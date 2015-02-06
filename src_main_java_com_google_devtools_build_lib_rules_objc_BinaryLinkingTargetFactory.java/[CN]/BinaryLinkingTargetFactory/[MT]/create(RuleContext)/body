@@ -1,0 +1,30 @@
+{
+  ObjcCommon common=common(ruleContext);
+  OptionsProvider optionsProvider=optionsProvider(ruleContext);
+  ObjcProvider objcProvider=common.getObjcProvider();
+  if (!hasLibraryOrSources(objcProvider)) {
+    ruleContext.ruleError(REQUIRES_AT_LEAST_ONE_LIBRARY_OR_SOURCE_FILE);
+    return null;
+  }
+  XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
+  NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(ObjcRuleClasses.intermediateArtifacts(ruleContext).singleArchitectureBinary());
+  new CompilationSupport(ruleContext).registerJ2ObjcCompileAndArchiveActions(optionsProvider,common.getObjcProvider()).registerCompileAndArchiveActions(common,optionsProvider).addXcodeSettings(xcodeProviderBuilder,common,optionsProvider).registerLinkActions(common.getObjcProvider(),extraLinkArgs,new ExtraLinkInputs()).validateAttributes();
+  Optional<XcTestAppProvider> xcTestAppProvider;
+switch (hasApplicationSupport) {
+case YES:
+    ApplicationSupport applicationSupport=new ApplicationSupport(ruleContext,common.getObjcProvider(),optionsProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES);
+  applicationSupport.registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateAttributes();
+xcTestAppProvider=Optional.of(applicationSupport.xcTestAppProvider());
+break;
+case NO:
+xcTestAppProvider=Optional.absent();
+break;
+default :
+throw new AssertionError();
+}
+new ResourceSupport(ruleContext).registerActions(common.getStoryboards()).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
+XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),productType).addDependencies(xcodeProviderBuilder).addFilesToBuild(filesToBuild);
+XcodeProvider xcodeProvider=xcodeProviderBuilder.build();
+xcodeSupport.registerActions(xcodeProvider);
+return common.configuredTarget(filesToBuild.build(),Optional.of(xcodeProvider),Optional.<ObjcProvider>absent(),xcTestAppProvider,Optional.<J2ObjcSrcsProvider>absent());
+}
