@@ -1,0 +1,26 @@
+{
+  FileValue outputDirectoryValue=createDirectory(downloader.getOutputDirectory(),env);
+  if (outputDirectoryValue == null) {
+    return null;
+  }
+  Path repositoryJar=null;
+  try {
+    repositoryJar=downloader.download();
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(e,Transience.TRANSIENT);
+  }
+  JarDecompressor decompressor=new JarDecompressor(MavenJarRule.NAME,downloader.getName(),repositoryJar);
+  Path repositoryDirectory=null;
+  try {
+    repositoryDirectory=decompressor.decompress();
+  }
+ catch (  DecompressorException e) {
+    throw new RepositoryFunctionException(new IOException(e.getMessage()),Transience.TRANSIENT);
+  }
+  FileValue repositoryFileValue=getRepositoryDirectory(repositoryDirectory,env);
+  if (repositoryFileValue == null) {
+    return null;
+  }
+  return new RepositoryValue(repositoryDirectory,repositoryFileValue);
+}

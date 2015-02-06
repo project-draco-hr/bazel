@@ -1,0 +1,20 @@
+{
+  String baseName=archivePath.getBaseName();
+  if (targetKind.startsWith(HttpJarRule.NAME + " ")) {
+    if (baseName.endsWith(".jar")) {
+      return new JarDecompressor(targetKind,targetName,archivePath);
+    }
+ else {
+      throw new DecompressorException("Expected " + HttpJarRule.NAME + " "+ targetName+ " to create file with a .jar suffix (got "+ archivePath+ ")");
+    }
+  }
+  if (targetKind.startsWith(HttpArchiveRule.NAME + " ")) {
+    if (baseName.endsWith(".zip") || baseName.endsWith(".jar")) {
+      return new ZipDecompressor(archivePath);
+    }
+ else {
+      throw new DecompressorException("Expected " + HttpArchiveRule.NAME + " "+ targetName+ " to create file with a .zip or .jar suffix (got "+ archivePath+ ")");
+    }
+  }
+  throw new DecompressorException("No decompressor found for " + targetKind + " rule "+ targetName+ " (got "+ archivePath+ ")");
+}

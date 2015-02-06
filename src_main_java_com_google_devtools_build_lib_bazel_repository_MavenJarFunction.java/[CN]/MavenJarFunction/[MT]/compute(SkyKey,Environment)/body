@@ -5,34 +5,6 @@
     return null;
   }
   AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(rule);
-  FileValue outputDirectoryValue=createOutputDirectory(env,rule.getName());
-  if (outputDirectoryValue == null) {
-    return null;
-  }
-  Path outputDirectory=outputDirectoryValue.realRootedPath().asPath();
-  MavenDownloader downloader=new MavenDownloader(mapper.get("group_id",Type.STRING),mapper.get("artifact_id",Type.STRING),mapper.get("version",Type.STRING),outputDirectory);
-  List<String> repositories=mapper.get("repositories",Type.STRING_LIST);
-  if (repositories != null && !repositories.isEmpty()) {
-    downloader.setRepositories(repositories);
-  }
-  Path repositoryJar=null;
-  try {
-    repositoryJar=downloader.download();
-  }
- catch (  IOException e) {
-    throw new RepositoryFunctionException(e,Transience.TRANSIENT);
-  }
-  JarDecompressor decompressor=new JarDecompressor(rule,repositoryJar);
-  Path repositoryDirectory=null;
-  try {
-    repositoryDirectory=decompressor.decompress();
-  }
- catch (  DecompressorException e) {
-    throw new RepositoryFunctionException(new IOException(e.getMessage()),Transience.TRANSIENT);
-  }
-  FileValue repositoryFileValue=getRepositoryDirectory(repositoryDirectory,env);
-  if (repositoryFileValue == null) {
-    return null;
-  }
-  return new RepositoryValue(repositoryDirectory,repositoryFileValue);
+  MavenDownloader downloader=createMavenDownloader(mapper);
+  return createOutputTree(downloader,env);
 }
