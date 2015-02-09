@@ -40,24 +40,11 @@ catch (  AbruptExitException e) {
     runtime.getReporter().handle(Event.error(e.getMessage()));
     return ExitCode.ANALYSIS_FAILURE;
   }
-  OutputFormatter.UnorderedFormatter unorderedFormatter=null;
-  if (!queryOptions.orderResults && formatter instanceof UnorderedFormatter) {
-    unorderedFormatter=(UnorderedFormatter)formatter;
-  }
   PrintStream output=new PrintStream(runtime.getReporter().getOutErr().getOutputStream());
   try {
-    if (unorderedFormatter != null) {
-      unorderedFormatter.outputUnordered(queryOptions,result.getResultSet(),output);
-    }
- else {
-      formatter.output(queryOptions,result.getResultGraph(),output);
-    }
+    output(queryOptions,result,formatter,output);
   }
- catch (  ClosedByInterruptException e) {
-    runtime.getReporter().handle(Event.error("query interrupted"));
-    return ExitCode.INTERRUPTED;
-  }
-catch (  IOException e) {
+ catch (  IOException e) {
     runtime.getReporter().handle(Event.error("I/O error: " + e.getMessage()));
     return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
   }
