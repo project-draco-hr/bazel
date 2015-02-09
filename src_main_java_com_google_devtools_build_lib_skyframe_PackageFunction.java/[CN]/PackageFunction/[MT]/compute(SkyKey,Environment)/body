@@ -31,7 +31,8 @@ default :
 if (packageName.equals(EXTERNAL_PACKAGE_NAME)) {
 return getExternalPackage(env,packageLookupValue.getRoot());
 }
-RootedPath buildFileRootedPath=RootedPath.toRootedPath(packageLookupValue.getRoot(),packageNameFragment.getChild("BUILD"));
+PathFragment buildFileFragment=packageNameFragment.getChild("BUILD");
+RootedPath buildFileRootedPath=RootedPath.toRootedPath(packageLookupValue.getRoot(),buildFileFragment);
 FileValue buildFileValue;
 try {
 buildFileValue=(FileValue)env.getValueOrThrow(FileValue.key(buildFileRootedPath),IOException.class,FileSymlinkCycleException.class,InconsistentFilesystemException.class);
@@ -84,7 +85,7 @@ inputSource=ParserInputSource.create(buildFilePath);
 env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
 throw new PackageFunctionException(new BuildFileContainsErrorsException(packageName,e.getMessage()),Transience.TRANSIENT);
 }
-SkylarkImportResult importResult=fetchImportsFromBuildFile(buildFilePath,packageId.getRepository(),preludeStatements,inputSource,packageName,env);
+SkylarkImportResult importResult=fetchImportsFromBuildFile(buildFilePath,buildFileFragment,packageId.getRepository(),preludeStatements,inputSource,packageName,env);
 if (importResult == null) {
 return null;
 }
