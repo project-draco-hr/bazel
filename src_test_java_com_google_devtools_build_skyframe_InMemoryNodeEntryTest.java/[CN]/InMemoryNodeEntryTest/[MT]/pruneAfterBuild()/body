@@ -1,0 +1,20 @@
+{
+  NodeEntry entry=new InMemoryNodeEntry();
+  entry.addReverseDepAndCheckIfDone(null);
+  SkyKey dep=key("dep");
+  addTemporaryDirectDep(entry,dep);
+  entry.signalDep();
+  setValue(entry,new IntegerValue(5),null,0L);
+  entry.markDirty(false);
+  entry.addReverseDepAndCheckIfDone(null);
+  assertEquals(NodeEntry.DirtyState.CHECK_DEPENDENCIES,entry.getDirtyState());
+  entry.addReverseDepAndCheckIfDone(null);
+  assertThat(entry.getNextDirtyDirectDeps()).containsExactly(dep).inOrder();
+  addTemporaryDirectDep(entry,dep);
+  entry.signalDep(new IntVersion(1L));
+  assertEquals(NodeEntry.DirtyState.REBUILDING,entry.getDirtyState());
+  assertThat(entry.getTemporaryDirectDeps()).containsExactly(dep);
+  setValue(entry,new IntegerValue(5),null,1L);
+  assertTrue(entry.isDone());
+  assertEquals(new IntVersion(0L),entry.getVersion());
+}

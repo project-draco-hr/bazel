@@ -1,0 +1,14 @@
+{
+  NodeEntry entry=new InMemoryNodeEntry();
+  entry.addReverseDepAndCheckIfDone(key("parent"));
+  setValue(entry,new SkyValue(){
+  }
+,null,0L);
+  entry.markDirty(true);
+  SkyKey newParent=key("new parent");
+  entry.addReverseDepAndCheckIfDone(newParent);
+  assertEquals(NodeEntry.DirtyState.REBUILDING,entry.getDirtyState());
+  assertThat(setValue(entry,new SkyValue(){
+  }
+,null,1L)).containsExactly(newParent);
+}

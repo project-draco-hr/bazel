@@ -1,0 +1,27 @@
+{
+  NodeEntry entry=new InMemoryNodeEntry();
+  SkyKey dep=key("dep");
+  entry.addReverseDepAndCheckIfDone(null);
+  addTemporaryDirectDep(entry,dep);
+  entry.signalDep();
+  setValue(entry,new SkyValue(){
+  }
+,null,0L);
+  assertFalse(entry.isDirty());
+  assertTrue(entry.isDone());
+  entry.markDirty(false);
+  assertTrue(entry.isDirty());
+  assertFalse(entry.isChanged());
+  assertFalse(entry.isDone());
+  assertTrue(entry.isReady());
+  SkyKey parent=key("parent");
+  entry.addReverseDepAndCheckIfDone(parent);
+  assertEquals(NodeEntry.DirtyState.CHECK_DEPENDENCIES,entry.getDirtyState());
+  assertThat(entry.getNextDirtyDirectDeps()).containsExactly(dep).inOrder();
+  addTemporaryDirectDep(entry,dep);
+  entry.signalDep(new IntVersion(0L));
+  assertEquals(NodeEntry.DirtyState.VERIFIED_CLEAN,entry.getDirtyState());
+  assertThat(entry.markClean()).containsExactly(parent);
+  assertTrue(entry.isDone());
+  assertEquals(new IntVersion(0L),entry.getVersion());
+}
