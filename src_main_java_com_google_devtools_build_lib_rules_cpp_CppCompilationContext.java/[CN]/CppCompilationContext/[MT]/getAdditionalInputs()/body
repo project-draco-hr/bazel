@@ -2,12 +2,15 @@
   if (depsContexts.isEmpty()) {
     return NestedSetBuilder.emptySet(Order.STABLE_ORDER);
   }
-  if (depsContexts.size() == 1) {
-    return depsContexts.get(0).auxiliaryInputs;
-  }
   NestedSetBuilder<Artifact> builder=NestedSetBuilder.stableOrder();
   for (  DepsContext depsContext : depsContexts) {
-    builder.addTransitive(depsContext.auxiliaryInputs);
+    builder.addTransitive(depsContext.topLevelHeaderModules);
+    builder.addTransitive(depsContext.impliedHeaderModules);
+    builder.addTransitive(depsContext.transitiveModuleMapsForHeaderModules);
+    builder.addTransitive(depsContext.directModuleMaps);
+  }
+  if (cppModuleMap != null) {
+    builder.add(cppModuleMap.getArtifact());
   }
   return builder.build();
 }

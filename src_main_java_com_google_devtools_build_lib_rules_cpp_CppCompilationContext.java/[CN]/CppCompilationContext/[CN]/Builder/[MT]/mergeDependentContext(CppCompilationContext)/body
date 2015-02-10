@@ -8,23 +8,33 @@
   declaredIncludeWarnDirs.addTransitive(otherContext.getDeclaredIncludeWarnDirs());
   declaredIncludeSrcs.addTransitive(otherContext.getDeclaredIncludeSrcs());
   pregreppedHdrs.addTransitive(otherContext.getPregreppedHeaders());
-  transitiveAuxiliaryInputs.addTransitive(otherContext.getTransitiveAuxiliaryInputs());
-  transitiveModuleMaps.addTransitive(otherContext.getTransitiveModuleMaps());
+  NestedSet<Artifact> othersTransitiveModuleMaps=otherContext.getTransitiveModuleMaps();
+  NestedSet<Artifact> othersDirectModuleMaps=otherContext.getDirectModuleMaps();
+  NestedSet<Artifact> othersTopLevelHeaderModules=otherContext.getTopLevelHeaderModules();
+  transitiveModuleMaps.addTransitive(othersTransitiveModuleMaps);
+  transitiveModuleMaps.addTransitive(othersDirectModuleMaps);
+  transitiveModuleMapsForHeaderModules.addTransitive(otherContext.getTransitiveModuleMapsForHeaderModules());
   transitiveHeaderModuleSrcs.addTransitive(otherContext.getTransitiveHeaderModuleSrcs());
+  impliedHeaderModules.addTransitive(otherContext.getImpliedHeaderModules());
+  topLevelHeaderModules.addTransitive(othersTopLevelHeaderModules);
   if (otherContext.getCppModuleMap() != null) {
-    auxiliaryInputs.add(otherContext.getCppModuleMap().getArtifact());
+    directModuleMaps.add(otherContext.getCppModuleMap().getArtifact());
   }
   if (otherContext.getHeaderModule() != null || otherContext.getPicHeaderModule() != null) {
+    impliedHeaderModules.addTransitive(othersTopLevelHeaderModules);
     if (otherContext.getHeaderModule() != null) {
-      transitiveAuxiliaryInputs.add(otherContext.getHeaderModule());
+      topLevelHeaderModules.add(otherContext.getHeaderModule());
     }
     if (otherContext.getPicHeaderModule() != null) {
-      transitiveAuxiliaryInputs.add(otherContext.getPicHeaderModule());
+      topLevelHeaderModules.add(otherContext.getPicHeaderModule());
     }
-    transitiveAuxiliaryInputs.addAll(otherContext.getTransitiveModuleMaps());
-    transitiveHeaderModuleSrcs.addAll(otherContext.getHeaderModuleSrcs());
+    transitiveHeaderModuleSrcs.addTransitive(otherContext.getHeaderModuleSrcs());
+    transitiveModuleMapsForHeaderModules.addTransitive(othersTransitiveModuleMaps);
+    transitiveModuleMapsForHeaderModules.addTransitive(othersDirectModuleMaps);
+    if (otherContext.getCppModuleMap() != null) {
+      transitiveModuleMapsForHeaderModules.add(otherContext.getCppModuleMap().getArtifact());
+    }
   }
-  auxiliaryInputs.addAll(transitiveAuxiliaryInputs.build().toCollection());
   defines.addAll(otherContext.getDefines());
   return this;
 }
