@@ -14,10 +14,12 @@
   artifactsToBuild.addAll(buildInfoArtifacts);
   addExtraActionsIfRequested(viewOptions,artifactsToBuild,configuredTargets);
   if (coverageReportActionFactory != null) {
-    Action action=coverageReportActionFactory.createCoverageReportAction(allTargetsToTest,getBaselineCoverageArtifacts(configuredTargets),artifactFactory,CoverageReportValue.ARTIFACT_OWNER);
-    if (action != null) {
-      skyframeExecutor.injectCoverageReportData(action);
-      artifactsToBuild.addAll(action.getOutputs());
+    CoverageReportActionsWrapper actionsWrapper;
+    actionsWrapper=coverageReportActionFactory.createCoverageReportActionsWrapper(allTargetsToTest,getBaselineCoverageArtifacts(configuredTargets),artifactFactory,CoverageReportValue.ARTIFACT_OWNER);
+    if (actionsWrapper != null) {
+      ImmutableList<Action> actions=actionsWrapper.getActions();
+      skyframeExecutor.injectCoverageReportData(actions);
+      artifactsToBuild.addAll(actionsWrapper.getCoverageOutputs());
     }
   }
   scheduleTestsIfRequested(parallelTests,exclusiveTests,topLevelOptions,allTargetsToTest);
