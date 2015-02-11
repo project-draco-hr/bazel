@@ -1,6 +1,6 @@
 {
   Collection<Artifact> extraActionOutputs=new LinkedHashSet<>();
-  ImmutableSet.Builder<Artifact> extraActionInputs=ImmutableSet.builder();
+  NestedSetBuilder<Artifact> extraActionInputs=NestedSetBuilder.stableOrder();
   ActionOwner owner=actionToShadow.getOwner();
   Label ownerLabel=owner.getLabel();
   if (requiresActionOutput) {
@@ -20,8 +20,9 @@
   extraActionOutputs.add(extraActionInfoFile);
   String command=createExpandedCommand(owningRule,actionToShadow,owner,extraActionInfoFile);
   Map<String,String> env=owningRule.getConfiguration().getDefaultShellEnvironment();
-  List<String> argv=CommandHelper.buildCommandLine(owningRule,command,extraActionInputs,".extra_action_script.sh");
+  CommandHelper commandHelper=new CommandHelper(owningRule,ImmutableList.<FilesToRunProvider>of(),ImmutableMap.<Label,Iterable<Artifact>>of());
+  List<String> argv=commandHelper.buildCommandLine(command,extraActionInputs,".extra_action_script.sh");
   String commandMessage=String.format("Executing extra_action %s on %s",label,ownerLabel);
-  owningRule.registerAction(new ExtraAction(actionToShadow.getOwner(),extraActionInputs.build(),manifests,extraActionInfoFile,extraActionOutputs,actionToShadow,createDummyOutput,CommandLine.of(argv,false),env,commandMessage,label.getName()));
+  owningRule.registerAction(new ExtraAction(actionToShadow.getOwner(),ImmutableSet.copyOf(extraActionInputs.build()),manifests,extraActionInfoFile,extraActionOutputs,actionToShadow,createDummyOutput,CommandLine.of(argv,false),env,commandMessage,label.getName()));
   return extraActionOutputs;
 }
