@@ -6,7 +6,10 @@
   if (inputArtifactData != null) {
     fileAndMetadataCache=new FileAndMetadataCache(inputArtifactData,expandedMiddlemen,skyframeActionExecutor.getExecRoot(),action.getOutputs(),action.discoversInputs() ? env : null,tsgm);
     metadataHandler=skyframeActionExecutor.constructMetadataHandler(fileAndMetadataCache);
-    token=skyframeActionExecutor.checkActionCache(action,metadataHandler,actionStartTime);
+    token=skyframeActionExecutor.checkActionCache(action,metadataHandler,new PackageRootResolverWithEnvironment(env),actionStartTime);
+    if (token == Token.NEED_TO_RERUN) {
+      return null;
+    }
   }
   if (token == null && inputArtifactData != null) {
     return new ActionExecutionValue(fileAndMetadataCache.getOutputData(),fileAndMetadataCache.getAdditionalOutputData());

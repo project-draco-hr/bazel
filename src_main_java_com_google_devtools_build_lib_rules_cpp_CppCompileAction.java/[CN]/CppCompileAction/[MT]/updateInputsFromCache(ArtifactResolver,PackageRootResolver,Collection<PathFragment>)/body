@@ -1,0 +1,29 @@
+{
+  Map<PathFragment,Artifact> allowedDerivedInputsMap=getAllowedDerivedInputsMap();
+  List<Artifact> inputs=new ArrayList<>();
+  List<PathFragment> unresolvedPaths=new ArrayList<>();
+  for (  PathFragment execPath : inputPaths) {
+    Artifact artifact=allowedDerivedInputsMap.get(execPath);
+    if (artifact != null) {
+      inputs.add(artifact);
+    }
+ else {
+      unresolvedPaths.add(execPath);
+    }
+  }
+  Map<PathFragment,Artifact> resolvedArtifacts=artifactResolver.resolveSourceArtifacts(unresolvedPaths,resolver);
+  if (resolvedArtifacts == null) {
+    return false;
+  }
+  for (  PathFragment execPath : unresolvedPaths) {
+    Artifact artifact=resolvedArtifacts.get(execPath);
+    if (artifact != null) {
+      inputs.add(artifact);
+    }
+  }
+  inputsKnown=true;
+synchronized (this) {
+    setInputs(inputs);
+  }
+  return true;
+}

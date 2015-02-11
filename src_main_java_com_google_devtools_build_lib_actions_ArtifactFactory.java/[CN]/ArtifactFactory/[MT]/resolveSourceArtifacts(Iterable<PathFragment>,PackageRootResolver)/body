@@ -1,0 +1,31 @@
+{
+  Map<PathFragment,Artifact> result=new HashMap<>();
+  ArrayList<PathFragment> unresolvedPaths=new ArrayList<>();
+  for (  PathFragment execPath : execPaths) {
+    PathFragment execPathNormalized=execPath.normalize();
+    Artifact a=pathToSourceArtifact.get(execPathNormalized);
+    if (a != null) {
+      result.put(execPath,a);
+    }
+ else     if (findDerivedRoot(execRoot.getRelative(execPathNormalized)) != null) {
+      result.put(execPath,null);
+    }
+ else {
+      unresolvedPaths.add(execPath);
+    }
+  }
+  Map<PathFragment,Root> sourceRoots=resolver.findPackageRoots(unresolvedPaths);
+  if (sourceRoots == null) {
+    return null;
+  }
+  for (  PathFragment path : unresolvedPaths) {
+    Root sourceRoot=sourceRoots.get(path);
+    if (sourceRoot != null) {
+      result.put(path,getSourceArtifact(path.normalize(),sourceRoot,ArtifactOwner.NULL_OWNER));
+    }
+ else {
+      result.put(path,null);
+    }
+  }
+  return result;
+}

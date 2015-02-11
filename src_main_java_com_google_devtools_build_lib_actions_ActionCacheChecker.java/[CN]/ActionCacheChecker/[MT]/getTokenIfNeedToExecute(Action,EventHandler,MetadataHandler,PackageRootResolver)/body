@@ -11,7 +11,10 @@
   if (!inputsKnown) {
     Preconditions.checkState(action.discoversInputs());
     entry=getCacheEntry(action);
-    updateActionInputs(action,entry);
+    boolean ranSuccessfully=updateActionInputs(action,entry,resolver);
+    if (!ranSuccessfully) {
+      return Token.NEED_TO_RERUN;
+    }
   }
   if (mustExecute(action,entry,handler,metadataHandler)) {
     return new Token(getKeyString(action));

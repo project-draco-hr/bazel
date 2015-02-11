@@ -1,6 +1,10 @@
 {
   Set<PathFragment> extraActionPathFragments=ImmutableSet.copyOf(Artifact.asPathFragments(extraActionInputs));
-  shadowedAction.updateInputsFromCache(artifactResolver,Collections2.filter(inputPaths,Predicates.in(extraActionPathFragments)));
+  boolean noMissingDependencies=shadowedAction.updateInputsFromCache(artifactResolver,resolver,Collections2.filter(inputPaths,Predicates.in(extraActionPathFragments)));
+  if (!noMissingDependencies) {
+    return false;
+  }
   Preconditions.checkState(shadowedAction.inputsKnown(),"%s %s",this,shadowedAction);
   updateInputs(shadowedAction.getInputs());
+  return true;
 }

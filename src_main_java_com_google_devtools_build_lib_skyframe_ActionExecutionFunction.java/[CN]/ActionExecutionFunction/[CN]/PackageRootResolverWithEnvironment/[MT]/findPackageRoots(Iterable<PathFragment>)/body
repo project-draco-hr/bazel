@@ -1,0 +1,21 @@
+{
+  Map<PathFragment,SkyKey> depKeys=new HashMap<>();
+  for (  PathFragment path : execPaths) {
+    depKeys.put(path,ContainingPackageLookupValue.key(PackageIdentifier.createInDefaultRepo(path)));
+  }
+  Map<SkyKey,SkyValue> values=env.getValues(depKeys.values());
+  if (env.valuesMissing()) {
+    return null;
+  }
+  Map<PathFragment,Root> result=new HashMap<>();
+  for (  PathFragment path : execPaths) {
+    ContainingPackageLookupValue value=(ContainingPackageLookupValue)values.get(depKeys.get(path));
+    if (value.hasContainingPackage()) {
+      result.put(path,Root.asSourceRoot(value.getContainingPackageRoot()));
+    }
+ else {
+      result.put(path,null);
+    }
+  }
+  return result;
+}
