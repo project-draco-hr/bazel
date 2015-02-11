@@ -44,7 +44,11 @@ catch (  AbruptExitException e) {
   try {
     QueryOutputUtils.output(queryOptions,result,formatter,output);
   }
- catch (  IOException e) {
+ catch (  ClosedByInterruptException e) {
+    runtime.getReporter().handle(Event.error("query interrupted"));
+    return ExitCode.INTERRUPTED;
+  }
+catch (  IOException e) {
     runtime.getReporter().handle(Event.error("I/O error: " + e.getMessage()));
     return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
   }
