@@ -5,12 +5,14 @@
   while (token.kind == TokenKind.ELIF) {
     thenBlocks.add(parseConditionalStatements(TokenKind.ELIF));
   }
-  List<Statement> elseBlock=new ArrayList<>();
+  List<Statement> elseBlock;
   if (token.kind == TokenKind.ELSE) {
     expect(TokenKind.ELSE);
     expect(TokenKind.COLON);
-    parseSuite(elseBlock);
+    elseBlock=parseSuite();
   }
-  Statement stmt=new IfStatement(thenBlocks,elseBlock);
-  list.add(setLocation(stmt,start,token.right));
+ else {
+    elseBlock=ImmutableList.of();
+  }
+  return setLocation(new IfStatement(thenBlocks,elseBlock),start,token.right);
 }

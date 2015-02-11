@@ -16,28 +16,21 @@
   }
  else   if (o instanceof List<?>) {
     List<?> seq=(List<?>)o;
-    boolean isTuple=isImmutable(seq);
-    String sep="";
-    buffer.append(isTuple ? '(' : '[');
-    for (int ii=0, len=seq.size(); ii < len; ++ii) {
-      buffer.append(sep);
-      prettyPrintValue(seq.get(ii),buffer);
-      sep=", ";
-    }
-    buffer.append(isTuple ? ')' : ']');
+    printList(seq,isImmutable(seq),buffer);
+  }
+ else   if (o instanceof SkylarkList) {
+    SkylarkList list=(SkylarkList)o;
+    printList(list.toList(),list.isTuple(),buffer);
   }
  else   if (o instanceof Map<?,?>) {
     Map<?,?> dict=(Map<?,?>)o;
-    buffer.append('{');
-    String sep="";
-    for (    Map.Entry<?,?> entry : dict.entrySet()) {
-      buffer.append(sep);
-      prettyPrintValue(entry.getKey(),buffer);
-      buffer.append(": ");
-      prettyPrintValue(entry.getValue(),buffer);
-      sep=", ";
-    }
-    buffer.append('}');
+    printList(dict.entrySet(),"{",", ","}",buffer);
+  }
+ else   if (o instanceof Map.Entry<?,?>) {
+    Map.Entry<?,?> entry=(Map.Entry<?,?>)o;
+    prettyPrintValue(entry.getKey(),buffer);
+    buffer.append(": ");
+    prettyPrintValue(entry.getValue(),buffer);
   }
  else   if (o instanceof Function) {
     Function func=(Function)o;
