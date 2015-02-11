@@ -23,7 +23,7 @@ catch (  AbruptExitException e) {
   }
   String query=Joiner.on(' ').join(options.getResidue());
   Set<Setting> settings=queryOptions.toSettings();
-  BlazeQueryEnvironment env=newQueryEnvironment(runtime,queryOptions.keepGoing,queryOptions.loadingPhaseThreads,settings);
+  AbstractBlazeQueryEnvironment<Target> env=newQueryEnvironment(runtime,queryOptions.keepGoing,orderResults(queryOptions,formatter),queryOptions.loadingPhaseThreads,settings);
   QueryExpression expr;
   try {
     expr=QueryExpression.parse(query,env);
@@ -32,7 +32,7 @@ catch (  AbruptExitException e) {
     runtime.getReporter().handle(Event.error(null,"Error while parsing '" + query + "': "+ e.getMessage()));
     return ExitCode.COMMAND_LINE_ERROR;
   }
-  BlazeQueryEvalResult<Target> result;
+  QueryEvalResult<Target> result;
   try {
     result=env.evaluateQuery(expr);
   }

@@ -1,0 +1,28 @@
+{
+  eventHandler.resetErrors();
+  resolvedTargetPatterns.clear();
+  Set<String> targetPatternSet=new LinkedHashSet<>();
+  expr.collectTargetPatterns(targetPatternSet);
+  try {
+    resolvedTargetPatterns.putAll(preloadOrThrow(targetPatternSet));
+  }
+ catch (  TargetParsingException e) {
+    throw new QueryException(expr,e.getMessage());
+  }
+  Set<T> resultNodes;
+  try {
+    resultNodes=expr.eval(this);
+  }
+ catch (  QueryException e) {
+    throw new QueryException(e,expr);
+  }
+  if (eventHandler.hasErrors()) {
+    if (!keepGoing) {
+      throw new QueryException("Evaluation of query \"" + expr + "\" failed due to BUILD file errors");
+    }
+ else {
+      eventHandler.handle(Event.warn("--keep_going specified, ignoring errors.  " + "Results may be inaccurate"));
+    }
+  }
+  return new QueryEvalResult<>(!eventHandler.hasErrors(),resultNodes);
+}
