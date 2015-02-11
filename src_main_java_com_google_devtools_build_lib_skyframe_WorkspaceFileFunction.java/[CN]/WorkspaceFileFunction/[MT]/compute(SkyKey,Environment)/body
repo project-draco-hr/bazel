@@ -3,35 +3,26 @@
   if (env.getValue(FileValue.key(workspaceRoot)) == null) {
     return null;
   }
-  Path workspaceFilePath=workspaceRoot.getRoot().getRelative(workspaceRoot.getRelativePath());
-  WorkspaceNameHolder holder=new WorkspaceNameHolder();
-  ExternalPackageBuilder builder=new ExternalPackageBuilder(workspaceFilePath);
-  StoredEventHandler localReporter=new StoredEventHandler();
-  BuildFileAST buildFileAST;
-  ParserInputSource inputSource=null;
+  Path repoWorkspace=workspaceRoot.getRoot().getRelative(workspaceRoot.getRelativePath());
+  Builder builder=new Builder(repoWorkspace);
+  List<PathFragment> workspaceFiles=packageFactory.getRuleClassProvider().getWorkspaceFiles();
+  for (  PathFragment workspaceFile : workspaceFiles) {
+    workspaceRoot=RootedPath.toRootedPath(installDir,workspaceFile);
+    if (env.getValue(FileValue.key(workspaceRoot)) == null) {
+      return null;
+    }
+    parseWorkspaceFile(installDir.getRelative(workspaceFile),builder);
+  }
+  parseWorkspaceFile(repoWorkspace,builder);
   try {
-    inputSource=ParserInputSource.create(workspaceFilePath);
+    builder.resolveBindTargets(packageFactory.getRuleClass(BIND));
   }
- catch (  IOException e) {
-    throw new WorkspaceFileFunctionException(e,Transience.TRANSIENT);
+ catch (  NoSuchBindingException e) {
+    throw new WorkspaceFileFunctionException(e);
   }
-  buildFileAST=BuildFileAST.parseBuildFile(inputSource,localReporter,null,false);
-  if (buildFileAST.containsErrors()) {
-    localReporter.handle(Event.error("WORKSPACE file could not be parsed"));
+catch (  EvalException e) {
+    throw new WorkspaceFileFunctionException(e);
   }
- else {
-    try {
-      if (!evaluateWorkspaceFile(buildFileAST,holder,builder)) {
-        localReporter.handle(Event.error("Error evaluating WORKSPACE file " + workspaceFilePath));
-      }
-    }
- catch (    EvalException e) {
-      throw new WorkspaceFileFunctionException(e);
-    }
-  }
-  builder.addEvents(localReporter.getEvents());
-  if (localReporter.hasErrors()) {
-    builder.setContainsErrors();
-  }
-  return new WorkspaceFileValue(holder.workspaceName,builder.build());
+  ExternalPackage pkg=builder.build();
+  return new WorkspaceFileValue(pkg.getWorkspaceName(),pkg);
 }

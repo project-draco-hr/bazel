@@ -1,0 +1,24 @@
+{
+  StoredEventHandler localReporter=new StoredEventHandler();
+  BuildFileAST buildFileAST;
+  ParserInputSource inputSource=null;
+  try {
+    inputSource=ParserInputSource.create(workspaceFilePath);
+  }
+ catch (  IOException e) {
+    throw new WorkspaceFileFunctionException(e,Transience.TRANSIENT);
+  }
+  buildFileAST=BuildFileAST.parseBuildFile(inputSource,localReporter,null,false);
+  if (buildFileAST.containsErrors()) {
+    localReporter.handle(Event.error("WORKSPACE file could not be parsed"));
+  }
+ else {
+    if (!evaluateWorkspaceFile(buildFileAST,builder)) {
+      localReporter.handle(Event.error("Error evaluating WORKSPACE file " + workspaceFilePath));
+    }
+  }
+  builder.addEvents(localReporter.getEvents());
+  if (localReporter.hasErrors()) {
+    builder.setContainsErrors();
+  }
+}
