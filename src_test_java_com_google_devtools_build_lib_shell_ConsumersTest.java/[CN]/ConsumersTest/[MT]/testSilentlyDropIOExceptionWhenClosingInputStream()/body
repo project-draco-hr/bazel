@@ -1,0 +1,16 @@
+{
+  InputStream in=new ByteArrayInputStream(new byte[]{'a'}){
+    @Override public void close() throws IOException {
+      throw new IOException("Please ignore me!");
+    }
+  }
+;
+  OutErrConsumers outErr=Consumers.createDiscardingConsumers();
+  outErr.registerInputs(in,in,false);
+  try {
+    outErr.waitForCompletion();
+  }
+ catch (  IOException e) {
+    fail();
+  }
+}

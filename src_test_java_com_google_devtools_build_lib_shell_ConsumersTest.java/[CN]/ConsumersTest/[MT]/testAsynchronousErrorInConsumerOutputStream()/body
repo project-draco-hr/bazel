@@ -1,0 +1,22 @@
+{
+  OutputStream out=new OutputStream(){
+    @Override public void write(    int b) throws IOException {
+      throw new OutOfMemoryError(SECRET_MESSAGE);
+    }
+  }
+;
+  OutErrConsumers outErr=Consumers.createStreamingConsumers(out,out);
+  ByteArrayInputStream outInput=new ByteArrayInputStream(new byte[]{'a'});
+  ByteArrayInputStream errInput=new ByteArrayInputStream(new byte[0]);
+  outErr.registerInputs(outInput,errInput,false);
+  try {
+    outErr.waitForCompletion();
+    fail();
+  }
+ catch (  IOException e) {
+    fail();
+  }
+catch (  Error e) {
+    assertEquals(SECRET_MESSAGE,e.getMessage());
+  }
+}

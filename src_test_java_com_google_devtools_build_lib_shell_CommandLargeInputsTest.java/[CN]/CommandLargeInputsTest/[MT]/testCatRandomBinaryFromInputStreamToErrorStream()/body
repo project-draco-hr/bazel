@@ -1,0 +1,12 @@
+{
+  final Command command=new Command(new String[]{"/bin/sh","-c","cat >&2"});
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  ByteArrayOutputStream err=new ByteArrayOutputStream();
+  byte[] randomBytes=getRandomBytes();
+  ByteArrayInputStream in=new ByteArrayInputStream(randomBytes);
+  final CommandResult result=command.execute(in,Command.NO_OBSERVER,out,err);
+  assertEquals(0,result.getTerminationStatus().getRawResult());
+  assertEquals(0,out.toByteArray().length);
+  TestUtil.assertArrayEquals(randomBytes,err.toByteArray());
+  assertOutAndErrNotAvailable(result);
+}

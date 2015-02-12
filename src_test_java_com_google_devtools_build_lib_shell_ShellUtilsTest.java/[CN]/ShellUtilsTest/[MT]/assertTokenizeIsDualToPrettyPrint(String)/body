@@ -1,0 +1,29 @@
+{
+  List<String> in=Arrays.asList(args);
+  String shellCommand=prettyPrintArgv(in);
+  String[] execArgs={"/bin/sh","-c","for i in " + shellCommand + "; do echo \"$i\"; done"};
+  String stdout=null;
+  try {
+    stdout=new String(new Command(execArgs).execute().getStdout());
+  }
+ catch (  Exception e) {
+    fail("/bin/sh failed:\n" + in + "\n"+ shellCommand+ "\n"+ e.getMessage());
+  }
+  ArrayList<String> words=Lists.newArrayList();
+  int index;
+  while ((index=stdout.indexOf("\n")) >= 0) {
+    words.add(stdout.substring(0,index));
+    stdout=stdout.substring(index + 1);
+  }
+  assertEquals(in,words);
+  List<String> out=new ArrayList<String>();
+  try {
+    tokenize(out,shellCommand);
+  }
+  finally {
+    if (out.isEmpty()) {
+      System.err.println(in);
+    }
+  }
+  assertEquals(in,out);
+}

@@ -1,0 +1,23 @@
+{
+  final Command command=new Command(new String[]{"/bin/sh","-c","echo -n Foo; sleep 0.1; echo Bar"});
+  final boolean[] flushed=new boolean[8];
+  OutputStream out=new OutputStream(){
+    private int count=0;
+    @Override public void write(    int b) throws IOException {
+      count++;
+    }
+    @Override public void flush() throws IOException {
+      flushed[count]=true;
+    }
+  }
+;
+  command.execute(Command.NO_INPUT,Command.NO_OBSERVER,out,System.err);
+  assertFalse(flushed[0]);
+  assertFalse(flushed[1]);
+  assertFalse(flushed[2]);
+  assertTrue(flushed[3]);
+  assertFalse(flushed[4]);
+  assertFalse(flushed[5]);
+  assertFalse(flushed[6]);
+  assertTrue(flushed[7]);
+}

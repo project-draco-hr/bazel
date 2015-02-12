@@ -1,0 +1,30 @@
+{
+  final Command command=new Command(new String[]{"sleep","10"});
+  final KillableObserver killer=new KillableObserver(){
+    @Override public void startObserving(    final Killable killable){
+      final Thread t=new Thread(){
+        @Override public void run(){
+          try {
+            Thread.sleep(1000L);
+          }
+ catch (          InterruptedException ie) {
+          }
+          killable.kill();
+        }
+      }
+;
+      t.start();
+    }
+    @Override public void stopObserving(    final Killable killable){
+    }
+  }
+;
+  try {
+    command.execute(Command.NO_INPUT,killer,false);
+    fail("Should have thrown AbnormalTerminationException");
+  }
+ catch (  AbnormalTerminationException ate) {
+    checkCommandElements(ate,"sleep","10");
+    checkATE(ate);
+  }
+}

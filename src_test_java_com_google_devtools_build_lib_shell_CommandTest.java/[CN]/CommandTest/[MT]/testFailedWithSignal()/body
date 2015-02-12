@@ -1,0 +1,32 @@
+{
+  for (  int signal : new int[]{1,2,9,15}) {
+    String killmyself=BlazeTestUtils.runfilesDir() + "/" + TestConstants.JAVATESTS_ROOT+ "/com/google/devtools/build/lib/shell/killmyself";
+    try {
+      String args[]={killmyself,"" + signal};
+      new Command(args).execute();
+      fail("Expected signal " + signal);
+    }
+ catch (    AbnormalTerminationException e) {
+      assertEquals("Process terminated by signal " + signal,e.getMessage());
+      checkCommandElements(e,killmyself,"" + signal);
+      TerminationStatus status=e.getResult().getTerminationStatus();
+      assertFalse(status.success());
+      assertFalse(status.exited());
+      assertEquals(signal,status.getTerminatingSignal());
+switch (signal) {
+case 1:
+        assertEquals("Hangup",status.toShortString());
+      break;
+case 2:
+    assertEquals("Interrupt",status.toShortString());
+  break;
+case 9:
+assertEquals("Killed",status.toShortString());
+break;
+case 15:
+assertEquals("Terminated",status.toShortString());
+break;
+}
+}
+}
+}

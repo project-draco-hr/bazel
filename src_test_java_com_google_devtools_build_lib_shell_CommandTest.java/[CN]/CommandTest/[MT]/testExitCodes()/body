@@ -1,0 +1,43 @@
+{
+{
+    String args[]={"/bin/sh","-c","exit 0"};
+    CommandResult result=new Command(args).execute();
+    TerminationStatus status=result.getTerminationStatus();
+    assertTrue(status.success());
+    assertTrue(status.exited());
+    assertEquals(0,status.getExitCode());
+  }
+  for (  int exit : new int[]{1,2,3,127,128,192,255}) {
+    try {
+      String args[]={"/bin/sh","-c","exit " + exit};
+      new Command(args).execute();
+      fail("Should have exited with status " + exit);
+    }
+ catch (    BadExitStatusException e) {
+      assertEquals("Process exited with status " + exit,e.getMessage());
+      checkCommandElements(e,"/bin/sh","-c","exit " + exit);
+      TerminationStatus status=e.getResult().getTerminationStatus();
+      assertFalse(status.success());
+      assertTrue(status.exited());
+      assertEquals(exit,status.getExitCode());
+      assertEquals("Exit " + exit,status.toShortString());
+    }
+  }
+  for (  int exit : new int[]{-1,-2,-3}) {
+    int expected=256 + exit;
+    try {
+      String args[]={"/bin/sh","-c","exit " + exit};
+      new Command(args).execute();
+      fail("Should have exited with status " + expected);
+    }
+ catch (    BadExitStatusException e) {
+      assertEquals("Process exited with status " + expected,e.getMessage());
+      checkCommandElements(e,"/bin/sh","-c","exit " + exit);
+      TerminationStatus status=e.getResult().getTerminationStatus();
+      assertFalse(status.success());
+      assertTrue(status.exited());
+      assertEquals(expected,status.getExitCode());
+      assertEquals("Exit " + expected,status.toShortString());
+    }
+  }
+}

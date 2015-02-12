@@ -1,0 +1,19 @@
+{
+  OutputStream out=new OutputStream(){
+    @Override public void write(    int b) throws IOException {
+      throw new IOException();
+    }
+  }
+;
+  Command command=new Command(new String[]{"cat","/dev/thisisnotreal"});
+  try {
+    command.execute(Command.NO_INPUT,Command.NO_OBSERVER,out,out);
+    fail();
+  }
+ catch (  AbnormalTerminationException e) {
+    checkCommandElements(e,"cat","/dev/thisisnotreal");
+    TerminationStatus status=e.getResult().getTerminationStatus();
+    assertTrue(status.exited() ? status.getExitCode() == 1 : status.getTerminatingSignal() == 13);
+    assertTrue(e.getMessage(),e.getMessage().endsWith("also encountered an error while attempting " + "to retrieve output"));
+  }
+}

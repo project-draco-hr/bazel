@@ -1,0 +1,19 @@
+{
+  OutputStream out=new OutputStream(){
+    @Override public void write(    int b){
+      throw new RuntimeException(SECRET_MESSAGE);
+    }
+  }
+;
+  OutErrConsumers outErr=Consumers.createStreamingConsumers(out,out);
+  ByteArrayInputStream outInput=new ByteArrayInputStream(new byte[]{'a'});
+  ByteArrayInputStream errInput=new ByteArrayInputStream(new byte[0]);
+  outErr.registerInputs(outInput,errInput,false);
+  try {
+    outErr.waitForCompletion();
+    fail();
+  }
+ catch (  RuntimeException e) {
+    assertEquals(SECRET_MESSAGE,e.getMessage());
+  }
+}

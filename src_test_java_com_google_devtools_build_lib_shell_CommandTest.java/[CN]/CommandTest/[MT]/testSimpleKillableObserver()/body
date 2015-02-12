@@ -1,0 +1,18 @@
+{
+  final Command command=new Command(new String[]{"sleep","5"});
+  final SimpleKillableObserver observer=new SimpleKillableObserver();
+  new Thread(){
+    @Override public void run(){
+      try {
+        command.execute(Command.NO_INPUT,observer,true);
+        fail();
+      }
+ catch (      CommandException e) {
+        checkCommandElements(e,"/bin/sh","-c","sleep 5");
+      }
+    }
+  }
+.start();
+  Thread.yield();
+  observer.kill();
+}

@@ -1,0 +1,17 @@
+{
+  OutputStream out=new OutputStream(){
+    @Override public void write(    int b) throws IOException {
+      throw new IOException();
+    }
+  }
+;
+  Command command=new Command(new String[]{"/bin/echo","foo"});
+  try {
+    command.execute(Command.NO_INPUT,Command.NO_OBSERVER,out,out);
+    fail();
+  }
+ catch (  AbnormalTerminationException e) {
+    checkCommandElements(e,"/bin/echo","foo");
+    assertEquals("java.io.IOException",e.getMessage());
+  }
+}

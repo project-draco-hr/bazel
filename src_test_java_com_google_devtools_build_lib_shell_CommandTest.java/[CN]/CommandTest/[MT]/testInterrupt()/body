@@ -1,0 +1,23 @@
+{
+  final Command command=new Command(new String[]{"sleep","10"});
+  final CommandResult[] resultContainer=new CommandResult[1];
+  final Thread commandThread=new Thread(){
+    @Override public void run(){
+      try {
+        resultContainer[0]=command.execute();
+      }
+ catch (      CommandException ce) {
+        fail(ce.toString());
+      }
+    }
+  }
+;
+  commandThread.start();
+  Thread.sleep(1000L);
+  commandThread.interrupt();
+  commandThread.join();
+  final CommandResult result=resultContainer[0];
+  assertTrue(result.getTerminationStatus().success());
+  assertTrue(result.getStderr().length == 0);
+  assertTrue(result.getStdout().length == 0);
+}
