@@ -24,11 +24,12 @@
     return;
   }
   OutErr outErr=request.getOutErr();
+  TopLevelArtifactContext context=request.getTopLevelArtifactContext();
   for (  ConfiguredTarget target : succeeded) {
     Label label=target.getLabel();
     boolean headerFlag=true;
-    for (    Artifact artifact : getFilesToBuild(target,request)) {
-      if (!artifact.isSourceArtifact()) {
+    for (    Artifact artifact : TopLevelArtifactHelper.getAllArtifactsToBuild(target,context)) {
+      if (!artifact.isSourceArtifact() && !artifact.isMiddlemanArtifact()) {
         if (headerFlag) {
           outErr.printErr("Target " + label + " up-to-date:\n");
           headerFlag=false;
