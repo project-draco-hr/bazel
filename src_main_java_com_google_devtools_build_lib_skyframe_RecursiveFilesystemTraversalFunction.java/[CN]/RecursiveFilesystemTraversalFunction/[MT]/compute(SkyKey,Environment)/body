@@ -19,18 +19,23 @@
       throw new RecursiveFilesystemTraversalFunctionException(new GeneratedPathConflictException(traversal));
     }
  else     if (pkgLookupResult.isPackage() && !traversal.skipTestingForSubpackage) {
-      if (traversal.crossPkgBoundaries) {
-        String msg=traversal.errorInfo + " crosses package boundary into package rooted at " + traversal.path.getRelativePath().getPathString();
+      String msg=traversal.errorInfo + " crosses package boundary into package rooted at " + traversal.path.getRelativePath().getPathString();
+switch (traversal.crossPkgBoundaries) {
+case CROSS:
         env.getListener().handle(new Event(EventKind.WARNING,null,msg));
-      }
- else {
-        return RecursiveFilesystemTraversalValue.EMPTY;
-      }
-    }
-    Collection<SkyKey> dependentKeys=createRecursiveTraversalKeys(env,traversal);
-    return resultForDirectory(traversal,rootInfo,traverseChildren(env,dependentKeys));
-  }
- catch (  MissingDepException e) {
-    return null;
-  }
+      break;
+case DONT_CROSS:
+    return RecursiveFilesystemTraversalValue.EMPTY;
+case REPORT_ERROR:
+  throw new RecursiveFilesystemTraversalFunctionException(new CannotCrossPackageBoundaryException(msg));
+default :
+throw new IllegalStateException(traversal.toString());
+}
+}
+Collection<SkyKey> dependentKeys=createRecursiveTraversalKeys(env,traversal);
+return resultForDirectory(traversal,rootInfo,traverseChildren(env,dependentKeys));
+}
+ catch (MissingDepException e) {
+return null;
+}
 }
