@@ -1,0 +1,19 @@
+{
+  if (fileManager instanceof StandardJavaFileManager) {
+    StandardJavaFileManager sjfm=(StandardJavaFileManager)fileManager;
+    ImmutableSet.Builder<String> result=ImmutableSet.builder();
+    for (    File jar : sjfm.getLocation(StandardLocation.PLATFORM_CLASS_PATH)) {
+      result.add(jar.toString());
+    }
+    return result.build();
+  }
+  if (fileManager instanceof JavacPathFileManager) {
+    JavacPathFileManager jpfm=(JavacPathFileManager)fileManager;
+    ImmutableSet.Builder<String> result=ImmutableSet.builder();
+    for (    Path jar : jpfm.getLocation(StandardLocation.PLATFORM_CLASS_PATH)) {
+      result.add(jar.toString());
+    }
+    return result.build();
+  }
+  throw new IllegalStateException("Unsupported file manager type: " + fileManager.getClass().toString());
+}

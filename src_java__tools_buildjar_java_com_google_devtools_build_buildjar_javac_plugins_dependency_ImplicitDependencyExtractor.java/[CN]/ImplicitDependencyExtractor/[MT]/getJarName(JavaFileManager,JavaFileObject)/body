@@ -1,0 +1,16 @@
+{
+  file=unwrapFileObject(file);
+  if (file instanceof ZipArchive.ZipFileObject || file instanceof ZipFileIndexArchive.ZipFileIndexFileObject) {
+    return file.getName().split("\\(")[0];
+  }
+  if (fileManager instanceof JavacPathFileManager) {
+    JavacPathFileManager fm=(JavacPathFileManager)fileManager;
+    Path path=fm.getPath(file);
+    if (!(path instanceof ZipPath)) {
+      return null;
+    }
+    ZipFileSystem zipfs=((ZipPath)path).getFileSystem();
+    return zipfs.toString();
+  }
+  return null;
+}
