@@ -14,8 +14,8 @@
   if (token == null && inputArtifactData != null) {
     return new ActionExecutionValue(fileAndMetadataCache.getOutputData(),fileAndMetadataCache.getAdditionalOutputData());
   }
- else {
-    ActionExecutionContext actionExecutionContext=null;
+  ActionExecutionContext actionExecutionContext=null;
+  try {
     if (inputArtifactData != null) {
       actionExecutionContext=skyframeActionExecutor.constructActionExecutionContext(fileAndMetadataCache,metadataHandler);
       if (action.discoversInputs()) {
@@ -23,5 +23,14 @@
       }
     }
     return skyframeActionExecutor.executeAction(action,fileAndMetadataCache,token,actionStartTime,actionExecutionContext);
+  }
+  finally {
+    try {
+      if (actionExecutionContext != null) {
+        actionExecutionContext.getFileOutErr().close();
+      }
+    }
+ catch (    IOException e) {
+    }
   }
 }
