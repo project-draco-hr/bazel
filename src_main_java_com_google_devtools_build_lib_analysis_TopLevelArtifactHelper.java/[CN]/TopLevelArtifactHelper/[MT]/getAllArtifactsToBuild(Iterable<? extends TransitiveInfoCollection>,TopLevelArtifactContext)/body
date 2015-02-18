@@ -1,7 +1,10 @@
 {
   NestedSetBuilder<Artifact> allArtifacts=NestedSetBuilder.stableOrder();
+  NestedSetBuilder<Artifact> importantArtifacts=NestedSetBuilder.stableOrder();
   for (  TransitiveInfoCollection target : targets) {
-    allArtifacts.addTransitive(getAllArtifactsToBuild(target,context));
+    ArtifactsToBuild targetArtifacts=getAllArtifactsToBuild(target,context);
+    allArtifacts.addTransitive(targetArtifacts.getAllArtifacts());
+    importantArtifacts.addTransitive(targetArtifacts.getImportantArtifacts());
   }
-  return allArtifacts.build();
+  return new ArtifactsToBuild(importantArtifacts.build(),allArtifacts.build());
 }
