@@ -22,6 +22,9 @@
     extraLinkArgs=new ExtraLinkArgs("-bundle","-bundle_loader",bundleLoader.getExecPathString());
     extraLinkInputs=new ExtraLinkInputs(bundleLoader);
   }
+  if (ruleContext.getConfiguration().isCodeCoverageEnabled()) {
+    extraLinkArgs=extraLinkArgs.appendedWith(CompilationSupport.LINKER_COVERAGE_FLAGS);
+  }
   new CompilationSupport(ruleContext).registerLinkActions(common.getObjcProvider(),extraLinkArgs,extraLinkInputs).registerJ2ObjcCompileAndArchiveActions(optionsProvider,common.getObjcProvider()).registerCompileAndArchiveActions(common,optionsProvider).addXcodeSettings(xcodeProviderBuilder,common,optionsProvider).validateAttributes();
   new ApplicationSupport(ruleContext,common.getObjcProvider(),optionsProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES).registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateAttributes();
   new ResourceSupport(ruleContext).registerActions(common.getStoryboards()).validateAttributes().addXcodeSettings(xcodeProviderBuilder);

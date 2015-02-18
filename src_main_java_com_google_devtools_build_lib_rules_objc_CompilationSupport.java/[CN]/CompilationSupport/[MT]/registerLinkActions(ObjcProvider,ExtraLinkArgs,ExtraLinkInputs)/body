@@ -8,6 +8,10 @@
  else {
     dsymBundle=Optional.absent();
   }
-  ObjcRuleClasses.actionsBuilder(ruleContext).registerLinkAction(intermediateArtifacts.singleArchitectureBinary(),objcProvider,extraLinkArgs,extraLinkInputs,dsymBundle);
+  ExtraLinkArgs coverageLinkArgs=new ExtraLinkArgs();
+  if (ruleContext.getConfiguration().isCodeCoverageEnabled()) {
+    coverageLinkArgs=new ExtraLinkArgs(LINKER_COVERAGE_FLAGS);
+  }
+  ObjcRuleClasses.actionsBuilder(ruleContext).registerLinkAction(intermediateArtifacts.singleArchitectureBinary(),objcProvider,extraLinkArgs.appendedWith(coverageLinkArgs),extraLinkInputs,dsymBundle);
   return this;
 }

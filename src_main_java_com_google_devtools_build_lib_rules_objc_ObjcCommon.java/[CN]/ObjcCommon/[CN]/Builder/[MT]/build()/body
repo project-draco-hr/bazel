@@ -22,7 +22,14 @@
     datamodels=ImmutableList.of();
   }
   for (  CompilationArtifacts artifacts : compilationArtifacts.asSet()) {
+    Iterable<Artifact> allSources=Iterables.concat(artifacts.getSrcs(),artifacts.getNonArcSrcs());
     objcProvider.addAll(LIBRARY,artifacts.getArchive().asSet());
+    objcProvider.addAll(SOURCE,allSources);
+    if (context.getConfiguration().isCodeCoverageEnabled()) {
+      for (      Artifact source : allSources) {
+        objcProvider.add(GCNO,intermediateArtifacts.gcnoFile(source));
+      }
+    }
     boolean usesCpp=false;
     for (    Artifact sourceFile : Iterables.concat(artifacts.getSrcs(),artifacts.getNonArcSrcs())) {
       usesCpp=usesCpp || ObjcRuleClasses.CPP_SOURCES.matches(sourceFile.getExecPath());
