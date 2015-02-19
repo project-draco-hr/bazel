@@ -1,0 +1,84 @@
+{
+  int mandatoryPositionals=0;
+  int optionalPositionals=0;
+  int mandatoryNamedOnly=0;
+  int optionalNamedOnly=0;
+  boolean hasStarStar=false;
+  boolean hasStar=false;
+  @Nullable String star=null;
+  @Nullable String starStar=null;
+  @Nullable T starType=null;
+  @Nullable T starStarType=null;
+  ArrayList<String> params=new ArrayList<>();
+  ArrayList<V> defaults=new ArrayList<>();
+  ArrayList<T> types=new ArrayList<>();
+  ArrayList<String> mandatoryNamedOnlyParams=new ArrayList<>();
+  ArrayList<T> mandatoryNamedOnlyTypes=new ArrayList<>();
+  boolean defaultRequired=false;
+  Set<String> paramNameSet=new HashSet<>();
+  for (  Parameter<V,T> param : parameters) {
+    if (hasStarStar) {
+      throw new SignatureException("illegal parameter after star-star parameter",param);
+    }
+    @Nullable String name=param.getName();
+    @Nullable T type=param.getType();
+    if (param.hasName()) {
+      if (paramNameSet.contains(name)) {
+        throw new SignatureException("duplicate parameter name in function definition",param);
+      }
+      paramNameSet.add(name);
+    }
+    if (param.isStarStar()) {
+      hasStarStar=true;
+      starStar=name;
+      starStarType=type;
+    }
+ else     if (param.isStar()) {
+      if (hasStar) {
+        throw new SignatureException("duplicate star parameter in function definition",param);
+      }
+      hasStar=true;
+      defaultRequired=false;
+      if (param.hasName()) {
+        star=name;
+        starType=type;
+      }
+    }
+ else     if (hasStar && param.isMandatory()) {
+      mandatoryNamedOnlyParams.add(name);
+      mandatoryNamedOnlyTypes.add(type);
+      mandatoryNamedOnly++;
+    }
+ else {
+      params.add(name);
+      types.add(type);
+      if (param.isMandatory()) {
+        if (defaultRequired) {
+          throw new SignatureException("a mandatory positional parameter must not follow an optional parameter",param);
+        }
+        mandatoryPositionals++;
+      }
+ else {
+        defaults.add(param.getDefaultValue());
+        if (hasStar) {
+          optionalNamedOnly++;
+        }
+ else {
+          optionalPositionals++;
+          defaultRequired=true;
+        }
+      }
+    }
+  }
+  params.addAll(mandatoryNamedOnlyParams);
+  types.addAll(mandatoryNamedOnlyTypes);
+  if (star != null) {
+    params.add(star);
+    types.add(starType);
+  }
+  if (starStar != null) {
+    params.add(starStar);
+    types.add(starStarType);
+  }
+  return WithValues.<V,T>create(FunctionSignature.create(Shape.create(mandatoryPositionals,optionalPositionals,mandatoryNamedOnly,optionalNamedOnly,star != null,starStar != null),ImmutableList.<String>copyOf(params)),FunctionSignature.<V>valueListOrNull(defaults),FunctionSignature.<T>valueListOrNull(types));
+}

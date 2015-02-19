@@ -33,6 +33,16 @@
       throw new EvalException(loc,getSignature() + " received insufficient arguments");
     }
   }
+  List<Object> defaults=signature.getDefaultValues();
+  if (defaults != null) {
+    int jj=0;
+    for (int ii=numMandatoryParameters; ii < numParams; ++ii) {
+      if (namedArguments[ii] == null) {
+        namedArguments[ii]=defaults.get(jj);
+      }
+      jj++;
+    }
+  }
   try {
     return call(namedArguments,ast,env);
   }

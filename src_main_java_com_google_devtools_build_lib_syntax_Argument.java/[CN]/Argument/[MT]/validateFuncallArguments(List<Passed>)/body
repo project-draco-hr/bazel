@@ -1,0 +1,30 @@
+{
+  boolean hasNamed=false;
+  boolean hasStar=false;
+  boolean hasKwArg=false;
+  for (  Passed arg : arguments) {
+    if (hasKwArg) {
+      throw new ArgumentException("argument after **kwargs");
+    }
+    if (arg.isPositional()) {
+      if (hasNamed) {
+        throw new ArgumentException("non-keyword arg after keyword arg");
+      }
+ else       if (arg.isStar()) {
+        throw new ArgumentException("only named arguments may follow *expression");
+      }
+    }
+ else     if (arg.isKeyword()) {
+      hasNamed=true;
+    }
+ else     if (arg.isStar()) {
+      if (hasStar) {
+        throw new ArgumentException("more than one *stararg");
+      }
+      hasStar=true;
+    }
+ else {
+      hasKwArg=true;
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  FunctionSignature signature=getSignature();
+  Shape shape=signature.getShape();
+  final ImmutableList<String> names=signature.getNames();
+  @Nullable final List<V> defaultValues=getDefaultValues();
+  @Nullable final List<T> types=getTypes();
+  int mandatoryPositionals=shape.getMandatoryPositionals();
+  int optionalPositionals=shape.getOptionalPositionals();
+  int mandatoryNamedOnly=shape.getMandatoryNamedOnly();
+  int optionalNamedOnly=shape.getOptionalNamedOnly();
+  boolean starArg=shape.hasStarArg();
+  boolean kwArg=shape.hasKwArg();
+  int positionals=mandatoryPositionals + optionalPositionals;
+  int namedOnly=mandatoryNamedOnly + optionalNamedOnly;
+  int named=positionals + namedOnly;
+  int args=named + (starArg ? 1 : 0) + (kwArg ? 1 : 0);
+  int endOptionals=positionals + optionalNamedOnly;
+  boolean hasStar=starArg || (namedOnly > 0);
+  int iStarArg=named;
+  int iKwArg=args - 1;
+class Show {
+    private boolean isMore=false;
+    private int j=0;
+    public void comma(){
+      if (isMore) {
+        sb.append(", ");
+      }
+      isMore=true;
+    }
+    public void type(    int i){
+      if (types != null && types.get(i) != null) {
+        sb.append(" : ").append(types.get(i).toString());
+      }
+    }
+    public void mandatory(    int i){
+      comma();
+      sb.append(names.get(i));
+      type(i);
+    }
+    public void optional(    int i){
+      mandatory(i);
+      sb.append(" = ").append((defaultValues == null) ? "null" : String.valueOf(defaultValues.get(j++)));
+    }
+  }
+  ;
+  Show show=new Show();
+  int i=0;
+  for (; i < mandatoryPositionals; i++) {
+    show.mandatory(i);
+  }
+  for (; i < positionals; i++) {
+    show.optional(i);
+  }
+  if (hasStar) {
+    show.comma();
+    sb.append("*");
+    if (starArg) {
+      sb.append(names.get(iStarArg));
+    }
+  }
+  for (; i < endOptionals; i++) {
+    show.optional(i);
+  }
+  for (; i < named; i++) {
+    show.mandatory(i);
+  }
+  if (kwArg) {
+    show.comma();
+    sb.append("**");
+    sb.append(names.get(iKwArg));
+  }
+  return sb;
+}

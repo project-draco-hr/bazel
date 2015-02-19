@@ -1,6 +1,6 @@
 {
-  List<Object> posargs=new ArrayList<>();
-  Map<String,Object> kwargs=new LinkedHashMap<>();
+  ImmutableList.Builder<Object> posargs=new ImmutableList.Builder<Object>();
+  Map<String,Object> kwargs=new HashMap<>();
   if (obj != null) {
     Object objValue=obj.eval(env);
     Function function=env.getFunction(EvalUtils.getSkylarkType(objValue.getClass()),func.getName());
@@ -9,29 +9,33 @@
         posargs.add(objValue);
       }
       evalArguments(posargs,kwargs,env,function);
-      return EvalUtils.checkNotNull(this,function.call(posargs,kwargs,this,env));
+      return EvalUtils.checkNotNull(this,function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env));
     }
  else     if (env.isSkylarkEnabled()) {
       evalArguments(posargs,kwargs,env,null);
       if (!kwargs.isEmpty()) {
-        throw new EvalException(func.getLocation(),"Keyword arguments are not allowed when calling a java method");
+        throw new EvalException(func.getLocation(),String.format("Keyword arguments are not allowed when calling a java method" + "\nwhile calling method '%s' on object %s of type %s",func.getName(),objValue,EvalUtils.getDataTypeName(objValue)));
       }
       if (objValue instanceof Class<?>) {
-        return invokeJavaMethod(null,(Class<?>)objValue,func.getName(),posargs);
+        return invokeJavaMethod(null,(Class<?>)objValue,func.getName(),posargs.build());
       }
  else {
-        return invokeJavaMethod(objValue,objValue.getClass(),func.getName(),posargs);
+        return invokeJavaMethod(objValue,objValue.getClass(),func.getName(),posargs.build());
       }
     }
  else {
       throw new EvalException(getLocation(),String.format("function '%s' is not defined on '%s'",func.getName(),EvalUtils.getDataTypeName(objValue)));
     }
   }
-  Object funcValue=func.eval(env);
-  if (!(funcValue instanceof Function)) {
-    throw new EvalException(getLocation(),"'" + EvalUtils.getDataTypeName(funcValue) + "' object is not callable");
+ else {
+    Object funcValue=func.eval(env);
+    if ((funcValue instanceof Function)) {
+      Function function=(Function)funcValue;
+      evalArguments(posargs,kwargs,env,function);
+      return EvalUtils.checkNotNull(this,function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env));
+    }
+ else {
+      throw new EvalException(getLocation(),"'" + EvalUtils.getDataTypeName(funcValue) + "' object is not callable");
+    }
   }
-  Function function=(Function)funcValue;
-  evalArguments(posargs,kwargs,env,function);
-  return EvalUtils.checkNotNull(this,function.call(posargs,kwargs,this,env));
 }

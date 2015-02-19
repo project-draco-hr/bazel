@@ -1,0 +1,28 @@
+{
+  boolean hasArg=false;
+  boolean hasStar=false;
+  boolean hasStarStar=false;
+  ArrayList<V> arguments=new ArrayList<>();
+  while (token.kind != TokenKind.RPAREN && token.kind != TokenKind.EOF) {
+    if (hasStarStar) {
+      reportError(lexer.createLocation(token.left,token.right),"unexpected tokens after kwarg");
+      break;
+    }
+    if (hasArg) {
+      expect(TokenKind.COMMA);
+    }
+    if (token.kind == TokenKind.RPAREN && !hasStar) {
+      break;
+    }
+    V arg=parseArgument.get();
+    hasArg=true;
+    if (arg.isStar()) {
+      hasStar=true;
+    }
+ else     if (arg.isStarStar()) {
+      hasStarStar=true;
+    }
+    arguments.add(arg);
+  }
+  return ImmutableList.copyOf(arguments);
+}

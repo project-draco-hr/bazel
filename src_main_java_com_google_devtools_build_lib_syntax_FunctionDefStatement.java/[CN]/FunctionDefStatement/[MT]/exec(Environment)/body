@@ -1,9 +1,12 @@
 {
-  ImmutableMap.Builder<String,Object> defaultValues=ImmutableMap.builder();
-  for (  Argument arg : args) {
-    if (arg.hasValue()) {
-      defaultValues.put(arg.getArgName(),arg.getValue().eval(env));
+  List<Expression> defaultExpressions=args.getDefaultValues();
+  ArrayList<Object> defaultValues=null;
+  ArrayList<SkylarkType> types=null;
+  if (defaultExpressions != null) {
+    defaultValues=new ArrayList<Object>(defaultExpressions.size());
+    for (    Expression expr : defaultExpressions) {
+      defaultValues.add(expr.eval(env));
     }
   }
-  env.update(ident.getName(),new UserDefinedFunction(ident,args,defaultValues.build(),statements,(SkylarkEnvironment)env));
+  env.update(ident.getName(),new UserDefinedFunction(ident,FunctionSignature.WithValues.<Object,SkylarkType>create(args.getSignature(),defaultValues,types),statements,(SkylarkEnvironment)env));
 }

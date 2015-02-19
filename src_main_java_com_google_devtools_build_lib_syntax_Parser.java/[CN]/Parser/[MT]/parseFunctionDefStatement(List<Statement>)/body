@@ -3,10 +3,15 @@
   expect(TokenKind.DEF);
   Ident ident=parseIdent();
   expect(TokenKind.LPAREN);
-  List<Argument> args=parseFunctionDefArguments();
+  FunctionSignature.WithValues<Expression,Expression> args=parseFunctionSignature();
   expect(TokenKind.RPAREN);
   expect(TokenKind.COLON);
   List<Statement> block=parseSuite();
+  FunctionSignature.Shape shape=args.getSignature().getShape();
+  if (shape.hasKwArg() || shape.hasStarArg() || shape.getNamedOnly() > 0) {
+    reportError(lexer.createLocation(start,token.right),"no star, star-star or named-only parameters (for now)");
+    return;
+  }
   FunctionDefStatement stmt=new FunctionDefStatement(ident,args,block);
   list.add(setLocation(stmt,start,token.right));
 }

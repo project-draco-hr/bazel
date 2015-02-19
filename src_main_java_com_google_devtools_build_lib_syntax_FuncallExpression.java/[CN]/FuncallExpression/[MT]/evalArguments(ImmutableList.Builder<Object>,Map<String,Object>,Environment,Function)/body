@@ -1,0 +1,32 @@
+{
+  ArgConversion conversion=getArgConversion(function);
+  ImmutableList.Builder<String> duplicates=new ImmutableList.Builder<String>();
+  for (  Argument.Passed arg : args) {
+    Object value=arg.getValue().eval(env);
+    if (conversion == ArgConversion.FROM_SKYLARK) {
+      value=SkylarkType.convertFromSkylark(value);
+    }
+ else     if (conversion == ArgConversion.TO_SKYLARK) {
+      value=SkylarkType.convertToSkylark(value,getLocation());
+      SkylarkType.checkTypeAllowedInSkylark(value,getLocation());
+    }
+    if (arg.isPositional()) {
+      posargs.add(value);
+    }
+ else     if (arg.isStar()) {
+      if (value instanceof Iterable) {
+        posargs.addAll((Iterable<Object>)value);
+      }
+    }
+ else     if (arg.isStarStar()) {
+      addKeywordArgs(kwargs,value,duplicates);
+    }
+ else {
+      addKeywordArg(kwargs,arg.getName(),value,duplicates);
+    }
+  }
+  List<String> dups=duplicates.build();
+  if (!dups.isEmpty()) {
+    throw new EvalException(getLocation(),"duplicate keyword" + (dups.size() > 1 ? "s" : "") + " '"+ Joiner.on("', '").join(dups)+ "' in call to "+ func);
+  }
+}
