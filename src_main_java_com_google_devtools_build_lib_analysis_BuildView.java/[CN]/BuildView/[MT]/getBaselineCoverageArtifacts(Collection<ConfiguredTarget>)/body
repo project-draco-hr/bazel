@@ -1,10 +1,10 @@
 {
-  Set<Artifact> baselineCoverageArtifacts=Sets.newHashSet();
+  NestedSetBuilder<Artifact> baselineCoverageArtifacts=NestedSetBuilder.stableOrder();
   for (  ConfiguredTarget target : configuredTargets) {
-    BaselineCoverageArtifactsProvider provider=target.getProvider(BaselineCoverageArtifactsProvider.class);
+    TopLevelArtifactProvider provider=target.getProvider(TopLevelArtifactProvider.class);
     if (provider != null) {
-      baselineCoverageArtifacts.addAll(provider.getBaselineCoverageArtifacts());
+      baselineCoverageArtifacts.addTransitive(provider.getOutputGroup(TopLevelArtifactProvider.BASELINE_COVERAGE));
     }
   }
-  return ImmutableSet.copyOf(baselineCoverageArtifacts);
+  return baselineCoverageArtifacts.build();
 }
