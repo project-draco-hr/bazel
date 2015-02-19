@@ -1,0 +1,11 @@
+{
+  CcToolchainProvider toolchain=CppHelper.getToolchain(ruleContext);
+  ImmutableSet.Builder<String> requestedFeatures=ImmutableSet.builder();
+  for (  String feature : Iterables.concat(DEFAULT_FEATURES,ruleContext.getFeatures())) {
+    if (!ruleSpecificUnsupportedFeatures.contains(feature)) {
+      requestedFeatures.add(feature);
+    }
+  }
+  requestedFeatures.addAll(ruleSpecificRequestedFeatures);
+  return toolchain.getFeatures().getFeatureConfiguration(requestedFeatures.build());
+}
