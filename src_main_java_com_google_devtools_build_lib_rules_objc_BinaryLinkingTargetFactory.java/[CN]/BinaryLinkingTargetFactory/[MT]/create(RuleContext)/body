@@ -8,13 +8,13 @@
   }
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(ObjcRuleClasses.intermediateArtifacts(ruleContext).singleArchitectureBinary());
-  new CompilationSupport(ruleContext).registerJ2ObjcCompileAndArchiveActions(optionsProvider,common.getObjcProvider()).registerCompileAndArchiveActions(common,optionsProvider).addXcodeSettings(xcodeProviderBuilder,common,optionsProvider).registerLinkActions(common.getObjcProvider(),extraLinkArgs,new ExtraLinkInputs()).validateAttributes();
+  new CompilationSupport(ruleContext).registerJ2ObjcCompileAndArchiveActions(optionsProvider,objcProvider).registerCompileAndArchiveActions(common,optionsProvider).addXcodeSettings(xcodeProviderBuilder,common,optionsProvider).registerLinkActions(objcProvider,extraLinkArgs,new ExtraLinkInputs()).validateAttributes();
   Optional<XcTestAppProvider> xcTestAppProvider;
-switch (hasApplicationSupport) {
+switch (hasReleaseBundlingSupport) {
 case YES:
-    ApplicationSupport applicationSupport=new ApplicationSupport(ruleContext,common.getObjcProvider(),optionsProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES);
-  applicationSupport.registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateAttributes();
-xcTestAppProvider=Optional.of(applicationSupport.xcTestAppProvider());
+    ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,objcProvider,optionsProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES,"Payload/%s.app");
+  releaseBundlingSupport.registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateAttributes();
+xcTestAppProvider=Optional.of(releaseBundlingSupport.xcTestAppProvider());
 break;
 case NO:
 xcTestAppProvider=Optional.absent();
@@ -23,8 +23,8 @@ default :
 throw new AssertionError();
 }
 new ResourceSupport(ruleContext).registerActions(common.getStoryboards()).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
-XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),productType).addDependencies(xcodeProviderBuilder).addFilesToBuild(filesToBuild);
+XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,objcProvider,productType).addDependencies(xcodeProviderBuilder,"bundles").addDependencies(xcodeProviderBuilder,"deps").addDependencies(xcodeProviderBuilder,"non_propagated_deps").addFilesToBuild(filesToBuild);
 XcodeProvider xcodeProvider=xcodeProviderBuilder.build();
 xcodeSupport.registerActions(xcodeProvider);
-return common.configuredTarget(filesToBuild.build(),Optional.of(xcodeProvider),Optional.<ObjcProvider>absent(),xcTestAppProvider,Optional.<J2ObjcSrcsProvider>absent());
+return common.configuredTarget(filesToBuild.build(),Optional.of(xcodeProvider),Optional.of(objcProvider),xcTestAppProvider,Optional.<J2ObjcSrcsProvider>absent());
 }

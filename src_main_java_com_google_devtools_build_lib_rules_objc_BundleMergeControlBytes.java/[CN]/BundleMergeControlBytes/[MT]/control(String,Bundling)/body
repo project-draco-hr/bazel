@@ -1,0 +1,26 @@
+{
+  ObjcProvider objcProvider=bundling.getObjcProvider();
+  mergeZipPrefix+=bundling.getBundleDir() + "/";
+  BundleMergeProtos.Control.Builder control=BundleMergeProtos.Control.newBuilder().addAllBundleFile(BundleableFile.toBundleFiles(bundling.getExtraBundleFiles())).addAllBundleFile(BundleableFile.toBundleFiles(objcProvider.get(BUNDLE_FILE))).addAllSourcePlistFile(Artifact.toExecPaths(bundling.getInfoplistMerging().getPlistWithEverything().asSet())).setMinimumOsVersion(objcConfiguration.getMinimumOs()).setSdkVersion(objcConfiguration.getIosSdkVersion()).setPlatform(objcConfiguration.getPlatform().name()).setBundleRoot(bundling.getBundleDir());
+  for (  Artifact mergeZip : bundling.getMergeZips()) {
+    control.addMergeZip(MergeZip.newBuilder().setEntryNamePrefix(mergeZipPrefix).setSourcePath(mergeZip.getExecPathString()).build());
+  }
+  for (  Xcdatamodel datamodel : objcProvider.get(XCDATAMODEL)) {
+    control.addMergeZip(MergeZip.newBuilder().setEntryNamePrefix(mergeZipPrefix).setSourcePath(datamodel.getOutputZip().getExecPathString()).build());
+  }
+  for (  TargetDeviceFamily targetDeviceFamily : families) {
+    control.addTargetDeviceFamily(targetDeviceFamily.name());
+  }
+  Map<String,String> variableSubstitutions=bundling.variableSubstitutions();
+  for (  String variable : variableSubstitutions.keySet()) {
+    control.addVariableSubstitution(VariableSubstitution.newBuilder().setName(variable).setValue(variableSubstitutions.get(variable)).build());
+  }
+  control.setOutFile(mergedIpa.getExecPathString());
+  for (  Artifact linkedBinary : bundling.getCombinedArchitectureBinary().asSet()) {
+    control.addBundleFile(BundleMergeProtos.BundleFile.newBuilder().setSourceFile(linkedBinary.getExecPathString()).setBundlePath(bundling.getName()).setExternalFileAttribute(BundleableFile.EXECUTABLE_EXTERNAL_FILE_ATTRIBUTE).build()).setExecutableName(bundling.getName());
+  }
+  for (  Bundling nestedBundling : bundling.getObjcProvider().get(NESTED_BUNDLE)) {
+    control.addNestedBundle(control(mergeZipPrefix,nestedBundling));
+  }
+  return control.build();
+}
