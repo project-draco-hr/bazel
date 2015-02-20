@@ -23,6 +23,6 @@
   }
   CommandLine commandLine=semantics.buildSingleJarCommandLine(ruleContext.getConfiguration(),outputJar,javaStartClass,deployManifestLines,buildInfoArtifacts,classpathResources,runtimeClasspath,includeBuildData,compression,launcher);
   List<String> jvmArgs=ImmutableList.of("-client",SINGLEJAR_MAX_MEMORY);
-  ResourceSet resourceSet=new ResourceSet(200.0,.2,.2);
+  ResourceSet resourceSet=ResourceSet.createWithRamCpuIo(200.0,.2,.2);
   ruleContext.registerAction(new SpawnAction.Builder().addInputs(inputs.build()).addTransitiveInputs(JavaCompilationHelper.getHostJavabaseInputs(ruleContext)).addOutput(outputJar).setResources(resourceSet).setJarExecutable(ruleContext.getHostConfiguration().getFragment(Jvm.class).getJavaExecutable(),ruleContext.getPrerequisiteArtifact("$singlejar",Mode.HOST),jvmArgs).setCommandLine(commandLine).useParameterFile(ParameterFileType.SHELL_QUOTED).setProgressMessage("Building deploy jar " + outputJar.prettyPrint()).setMnemonic("JavaDeployJar").build(ruleContext));
 }
