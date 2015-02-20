@@ -8,7 +8,7 @@
   if (fake) {
     Artifact outputFile=ruleContext.getRelatedArtifact(outputName,outputExtension);
     PathFragment tempOutputName=FileSystemUtils.replaceExtension(outputFile.getExecPath(),".temp" + outputExtension);
-    builder.setOutputFile(outputFile).setDotdFile(outputName,".d",ruleContext).setTempOutputFile(tempOutputName);
+    builder.setOutputFile(outputFile).setDotdFile(outputName,dependencyFileExtension,ruleContext).setTempOutputFile(tempOutputName);
     semantics.finalizeCompileActionBuilder(ruleContext,builder);
     CppCompileAction action=builder.build();
     env.registerAction(action);
@@ -19,7 +19,7 @@
     boolean generateNoPicAction=getGenerateNoPicActions();
     Preconditions.checkState(generatePicAction || generateNoPicAction);
     if (generatePicAction) {
-      CppCompileActionBuilder picBuilder=copyAsPicBuilder(builder,outputName,outputExtension);
+      CppCompileActionBuilder picBuilder=copyAsPicBuilder(builder,outputName,outputExtension,dependencyFileExtension);
       cppConfiguration.getFdoSupport().configureCompilation(picBuilder,ruleContext,env,ruleContext.getLabel(),ccRelativeName,nocopts,true,lipoProvider);
       if (maySaveTemps) {
         result.addTemps(createTempsActions(sourceArtifact,outputName,picBuilder,true));
@@ -39,7 +39,7 @@
       }
     }
     if (generateNoPicAction) {
-      builder.setOutputFile(ruleContext.getRelatedArtifact(outputName,outputExtension)).setDotdFile(outputName,".d",ruleContext);
+      builder.setOutputFile(ruleContext.getRelatedArtifact(outputName,outputExtension)).setDotdFile(outputName,dependencyFileExtension,ruleContext);
       cppConfiguration.getFdoSupport().configureCompilation(builder,ruleContext,env,ruleContext.getLabel(),ccRelativeName,nocopts,false,lipoProvider);
       if (maySaveTemps) {
         result.addTemps(createTempsActions(sourceArtifact,outputName,builder,false));
