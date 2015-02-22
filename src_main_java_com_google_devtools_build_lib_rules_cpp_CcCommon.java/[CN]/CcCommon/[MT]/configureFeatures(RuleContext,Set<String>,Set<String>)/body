@@ -1,8 +1,15 @@
 {
   CcToolchainProvider toolchain=CppHelper.getToolchain(ruleContext);
+  ImmutableSet.Builder<String> unsupportedFeaturesBuilder=ImmutableSet.builder();
+  unsupportedFeaturesBuilder.addAll(ruleSpecificUnsupportedFeatures);
+  if (!toolchain.supportsHeaderParsing()) {
+    unsupportedFeaturesBuilder.add(CppRuleClasses.PARSE_HEADERS);
+    unsupportedFeaturesBuilder.add(CppRuleClasses.PREPROCESS_HEADERS);
+  }
+  Set<String> unsupportedFeatures=unsupportedFeaturesBuilder.build();
   ImmutableSet.Builder<String> requestedFeatures=ImmutableSet.builder();
   for (  String feature : Iterables.concat(DEFAULT_FEATURES,ruleContext.getFeatures())) {
-    if (!ruleSpecificUnsupportedFeatures.contains(feature)) {
+    if (!unsupportedFeatures.contains(feature)) {
       requestedFeatures.add(feature);
     }
   }

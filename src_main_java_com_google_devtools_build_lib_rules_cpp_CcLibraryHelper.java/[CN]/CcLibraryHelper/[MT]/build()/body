@@ -7,9 +7,10 @@
   }
   CcLinkingOutputs ccLinkingOutputs=CcLinkingOutputs.EMPTY;
   CcCompilationOutputs ccOutputs=new CcCompilationOutputs.Builder().build();
-  CppModel model=new CppModel(ruleContext,semantics).addSources(sources).addCopts(copts).setLinkTargetType(linkType).setNeverLink(neverlink).setFake(fake).setAllowInterfaceSharedObjects(emitInterfaceSharedObjects).setCreateDynamicLibrary(emitDynamicLibrary).setSaveTemps(true).setEnableLayeringCheck(enableLayeringCheck).setCompileHeaderModules(compileHeaderModules).setNoCopts(nocopts).setDynamicLibraryPath(dynamicLibraryPath).addLinkopts(linkopts).setFeatureConfiguration(featureConfiguration);
+  CppModel model=new CppModel(ruleContext,semantics).addSources(sources).addCopts(copts).setLinkTargetType(linkType).setNeverLink(neverlink).setFake(fake).setAllowInterfaceSharedObjects(emitInterfaceSharedObjects).setCreateDynamicLibrary(emitDynamicLibrary).setSaveTemps(true).setNoCopts(nocopts).setDynamicLibraryPath(dynamicLibraryPath).addLinkopts(linkopts).setFeatureConfiguration(featureConfiguration);
   CppCompilationContext cppCompilationContext=initializeCppCompilationContext(model,featureConfiguration);
   model.setContext(cppCompilationContext);
+  boolean compileHeaderModules=featureConfiguration.isEnabled(CppRuleClasses.HEADER_MODULES);
   if (emitCompileActionsIfEmpty || !sources.isEmpty() || compileHeaderModules) {
     Preconditions.checkState(!compileHeaderModules || cppCompilationContext.getCppModuleMap() != null,"All cc rules must support module maps.");
     ccOutputs=model.createCcCompileActions();

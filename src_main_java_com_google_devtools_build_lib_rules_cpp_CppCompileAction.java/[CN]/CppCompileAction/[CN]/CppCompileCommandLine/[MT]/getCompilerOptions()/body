@@ -1,32 +1,5 @@
 {
   List<String> options=new ArrayList<>();
-  if (CppFileTypes.CPP_MODULE_MAP.matches(sourceFile.getExecPath())) {
-    if (!featureConfiguration.isEnabled(CppRuleClasses.HEADER_MODULES)) {
-      options.add("-x");
-      options.add("c++");
-      options.add("-Xclang=-emit-module");
-      options.add("-Xcrosstool-module-compilation");
-    }
-  }
- else   if (CppFileTypes.CPP_HEADER.matches(sourceFile.getExecPath())) {
-    if (features.contains(CppRuleClasses.PARSE_HEADERS)) {
-      if (!featureConfiguration.isEnabled(CppRuleClasses.PARSE_HEADERS)) {
-        options.add("-x");
-        options.add("c++-header");
-        options.add("-fsyntax-only");
-      }
-    }
- else     if (features.contains(CppRuleClasses.PREPROCESS_HEADERS)) {
-      if (!featureConfiguration.isEnabled(CppRuleClasses.PREPROCESS_HEADERS)) {
-        options.add("-E");
-        options.add("-x");
-        options.add("c++");
-      }
-    }
- else {
-      throw new IllegalStateException();
-    }
-  }
   for (  PathFragment quoteIncludePath : context.getQuoteIncludeDirs()) {
     options.add("-iquote");
     options.add(quoteIncludePath.getSafePathString());
@@ -72,23 +45,6 @@
     options.add("-MD");
     options.add("-MF");
     options.add(dotdFile.getSafeExecPath().getPathString());
-  }
-  if (cppModuleMap != null && (compileHeaderModules || enableLayeringCheck)) {
-    if (!featureConfiguration.isEnabled(CppRuleClasses.MODULE_MAPS)) {
-      options.add("-Xclang-only=-fmodule-maps");
-      options.add("-Xclang-only=-fmodule-name=" + cppModuleMap.getName());
-      options.add("-Xclang-only=-fmodule-map-file=" + cppModuleMap.getArtifact().getExecPathString());
-      options.add("-Xclang=-fno-modules-implicit-maps");
-    }
-    if (compileHeaderModules && !featureConfiguration.isEnabled(CppRuleClasses.HEADER_MODULES)) {
-      options.add("-Xclang-only=-fmodules");
-      for (      String headerModulePath : getHeaderModulePaths()) {
-        options.add("-Xclang=-fmodule-file=" + headerModulePath);
-      }
-    }
-    if (enableLayeringCheck && !featureConfiguration.isEnabled(CppRuleClasses.LAYERING_CHECK)) {
-      options.add("-Xclang-only=-fmodules-strict-decluse");
-    }
   }
   if (FileType.contains(outputFile,CppFileTypes.ASSEMBLER,CppFileTypes.PIC_ASSEMBLER)) {
     options.add("-S");
