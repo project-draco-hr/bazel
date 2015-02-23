@@ -1,8 +1,14 @@
 {
   for (  XcodeProvider dependency : dependencies) {
-    this.dependencies.add(dependency);
-    this.dependencies.addTransitive(dependency.dependencies);
-    this.addTransitiveSets(dependency);
+    if (dependency.productType == XcodeProductType.EXTENSION) {
+      this.extensions.add(dependency);
+      this.inputsToXcodegen.addTransitive(dependency.inputsToXcodegen);
+    }
+ else {
+      this.dependencies.add(dependency);
+      this.dependencies.addTransitive(dependency.dependencies);
+      this.addTransitiveSets(dependency);
+    }
   }
   return this;
 }
