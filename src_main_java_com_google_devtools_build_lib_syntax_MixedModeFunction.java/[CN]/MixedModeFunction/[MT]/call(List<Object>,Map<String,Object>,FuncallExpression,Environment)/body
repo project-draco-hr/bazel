@@ -19,7 +19,9 @@
     String keyword=entry.getKey();
     int pos=parameters.indexOf(keyword);
     if (pos == -1) {
-      throw new EvalException(loc,"unexpected keyword '" + keyword + "' in call to "+ getSignature());
+      List<String> unexpected=listDifference(new ArrayList<>(kwargs.keySet()),parameters);
+      Collections.sort(unexpected);
+      throw new EvalException(loc,"unexpected keyword" + (unexpected.size() > 1 ? "s" : "") + " '"+ Joiner.on("', '").join(unexpected)+ "' in call to "+ getSignature());
     }
  else {
       if (namedArguments[pos] != null) {
