@@ -34,9 +34,10 @@
   providers.put(CppDebugFileProvider.class,new CppDebugFileProvider(dwoArtifacts.getDwoArtifacts(),dwoArtifacts.getPicDwoArtifacts()));
   providers.put(TransitiveLipoInfoProvider.class,collectTransitiveLipoInfo(ccOutputs));
   providers.put(TempsProvider.class,getTemps(ccOutputs));
+  Map<String,NestedSet<Artifact>> outputGroups=new TreeMap<>();
   if (emitCompileProviders) {
-    providers.put(FilesToCompileProvider.class,new FilesToCompileProvider(getFilesToCompile(ccOutputs)));
-    providers.put(CompilationPrerequisitesProvider.class,CcCommon.collectCompilationPrerequisites(ruleContext,cppCompilationContext));
+    outputGroups.put(TopLevelArtifactProvider.FILES_TO_COMPILE,getFilesToCompile(ccOutputs));
+    outputGroups.put(TopLevelArtifactProvider.COMPILATION_PREREQUISITES,CcCommon.collectCompilationPrerequisites(ruleContext,cppCompilationContext));
   }
   if (emitCcNativeLibrariesProvider) {
     providers.put(CcNativeLibraryProvider.class,new CcNativeLibraryProvider(collectNativeCcLibraries(ccLinkingOutputs)));
@@ -49,5 +50,5 @@
  else {
     providers.put(CcLinkParamsProvider.class,new CcLinkParamsProvider(createCcLinkParamsStore(ccLinkingOutputs,cppCompilationContext,forcePic)));
   }
-  return new Info(providers,ccOutputs,ccLinkingOutputs,originalLinkingOutputs,cppCompilationContext);
+  return new Info(providers,outputGroups,ccOutputs,ccLinkingOutputs,originalLinkingOutputs,cppCompilationContext);
 }
