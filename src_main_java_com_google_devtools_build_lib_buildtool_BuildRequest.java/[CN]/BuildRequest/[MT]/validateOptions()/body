@@ -7,6 +7,13 @@
   if (jobs > JOBS_TOO_HIGH_WARNING) {
     warnings.add(String.format("High value for --jobs: %d. You may run into memory issues",jobs));
   }
+  int localTestJobs=getExecutionOptions().localTestJobs;
+  if (localTestJobs < 0) {
+    throw new InvalidConfigurationException(String.format("Invalid parameter for --local_test_jobs: %d. Only values 0 or greater are " + "allowed.",localTestJobs));
+  }
+  if (localTestJobs > jobs) {
+    warnings.add(String.format("High value for --local_test_jobs: %d. This exceeds the value for --jobs: " + "%d. Only up to %d local tests will run concurrently.",localTestJobs,jobs,jobs));
+  }
   if (getBuildOptions().verboseExplanations && getBuildOptions().explanationPath == null) {
     warnings.add("--verbose_explanations has no effect when --explain=<file> is not enabled");
   }

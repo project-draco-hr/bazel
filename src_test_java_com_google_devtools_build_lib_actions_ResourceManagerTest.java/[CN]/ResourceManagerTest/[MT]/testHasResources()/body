@@ -1,29 +1,33 @@
 {
   assertFalse(rm.inUse());
   assertFalse(rm.threadHasResources());
-  acquire(1,.1,.1);
+  acquire(1.0,0.1,0.1,1);
   assertTrue(rm.threadHasResources());
   TestThread thread1=new TestThread(){
     @Override public void runTest() throws Exception {
       assertFalse(rm.threadHasResources());
-      acquire(1,0,0);
+      acquire(1.0,0,0,0);
       assertTrue(rm.threadHasResources());
-      release(1,0,0);
+      release(1.0,0,0,0);
       assertFalse(rm.threadHasResources());
-      acquire(0,0.1,0);
+      acquire(0,0.1,0,0);
       assertTrue(rm.threadHasResources());
-      release(0,0.1,0);
+      release(0,0.1,0,0);
       assertFalse(rm.threadHasResources());
-      acquire(0,0,0.1);
+      acquire(0,0,0.1,0);
       assertTrue(rm.threadHasResources());
-      release(0,0,0.1);
+      release(0,0,0.1,0);
+      assertFalse(rm.threadHasResources());
+      acquire(0,0,0,1);
+      assertTrue(rm.threadHasResources());
+      release(0,0,0,1);
       assertFalse(rm.threadHasResources());
     }
   }
 ;
   thread1.start();
   thread1.joinAndAssertState(10000);
-  release(1,.1,.1);
+  release(1.0,0.1,0.1,1);
   assertFalse(rm.threadHasResources());
   assertFalse(rm.inUse());
 }

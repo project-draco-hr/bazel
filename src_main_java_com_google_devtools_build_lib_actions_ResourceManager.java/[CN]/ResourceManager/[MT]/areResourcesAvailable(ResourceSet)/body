@@ -1,13 +1,19 @@
 {
   Preconditions.checkNotNull(availableResources);
-  if (usedCpu == 0.0 && usedRam == 0.0 && usedIo == 0.0) {
+  if (usedCpu == 0.0 && usedRam == 0.0 && usedIo == 0.0 && usedLocalTestCount == 0) {
     return true;
   }
   double cpu=resources.getCpuUsage() * MIN_NECESSARY_CPU_RATIO;
   double ram=resources.getMemoryMb() * MIN_NECESSARY_RAM_RATIO;
   double io=resources.getIoUsage() * MIN_NECESSARY_IO_RATIO;
+  int localTestCount=resources.getLocalTestCount();
   double availableCpu=availableResources.getCpuUsage();
   double availableRam=availableResources.getMemoryMb();
   double availableIo=availableResources.getIoUsage();
-  return (cpu == 0.0 || usedCpu == 0.0 || usedCpu + cpu <= availableCpu) && (ram == 0.0 || usedRam == 0.0 || usedRam + ram <= availableRam) && (io == 0.0 || usedIo == 0.0 || usedIo + io <= availableIo);
+  int availableLocalTestCount=availableResources.getLocalTestCount();
+  boolean cpuIsAvailable=cpu == 0.0 || usedCpu == 0.0 || usedCpu + cpu <= availableCpu;
+  boolean ramIsAvailable=ram == 0.0 || usedRam == 0.0 || usedRam + ram <= availableRam;
+  boolean ioIsAvailable=io == 0.0 || usedIo == 0.0 || usedIo + io <= availableIo;
+  boolean localTestCountIsAvailable=localTestCount == 0 || usedLocalTestCount == 0 || usedLocalTestCount + localTestCount <= availableLocalTestCount;
+  return cpuIsAvailable && ramIsAvailable && ioIsAvailable&& localTestCountIsAvailable;
 }
