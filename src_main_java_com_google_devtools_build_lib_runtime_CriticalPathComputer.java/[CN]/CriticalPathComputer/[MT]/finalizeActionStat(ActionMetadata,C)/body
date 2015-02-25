@@ -1,5 +1,5 @@
 {
-  component.setFinishTimeMillis(getTime());
+  component.setRelativeStartNanos(clock.nanoTime());
   for (  Artifact input : action.getInputs()) {
     addArtifactDependency(component,input);
   }
@@ -8,7 +8,7 @@ synchronized (lock) {
       maxCriticalPath=component;
     }
     if (slowestComponents.size() == SLOWEST_COMPONENTS_SIZE) {
-      if (slowestComponents.peek().getActionWallTime() >= component.getActionWallTime()) {
+      if (slowestComponents.peek().getElapsedTimeNanos() >= component.getElapsedTimeNanos()) {
         return;
       }
       slowestComponents.remove();
