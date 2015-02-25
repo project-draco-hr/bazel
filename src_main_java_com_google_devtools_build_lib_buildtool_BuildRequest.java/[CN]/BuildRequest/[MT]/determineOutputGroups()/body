@@ -1,15 +1,28 @@
 {
-  Set<String> current=new TreeSet<>();
-  current.addAll(getBuildOptions().outputGroups);
+  Set<String> current=new HashSet<>();
   current.add(TopLevelArtifactProvider.TEMP_FILES);
-  if (getOptions(Options.class).collectCodeCoverage && !getBuildOptions().compileOnly && !getBuildOptions().compilationPrerequisitesOnly&& runTests) {
+  current.add(TopLevelArtifactProvider.HIDDEN_TOP_LEVEL);
+  current.add(TopLevelArtifactProvider.DEFAULT);
+  current.addAll(getBuildOptions().outputGroups);
+  if (getOptions(Options.class).collectCodeCoverage && runTests) {
     current.add(TopLevelArtifactProvider.BASELINE_COVERAGE);
   }
-  if (getBuildOptions().compileOnly) {
+  BuildRequestOptions options=getOptions(BuildRequestOptions.class);
+  if (!options.buildDefaultArtifacts) {
+    current.remove(TopLevelArtifactProvider.DEFAULT);
+    current.remove(TopLevelArtifactProvider.HIDDEN_TOP_LEVEL);
+  }
+  if (options.compileOnly) {
     current.add(TopLevelArtifactProvider.FILES_TO_COMPILE);
+    current.remove(TopLevelArtifactProvider.BASELINE_COVERAGE);
+    current.remove(TopLevelArtifactProvider.DEFAULT);
+    current.remove(TopLevelArtifactProvider.HIDDEN_TOP_LEVEL);
   }
-  if (getBuildOptions().compilationPrerequisitesOnly) {
+  if (options.compilationPrerequisitesOnly) {
     current.add(TopLevelArtifactProvider.COMPILATION_PREREQUISITES);
+    current.remove(TopLevelArtifactProvider.BASELINE_COVERAGE);
+    current.remove(TopLevelArtifactProvider.DEFAULT);
+    current.remove(TopLevelArtifactProvider.HIDDEN_TOP_LEVEL);
   }
-  return ImmutableSet.copyOf(current);
+  return ImmutableSortedSet.copyOf(current);
 }
