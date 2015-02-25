@@ -1,0 +1,19 @@
+{
+  optionsParser=OptionsParser.newOptionsParser(Iterables.concat(Arrays.asList(ExecutionOptions.class,BuildRequest.BuildRequestOptions.class),ruleClassProvider.getConfigurationOptions()));
+  try {
+    List<String> configurationArgs=new ArrayList<>();
+    configurationArgs.add("--experimental_extended_sanity_checks");
+    configurationArgs.addAll(getAnalysisMock().getOptionOverrides());
+    optionsParser.parse(configurationArgs);
+    optionsParser.parse(args);
+    configurationFactory.forbidSanityCheck();
+    BuildOptions buildOptions=ruleClassProvider.createBuildOptions(optionsParser);
+    ensureTargetsVisited(buildOptions.getAllLabels().values());
+    BuildConfigurationKey key=new BuildConfigurationKey(buildOptions,directories,ImmutableMap.<String,String>of());
+    skyframeExecutor.invalidateConfigurationCollection();
+    return skyframeExecutor.createConfigurations(configurationFactory,key);
+  }
+ catch (  InvalidConfigurationException|OptionsParsingException e) {
+    throw new IllegalArgumentException(e);
+  }
+}

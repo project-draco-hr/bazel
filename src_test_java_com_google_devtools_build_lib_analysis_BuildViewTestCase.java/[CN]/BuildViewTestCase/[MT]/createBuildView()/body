@@ -1,0 +1,11 @@
+{
+  Preconditions.checkNotNull(masterConfig);
+  Preconditions.checkState(getHostConfiguration() == getTargetConfiguration() || getHostConfiguration().getShortName().equals("host"),"Host configuration %s does not have name 'host' " + "and does not match target configuration %s",getHostConfiguration(),getTargetConfiguration());
+  String defaultsPackageContent=ruleClassProvider.getDefaultsPackageContent(optionsParser);
+  skyframeExecutor.setupDefaultPackage(defaultsPackageContent);
+  skyframeExecutor.dropConfiguredTargets();
+  view=new BuildView(directories,getPackageManager(),ruleClassProvider,skyframeExecutor,binTools,null);
+  view.setConfigurationsForTesting(masterConfig);
+  view.setArtifactRoots(ImmutableMap.of(PackageIdentifier.createInDefaultRepo(""),rootDirectory));
+  simulateLoadingPhase();
+}

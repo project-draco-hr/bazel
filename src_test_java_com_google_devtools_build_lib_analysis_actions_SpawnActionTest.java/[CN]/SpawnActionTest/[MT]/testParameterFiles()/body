@@ -1,0 +1,13 @@
+{
+  Artifact output1=getBinArtifactWithNoOwner("output1");
+  Artifact output2=getBinArtifactWithNoOwner("output2");
+  Artifact paramFile=getBinArtifactWithNoOwner("output1-2.params");
+  PathFragment executable=new PathFragment("/bin/executable");
+  useConfiguration("--min_param_file_size=500");
+  String longOption=Strings.repeat("x",1000);
+  SpawnAction spawnAction=((SpawnAction)builder().addOutput(output1).setExecutable(executable).useParameterFile(ParameterFileType.UNQUOTED).addArgument(longOption).build(ActionsTestUtil.NULL_ACTION_OWNER,collectingAnalysisEnvironment,targetConfig)[0]);
+  assertThat(spawnAction.getRemainingArguments()).containsExactly("@" + paramFile.getExecPathString()).inOrder();
+  useConfiguration("--min_param_file_size=1500");
+  spawnAction=((SpawnAction)builder().addOutput(output2).setExecutable(executable).useParameterFile(ParameterFileType.UNQUOTED).addArgument(longOption).build(ActionsTestUtil.NULL_ACTION_OWNER,collectingAnalysisEnvironment,targetConfig)[0]);
+  assertThat(spawnAction.getRemainingArguments()).containsExactly(longOption).inOrder();
+}

@@ -1,0 +1,17 @@
+{
+  Preconditions.checkState(realFileSystem);
+  Path target=runfilesDirectory.getRelative(TestConstants.RUNFILES_PREFIX + "/" + relativePath);
+  if (!target.exists()) {
+    Path readOnlyClientPath=rootDirectory.getRelative("../READONLY/" + TestConstants.RUNFILES_PREFIX + "/"+ relativePath);
+    if (!readOnlyClientPath.exists()) {
+      throw new IOException("target does not exist " + target);
+    }
+ else {
+      target=readOnlyClientPath;
+    }
+  }
+  Path path=rootDirectory.getRelative(dest);
+  FileSystemUtils.createDirectoryAndParents(path.getParentDirectory());
+  path.delete();
+  path.createSymbolicLink(target);
+}

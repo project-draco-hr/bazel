@@ -1,0 +1,26 @@
+{
+  Map<Root,String> rootMap=new HashMap<>();
+  BuildConfiguration targetConfiguration=Iterables.getOnlyElement(configurations.getTargetConfigurations());
+  BuildConfiguration hostConfiguration=targetConfiguration.getConfiguration(ConfigurationTransition.HOST);
+  rootMap.put(targetConfiguration.getBinDirectory(),"bin");
+  rootMap.put(targetConfiguration.getGenfilesDirectory(),"genfiles");
+  rootMap.put(targetConfiguration.getMiddlemanDirectory(),"internal");
+  rootMap.put(hostConfiguration.getBinDirectory(),"bin(host)");
+  rootMap.put(hostConfiguration.getGenfilesDirectory(),"genfiles(host)");
+  rootMap.put(hostConfiguration.getMiddlemanDirectory(),"internal(host)");
+  Set<String> files=new LinkedHashSet<>();
+  for (  Artifact artifact : artifacts) {
+    Root root=artifact.getRoot();
+    if (root.isSourceRoot()) {
+      files.add("src " + artifact.getRootRelativePath());
+    }
+ else {
+      String name=rootMap.get(root);
+      if (name == null) {
+        name="/";
+      }
+      files.add(name + " " + artifact.getRootRelativePath());
+    }
+  }
+  return files;
+}

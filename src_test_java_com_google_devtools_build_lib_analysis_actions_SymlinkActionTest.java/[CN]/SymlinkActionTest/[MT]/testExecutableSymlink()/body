@@ -1,0 +1,19 @@
+{
+  Executor executor=new TestExecutorBuilder(directories,null).build();
+  outputArtifact=getBinArtifactWithNoOwner("destination2.txt");
+  output=outputArtifact.getPath();
+  action=new ExecutableSymlinkAction(NULL_ACTION_OWNER,inputArtifact,outputArtifact);
+  assertFalse(input.isExecutable());
+  ActionExecutionContext actionExecutionContext=new ActionExecutionContext(executor,null,null,null,null);
+  try {
+    action.execute(actionExecutionContext);
+    fail("Expected ActionExecutionException");
+  }
+ catch (  ActionExecutionException e) {
+    MoreAsserts.assertContainsRegex("'input.txt' is not executable",e.getMessage());
+  }
+  input.setExecutable(true);
+  action.execute(actionExecutionContext);
+  assertTrue(output.isSymbolicLink());
+  assertEquals(input,output.resolveSymbolicLinks());
+}

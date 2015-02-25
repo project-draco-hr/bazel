@@ -1,0 +1,17 @@
+{
+  Artifact baselineCoverage=Iterables.getOnlyElement(target.getProvider(TopLevelArtifactProvider.class).getOutputGroup(TopLevelArtifactProvider.BASELINE_COVERAGE));
+  BaselineCoverageAction baselineAction=(BaselineCoverageAction)getGeneratingAction(baselineCoverage);
+  EventBus eventBus=new EventBus();
+  Executor mockExecutor=Mockito.mock(Executor.class);
+  Mockito.when(mockExecutor.getEventBus()).thenReturn(eventBus);
+  ByteArrayOutputStream bytes=new ByteArrayOutputStream();
+  baselineAction.newDeterministicWriter(reporter,mockExecutor).writeOutputFile(bytes);
+  ImmutableList.Builder<String> basenames=ImmutableList.builder();
+  for (  String line : new String(bytes.toByteArray(),StandardCharsets.UTF_8).split("\n")) {
+    if (line.startsWith("SF:")) {
+      String basename=line.substring(line.lastIndexOf("/") + 1);
+      basenames.add(basename);
+    }
+  }
+  return basenames.build();
+}

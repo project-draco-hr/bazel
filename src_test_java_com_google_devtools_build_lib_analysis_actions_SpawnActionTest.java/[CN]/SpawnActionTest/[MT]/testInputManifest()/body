@@ -1,0 +1,8 @@
+{
+  Artifact manifest=getSourceArtifact("MANIFEST");
+  Action[] actions=builder().addInput(manifest).addInputManifest(manifest,new PathFragment("/destination/")).addOutput(getBinArtifactWithNoOwner("output")).setExecutable(scratchFile("/bin/xxx").asFragment()).setProgressMessage("Test").build(ActionsTestUtil.NULL_ACTION_OWNER,collectingAnalysisEnvironment,targetConfig);
+  collectingAnalysisEnvironment.registerAction(actions);
+  SpawnAction action=(SpawnAction)actions[0];
+  List<String> inputFiles=actionInputsToPaths(action.getSpawn().getInputFiles());
+  assertTrue(inputFiles.isEmpty());
+}
