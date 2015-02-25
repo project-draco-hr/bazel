@@ -1,0 +1,44 @@
+{
+  try {
+    DependencySet depSet=processDepset(execRoot,reply);
+    CppConfiguration toolchain=cppConfiguration;
+    List<PathFragment> systemIncludePrefixes=new ArrayList<>();
+    for (    PathFragment includePath : toolchain.getBuiltInIncludeDirectories()) {
+      if (includePath.isAbsolute()) {
+        systemIncludePrefixes.add(includePath);
+      }
+    }
+    systemIncludePrefixes.addAll(extraSystemIncludePrefixes);
+    IncludeProblems problems=new IncludeProblems();
+    Map<PathFragment,Artifact> allowedDerivedInputsMap=getAllowedDerivedInputsMap();
+    for (    PathFragment execPath : depSet.getDependencies()) {
+      if (execPath.isAbsolute()) {
+        if (FileSystemUtils.startsWithAny(execPath,systemIncludePrefixes)) {
+          continue;
+        }
+        if (execPath.startsWith(execRoot.asFragment())) {
+          execPath=execPath.relativeTo(execRoot.asFragment());
+        }
+ else {
+          problems.add(execPath.getPathString());
+          continue;
+        }
+      }
+      Artifact artifact=allowedDerivedInputsMap.get(execPath);
+      if (artifact == null) {
+        artifact=artifactResolver.resolveSourceArtifact(execPath);
+      }
+      if (artifact != null) {
+        inputs.add(artifact);
+        inputs.addAll(includeResolver.getInputsForIncludedFile(artifact,artifactResolver));
+      }
+ else {
+        problems.add(execPath.getPathString());
+      }
+    }
+    problems.assertProblemFree(this,getSourceFile());
+  }
+ catch (  IOException e) {
+    throw new ActionExecutionException("error while parsing .d file",e,this,false);
+  }
+}

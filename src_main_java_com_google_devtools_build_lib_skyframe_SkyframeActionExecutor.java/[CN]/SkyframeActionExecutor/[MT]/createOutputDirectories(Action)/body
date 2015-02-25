@@ -1,0 +1,29 @@
+{
+  try {
+    Set<Path> done=new HashSet<>();
+    for (    Artifact outputFile : action.getOutputs()) {
+      Path outputDir=outputFile.getPath().getParentDirectory();
+      if (done.add(outputDir)) {
+        try {
+          createDirectoryAndParents(outputDir);
+          continue;
+        }
+ catch (        IOException e) {
+        }
+        try {
+          for (Path p=outputDir; !p.isDirectory(Symlinks.NOFOLLOW); p=p.getParentDirectory()) {
+            p.delete();
+          }
+          createDirectoryAndParents(outputDir);
+        }
+ catch (        IOException e) {
+          throw new ActionExecutionException("failed to create output directory '" + outputDir + "'",e,action,false);
+        }
+      }
+    }
+  }
+ catch (  ActionExecutionException ex) {
+    printError(ex.getMessage(),action,null);
+    throw ex;
+  }
+}

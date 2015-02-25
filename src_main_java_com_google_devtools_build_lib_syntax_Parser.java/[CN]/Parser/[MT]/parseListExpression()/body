@@ -1,0 +1,68 @@
+{
+  int start=token.left;
+  expect(TokenKind.LBRACKET);
+  if (token.kind == TokenKind.RBRACKET) {
+    ListLiteral literal=ListLiteral.makeList(Collections.<Expression>emptyList());
+    setLocation(literal,start,token.right);
+    nextToken();
+    return literal;
+  }
+  Expression expression=parseExpression();
+  Preconditions.checkNotNull(expression,"null element in list in AST at %s:%s",token.left,token.right);
+switch (token.kind) {
+case RBRACKET:
+{
+      ListLiteral literal=ListLiteral.makeList(Collections.singletonList(expression));
+      setLocation(literal,start,token.right);
+      nextToken();
+      return literal;
+    }
+case FOR:
+{
+    ListComprehension listComprehension=new ListComprehension(expression);
+    do {
+      nextToken();
+      Ident ident=parseForLoopVariables();
+      if (token.kind == TokenKind.IN) {
+        nextToken();
+        Expression listExpression=parseExpression();
+        listComprehension.add(ident,listExpression);
+      }
+ else {
+        break;
+      }
+      if (token.kind == TokenKind.RBRACKET) {
+        setLocation(listComprehension,start,token.right);
+        nextToken();
+        return listComprehension;
+      }
+    }
+ while (token.kind == TokenKind.FOR);
+    syntaxError(token);
+    int end=syncPast(LIST_TERMINATOR_SET);
+    return makeErrorExpression(start,end);
+  }
+case COMMA:
+{
+  nextToken();
+  List<Expression> list=parseExprList();
+  Preconditions.checkState(!list.contains(null),"null element in list in AST at %s:%s",token.left,token.right);
+  list.add(0,expression);
+  if (token.kind == TokenKind.RBRACKET) {
+    ListLiteral literal=ListLiteral.makeList(list);
+    setLocation(literal,start,token.right);
+    nextToken();
+    return literal;
+  }
+  syntaxError(token);
+  int end=syncPast(LIST_TERMINATOR_SET);
+  return makeErrorExpression(start,end);
+}
+default :
+{
+syntaxError(token);
+int end=syncPast(LIST_TERMINATOR_SET);
+return makeErrorExpression(start,end);
+}
+}
+}

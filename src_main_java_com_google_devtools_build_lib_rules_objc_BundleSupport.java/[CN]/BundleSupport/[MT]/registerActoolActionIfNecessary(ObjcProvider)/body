@@ -1,0 +1,9 @@
+{
+  Optional<Artifact> actoolzipOutput=bundling.getActoolzipOutput();
+  if (!actoolzipOutput.isPresent()) {
+    return;
+  }
+  ObjcActionsBuilder actionsBuilder=ObjcRuleClasses.actionsBuilder(ruleContext);
+  Artifact actoolPartialInfoplist=actoolPartialInfoplist(ruleContext,objcProvider).get();
+  actionsBuilder.registerActoolzipAction(new ObjcRuleClasses.Tools(ruleContext),objcProvider,actoolzipOutput.get(),new ObjcActionsBuilder.ExtraActoolOutputs(actoolPartialInfoplist),new ExtraActoolArgs(new ImmutableList.Builder<String>().addAll(extraActoolArgs).add("--output-partial-info-plist",actoolPartialInfoplist.getExecPathString()).build()),targetDeviceFamilies);
+}

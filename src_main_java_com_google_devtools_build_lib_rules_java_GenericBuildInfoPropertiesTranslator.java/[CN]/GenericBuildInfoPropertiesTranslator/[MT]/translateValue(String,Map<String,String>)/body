@@ -1,0 +1,34 @@
+{
+  String[] split=valueDescription.split("%");
+  StringBuffer result=new StringBuffer();
+  boolean isInsideKey=false;
+  for (  String key : split) {
+    if (isInsideKey) {
+      if (key.isEmpty()) {
+        result.append("%");
+      }
+ else {
+        String defaultValue=null;
+        int i=key.lastIndexOf('|');
+        if (i >= 0) {
+          defaultValue=key.substring(i + 1);
+          key=key.substring(0,i);
+        }
+        if (buildInfo.containsKey(key)) {
+          result.append(buildInfo.get(key));
+        }
+ else         if (defaultValue != null) {
+          result.append(defaultValue);
+        }
+ else {
+          return null;
+        }
+      }
+    }
+ else {
+      result.append(key);
+    }
+    isInsideKey=!isInsideKey;
+  }
+  return result.toString();
+}

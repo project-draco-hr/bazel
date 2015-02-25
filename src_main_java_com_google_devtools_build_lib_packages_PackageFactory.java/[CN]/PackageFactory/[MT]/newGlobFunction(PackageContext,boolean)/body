@@ -1,0 +1,35 @@
+{
+  List<String> params=ImmutableList.of("include","exclude","exclude_directories");
+  return new MixedModeFunction("glob",params,1,false){
+    @Override public Object call(    Object[] namedArguments,    FuncallExpression ast,    Environment env) throws EvalException, ConversionException, InterruptedException {
+      PackageContext context;
+      if (originalContext == null) {
+        Preconditions.checkArgument(!async);
+        try {
+          context=(PackageContext)env.lookup(PKG_CONTEXT);
+        }
+ catch (        NoSuchVariableException e) {
+          throw new EvalException(ast.getLocation(),e.getMessage());
+        }
+      }
+ else {
+        context=originalContext;
+      }
+      List<String> includes=Type.STRING_LIST.convert(namedArguments[0],"'glob' argument");
+      List<String> excludes=namedArguments[1] == null ? Collections.<String>emptyList() : Type.STRING_LIST.convert(namedArguments[1],"'glob' argument");
+      int excludeDirs=namedArguments[2] == null ? EXCLUDE_DIR_DEFAULT : Type.INTEGER.convert(namedArguments[2],"'glob' argument");
+      if (async) {
+        try {
+          context.globber.runAsync(includes,excludes,excludeDirs != 0);
+        }
+ catch (        GlobCache.BadGlobException e) {
+        }
+        return GlobList.captureResults(includes,excludes,ImmutableList.<String>of());
+      }
+ else {
+        return handleGlob(includes,excludes,excludeDirs != 0,context,ast);
+      }
+    }
+  }
+;
+}

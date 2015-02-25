@@ -1,0 +1,33 @@
+{
+  ImmutableSet<SkyKey> skyKeySet=ImmutableSet.copyOf(skyKeys);
+  if (Iterables.all(skyKeySet,nodeEntryIsDone)) {
+    for (    SkyKey skyKey : skyKeySet) {
+      informProgressReceiverThatValueIsDone(skyKey);
+    }
+    return constructResult(null,skyKeySet,null,false);
+  }
+  if (!keepGoing) {
+    Set<SkyKey> cachedErrorKeys=new HashSet<>();
+    for (    SkyKey skyKey : skyKeySet) {
+      NodeEntry entry=graph.get(skyKey);
+      if (entry == null) {
+        continue;
+      }
+      if (entry.isDone() && entry.getErrorInfo() != null) {
+        informProgressReceiverThatValueIsDone(skyKey);
+        cachedErrorKeys.add(skyKey);
+      }
+    }
+    if (!cachedErrorKeys.isEmpty()) {
+      return constructResult(null,cachedErrorKeys,null,false);
+    }
+  }
+  Preconditions.checkState(keepGoing || !(graph instanceof InMemoryGraph) || ((InMemoryGraph)graph).keepsEdges(),"nokeep_going evaluations are not allowed if graph edges are not kept: %s",skyKeys);
+  Profiler.instance().startTask(ProfilerTask.SKYFRAME_EVAL,skyKeySet);
+  try {
+    return eval(skyKeySet,new ValueVisitor(threadCount));
+  }
+  finally {
+    Profiler.instance().completeTask(ProfilerTask.SKYFRAME_EVAL);
+  }
+}

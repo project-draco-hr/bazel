@@ -1,0 +1,47 @@
+{
+  TestResultStats stats=new TestResultStats();
+  stats.numberOfTargets=summaries.size();
+  stats.numberOfExecutedTargets=numberOfExecutedTargets;
+  TestOutputFormat testOutput=options.getOptions(ExecutionOptions.class).testOutput;
+  for (  TestSummary summary : summaries) {
+    if (summary.isLocalActionCached() && TestLogHelper.shouldOutputTestLog(testOutput,TestResult.isBlazeTestStatusPassed(summary.getStatus()))) {
+      TestSummaryPrinter.printCachedOutput(summary,testOutput,printer);
+    }
+  }
+  for (  TestSummary summary : summaries) {
+    if (TestResult.isBlazeTestStatusPassed(summary.getStatus())) {
+      stats.passCount++;
+    }
+ else     if (summary.getStatus() == BlazeTestStatus.FAILED_TO_BUILD) {
+      stats.failedToBuildCount++;
+    }
+ else     if (summary.ranRemotely()) {
+      stats.failedRemotelyCount++;
+    }
+ else {
+      stats.failedLocallyCount++;
+    }
+    if (summary.getStatus() == BlazeTestStatus.NO_STATUS) {
+      stats.noStatusCount++;
+    }
+    if (summary.wasUnreportedWrongSize()) {
+      stats.wasUnreportedWrongSize=true;
+    }
+  }
+  stats.failedCount=summaries.size() - stats.passCount;
+  TestSummaryFormat testSummaryFormat=options.getOptions(ExecutionOptions.class).testSummary;
+switch (testSummaryFormat) {
+case DETAILED:
+    printDetailedTestResultSummary(summaries);
+  break;
+case SHORT:
+printShortSummary(summaries,true);
+break;
+case TERSE:
+printShortSummary(summaries,false);
+break;
+case NONE:
+break;
+}
+printStats(stats);
+}

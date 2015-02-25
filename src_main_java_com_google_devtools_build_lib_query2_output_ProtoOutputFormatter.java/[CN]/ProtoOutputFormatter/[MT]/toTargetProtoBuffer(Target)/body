@@ -1,0 +1,81 @@
+{
+  Build.Target.Builder targetPb=Build.Target.newBuilder();
+  String location=target.getLocation().print();
+  if (target instanceof Rule) {
+    Rule rule=(Rule)target;
+    Build.Rule.Builder rulePb=Build.Rule.newBuilder().setName(rule.getLabel().toString()).setRuleClass(rule.getRuleClass()).setLocation(location);
+    for (    Attribute attr : rule.getAttributes()) {
+      addAttributeToProto(rulePb,attr,getAttributeValues(rule,attr).first,null,rule.isAttributeValueExplicitlySpecified(attr),false);
+    }
+    SkylarkEnvironment env=rule.getRuleClassObject().getRuleDefinitionEnvironment();
+    if (env != null) {
+      rulePb.addAttribute(Build.Attribute.newBuilder().setName(RULE_IMPLEMENTATION_HASH_ATTR_NAME).setType(ProtoUtils.getDiscriminatorFromType(com.google.devtools.build.lib.packages.Type.STRING)).setStringValue(env.getTransitiveFileContentHashCode()));
+    }
+    for (    Label label : rule.getLabels(dependencyFilter)) {
+      rulePb.addRuleInput(label.toString());
+    }
+    for (    OutputFile outputFile : rule.getOutputFiles()) {
+      Label fileLabel=outputFile.getLabel();
+      rulePb.addRuleOutput(fileLabel.toString());
+    }
+    for (    String feature : rule.getFeatures()) {
+      rulePb.addDefaultSetting(feature);
+    }
+    targetPb.setType(RULE);
+    targetPb.setRule(rulePb);
+  }
+ else   if (target instanceof OutputFile) {
+    OutputFile outputFile=(OutputFile)target;
+    Label label=outputFile.getLabel();
+    Rule generatingRule=outputFile.getGeneratingRule();
+    Build.GeneratedFile output=Build.GeneratedFile.newBuilder().setLocation(location).setGeneratingRule(generatingRule.getLabel().toString()).setName(label.toString()).build();
+    targetPb.setType(GENERATED_FILE);
+    targetPb.setGeneratedFile(output);
+  }
+ else   if (target instanceof InputFile) {
+    InputFile inputFile=(InputFile)target;
+    Label label=inputFile.getLabel();
+    Build.SourceFile.Builder input=Build.SourceFile.newBuilder().setLocation(location).setName(label.toString());
+    if (inputFile.getName().equals("BUILD")) {
+      for (      Label subinclude : inputFile.getPackage().getSubincludeLabels()) {
+        input.addSubinclude(subinclude.toString());
+      }
+      for (      Label skylarkFileDep : inputFile.getPackage().getSkylarkFileDependencies()) {
+        input.addSubinclude(skylarkFileDep.toString());
+      }
+      for (      String feature : inputFile.getPackage().getFeatures()) {
+        input.addFeature(feature);
+      }
+    }
+    for (    Label visibilityDependency : target.getVisibility().getDependencyLabels()) {
+      input.addPackageGroup(visibilityDependency.toString());
+    }
+    for (    Label visibilityDeclaration : target.getVisibility().getDeclaredLabels()) {
+      input.addVisibilityLabel(visibilityDeclaration.toString());
+    }
+    targetPb.setType(SOURCE_FILE);
+    targetPb.setSourceFile(input);
+  }
+ else   if (target instanceof FakeSubincludeTarget) {
+    Label label=target.getLabel();
+    Build.SourceFile input=Build.SourceFile.newBuilder().setLocation(location).setName(label.toString()).build();
+    targetPb.setType(SOURCE_FILE);
+    targetPb.setSourceFile(input);
+  }
+ else   if (target instanceof PackageGroup) {
+    PackageGroup packageGroup=(PackageGroup)target;
+    Build.PackageGroup.Builder packageGroupPb=Build.PackageGroup.newBuilder().setName(packageGroup.getLabel().toString());
+    for (    String containedPackage : packageGroup.getContainedPackages()) {
+      packageGroupPb.addContainedPackage(containedPackage);
+    }
+    for (    Label include : packageGroup.getIncludes()) {
+      packageGroupPb.addIncludedPackageGroup(include.toString());
+    }
+    targetPb.setType(PACKAGE_GROUP);
+    targetPb.setPackageGroup(packageGroupPb);
+  }
+ else {
+    throw new IllegalArgumentException(target.toString());
+  }
+  return targetPb.build();
+}

@@ -1,0 +1,22 @@
+{
+  try (ZipFile zipFile=new ZipFile(sourceJar)){
+    Enumeration<? extends ZipEntry> zipEntries=zipFile.entries();
+    while (zipEntries.hasMoreElements()) {
+      ZipEntry currentEntry=zipEntries.nextElement();
+      String entryName=currentEntry.getName();
+      File outputFile=new File(sourceDir,entryName);
+      outputFile.getParentFile().mkdirs();
+      if (currentEntry.isDirectory()) {
+        outputFile.mkdir();
+      }
+ else {
+        try (InputStream in=zipFile.getInputStream(currentEntry);OutputStream out=new FileOutputStream(outputFile)){
+          ByteStreams.copy(in,out);
+        }
+         for (        SourceJarEntryListener listener : listeners) {
+          listener.onEntry(currentEntry);
+        }
+      }
+    }
+  }
+ }

@@ -1,0 +1,23 @@
+{
+  for (  Path packagePathEntry : pkgLocator.get().getPathEntries()) {
+    RootedPath rootedPath=RootedPath.toRootedPath(packagePathEntry,astFilePathFragment);
+    SkyKey fileSkyKey=FileValue.key(rootedPath);
+    FileValue fileValue=null;
+    try {
+      fileValue=(FileValue)env.getValueOrThrow(fileSkyKey,IOException.class,FileSymlinkCycleException.class,InconsistentFilesystemException.class);
+    }
+ catch (    IOException|FileSymlinkCycleException e) {
+      throw new ASTLookupFunctionException(new ErrorReadingSkylarkExtensionException(e.getMessage()),Transience.PERSISTENT);
+    }
+catch (    InconsistentFilesystemException e) {
+      throw new ASTLookupFunctionException(e,Transience.PERSISTENT);
+    }
+    if (fileValue == null) {
+      return null;
+    }
+    if (fileValue.isFile()) {
+      return FileLookupResult.file(rootedPath);
+    }
+  }
+  return FileLookupResult.noFile();
+}

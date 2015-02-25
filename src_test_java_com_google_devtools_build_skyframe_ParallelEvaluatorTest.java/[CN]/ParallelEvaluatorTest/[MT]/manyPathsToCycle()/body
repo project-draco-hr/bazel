@@ -1,0 +1,19 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  SkyKey midKey=GraphTester.toSkyKey("mid");
+  SkyKey cycleKey=GraphTester.toSkyKey("cycle");
+  tester.getOrCreate(topKey).addDependency(midKey);
+  tester.getOrCreate(cycleKey).addDependency(cycleKey);
+  for (int i=0; i < 100; i++) {
+    SkyKey dep=GraphTester.toSkyKey(Integer.toString(i));
+    tester.getOrCreate(midKey).addDependency(dep);
+    tester.getOrCreate(dep).addDependency(cycleKey);
+  }
+  EvaluationResult<StringValue> result=eval(true,ImmutableList.of(topKey));
+  assertEquals(null,result.get(topKey));
+  CycleInfo cycleInfo=Iterables.getOnlyElement(result.getError(topKey).getCycleInfo());
+  assertEquals(1,cycleInfo.getCycle().size());
+  assertEquals(3,cycleInfo.getPathToCycle().size());
+  assertThat(cycleInfo.getPathToCycle().subList(0,2)).containsExactly(topKey,midKey).inOrder();
+}

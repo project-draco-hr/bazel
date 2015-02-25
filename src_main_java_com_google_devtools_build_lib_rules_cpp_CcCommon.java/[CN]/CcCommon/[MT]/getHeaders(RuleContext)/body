@@ -1,0 +1,15 @@
+{
+  List<Artifact> hdrs=new ArrayList<>();
+  for (  TransitiveInfoCollection target : ruleContext.getPrerequisitesIf("hdrs",Mode.TARGET,FileProvider.class)) {
+    FileProvider provider=target.getProvider(FileProvider.class);
+    for (    Artifact artifact : provider.getFilesToBuild()) {
+      if (!CppRuleClasses.DISALLOWED_HDRS_FILES.matches(artifact.getFilename())) {
+        hdrs.add(artifact);
+      }
+ else {
+        ruleContext.attributeWarning("hdrs","file '" + artifact.getFilename() + "' from target '"+ target.getLabel()+ "' is not allowed in hdrs");
+      }
+    }
+  }
+  return hdrs;
+}

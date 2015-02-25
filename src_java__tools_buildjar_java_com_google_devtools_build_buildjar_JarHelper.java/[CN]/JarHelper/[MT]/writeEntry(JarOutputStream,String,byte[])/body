@@ -1,0 +1,22 @@
+{
+  if (names.add(name)) {
+    JarEntry entry=new JarEntry(name);
+    entry.setTime(newEntryTimeMillis(name));
+    int size=content.length;
+    entry.setSize(size);
+    if (size == 0) {
+      entry.setMethod(JarEntry.STORED);
+      entry.setCrc(0);
+      out.putNextEntry(entry);
+    }
+ else {
+      entry.setMethod(storageMethod);
+      if (storageMethod == JarEntry.STORED) {
+        entry.setCrc(Hashing.crc32().hashBytes(content).padToLong());
+      }
+      out.putNextEntry(entry);
+      out.write(content);
+    }
+    out.closeEntry();
+  }
+}

@@ -1,0 +1,88 @@
+{
+  final CountDownLatch errorCommitted=new CountDownLatch(1);
+  final TrackingAwaiter trackingAwaiterForError=new TrackingAwaiter();
+  final CountDownLatch otherStarted=new CountDownLatch(1);
+  final TrackingAwaiter trackingAwaiterForOther=new TrackingAwaiter();
+  final CountDownLatch otherParentSignaled=new CountDownLatch(1);
+  final TrackingAwaiter trackingAwaiterForOtherParent=new TrackingAwaiter();
+  final SkyKey errorParentKey=GraphTester.toSkyKey("errorParentKey");
+  final SkyKey errorKey=GraphTester.toSkyKey("errorKey");
+  final SkyKey otherParentKey=GraphTester.toSkyKey("otherParentKey");
+  final SkyKey otherKey=GraphTester.toSkyKey("otherKey");
+  final AtomicInteger numOtherParentInvocations=new AtomicInteger(0);
+  final AtomicInteger numErrorParentInvocations=new AtomicInteger(0);
+  tester.getOrCreate(otherParentKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+      int invocations=numOtherParentInvocations.incrementAndGet();
+      assertEquals("otherParentKey should not be restarted",1,invocations);
+      return env.getValue(otherKey);
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  tester.getOrCreate(otherKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+      otherStarted.countDown();
+      trackingAwaiterForError.awaitLatchAndTrackExceptions(errorCommitted,"error didn't get committed to the graph in time");
+      return new StringValue("other");
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  tester.getOrCreate(errorKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+      trackingAwaiterForOther.awaitLatchAndTrackExceptions(otherStarted,"other didn't start in time");
+      throw new GenericFunctionException(new SomeErrorException("error"),Transience.PERSISTENT);
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  tester.getOrCreate(errorParentKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+      int invocations=numErrorParentInvocations.incrementAndGet();
+      try {
+        SkyValue value=env.getValueOrThrow(errorKey,SomeErrorException.class);
+        assertTrue("bogus non-null value " + value,value == null);
+        if (invocations == 1) {
+          return null;
+        }
+ else {
+          assertFalse(env.inErrorBubblingForTesting());
+          fail("RACE CONDITION: errorParentKey was restarted!");
+          return null;
+        }
+      }
+ catch (      SomeErrorException e) {
+        assertTrue("child error propagated during normal evaluation",env.inErrorBubblingForTesting());
+        assertEquals(2,invocations);
+        return null;
+      }
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  graph=new NotifyingInMemoryGraph(new Listener(){
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+      if (key.equals(errorKey) && type == EventType.SET_VALUE && order == Order.AFTER) {
+        errorCommitted.countDown();
+        trackingAwaiterForOtherParent.awaitLatchAndTrackExceptions(otherParentSignaled,"otherParent didn't get signaled in time");
+        Uninterruptibles.sleepUninterruptibly(10,TimeUnit.MILLISECONDS);
+      }
+      if (key.equals(otherParentKey) && type == EventType.SIGNAL && order == Order.AFTER) {
+        otherParentSignaled.countDown();
+      }
+    }
+  }
+);
+  EvaluationResult<StringValue> result=eval(false,ImmutableList.of(otherParentKey,errorParentKey));
+  assertTrue(result.hasError());
+  assertEquals(errorKey,result.getError().getRootCauseOfException());
+}

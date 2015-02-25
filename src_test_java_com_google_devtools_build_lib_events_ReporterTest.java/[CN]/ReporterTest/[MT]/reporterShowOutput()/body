@@ -1,0 +1,9 @@
+{
+  reporter.setOutputFilter(OutputFilter.RegexOutputFilter.forRegex("naughty"));
+  EventCollector collector=new EventCollector(EventKind.ALL_EVENTS);
+  reporter.addHandler(collector);
+  Event interesting=new Event(EventKind.WARNING,null,"show-me","naughty");
+  reporter.handle(interesting);
+  reporter.handle(new Event(EventKind.WARNING,null,"ignore-me","good"));
+  assertEquals(ImmutableList.copyOf(collector.iterator()),ImmutableList.of(interesting));
+}

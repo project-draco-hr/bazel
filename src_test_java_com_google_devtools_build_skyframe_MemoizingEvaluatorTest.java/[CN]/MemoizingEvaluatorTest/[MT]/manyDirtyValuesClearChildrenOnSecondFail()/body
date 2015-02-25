@@ -1,0 +1,23 @@
+{
+  final SkyKey leafKey=GraphTester.toSkyKey("leaf");
+  tester.set(leafKey,new StringValue("leafy"));
+  SkyKey lastKey=GraphTester.toSkyKey("last");
+  tester.set(lastKey,new StringValue("last"));
+  final List<SkyKey> tops=new ArrayList<>();
+  for (int i=0; i < 10000; i++) {
+    SkyKey topKey=GraphTester.toSkyKey("top" + i);
+    tester.getOrCreate(topKey).addDependency(leafKey).addDependency(lastKey).setComputedValue(CONCATENATE);
+    tops.add(topKey);
+  }
+  tester.eval(false,tops.toArray(new SkyKey[0]));
+  failBuildAndRemoveValue(leafKey);
+  tester.set(leafKey,null);
+  tester.getOrCreate(leafKey,true).setBuilder(INTERRUPT_BUILDER);
+  tester.invalidate();
+  try {
+    tester.eval(false,tops.toArray(new SkyKey[0]));
+    Assert.fail();
+  }
+ catch (  InterruptedException e) {
+  }
+}

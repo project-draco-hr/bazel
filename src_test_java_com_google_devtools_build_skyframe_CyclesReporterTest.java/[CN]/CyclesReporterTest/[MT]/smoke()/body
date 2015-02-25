@@ -1,0 +1,14 @@
+{
+  final AtomicBoolean reported=new AtomicBoolean();
+  SingleCycleReporter singleReporter=new SingleCycleReporter(){
+    @Override public boolean maybeReportCycle(    SkyKey topLevelKey,    CycleInfo cycleInfo,    boolean alreadyReported,    EventHandler eventHandler){
+      reported.set(true);
+      return true;
+    }
+  }
+;
+  CycleInfo cycleInfo=new CycleInfo(ImmutableList.of(DUMMY_KEY));
+  CyclesReporter cyclesReporter=new CyclesReporter(singleReporter);
+  cyclesReporter.reportCycles(ImmutableList.of(cycleInfo),DUMMY_KEY,NullEventHandler.INSTANCE);
+  assertThat(reported.get()).isTrue();
+}

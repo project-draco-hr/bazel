@@ -1,0 +1,16 @@
+{
+  TestDelegator delegator=new TestDelegator(){
+    @Override protected boolean isWritable(    Path path){
+      lastPath=path;
+      return booleanState();
+    }
+  }
+;
+  scopedFS().setDelegator(delegator);
+  delegator.setState(false);
+  assertFalseWithPathCheck(fileLink.isWritable(),delegator,fileLinkTarget);
+  assertFalseWithPathCheck(dirLink.getRelative("a").isWritable(),delegator,dirLinkTarget.getRelative("a"));
+  delegator.setState(true);
+  assertTrueWithPathCheck(fileLink.isWritable(),delegator,fileLinkTarget);
+  assertTrueWithPathCheck(dirLink.getRelative("a").isWritable(),delegator,dirLinkTarget.getRelative("a"));
+}

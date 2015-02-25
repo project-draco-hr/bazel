@@ -1,0 +1,21 @@
+{
+  try {
+    File file=new File("/proc/" + processId + "/stat");
+    if (file.isDirectory()) {
+      return new long[2];
+    }
+    Iterator<String> stat=WHITESPACE_SPLITTER.split(Files.toString(file,US_ASCII)).iterator();
+    for (int i=0; i < 13; ++i) {
+      stat.next();
+    }
+    long token13=Long.parseLong(stat.next());
+    long token14=Long.parseLong(stat.next());
+    return new long[]{token13,token14};
+  }
+ catch (  NumberFormatException e) {
+    return new long[2];
+  }
+catch (  IOException e) {
+    return new long[2];
+  }
+}

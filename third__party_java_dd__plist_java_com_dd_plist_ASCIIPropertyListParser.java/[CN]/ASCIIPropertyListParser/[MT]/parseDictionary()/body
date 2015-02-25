@@ -1,0 +1,24 @@
+{
+  skip();
+  skipWhitespacesAndComments();
+  NSDictionary dict=new NSDictionary();
+  while (!accept(DICTIONARY_END_TOKEN)) {
+    String keyString;
+    if (accept(QUOTEDSTRING_BEGIN_TOKEN)) {
+      keyString=parseQuotedString();
+    }
+ else {
+      keyString=parseString();
+    }
+    skipWhitespacesAndComments();
+    read(DICTIONARY_ASSIGN_TOKEN);
+    skipWhitespacesAndComments();
+    NSObject object=parseObject();
+    dict.put(keyString,object);
+    skipWhitespacesAndComments();
+    read(DICTIONARY_ITEM_DELIMITER_TOKEN);
+    skipWhitespacesAndComments();
+  }
+  skip();
+  return dict;
+}

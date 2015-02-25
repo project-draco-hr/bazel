@@ -1,0 +1,19 @@
+{
+  bundleSupport.registerActions(objcProvider);
+  registerCombineArchitecturesAction();
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  Artifact ipaOutput=ruleContext.getImplicitOutputArtifact(IPA);
+  Artifact maybeSignedIpa;
+  if (objcConfiguration.getPlatform() == Platform.SIMULATOR) {
+    maybeSignedIpa=ipaOutput;
+  }
+ else   if (attributes.provisioningProfile() == null) {
+    throw new IllegalStateException(DEVICE_NO_PROVISIONING_PROFILE);
+  }
+ else {
+    maybeSignedIpa=registerBundleSigningActions(ipaOutput);
+  }
+  BundleMergeControlBytes bundleMergeControlBytes=new BundleMergeControlBytes(bundling,maybeSignedIpa,objcConfiguration,families);
+  registerBundleMergeActions(maybeSignedIpa,bundling.getBundleContentArtifacts(),bundleMergeControlBytes);
+  return this;
+}

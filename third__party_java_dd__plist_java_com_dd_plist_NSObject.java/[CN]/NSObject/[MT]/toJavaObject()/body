@@ -1,0 +1,74 @@
+{
+  if (this instanceof NSArray) {
+    NSObject[] arrayA=((NSArray)this).getArray();
+    Object[] arrayB=new Object[arrayA.length];
+    for (int i=0; i < arrayA.length; i++) {
+      arrayB[i]=arrayA[i].toJavaObject();
+    }
+    return arrayB;
+  }
+ else   if (this instanceof NSDictionary) {
+    HashMap<String,NSObject> hashMapA=((NSDictionary)this).getHashMap();
+    HashMap<String,Object> hashMapB=new HashMap<String,Object>(hashMapA.size());
+    for (    String key : hashMapA.keySet()) {
+      hashMapB.put(key,hashMapA.get(key).toJavaObject());
+    }
+    return hashMapB;
+  }
+ else   if (this instanceof NSSet) {
+    Set<NSObject> setA=((NSSet)this).getSet();
+    Set<Object> setB;
+    if (setA instanceof LinkedHashSet) {
+      setB=new LinkedHashSet<Object>(setA.size());
+    }
+ else {
+      setB=new TreeSet<Object>();
+    }
+    for (    NSObject o : setA) {
+      setB.add(o.toJavaObject());
+    }
+    return setB;
+  }
+ else   if (this instanceof NSNumber) {
+    NSNumber num=(NSNumber)this;
+switch (num.type()) {
+case NSNumber.INTEGER:
+{
+        long longVal=num.longValue();
+        if (longVal > Integer.MAX_VALUE || longVal < Integer.MIN_VALUE) {
+          return longVal;
+        }
+ else {
+          return num.intValue();
+        }
+      }
+case NSNumber.REAL:
+{
+      return num.doubleValue();
+    }
+case NSNumber.BOOLEAN:
+{
+    return num.boolValue();
+  }
+default :
+{
+  return num.doubleValue();
+}
+}
+}
+ else if (this instanceof NSString) {
+return ((NSString)this).getContent();
+}
+ else if (this instanceof NSData) {
+return ((NSData)this).bytes();
+}
+ else if (this instanceof NSDate) {
+return ((NSDate)this).getDate();
+}
+ else if (this instanceof UID) {
+return ((UID)this).getBytes();
+}
+ else {
+return this;
+}
+}

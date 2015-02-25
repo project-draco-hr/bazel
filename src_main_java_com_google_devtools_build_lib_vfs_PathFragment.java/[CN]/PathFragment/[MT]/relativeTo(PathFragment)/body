@@ -1,0 +1,15 @@
+{
+  String[] ancestorSegments=ancestorDirectory.segments();
+  int ancestorLength=ancestorSegments.length;
+  if (isAbsolute != ancestorDirectory.isAbsolute() || segments.length < ancestorLength) {
+    throw new IllegalArgumentException("PathFragment " + this + " is not beneath "+ ancestorDirectory);
+  }
+  for (int index=0; index < ancestorLength; index++) {
+    if (!segments[index].equals(ancestorSegments[index])) {
+      throw new IllegalArgumentException("PathFragment " + this + " is not beneath "+ ancestorDirectory);
+    }
+  }
+  int length=segments.length - ancestorLength;
+  String[] resultSegments=subarray(segments,ancestorLength,length);
+  return new PathFragment('\0',false,resultSegments);
+}

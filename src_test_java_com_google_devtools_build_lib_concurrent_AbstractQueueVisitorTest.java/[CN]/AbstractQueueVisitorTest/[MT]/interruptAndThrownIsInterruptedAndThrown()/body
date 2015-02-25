@@ -1,0 +1,22 @@
+{
+  final ConcreteQueueVisitor visitor=new ConcreteQueueVisitor();
+  final CountDownLatch threadStarted=new CountDownLatch(1);
+  visitor.enqueue(new Runnable(){
+    @Override public void run(){
+      threadStarted.countDown();
+      assertTrue(Uninterruptibles.awaitUninterruptibly(visitor.getInterruptionLatchForTestingOnly(),2,TimeUnit.SECONDS));
+      throw THROWABLE;
+    }
+  }
+);
+  assertTrue(threadStarted.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS));
+  Thread.currentThread().interrupt();
+  try {
+    visitor.work(true);
+    fail();
+  }
+ catch (  Exception e) {
+    assertEquals(THROWABLE,e);
+    assertTrue(Thread.interrupted());
+  }
+}

@@ -1,0 +1,15 @@
+{
+  PriorityQueue<SlowTask> queue=priorityQueues[(int)(Thread.currentThread().getId() % SHARDS)];
+synchronized (queue) {
+    if (queue.size() == size) {
+      if (queue.peek().getDurationNanos() > taskData.duration) {
+        return;
+      }
+      queue.add(new SlowTask(taskData));
+      queue.remove();
+    }
+ else {
+      queue.add(new SlowTask(taskData));
+    }
+  }
+}

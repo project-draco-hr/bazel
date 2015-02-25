@@ -1,0 +1,16 @@
+{
+  String[] cpuStats=statContent.substring(0,statContent.indexOf('\n')).trim().split(" +");
+  if (cpuStats.length < 9 | cpuStats.length > 10) {
+    throw new IllegalArgumentException("Unrecognized /proc/stat format");
+  }
+  if (!cpuStats[0].equals("cpu")) {
+    throw new IllegalArgumentException("/proc/stat does not start with cpu keyword");
+  }
+  long idleCpuJiffies=Long.parseLong(cpuStats[4]);
+  long totalJiffies=0;
+  for (int i=1; i < cpuStats.length; i++) {
+    totalJiffies+=Long.parseLong(cpuStats[i]);
+  }
+  long totalCpuJiffies=totalJiffies;
+  return new CpuTimes(idleCpuJiffies,totalCpuJiffies);
+}

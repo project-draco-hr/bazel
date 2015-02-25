@@ -1,0 +1,22 @@
+{
+  graph=new DeterministicInMemoryGraph();
+  tester=new GraphTester();
+  SkyKey errorKey=GraphTester.toSkyKey("error");
+  SkyKey cycleKey=GraphTester.toSkyKey("cycle");
+  SkyKey midKey=GraphTester.toSkyKey("mid");
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  tester.getOrCreate(topKey).addDependency(midKey).setComputedValue(CONCATENATE);
+  tester.getOrCreate(midKey).addDependency(errorKey).addDependency(cycleKey).setComputedValue(CONCATENATE);
+  SkyKey otherTop=GraphTester.toSkyKey("otherTop");
+  CountDownLatch topStartAndCycleFinish=new CountDownLatch(2);
+  tester.getOrCreate(otherTop).setBuilder(new ChainedFunction(topStartAndCycleFinish,new CountDownLatch(0),null,true,new StringValue("never returned"),ImmutableSet.<SkyKey>of(GraphTester.toSkyKey("dep that never builds"))));
+  tester.getOrCreate(cycleKey).setBuilder(new ChainedFunction(null,null,topStartAndCycleFinish,false,new StringValue(""),ImmutableSet.<SkyKey>of(midKey)));
+  tester.getOrCreate(errorKey).setBuilder(new ChainedFunction(null,topStartAndCycleFinish,null,false,null,ImmutableSet.<SkyKey>of()));
+  EvaluationResult<StringValue> result=eval(false,ImmutableSet.of(topKey,otherTop));
+  assertThat(result.errorMap().keySet()).containsExactly(topKey);
+  Iterable<CycleInfo> cycleInfos=result.getError(topKey).getCycleInfo();
+  assertThat(cycleInfos).isNotEmpty();
+  CycleInfo cycleInfo=Iterables.getOnlyElement(cycleInfos);
+  assertThat(cycleInfo.getPathToCycle()).containsExactly(topKey);
+  assertThat(cycleInfo.getCycle()).containsExactly(midKey,cycleKey);
+}

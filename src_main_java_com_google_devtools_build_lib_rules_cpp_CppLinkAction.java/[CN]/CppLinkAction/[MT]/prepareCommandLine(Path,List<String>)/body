@@ -1,0 +1,16 @@
+{
+  List<String> commandlineArgs;
+  if (linkCommandLine.canBeSplit()) {
+    PathFragment paramExecPath=ParameterFile.derivePath(outputLibrary.getArtifact().getExecPath());
+    Pair<List<String>,List<String>> split=linkCommandLine.splitCommandline(paramExecPath);
+    commandlineArgs=split.first;
+    writeToParamFile(execRoot,paramExecPath,split.second);
+    if (inputFiles != null) {
+      inputFiles.add(paramExecPath.getPathString());
+    }
+  }
+ else {
+    commandlineArgs=linkCommandLine.getRawLinkArgv();
+  }
+  return linkCommandLine.finalizeWithLinkstampCommands(commandlineArgs);
+}

@@ -1,0 +1,30 @@
+{
+  Artifact middleman=action.getPrimaryOutput();
+  String cacheKey=middleman.getExecPathString();
+  ActionCache.Entry entry=actionCache.get(cacheKey);
+  boolean changed=false;
+  if (entry != null) {
+    if (entry.isCorrupted()) {
+      reportCorruptedCacheEntry(handler,action);
+      changed=true;
+    }
+ else     if (validateArtifacts(entry,action,metadataHandler,false)) {
+      reportChanged(handler,action);
+      changed=true;
+    }
+  }
+ else {
+    reportChangedDeps(handler,action);
+    changed=true;
+  }
+  if (changed) {
+    entry=actionCache.createEntry("");
+    for (    Artifact input : action.getInputs()) {
+      entry.addFile(input.getExecPath(),metadataHandler.getMetadataMaybe(input));
+    }
+  }
+  metadataHandler.setDigestForVirtualArtifact(middleman,entry.getFileDigest());
+  if (changed) {
+    actionCache.put(cacheKey,entry);
+  }
+}

@@ -1,0 +1,58 @@
+{
+  String originalPattern=pattern;
+  final boolean isAbsolute=pattern.startsWith("//");
+  pattern=isAbsolute ? pattern.substring(2) : absolutize(pattern);
+  if (pattern.startsWith("/")) {
+    throw new TargetParsingException("not a relative path or label: '" + pattern + "'");
+  }
+  if (pattern.isEmpty()) {
+    throw new TargetParsingException("the empty string is not a valid target");
+  }
+  if (pattern.endsWith("/BUILD")) {
+    pattern=pattern.substring(0,pattern.length() - 6) + ":BUILD";
+  }
+  int colonIndex=pattern.lastIndexOf(':');
+  String packagePart=colonIndex < 0 ? pattern : pattern.substring(0,colonIndex);
+  String targetPart=colonIndex < 0 ? "" : pattern.substring(colonIndex + 1);
+  if (packagePart.equals("...")) {
+    packagePart="/...";
+  }
+  if (packagePart.endsWith("/")) {
+    throw new TargetParsingException("The package part of '" + originalPattern + "' should not end in a slash");
+  }
+  if (packagePart.endsWith("/...")) {
+    String realPackagePart=removeSuffix(packagePart,"/...");
+    if (targetPart.isEmpty() || ALL_RULES_IN_SUFFIXES.contains(targetPart)) {
+      return new TargetsBelowPackage(originalPattern,realPackagePart,true);
+    }
+ else     if (ALL_TARGETS_IN_SUFFIXES.contains(targetPart)) {
+      return new TargetsBelowPackage(originalPattern,realPackagePart,false);
+    }
+  }
+  if (ALL_RULES_IN_SUFFIXES.contains(targetPart)) {
+    return new TargetsInPackage(originalPattern,pattern,":" + targetPart,isAbsolute,true,true);
+  }
+  if (ALL_TARGETS_IN_SUFFIXES.contains(targetPart)) {
+    return new TargetsInPackage(originalPattern,pattern,":" + targetPart,isAbsolute,false,true);
+  }
+  if (isAbsolute || pattern.contains(":")) {
+    String fullLabel="//" + pattern;
+    try {
+      LabelValidator.validateAbsoluteLabel(fullLabel);
+    }
+ catch (    BadLabelException e) {
+      String error="invalid target format '" + originalPattern + "': "+ e.getMessage();
+      throw new TargetParsingException(error);
+    }
+    return new SingleTarget(fullLabel);
+  }
+  int slashIndex=pattern.indexOf('/');
+  if (slashIndex < 0) {
+    throw new TargetParsingException("ambiguous target pattern: '" + pattern + "' could "+ "potentially be the name of a package; use '"+ pattern+ ":all' to mean \"all "+ "rules in this package\", '"+ pattern+ "/...' to mean \"all rules recursively "+ "beneath this package\", or '//"+ pattern+ "' to mean \"the default rule in this "+ "package\"");
+  }
+  String errorMessage=LabelValidator.validatePackageName(pattern.substring(0,slashIndex));
+  if (errorMessage != null) {
+    throw new TargetParsingException("Bad target pattern '" + originalPattern + "': "+ errorMessage);
+  }
+  return new InterpretPathAsTarget(pattern);
+}

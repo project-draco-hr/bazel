@@ -1,0 +1,22 @@
+{
+  FileStatus stat=stdErr.statNullable();
+  OutputStream out=null;
+  InputStream in=null;
+  if (stat != null) {
+    try {
+      if (stat.getSize() > 0) {
+        if (stdOut.exists()) {
+          stdOut.setWritable(true);
+        }
+        out=stdOut.getOutputStream(true);
+        in=stdErr.getInputStream();
+        ByteStreams.copy(in,out);
+      }
+    }
+  finally {
+      Closeables.close(out,true);
+      Closeables.close(in,true);
+      stdErr.delete();
+    }
+  }
+}

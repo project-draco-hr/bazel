@@ -1,0 +1,74 @@
+{
+  graph=new InMemoryGraph();
+  int numValues=50;
+  final SkyKey[] family=new SkyKey[numValues];
+  final SkyKey child=GraphTester.skyKey("child");
+  final StringValue childValue=new StringValue("child");
+  tester.set(child,childValue);
+  family[0]=child;
+  for (int i=1; i < numValues; i++) {
+    SkyKey member=skyKey(Integer.toString(i));
+    tester.getOrCreate(member).addDependency(family[i - 1]).setComputedValue(CONCATENATE);
+    family[i]=member;
+  }
+  SkyKey parent=GraphTester.skyKey("parent");
+  tester.getOrCreate(parent).addDependency(family[numValues - 1]).setComputedValue(CONCATENATE);
+  eval(false,parent);
+  final Thread mainThread=Thread.currentThread();
+  final AtomicReference<SkyValue> badValue=new AtomicReference<>();
+  EvaluationProgressReceiver receiver=new EvaluationProgressReceiver(){
+    @Override public void invalidated(    SkyValue value,    InvalidationState state){
+      if (value == childValue) {
+        mainThread.interrupt();
+      }
+ else       if (!childValue.equals(value)) {
+        badValue.set(value);
+      }
+      try {
+        assertTrue(visitor.get().awaitInterruptionForTestingOnly(2,TimeUnit.HOURS));
+      }
+ catch (      InterruptedException e) {
+      }
+    }
+    @Override public void enqueueing(    SkyKey skyKey){
+      throw new UnsupportedOperationException();
+    }
+    @Override public void evaluated(    SkyKey skyKey,    SkyValue value,    EvaluationState state){
+      throw new UnsupportedOperationException();
+    }
+  }
+;
+  try {
+    invalidateWithoutError(receiver,child);
+    fail();
+  }
+ catch (  InterruptedException e) {
+  }
+  assertNull(badValue.get());
+  assertFalse(state.isEmpty());
+  final Set<SkyValue> invalidated=Sets.newConcurrentHashSet();
+  assertFalse(isInvalidated(parent));
+  SkyValue parentValue=graph.getValue(parent);
+  assertNotNull(parentValue);
+  receiver=new EvaluationProgressReceiver(){
+    @Override public void invalidated(    SkyValue value,    InvalidationState state){
+      invalidated.add(value);
+    }
+    @Override public void enqueueing(    SkyKey skyKey){
+      throw new UnsupportedOperationException();
+    }
+    @Override public void evaluated(    SkyKey skyKey,    SkyValue value,    EvaluationState state){
+      throw new UnsupportedOperationException();
+    }
+  }
+;
+  invalidateWithoutError(receiver);
+  assertTrue(invalidated.contains(parentValue));
+  assertThat(state.getInvalidationsForTesting()).isEmpty();
+  assertTrue(isInvalidated(child));
+  assertChanged(child);
+  for (int i=1; i < numValues; i++) {
+    assertDirtyAndNotChanged(family[i]);
+  }
+  assertDirtyAndNotChanged(parent);
+}

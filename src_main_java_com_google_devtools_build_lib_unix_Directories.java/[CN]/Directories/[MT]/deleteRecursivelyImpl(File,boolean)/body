@@ -1,0 +1,25 @@
+{
+  if (!file.exists()) {
+    if (failIfFileDoesNotExist) {
+      throw new FileNotFoundException(file.getPath());
+    }
+ else {
+      return false;
+    }
+  }
+  String filePath=file.getPath();
+  if (!filePath.isEmpty() && filePath.charAt(0) == '-') {
+    filePath="./" + filePath;
+  }
+  try {
+    new Command(new String[]{"/bin/rm","-rf",filePath}).execute();
+  }
+ catch (  AbnormalTerminationException e) {
+    String message=e.getResult().getTerminationStatus() + ": " + new String(e.getResult().getStderr());
+    throw new IOException(message,e);
+  }
+catch (  CommandException e) {
+    throw new IOException(e);
+  }
+  return true;
+}

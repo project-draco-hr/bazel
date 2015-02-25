@@ -1,0 +1,15 @@
+{
+  BlazeCommand command=runtime.getCommandMap().get(options.getOptions(Options.class).forCommand);
+  Collection<Class<? extends OptionsBase>> optionsClasses=BlazeCommandUtils.getOptions(command.getClass(),runtime.getBlazeModules(),runtime.getRuleClassProvider());
+  try {
+    List<String> result=OptionsParser.canonicalize(optionsClasses,options.getResidue());
+    for (    String piece : result) {
+      runtime.getReporter().getOutErr().printOutLn(piece);
+    }
+  }
+ catch (  OptionsParsingException e) {
+    runtime.getReporter().handle(Event.error(e.getMessage()));
+    return ExitCode.COMMAND_LINE_ERROR;
+  }
+  return ExitCode.SUCCESS;
+}

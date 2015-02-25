@@ -1,0 +1,12 @@
+{
+  Path parent=filesystem.getPath("/a");
+  PathFragment childFragment=new PathFragment("b");
+  Path child=parent.getRelative(childFragment);
+  WeakReference<Path> childRef=new WeakReference<>(child);
+  int childHashCode1=childRef.get().hashCode();
+  assertEquals(childHashCode1,parent.getRelative(childFragment).hashCode());
+  child=null;
+  GcFinalization.awaitClear(childRef);
+  int childHashCode2=parent.getRelative(childFragment).hashCode();
+  assertEquals(childHashCode1,childHashCode2);
+}

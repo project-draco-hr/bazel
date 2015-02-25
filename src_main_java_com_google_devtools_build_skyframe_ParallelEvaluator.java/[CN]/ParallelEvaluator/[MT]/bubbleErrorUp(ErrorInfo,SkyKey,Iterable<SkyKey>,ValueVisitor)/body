@@ -1,0 +1,70 @@
+{
+  Set<SkyKey> rootValues=ImmutableSet.copyOf(skyKeys);
+  ErrorInfo error=leafFailure;
+  Map<SkyKey,ValueWithMetadata> bubbleErrorInfo=new HashMap<>();
+  boolean externalInterrupt=false;
+  while (true) {
+    NodeEntry errorEntry=graph.get(errorKey);
+    Iterable<SkyKey> reverseDeps=errorEntry.isDone() ? errorEntry.getReverseDeps() : errorEntry.getInProgressReverseDeps();
+    if (Iterables.isEmpty(reverseDeps)) {
+      Preconditions.checkState(rootValues.contains(errorKey),"Current key %s has to be a top-level key: %s",errorKey,rootValues);
+      break;
+    }
+    SkyKey parent=null;
+    NodeEntry parentEntry=null;
+    for (    SkyKey bubbleParent : reverseDeps) {
+      if (bubbleErrorInfo.containsKey(bubbleParent)) {
+        return null;
+      }
+      NodeEntry bubbleParentEntry=Preconditions.checkNotNull(graph.get(bubbleParent),"parent %s of %s not in graph",bubbleParent,errorKey);
+      if (bubbleParentEntry.isDone()) {
+        Preconditions.checkState(errorEntry.isDone(),"%s %s",errorEntry,bubbleParentEntry);
+        Version parentVersion=bubbleParentEntry.getVersion();
+        Version childVersion=errorEntry.getVersion();
+        Preconditions.checkState(childVersion.atMost(graphVersion) && !childVersion.equals(graphVersion),"child entry is not older than the current graph version, but had a done parent. " + "child: %s childEntry: %s, childVersion: %s" + "bubbleParent: %s bubbleParentEntry: %s, parentVersion: %s, graphVersion: %s",errorKey,errorEntry,childVersion,bubbleParent,bubbleParentEntry,parentVersion,graphVersion);
+        Preconditions.checkState(parentVersion.atMost(graphVersion) && !parentVersion.equals(graphVersion),"parent entry is not older than the current graph version. " + "child: %s childEntry: %s, childVersion: %s" + "bubbleParent: %s bubbleParentEntry: %s, parentVersion: %s, graphVersion: %s",errorKey,errorEntry,childVersion,bubbleParent,bubbleParentEntry,parentVersion,graphVersion);
+        continue;
+      }
+      Preconditions.checkState(visitor.isInflight(bubbleParent),"errorKey: %s, errorEntry: %s, bubbleParent: %s, bubbleParentEntry: %s",errorKey,errorEntry,bubbleParent,bubbleParentEntry);
+      parent=bubbleParent;
+      parentEntry=bubbleParentEntry;
+      break;
+    }
+    Preconditions.checkNotNull(parent,"",errorKey,bubbleErrorInfo);
+    errorKey=parent;
+    SkyFunction factory=skyFunctions.get(parent.functionName());
+    if (parentEntry.isDirty()) {
+switch (parentEntry.getDirtyState()) {
+case CHECK_DEPENDENCIES:
+        parentEntry.signalDep();
+case REBUILDING:
+      break;
+default :
+    throw new AssertionError(parent + " not in valid dirty state: " + parentEntry);
+}
+}
+SkyFunctionEnvironment env=new SkyFunctionEnvironment(parent,parentEntry.getTemporaryDirectDeps(),bubbleErrorInfo,visitor);
+externalInterrupt=externalInterrupt || Thread.currentThread().isInterrupted();
+try {
+factory.compute(parent,env);
+}
+ catch (SkyFunctionException builderException) {
+ReifiedSkyFunctionException reifiedBuilderException=new ReifiedSkyFunctionException(builderException,parent);
+if (reifiedBuilderException.getRootCauseSkyKey().equals(parent)) {
+  error=new ErrorInfo(reifiedBuilderException);
+  bubbleErrorInfo.put(errorKey,ValueWithMetadata.error(new ErrorInfo(errorKey,ImmutableSet.of(error)),env.buildEvents(true)));
+  continue;
+}
+}
+catch (InterruptedException interruptedException) {
+}
+ finally {
+Thread.interrupted();
+}
+bubbleErrorInfo.put(errorKey,ValueWithMetadata.error(new ErrorInfo(errorKey,ImmutableSet.of(error)),env.buildEvents(true)));
+}
+if (externalInterrupt) {
+Thread.currentThread().interrupt();
+}
+return bubbleErrorInfo;
+}

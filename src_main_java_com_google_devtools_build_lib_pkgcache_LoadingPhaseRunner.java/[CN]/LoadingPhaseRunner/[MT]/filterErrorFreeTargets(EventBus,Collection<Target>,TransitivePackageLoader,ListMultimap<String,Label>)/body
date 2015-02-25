@@ -1,0 +1,16 @@
+{
+  Collection<Label> labelsToLoad=new ArrayList<>(labelsToLoadUnconditionally.values());
+  for (  Target target : targetsToLoad) {
+    labelsToLoad.add(target.getLabel());
+  }
+  Multimap<Label,Label> rootCauses=pkgLoader.getRootCauses(labelsToLoad);
+  for (  Map.Entry<String,Label> entry : labelsToLoadUnconditionally.entries()) {
+    if (rootCauses.containsKey(entry.getValue())) {
+      throw new LoadingFailedException("Failed to load required " + entry.getKey() + " target: '"+ entry.getValue()+ "'");
+    }
+  }
+  for (  Map.Entry<Label,Label> entry : rootCauses.entries()) {
+    eventBus.post(new LoadingFailureEvent(entry.getKey(),entry.getValue()));
+  }
+  return ImmutableSet.copyOf(Sets.difference(ImmutableSet.copyOf(targetsToLoad),ImmutableSet.copyOf(getTargetsForLabels(rootCauses.keySet()))));
+}

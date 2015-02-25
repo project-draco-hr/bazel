@@ -1,0 +1,8 @@
+{
+  InstrumentedFilesCollector instrumentedFilesCollector=new InstrumentedFilesCollector(ruleContext,semantics.getCoverageInstrumentationSpec(),JAVA_METADATA_COLLECTOR,filesToBuild);
+  builder.add(InstrumentedFilesProvider.class,new InstrumentedFilesProviderImpl(instrumentedFilesCollector)).add(FilesToCompileProvider.class,new FilesToCompileProvider(getFilesToCompile(classJar))).add(JavaExportsProvider.class,new JavaExportsProvider(collectTransitiveExports()));
+  if (!TargetUtils.isTestRule(ruleContext.getTarget())) {
+    ImmutableList<Artifact> baselineCoverageArtifacts=BaselineCoverageAction.getBaselineCoverageArtifacts(ruleContext,instrumentedFilesCollector.getInstrumentedFiles());
+    builder.setBaselineCoverageArtifacts(baselineCoverageArtifacts);
+  }
+}

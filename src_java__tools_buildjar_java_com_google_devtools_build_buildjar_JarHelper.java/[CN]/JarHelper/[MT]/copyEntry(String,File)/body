@@ -1,0 +1,35 @@
+{
+  if (!names.contains(name)) {
+    if (!file.exists()) {
+      throw new FileNotFoundException(file.getAbsolutePath() + " (No such file or directory)");
+    }
+    boolean isDirectory=file.isDirectory();
+    if (isDirectory && !name.endsWith("/")) {
+      name=name + '/';
+    }
+    if (names.add(name)) {
+      if (verbose) {
+        System.err.println("adding " + file);
+      }
+      long size=isDirectory ? 0 : file.length();
+      JarEntry outEntry=new JarEntry(name);
+      long newtime=normalize ? normalizedTimestamp(name) : file.lastModified();
+      outEntry.setTime(newtime);
+      outEntry.setSize(size);
+      if (size == 0L) {
+        outEntry.setMethod(JarEntry.STORED);
+        outEntry.setCrc(0);
+        out.putNextEntry(outEntry);
+      }
+ else {
+        outEntry.setMethod(storageMethod);
+        if (storageMethod == JarEntry.STORED) {
+          outEntry.setCrc(Files.hash(file,Hashing.crc32()).padToLong());
+        }
+        out.putNextEntry(outEntry);
+        Files.copy(file,out);
+      }
+      out.closeEntry();
+    }
+  }
+}

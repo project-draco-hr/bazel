@@ -1,0 +1,42 @@
+{
+  Executor executor=actionExecutionContext.getExecutor();
+  LOG.info("Generating " + getDotdFile());
+  CppCompileActionContext context=executor.getContext(CppCompileActionContext.class);
+  CppCompileActionContext.Reply reply=null;
+  try {
+    reply=context.execWithReply(this,actionExecutionContext.withFileOutErr(new FileOutErr()));
+  }
+ catch (  ExecException e) {
+    reply=context.getReplyFromException(e,this);
+    if (reply == null) {
+      throw e.toActionExecutionException("",executor.getVerboseFailures(),this);
+    }
+  }
+  IncludeScanningContext scanningContext=executor.getContext(IncludeScanningContext.class);
+  updateActionInputs(executor.getExecRoot(),scanningContext.getArtifactResolver(),reply);
+  try {
+    validateInclusions(actionExecutionContext.getMiddlemanExpander(),executor.getEventHandler());
+  }
+ catch (  ActionExecutionException e) {
+    executor.getEventHandler().handle(Event.warn(getOwner().getLocation(),e.getMessage() + ";\n  this warning may eventually become an error"));
+  }
+  LOG.info("Generating " + outputFile);
+  final String outputPrefix="$TEST_TMPDIR/";
+  String argv=Joiner.on(' ').join(Iterables.transform(getArgv(outputFile.getExecPath()),new Function<String,String>(){
+    @Override public String apply(    String input){
+      String result=ShellEscaper.escapeString(input);
+      if (input.equals(outputFile.getExecPathString()) || input.equals(getDotdFile().getSafeExecPath().getPathString())) {
+        result=outputPrefix + result;
+      }
+      return result;
+    }
+  }
+));
+  try {
+    Preconditions.checkState(outputFile.getExecPath().getParentDirectory().equals(getDotdFile().getSafeExecPath().getParentDirectory()));
+    FileSystemUtils.writeContent(outputFile.getPath(),ISO_8859_1,outputFile.getPath().getBaseName() + ": " + "mkdir -p "+ outputPrefix+ "$(dirname "+ outputFile.getExecPath()+ ")"+ " && "+ argv+ "\n");
+  }
+ catch (  IOException e) {
+    throw new ActionExecutionException("failed to create fake compile command for rule '" + getOwner().getLabel() + ": "+ e.getMessage(),this,false);
+  }
+}

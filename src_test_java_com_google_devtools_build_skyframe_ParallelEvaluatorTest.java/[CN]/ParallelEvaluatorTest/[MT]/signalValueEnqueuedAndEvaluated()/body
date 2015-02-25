@@ -1,0 +1,45 @@
+{
+  final Set<SkyKey> enqueuedValues=Sets.newConcurrentHashSet();
+  final Set<SkyKey> evaluatedValues=Sets.newConcurrentHashSet();
+  EvaluationProgressReceiver progressReceiver=new EvaluationProgressReceiver(){
+    @Override public void invalidated(    SkyValue value,    InvalidationState state){
+      throw new IllegalStateException();
+    }
+    @Override public void enqueueing(    SkyKey skyKey){
+      enqueuedValues.add(skyKey);
+    }
+    @Override public void evaluated(    SkyKey skyKey,    SkyValue value,    EvaluationState state){
+      evaluatedValues.add(skyKey);
+    }
+  }
+;
+  EventHandler reporter=new EventHandler(){
+    @Override public void handle(    Event e){
+      throw new IllegalStateException();
+    }
+  }
+;
+  MemoizingEvaluator aug=new InMemoryMemoizingEvaluator(ImmutableMap.of(GraphTester.NODE_TYPE,tester.getFunction()),new RecordingDifferencer(),progressReceiver);
+  SequentialBuildDriver driver=new SequentialBuildDriver(aug);
+  tester.getOrCreate("top1").setComputedValue(CONCATENATE).addDependency("d1").addDependency("d2");
+  tester.getOrCreate("top2").setComputedValue(CONCATENATE).addDependency("d3");
+  tester.getOrCreate("top3");
+  assertThat(enqueuedValues).isEmpty();
+  assertThat(evaluatedValues).isEmpty();
+  tester.set("d1",new StringValue("1"));
+  tester.set("d2",new StringValue("2"));
+  tester.set("d3",new StringValue("3"));
+  driver.evaluate(ImmutableList.of(GraphTester.toSkyKey("top1")),false,200,reporter);
+  assertThat(enqueuedValues).containsExactlyElementsIn(Arrays.asList(GraphTester.toSkyKeys("top1","d1","d2")));
+  assertThat(evaluatedValues).containsExactlyElementsIn(Arrays.asList(GraphTester.toSkyKeys("top1","d1","d2")));
+  enqueuedValues.clear();
+  evaluatedValues.clear();
+  driver.evaluate(ImmutableList.of(GraphTester.toSkyKey("top2")),false,200,reporter);
+  assertThat(enqueuedValues).containsExactlyElementsIn(Arrays.asList(GraphTester.toSkyKeys("top2","d3")));
+  assertThat(evaluatedValues).containsExactlyElementsIn(Arrays.asList(GraphTester.toSkyKeys("top2","d3")));
+  enqueuedValues.clear();
+  evaluatedValues.clear();
+  driver.evaluate(ImmutableList.of(GraphTester.toSkyKey("top1")),false,200,reporter);
+  assertThat(enqueuedValues).isEmpty();
+  assertThat(evaluatedValues).containsExactlyElementsIn(Arrays.asList(GraphTester.toSkyKeys("top1")));
+}

@@ -1,0 +1,28 @@
+{
+  Map<String,String> variableView=new HashMap<>();
+  String sequenceName=null;
+  for (  String name : usedVariables) {
+    Collection<String> value=variables.get(name);
+    if (value.isEmpty()) {
+      throw new ExpansionException("Invalid toolchain configuration: unknown variable '" + name + "' can not be expanded.");
+    }
+ else     if (value.size() > 1) {
+      if (sequenceName != null) {
+        throw new ExpansionException("Invalid toolchain configuration: trying to expand two variable list in one " + "flag group: '" + sequenceName + "' and '"+ name+ "'");
+      }
+      sequenceName=name;
+    }
+ else {
+      variableView.put(name,value.iterator().next());
+    }
+  }
+  if (sequenceName != null) {
+    for (    String value : variables.get(sequenceName)) {
+      variableView.put(sequenceName,value);
+      expandOnce(variableView,commandLine);
+    }
+  }
+ else {
+    expandOnce(variableView,commandLine);
+  }
+}

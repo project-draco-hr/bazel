@@ -1,0 +1,21 @@
+{
+  checkModifiable();
+  FileSystem sourceDelegate=getDelegate(sourcePath);
+  if (!sourceDelegate.supportsModifications()) {
+    throw new UnsupportedOperationException("The filesystem for the source path " + sourcePath.getPathString() + " does not support modifications.");
+  }
+  sourcePath=adjustPath(sourcePath,sourceDelegate);
+  FileSystem targetDelegate=getDelegate(targetPath);
+  if (!targetDelegate.supportsModifications()) {
+    throw new UnsupportedOperationException("The filesystem for the target path " + targetPath.getPathString() + " does not support modifications.");
+  }
+  targetPath=adjustPath(targetPath,targetDelegate);
+  if (sourceDelegate == targetDelegate) {
+    sourceDelegate.renameTo(sourcePath,targetPath);
+    return;
+  }
+ else {
+    FileSystemUtils.copyFile(sourcePath,targetPath);
+    sourceDelegate.delete(sourcePath);
+  }
+}

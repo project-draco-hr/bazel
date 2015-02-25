@@ -1,0 +1,26 @@
+{
+  List<String> modifiedArgv;
+  if (argvStartsWithSh()) {
+    useShell=true;
+    modifiedArgv=Lists.newArrayList(argv.subList(2,argv.size()));
+  }
+ else {
+    modifiedArgv=Lists.newArrayList(argv);
+  }
+  if (!modifiedArgv.isEmpty()) {
+    String argv0=modifiedArgv.get(0);
+    String command=ARGV_SPLITTER.split(argv0).iterator().next();
+    if (!command.toLowerCase().endsWith(".exe")) {
+      useShell=true;
+    }
+  }
+ else {
+    useShell=true;
+  }
+  if (useShell) {
+    return new String[]{"CMD.EXE","/S","/E:ON","/V:ON","/D","/C","\"" + Joiner.on(' ').join(modifiedArgv) + "\""};
+  }
+ else {
+    return modifiedArgv.toArray(new String[argv.size()]);
+  }
+}

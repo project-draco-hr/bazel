@@ -1,0 +1,29 @@
+{
+  return new SafeImplicitOutputsFunction(){
+    @Override public Iterable<String> getImplicitOutputs(    AttributeMap rule){
+      Iterable<String> result=null;
+      for (      String template : templates) {
+        List<String> substitutions=substitutePlaceholderIntoTemplate(template,rule);
+        if (substitutions.isEmpty()) {
+          continue;
+        }
+        if (result == null) {
+          result=substitutions;
+        }
+ else {
+          result=Iterables.concat(result,substitutions);
+        }
+      }
+      if (result == null) {
+        return ImmutableList.<String>of();
+      }
+ else {
+        return Sets.newLinkedHashSet(result);
+      }
+    }
+    @Override public String toString(){
+      return StringUtil.joinEnglishList(templates);
+    }
+  }
+;
+}

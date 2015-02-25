@@ -1,0 +1,20 @@
+{
+  TestDelegator delegator=new TestDelegator(){
+    @Override protected PathFragment readSymbolicLink(    Path path){
+      lastPath=path;
+      return (PathFragment)objectState;
+    }
+    @Override protected boolean isDirectory(    Path path,    boolean followSymlinks){
+      return true;
+    }
+  }
+;
+  scopedFS().setDelegator(delegator);
+  delegator.setState(new PathFragment("whatever"));
+  PathFragment p=fileLink.readSymbolicLink();
+  assertEquals(null,delegator.lastPath());
+  assertNotSame(delegator.objectState(),p);
+  p=dirLink.getRelative("a").readSymbolicLink();
+  assertEquals(dirLinkTarget.getRelative("a"),delegator.lastPath());
+  assertSame(delegator.objectState(),p);
+}

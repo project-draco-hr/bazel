@@ -1,0 +1,20 @@
+{
+  ImmutableSet<String> mappedAttributes=ImmutableSet.copyOf(attributeMap.getAttributeNames());
+  for (  Attribute attribute : attributes) {
+    if (!attribute.isImplicit() || !attribute.getCondition().apply(attributeMap)) {
+      continue;
+    }
+    if (attribute.getType() == Type.LABEL) {
+      Label label=mappedAttributes.contains(attribute.getName()) ? attributeMap.get(attribute.getName(),Type.LABEL) : Type.LABEL.cast(attribute.getDefaultValue(rule));
+      if (label != null) {
+        builder.put(attribute,LabelAndConfiguration.of(label,configuration));
+      }
+    }
+ else     if (attribute.getType() == Type.LABEL_LIST) {
+      List<Label> labelList=mappedAttributes.contains(attribute.getName()) ? attributeMap.get(attribute.getName(),Type.LABEL_LIST) : Type.LABEL_LIST.cast(attribute.getDefaultValue(rule));
+      for (      Label label : labelList) {
+        builder.put(attribute,LabelAndConfiguration.of(label,configuration));
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  try {
+    List<String> items=new ArrayList<>();
+    items.add(String.format("Elapsed time: %.3fs",event.getResult().getElapsedSeconds()));
+    if (criticalPathComputer != null) {
+      Profiler.instance().startTask(ProfilerTask.CRITICAL_PATH,"Critical path");
+      AggregatedCriticalPath<SimpleCriticalPathComponent> criticalPath=criticalPathComputer.aggregate();
+      items.add(criticalPath.toStringSummary());
+      LOG.info(criticalPath.toString());
+      LOG.info("Slowest actions:\n  " + Joiner.on("\n  ").join(criticalPathComputer.getSlowestComponents()));
+      for (      SimpleCriticalPathComponent stat : criticalPath.components().reverse()) {
+        Profiler.instance().logSimpleTaskDuration(TimeUnit.MILLISECONDS.toNanos(stat.getStartTime()),TimeUnit.MILLISECONDS.toNanos(stat.getActionWallTime()),ProfilerTask.CRITICAL_PATH_COMPONENT,stat.getAction());
+      }
+      Profiler.instance().completeTask(ProfilerTask.CRITICAL_PATH);
+    }
+    reporter.handle(Event.info(Joiner.on(", ").join(items)));
+  }
+  finally {
+    criticalPathComputer=null;
+  }
+}

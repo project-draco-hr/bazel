@@ -1,0 +1,14 @@
+{
+  if (exceptionClass.equals(ValueOrExceptionUtils.BottomException.class)) {
+    return;
+  }
+  if (exceptionClass.isAssignableFrom(RuntimeException.class)) {
+    throw new IllegalStateException(exceptionClass.getSimpleName() + " is a supertype of " + "RuntimeException. Don't do this since then you would potentially swallow all "+ "RuntimeExceptions, even those from Skyframe");
+  }
+  if (RuntimeException.class.isAssignableFrom(exceptionClass)) {
+    throw new IllegalStateException(exceptionClass.getSimpleName() + " is a subtype of " + "RuntimeException. You should rewrite your code to use checked exceptions.");
+  }
+  if (InterruptedException.class.isAssignableFrom(exceptionClass)) {
+    throw new IllegalStateException(exceptionClass.getSimpleName() + " is a subtype of " + "InterruptedException. Don't do this; Skyframe handles interrupts separately from the "+ "general SkyFunctionException mechanism.");
+  }
+}

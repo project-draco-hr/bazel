@@ -1,0 +1,17 @@
+{
+  BuildConfiguration.Options opts=get(BuildConfiguration.Options.class);
+  Map<String,Set<Label>> collector=new TreeMap<>();
+  for (  FragmentOptions fragment : fragmentOptionsMap.values()) {
+    for (    Map.Entry<String,Set<Label>> entry : fragment.getDefaultsLabels(opts).entrySet()) {
+      if (!collector.containsKey(entry.getKey())) {
+        collector.put(entry.getKey(),new TreeSet<Label>());
+      }
+      collector.get(entry.getKey()).addAll(entry.getValue());
+    }
+  }
+  ImmutableMap.Builder<String,ImmutableSet<Label>> result=new ImmutableMap.Builder<>();
+  for (  Map.Entry<String,Set<Label>> entry : collector.entrySet()) {
+    result.put(entry.getKey(),ImmutableSet.copyOf(entry.getValue()));
+  }
+  return result.build();
+}

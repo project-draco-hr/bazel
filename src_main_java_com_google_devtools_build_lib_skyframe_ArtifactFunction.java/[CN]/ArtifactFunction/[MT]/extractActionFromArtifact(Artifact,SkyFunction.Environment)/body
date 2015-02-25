@@ -1,0 +1,12 @@
+{
+  ArtifactOwner artifactOwner=artifact.getArtifactOwner();
+  Preconditions.checkState(artifactOwner instanceof ActionLookupKey,"",artifact,artifactOwner);
+  SkyKey actionLookupKey=ActionLookupValue.key((ActionLookupKey)artifactOwner);
+  ActionLookupValue value=(ActionLookupValue)env.getValue(actionLookupKey);
+  if (value == null) {
+    Preconditions.checkState(artifactOwner == CoverageReportValue.ARTIFACT_OWNER,"Not-yet-present artifact owner: %s",artifactOwner);
+    return null;
+  }
+  Preconditions.checkNotNull(value,"Owner %s of %s not in graph %s",artifactOwner,artifact,actionLookupKey);
+  return Preconditions.checkNotNull(value.getGeneratingAction(artifact),"Value %s does not contain generating action of %s",value,artifact);
+}

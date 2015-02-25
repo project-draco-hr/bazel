@@ -1,0 +1,32 @@
+{
+  consumedBytes=0;
+  int bytesProduced=0;
+  int bytesConsumed=0;
+  while ((bytesProduced == 0) && !inflater.finished()) {
+    inflater.setInput(buffer,bufferOffset + bytesConsumed,bufferLength - bytesConsumed);
+    int remainingBefore=inflater.getRemaining();
+    try {
+      bytesProduced=inflater.inflate(dest,off,len);
+    }
+ catch (    DataFormatException e) {
+      throw new IOException("Invalid deflate stream in ZIP file.",e);
+    }
+    bytesConsumed+=remainingBefore - inflater.getRemaining();
+    consumedBytes=bytesConsumed;
+    if (bytesProduced == 0) {
+      if (inflater.needsDictionary()) {
+        throw new AssertionError("Inflater unexpectedly requires a dictionary.");
+      }
+ else       if (inflater.needsInput()) {
+        readMoreData("need more data for deflate");
+      }
+ else       if (inflater.finished()) {
+        return 0;
+      }
+ else {
+        throw new AssertionError("Inflater unexpectedly produced no output.");
+      }
+    }
+  }
+  return bytesProduced;
+}

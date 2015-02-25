@@ -1,0 +1,37 @@
+{
+  RootedPath workspaceRoot=(RootedPath)skyKey.argument();
+  if (env.getValue(FileValue.key(workspaceRoot)) == null) {
+    return null;
+  }
+  Path workspaceFilePath=workspaceRoot.getRoot().getRelative(workspaceRoot.getRelativePath());
+  WorkspaceNameHolder holder=new WorkspaceNameHolder();
+  ExternalPackageBuilder builder=new ExternalPackageBuilder(workspaceFilePath);
+  StoredEventHandler localReporter=new StoredEventHandler();
+  BuildFileAST buildFileAST;
+  ParserInputSource inputSource=null;
+  try {
+    inputSource=ParserInputSource.create(workspaceFilePath);
+  }
+ catch (  IOException e) {
+    throw new WorkspaceFileFunctionException(e,Transience.TRANSIENT);
+  }
+  buildFileAST=BuildFileAST.parseBuildFile(inputSource,localReporter,null,false);
+  if (buildFileAST.containsErrors()) {
+    localReporter.handle(Event.error("WORKSPACE file could not be parsed"));
+  }
+ else {
+    try {
+      if (!evaluateWorkspaceFile(buildFileAST,holder,builder)) {
+        localReporter.handle(Event.error("Error evaluating WORKSPACE file " + workspaceFilePath));
+      }
+    }
+ catch (    EvalException e) {
+      throw new WorkspaceFileFunctionException(e);
+    }
+  }
+  builder.addEvents(localReporter.getEvents());
+  if (localReporter.hasErrors()) {
+    builder.setContainsErrors();
+  }
+  return new WorkspaceFileValue(holder.workspaceName,builder.build());
+}

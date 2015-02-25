@@ -1,0 +1,28 @@
+{
+  StringBuilder desc=new StringBuilder();
+  if (!impl.getOptionsClasses().isEmpty()) {
+    List<Field> allFields=Lists.newArrayList();
+    for (    Class<? extends OptionsBase> optionsClass : impl.getOptionsClasses()) {
+      allFields.addAll(impl.getAnnotatedFieldsFor(optionsClass));
+    }
+    Collections.sort(allFields,OptionsUsage.BY_CATEGORY);
+    String prevCategory=null;
+    for (    Field optionField : allFields) {
+      String category=optionField.getAnnotation(Option.class).category();
+      if (!category.equals(prevCategory)) {
+        prevCategory=category;
+        String description=categoryDescriptions.get(category);
+        if (description == null) {
+          description="Options category '" + category + "'";
+        }
+        if (documentationLevel(category) == DocumentationLevel.DOCUMENTED) {
+          desc.append("\n").append(description).append(":\n");
+        }
+      }
+      if (documentationLevel(prevCategory) == DocumentationLevel.DOCUMENTED) {
+        OptionsUsage.getUsage(optionField,desc,helpVerbosity);
+      }
+    }
+  }
+  return desc.toString().trim();
+}

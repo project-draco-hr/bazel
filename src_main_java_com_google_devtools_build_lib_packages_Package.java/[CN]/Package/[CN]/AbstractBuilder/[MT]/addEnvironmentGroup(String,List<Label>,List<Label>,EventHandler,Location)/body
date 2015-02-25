@@ -1,0 +1,30 @@
+{
+  if (!checkForDuplicateLabels(environments,name,"environments",location,eventHandler) || !checkForDuplicateLabels(defaults,name,"defaults",location,eventHandler)) {
+    setContainsErrors();
+    return;
+  }
+  EnvironmentGroup group=new EnvironmentGroup(createLabel(name),pkg,environments,defaults,location);
+  Target existing=targets.get(group.getName());
+  if (existing != null) {
+    throw nameConflict(group,existing);
+  }
+  targets.put(group.getName(),group);
+  Collection<Event> membershipErrors=group.validateMembership();
+  if (!membershipErrors.isEmpty()) {
+    for (    Event error : membershipErrors) {
+      eventHandler.handle(error);
+    }
+    setContainsErrors();
+    return;
+  }
+  for (  Label environment : group.getEnvironments()) {
+    EnvironmentGroup otherGroup=environmentGroups.get(environment);
+    if (otherGroup != null) {
+      eventHandler.handle(Event.error(location,"environment " + environment + " belongs to"+ " both "+ group.getLabel()+ " and "+ otherGroup.getLabel()));
+      setContainsErrors();
+    }
+ else {
+      environmentGroups.put(environment,group);
+    }
+  }
+}

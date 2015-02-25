@@ -1,0 +1,11 @@
+{
+  InMemoryContentInfo status;
+synchronized (this) {
+    status=scopeLimitedStat(path,true);
+    if (!status.outOfScope()) {
+      status.setLastModifiedTime(newTime == -1L ? clock.currentTimeMillis() : newTime);
+      return;
+    }
+  }
+  getDelegatedPath(status.getEscapingPath()).setLastModifiedTime(newTime);
+}

@@ -1,0 +1,14 @@
+{
+  if (rootedPath.equals(realRootedPath)) {
+    Preconditions.checkState(fileStateValue.getType() != FileStateValue.Type.SYMLINK,"rootedPath: %s, fileStateValue: %s, realRootedPath: %s, realFileStateValue: %s",rootedPath,fileStateValue,realRootedPath,realFileStateValue);
+    return new RegularFileValue(rootedPath,fileStateValue);
+  }
+ else {
+    if (fileStateValue.getType() == FileStateValue.Type.SYMLINK) {
+      return new SymlinkFileValue(realRootedPath,realFileStateValue,fileStateValue.getSymlinkTarget());
+    }
+ else {
+      return new DifferentRealPathFileValue(realRootedPath,realFileStateValue);
+    }
+  }
+}

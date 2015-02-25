@@ -1,0 +1,18 @@
+{
+  OptionsParser parser=OptionsParser.newOptionsParser(PlMergeOptions.class);
+  parser.parse(args);
+  PlMergeOptions options=parser.getOptions(PlMergeOptions.class);
+  if (options.sourceFiles.isEmpty()) {
+    missingArg("At least one --source_file");
+  }
+  if (options.outFile == null) {
+    missingArg("--out_file");
+  }
+  FileSystem fileSystem=FileSystems.getDefault();
+  List<Path> sourceFilePaths=new ArrayList<>();
+  for (  String sourceFile : options.sourceFiles) {
+    sourceFilePaths.add(fileSystem.getPath(sourceFile));
+  }
+  PlistMerging merging=PlistMerging.from(sourceFilePaths,ImmutableMap.<String,NSObject>of(),ImmutableMap.<String,String>of(),new KeysToRemoveIfEmptyString());
+  merging.writePlist(fileSystem.getPath(options.outFile));
+}

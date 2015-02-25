@@ -1,0 +1,31 @@
+{
+  BlazeRule annotation=definitionClass.getAnnotation(BlazeRule.class);
+  Preconditions.checkArgument(ruleClassMap.get(annotation.name()) == null,annotation.name());
+  Preconditions.checkArgument(annotation.type() == ABSTRACT ^ annotation.factoryClass() != RuleConfiguredTargetFactory.class);
+  Preconditions.checkArgument((annotation.type() != TEST) || Arrays.asList(annotation.ancestors()).contains(BaseRuleClasses.TestBaseRule.class));
+  RuleDefinition instance;
+  try {
+    instance=definitionClass.newInstance();
+  }
+ catch (  IllegalAccessException|InstantiationException e) {
+    throw new IllegalStateException(e);
+  }
+  RuleClass[] ancestorClasses=new RuleClass[annotation.ancestors().length];
+  for (int i=0; i < annotation.ancestors().length; i++) {
+    ancestorClasses[i]=ruleMap.get(annotation.ancestors()[i]);
+    if (ancestorClasses[i] == null) {
+      throw new IllegalStateException("Ancestor " + annotation.ancestors()[i] + " of "+ annotation.name()+ " is not initialized");
+    }
+  }
+  RuleConfiguredTargetFactory factory=null;
+  if (annotation.type() != ABSTRACT) {
+    factory=createFactory(annotation.factoryClass());
+  }
+  RuleClass.Builder builder=new RuleClass.Builder(annotation.name(),annotation.type(),false,ancestorClasses);
+  builder.factory(factory);
+  RuleClass ruleClass=instance.build(builder,this);
+  ruleMap.put(definitionClass,ruleClass);
+  ruleClassMap.put(ruleClass.getName(),ruleClass);
+  ruleDefinitionMap.put(ruleClass.getName(),definitionClass);
+  return ruleClass;
+}

@@ -1,0 +1,32 @@
+{
+  DependencyResolver resolver=new DependencyResolver(){
+    @Override protected void invalidVisibilityReferenceHook(    TargetAndConfiguration node,    Label label){
+      throw new RuntimeException("bad visibility on " + label + " during testing unexpected");
+    }
+    @Override protected void invalidPackageGroupReferenceHook(    TargetAndConfiguration node,    Label label){
+      throw new RuntimeException("bad package group on " + label + " during testing unexpected");
+    }
+    @Override protected Target getTarget(    Label label) throws NoSuchThingException {
+      return packageManager.getLoadedTarget(label);
+    }
+  }
+;
+  TargetAndConfiguration ctNode=new TargetAndConfiguration(target);
+  ListMultimap<Attribute,Dependency> depNodeNames;
+  try {
+    depNodeNames=resolver.dependentNodeMap(ctNode,null,getConfigurableAttributeKeys(ctNode));
+  }
+ catch (  EvalException e) {
+    throw new IllegalStateException(e);
+  }
+  final Map<LabelAndConfiguration,ConfiguredTarget> depMap=new HashMap<>();
+  for (  ConfiguredTarget dep : skyframeExecutor.getConfiguredTargets(depNodeNames.values())) {
+    depMap.put(LabelAndConfiguration.of(dep.getLabel(),dep.getConfiguration()),dep);
+  }
+  return Multimaps.transformValues(depNodeNames,new Function<Dependency,ConfiguredTarget>(){
+    @Override public ConfiguredTarget apply(    Dependency depName){
+      return depMap.get(LabelAndConfiguration.of(depName.getLabel(),depName.getConfiguration()));
+    }
+  }
+);
+}

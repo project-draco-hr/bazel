@@ -1,0 +1,28 @@
+{
+  initializeTester();
+  SkyKey leaf=GraphTester.toSkyKey("leaf");
+  SkyKey mid=GraphTester.toSkyKey("mid");
+  SkyKey top=GraphTester.toSkyKey("top");
+  SkyKey suffix=GraphTester.toSkyKey("suffix");
+  StringValue suffixValue=new StringValue("suffix");
+  tester.set(suffix,suffixValue);
+  tester.getOrCreate(top).addDependency(mid).addDependency(suffix).setComputedValue(CONCATENATE);
+  tester.getOrCreate(mid).addDependency(leaf).addDependency(suffix).setComputedValue(CONCATENATE);
+  SkyValue leafyValue=new StringValue("leafy");
+  tester.set(leaf,leafyValue);
+  StringValue value=(StringValue)tester.evalAndGet("top");
+  assertEquals("leafysuffixsuffix",value.getValue());
+  tester.getOrCreate(leaf,true);
+  tester.getOrCreate(mid,false).setHasError(true);
+  tester.invalidate();
+  value=(StringValue)tester.evalAndGet("leaf");
+  assertEquals("leafy",value.getValue());
+  assertThat(tester.getDirtyValues()).containsExactly(new StringValue("leafysuffix"),new StringValue("leafysuffixsuffix"));
+  assertThat(tester.getDeletedValues()).isEmpty();
+  EvaluationResult<StringValue> result=tester.eval(false,top);
+  assertFalse(result.hasError());
+  value=result.get(top);
+  assertEquals("leafysuffixsuffix",value.getValue());
+  assertThat(tester.getDirtyValues()).isEmpty();
+  assertThat(tester.getDeletedValues()).isEmpty();
+}

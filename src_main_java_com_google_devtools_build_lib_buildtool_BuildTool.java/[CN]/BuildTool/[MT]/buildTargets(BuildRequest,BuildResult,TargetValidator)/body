@@ -1,0 +1,58 @@
+{
+  validateOptions(request);
+  BuildOptions buildOptions=runtime.createBuildOptions(request);
+  runtime.setupPackageCache(request.getPackageCacheOptions(),DefaultsPackage.getDefaultsPackageContent(buildOptions));
+  ExecutionTool executionTool=null;
+  LoadingResult loadingResult=null;
+  BuildConfigurationCollection configurations=null;
+  try {
+    getEventBus().post(new BuildStartingEvent(runtime.getOutputFileSystem(),request));
+    LOG.info("Build identifier: " + request.getId());
+    executionTool=new ExecutionTool(runtime,request);
+    if (needsExecutionPhase(request.getBuildOptions())) {
+      executionTool.init();
+    }
+    loadingResult=runLoadingPhase(request,validator);
+    if (!request.getMultiCpus().isEmpty()) {
+      getReporter().handle(Event.warn("The --experimental_multi_cpu option is _very_ experimental and only intended for " + "internal testing at this time. If you do not work on the build tool, then you " + "should stop now!"));
+      if (!"build".equals(request.getCommandName()) && !"test".equals(request.getCommandName())) {
+        throw new InvalidConfigurationException("The experimental setting to select multiple CPUs is only supported for 'build' and " + "'test' right now!");
+      }
+    }
+    configurations=getConfigurations(runtime.getBuildConfigurationKey(buildOptions,request.getMultiCpus()),request.getViewOptions().keepGoing);
+    getEventBus().post(new ConfigurationsCreatedEvent(configurations));
+    runtime.throwPendingException();
+    if (configurations.getTargetConfigurations().size() == 1) {
+      getEventBus().post(new MakeEnvironmentEvent(configurations.getTargetConfigurations().get(0).getMakeEnvironment()));
+    }
+    LOG.info("Configurations created");
+    AnalysisResult analysisResult=runAnalysisPhase(request,loadingResult,configurations);
+    result.setActualTargets(analysisResult.getTargetsToBuild());
+    result.setTestTargets(analysisResult.getTargetsToTest());
+    reportTargets(analysisResult);
+    if (needsExecutionPhase(request.getBuildOptions())) {
+      executionTool.executeBuild(analysisResult,result,runtime.getSkyframeExecutor(),configurations,mergePackageRoots(loadingResult.getPackageRoots(),runtime.getSkyframeExecutor().getPackageRoots()));
+    }
+    String delayedErrorMsg=analysisResult.getError();
+    if (delayedErrorMsg != null) {
+      throw new BuildFailedException(delayedErrorMsg);
+    }
+  }
+ catch (  RuntimeException e) {
+    request.getOutErr().printErrLn("Unhandled exception thrown during build; message: " + e.getMessage());
+    throw e;
+  }
+ finally {
+    long versionWindow=request.getViewOptions().versionWindowForDirtyNodeGc;
+    if (versionWindow != -1) {
+      runtime.getSkyframeExecutor().deleteOldNodes(versionWindow);
+    }
+    if (executionTool != null) {
+      executionTool.shutdown();
+    }
+    getEventBus().post(new BuildInfoEvent(runtime.getworkspaceStatusActionFactory().createDummyWorkspaceStatus()));
+  }
+  if (loadingResult != null && loadingResult.hasTargetPatternError()) {
+    throw new BuildFailedException("execution phase successful, but there were errors " + "parsing the target pattern");
+  }
+}

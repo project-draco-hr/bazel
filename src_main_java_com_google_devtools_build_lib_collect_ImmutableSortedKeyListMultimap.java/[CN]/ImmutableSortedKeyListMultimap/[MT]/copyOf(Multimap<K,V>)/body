@@ -1,0 +1,21 @@
+{
+  if (data.isEmpty()) {
+    return EMPTY_MULTIMAP;
+  }
+  if (data instanceof ImmutableSortedKeyListMultimap) {
+    return (ImmutableSortedKeyListMultimap<K,V>)data;
+  }
+  Set<K> keySet=data.keySet();
+  int size=keySet.size();
+  K[] sortedKeys=(K[])new Comparable<?>[size];
+  int index=0;
+  for (  K key : keySet) {
+    sortedKeys[index++]=Preconditions.checkNotNull(key);
+  }
+  Arrays.sort(sortedKeys);
+  List<V>[] values=(List<V>[])new List<?>[size];
+  for (int i=0; i < size; i++) {
+    values[i]=ImmutableList.copyOf(data.get(sortedKeys[i]));
+  }
+  return new ImmutableSortedKeyListMultimap<>(sortedKeys,values);
+}

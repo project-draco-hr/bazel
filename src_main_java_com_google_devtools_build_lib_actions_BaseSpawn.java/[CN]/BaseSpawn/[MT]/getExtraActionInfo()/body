@@ -1,0 +1,14 @@
+{
+  SpawnInfo.Builder info=SpawnInfo.newBuilder();
+  info.addAllArgument(getArguments());
+  for (  Map.Entry<String,String> variable : getEnvironment().entrySet()) {
+    info.addVariable(EnvironmentVariable.newBuilder().setName(variable.getKey()).setValue(variable.getValue()).build());
+  }
+  for (  ActionInput input : getInputFiles()) {
+    if (!(input instanceof Artifact) || !((Artifact)input).isMiddlemanArtifact()) {
+      info.addInputFile(input.getExecPathString());
+    }
+  }
+  info.addAllOutputFile(ActionInputHelper.toExecPaths(getOutputFiles()));
+  return info.build();
+}

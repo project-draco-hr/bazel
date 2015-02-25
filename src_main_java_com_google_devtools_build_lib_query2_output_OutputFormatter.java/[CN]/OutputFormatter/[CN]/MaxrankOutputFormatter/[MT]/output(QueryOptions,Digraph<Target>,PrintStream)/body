@@ -1,0 +1,34 @@
+{
+class DP {
+    final Map<Node<Set<Node<Target>>>,Integer> ranks=new HashMap<>();
+    int rank(    Node<Set<Node<Target>>> node){
+      Integer rank=ranks.get(node);
+      if (rank == null) {
+        int maxPredRank=-1;
+        for (        Node<Set<Node<Target>>> p : node.getPredecessors()) {
+          maxPredRank=Math.max(maxPredRank,rank(p));
+        }
+        rank=maxPredRank + 1;
+        ranks.put(node,rank);
+      }
+      return rank;
+    }
+  }
+  DP dp=new DP();
+  List<Pair<Integer,Label>> output=new ArrayList<>();
+  for (  Node<Set<Node<Target>>> x : result.getStrongComponentGraph().getNodes()) {
+    int rank=dp.rank(x);
+    for (    Node<Target> y : x.getLabel()) {
+      output.add(Pair.of(rank,y.getLabel().getLabel()));
+    }
+  }
+  Collections.sort(output,new Comparator<Pair<Integer,Label>>(){
+    @Override public int compare(    Pair<Integer,Label> x,    Pair<Integer,Label> y){
+      return x.first - y.first;
+    }
+  }
+);
+  for (  Pair<Integer,Label> pair : output) {
+    out.println(pair.first + " " + pair.second);
+  }
+}

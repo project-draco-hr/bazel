@@ -1,0 +1,19 @@
+{
+  ResolvedTargets.Builder<Target> testTargetsBuilder=ResolvedTargets.builder();
+  for (  String targetPattern : targetPatterns) {
+    if (targetPattern.startsWith("-")) {
+      ResolvedTargets<Target> someNegativeTargets=targetPatternEvaluator.parseTargetPatternList(eventHandler,ImmutableList.of(targetPattern.substring(1)),FilteringPolicies.FILTER_TESTS,keepGoing);
+      ResolvedTargets<Target> moreNegativeTargets=TestTargetUtils.expandTestSuites(packageManager,eventHandler,someNegativeTargets.getTargets(),false,keepGoing);
+      testTargetsBuilder.filter(Predicates.not(Predicates.in(moreNegativeTargets.getTargets())));
+      testTargetsBuilder.mergeError(moreNegativeTargets.hasError());
+    }
+ else {
+      ResolvedTargets<Target> somePositiveTargets=targetPatternEvaluator.parseTargetPatternList(eventHandler,ImmutableList.of(targetPattern),FilteringPolicies.FILTER_TESTS,keepGoing);
+      ResolvedTargets<Target> morePositiveTargets=TestTargetUtils.expandTestSuites(packageManager,eventHandler,somePositiveTargets.getTargets(),false,keepGoing);
+      testTargetsBuilder.addAll(morePositiveTargets.getTargets());
+      testTargetsBuilder.mergeError(morePositiveTargets.hasError());
+    }
+  }
+  testTargetsBuilder.filter(getTestFilter(eventHandler,options));
+  return testTargetsBuilder.build();
+}

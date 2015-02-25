@@ -1,0 +1,23 @@
+{
+  initializeTester();
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  tester.set(topKey,new StringValue("initial"));
+  assertEquals(new StringValue("initial"),tester.evalAndGet(false,topKey));
+  CountDownLatch slowStart=new CountDownLatch(1);
+  CountDownLatch errorFinish=new CountDownLatch(1);
+  SkyKey errorKey=GraphTester.toSkyKey("error");
+  tester.getOrCreate(errorKey).setBuilder(new ChainedFunction(null,slowStart,errorFinish,false,null,ImmutableList.<SkyKey>of()));
+  SkyKey slowKey=GraphTester.toSkyKey("slow");
+  tester.getOrCreate(slowKey).setBuilder(new ChainedFunction(slowStart,errorFinish,null,true,new StringValue("slow"),ImmutableList.<SkyKey>of()));
+  SkyKey midKey=GraphTester.toSkyKey("mid");
+  tester.getOrCreate(midKey).addDependency(slowKey).setComputedValue(COPY);
+  tester.set(topKey,null);
+  tester.getOrCreate(topKey).addDependency(midKey).addDependency(errorKey).setComputedValue(CONCATENATE);
+  tester.invalidate();
+  EvaluationResult<StringValue> result=tester.eval(false,topKey);
+  assertThat(result.getError().getRootCauses()).containsExactly(errorKey);
+  assertEquals(null,tester.graph.getExistingValueForTesting(midKey));
+  tester.getOrCreate(slowKey,false).setBuilder(null).setConstantValue(new StringValue("slow"));
+  tester.evalAndGet(false,midKey);
+  tester.eval(true,topKey);
+}

@@ -1,0 +1,18 @@
+{
+  Action action=mockAction("action1",true);
+  verifyNoOutput();
+  setPreparing(action);
+  clock.advance();
+  verifyOutput("Still waiting for 1 job to complete:","Preparing:","action1, 1 s");
+  setScheduling(action);
+  clock.advance();
+  verifyOutput("Still waiting for 1 job to complete:","Scheduling:","action1, 1 s");
+  setRunning(action);
+  clock.advance();
+  verifyOutput("Still waiting for 1 job to complete:","Running (remote):","action1, 1 s");
+  clock.advance();
+  eventBus.post(ActionStatusMessage.analysisStrategy(action));
+  verifyOutput("Still waiting for 1 job to complete:","Analyzing:","action1, 0 s");
+  statusReporter.remove(action);
+  verifyNoOutput();
+}

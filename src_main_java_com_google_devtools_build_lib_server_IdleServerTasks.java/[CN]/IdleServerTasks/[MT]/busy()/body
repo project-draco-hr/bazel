@@ -1,0 +1,19 @@
+{
+  Preconditions.checkState(!executor.isShutdown());
+  executor.shutdown();
+  executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+  executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+  boolean interrupted=false;
+  while (true) {
+    try {
+      executor.awaitTermination(Long.MAX_VALUE,TimeUnit.HOURS);
+      break;
+    }
+ catch (    InterruptedException e) {
+      interrupted=true;
+    }
+  }
+  if (interrupted) {
+    Thread.currentThread().interrupt();
+  }
+}

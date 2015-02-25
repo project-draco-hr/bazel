@@ -1,0 +1,39 @@
+{
+  for (  Attribute attribute : attributes) {
+    if (!attribute.isLateBound() || !attribute.getCondition().apply(attributeMap)) {
+      continue;
+    }
+    List<BuildConfiguration> actualConfigurations=ImmutableList.of(configuration);
+    if (attribute.getConfigurationTransition() instanceof SplitTransition<?>) {
+      Preconditions.checkState(attribute.getConfigurator() == null);
+      actualConfigurations=configuration.getSplitConfigurations((SplitTransition<?>)attribute.getConfigurationTransition());
+    }
+    for (    BuildConfiguration actualConfig : actualConfigurations) {
+      @SuppressWarnings("unchecked") LateBoundDefault<BuildConfiguration> lateBoundDefault=(LateBoundDefault<BuildConfiguration>)attribute.getLateBoundDefault();
+      if (lateBoundDefault.useHostConfiguration()) {
+        actualConfig=actualConfig.getConfiguration(ConfigurationTransition.HOST);
+      }
+      if (!lateBoundDefault.getRequiredConfigurationFragments().isEmpty()) {
+        if (!actualConfig.hasAllFragments(lateBoundDefault.getRequiredConfigurationFragments())) {
+          continue;
+        }
+      }
+      Object actualValue=lateBoundDefault.getDefault(rule,actualConfig);
+      if (attribute.getType() == Type.LABEL) {
+        Label label;
+        label=Type.LABEL.cast(actualValue);
+        if (label != null) {
+          builder.put(attribute,LabelAndConfiguration.of(label,actualConfig));
+        }
+      }
+ else       if (attribute.getType() == Type.LABEL_LIST) {
+        for (        Label label : Type.LABEL_LIST.cast(actualValue)) {
+          builder.put(attribute,LabelAndConfiguration.of(label,actualConfig));
+        }
+      }
+ else {
+        throw new IllegalStateException(String.format("Late bound attribute '%s' is not a label or a label list",attribute.getName()));
+      }
+    }
+  }
+}

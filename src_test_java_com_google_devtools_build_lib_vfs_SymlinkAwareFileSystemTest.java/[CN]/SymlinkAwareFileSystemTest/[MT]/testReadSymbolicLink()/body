@@ -1,0 +1,21 @@
+{
+  if (supportsSymlinks) {
+    assertEquals(xNothing.toString(),xDanglingLink.readSymbolicLink().toString());
+  }
+  assertEquals(xFile.toString(),xLinkToFile.readSymbolicLink().toString());
+  assertEquals(xEmptyDirectory.toString(),xLinkToDirectory.readSymbolicLink().toString());
+  try {
+    xFile.readSymbolicLink();
+    fail();
+  }
+ catch (  NotASymlinkException e) {
+    assertEquals(xFile.toString(),e.getMessage());
+  }
+  try {
+    xNothing.readSymbolicLink();
+    fail();
+  }
+ catch (  IOException e) {
+    assertEquals(xNothing + " (No such file or directory)",e.getMessage());
+  }
+}

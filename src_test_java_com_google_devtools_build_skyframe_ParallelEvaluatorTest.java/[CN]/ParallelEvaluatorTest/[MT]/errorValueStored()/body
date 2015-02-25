@@ -1,0 +1,17 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey errorKey=GraphTester.toSkyKey("my_error_value");
+  tester.getOrCreate(errorKey).setHasError(true);
+  EvaluationResult<StringValue> result=eval(false,ImmutableList.of(errorKey));
+  assertThat(result.keyNames()).isEmpty();
+  assertThat(result.errorMap().keySet()).containsExactly(errorKey);
+  ErrorInfo errorInfo=result.getError();
+  assertThat(errorInfo.getRootCauses()).containsExactly(errorKey);
+  tester.getOrCreate(errorKey).setHasError(false);
+  tester.set(errorKey,new StringValue("no error?"));
+  result=eval(false,ImmutableList.of(errorKey));
+  assertThat(result.keyNames()).isEmpty();
+  assertThat(result.errorMap().keySet()).containsExactly(errorKey);
+  errorInfo=result.getError();
+  assertThat(errorInfo.getRootCauses()).containsExactly(errorKey);
+}

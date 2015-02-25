@@ -1,0 +1,14 @@
+{
+  ImmutableList.Builder<Pair<Artifact,FileArtifactValue>> inputs=ImmutableList.builder();
+  for (  Map.Entry<SkyKey,SkyValue> entry : env.getValues(ArtifactValue.mandatoryKeys(action.getInputs())).entrySet()) {
+    Artifact input=ArtifactValue.artifact(entry.getKey());
+    ArtifactValue inputValue=(ArtifactValue)entry.getValue();
+    Preconditions.checkNotNull(inputValue,"%s has null dep %s",artifact,input);
+    if (!(inputValue instanceof FileArtifactValue)) {
+      Preconditions.checkState(!(inputValue instanceof AggregatingArtifactValue),"%s %s %s",artifact,action,inputValue);
+      continue;
+    }
+    inputs.add(Pair.of(input,(FileArtifactValue)inputValue));
+  }
+  return new AggregatingArtifactValue(inputs.build(),value);
+}

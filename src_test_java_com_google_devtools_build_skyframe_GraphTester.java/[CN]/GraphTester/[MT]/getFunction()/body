@@ -1,0 +1,60 @@
+{
+  return new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey key,    Environment env) throws SkyFunctionException, InterruptedException {
+      TestFunction builder=values.get(key);
+      Preconditions.checkState(builder != null,"No TestFunction for " + key);
+      if (builder.builder != null) {
+        return builder.builder.compute(key,env);
+      }
+      if (builder.warning != null) {
+        env.getListener().handle(Event.warn(builder.warning));
+      }
+      if (builder.progress != null) {
+        env.getListener().handle(Event.progress(builder.progress));
+      }
+      Map<SkyKey,SkyValue> deps=new LinkedHashMap<>();
+      boolean oneMissing=false;
+      for (      Pair<SkyKey,SkyValue> dep : builder.deps) {
+        SkyValue value;
+        if (dep.second == null) {
+          value=env.getValue(dep.first);
+        }
+ else {
+          try {
+            value=env.getValueOrThrow(dep.first,SomeErrorException.class);
+          }
+ catch (          SomeErrorException e) {
+            value=dep.second;
+          }
+        }
+        if (value == null) {
+          oneMissing=true;
+        }
+ else {
+          deps.put(dep.first,value);
+        }
+        Preconditions.checkState(oneMissing == env.valuesMissing());
+      }
+      if (env.valuesMissing()) {
+        return null;
+      }
+      if (builder.hasTransientError) {
+        throw new GenericFunctionException(new SomeErrorException(key.toString()),Transience.TRANSIENT);
+      }
+      if (builder.hasError) {
+        throw new GenericFunctionException(new SomeErrorException(key.toString()),Transience.PERSISTENT);
+      }
+      if (builder.value != null) {
+        return builder.value;
+      }
+      if (Thread.currentThread().isInterrupted()) {
+        throw new InterruptedException(key.toString());
+      }
+      return builder.computer.compute(deps,env);
+    }
+    @Nullable @Override public String extractTag(    SkyKey skyKey){
+      return values.get(skyKey).tag;
+    }
+  }
+;
+}

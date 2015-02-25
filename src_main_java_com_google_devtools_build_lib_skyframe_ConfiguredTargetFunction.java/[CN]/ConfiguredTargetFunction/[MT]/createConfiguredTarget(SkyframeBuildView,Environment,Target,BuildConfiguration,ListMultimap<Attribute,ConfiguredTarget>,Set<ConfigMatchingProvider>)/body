@@ -1,0 +1,23 @@
+{
+  boolean extendedSanityChecks=configuration != null && configuration.extendedSanityChecks();
+  StoredEventHandler events=new StoredEventHandler();
+  BuildConfiguration ownerConfig=(configuration == null) ? null : configuration.getArtifactOwnerConfiguration();
+  boolean allowRegisteringActions=configuration == null || configuration.isActionsEnabled();
+  CachingAnalysisEnvironment analysisEnvironment=view.createAnalysisEnvironment(new ConfiguredTargetKey(target.getLabel(),ownerConfig),false,extendedSanityChecks,events,env,allowRegisteringActions);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  ConfiguredTarget configuredTarget=view.createConfiguredTarget(target,configuration,analysisEnvironment,depValueMap,configConditions);
+  events.replayOn(env.getListener());
+  if (events.hasErrors()) {
+    analysisEnvironment.disable(target);
+    throw new ConfiguredTargetFunctionException(new ConfiguredValueCreationException("Analysis of target '" + target.getLabel() + "' failed; build aborted"));
+  }
+  Preconditions.checkState(!analysisEnvironment.hasErrors(),"Analysis environment hasError() but no errors reported");
+  if (env.valuesMissing()) {
+    return null;
+  }
+  analysisEnvironment.disable(target);
+  Preconditions.checkNotNull(configuredTarget,target);
+  return new ConfiguredTargetValue(configuredTarget,ImmutableList.copyOf(analysisEnvironment.getRegisteredActions()));
+}

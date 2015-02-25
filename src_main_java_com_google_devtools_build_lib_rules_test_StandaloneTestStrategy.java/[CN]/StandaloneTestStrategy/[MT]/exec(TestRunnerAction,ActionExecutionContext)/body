@@ -1,0 +1,24 @@
+{
+  Path runfilesDir=null;
+  try {
+    runfilesDir=TestStrategy.getLocalRunfilesDirectory(action,actionExecutionContext,binTools);
+  }
+ catch (  ExecException e) {
+    throw new TestExecException(e.getMessage());
+  }
+  Path workingDirectory=runfilesDir.getRelative(runfilesPrefix);
+  Map<String,String> env=getEnv(action,runfilesDir);
+  Spawn spawn=new BaseSpawn(getArgs(action),env,action.getTestProperties().getExecutionInfo(),action,action.getTestProperties().getLocalResourceUsage());
+  Executor executor=actionExecutionContext.getExecutor();
+  try {
+    FileSystemUtils.createDirectoryAndParents(workingDirectory);
+    FileOutErr fileOutErr=new FileOutErr(action.getTestLog().getPath(),action.resolve(actionExecutionContext.getExecutor().getExecRoot()).getTestStderr());
+    TestResultData data=execute(actionExecutionContext.withFileOutErr(fileOutErr),spawn,action);
+    appendStderr(fileOutErr.getOutputFile(),fileOutErr.getErrorFile());
+    finalizeTest(actionExecutionContext,action,data);
+  }
+ catch (  IOException e) {
+    executor.getEventHandler().handle(Event.error("Caught I/O exception: " + e));
+    throw new EnvironmentalExecException("unexpected I/O exception",e);
+  }
+}

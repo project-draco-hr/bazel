@@ -1,0 +1,17 @@
+{
+  if (inputPath.isFile()) {
+    if (DocgenConsts.JAVA_SOURCE_FILE_SUFFIX.apply(inputPath.getName())) {
+      SourceFileReader sfr=new SourceFileReader(ruleClassProvider,inputPath.getAbsolutePath());
+      sfr.readDocsFromComments();
+      ruleDocEntries.addAll(sfr.getRuleDocEntries());
+      if (attributeDocEntries != null) {
+        attributeDocEntries.putAll(sfr.getAttributeDocEntries());
+      }
+    }
+  }
+ else   if (inputPath.isDirectory()) {
+    for (    File childPath : inputPath.listFiles()) {
+      collectDocs(ruleDocEntries,attributeDocEntries,childPath);
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  initializeTester();
+  SkyKey errorKey=GraphTester.toSkyKey("my_error_value");
+  tester.set(errorKey,new StringValue("biding time"));
+  SkyKey absentParentKey=GraphTester.toSkyKey("absentParent");
+  tester.getOrCreate(absentParentKey).addDependency(errorKey).setComputedValue(CONCATENATE);
+  assertEquals(new StringValue("biding time"),tester.evalAndGet(false,absentParentKey));
+  tester.getOrCreate(errorKey,true).setHasError(true);
+  SkyKey newParent=GraphTester.toSkyKey("newParent");
+  tester.getOrCreate(newParent).addDependency(errorKey).setComputedValue(CONCATENATE);
+  tester.invalidate();
+  EvaluationResult<StringValue> result=tester.eval(false,newParent);
+  ErrorInfo error=result.getError(newParent);
+  assertThat(error.getRootCauses()).containsExactly(errorKey);
+}

@@ -1,0 +1,28 @@
+{
+  final ThreadSafeCounter threadSafeCounterArray[]=new ThreadSafeCounter[]{new ThreadSafeCounter(1),new ThreadSafeCounter(2),new ThreadSafeCounter(3)};
+  final ThreadCompatibleCounter threadCompatibleCounterArray[]=new ThreadCompatibleCounter[]{new ThreadCompatibleCounter(1),new ThreadCompatibleCounter(2),new ThreadCompatibleCounter(3)};
+  final ThreadHostileCounter threadHostileCounter=new ThreadHostileCounter(1);
+class MyThread implements Runnable {
+    ThreadCompatibleCounter threadCompatibleCounter=new ThreadCompatibleCounter(1);
+    @Override public void run(){
+      for (      ThreadSafeCounter counter : threadSafeCounterArray) {
+        counter.increment();
+      }
+      threadCompatibleCounter.increment();
+      for (      ThreadCompatibleCounter counter : threadCompatibleCounterArray) {
+synchronized (counter) {
+          counter.increment();
+        }
+      }
+synchronized (this.getClass()) {
+        threadHostileCounter.increment();
+      }
+    }
+  }
+  Thread thread1=new Thread(new MyThread());
+  Thread thread2=new Thread(new MyThread());
+  thread1.start();
+  thread2.start();
+  thread1.join();
+  thread2.join();
+}

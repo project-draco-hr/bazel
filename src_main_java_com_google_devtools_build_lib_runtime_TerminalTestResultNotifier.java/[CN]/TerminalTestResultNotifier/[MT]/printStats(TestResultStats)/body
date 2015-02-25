@@ -1,0 +1,22 @@
+{
+  if (!optionCheckTestsUpToDate()) {
+    List<String> results=new ArrayList<>();
+    if (stats.passCount == 1) {
+      results.add(stats.passCount + " test passes");
+    }
+ else     if (stats.passCount > 0) {
+      results.add(stats.passCount + " tests pass");
+    }
+    addToErrorList(results,"to build",stats.failedToBuildCount);
+    addToErrorList(results,"locally",stats.failedLocallyCount);
+    addToErrorList(results,"remotely",stats.failedRemotelyCount);
+    printer.print(String.format("\nExecuted %d out of %d tests: %s.\n",stats.numberOfExecutedTargets,stats.numberOfTargets,StringUtil.joinEnglishList(results,"and")));
+  }
+ else {
+    int failingUpToDateCount=stats.failedCount - stats.noStatusCount;
+    printer.print(String.format("\nFinished with %d passing and %s%d failing%s tests up to date, %s%d out of date.%s\n",stats.passCount,failingUpToDateCount > 0 ? AnsiTerminalPrinter.Mode.ERROR : "",failingUpToDateCount,AnsiTerminalPrinter.Mode.DEFAULT,stats.noStatusCount > 0 ? AnsiTerminalPrinter.Mode.ERROR : "",stats.noStatusCount,AnsiTerminalPrinter.Mode.DEFAULT));
+  }
+  if (stats.wasUnreportedWrongSize) {
+    printer.print("There were tests whose specified size is too big. Use the " + "--test_verbose_timeout_warnings command line option to see which " + "ones these are.\n");
+  }
+}

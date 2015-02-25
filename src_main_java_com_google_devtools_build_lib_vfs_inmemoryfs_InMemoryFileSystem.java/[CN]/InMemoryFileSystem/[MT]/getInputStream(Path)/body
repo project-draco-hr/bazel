@@ -1,0 +1,17 @@
+{
+  InMemoryContentInfo status;
+synchronized (this) {
+    status=scopeLimitedStat(path,true);
+    if (!status.outOfScope()) {
+      if (status.isDirectory()) {
+        throw Error.EISDIR.exception(path);
+      }
+      if (!path.isReadable()) {
+        throw Error.EACCES.exception(path);
+      }
+      Preconditions.checkState(status instanceof FileInfo);
+      return new ByteArrayInputStream(((FileInfo)status).readContent());
+    }
+  }
+  return getDelegatedPath(status.getEscapingPath()).getInputStream();
+}

@@ -1,0 +1,23 @@
+{
+  try (BufferedInputStream bis=new BufferedInputStream(new FileInputStream(path))){
+    Deps.Dependencies deps=Deps.Dependencies.parseFrom(bis);
+    if (!deps.hasRuleLabel()) {
+      throw new IOException("Text file");
+    }
+    for (    Deps.Dependency dep : deps.getDependencyList()) {
+      if (dep.getKind() == Kind.EXPLICIT || dep.getKind() == Kind.IMPLICIT) {
+        requiredClasspath.add(dep.getPath());
+      }
+    }
+  }
+ catch (  IOException ex) {
+    try (BufferedReader reader=new BufferedReader(new FileReader(path))){
+      for (String dep=reader.readLine(); dep != null; dep=reader.readLine()) {
+        requiredClasspath.add(dep);
+      }
+    }
+ catch (    IOException exc) {
+      exc.printStackTrace();
+    }
+  }
+}

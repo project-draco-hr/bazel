@@ -1,0 +1,27 @@
+{
+  String pathString=path.getPath().getPathString();
+  Set<Inclusion> hints=null;
+  for (  final Rule rule : rules) {
+    if ((rule.type != Rule.Type.INCLUDE_ANGLE) && (rule.type != Rule.Type.INCLUDE_QUOTE)) {
+      continue;
+    }
+    Matcher m=rule.pattern.matcher(pathString);
+    if (!m.matches()) {
+      continue;
+    }
+    if (hints == null) {
+      hints=Sets.newLinkedHashSet();
+    }
+    Inclusion inclusion=new Inclusion(rule.findRoot,rule.type == Rule.Type.INCLUDE_QUOTE ? Kind.QUOTE : Kind.ANGLE);
+    hints.add(inclusion);
+    if (LOG_FINE) {
+      LOG.fine("hint for " + rule.type + " "+ pathString+ " root: "+ inclusion);
+    }
+  }
+  if (hints != null && !hints.isEmpty()) {
+    return ImmutableList.copyOf(hints);
+  }
+ else {
+    return ImmutableList.of();
+  }
+}

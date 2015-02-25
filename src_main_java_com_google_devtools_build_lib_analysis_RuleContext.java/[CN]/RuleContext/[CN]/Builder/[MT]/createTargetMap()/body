@@ -1,0 +1,30 @@
+{
+  ImmutableSortedKeyListMultimap.Builder<String,ConfiguredTarget> mapBuilder=ImmutableSortedKeyListMultimap.builder();
+  for (  Map.Entry<Attribute,Collection<ConfiguredTarget>> entry : prerequisiteMap.asMap().entrySet()) {
+    Attribute attribute=entry.getKey();
+    if (attribute == null) {
+      continue;
+    }
+    if (attribute.isSilentRuleClassFilter()) {
+      Predicate<RuleClass> filter=attribute.getAllowedRuleClassesPredicate();
+      for (      ConfiguredTarget configuredTarget : entry.getValue()) {
+        Target prerequisiteTarget=configuredTarget.getTarget();
+        if ((prerequisiteTarget instanceof Rule) && filter.apply(((Rule)prerequisiteTarget).getRuleClassObject())) {
+          validateDirectPrerequisite(attribute,configuredTarget);
+          mapBuilder.put(attribute.getName(),configuredTarget);
+        }
+      }
+    }
+ else {
+      for (      ConfiguredTarget configuredTarget : entry.getValue()) {
+        validateDirectPrerequisite(attribute,configuredTarget);
+        mapBuilder.put(attribute.getName(),configuredTarget);
+      }
+    }
+  }
+  Attribute abiDepsAttr=rule.getAttributeDefinition("abi_deps");
+  if ((abiDepsAttr != null) && rule.isAttributeValueExplicitlySpecified("abi_deps") && rule.isAttributeValueExplicitlySpecified("deps")) {
+    attributeError("deps","Only one of deps and abi_deps should be provided");
+  }
+  return mapBuilder.build();
+}

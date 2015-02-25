@@ -1,0 +1,45 @@
+{
+  initializeTester();
+  SkyKey errorKey=GraphTester.toSkyKey("error");
+  tester.set(errorKey,new StringValue("biding time"));
+  SkyKey slowKey=GraphTester.toSkyKey("slow");
+  tester.set(slowKey,new StringValue("slow"));
+  SkyKey midKey=GraphTester.toSkyKey("mid");
+  tester.getOrCreate(midKey).addDependency(slowKey).setComputedValue(COPY);
+  SkyKey lastKey=GraphTester.toSkyKey("last");
+  tester.set(lastKey,new StringValue("last"));
+  SkyKey motherKey=GraphTester.toSkyKey("mother");
+  tester.getOrCreate(motherKey).addDependency(errorKey).addDependency(midKey).addDependency(lastKey).setComputedValue(CONCATENATE);
+  SkyKey fatherKey=GraphTester.toSkyKey("father");
+  tester.getOrCreate(fatherKey).addDependency(errorKey).addDependency(midKey).addDependency(lastKey).setComputedValue(CONCATENATE);
+  EvaluationResult<StringValue> result=tester.eval(false,motherKey,fatherKey);
+  assertEquals("biding timeslowlast",result.get(motherKey).getValue());
+  assertEquals("biding timeslowlast",result.get(fatherKey).getValue());
+  tester.set(slowKey,null);
+  CountDownLatch errorFinish=new CountDownLatch(1);
+  tester.set(errorKey,null);
+  tester.getOrCreate(errorKey).setBuilder(new ChainedFunction(null,null,errorFinish,false,null,ImmutableList.<SkyKey>of()));
+  tester.getOrCreate(slowKey).setBuilder(new ChainedFunction(null,errorFinish,null,true,new StringValue("leaf2"),ImmutableList.<SkyKey>of()));
+  tester.invalidate();
+  result=tester.eval(false,motherKey,fatherKey);
+  assertTrue(result.hasError());
+  assertTrue(result.getError(motherKey) + ", " + result.getError(fatherKey),(result.getError(motherKey) == null) != (result.getError(fatherKey) == null));
+  SkyKey parentKey=(reevaluateMissingValue == (result.getError(motherKey) == null)) ? motherKey : fatherKey;
+  tester.getOrCreate(slowKey,false).setBuilder(null).setConstantValue(new StringValue("leaf2"));
+  if (removeError) {
+    tester.getOrCreate(errorKey,true).setBuilder(null).setConstantValue(new StringValue("reformed"));
+  }
+  String lastString="last";
+  if (!reevaluateMissingValue) {
+    lastString="last2";
+    tester.set(lastKey,new StringValue(lastString));
+  }
+  tester.invalidate();
+  result=tester.eval(false,parentKey);
+  if (removeError) {
+    assertEquals("reformedleaf2" + lastString,result.get(parentKey).getValue());
+  }
+ else {
+    assertNotNull(result.getError(parentKey));
+  }
+}

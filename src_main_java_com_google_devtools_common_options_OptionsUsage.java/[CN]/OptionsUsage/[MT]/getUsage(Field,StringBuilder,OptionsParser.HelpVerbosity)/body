@@ -1,0 +1,45 @@
+{
+  String flagName=getFlagName(optionField);
+  String typeDescription=getTypeDescription(optionField);
+  Option annotation=optionField.getAnnotation(Option.class);
+  usage.append("  --" + flagName);
+  if (helpVerbosity == OptionsParser.HelpVerbosity.SHORT) {
+    usage.append('\n');
+    return;
+  }
+  if (annotation.abbrev() != '\0') {
+    usage.append(" [-").append(annotation.abbrev()).append(']');
+  }
+  if (!typeDescription.equals("")) {
+    usage.append(" (" + typeDescription + "; ");
+    if (annotation.allowMultiple()) {
+      usage.append("may be used multiple times");
+    }
+ else {
+      String defaultValueString=OptionsParserImpl.getDefaultOptionString(optionField);
+      if (OptionsParserImpl.isSpecialNullDefault(defaultValueString,optionField)) {
+        usage.append("default: see description");
+      }
+ else {
+        usage.append("default: \"" + defaultValueString + "\"");
+      }
+    }
+    usage.append(")");
+  }
+  usage.append("\n");
+  if (helpVerbosity == OptionsParser.HelpVerbosity.MEDIUM) {
+    return;
+  }
+  if (!annotation.help().equals("")) {
+    usage.append(paragraphFill(annotation.help(),4,80));
+    usage.append('\n');
+  }
+  if (annotation.expansion().length > 0) {
+    StringBuilder expandsMsg=new StringBuilder("Expands to: ");
+    for (    String exp : annotation.expansion()) {
+      expandsMsg.append(exp).append(" ");
+    }
+    usage.append(paragraphFill(expandsMsg.toString(),4,80));
+    usage.append('\n');
+  }
+}

@@ -1,0 +1,52 @@
+{
+  Map<Object,Object> visited=Maps.newIdentityHashMap();
+  visited.put(start,start);
+  Queue<Object> toScan=Lists.newLinkedList();
+  toScan.add(start);
+  while (!toScan.isEmpty()) {
+    Object current=toScan.poll();
+    if (current.getClass().isArray()) {
+      if (current.getClass().getComponentType().isPrimitive()) {
+        continue;
+      }
+      for (      Object ref : (Object[])current) {
+        if (ref != null) {
+          if (predicate.apply(ref)) {
+            return true;
+          }
+          if (visited.put(ref,ref) == null) {
+            toScan.add(ref);
+          }
+        }
+      }
+    }
+ else {
+      for (Class<?> clazz=current.getClass(); clazz != null; clazz=clazz.getSuperclass()) {
+        for (        Field f : clazz.getDeclaredFields()) {
+          if (f.getType().isPrimitive() || ALL_STRONG_REFS.apply(f)) {
+            continue;
+          }
+          f.setAccessible(true);
+          try {
+            Object ref=f.get(current);
+            if (ref != null) {
+              if (predicate.apply(ref)) {
+                return true;
+              }
+              if (visited.put(ref,ref) == null) {
+                toScan.add(ref);
+              }
+            }
+          }
+ catch (          IllegalArgumentException e) {
+            throw new IllegalStateException("Error when scanning the heap",e);
+          }
+catch (          IllegalAccessException e) {
+            throw new IllegalStateException("Error when scanning the heap",e);
+          }
+        }
+      }
+    }
+  }
+  return false;
+}

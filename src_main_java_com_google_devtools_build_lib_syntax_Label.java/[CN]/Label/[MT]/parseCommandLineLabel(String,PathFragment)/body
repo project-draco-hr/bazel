@@ -1,0 +1,13 @@
+{
+  Preconditions.checkArgument(!workspaceRelativePath.isAbsolute());
+  if (label.startsWith("//")) {
+    return parseAbsolute(label);
+  }
+  int index=label.indexOf(':');
+  if (index < 0) {
+    index=0;
+    label=":" + label;
+  }
+  PathFragment path=workspaceRelativePath.getRelative(label.substring(0,index));
+  return new Label(path.getPathString(),label.substring(index + 1));
+}

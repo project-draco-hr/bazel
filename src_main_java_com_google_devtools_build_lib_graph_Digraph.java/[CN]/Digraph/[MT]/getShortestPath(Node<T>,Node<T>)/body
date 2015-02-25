@@ -1,0 +1,25 @@
+{
+  checkNode(fromNode);
+  checkNode(toNode);
+  if (fromNode == toNode) {
+    return Collections.singletonList(fromNode);
+  }
+  Map<Node<T>,Node<T>> pathPredecessor=new HashMap<Node<T>,Node<T>>();
+  Set<Node<T>> marked=new HashSet<Node<T>>();
+  LinkedList<Node<T>> queue=new LinkedList<Node<T>>();
+  queue.addLast(fromNode);
+  marked.add(fromNode);
+  while (queue.size() > 0) {
+    Node<T> u=queue.removeFirst();
+    for (    Node<T> v : u.getSuccessors()) {
+      if (marked.add(v)) {
+        pathPredecessor.put(v,u);
+        if (v == toNode) {
+          return getPathToTreeNode(pathPredecessor,v);
+        }
+        queue.addLast(v);
+      }
+    }
+  }
+  return null;
+}

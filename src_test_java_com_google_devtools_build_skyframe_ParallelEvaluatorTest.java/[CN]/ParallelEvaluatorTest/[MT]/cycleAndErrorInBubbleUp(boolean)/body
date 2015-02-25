@@ -1,0 +1,23 @@
+{
+  graph=new DeterministicInMemoryGraph();
+  tester=new GraphTester();
+  SkyKey errorKey=GraphTester.toSkyKey("error");
+  SkyKey cycleKey=GraphTester.toSkyKey("cycle");
+  SkyKey midKey=GraphTester.toSkyKey("mid");
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  tester.getOrCreate(topKey).addDependency(midKey).setComputedValue(CONCATENATE);
+  tester.getOrCreate(midKey).addDependency(errorKey).addDependency(cycleKey).setComputedValue(CONCATENATE);
+  CountDownLatch cycleFinish=new CountDownLatch(1);
+  tester.getOrCreate(cycleKey).setBuilder(new ChainedFunction(null,null,cycleFinish,false,new StringValue(""),ImmutableSet.<SkyKey>of(midKey)));
+  tester.getOrCreate(errorKey).setBuilder(new ChainedFunction(null,cycleFinish,null,false,null,ImmutableSet.<SkyKey>of()));
+  EvaluationResult<StringValue> result=eval(keepGoing,ImmutableSet.of(topKey));
+  assertThat(result.errorMap().keySet()).containsExactly(topKey);
+  Iterable<CycleInfo> cycleInfos=result.getError(topKey).getCycleInfo();
+  if (keepGoing) {
+    assertThat(result.getError().getRootCauses()).containsExactly(errorKey);
+  }
+  assertThat(cycleInfos).isNotEmpty();
+  CycleInfo cycleInfo=Iterables.getOnlyElement(cycleInfos);
+  assertThat(cycleInfo.getPathToCycle()).containsExactly(topKey);
+  assertThat(cycleInfo.getCycle()).containsExactly(midKey,cycleKey);
+}

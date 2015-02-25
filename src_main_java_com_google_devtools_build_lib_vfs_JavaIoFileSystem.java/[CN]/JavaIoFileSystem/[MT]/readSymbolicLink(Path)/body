@@ -1,0 +1,17 @@
+{
+  File file=getIoFile(path);
+  long startTime=Profiler.nanoTimeMaybe();
+  try {
+    String link=Files.readSymbolicLink(file.toPath()).toString();
+    return new PathFragment(link);
+  }
+ catch (  java.nio.file.NotLinkException e) {
+    throw new NotASymlinkException(path);
+  }
+catch (  java.nio.file.NoSuchFileException e) {
+    throw new FileNotFoundException(path + ERR_NO_SUCH_FILE_OR_DIR);
+  }
+ finally {
+    profiler.logSimpleTask(startTime,ProfilerTask.VFS_LINK,file.getPath());
+  }
+}

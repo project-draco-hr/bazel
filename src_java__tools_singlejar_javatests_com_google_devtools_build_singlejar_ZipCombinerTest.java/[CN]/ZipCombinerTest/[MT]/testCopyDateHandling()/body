@@ -1,0 +1,17 @@
+{
+  final Date date=new GregorianCalendar(2009,8,2,0,0,0).getTime();
+  ZipEntryFilter mockFilter=new ZipEntryFilter(){
+    @Override public void accept(    String filename,    StrategyCallback callback) throws IOException {
+      assertEquals("hello.txt",filename);
+      callback.copy(date);
+    }
+  }
+;
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  ZipCombiner singleJar=new ZipCombiner(mockFilter,out);
+  singleJar.addZip(sampleZip());
+  singleJar.close();
+  ZipInputStream zipInput=new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
+  assertEntry(zipInput,"hello.txt",date,"Hello World!");
+  assertNull(zipInput.getNextEntry());
+}

@@ -1,0 +1,12 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey errorKey=GraphTester.toSkyKey("my_error_value");
+  tester.getOrCreate(errorKey).setHasError(true);
+  SkyKey parentErrorKey=GraphTester.toSkyKey("parent");
+  tester.getOrCreate(parentErrorKey).addErrorDependency(errorKey,new StringValue("recovered")).setHasError(true);
+  EvaluationResult<StringValue> result=eval(false,ImmutableList.of(parentErrorKey));
+  assertThat(result.keyNames()).isEmpty();
+  Map.Entry<SkyKey,ErrorInfo> error=Iterables.getOnlyElement(result.errorMap().entrySet());
+  assertEquals(parentErrorKey,error.getKey());
+  assertThat(error.getValue().getRootCauses()).containsExactly(parentErrorKey);
+}

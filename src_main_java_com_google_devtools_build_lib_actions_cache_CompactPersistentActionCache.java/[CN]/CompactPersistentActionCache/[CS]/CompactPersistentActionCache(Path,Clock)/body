@@ -1,0 +1,27 @@
+{
+  Path cacheFile=cacheFile(cacheRoot);
+  Path journalFile=journalFile(cacheRoot);
+  Path indexFile=cacheRoot.getChild("filename_index_v" + VERSION + ".blaze");
+  Map<Integer,byte[]> backingMap=new HashMap<>();
+  try {
+    indexer=PersistentStringIndexer.newPersistentStringIndexer(indexFile,clock);
+  }
+ catch (  IOException e) {
+    renameCorruptedFiles(cacheRoot);
+    throw new IOException("Failed to load filename index data",e);
+  }
+  try {
+    map=new ActionMap(backingMap,clock,cacheFile,journalFile);
+  }
+ catch (  IOException e) {
+    renameCorruptedFiles(cacheRoot);
+    throw new IOException("Failed to load action cache data",e);
+  }
+  if (!map.isEmpty()) {
+    String integrityError=validateIntegrity(indexer.size(),map.get(VALIDATION_KEY));
+    if (integrityError != null) {
+      renameCorruptedFiles(cacheRoot);
+      throw new IOException("Failed action cache referential integrity check: " + integrityError);
+    }
+  }
+}

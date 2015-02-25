@@ -1,0 +1,24 @@
+{
+  List<String> params=ImmutableList.of("name","environments","defaults");
+  return new MixedModeFunction("environment_group",params,params.size(),true){
+    @Override public Object call(    Object[] namedArgs,    FuncallExpression ast) throws EvalException, ConversionException {
+      Preconditions.checkState(namedArgs[0] != null);
+      String name=Type.STRING.convert(namedArgs[0],"'environment_group' argument");
+      Preconditions.checkState(namedArgs[1] != null);
+      List<Label> environments=Type.LABEL_LIST.convert(namedArgs[1],"'environment_group argument'",context.pkgBuilder.getBuildFileLabel());
+      Preconditions.checkState(namedArgs[2] != null);
+      List<Label> defaults=Type.LABEL_LIST.convert(namedArgs[2],"'environment_group argument'",context.pkgBuilder.getBuildFileLabel());
+      try {
+        context.pkgBuilder.addEnvironmentGroup(name,environments,defaults,context.eventHandler,ast.getLocation());
+        return Environment.NONE;
+      }
+ catch (      Label.SyntaxException e) {
+        throw new EvalException(ast.getLocation(),"environment group has invalid name: " + name + ": "+ e.getMessage());
+      }
+catch (      Package.NameConflictException e) {
+        throw new EvalException(ast.getLocation(),e.getMessage());
+      }
+    }
+  }
+;
+}

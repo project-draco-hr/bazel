@@ -1,0 +1,22 @@
+{
+  final Set<String> invalidated=Sets.newConcurrentHashSet();
+  EvaluationProgressReceiver receiver=new EvaluationProgressReceiver(){
+    @Override public void invalidated(    SkyValue value,    InvalidationState state){
+      Preconditions.checkState(state == expectedState());
+      invalidated.add(((StringValue)value).getValue());
+    }
+    @Override public void enqueueing(    SkyKey skyKey){
+      throw new UnsupportedOperationException();
+    }
+    @Override public void evaluated(    SkyKey skyKey,    SkyValue value,    EvaluationState state){
+      throw new UnsupportedOperationException();
+    }
+  }
+;
+  graph=new InMemoryGraph();
+  set("a","a");
+  tester.getOrCreate("ab").addDependency("a").setHasError(true);
+  eval(false,skyKey("ab"));
+  invalidateWithoutError(receiver,skyKey("a"));
+  assertThat(invalidated).containsExactly("a").inOrder();
+}

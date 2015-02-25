@@ -1,0 +1,51 @@
+{
+  Random random=new Random(TestUtils.getRandomSeed());
+  int graphSize=1000;
+  int tries=5;
+  graph=new InMemoryGraph();
+  SkyKey[] values=constructLargeGraph(graphSize);
+  eval(false,values);
+  final Thread mainThread=Thread.currentThread();
+  for (int run=0; run < tries; run++) {
+    Set<Pair<SkyKey,InvalidationType>> valuesToInvalidate=getValuesToInvalidate(values);
+    int validValuesToDo=Sets.difference(valuesToInvalidate,state.getInvalidationsForTesting()).size();
+    for (    Pair<SkyKey,InvalidationType> pair : state.getInvalidationsForTesting()) {
+      if (!isInvalidated(pair.first)) {
+        validValuesToDo++;
+      }
+    }
+    int countDownStart=validValuesToDo > 0 ? random.nextInt(validValuesToDo) : 0;
+    final CountDownLatch countDownToInterrupt=new CountDownLatch(countDownStart);
+    final EvaluationProgressReceiver receiver=new EvaluationProgressReceiver(){
+      @Override public void invalidated(      SkyValue value,      InvalidationState state){
+        countDownToInterrupt.countDown();
+        if (countDownToInterrupt.getCount() == 0) {
+          mainThread.interrupt();
+          try {
+            TrackingAwaiter.waitAndMaybeThrowInterrupt(visitor.get().getInterruptionLatchForTestingOnly(),"Main thread was not interrupted");
+          }
+ catch (          InterruptedException e) {
+            throw new IllegalStateException(e);
+          }
+        }
+      }
+      @Override public void enqueueing(      SkyKey skyKey){
+        throw new UnsupportedOperationException();
+      }
+      @Override public void evaluated(      SkyKey skyKey,      SkyValue value,      EvaluationState state){
+        throw new UnsupportedOperationException();
+      }
+    }
+;
+    try {
+      invalidate(graph,receiver,Sets.newHashSet(Iterables.transform(valuesToInvalidate,Pair.<SkyKey,InvalidationType>firstFunction())).toArray(new SkyKey[0]));
+      assertThat(state.getInvalidationsForTesting()).isEmpty();
+    }
+ catch (    InterruptedException e) {
+    }
+    if (state.isEmpty()) {
+      break;
+    }
+  }
+  eval(false,values);
+}

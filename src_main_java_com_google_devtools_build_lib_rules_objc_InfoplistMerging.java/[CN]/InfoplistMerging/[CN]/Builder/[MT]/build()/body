@@ -1,0 +1,15 @@
+{
+  Preconditions.checkNotNull(intermediateArtifacts,"intermediateArtifacts");
+  Optional<Artifact> plistWithEverything=Optional.absent();
+  Action[] mergeActions=new Action[0];
+  int inputs=Iterables.size(inputPlists);
+  if (inputs == 1) {
+    plistWithEverything=Optional.of(Iterables.getOnlyElement(inputPlists));
+  }
+ else   if (inputs > 1) {
+    Artifact merged=intermediateArtifacts.mergedInfoplist();
+    plistWithEverything=Optional.of(merged);
+    mergeActions=new SpawnAction.Builder().setMnemonic("MergeInfoPlistFiles").setExecutable(plmerge).setCommandLine(mergeCommandLine(inputPlists,merged)).addTransitiveInputs(inputPlists).addOutput(merged).build(context);
+  }
+  return new InfoplistMerging(plistWithEverything,mergeActions,inputPlists);
+}

@@ -1,0 +1,19 @@
+{
+  Preconditions.checkArgument(resources != null);
+  long startTime=Profiler.nanoTimeMaybe();
+  CountDownLatch latch=null;
+  try {
+    waiting(owner);
+    latch=acquire(resources);
+    if (latch != null) {
+      latch.await();
+    }
+  }
+  finally {
+    threadLocked.set(resources.getCpuUsage() != 0 || resources.getMemoryMb() != 0 || resources.getIoUsage() != 0);
+    acquired(owner);
+    if (latch != null) {
+      Profiler.instance().logSimpleTask(startTime,ProfilerTask.ACTION_LOCK,owner);
+    }
+  }
+}

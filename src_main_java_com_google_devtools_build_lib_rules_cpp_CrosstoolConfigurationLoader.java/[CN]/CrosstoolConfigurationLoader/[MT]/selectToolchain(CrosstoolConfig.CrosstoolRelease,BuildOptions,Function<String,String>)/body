@@ -1,0 +1,48 @@
+{
+  CrosstoolConfigurationIdentifier config=CrosstoolConfigurationIdentifier.fromReleaseAndCrosstoolConfiguration(release,options);
+  if ((config.getCompiler() != null) || (config.getLibc() != null)) {
+    ArrayList<CrosstoolConfig.CToolchain> candidateToolchains=new ArrayList<>();
+    for (    CrosstoolConfig.CToolchain toolchain : release.getToolchainList()) {
+      if (config.isCandidateToolchain(toolchain)) {
+        candidateToolchains.add(toolchain);
+      }
+    }
+switch (candidateToolchains.size()) {
+case 0:
+{
+        StringBuilder message=new StringBuilder();
+        message.append("No toolchain found for");
+        message.append(config.describeFlags());
+        message.append(". Valid toolchains are: ");
+        describeToolchainList(message,release.getToolchainList());
+        throw new InvalidConfigurationException(message.toString());
+      }
+case 1:
+    return candidateToolchains.get(0);
+default :
+{
+    StringBuilder message=new StringBuilder();
+    message.append("Multiple toolchains found for");
+    message.append(config.describeFlags());
+    message.append(": ");
+    describeToolchainList(message,candidateToolchains);
+    throw new InvalidConfigurationException(message.toString());
+  }
+}
+}
+String selectedIdentifier=null;
+String desiredCpu=cpuTransformer.apply(config.getCpu());
+for (CrosstoolConfig.DefaultCpuToolchain selector : release.getDefaultToolchainList()) {
+if (selector.getCpu().equals(desiredCpu)) {
+selectedIdentifier=selector.getToolchainIdentifier();
+break;
+}
+}
+checkToolChain(selectedIdentifier,desiredCpu);
+for (CrosstoolConfig.CToolchain toolchain : release.getToolchainList()) {
+if (toolchain.getToolchainIdentifier().equals(selectedIdentifier)) {
+return toolchain;
+}
+}
+throw new InvalidConfigurationException("Inconsistent crosstool configuration; no toolchain " + "corresponding to '" + selectedIdentifier + "' found for cpu '"+ config.getCpu()+ "'");
+}

@@ -1,0 +1,13 @@
+{
+  ImmutableList.Builder<FilesetEntry> result=ImmutableList.builder();
+  for (  Build.FilesetEntry filesetPb : filesetPbs) {
+    Label srcLabel=deserializeLabel(filesetPb.getSource());
+    List<Label> files=filesetPb.getFilesPresent() ? deserializeLabels(filesetPb.getFileList()) : null;
+    List<String> excludes=filesetPb.getExcludeList().isEmpty() ? null : ImmutableList.copyOf(filesetPb.getExcludeList());
+    String destDir=filesetPb.getDestinationDirectory();
+    FilesetEntry.SymlinkBehavior symlinkBehavior=pbToSymlinkBehavior(filesetPb.getSymlinkBehavior());
+    String stripPrefix=filesetPb.hasStripPrefix() ? filesetPb.getStripPrefix() : null;
+    result.add(new FilesetEntry(srcLabel,files,excludes,destDir,symlinkBehavior,stripPrefix));
+  }
+  return result.build();
+}

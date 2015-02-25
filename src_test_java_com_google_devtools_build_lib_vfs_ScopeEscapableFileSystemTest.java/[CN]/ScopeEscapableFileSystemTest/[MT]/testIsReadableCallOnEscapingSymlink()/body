@@ -1,0 +1,16 @@
+{
+  TestDelegator delegator=new TestDelegator(){
+    @Override protected boolean isReadable(    Path path){
+      lastPath=path;
+      return booleanState();
+    }
+  }
+;
+  scopedFS().setDelegator(delegator);
+  delegator.setState(false);
+  assertFalseWithPathCheck(fileLink.isReadable(),delegator,fileLinkTarget);
+  assertFalseWithPathCheck(dirLink.getRelative("a").isReadable(),delegator,dirLinkTarget.getRelative("a"));
+  delegator.setState(true);
+  assertTrueWithPathCheck(fileLink.isReadable(),delegator,fileLinkTarget);
+  assertTrueWithPathCheck(dirLink.getRelative("a").isReadable(),delegator,dirLinkTarget.getRelative("a"));
+}

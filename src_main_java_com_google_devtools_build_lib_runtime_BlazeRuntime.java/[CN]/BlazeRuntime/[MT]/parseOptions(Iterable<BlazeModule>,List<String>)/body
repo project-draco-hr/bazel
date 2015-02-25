@@ -1,0 +1,12 @@
+{
+  Set<Class<? extends OptionsBase>> optionClasses=Sets.newHashSet();
+  optionClasses.addAll(BlazeCommandUtils.getStartupOptions(modules));
+  OptionsParser parser=OptionsParser.newOptionsParser(optionClasses);
+  parser.setAllowResidue(false);
+  parser.parse(OptionPriority.COMMAND_LINE,null,args);
+  Function<? super String,String> sourceFunction=sourceFunctionForMap(parser.getOptions(BlazeServerStartupOptions.class).optionSources);
+  parser=OptionsParser.newOptionsParser(optionClasses);
+  parser.setAllowResidue(false);
+  parser.parseWithSourceFunction(OptionPriority.COMMAND_LINE,sourceFunction,args);
+  return parser;
+}

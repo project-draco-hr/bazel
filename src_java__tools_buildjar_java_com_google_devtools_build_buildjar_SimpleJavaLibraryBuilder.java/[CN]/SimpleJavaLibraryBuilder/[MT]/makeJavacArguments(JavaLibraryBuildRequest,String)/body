@@ -1,0 +1,15 @@
+{
+  List<String> javacArguments=createInitialJavacArgs(build,classPath);
+  javacArguments.addAll(getAnnotationProcessingOptions(build));
+  for (  String option : build.getJavacOpts()) {
+    if (option.startsWith("-J")) {
+      continue;
+    }
+    if (option.equals("-processor") || option.equals("-processorpath")) {
+      throw new IllegalStateException("Using " + option + " in javacopts is no longer supported."+ " Use a java_plugin() rule instead.");
+    }
+    javacArguments.add(option);
+  }
+  javacArguments.addAll(build.getSourceFiles());
+  return javacArguments.toArray(new String[0]);
+}

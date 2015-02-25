@@ -1,0 +1,25 @@
+{
+  boolean interrupted=false;
+  try {
+    while (true) {
+      try {
+        return super.get();
+      }
+ catch (      InterruptedException e) {
+        if (checkForInterrupt) {
+          throw e;
+        }
+        interrupted=true;
+      }
+catch (      ExecutionException e) {
+        Throwables.propagateIfInstanceOf(e.getCause(),InterruptedException.class);
+        throw e;
+      }
+    }
+  }
+  finally {
+    if (!checkForInterrupt && interrupted) {
+      Thread.currentThread().interrupt();
+    }
+  }
+}

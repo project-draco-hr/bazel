@@ -1,0 +1,20 @@
+{
+  RecordingOutErr outErr=getRecordingOutErr();
+  outErr.printOut("Test");
+  outErr.printOutLn("out1");
+  PrintWriter writer=new PrintWriter(outErr.getOutputStream());
+  writer.println("Testout2");
+  writer.flush();
+  outErr.printErr("Test");
+  outErr.printErrLn("err1");
+  writer=new PrintWriter(outErr.getErrorStream());
+  writer.println("Testerr2");
+  writer.flush();
+  assertEquals(outErr.outAsLatin1(),"Testout1\nTestout2\n");
+  assertEquals(outErr.errAsLatin1(),"Testerr1\nTesterr2\n");
+  assertTrue(outErr.hasRecordedOutput());
+  outErr.reset();
+  assertEquals(outErr.outAsLatin1(),"");
+  assertEquals(outErr.errAsLatin1(),"");
+  assertFalse(outErr.hasRecordedOutput());
+}

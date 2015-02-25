@@ -1,0 +1,56 @@
+{
+  graph=new InMemoryGraph();
+  final CountDownLatch allValuesReady=new CountDownLatch(3);
+  final SkyKey waitKey=GraphTester.toSkyKey("wait");
+  final SkyKey fastKey=GraphTester.toSkyKey("fast");
+  SkyKey leafKey=GraphTester.toSkyKey("leaf");
+  tester.getOrCreate(waitKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws InterruptedException {
+      allValuesReady.countDown();
+      Thread.sleep(10000);
+      throw new AssertionError("Should have been interrupted");
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  tester.getOrCreate(fastKey).setBuilder(new ChainedFunction(null,null,allValuesReady,false,new StringValue("fast"),ImmutableList.of(leafKey)));
+  tester.set(leafKey,new StringValue("leaf"));
+  if (buildFastFirst) {
+    eval(false,fastKey);
+  }
+  final Set<SkyKey> receivedValues=Sets.newConcurrentHashSet();
+  revalidationReceiver=new EvaluationProgressReceiver(){
+    @Override public void invalidated(    SkyValue value,    InvalidationState state){
+    }
+    @Override public void enqueueing(    SkyKey key){
+    }
+    @Override public void evaluated(    SkyKey skyKey,    SkyValue value,    EvaluationState state){
+      receivedValues.add(skyKey);
+    }
+  }
+;
+  TestThread evalThread=new TestThread(){
+    @Override public void runTest() throws Exception {
+      try {
+        eval(true,waitKey,fastKey);
+        fail();
+      }
+ catch (      InterruptedException e) {
+      }
+    }
+  }
+;
+  evalThread.start();
+  assertTrue(allValuesReady.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS));
+  evalThread.interrupt();
+  evalThread.join(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+  assertFalse(evalThread.isAlive());
+  if (buildFastFirst) {
+    assertThat(receivedValues).containsExactly(fastKey);
+  }
+ else {
+    assertThat(receivedValues).containsExactly(fastKey,leafKey);
+  }
+}

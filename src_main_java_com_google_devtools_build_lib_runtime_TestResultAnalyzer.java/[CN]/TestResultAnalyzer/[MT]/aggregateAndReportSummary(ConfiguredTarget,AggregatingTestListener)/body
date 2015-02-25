@@ -1,0 +1,27 @@
+{
+  TestSummary.Builder summary=listener.getCurrentSummary(testTarget);
+  Label testLabel=testTarget.getLabel();
+  Preconditions.checkNotNull(summary,"%s did not complete test filtering, but has a test result",testLabel);
+  if (listener.targetReported(testTarget)) {
+    return summary;
+  }
+  Collection<Artifact> incompleteRuns=listener.getIncompleteRuns(testTarget);
+  Map<Artifact,TestResult> statusMap=listener.getStatusMap();
+  for (  Artifact testStatus : TestProvider.getTestStatusArtifacts(testTarget)) {
+    TestResult runResult=statusMap.get(testStatus);
+    boolean isIncompleteRun=incompleteRuns.contains(testStatus);
+    if (runResult == null) {
+      summary=markIncomplete(summary);
+    }
+ else     if (isIncompleteRun) {
+      boolean newlyFetched=!statusMap.containsKey(testStatus);
+      summary=incrementalAnalyze(summary,runResult);
+      if (newlyFetched) {
+        eventBus.post(runResult);
+      }
+      Preconditions.checkState(listener.getIncompleteRuns(testTarget).contains(testStatus) == isIncompleteRun,"TestListener changed in differential analysis. Ensure it isn't still registered.");
+    }
+  }
+  eventBus.post(summary.build());
+  return summary;
+}

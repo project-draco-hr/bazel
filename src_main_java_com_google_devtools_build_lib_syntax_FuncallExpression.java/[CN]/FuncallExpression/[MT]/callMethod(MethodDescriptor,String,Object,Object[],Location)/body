@@ -1,0 +1,24 @@
+{
+  Method method=methodDescriptor.getMethod();
+  if (obj == null && !Modifier.isStatic(method.getModifiers())) {
+    throw new EvalException(loc,"Method '" + methodName + "' is not static");
+  }
+  method.setAccessible(true);
+  Object result=method.invoke(obj,args);
+  if (method.getReturnType().equals(Void.TYPE)) {
+    return Environment.NONE;
+  }
+  if (result == null) {
+    if (methodDescriptor.getAnnotation().allowReturnNones()) {
+      return Environment.NONE;
+    }
+ else {
+      throw new EvalException(loc,"Method invocation returned None, please contact Skylark developers: " + methodName + "("+ EvalUtils.prettyPrintValues(", ",ImmutableList.copyOf(args))+ ")");
+    }
+  }
+  result=SkylarkType.convertToSkylark(result,method);
+  if (result != null && !EvalUtils.isSkylarkImmutable(result.getClass())) {
+    throw new EvalException(loc,"Method '" + methodName + "' returns a mutable object (type of "+ EvalUtils.getDatatypeName(result)+ ")");
+  }
+  return result;
+}

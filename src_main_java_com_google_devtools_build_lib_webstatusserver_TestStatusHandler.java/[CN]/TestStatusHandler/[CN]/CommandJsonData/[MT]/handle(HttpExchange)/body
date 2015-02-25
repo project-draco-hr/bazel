@@ -1,0 +1,14 @@
+{
+  exchange.getResponseHeaders().put("Content-Type",ImmutableList.of("application/json"));
+  Type commandInfoType=new TypeToken<Map<String,JsonElement>>(){
+  }
+.getType();
+  JsonObject response=gson.toJsonTree(testStatusHandler.buildLog.getCommandInfo(),commandInfoType).getAsJsonObject();
+  response.addProperty("startTime",testStatusHandler.buildLog.getStartTime());
+  response.addProperty("finished",testStatusHandler.buildLog.finished());
+  String serializedResponse=response.toString();
+  exchange.sendResponseHeaders(200,serializedResponse.length());
+  OutputStream os=exchange.getResponseBody();
+  os.write(serializedResponse.getBytes());
+  os.close();
+}

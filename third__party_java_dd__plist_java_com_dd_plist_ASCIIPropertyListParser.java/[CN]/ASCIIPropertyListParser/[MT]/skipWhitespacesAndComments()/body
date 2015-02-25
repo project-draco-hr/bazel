@@ -1,0 +1,26 @@
+{
+  boolean commentSkipped;
+  do {
+    commentSkipped=false;
+    while (accept(WHITESPACE_CARRIAGE_RETURN,WHITESPACE_NEWLINE,WHITESPACE_SPACE,WHITESPACE_TAB)) {
+      skip();
+    }
+    if (acceptSequence(COMMENT_BEGIN_TOKEN,SINGLELINE_COMMENT_SECOND_TOKEN)) {
+      skip(2);
+      readInputUntil(WHITESPACE_CARRIAGE_RETURN,WHITESPACE_NEWLINE);
+      commentSkipped=true;
+    }
+ else     if (acceptSequence(COMMENT_BEGIN_TOKEN,MULTILINE_COMMENT_SECOND_TOKEN)) {
+      skip(2);
+      while (true) {
+        if (acceptSequence(MULTILINE_COMMENT_SECOND_TOKEN,MULTILINE_COMMENT_END_TOKEN)) {
+          skip(2);
+          break;
+        }
+        skip();
+      }
+      commentSkipped=true;
+    }
+  }
+ while (commentSkipped);
+}

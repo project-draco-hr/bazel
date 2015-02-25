@@ -1,0 +1,15 @@
+{
+  SkylarkType elementsType=listExpression.validate(env);
+  Class<?> listElementType=elementsType.getGenericType1();
+  SkylarkType listElementSkylarkType=listElementType.equals(Object.class) ? SkylarkType.UNKNOWN : SkylarkType.of(listElementType);
+  env.update(loopVar.getName(),listElementSkylarkType,getLocation());
+  SkylarkType keyType=keyExpression.validate(env);
+  if (!keyType.isSimple()) {
+    throw new EvalException(getLocation(),"Dict comprehension key must be of a simple type");
+  }
+  valueExpression.validate(env);
+  if (elementsType != SkylarkType.UNKNOWN && !elementsType.isList()) {
+    throw new EvalException(getLocation(),"Dict comprehension elements must be a list");
+  }
+  return SkylarkType.of(Map.class,keyType.getType());
+}

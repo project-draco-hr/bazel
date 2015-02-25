@@ -1,0 +1,30 @@
+{
+  if (!getEventMask().contains(event.getKind())) {
+    return;
+  }
+  try {
+switch (event.getKind()) {
+case STDOUT:
+      outErr.getOutputStream().write(event.getMessageBytes());
+    outErr.getOutputStream().flush();
+  break;
+case STDERR:
+outErr.getErrorStream().write(event.getMessageBytes());
+outErr.getErrorStream().flush();
+break;
+default :
+PrintWriter err=new PrintWriter(outErr.getErrorStream());
+err.print(event.getKind());
+err.print(": ");
+if (event.getLocation() != null) {
+err.print(event.getLocation().print());
+err.print(": ");
+}
+err.println(event.getMessage());
+err.flush();
+}
+}
+ catch (IOException e) {
+outErr.printErrLn(e.getMessage());
+}
+}

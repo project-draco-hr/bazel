@@ -1,0 +1,18 @@
+{
+  TestDelegator delegator=new TestDelegator(){
+    @Override protected Collection<Path> getDirectoryEntries(    Path path){
+      lastPath=path;
+      return ImmutableList.of((Path)objectState);
+    }
+    @Override protected boolean isDirectory(    Path path,    boolean followSymlinks){
+      return true;
+    }
+  }
+;
+  scopedFS().setDelegator(delegator);
+  delegator.setState(testFS.getPath("/anything"));
+  Collection<Path> entries=dirLink.getDirectoryEntries();
+  assertEquals(dirLinkTarget,delegator.lastPath());
+  assertEquals(1,entries.size());
+  assertSame(delegator.objectState(),entries.iterator().next());
+}

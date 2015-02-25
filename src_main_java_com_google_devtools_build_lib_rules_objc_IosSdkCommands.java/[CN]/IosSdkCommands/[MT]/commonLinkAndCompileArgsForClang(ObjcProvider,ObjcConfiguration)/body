@@ -1,0 +1,13 @@
+{
+  ImmutableList.Builder<String> builder=new ImmutableList.Builder<>();
+  if (configuration.getPlatform() == Platform.SIMULATOR) {
+    builder.add("-mios-simulator-version-min=" + configuration.getMinimumOs());
+  }
+ else {
+    builder.add("-miphoneos-version-min=" + configuration.getMinimumOs());
+  }
+  if (configuration.generateDebugSymbols()) {
+    builder.add("-g");
+  }
+  return builder.add("-arch",configuration.getIosCpu()).add("-isysroot",sdkDir(configuration)).add("-F",sdkDir(configuration) + "/Developer/Library/Frameworks").add("-F",frameworkDir(configuration)).addAll(Interspersing.beforeEach("-F",PathFragment.safePathStrings(uniqueParentDirectories(provider.get(FRAMEWORK_DIR))))).build();
+}

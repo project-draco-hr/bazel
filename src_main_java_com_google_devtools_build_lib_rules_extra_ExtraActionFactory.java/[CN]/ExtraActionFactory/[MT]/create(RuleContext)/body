@@ -1,0 +1,21 @@
+{
+  List<Artifact> resolvedData=Lists.newArrayList();
+  Iterable<FilesToRunProvider> tools=context.getPrerequisites("tools",Mode.HOST,FilesToRunProvider.class);
+  CommandHelper commandHelper=new CommandHelper(context,tools,ImmutableMap.<Label,Iterable<Artifact>>of());
+  resolvedData.addAll(context.getPrerequisiteArtifacts("data",Mode.DATA).list());
+  List<String> outputTemplates=context.attributes().get("out_templates",Type.STRING_LIST);
+  String command=commandHelper.resolveCommandAndExpandLabels(false,true);
+  command=command.replace("$(EXTRA_ACTION_FILE)","$$(EXTRA_ACTION_FILE)");
+  command=command.replace("$(ACTION_ID)","$$(ACTION_ID)");
+  command=command.replace("$(OWNER_LABEL_DIGEST)","$$(OWNER_LABEL_DIGEST)");
+  command=command.replace("$(output ","$$(output ");
+  try {
+    command=MakeVariableExpander.expand(command,new ConfigurationMakeVariableContext(context.getTarget().getPackage(),context.getConfiguration()));
+  }
+ catch (  MakeVariableExpander.ExpansionException e) {
+    context.ruleError(String.format("Unable to expand make variables: %s",e.getMessage()));
+  }
+  boolean requiresActionOutput=context.attributes().get("requires_action_output",Type.BOOLEAN);
+  ExtraActionSpec spec=new ExtraActionSpec(commandHelper.getResolvedTools(),commandHelper.getRemoteRunfileManifestMap(),resolvedData,outputTemplates,command,context.getLabel(),requiresActionOutput);
+  return new RuleConfiguredTargetBuilder(context).addProvider(ExtraActionSpec.class,spec).add(RunfilesProvider.class,RunfilesProvider.simple(Runfiles.EMPTY)).build();
+}

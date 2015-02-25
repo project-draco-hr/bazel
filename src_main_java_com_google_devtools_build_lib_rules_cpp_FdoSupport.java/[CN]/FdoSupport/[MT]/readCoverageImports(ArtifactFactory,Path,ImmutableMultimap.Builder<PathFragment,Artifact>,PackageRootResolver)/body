@@ -1,0 +1,19 @@
+{
+  PathFragment key=importsFile.asFragment().relativeTo(ZIP_ROOT);
+  String baseName=key.getBaseName();
+  String ext=Iterables.getOnlyElement(CppFileTypes.COVERAGE_DATA_IMPORTS.getExtensions());
+  key=key.replaceName(baseName.substring(0,baseName.length() - ext.length()));
+  for (  String line : FileSystemUtils.iterateLinesAsLatin1(importsFile)) {
+    if (!line.isEmpty()) {
+      PathFragment execPath=new PathFragment(line);
+      if (execPath.isAbsolute()) {
+        throw new FdoException("Absolute paths not allowed in gcda imports file " + importsFile + ": "+ execPath);
+      }
+      Artifact artifact=artifactFactory.deserializeArtifact(new PathFragment(line),resolver);
+      if (artifact == null) {
+        throw new FdoException("Auxiliary LIPO input not found: " + line);
+      }
+      importsBuilder.put(key,artifact);
+    }
+  }
+}

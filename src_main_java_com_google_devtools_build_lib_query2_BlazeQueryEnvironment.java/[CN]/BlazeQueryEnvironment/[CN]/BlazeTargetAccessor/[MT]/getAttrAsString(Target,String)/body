@@ -1,0 +1,32 @@
+{
+  Preconditions.checkArgument(target instanceof Rule);
+  List<String> values=new ArrayList<>();
+  Attribute attribute=((Rule)target).getAttributeDefinition(attrName);
+  if (attribute != null) {
+    Type<?> attributeType=attribute.getType();
+    for (    Object attrValue : AggregatingAttributeMapper.of((Rule)target).visitAttribute(attribute.getName(),attributeType)) {
+      if (attributeType == BOOLEAN) {
+        values.add(Type.BOOLEAN.cast(attrValue) ? "1" : "0");
+      }
+ else       if (attributeType == TRISTATE) {
+switch (Type.TRISTATE.cast(attrValue)) {
+case AUTO:
+          values.add("-1");
+        break;
+case NO:
+      values.add("0");
+    break;
+case YES:
+  values.add("1");
+break;
+default :
+throw new AssertionError("This can't happen!");
+}
+}
+ else {
+values.add(attrValue == null ? null : attrValue.toString());
+}
+}
+}
+return values;
+}

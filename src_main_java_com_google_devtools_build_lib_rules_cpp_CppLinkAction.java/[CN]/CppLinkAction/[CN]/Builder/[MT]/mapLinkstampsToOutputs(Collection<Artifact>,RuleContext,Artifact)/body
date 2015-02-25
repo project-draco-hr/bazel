@@ -1,0 +1,10 @@
+{
+  ImmutableMap.Builder<Artifact,Artifact> mapBuilder=ImmutableMap.builder();
+  PathFragment outputBinaryPath=outputBinary.getRootRelativePath();
+  PathFragment stampOutputDirectory=outputBinaryPath.getParentDirectory().getRelative("_objs").getRelative(outputBinaryPath.getBaseName());
+  for (  Artifact linkstamp : linkstamps) {
+    PathFragment stampOutputPath=stampOutputDirectory.getRelative(FileSystemUtils.replaceExtension(linkstamp.getRootRelativePath(),".o"));
+    mapBuilder.put(linkstamp,ruleContext.getAnalysisEnvironment().getDerivedArtifact(stampOutputPath,outputBinary.getRoot()));
+  }
+  return mapBuilder.build();
+}

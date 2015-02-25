@@ -1,0 +1,26 @@
+{
+  GroupedList<String> groupedList=new GroupedList<>();
+  assertTrue(groupedList.isEmpty());
+  GroupedListHelper<String> helper=new GroupedListHelper<>();
+  List<ImmutableList<String>> elements=ImmutableList.of(ImmutableList.of("1"),ImmutableList.of("2a","2b"),ImmutableList.of("3"),ImmutableList.of("4"),ImmutableList.of("5a","5b","5c"),ImmutableList.of("6a","6b","6c"));
+  List<String> allElts=new ArrayList<>();
+  for (  List<String> group : elements) {
+    if (group.size() > 1) {
+      helper.startGroup();
+    }
+    for (    String elt : group) {
+      helper.add(elt);
+    }
+    if (group.size() > 1) {
+      helper.endGroup();
+    }
+    allElts.addAll(group);
+  }
+  groupedList.append(helper);
+  assertEquals(allElts.size(),groupedList.size());
+  assertFalse(groupedList.isEmpty());
+  Object compressed=groupedList.compress();
+  assertElementsEqual(compressed,allElts);
+  assert_().that(GroupedList.create(compressed)).containsExactlyElementsIn(elements).inOrder();
+  assert_().that(groupedList).containsExactlyElementsIn(elements).inOrder();
+}

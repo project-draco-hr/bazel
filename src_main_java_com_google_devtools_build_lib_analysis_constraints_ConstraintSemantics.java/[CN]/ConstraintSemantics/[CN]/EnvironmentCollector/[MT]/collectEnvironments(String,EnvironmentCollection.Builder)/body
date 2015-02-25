@@ -1,0 +1,12 @@
+{
+  if (!ruleContext.getRule().isAttrDefined(attrName,Type.LABEL_LIST)) {
+    return EnvironmentCollection.EMPTY;
+  }
+  EnvironmentCollection.Builder environments=new EnvironmentCollection.Builder();
+  for (  TransitiveInfoCollection envTarget : ruleContext.getPrerequisites(attrName,RuleConfiguredTarget.Mode.DONT_CHECK)) {
+    EnvironmentWithGroup envInfo=resolveEnvironment(envTarget);
+    environments.put(envInfo.group(),envInfo.environment());
+    supportedEnvironments.put(envInfo.group(),envInfo.environment());
+  }
+  return environments.build();
+}

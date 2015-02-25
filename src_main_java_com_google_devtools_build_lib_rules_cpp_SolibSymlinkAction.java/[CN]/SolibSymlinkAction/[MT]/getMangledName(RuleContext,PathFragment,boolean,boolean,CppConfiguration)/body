@@ -1,0 +1,13 @@
+{
+  String escapedRulePath=Actions.escapedPath("_" + ruleContext.getLabel());
+  String soname=getDynamicLibrarySoname(libraryPath,preserveName);
+  PathFragment solibDir=new PathFragment(cppConfiguration.getSolibDirectory());
+  if (preserveName) {
+    String escapedLibraryPath=Actions.escapedPath("_" + libraryPath.getParentDirectory().getPathString());
+    PathFragment mangledDir=solibDir.getRelative(prefixConsumer ? escapedRulePath + "__" + escapedLibraryPath : escapedLibraryPath);
+    return mangledDir.getRelative(soname);
+  }
+ else {
+    return solibDir.getRelative(prefixConsumer ? escapedRulePath + "__" + soname : soname);
+  }
+}

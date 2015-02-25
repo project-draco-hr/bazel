@@ -1,0 +1,26 @@
+{
+  if (function.getLocation() == null) {
+    function=setLocation(function,start,end);
+  }
+  boolean seenKeywordArg=false;
+  boolean seenKwargs=false;
+  for (  Argument arg : args) {
+    if (arg.isPositional()) {
+      if (seenKeywordArg || seenKwargs) {
+        reportError(arg.getLocation(),"syntax error: non-keyword arg after keyword arg");
+        return makeErrorExpression(start,end);
+      }
+    }
+ else     if (arg.isKwargs()) {
+      if (seenKwargs) {
+        reportError(arg.getLocation(),"there can be only one **kwargs argument");
+        return makeErrorExpression(start,end);
+      }
+      seenKwargs=true;
+    }
+ else {
+      seenKeywordArg=true;
+    }
+  }
+  return setLocation(new FuncallExpression(receiver,function,args),start,end);
+}

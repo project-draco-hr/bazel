@@ -1,0 +1,23 @@
+{
+  initializeTester();
+  String[] values=new String[TEST_NODE_COUNT];
+  for (int i=0; i < values.length; i++) {
+    values[i]=Integer.toString(i);
+    tester.getOrCreate(values[i]).addDependency("leaf").setComputedValue(COPY);
+  }
+  tester.set("leaf",new StringValue("leaf"));
+  EvaluationResult<StringValue> result=tester.eval(false,values);
+  for (int i=0; i < values.length; i++) {
+    SkyValue actual=result.get(new SkyKey(GraphTester.NODE_TYPE,values[i]));
+    assertEquals(new StringValue("leaf"),actual);
+  }
+  for (int j=0; j < TESTED_NODES; j++) {
+    tester.set("leaf",new StringValue("other" + j));
+    tester.invalidate();
+    result=tester.eval(false,values);
+    for (int i=0; i < values.length; i++) {
+      SkyValue actual=result.get(new SkyKey(GraphTester.NODE_TYPE,values[i]));
+      assertEquals("Run " + j + ", value "+ i,new StringValue("other" + j),actual);
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  Preconditions.checkArgument(!path.startsWith("/"));
+  Iterator<String> it=SLASH_SPLITTER.split(path).iterator();
+  List<String> pieces=new ArrayList<>();
+  while (it.hasNext()) {
+    String piece=it.next();
+    if (".".equals(piece) || piece.isEmpty()) {
+      continue;
+    }
+    if ("..".equals(piece)) {
+      if (pieces.isEmpty()) {
+        pieces.add(piece);
+        continue;
+      }
+      String predecessor=pieces.remove(pieces.size() - 1);
+      if ("..".equals(predecessor)) {
+        pieces.add(piece);
+        pieces.add(piece);
+      }
+      continue;
+    }
+    pieces.add(piece);
+  }
+  return SLASH_JOINER.join(pieces);
+}

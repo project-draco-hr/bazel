@@ -1,0 +1,17 @@
+{
+  assertEquals("",out.toString());
+  reporter.addHandler(outAppender);
+  PrintWriter infoWriter=new PrintWriter(new ReporterStream(reporter,EventKind.INFO),true);
+  PrintWriter warnWriter=new PrintWriter(new ReporterStream(reporter,EventKind.WARNING),true);
+  try {
+    infoWriter.println("some info");
+    warnWriter.println("a warning");
+  }
+  finally {
+    infoWriter.close();
+    warnWriter.close();
+  }
+  reporter.getOutErr().printOutLn("some output");
+  reporter.getOutErr().printErrLn("an error");
+  MoreAsserts.assertEqualsUnifyingLineEnds("[INFO: some info\n]\n" + "[WARNING: a warning\n]\n" + "[STDOUT: some output\n]\n"+ "[STDERR: an error\n]\n",out.toString());
+}

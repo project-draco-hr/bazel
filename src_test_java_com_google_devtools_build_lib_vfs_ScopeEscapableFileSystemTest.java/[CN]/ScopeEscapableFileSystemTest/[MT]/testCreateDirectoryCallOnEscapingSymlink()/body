@@ -1,0 +1,17 @@
+{
+  TestDelegator delegator=new TestDelegator(){
+    @Override protected boolean createDirectory(    Path path){
+      lastPath=path;
+      return booleanState();
+    }
+    @Override protected boolean isDirectory(    Path path,    boolean followSymlinks){
+      return true;
+    }
+  }
+;
+  scopedFS().setDelegator(delegator);
+  delegator.setState(false);
+  assertFalseWithPathCheck(dirLink.getRelative("a").createDirectory(),delegator,dirLinkTarget.getRelative("a"));
+  delegator.setState(true);
+  assertTrueWithPathCheck(dirLink.getRelative("a").createDirectory(),delegator,dirLinkTarget.getRelative("a"));
+}

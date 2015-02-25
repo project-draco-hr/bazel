@@ -1,0 +1,23 @@
+{
+  Label actual=binding.getActual();
+  Label tortoise=virtual;
+  Label hare=actual;
+  boolean moveTortoise=true;
+  while (Binding.isBoundLabel(actual)) {
+    if (tortoise == hare) {
+      throw new NoSuchBindingException("cycle detected resolving " + virtual + " binding");
+    }
+    Label previous=actual;
+    binding=bindMap.get(actual);
+    if (binding == null) {
+      throw new NoSuchBindingException("no binding found for target " + previous + " (via "+ virtual+ ")");
+    }
+    actual=binding.getActual();
+    hare=actual;
+    moveTortoise=!moveTortoise;
+    if (moveTortoise) {
+      tortoise=bindMap.get(tortoise).getActual();
+    }
+  }
+  bindMap.put(virtual,binding);
+}

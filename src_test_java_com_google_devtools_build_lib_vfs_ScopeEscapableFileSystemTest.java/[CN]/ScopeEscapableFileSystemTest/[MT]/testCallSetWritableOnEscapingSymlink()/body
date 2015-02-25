@@ -1,0 +1,24 @@
+{
+  TestDelegator delegator=new TestDelegator(){
+    @Override protected void setWritable(    Path path,    boolean writable){
+      lastPath=path;
+      setState(writable);
+    }
+  }
+;
+  scopedFS().setDelegator(delegator);
+  delegator.setState(false);
+  fileLink.setWritable(true);
+  assertTrue(delegator.booleanState());
+  checkPath(delegator,fileLinkTarget);
+  fileLink.setWritable(false);
+  assertFalse(delegator.booleanState());
+  checkPath(delegator,fileLinkTarget);
+  delegator.setState(false);
+  dirLink.getRelative("a").setWritable(true);
+  assertTrue(delegator.booleanState());
+  checkPath(delegator,dirLinkTarget.getRelative("a"));
+  dirLink.getRelative("a").setWritable(false);
+  assertFalse(delegator.booleanState());
+  checkPath(delegator,dirLinkTarget.getRelative("a"));
+}

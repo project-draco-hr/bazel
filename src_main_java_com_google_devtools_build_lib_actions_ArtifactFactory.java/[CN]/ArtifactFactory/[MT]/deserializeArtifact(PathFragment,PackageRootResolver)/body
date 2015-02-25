@@ -1,0 +1,21 @@
+{
+  Preconditions.checkArgument(!execPath.isAbsolute(),execPath);
+  Path path=execRoot.getRelative(execPath);
+  Root root=findDerivedRoot(path);
+  Artifact result;
+  if (root != null) {
+    result=getDerivedArtifact(path.relativeTo(root.getPath()),root,Artifact.DESERIALIZED_MARKER_OWNER);
+    Artifact oldResult=deserializedArtifacts.putIfAbsent(execPath,result);
+    if (oldResult != null) {
+      result=oldResult;
+    }
+    return result;
+  }
+ else {
+    Map<PathFragment,Root> sourceRoots=resolver.findPackageRoots(Lists.newArrayList(execPath));
+    if (sourceRoots == null || sourceRoots.get(execPath) == null) {
+      return null;
+    }
+    return getSourceArtifact(execPath,sourceRoots.get(execPath),ArtifactOwner.NULL_OWNER);
+  }
+}

@@ -1,0 +1,57 @@
+{
+  Collection<ConfiguredTarget> succeeded=new ArrayList<>();
+  Collection<ConfiguredTarget> failed=new ArrayList<>();
+  for (  ConfiguredTarget target : configuredTargets) {
+    if (target instanceof InputFileConfiguredTarget) {
+      continue;
+    }
+    if (target.getTarget() instanceof Rule) {
+      Rule rule=(Rule)target.getTarget();
+      if (rule.getRuleClass().contains("$")) {
+        continue;
+      }
+    }
+    if (target instanceof OutputFileConfiguredTarget) {
+      TransitiveInfoCollection generatingRule=getView().getGeneratingRule((OutputFileConfiguredTarget)target);
+      if (CollectionUtils.containsAll(generatingRule.getProvider(FileProvider.class).getFilesToBuild(),target.getProvider(FileProvider.class).getFilesToBuild()) && configuredTargets.contains(generatingRule)) {
+        continue;
+      }
+    }
+    Collection<ConfiguredTarget> successfulTargets=result.getSuccessfulTargets();
+    (successfulTargets.contains(target) ? succeeded : failed).add(target);
+  }
+  if (succeeded.size() + failed.size() > request.getBuildOptions().maxResultTargets) {
+    return;
+  }
+  OutErr outErr=request.getOutErr();
+  for (  ConfiguredTarget target : succeeded) {
+    Label label=target.getLabel();
+    boolean headerFlag=true;
+    for (    Artifact artifact : getFilesToBuild(target,request)) {
+      if (!artifact.isSourceArtifact()) {
+        if (headerFlag) {
+          outErr.printErr("Target " + label + " up-to-date:\n");
+          headerFlag=false;
+        }
+        outErr.printErrLn("  " + OutputDirectoryLinksUtils.getPrettyPath(artifact.getPath(),runtime.getWorkspaceName(),getWorkspace(),request.getSymlinkPrefix()));
+      }
+    }
+    if (headerFlag) {
+      outErr.printErr("Target " + label + " up-to-date (nothing to build)\n");
+    }
+  }
+  for (  ConfiguredTarget target : failed) {
+    outErr.printErr("Target " + target.getLabel() + " failed to build\n");
+    TempsProvider tempsProvider=target.getProvider(TempsProvider.class);
+    if (tempsProvider != null) {
+      for (      Artifact temp : tempsProvider.getTemps()) {
+        if (temp.getPath().exists()) {
+          outErr.printErrLn("  See temp at " + OutputDirectoryLinksUtils.getPrettyPath(temp.getPath(),runtime.getWorkspaceName(),getWorkspace(),request.getSymlinkPrefix()));
+        }
+      }
+    }
+  }
+  if (!failed.isEmpty() && !request.getOptions(ExecutionOptions.class).verboseFailures) {
+    outErr.printErr("Use --verbose_failures to see the command lines of failed build steps.\n");
+  }
+}

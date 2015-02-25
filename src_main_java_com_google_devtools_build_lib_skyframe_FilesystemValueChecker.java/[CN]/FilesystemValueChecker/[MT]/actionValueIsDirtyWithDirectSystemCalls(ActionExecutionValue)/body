@@ -1,0 +1,18 @@
+{
+  boolean isDirty=false;
+  for (  Map.Entry<Artifact,FileValue> entry : actionValue.getAllOutputArtifactData().entrySet()) {
+    Artifact artifact=entry.getKey();
+    FileValue lastKnownData=entry.getValue();
+    try {
+      if (!FileAndMetadataCache.fileValueFromArtifact(artifact,null,tsgm).equals(lastKnownData)) {
+        modifiedOutputFilesCounter.getAndIncrement();
+        isDirty=true;
+      }
+    }
+ catch (    IOException e) {
+      modifiedOutputFilesCounter.getAndIncrement();
+      isDirty=true;
+    }
+  }
+  return isDirty;
+}

@@ -1,0 +1,28 @@
+{
+  RuleVisibility ruleVisibility=target.getVisibility();
+  if (ruleVisibility instanceof ConstantRuleVisibility) {
+    return ((ConstantRuleVisibility)ruleVisibility).isPubliclyVisible() ? NestedSetBuilder.<PackageSpecification>create(Order.STABLE_ORDER,PackageSpecification.EVERYTHING) : NestedSetBuilder.<PackageSpecification>emptySet(Order.STABLE_ORDER);
+  }
+ else   if (ruleVisibility instanceof PackageGroupsRuleVisibility) {
+    PackageGroupsRuleVisibility packageGroupsVisibility=(PackageGroupsRuleVisibility)ruleVisibility;
+    NestedSetBuilder<PackageSpecification> packageSpecifications=NestedSetBuilder.stableOrder();
+    for (    Label groupLabel : packageGroupsVisibility.getPackageGroups()) {
+      ConfiguredTarget group=findPrerequisite(prerequisiteMap,groupLabel,packageGroupConfiguration);
+      PackageSpecificationProvider provider=null;
+      if (group != null) {
+        provider=group.getProvider(PackageSpecificationProvider.class);
+      }
+      if (provider != null) {
+        packageSpecifications.addTransitive(provider.getPackageSpecifications());
+      }
+ else {
+        reporter.handle(Event.error(target.getLocation(),String.format("Label '%s' does not refer to a package group",groupLabel)));
+      }
+    }
+    packageSpecifications.addAll(packageGroupsVisibility.getDirectPackages());
+    return packageSpecifications.build();
+  }
+ else {
+    throw new IllegalStateException("unknown visibility");
+  }
+}

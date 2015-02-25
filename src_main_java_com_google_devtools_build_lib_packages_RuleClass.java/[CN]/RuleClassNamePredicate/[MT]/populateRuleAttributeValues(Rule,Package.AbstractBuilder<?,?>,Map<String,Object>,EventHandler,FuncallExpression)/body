@@ -1,0 +1,53 @@
+{
+  BitSet definedAttrs=new BitSet();
+  for (  Map.Entry<String,Object> entry : attributeValues.entrySet()) {
+    String attributeName=entry.getKey();
+    Object attributeValue=entry.getValue();
+    if (attributeValue == Environment.NONE) {
+      continue;
+    }
+    Integer attrIndex=setRuleAttributeValue(rule,eventHandler,attributeName,attributeValue);
+    if (attrIndex != null) {
+      definedAttrs.set(attrIndex);
+      checkAttrValNonEmpty(rule,eventHandler,attributeValue,attrIndex);
+    }
+  }
+  if (ast != null) {
+    for (    Argument arg : ast.getArguments()) {
+      Ident keyword=arg.getName();
+      if (keyword != null) {
+        String name=keyword.getName();
+        Integer attrIndex=getAttributeIndex(name);
+        if (attrIndex != null) {
+          rule.setAttributeLocation(attrIndex,arg.getValue().getLocation());
+        }
+      }
+    }
+  }
+  List<Attribute> attrsWithComputedDefaults=new ArrayList<>();
+  int numAttributes=getAttributeCount();
+  for (int attrIndex=0; attrIndex < numAttributes; ++attrIndex) {
+    if (!definedAttrs.get(attrIndex)) {
+      Attribute attr=getAttribute(attrIndex);
+      if (attr.isMandatory()) {
+        rule.reportError(rule.getLabel() + ": missing value for mandatory " + "attribute '"+ attr.getName()+ "' in '"+ name+ "' rule",eventHandler);
+      }
+      if (attr.hasComputedDefault()) {
+        attrsWithComputedDefaults.add(attr);
+      }
+ else {
+        Object defaultValue=getAttributeNoncomputedDefaultValue(attr,pkgBuilder);
+        checkAttrValNonEmpty(rule,eventHandler,defaultValue,attrIndex);
+        checkAllowedValues(rule,attr,defaultValue,eventHandler);
+        rule.setAttributeValue(attr,defaultValue,false);
+      }
+    }
+  }
+  for (  Attribute attr : attrsWithComputedDefaults) {
+    rule.setAttributeValue(attr,attr.getDefaultValue(rule),false);
+  }
+  populateConfigDependenciesAttribute(rule);
+  checkForDuplicateLabels(rule,eventHandler);
+  checkThirdPartyRuleHasLicense(rule,pkgBuilder,eventHandler);
+  checkForValidSizeAndTimeoutValues(rule,eventHandler);
+}

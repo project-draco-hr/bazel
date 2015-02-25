@@ -1,0 +1,25 @@
+{
+  out.println(String.format("# %s",rule.getLocation()));
+  out.println(String.format("%s(",rule.getRuleClass()));
+  out.println(String.format("  name = \"%s\",",rule.getName()));
+  for (  Attribute attr : rule.getAttributes()) {
+    Pair<Iterable<Object>,AttributeValueSource> values=getAttributeValues(rule,attr);
+    if (Iterables.size(values.first) != 1) {
+      continue;
+    }
+    if (values.second != AttributeValueSource.RULE) {
+      continue;
+    }
+    Object value=Iterables.getOnlyElement(values.first);
+    out.print(String.format("  %s = ",attr.getName()));
+    if (value instanceof Label) {
+      value=value.toString();
+    }
+ else     if (value instanceof List<?> && EvalUtils.isImmutable(value)) {
+      value=new ArrayList<>((List<?>)value);
+    }
+    EvalUtils.prettyPrintValue(value,out);
+    out.println(",");
+  }
+  out.println(String.format(")\n"));
+}

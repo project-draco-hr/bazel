@@ -1,0 +1,23 @@
+{
+class CustomRuntimeException extends RuntimeException {
+  }
+  final CustomRuntimeException expected=new CustomRuntimeException();
+  final SkyFunction builder=new SkyFunction(){
+    @Override @Nullable public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException, InterruptedException {
+      throw expected;
+    }
+    @Override @Nullable public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+;
+  final ParallelEvaluator evaluator=makeEvaluator(new InMemoryGraph(),ImmutableMap.of(GraphTester.NODE_TYPE,builder),false);
+  SkyKey valueToEval=GraphTester.toSkyKey("a");
+  try {
+    evaluator.eval(ImmutableList.of(valueToEval));
+  }
+ catch (  RuntimeException re) {
+    assertTrue(re.getMessage().contains("Unrecoverable error while evaluating node '" + valueToEval.toString() + "'"));
+    assertTrue(re.getCause() instanceof CustomRuntimeException);
+  }
+}

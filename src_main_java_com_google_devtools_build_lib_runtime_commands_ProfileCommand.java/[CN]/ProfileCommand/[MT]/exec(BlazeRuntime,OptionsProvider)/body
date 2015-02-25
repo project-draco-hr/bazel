@@ -1,0 +1,43 @@
+{
+  ProfileOptions opts=options.getOptions(ProfileOptions.class);
+  if (!opts.vfsStats) {
+    opts.vfsStatsLimit=0;
+  }
+  currentPathMapping=new Function<String,String>(){
+    @Override public String apply(    String input){
+      if (runtime.getWorkspaceName().isEmpty()) {
+        return input;
+      }
+ else {
+        return input.substring(input.lastIndexOf("/" + runtime.getWorkspaceName()) + 1);
+      }
+    }
+  }
+;
+  PrintStream out=new PrintStream(runtime.getReporter().getOutErr().getOutputStream());
+  try {
+    runtime.getReporter().handle(Event.warn(null,"This information is intended for consumption by Blaze developers" + " only, and may change at any time.  Script against it at your own risk"));
+    for (    String name : options.getResidue()) {
+      Path profileFile=runtime.getWorkingDirectory().getRelative(name);
+      try {
+        ProfileInfo info=ProfileInfo.loadProfileVerbosely(profileFile,getInfoListener(runtime));
+        if (opts.dumpMode != null) {
+          dumpProfile(runtime,info,out,opts.dumpMode);
+        }
+ else         if (opts.html) {
+          createHtml(runtime,info,profileFile,opts);
+        }
+ else {
+          createText(runtime,info,out,opts);
+        }
+      }
+ catch (      IOException e) {
+        runtime.getReporter().handle(Event.error(null,"Failed to process file " + name + ": "+ e.getMessage()));
+      }
+    }
+  }
+  finally {
+    out.flush();
+  }
+  return ExitCode.SUCCESS;
+}

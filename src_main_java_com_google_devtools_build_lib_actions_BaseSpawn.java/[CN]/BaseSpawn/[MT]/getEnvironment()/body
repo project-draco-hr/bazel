@@ -1,0 +1,12 @@
+{
+  if (getRunfilesManifests().size() != 1) {
+    return environment;
+  }
+  ImmutableMap.Builder<String,String> env=ImmutableMap.builder();
+  env.putAll(environment);
+  for (  Map.Entry<PathFragment,Artifact> e : getRunfilesManifests().entrySet()) {
+    env.put("JAVA_RUNFILES",e.getKey().getPathString() + "/");
+    env.put("PYTHON_RUNFILES",e.getKey().getPathString() + "/");
+  }
+  return env.build();
+}

@@ -1,0 +1,34 @@
+{
+  String testName=summary.getTarget().getLabel().toString();
+  List<String> allLogs=new ArrayList<>();
+  for (  Path path : summary.getFailedLogs()) {
+    allLogs.add(path.getPathString());
+  }
+  for (  Path path : summary.getPassedLogs()) {
+    allLogs.add(path.getPathString());
+  }
+  printer.printLn("" + TestSummary.getStatusMode(summary.getStatus()) + summary.getStatus()+ ": "+ Mode.DEFAULT+ testName+ " (see "+ Joiner.on(' ').join(allLogs)+ ")");
+  printer.printLn(Mode.INFO + "INFO: " + Mode.DEFAULT+ "From Testing "+ testName);
+  if (TestLogHelper.shouldOutputTestLog(testOutput,false)) {
+    for (    Path path : summary.getFailedLogs()) {
+      try {
+        TestLogHelper.writeTestLog(path,testName,printer.getOutputStream());
+      }
+ catch (      IOException e) {
+        printer.printLn("==================== Could not read test output for " + testName);
+        LoggingUtil.logToRemote(Level.WARNING,"Error while reading test log",e);
+      }
+    }
+  }
+  if (TestLogHelper.shouldOutputTestLog(testOutput,true)) {
+    for (    Path path : summary.getPassedLogs()) {
+      try {
+        TestLogHelper.writeTestLog(path,testName,printer.getOutputStream());
+      }
+ catch (      Exception e) {
+        printer.printLn("==================== Could not read test output for " + testName);
+        LoggingUtil.logToRemote(Level.WARNING,"Error while reading test log",e);
+      }
+    }
+  }
+}

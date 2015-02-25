@@ -1,0 +1,50 @@
+{
+  if (!eventMask.contains(event.getKind())) {
+    return;
+  }
+  String prefix;
+switch (event.getKind()) {
+case STDOUT:
+    putOutput(outErr.getOutputStream(),event);
+  return;
+case STDERR:
+putOutput(outErr.getErrorStream(),event);
+return;
+case PASS:
+case FAIL:
+case TIMEOUT:
+case ERROR:
+case WARNING:
+case DEPCHECKER:
+prefix=event.getKind() + ": ";
+break;
+case SUBCOMMAND:
+prefix=">>>>>>>>> ";
+break;
+case INFO:
+case PROGRESS:
+case START:
+case FINISH:
+prefix="____";
+break;
+default :
+throw new IllegalStateException("" + event.getKind());
+}
+StringBuilder buf=new StringBuilder();
+buf.append(prefix);
+if (showTimestamp) {
+buf.append(timestamp());
+}
+Location location=event.getLocation();
+if (location != null) {
+buf.append(location.print()).append(": ");
+}
+buf.append(event.getMessage());
+if (event.getKind() == EventKind.FINISH) {
+buf.append(" DONE");
+}
+if (event.getKind() == EventKind.WARNING || event.getKind() == EventKind.ERROR) {
+buf.append('.');
+}
+errPrintStream.println(buf);
+}

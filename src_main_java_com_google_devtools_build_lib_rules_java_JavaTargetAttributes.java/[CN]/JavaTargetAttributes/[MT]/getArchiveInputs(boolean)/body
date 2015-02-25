@@ -1,0 +1,15 @@
+{
+  IterablesChain.Builder<Artifact> inputs=IterablesChain.builder();
+  if (includeClasspath) {
+    inputs.add(ImmutableList.copyOf(getRuntimeClassPathForArchive()));
+  }
+  inputs.add(getResources());
+  inputs.add(getClassPathResources());
+  if (getExcludedArtifacts().isEmpty()) {
+    return inputs.build();
+  }
+ else {
+    Set<Artifact> excludedJars=Sets.newHashSet(getExcludedArtifacts());
+    return ImmutableList.copyOf(Iterables.filter(inputs.build(),Predicates.not(Predicates.in(excludedJars))));
+  }
+}

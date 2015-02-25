@@ -1,0 +1,27 @@
+{
+  TestTimeout specifiedTimeout=target.getProvider(TestProvider.class).getTestParams().getTimeout();
+  long maxTimeOfShard=0;
+  for (  Long shardTime : testTimes) {
+    if (shardTime != null) {
+      maxTimeOfShard=Math.max(maxTimeOfShard,shardTime);
+    }
+  }
+  int maxTimeInSeconds=(int)(maxTimeOfShard / 1000);
+  if (!specifiedTimeout.isInRangeFuzzy(maxTimeInSeconds)) {
+    TestTimeout expectedTimeout=TestTimeout.getSuggestedTestTimeout(maxTimeInSeconds);
+    TestSize expectedSize=TestSize.getTestSize(expectedTimeout);
+    if (verbose) {
+      StringBuilder builder=new StringBuilder(String.format("Test execution time (%.1fs excluding execution overhead) outside of " + "range for %s tests. Consider setting timeout=\"%s\"",maxTimeOfShard / 1000.0,specifiedTimeout.prettyPrint(),expectedTimeout));
+      if (expectedSize != null) {
+        builder.append(" or size=\"").append(expectedSize).append("\"");
+      }
+      builder.append(". You need not modify the size if you think it is correct.");
+      warnings.add(builder.toString());
+      return false;
+    }
+    return true;
+  }
+ else {
+    return false;
+  }
+}

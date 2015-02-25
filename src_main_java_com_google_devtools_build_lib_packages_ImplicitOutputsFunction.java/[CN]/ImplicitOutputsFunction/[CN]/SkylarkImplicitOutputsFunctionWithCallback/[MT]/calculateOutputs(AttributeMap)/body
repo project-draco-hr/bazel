@@ -1,0 +1,23 @@
+{
+  Map<String,Object> attrValues=new HashMap<>();
+  for (  String attrName : map.getAttributeNames()) {
+    Object value=map.get(attrName,map.getAttributeType(attrName));
+    if (value != null) {
+      attrValues.put(attrName,value);
+    }
+  }
+  ClassObject attrs=new SkylarkClassObject(attrValues,"No such attribute '%s'");
+  try {
+    ImmutableMap.Builder<String,String> builder=ImmutableMap.builder();
+    for (    Map.Entry<String,String> entry : castMap(callback.call(attrs),String.class,String.class,"implicit outputs function return value")) {
+      Iterable<String> substitutions=fromTemplates(entry.getValue()).getImplicitOutputs(map);
+      if (!Iterables.isEmpty(substitutions)) {
+        builder.put(entry.getKey(),Iterables.getOnlyElement(substitutions));
+      }
+    }
+    return builder.build();
+  }
+ catch (  IllegalArgumentException e) {
+    throw new EvalException(loc,e.getMessage());
+  }
+}

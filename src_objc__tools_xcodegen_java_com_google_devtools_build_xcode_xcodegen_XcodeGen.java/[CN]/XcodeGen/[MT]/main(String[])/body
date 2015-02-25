@@ -1,0 +1,27 @@
+{
+  OptionsParser parser=OptionsParser.newOptionsParser(XcodeGenOptions.class);
+  parser.parse(args);
+  XcodeGenOptions options=parser.getOptions(XcodeGenOptions.class);
+  if (options.control == null) {
+    throw new IllegalArgumentException("--control must be specified\n" + Options.getUsage(XcodeGenOptions.class));
+  }
+  FileSystem fileSystem=FileSystems.getDefault();
+  Control controlPb;
+  try (InputStream in=Files.newInputStream(fileSystem.getPath(options.control))){
+    controlPb=Control.parseFrom(in);
+  }
+   Path pbxprojPath=fileSystem.getPath(controlPb.getPbxproj());
+  Path symlinkToInsideWorkspace=fileSystem.getPath("tools/objc/precomp_xcodegen_deploy.jar");
+  Path workspaceRoot;
+  if (!Files.exists(symlinkToInsideWorkspace)) {
+    workspaceRoot=XcodeprojGeneration.relativeWorkspaceRoot(pbxprojPath);
+  }
+ else {
+    workspaceRoot=symlinkToInsideWorkspace.toRealPath().resolve("../../..").normalize();
+  }
+  try (OutputStream out=Files.newOutputStream(pbxprojPath)){
+    Path relativeWorkspaceRoot=fileSystem.getPath(".");
+    PBXProject project=XcodeprojGeneration.xcodeproj(workspaceRoot,controlPb,ImmutableList.of(new CurrentVersionSetter(relativeWorkspaceRoot),new PbxReferencesGrouper(fileSystem)));
+    XcodeprojGeneration.write(out,project);
+  }
+ }

@@ -1,0 +1,11 @@
+{
+  int index=allocateIndex();
+  int len=key.length - offset;
+  Preconditions.checkState(len >= 0);
+  byte[] content=new byte[VarInt.varIntSize(parentNode) + VarInt.varIntSize(len) + len];
+  int contentOffset=VarInt.putVarInt(parentNode,content,0);
+  contentOffset=VarInt.putVarInt(len,content,contentOffset);
+  System.arraycopy(key,offset,content,contentOffset,len);
+  updateNode(index,content);
+  return index;
+}

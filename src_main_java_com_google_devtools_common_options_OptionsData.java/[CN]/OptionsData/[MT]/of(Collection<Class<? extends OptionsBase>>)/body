@@ -1,0 +1,84 @@
+{
+  Map<Class<? extends OptionsBase>,Constructor<?>> constructorBuilder=Maps.newHashMap();
+  Map<Class<? extends OptionsBase>,List<Field>> allOptionsFieldsBuilder=Maps.newHashMap();
+  Map<String,Field> nameToFieldBuilder=Maps.newHashMap();
+  Map<Character,Field> abbrevToFieldBuilder=Maps.newHashMap();
+  Map<Field,Object> optionDefaultsBuilder=Maps.newHashMap();
+  Map<Field,Converter<?>> convertersBuilder=Maps.newHashMap();
+  for (  Class<? extends OptionsBase> parsedOptionsClass : classes) {
+    try {
+      Constructor<? extends OptionsBase> constructor=parsedOptionsClass.getConstructor(new Class[0]);
+      constructorBuilder.put(parsedOptionsClass,constructor);
+    }
+ catch (    NoSuchMethodException e) {
+      throw new IllegalArgumentException(parsedOptionsClass + " lacks an accessible default constructor");
+    }
+    List<Field> fields=getAllAnnotatedFields(parsedOptionsClass);
+    allOptionsFieldsBuilder.put(parsedOptionsClass,fields);
+    for (    Field field : fields) {
+      Option annotation=field.getAnnotation(Option.class);
+      Type fieldType=field.getGenericType();
+      if (annotation.allowMultiple()) {
+        if (!(fieldType instanceof ParameterizedType)) {
+          throw new AssertionError("Type of multiple occurrence option must be a List<...>");
+        }
+        ParameterizedType pfieldType=(ParameterizedType)fieldType;
+        if (pfieldType.getRawType() != List.class) {
+          throw new AssertionError("Type of multiple occurrence option must be a List<...>");
+        }
+        fieldType=pfieldType.getActualTypeArguments()[0];
+      }
+      @SuppressWarnings("rawtypes") Class<? extends Converter> converter=annotation.converter();
+      if (converter == Converter.class) {
+        Converter<?> actualConverter=OptionsParserImpl.DEFAULT_CONVERTERS.get(fieldType);
+        if (actualConverter == null) {
+          throw new AssertionError("Cannot find converter for field of type " + field.getType() + " named "+ field.getName()+ " in class "+ field.getDeclaringClass().getName());
+        }
+        converter=actualConverter.getClass();
+      }
+      if (Modifier.isAbstract(converter.getModifiers())) {
+        throw new AssertionError("The converter type (" + converter + ") must be a concrete type");
+      }
+      Type converterResultType;
+      try {
+        Method convertMethod=converter.getMethod("convert",String.class);
+        converterResultType=GenericTypeHelper.getActualReturnType(converter,convertMethod);
+      }
+ catch (      NoSuchMethodException e) {
+        throw new AssertionError("A known converter object doesn't implement the convert" + " method");
+      }
+      if (annotation.allowMultiple()) {
+        if (GenericTypeHelper.getRawType(converterResultType) == List.class) {
+          Type elementType=((ParameterizedType)converterResultType).getActualTypeArguments()[0];
+          if (!GenericTypeHelper.isAssignableFrom(fieldType,elementType)) {
+            throw new AssertionError("If the converter return type of a multiple occurance " + "option is a list, then the type of list elements (" + fieldType + ") must be "+ "assignable from the converter list element type ("+ elementType+ ")");
+          }
+        }
+ else {
+          if (!GenericTypeHelper.isAssignableFrom(fieldType,converterResultType)) {
+            throw new AssertionError("Type of list elements (" + fieldType + ") for multiple occurrence option must be assignable from the converter "+ "return type ("+ converterResultType+ ")");
+          }
+        }
+      }
+ else {
+        if (!GenericTypeHelper.isAssignableFrom(fieldType,converterResultType)) {
+          throw new AssertionError("Type of field (" + fieldType + ") must be assignable from the converter "+ "return type ("+ converterResultType+ ")");
+        }
+      }
+      if (annotation.name() == null) {
+        throw new AssertionError("Option cannot have a null name");
+      }
+      if (nameToFieldBuilder.put(annotation.name(),field) != null) {
+        throw new DuplicateOptionDeclarationException("Duplicate option name: --" + annotation.name());
+      }
+      if (annotation.abbrev() != '\0') {
+        if (abbrevToFieldBuilder.put(annotation.abbrev(),field) != null) {
+          throw new DuplicateOptionDeclarationException("Duplicate option abbrev: -" + annotation.abbrev());
+        }
+      }
+      optionDefaultsBuilder.put(field,retrieveDefaultFromAnnotation(field));
+      convertersBuilder.put(field,OptionsParserImpl.findConverter(field));
+    }
+  }
+  return new OptionsData(constructorBuilder,nameToFieldBuilder,abbrevToFieldBuilder,allOptionsFieldsBuilder,optionDefaultsBuilder,convertersBuilder);
+}

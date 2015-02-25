@@ -1,0 +1,16 @@
+{
+  initializeTester();
+  SkyKey error=GraphTester.toSkyKey("error");
+  tester.getOrCreate(error).setHasError(true);
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  tester.getOrCreate(topKey).addDependency(error).setComputedValue(COPY);
+  EvaluationResult<StringValue> result=tester.eval(false,topKey);
+  assertThat(result.getError(topKey).getRootCauses()).containsExactly(error);
+  tester.getOrCreate(error).setHasError(false);
+  StringValue val=new StringValue("reformed");
+  tester.set(error,val);
+  tester.invalidate();
+  result=tester.eval(false,topKey);
+  assertEquals(val,result.get(topKey));
+  assertFalse(result.hasError());
+}

@@ -1,0 +1,23 @@
+{
+  boolean foundMismatch=false;
+  Map<Class<? extends OptionsBase>,OptionsParser> parserCache=new HashMap<>();
+  for (  Map.Entry<String,String> setting : expectedSettings.entrySet()) {
+    String optionName=setting.getKey();
+    String expectedRawValue=setting.getValue();
+    Class<? extends OptionsBase> optionClass=config.getOptionClass(optionName);
+    if (optionClass == null) {
+      throw new OptionsParsingException("unknown option: '" + optionName + "'");
+    }
+    OptionsParser parser=parserCache.get(optionClass);
+    if (parser == null) {
+      parser=OptionsParser.newOptionsParser(optionClass);
+      parserCache.put(optionClass,parser);
+    }
+    parser.parse("--" + optionName + "="+ expectedRawValue);
+    Object expectedParsedValue=parser.getOptions(optionClass).asMap().get(optionName);
+    if (!optionMatches(config,optionName,expectedParsedValue)) {
+      foundMismatch=true;
+    }
+  }
+  return !foundMismatch;
+}

@@ -1,0 +1,21 @@
+{
+  env.getValue(WorkspaceStatusValue.SKY_KEY);
+  Map<BuildInfoKey,BuildInfoFactory> buildInfoFactories=PrecomputedValue.BUILD_INFO_FACTORIES.get(env);
+  if (buildInfoFactories == null) {
+    return false;
+  }
+  BuildConfigurationCollection configurations=getBuildConfigurationCollection(env);
+  if (configurations == null) {
+    return false;
+  }
+  List<SkyKey> depKeys=Lists.newArrayList();
+  for (  BuildInfoKey key : buildInfoFactories.keySet()) {
+    for (    BuildConfiguration config : configurations.getAllConfigurations()) {
+      if (buildInfoFactories.get(key).isEnabled(config)) {
+        depKeys.add(BuildInfoCollectionValue.key(new BuildInfoKeyAndConfig(key,config)));
+      }
+    }
+  }
+  env.getValues(depKeys);
+  return !env.valuesMissing();
+}

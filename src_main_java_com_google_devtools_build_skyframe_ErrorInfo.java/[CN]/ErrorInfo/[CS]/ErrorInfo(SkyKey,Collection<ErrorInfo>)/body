@@ -1,0 +1,26 @@
+{
+  Preconditions.checkNotNull(currentValue);
+  Preconditions.checkState(!childErrors.isEmpty(),"Error value %s with no exception must depend on another error value",currentValue);
+  NestedSetBuilder<SkyKey> builder=NestedSetBuilder.stableOrder();
+  ImmutableList.Builder<CycleInfo> cycleBuilder=ImmutableList.builder();
+  Exception firstException=null;
+  SkyKey firstChildKey=null;
+  boolean isTransient=false;
+  boolean isCatastrophic=false;
+  for (  ErrorInfo child : childErrors) {
+    if (firstException == null) {
+      firstException=child.getException();
+      firstChildKey=child.getRootCauseOfException();
+    }
+    builder.addTransitive(child.rootCauses);
+    cycleBuilder.addAll(CycleInfo.prepareCycles(currentValue,child.cycles));
+    isTransient|=child.isTransient();
+    isCatastrophic|=child.isCatastrophic();
+  }
+  this.rootCauses=builder.build();
+  this.exception=firstException;
+  this.rootCauseOfException=firstChildKey;
+  this.cycles=cycleBuilder.build();
+  this.isTransient=isTransient;
+  this.isCatastrophic=isCatastrophic;
+}

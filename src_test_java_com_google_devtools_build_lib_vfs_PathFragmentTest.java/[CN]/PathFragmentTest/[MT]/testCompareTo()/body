@@ -1,0 +1,22 @@
+{
+  List<String> pathStrs=ImmutableList.of("","/","//",".","/./","foo/.//bar","foo","/foo","foo/bar","foo/Bar","Foo/bar");
+  List<PathFragment> paths=toPaths(pathStrs);
+  for (  PathFragment x : paths) {
+    for (    PathFragment y : paths) {
+      for (      PathFragment z : paths) {
+        assertEquals(Integer.signum(x.compareTo(y)),-1 * Integer.signum(y.compareTo(x)));
+        if (x.compareTo(y) > 0 && y.compareTo(z) > 0) {
+          MoreAsserts.assertGreaterThan(0,x.compareTo(z));
+        }
+        if (x.compareTo(y) == 0) {
+          assertEquals(Integer.signum(x.compareTo(z)),Integer.signum(y.compareTo(z)));
+        }
+        assertEquals((x.compareTo(y) == 0),x.equals(y));
+      }
+    }
+  }
+  Collections.shuffle(paths);
+  Collections.sort(paths);
+  List<PathFragment> expectedOrder=toPaths(ImmutableList.of("/","//","/./","/foo","",".","Foo/bar","foo","foo/.//bar","foo/Bar","foo/bar"));
+  assertEquals(expectedOrder,paths);
+}

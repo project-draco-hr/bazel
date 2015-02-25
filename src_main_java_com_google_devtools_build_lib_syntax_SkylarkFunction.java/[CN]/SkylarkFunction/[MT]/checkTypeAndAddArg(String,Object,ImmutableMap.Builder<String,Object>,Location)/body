@@ -1,0 +1,17 @@
+{
+  SkylarkBuiltin.Param param=parameterTypes.get(paramName);
+  if (param.callbackEnabled() && Function.class.isAssignableFrom(value.getClass())) {
+    arguments.put(paramName,value);
+    return;
+  }
+  if (!(param.type().isAssignableFrom(value.getClass()))) {
+    throw new EvalException(loc,String.format("expected %s for '%s' but got %s instead\n" + "%s.%s: %s",EvalUtils.getDataTypeNameFromClass(param.type()),paramName,EvalUtils.getDatatypeName(value),getName(),paramName,param.doc()));
+  }
+  if (param.type().equals(SkylarkList.class)) {
+    checkGeneric(paramName,param,value,((SkylarkList)value).getGenericType(),loc);
+  }
+ else   if (param.type().equals(SkylarkNestedSet.class)) {
+    checkGeneric(paramName,param,value,((SkylarkNestedSet)value).getGenericType(),loc);
+  }
+  arguments.put(paramName,value);
+}

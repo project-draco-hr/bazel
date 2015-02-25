@@ -1,0 +1,40 @@
+{
+  if (attrName.equals("name")) {
+    return null;
+  }
+  Integer attrIndex=getAttributeIndex(attrName);
+  if (attrIndex == null) {
+    rule.reportError(rule.getLabel() + ": no such attribute '" + attrName+ "' in '"+ name+ "' rule",eventHandler);
+    return null;
+  }
+  Attribute attr=getAttribute(attrIndex);
+  Object converted;
+  try {
+    String what="attribute '" + attrName + "' in '"+ name+ "' rule";
+    converted=attr.getType().selectableConvert(attrVal,what,rule.getLabel());
+    if ((converted instanceof Type.Selector<?>) && !attr.isConfigurable()) {
+      rule.reportError(rule.getLabel() + ": attribute \"" + attr.getName()+ "\" is not configurable",eventHandler);
+      return null;
+    }
+    if ((converted instanceof List<?>) && !(converted instanceof GlobList<?>)) {
+      if (attr.isOrderIndependent()) {
+        converted=Ordering.natural().sortedCopy((List<? extends Comparable<?>>)converted);
+      }
+      converted=ImmutableList.copyOf((List<?>)converted);
+    }
+  }
+ catch (  Type.ConversionException e) {
+    rule.reportError(rule.getLabel() + ": " + e.getMessage(),eventHandler);
+    return null;
+  }
+  if (attrName.equals("visibility")) {
+    List<Label> attrList=(List<Label>)converted;
+    if (!attrList.isEmpty() && ConstantRuleVisibility.LEGACY_PUBLIC_LABEL.equals(attrList.get(0))) {
+      rule.reportError(rule.getLabel() + ": //visibility:legacy_public only allowed in package " + "declaration",eventHandler);
+    }
+    rule.setVisibility(PackageFactory.getVisibility(attrList));
+  }
+  checkAllowedValues(rule,attr,converted,eventHandler);
+  rule.setAttributeValue(attr,converted,true);
+  return attrIndex;
+}

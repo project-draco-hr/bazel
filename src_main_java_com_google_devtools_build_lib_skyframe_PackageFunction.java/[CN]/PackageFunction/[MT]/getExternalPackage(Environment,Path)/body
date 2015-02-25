@@ -1,0 +1,20 @@
+{
+  RootedPath workspacePath=RootedPath.toRootedPath(packageLookupPath,new PathFragment("WORKSPACE"));
+  SkyKey workspaceKey=WorkspaceFileValue.key(workspacePath);
+  WorkspaceFileValue workspace=null;
+  try {
+    workspace=(WorkspaceFileValue)env.getValueOrThrow(workspaceKey,IOException.class,FileSymlinkCycleException.class,InconsistentFilesystemException.class,EvalException.class);
+  }
+ catch (  IOException|FileSymlinkCycleException|InconsistentFilesystemException|EvalException e) {
+    throw new PackageFunctionException(new BadWorkspaceFileException(e.getMessage()),Transience.PERSISTENT);
+  }
+  if (workspace == null) {
+    return null;
+  }
+  Package pkg=workspace.getPackage();
+  Event.replayEventsOn(env.getListener(),pkg.getEvents());
+  if (pkg.containsErrors()) {
+    throw new PackageFunctionException(new BuildFileContainsErrorsException("external","Package 'external' contains errors"),pkg.containsTemporaryErrors() ? Transience.TRANSIENT : Transience.PERSISTENT);
+  }
+  return new PackageValue(pkg);
+}

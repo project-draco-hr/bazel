@@ -1,0 +1,46 @@
+{
+  final CountDownLatch errorCommitted=new CountDownLatch(1);
+  final TrackingAwaiter trackingAwaiterForError=new TrackingAwaiter();
+  final CountDownLatch otherDone=new CountDownLatch(1);
+  final TrackingAwaiter trackingAwaiterForOther=new TrackingAwaiter();
+  final SkyKey errorKey=GraphTester.toSkyKey("errorKey");
+  final SkyKey otherKey=GraphTester.toSkyKey("otherKey");
+  tester.getOrCreate(errorKey).setHasError(true);
+  final AtomicInteger numOtherInvocations=new AtomicInteger(0);
+  tester.getOrCreate(otherKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+      int invocations=numOtherInvocations.incrementAndGet();
+      if (invocations == 1) {
+        trackingAwaiterForError.awaitLatchAndTrackExceptions(errorCommitted,"error didn't get committed to the graph in time");
+      }
+      try {
+        SkyValue value=env.getValueOrThrow(errorKey,SomeErrorException.class);
+        assertTrue("bogus non-null value " + value,value == null);
+        assertEquals(1,invocations);
+        otherDone.countDown();
+        throw new GenericFunctionException(new SomeErrorException("other"),Transience.PERSISTENT);
+      }
+ catch (      SomeErrorException e) {
+        assertEquals(2,invocations);
+        return null;
+      }
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  graph=new NotifyingInMemoryGraph(new Listener(){
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+      if (key.equals(errorKey) && type == EventType.SET_VALUE && order == Order.AFTER) {
+        errorCommitted.countDown();
+        trackingAwaiterForOther.awaitLatchAndTrackExceptions(otherDone,"otherKey's SkyFunction didn't finish in time");
+      }
+    }
+  }
+);
+  EvaluationResult<StringValue> result=eval(false,ImmutableList.of(errorKey,otherKey));
+  assertEquals(null,graph.get(otherKey));
+  assertTrue(result.hasError());
+  assertEquals(errorKey,result.getError().getRootCauseOfException());
+}

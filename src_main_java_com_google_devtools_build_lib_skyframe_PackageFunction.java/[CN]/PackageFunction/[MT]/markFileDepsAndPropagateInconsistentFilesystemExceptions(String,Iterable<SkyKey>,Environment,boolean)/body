@@ -1,0 +1,19 @@
+{
+  Preconditions.checkState(Iterables.all(depKeys,SkyFunctions.isSkyFunction(SkyFunctions.FILE)),depKeys);
+  boolean packageShouldBeInError=packageWasInError;
+  for (  Map.Entry<SkyKey,ValueOrException3<IOException,FileSymlinkCycleException,InconsistentFilesystemException>> entry : env.getValuesOrThrow(depKeys,IOException.class,FileSymlinkCycleException.class,InconsistentFilesystemException.class).entrySet()) {
+    try {
+      entry.getValue().get();
+    }
+ catch (    IOException e) {
+      maybeThrowFilesystemInconsistency(packageName,e,packageWasInError);
+    }
+catch (    FileSymlinkCycleException e) {
+      packageShouldBeInError=true;
+    }
+catch (    InconsistentFilesystemException e) {
+      throw new InternalInconsistentFilesystemException(packageName,e);
+    }
+  }
+  return packageShouldBeInError;
+}

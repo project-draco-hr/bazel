@@ -1,0 +1,10 @@
+{
+  graph=new InMemoryGraph();
+  set("a","a");
+  SkyKey parentErrorKey=GraphTester.toSkyKey("parent");
+  SkyKey errorKey=GraphTester.toSkyKey("error");
+  tester.getOrCreate(parentErrorKey).addDependency("a").addDependency(errorKey).setComputedValue(CONCATENATE);
+  tester.getOrCreate(errorKey).setHasError(true);
+  ErrorInfo error=evalValueInError(parentErrorKey);
+  assertThat(error.getRootCauses()).containsExactly(errorKey);
+}

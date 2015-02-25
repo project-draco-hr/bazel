@@ -1,0 +1,12 @@
+{
+  SkyKey key=GraphTester.toSkyKey("value");
+  SkyValue val=new StringValue("val");
+  tester.getOrCreate(key).setConstantValue(new StringValue("old_val"));
+  tester.differencer.inject(ImmutableMap.of(key,val));
+  tester.eval(false,new SkyKey[0]);
+  tester.differencer.invalidate(ImmutableList.of(key));
+  tester.eval(false,new SkyKey[0]);
+  tester.differencer.inject(ImmutableMap.of(key,val));
+  tester.eval(false,new SkyKey[0]);
+  assertEquals(val,tester.evalAndGet("value"));
+}

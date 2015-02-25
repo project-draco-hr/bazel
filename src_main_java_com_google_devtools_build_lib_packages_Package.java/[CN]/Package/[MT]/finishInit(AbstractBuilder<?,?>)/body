@@ -1,0 +1,32 @@
+{
+  if (builder.containsErrors) {
+    for (    Rule rule : builder.getTargets(Rule.class)) {
+      rule.setContainsErrors();
+    }
+  }
+  this.filename=builder.filename;
+  this.packageDirectory=filename.getParentDirectory();
+  this.sourceRoot=getSourceRoot(filename,nameFragment);
+  if ((sourceRoot == null || !sourceRoot.getRelative(nameFragment).equals(packageDirectory)) && !filename.getBaseName().equals("WORKSPACE")) {
+    throw new IllegalArgumentException("Invalid BUILD file name for package '" + name + "': "+ filename);
+  }
+  this.makeEnv=builder.makeEnv.build();
+  this.targets=ImmutableSortedKeyMap.copyOf(builder.targets);
+  this.defaultVisibility=builder.defaultVisibility;
+  this.defaultVisibilitySet=builder.defaultVisibilitySet;
+  if (builder.defaultCopts == null) {
+    this.defaultCopts=ImmutableList.of();
+  }
+ else {
+    this.defaultCopts=ImmutableList.copyOf(builder.defaultCopts);
+  }
+  this.buildFile=builder.buildFile;
+  this.containsErrors=builder.containsErrors;
+  this.containsTemporaryErrors=builder.containsTemporaryErrors;
+  this.subincludes=builder.subincludes.keySet();
+  this.skylarkFileDependencies=builder.skylarkFileDependencies;
+  this.defaultLicense=builder.defaultLicense;
+  this.defaultDistributionSet=builder.defaultDistributionSet;
+  this.features=ImmutableSortedSet.copyOf(builder.features);
+  this.events=ImmutableList.copyOf(builder.events);
+}

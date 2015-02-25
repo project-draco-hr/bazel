@@ -1,0 +1,26 @@
+{
+  outErr.printOut("Usage: blaze <command> <options> ...\n\n");
+  outErr.printOut("Available commands:\n");
+  Map<String,BlazeCommand> commandsByName=runtime.getCommandMap();
+  List<String> namesInOrder=new ArrayList<>(commandsByName.keySet());
+  Collections.sort(namesInOrder);
+  for (  String name : namesInOrder) {
+    BlazeCommand command=commandsByName.get(name);
+    Command annotation=command.getClass().getAnnotation(Command.class);
+    if (annotation.hidden()) {
+      continue;
+    }
+    String shortDescription=annotation.shortDescription();
+    outErr.printOut(String.format("  %-19s %s\n",name,shortDescription));
+  }
+  outErr.printOut("\n");
+  outErr.printOut("Getting more help:\n");
+  outErr.printOut("  blaze help <command>\n");
+  outErr.printOut("                   Prints help and options for <command>.\n");
+  outErr.printOut("  blaze help startup_options\n");
+  outErr.printOut("                   Options for the JVM hosting Blaze.\n");
+  outErr.printOut("  blaze help target-syntax\n");
+  outErr.printOut("                   Explains the syntax for specifying targets.\n");
+  outErr.printOut("  blaze help info-keys\n");
+  outErr.printOut("                   Displays a list of keys used by the info command.\n");
+}

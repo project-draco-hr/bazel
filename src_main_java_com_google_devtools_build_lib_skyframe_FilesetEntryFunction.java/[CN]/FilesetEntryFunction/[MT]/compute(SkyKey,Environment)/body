@@ -1,0 +1,65 @@
+{
+  FilesetTraversalParams t=(FilesetTraversalParams)key.argument();
+  Preconditions.checkState(t.getNestedTraversal().isPresent() != t.getDirectTraversal().isPresent(),"Exactly one of the nested and direct traversals must be specified: %s",t);
+  Set<String> exclusions=createExclusionSet(t.getExcludedFiles());
+  Map<PathFragment,FilesetOutputSymlink> outputSymlinks=new LinkedHashMap<>();
+  if (t.getNestedTraversal().isPresent()) {
+    FilesetEntryValue nested=(FilesetEntryValue)env.getValue(FilesetEntryValue.key(t.getNestedTraversal().get()));
+    if (env.valuesMissing()) {
+      return null;
+    }
+    for (    FilesetOutputSymlink s : nested.getSymlinks()) {
+      maybeStoreSymlink(s,t.getDestPath(),exclusions,outputSymlinks);
+    }
+  }
+ else {
+    DirectTraversal direct=t.getDirectTraversal().get();
+    RecursiveFilesystemTraversalValue rftv;
+    try {
+      rftv=traverse(env,createErrorInfo(t),direct);
+    }
+ catch (    MissingDepException e) {
+      return null;
+    }
+    if (!rftv.getResolvedRoot().isPresent()) {
+      return FilesetEntryValue.EMPTY;
+    }
+    ResolvedFile resolvedRoot=rftv.getResolvedRoot().get();
+    if (!resolvedRoot.type.exists()) {
+      return FilesetEntryValue.EMPTY;
+    }
+    PathFragment prefixToRemove=direct.getRoot().getRelativePart();
+    Iterable<ResolvedFile> results=null;
+    if (direct.isRecursive() || (resolvedRoot.type.isDirectory() && !resolvedRoot.type.isSymlink())) {
+      DirectoryTree root=new DirectoryTree();
+      for (      ResolvedFile f : rftv.getTransitiveFiles().toCollection()) {
+        PathFragment path=f.getNameInSymlinkTree().relativeTo(prefixToRemove);
+        if (path.segmentCount() > 0) {
+          path=t.getDestPath().getRelative(path);
+          DirectoryTree dir=root;
+          for (int i=0; i < path.segmentCount() - 1; ++i) {
+            dir=dir.addOrGetSubdir(path.getSegment(i));
+          }
+          dir.maybeAddFile(f);
+        }
+      }
+      results=root.iterateFiles();
+    }
+ else {
+      results=ImmutableList.of(resolvedRoot);
+    }
+    for (    ResolvedFile f : results) {
+      PathFragment targetName;
+      try {
+        targetName=f.getTargetInSymlinkTree(direct.isFollowingSymlinks());
+      }
+ catch (      DanglingSymlinkException e) {
+        throw new FilesetEntryFunctionException(e);
+      }
+      String metadata=Integer.toHexString(f.metadata.get().hashCode());
+      PathFragment linkName=f.getNameInSymlinkTree().relativeTo(prefixToRemove);
+      maybeStoreSymlink(linkName,targetName,metadata,t.getDestPath(),exclusions,outputSymlinks);
+    }
+  }
+  return FilesetEntryValue.of(ImmutableSet.copyOf(outputSymlinks.values()));
+}

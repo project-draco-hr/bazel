@@ -1,0 +1,18 @@
+{
+  Path htmlFile=profileFile.getParentDirectory().getChild(profileFile.getBaseName() + ".html");
+  List<ProfilePhaseStatistics> statistics=getStatistics(runtime,info,opts);
+  runtime.getReporter().handle(Event.info("Creating HTML output in " + htmlFile));
+  ChartCreator chartCreator=opts.htmlDetails ? new DetailedChartCreator(info,statistics) : new AggregatingChartCreator(info,statistics);
+  Chart chart=chartCreator.create();
+  OutputStream out=new BufferedOutputStream(htmlFile.getOutputStream());
+  try {
+    chart.accept(new HtmlChartVisitor(new PrintStream(out),opts.htmlPixelsPerSecond));
+  }
+  finally {
+    try {
+      out.close();
+    }
+ catch (    IOException e) {
+    }
+  }
+}

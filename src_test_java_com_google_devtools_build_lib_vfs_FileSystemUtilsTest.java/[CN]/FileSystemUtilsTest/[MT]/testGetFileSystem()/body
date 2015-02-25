@@ -1,0 +1,27 @@
+{
+  Path mountTable=fileSystem.getPath("/proc/mounts");
+  FileSystemUtils.writeIsoLatin1(mountTable,"/dev/sda1 / ext2 blah 0 0","/dev/mapper/_dev_sda6 /usr/local/google ext3 blah 0 0","devshm /dev/shm tmpfs blah 0 0","/dev/fuse /fuse/mnt fuse blah 0 0","mtvhome22.nfs:/vol/mtvhome22/johndoe /home/johndoe nfs blah 0 0","/dev/foo /foo dummy_foo blah 0 0","/dev/foobar /foobar dummy_foobar blah 0 0","proc proc proc rw,noexec,nosuid,nodev 0 0");
+  Path path=fileSystem.getPath("/usr/local/google/_blaze");
+  FileSystemUtils.createDirectoryAndParents(path);
+  assertEquals("ext3",FileSystemUtils.getFileSystem(path));
+  path=fileSystem.getPath("/usr/local/tmp");
+  FileSystemUtils.createDirectoryAndParents(path);
+  assertEquals("ext2",FileSystemUtils.getFileSystem(path));
+  path=fileSystem.getPath("/foo");
+  FileSystemUtils.createDirectoryAndParents(path);
+  assertEquals("dummy_foo",FileSystemUtils.getFileSystem(path));
+  path=fileSystem.getPath("/foobar");
+  FileSystemUtils.createDirectoryAndParents(path);
+  assertEquals("dummy_foobar",FileSystemUtils.getFileSystem(path));
+  path=fileSystem.getPath("/dev/shm/blaze");
+  FileSystemUtils.createDirectoryAndParents(path);
+  assertEquals("tmpfs",FileSystemUtils.getFileSystem(path));
+  Path fusePath=fileSystem.getPath("/fuse/mnt/tmp");
+  FileSystemUtils.createDirectoryAndParents(fusePath);
+  assertEquals("fuse",FileSystemUtils.getFileSystem(fusePath));
+  path=fileSystem.getPath("/usr/local/google/_blaze/out");
+  path.createSymbolicLink(fusePath);
+  assertEquals("fuse",FileSystemUtils.getFileSystem(path));
+  path=fileSystem.getPath("/does/not/exist");
+  assertEquals("unknown",FileSystemUtils.getFileSystem(path));
+}

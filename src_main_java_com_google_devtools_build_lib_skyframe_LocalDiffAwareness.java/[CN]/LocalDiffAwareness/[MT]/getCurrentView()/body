@@ -1,0 +1,30 @@
+{
+  Set<Path> modifiedAbsolutePaths;
+  if (numGetCurrentViewCalls++ == 0) {
+    try {
+      registerSubDirectoriesAndReturnContents(watchRootPath);
+    }
+ catch (    IOException e) {
+      close();
+      throw new BrokenDiffAwarenessException("Error encountered with local file system watcher " + e);
+    }
+    modifiedAbsolutePaths=ImmutableSet.of();
+  }
+ else {
+    try {
+      modifiedAbsolutePaths=collectChanges();
+    }
+ catch (    BrokenDiffAwarenessException e) {
+      close();
+      throw e;
+    }
+catch (    IOException e) {
+      close();
+      throw new BrokenDiffAwarenessException("Error encountered with local file system watcher " + e);
+    }
+catch (    ClosedWatchServiceException e) {
+      throw new BrokenDiffAwarenessException("Internal error with the local file system watcher " + e);
+    }
+  }
+  return new SequentialView(this,numGetCurrentViewCalls,modifiedAbsolutePaths);
+}

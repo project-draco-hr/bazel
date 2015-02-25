@@ -1,0 +1,33 @@
+{
+  captureSigint();
+  CommandLineOptions commandLineOptions=splitStartupOptions(modules,args);
+  LOG.info("Running Blaze in batch mode with startup args " + commandLineOptions.getStartupArgs());
+  String memoryWarning=validateJvmMemorySettings();
+  if (memoryWarning != null) {
+    OutErr.SYSTEM_OUT_ERR.printErrLn(memoryWarning);
+  }
+  BlazeRuntime runtime;
+  try {
+    runtime=newRuntime(modules,parseOptions(modules,commandLineOptions.getStartupArgs()));
+  }
+ catch (  OptionsParsingException e) {
+    OutErr.SYSTEM_OUT_ERR.printErr(e.getMessage());
+    return ExitCode.COMMAND_LINE_ERROR.getNumericExitCode();
+  }
+catch (  AbruptExitException e) {
+    OutErr.SYSTEM_OUT_ERR.printErr(e.getMessage());
+    return e.getExitCode().getNumericExitCode();
+  }
+  BlazeCommandDispatcher dispatcher=new BlazeCommandDispatcher(runtime,getBuiltinCommandList());
+  try {
+    LOG.info(getRequestLogString(commandLineOptions.getOtherArgs()));
+    return dispatcher.exec(commandLineOptions.getOtherArgs(),OutErr.SYSTEM_OUT_ERR,runtime.getClock().currentTimeMillis());
+  }
+ catch (  BlazeCommandDispatcher.ShutdownBlazeServerException e) {
+    return e.getExitStatus();
+  }
+ finally {
+    runtime.shutdown();
+    dispatcher.shutdown();
+  }
+}

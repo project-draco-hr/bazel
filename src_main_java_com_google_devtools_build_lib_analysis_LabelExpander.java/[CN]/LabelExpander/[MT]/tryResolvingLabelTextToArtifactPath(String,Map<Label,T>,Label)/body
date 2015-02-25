@@ -1,0 +1,18 @@
+{
+  Label resolvedLabel=resolveLabelText(labelText,labelResolver);
+  if (resolvedLabel != null) {
+    Iterable<Artifact> artifacts=labelMap.get(resolvedLabel);
+    if (artifacts != null) {
+      List<String> locations=new ArrayList<>();
+      Artifact.addExecPaths(artifacts,locations);
+      int resultSetSize=locations.size();
+      if (resultSetSize == 1) {
+        return Iterables.getOnlyElement(locations);
+      }
+ else {
+        throw new NotUniqueExpansionException(resultSetSize,labelText);
+      }
+    }
+  }
+  return labelText;
+}

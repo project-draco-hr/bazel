@@ -1,0 +1,28 @@
+{
+  ImmutableList<Artifact> classpathResources=attributes.getClassPathResources();
+  Set<String> classPathResourceNames=new HashSet<>();
+  for (  Artifact artifact : classpathResources) {
+    String name=artifact.getExecPath().getBaseName();
+    if (!classPathResourceNames.add(name)) {
+      ruleContext.attributeError("classpath_resources","entries must have different file names (duplicate: " + name + ")");
+      return;
+    }
+  }
+  IterablesChain<Artifact> runtimeJars=runtimeJarsBuilder.build();
+  IterablesChain.Builder<Artifact> inputs=IterablesChain.builder();
+  inputs.add(attributes.getArchiveInputs(true));
+  inputs.add(ImmutableList.copyOf(runtimeJars));
+  if (runfilesMiddleman != null) {
+    inputs.addElement(runfilesMiddleman);
+  }
+  final ImmutableList<Artifact> buildInfoArtifacts=ruleContext.getAnalysisEnvironment().getBuildInfo(ruleContext,JavaBuildInfoFactory.KEY);
+  inputs.add(buildInfoArtifacts);
+  Iterable<Artifact> runtimeClasspath=Iterables.concat(runtimeJars,attributes.getRuntimeClassPathForArchive());
+  if (launcher != null) {
+    inputs.addElement(launcher);
+  }
+  CommandLine commandLine=semantics.buildSingleJarCommandLine(ruleContext.getConfiguration(),outputJar,javaStartClass,deployManifestLines,buildInfoArtifacts,classpathResources,runtimeClasspath,includeBuildData,compression,launcher);
+  List<String> jvmArgs=ImmutableList.of("-client",SINGLEJAR_MAX_MEMORY);
+  ResourceSet resourceSet=new ResourceSet(200.0,.2,.2);
+  ruleContext.registerAction(new SpawnAction.Builder().addInputs(inputs.build()).addTransitiveInputs(JavaCompilationHelper.getHostJavabaseInputs(ruleContext)).addOutput(outputJar).setResources(resourceSet).setJarExecutable(ruleContext.getHostConfiguration().getFragment(Jvm.class).getJavaExecutable(),ruleContext.getPrerequisiteArtifact("$singlejar",Mode.HOST),jvmArgs).setCommandLine(commandLine).useParameterFile(ParameterFileType.SHELL_QUOTED).setProgressMessage("Building deploy jar " + outputJar.prettyPrint()).setMnemonic("JavaDeployJar").build(ruleContext));
+}

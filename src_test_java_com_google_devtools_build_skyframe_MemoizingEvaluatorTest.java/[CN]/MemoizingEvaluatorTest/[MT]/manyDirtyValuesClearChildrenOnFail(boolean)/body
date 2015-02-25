@@ -1,0 +1,59 @@
+{
+  SkyKey leafKey=GraphTester.toSkyKey("leaf");
+  tester.set(leafKey,new StringValue("leafy"));
+  SkyKey lastKey=GraphTester.toSkyKey("last");
+  tester.set(lastKey,new StringValue("last"));
+  final List<SkyKey> tops=new ArrayList<>();
+  for (int i=0; i < 10000; i++) {
+    SkyKey topKey=GraphTester.toSkyKey("top" + i);
+    tester.getOrCreate(topKey).addDependency(leafKey).addDependency(lastKey).setComputedValue(CONCATENATE);
+    tops.add(topKey);
+  }
+  tester.eval(false,tops.toArray(new SkyKey[0]));
+  final CountDownLatch notifyStart=new CountDownLatch(1);
+  tester.set(leafKey,null);
+  if (interrupt) {
+    final AtomicBoolean shouldSleep=new AtomicBoolean(true);
+    tester.getOrCreate(leafKey,true).setBuilder(new NoExtractorFunction(){
+      @Override public SkyValue compute(      SkyKey skyKey,      Environment env) throws InterruptedException {
+        notifyStart.countDown();
+        if (shouldSleep.get()) {
+          Thread.sleep(5000);
+          throw new AssertionError("leaf was not interrupted");
+        }
+        return new StringValue("crunchy");
+      }
+    }
+);
+    tester.invalidate();
+    TestThread evalThread=new TestThread(){
+      @Override public void runTest(){
+        try {
+          tester.eval(false,tops.toArray(new SkyKey[0]));
+          Assert.fail();
+        }
+ catch (        InterruptedException e) {
+        }
+      }
+    }
+;
+    evalThread.start();
+    assertTrue(notifyStart.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS));
+    evalThread.interrupt();
+    evalThread.joinAndAssertState(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+    shouldSleep.set(false);
+  }
+ else {
+    tester.getOrCreate(leafKey,true).setHasError(true);
+    tester.invalidate();
+    tester.eval(false,tops.toArray(new SkyKey[0]));
+    tester.getOrCreate(leafKey,true).setHasError(false);
+    tester.set(leafKey,new StringValue("crunchy"));
+  }
+  tester.set(lastKey,new StringValue("new last"));
+  tester.invalidate();
+  EvaluationResult<StringValue> result=tester.eval(false,tops.toArray(new SkyKey[0]));
+  for (  SkyKey topKey : tops) {
+    assertEquals(topKey.toString(),"crunchynew last",result.get(topKey).getValue());
+  }
+}

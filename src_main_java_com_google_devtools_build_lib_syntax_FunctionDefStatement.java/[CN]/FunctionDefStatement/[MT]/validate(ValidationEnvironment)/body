@@ -1,0 +1,19 @@
+{
+  SkylarkFunctionType type=SkylarkFunctionType.of(ident.getName());
+  ValidationEnvironment localEnv=new ValidationEnvironment(env,type);
+  for (  Argument i : args) {
+    SkylarkType argType=SkylarkType.UNKNOWN;
+    if (i.hasValue()) {
+      argType=i.getValue().validate(env);
+      if (argType.equals(SkylarkType.NONE)) {
+        argType=SkylarkType.UNKNOWN;
+      }
+    }
+    localEnv.update(i.getArgName(),argType,getLocation());
+  }
+  for (  Statement stmts : statements) {
+    stmts.validate(localEnv);
+  }
+  env.updateFunction(ident.getName(),type,getLocation());
+  type.setReturnType(SkylarkType.NONE,getLocation());
+}

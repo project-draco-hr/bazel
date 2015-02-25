@@ -1,0 +1,13 @@
+{
+  PriorityQueue<SlowTask> merged=new PriorityQueue<>(size * SHARDS);
+  for (int i=0; i < SHARDS; i++) {
+    PriorityQueue<SlowTask> queue=priorityQueues[i];
+synchronized (queue) {
+      merged.addAll(queue);
+    }
+  }
+  while (merged.size() > size) {
+    merged.remove();
+  }
+  return merged;
+}

@@ -1,0 +1,79 @@
+{
+  ruleContext.checkSrcsSamePackage(true);
+  CcCommon common=new CcCommon(ruleContext);
+  CppConfiguration cppConfiguration=ruleContext.getFragment(CppConfiguration.class);
+  LinkTargetType linkType=isLinkShared(ruleContext) ? LinkTargetType.DYNAMIC_LIBRARY : LinkTargetType.EXECUTABLE;
+  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,semantics).setLinkType(linkType).setHeadersCheckingMode(common.determineHeadersCheckingMode()).addCopts(common.getCopts()).setNoCopts(common.getNoCopts()).addLinkopts(common.getLinkopts()).addDefines(common.getDefines()).addCompilationPrerequisites(common.getSharedLibrariesFromSrcs()).addCompilationPrerequisites(common.getStaticLibrariesFromSrcs()).addSources(common.getCAndCppSources()).addPrivateHeaders(FileType.filter(ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list(),CppFileTypes.CPP_HEADER)).addObjectFiles(common.getObjectFilesFromSrcs(false)).addPicObjectFiles(common.getObjectFilesFromSrcs(true)).addPicIndependentObjectFiles(common.getLinkerScripts()).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addDeps(ImmutableList.of(CppHelper.mallocForTarget(ruleContext))).setEnableLayeringCheck(ruleContext.getFeatures().contains(CppRuleClasses.LAYERING_CHECK)).addSystemIncludeDirs(common.getSystemIncludeDirs()).addIncludeDirs(common.getIncludeDirs()).addLooseIncludeDirs(common.getLooseIncludeDirs()).setFake(fake);
+  CcLibraryHelper.Info info=helper.build();
+  CppCompilationContext cppCompilationContext=info.getCppCompilationContext();
+  CcCompilationOutputs ccCompilationOutputs=info.getCcCompilationOutputs();
+  PathFragment executableName=Util.getWorkspaceRelativePath(ruleContext.getTarget(),"",OsUtils.executableExtension());
+  CppLinkAction.Builder linkActionBuilder=determineLinkerArguments(ruleContext,common,cppConfiguration,ccCompilationOutputs,cppCompilationContext.getCompilationPrerequisites(),fake,executableName);
+  linkActionBuilder.setUseTestOnlyFlags(useTestOnlyFlags);
+  linkActionBuilder.addNonLibraryInputs(ccCompilationOutputs.getHeaderTokenFiles());
+  CcToolchainProvider ccToolchain=CppHelper.getToolchain(ruleContext);
+  LinkStaticness linkStaticness=getLinkStaticness(ruleContext,common,cppConfiguration);
+  if (linkStaticness == LinkStaticness.DYNAMIC) {
+    linkActionBuilder.setRuntimeInputs(ccToolchain.getDynamicRuntimeLinkMiddleman(),ccToolchain.getDynamicRuntimeLinkInputs());
+  }
+ else {
+    linkActionBuilder.setRuntimeInputs(ccToolchain.getStaticRuntimeLinkMiddleman(),ccToolchain.getStaticRuntimeLinkInputs());
+    if (!ccToolchain.getStaticRuntimeLinkInputs().isEmpty()) {
+      linkActionBuilder.addLinkopt("-static-libgcc");
+    }
+  }
+  linkActionBuilder.setLinkType(linkType);
+  linkActionBuilder.setLinkStaticness(linkStaticness);
+  linkActionBuilder.setFake(fake);
+  CppLinkAction.Context linkContext=new CppLinkAction.Context(linkActionBuilder);
+  CppLinkAction linkAction=linkActionBuilder.build();
+  ruleContext.registerAction(linkAction);
+  LibraryToLink outputLibrary=linkAction.getOutputLibrary();
+  Iterable<Artifact> fakeLinkerInputs=fake ? linkAction.getInputs() : ImmutableList.<Artifact>of();
+  Artifact executable=outputLibrary.getArtifact();
+  CcLinkingOutputs.Builder linkingOutputsBuilder=new CcLinkingOutputs.Builder();
+  if (isLinkShared(ruleContext)) {
+    if (CppFileTypes.SHARED_LIBRARY.matches(executableName)) {
+      linkingOutputsBuilder.addDynamicLibrary(outputLibrary);
+      linkingOutputsBuilder.addExecutionDynamicLibrary(outputLibrary);
+    }
+ else {
+      ruleContext.attributeError("linkshared","'linkshared' used in non-shared library");
+    }
+  }
+  for (  Artifact library : common.getSharedLibrariesFromSrcs()) {
+    LibraryToLink symlink=common.getDynamicLibrarySymlink(library,true);
+    linkingOutputsBuilder.addDynamicLibrary(symlink);
+    linkingOutputsBuilder.addExecutionDynamicLibrary(symlink);
+  }
+  CcLinkingOutputs linkingOutputs=linkingOutputsBuilder.build();
+  NestedSet<Artifact> filesToBuild=NestedSetBuilder.create(Order.STABLE_ORDER,executable);
+  Artifact strippedFile=ruleContext.getImplicitOutputArtifact(CppRuleClasses.CC_BINARY_STRIPPED);
+  createStripAction(ruleContext,cppConfiguration,executable,strippedFile);
+  DwoArtifactsCollector dwoArtifacts=collectTransitiveDwoArtifacts(ruleContext,common,cppConfiguration,ccCompilationOutputs);
+  Artifact dwpFile=ruleContext.getImplicitOutputArtifact(CppRuleClasses.CC_BINARY_DEBUG_PACKAGE);
+  createDebugPackagerActions(ruleContext,cppConfiguration,dwpFile,dwoArtifacts);
+  Artifact explicitDwpFile=dwpFile;
+  if (!cppConfiguration.useFission()) {
+    explicitDwpFile=null;
+  }
+  Runfiles runfiles=collectRunfiles(ruleContext,common,linkingOutputs,cppCompilationContext,linkStaticness,filesToBuild,fakeLinkerInputs,fake);
+  RunfilesSupport runfilesSupport=RunfilesSupport.withExecutable(ruleContext,runfiles,executable,ruleContext.getConfiguration().buildRunfiles());
+  TransitiveLipoInfoProvider transitiveLipoInfo;
+  if (cppConfiguration.isLipoContextCollector()) {
+    transitiveLipoInfo=common.collectTransitiveLipoLabels(ccCompilationOutputs);
+  }
+ else {
+    transitiveLipoInfo=TransitiveLipoInfoProvider.EMPTY;
+  }
+  RuleConfiguredTargetBuilder ruleBuilder=new RuleConfiguredTargetBuilder(ruleContext);
+  common.addTransitiveInfoProviders(ruleBuilder,filesToBuild,ccCompilationOutputs,cppCompilationContext,linkingOutputs,dwoArtifacts,transitiveLipoInfo);
+  Map<Artifact,IncludeScannable> scannableMap=new LinkedHashMap<>();
+  if (cppConfiguration.isLipoContextCollector()) {
+    for (    IncludeScannable scannable : transitiveLipoInfo.getTransitiveIncludeScannables()) {
+      Artifact source=Iterables.getOnlyElement(scannable.getIncludeScannerSources());
+      scannableMap.put(source,scannable);
+    }
+  }
+  return ruleBuilder.add(RunfilesProvider.class,RunfilesProvider.simple(runfiles)).add(CppDebugPackageProvider.class,new CppDebugPackageProvider(strippedFile,executable,explicitDwpFile)).setRunfilesSupport(runfilesSupport,executable).setBaselineCoverageArtifacts(createBaselineCoverageArtifacts(ruleContext,common,ccCompilationOutputs,fake)).addProvider(LipoContextProvider.class,new LipoContextProvider(cppCompilationContext,ImmutableMap.copyOf(scannableMap))).addProvider(CppLinkAction.Context.class,linkContext).build();
+}

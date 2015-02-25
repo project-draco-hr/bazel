@@ -1,0 +1,22 @@
+{
+  Path testOutput=executor.getExecRoot().getRelative(result.getTestLogPath().asFragment());
+  boolean isPassed=result.getData().getTestPassed();
+  try {
+    if (TestLogHelper.shouldOutputTestLog(executionOptions.testOutput,isPassed)) {
+      TestLogHelper.writeTestLog(testOutput,result.getTestName(),outErr.getOutputStream());
+    }
+  }
+  finally {
+    if (isPassed) {
+      executor.getEventHandler().handle(new Event(EventKind.PASS,null,result.getTestName()));
+    }
+ else {
+      if (result.getData().getStatus() == BlazeTestStatus.TIMEOUT) {
+        executor.getEventHandler().handle(new Event(EventKind.TIMEOUT,null,result.getTestName() + " (see " + testOutput+ ")"));
+      }
+ else {
+        executor.getEventHandler().handle(new Event(EventKind.FAIL,null,result.getTestName() + " (see " + testOutput+ ")"));
+      }
+    }
+  }
+}

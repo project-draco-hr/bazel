@@ -1,0 +1,88 @@
+{
+  final int NUM_TO_WRITE=10000;
+  final AtomicInteger baseSelector=new AtomicInteger();
+class PathCreator extends TestThread {
+    @Override public void runTest() throws Exception {
+      Path base=testFS.getPath("/base" + baseSelector.getAndIncrement());
+      base.createDirectory();
+      for (int i=0; i < NUM_TO_WRITE; i++) {
+        Path subdir1=base.getRelative("subdir1_" + i);
+        subdir1.createDirectory();
+        Path subdir2=base.getRelative("subdir2_" + i);
+        subdir2.createDirectory();
+        Path file=base.getRelative("somefile" + i);
+        writeToFile(file,TEST_FILE_DATA);
+        subdir1.setReadable(true);
+        subdir2.setReadable(false);
+        file.setReadable(true);
+        subdir1.setWritable(false);
+        subdir2.setWritable(true);
+        file.setWritable(false);
+        subdir1.setExecutable(false);
+        subdir2.setExecutable(true);
+        file.setExecutable(false);
+        subdir1.setLastModifiedTime(100);
+        subdir2.setLastModifiedTime(200);
+        file.setLastModifiedTime(300);
+        Path symlink=base.getRelative("symlink" + i);
+        symlink.createSymbolicLink(file);
+      }
+    }
+  }
+  Collection<TestThread> threads=Lists.newArrayListWithCapacity(NUM_THREADS_FOR_CONCURRENCY_TESTS);
+  for (int i=0; i < NUM_THREADS_FOR_CONCURRENCY_TESTS; i++) {
+    TestThread thread=new PathCreator();
+    thread.start();
+    threads.add(thread);
+  }
+  for (  TestThread thread : threads) {
+    thread.joinAndAssertState(0);
+  }
+class PathValidator extends TestThread {
+    @Override public void runTest() throws Exception {
+      Path base=testFS.getPath("/base" + baseSelector.getAndIncrement());
+      assertTrue(base.exists());
+      assertFalse(base.getRelative("notreal").exists());
+      for (int i=0; i < NUM_TO_WRITE; i++) {
+        Path subdir1=base.getRelative("subdir1_" + i);
+        assertTrue(subdir1.exists());
+        assertTrue(subdir1.isDirectory());
+        assertTrue(subdir1.isReadable());
+        assertFalse(subdir1.isWritable());
+        assertFalse(subdir1.isExecutable());
+        assertEquals(100,subdir1.getLastModifiedTime());
+        Path subdir2=base.getRelative("subdir2_" + i);
+        assertTrue(subdir2.exists());
+        assertTrue(subdir2.isDirectory());
+        assertFalse(subdir2.isReadable());
+        assertTrue(subdir2.isWritable());
+        assertTrue(subdir2.isExecutable());
+        assertEquals(200,subdir2.getLastModifiedTime());
+        Path file=base.getRelative("somefile" + i);
+        assertTrue(file.exists());
+        assertTrue(file.isFile());
+        assertTrue(file.isReadable());
+        assertFalse(file.isWritable());
+        assertFalse(file.isExecutable());
+        assertEquals(300,file.getLastModifiedTime());
+        BufferedReader reader=new BufferedReader(new InputStreamReader(file.getInputStream(),Charset.defaultCharset()));
+        assertEquals(TEST_FILE_DATA,reader.readLine());
+        assertEquals(null,reader.readLine());
+        Path symlink=base.getRelative("symlink" + i);
+        assertTrue(symlink.exists());
+        assertTrue(symlink.isSymbolicLink());
+        assertEquals(file.asFragment(),symlink.readSymbolicLink());
+      }
+    }
+  }
+  baseSelector.set(0);
+  threads=Lists.newArrayListWithCapacity(NUM_THREADS_FOR_CONCURRENCY_TESTS);
+  for (int i=0; i < NUM_THREADS_FOR_CONCURRENCY_TESTS; i++) {
+    TestThread thread=new PathValidator();
+    thread.start();
+    threads.add(thread);
+  }
+  for (  TestThread thread : threads) {
+    thread.joinAndAssertState(0);
+  }
+}

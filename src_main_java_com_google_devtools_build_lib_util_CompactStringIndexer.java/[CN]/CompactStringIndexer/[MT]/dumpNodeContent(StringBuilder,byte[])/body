@@ -1,0 +1,15 @@
+{
+  int[] intHolder=new int[1];
+  int offset=VarInt.getVarInt(content,0,intHolder);
+  builder.append("parent: ").append(intHolder[0]);
+  offset=VarInt.getVarInt(content,offset,intHolder);
+  int len=intHolder[0];
+  builder.append(", len: ").append(len).append(", key: \"").append(new String(content,offset,len,UTF_8)).append('"');
+  offset+=len;
+  while (offset < content.length) {
+    builder.append(", '").append(new String(content,offset,1,UTF_8)).append("': ");
+    offset=VarInt.getVarInt(content,offset + 1,intHolder);
+    builder.append(intHolder[0]);
+  }
+  builder.append(", size: ").append(content.length);
+}

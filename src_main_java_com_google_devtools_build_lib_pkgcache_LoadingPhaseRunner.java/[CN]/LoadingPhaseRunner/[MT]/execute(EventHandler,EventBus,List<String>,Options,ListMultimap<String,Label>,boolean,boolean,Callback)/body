@@ -1,0 +1,52 @@
+{
+  LOG.info("Starting pattern evaluation");
+  Stopwatch timer=Stopwatch.createStarted();
+  if (options.buildTestsOnly && options.compileOneDependency) {
+    throw new LoadingFailedException("--compile_one_dependency cannot be used together with " + "the --build_tests_only option or the 'bazel test' command ");
+  }
+  EventHandler parseFailureListener=new ParseFailureListenerImpl(eventHandler,eventBus);
+  ResolvedTargets<Target> targets=getTargetsToBuild(parseFailureListener,targetPatterns,options.compileOneDependency,keepGoing);
+  ImmutableSet<Target> filteredTargets=targets.getFilteredTargets();
+  boolean buildTestsOnly=options.buildTestsOnly;
+  ImmutableSet<Target> testsToRun=null;
+  ImmutableSet<Target> testFilteredTargets=ImmutableSet.of();
+  if (determineTests || buildTestsOnly) {
+    ResolvedTargets<Target> testTargets=determineTests(parseFailureListener,targetPatterns,options,keepGoing);
+    if (testTargets.getTargets().isEmpty() && !testTargets.getFilteredTargets().isEmpty()) {
+      eventHandler.handle(Event.warn("All specified test targets were excluded by filters"));
+    }
+    if (buildTestsOnly) {
+      Set<Target> allFilteredTargets=new HashSet<>();
+      allFilteredTargets.addAll(targets.getTargets());
+      allFilteredTargets.addAll(targets.getFilteredTargets());
+      allFilteredTargets.removeAll(testTargets.getTargets());
+      allFilteredTargets.addAll(testTargets.getFilteredTargets());
+      testFilteredTargets=ImmutableSet.copyOf(allFilteredTargets);
+      filteredTargets=ImmutableSet.of();
+      targets=ResolvedTargets.<Target>builder().merge(testTargets).mergeError(targets.hasError()).build();
+      if (determineTests) {
+        testsToRun=testTargets.getTargets();
+      }
+    }
+ else {
+      testsToRun=testTargets.getTargets();
+      targets=ResolvedTargets.<Target>builder().merge(targets).addAll(testsToRun).mergeError(testTargets.hasError()).build();
+    }
+    if (testsToRun != null) {
+      Preconditions.checkState(targets.getTargets().containsAll(testsToRun));
+    }
+  }
+  eventBus.post(new TargetParsingCompleteEvent(targets.getTargets(),filteredTargets,testFilteredTargets,timer.stop().elapsed(TimeUnit.MILLISECONDS)));
+  if (targets.hasError()) {
+    eventHandler.handle(Event.warn("Target pattern parsing failed. Continuing anyway"));
+  }
+  if (callback != null) {
+    callback.notifyTargets(targets.getTargets());
+  }
+  maybeReportDeprecation(eventHandler,targets.getTargets());
+  LoadingResult result=doLoadingPhase(eventHandler,eventBus,targets.getTargets(),testsToRun,labelsToLoadUnconditionally,keepGoing,options.loadingPhaseThreads,targets.hasError());
+  if (callback != null) {
+    callback.notifyVisitedPackages(result.getVisitedPackages());
+  }
+  return result;
+}

@@ -1,0 +1,11 @@
+{
+  Multimap<Label,String> depMap=HashMultimap.<Label,String>create();
+  for (  Artifact jar : javaTargetAttributes.getDirectJars()) {
+    depMap.put(Preconditions.checkNotNull(jar.getOwner()),jar.getExecPathString());
+  }
+  ImmutableList.Builder<Dependency> depOuts=ImmutableList.builder();
+  for (  Label label : depMap.keySet()) {
+    depOuts.add(new Dependency(label,depMap.get(label)));
+  }
+  return depOuts.build();
+}

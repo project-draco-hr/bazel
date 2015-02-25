@@ -1,0 +1,13 @@
+{
+  String name=path.toString();
+  long startTime=Profiler.nanoTimeMaybe();
+  try {
+    return new PathFragment(FilesystemUtils.readlink(name));
+  }
+ catch (  IOException e) {
+    throw e.getMessage().endsWith("(Invalid argument)") ? new NotASymlinkException(path) : e;
+  }
+ finally {
+    profiler.logSimpleTask(startTime,ProfilerTask.VFS_LINK,name);
+  }
+}

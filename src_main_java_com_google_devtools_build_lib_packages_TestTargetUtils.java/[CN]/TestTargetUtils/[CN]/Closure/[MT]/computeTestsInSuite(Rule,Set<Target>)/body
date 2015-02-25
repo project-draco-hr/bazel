@@ -1,0 +1,28 @@
+{
+  List<Target> testsAndSuites=new ArrayList<>();
+  testsAndSuites.addAll(getPrerequisites(testSuite,"tests"));
+  testsAndSuites.addAll(getPrerequisites(testSuite,"suites"));
+  for (  Target test : testsAndSuites) {
+    if (TargetUtils.isTestRule(test)) {
+      result.add(test);
+    }
+ else     if (strict && !TargetUtils.isTestSuiteRule(test)) {
+      eventHandler.handle(Event.error(testSuite.getLocation(),"in test_suite rule '" + testSuite.getLabel() + "': expecting a test or a test_suite rule but '"+ test.getLabel()+ "' is not one."));
+      hasError=true;
+      if (!keepGoing) {
+        throw new TargetParsingException("Test suite expansion failed.");
+      }
+    }
+  }
+  for (  Target target : getPrerequisites(testSuite,"$implicit_tests")) {
+    if (TargetUtils.isTestRule(target)) {
+      result.add(target);
+    }
+  }
+  filterTests(testSuite,result);
+  for (  Target suite : testsAndSuites) {
+    if (TargetUtils.isTestSuiteRule(suite)) {
+      result.addAll(getTestsInSuite((Rule)suite));
+    }
+  }
+}

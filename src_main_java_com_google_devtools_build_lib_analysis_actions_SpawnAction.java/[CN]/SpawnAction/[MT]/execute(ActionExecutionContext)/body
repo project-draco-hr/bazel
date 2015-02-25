@@ -1,0 +1,13 @@
+{
+  Executor executor=actionExecutionContext.getExecutor();
+  try {
+    internalExecute(actionExecutionContext);
+  }
+ catch (  ExecException e) {
+    String failMessage=progressMessage;
+    if (isShellCommand()) {
+      failMessage="error executing shell command: " + "'" + truncate(Iterables.get(argv.arguments(),2),200) + "'";
+    }
+    throw e.toActionExecutionException(failMessage,executor.getVerboseFailures(),this);
+  }
+}

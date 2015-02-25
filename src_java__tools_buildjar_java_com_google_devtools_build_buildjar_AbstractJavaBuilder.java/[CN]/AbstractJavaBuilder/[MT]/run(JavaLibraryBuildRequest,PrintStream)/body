@@ -1,0 +1,18 @@
+{
+  boolean successful=false;
+  try {
+    compileJavaLibrary(build,err);
+    buildJar(build);
+    if (!build.getProcessors().isEmpty()) {
+      if (build.getGeneratedSourcesOutputJar() != null) {
+        buildGensrcJar(build,err);
+      }
+    }
+    successful=true;
+  }
+  finally {
+    build.getDependencyModule().emitUsedClasspath(build.getClassPath());
+    build.getDependencyModule().emitDependencyInformation(build.getClassPath(),successful);
+    shutdown(err);
+  }
+}

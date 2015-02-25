@@ -1,0 +1,29 @@
+{
+  int minVersion=VERSION_00;
+  if (root == null) {
+    minVersion=VERSION_10;
+  }
+  if (root instanceof NSDictionary) {
+    NSDictionary dict=(NSDictionary)root;
+    for (    NSObject o : dict.getHashMap().values()) {
+      int v=getMinimumRequiredVersion(o);
+      if (v > minVersion)       minVersion=v;
+    }
+  }
+ else   if (root instanceof NSArray) {
+    NSArray array=(NSArray)root;
+    for (    NSObject o : array.getArray()) {
+      int v=getMinimumRequiredVersion(o);
+      if (v > minVersion)       minVersion=v;
+    }
+  }
+ else   if (root instanceof NSSet) {
+    minVersion=VERSION_10;
+    NSSet set=(NSSet)root;
+    for (    NSObject o : set.allObjects()) {
+      int v=getMinimumRequiredVersion(o);
+      if (v > minVersion)       minVersion=v;
+    }
+  }
+  return minVersion;
+}

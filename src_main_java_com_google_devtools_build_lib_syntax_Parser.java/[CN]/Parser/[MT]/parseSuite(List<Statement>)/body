@@ -1,0 +1,19 @@
+{
+  if (token.kind == TokenKind.NEWLINE) {
+    expect(TokenKind.NEWLINE);
+    if (token.kind != TokenKind.INDENT) {
+      reportError(lexer.createLocation(token.left,token.right),"expected an indented block");
+      return;
+    }
+    expect(TokenKind.INDENT);
+    while (token.kind != TokenKind.OUTDENT && token.kind != TokenKind.EOF) {
+      parseStatement(list,false);
+    }
+    expect(TokenKind.OUTDENT);
+  }
+ else {
+    Statement stmt=parseSmallStatement();
+    list.add(stmt);
+    expect(TokenKind.NEWLINE);
+  }
+}

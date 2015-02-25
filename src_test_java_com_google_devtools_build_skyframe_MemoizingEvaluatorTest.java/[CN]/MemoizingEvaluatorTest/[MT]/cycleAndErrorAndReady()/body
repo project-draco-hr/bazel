@@ -1,0 +1,61 @@
+{
+  final SkyKey otherTop=GraphTester.toSkyKey("otherTop");
+  final SkyKey errorKey=GraphTester.toSkyKey("error");
+  final CountDownLatch valuesReady=new CountDownLatch(3);
+  final CountDownLatch errorThrown=new CountDownLatch(1);
+  final AtomicBoolean secondBuild=new AtomicBoolean(false);
+  final TrackingAwaiter trackingAwaiter=new TrackingAwaiter();
+  setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+      if (!secondBuild.get()) {
+        return;
+      }
+      if (key.equals(errorKey) && type == EventType.SET_VALUE) {
+        trackingAwaiter.awaitLatchAndTrackExceptions(valuesReady,"waiting values not ready");
+        return;
+      }
+      if (key.equals(otherTop) && type == EventType.SIGNAL) {
+        valuesReady.countDown();
+        trackingAwaiter.awaitLatchAndTrackExceptions(errorThrown,"error not thrown");
+        return;
+      }
+    }
+  }
+));
+  final SkyKey dep1=GraphTester.toSkyKey("dep1");
+  tester.set(dep1,new StringValue("dep1"));
+  final SkyKey dep2=GraphTester.toSkyKey("dep2");
+  tester.set(dep2,new StringValue("dep2"));
+  tester.getOrCreate(otherTop).setBuilder(new NoExtractorFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env){
+      env.getValue(dep1);
+      if (env.valuesMissing()) {
+        return null;
+      }
+      env.getValue(dep2);
+      return env.valuesMissing() ? null : new StringValue("otherTop");
+    }
+  }
+);
+  assertEquals(new StringValue("otherTop"),tester.evalAndGet(false,otherTop));
+  tester.getOrCreate(dep1,true);
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  final SkyKey cycle1Key=GraphTester.toSkyKey("cycle1");
+  final SkyKey cycle2Key=GraphTester.toSkyKey("cycle2");
+  tester.getOrCreate(topKey).addDependency(cycle1Key).setComputedValue(CONCATENATE);
+  tester.getOrCreate(cycle1Key).addDependency(errorKey).addDependency(cycle2Key).setComputedValue(CONCATENATE);
+  tester.getOrCreate(errorKey).setHasError(true);
+  tester.getOrCreate(cycle2Key).setBuilder(new ChainedFunction(valuesReady,null,null,false,new StringValue("never returned"),ImmutableList.<SkyKey>of(cycle1Key)));
+  final SkyKey exceptionMarker=GraphTester.toSkyKey("exceptionMarker");
+  tester.getOrCreate(exceptionMarker).setBuilder(new ChainedFunction(valuesReady,new CountDownLatch(0),errorThrown,true,new StringValue("exception marker"),ImmutableList.<SkyKey>of()));
+  tester.invalidate();
+  secondBuild.set(true);
+  EvaluationResult<StringValue> result=tester.eval(false,otherTop,topKey,exceptionMarker);
+  trackingAwaiter.assertNoErrors();
+  assertThat(result.errorMap().keySet()).containsExactly(topKey);
+  Iterable<CycleInfo> cycleInfos=result.getError(topKey).getCycleInfo();
+  assertWithMessage(result.toString()).that(cycleInfos).isNotEmpty();
+  CycleInfo cycleInfo=Iterables.getOnlyElement(cycleInfos);
+  assertThat(cycleInfo.getPathToCycle()).containsExactly(topKey);
+  assertThat(cycleInfo.getCycle()).containsExactly(cycle1Key,cycle2Key);
+}

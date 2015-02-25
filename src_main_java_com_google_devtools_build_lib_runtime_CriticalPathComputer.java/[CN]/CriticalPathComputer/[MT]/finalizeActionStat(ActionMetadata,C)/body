@@ -1,0 +1,18 @@
+{
+  component.setFinishTimeMillis(getTime());
+  for (  Artifact input : action.getInputs()) {
+    addArtifactDependency(component,input);
+  }
+synchronized (lock) {
+    if (isBiggestCriticalPath(component)) {
+      maxCriticalPath=component;
+    }
+    if (slowestComponents.size() == SLOWEST_COMPONENTS_SIZE) {
+      if (slowestComponents.peek().getActionWallTime() >= component.getActionWallTime()) {
+        return;
+      }
+      slowestComponents.remove();
+    }
+    slowestComponents.add(component);
+  }
+}

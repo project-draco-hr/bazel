@@ -1,0 +1,83 @@
+{
+  int start=token.left;
+switch (token.kind) {
+case INT:
+{
+      IntegerLiteral literal=new IntegerLiteral((Integer)token.value);
+      setLocation(literal,start,token.right);
+      nextToken();
+      return literal;
+    }
+case STRING:
+{
+    String value=(String)token.value;
+    int end=token.right;
+    char quoteChar=lexer.charAt(start);
+    nextToken();
+    if (token.kind == TokenKind.STRING) {
+      reportError(lexer.createLocation(end,token.left),"Implicit string concatenation is forbidden, use the + operator");
+    }
+    StringLiteral literal=new StringLiteral(value,quoteChar);
+    setLocation(literal,start,end);
+    return literal;
+  }
+case IDENTIFIER:
+{
+  Ident ident=parseIdent();
+  if (token.kind == TokenKind.LPAREN) {
+    return parseFuncallSuffix(start,null,ident);
+  }
+ else {
+    return ident;
+  }
+}
+case LBRACKET:
+{
+return parseListExpression();
+}
+case LBRACE:
+{
+return parseDictExpression();
+}
+case LPAREN:
+{
+nextToken();
+if (token.kind == TokenKind.RPAREN) {
+ListLiteral literal=ListLiteral.makeTuple(Collections.<Expression>emptyList());
+setLocation(literal,start,token.right);
+nextToken();
+return literal;
+}
+Expression expression=parseExpression();
+if (token.kind == TokenKind.COMMA) {
+nextToken();
+List<Expression> tuple=parseExprList();
+tuple.add(0,expression);
+expect(TokenKind.RPAREN);
+return setLocation(ListLiteral.makeTuple(tuple),start,token.right);
+}
+setLocation(expression,start,token.right);
+if (token.kind == TokenKind.RPAREN) {
+nextToken();
+return expression;
+}
+syntaxError(token);
+int end=syncTo(EXPR_TERMINATOR_SET);
+return makeErrorExpression(start,end);
+}
+case MINUS:
+{
+nextToken();
+List<Argument> args=new ArrayList<>();
+Expression expr=parsePrimaryWithSuffix();
+args.add(setLocation(new Argument(expr),start,expr));
+return makeFuncallExpression(null,new Ident("-"),args,start,token.right);
+}
+default :
+{
+syntaxError(token);
+int end=syncTo(EXPR_TERMINATOR_SET);
+return makeErrorExpression(start,end);
+}
+}
+}

@@ -1,0 +1,25 @@
+{
+  LOG.info("Accumulating dirty actions");
+  final int numOutputJobs=Runtime.getRuntime().availableProcessors() * 4;
+  final Set<SkyKey> actionSkyKeys=Sets.filter(valuesSupplier.get().keySet(),ACTION_FILTER);
+  final Sharder<Pair<SkyKey,ActionExecutionValue>> outputShards=new Sharder<>(numOutputJobs,actionSkyKeys.size());
+  for (  SkyKey key : actionSkyKeys) {
+    outputShards.add(Pair.of(key,(ActionExecutionValue)valuesSupplier.get().get(key)));
+  }
+  LOG.info("Sharded action values for batching");
+  ExecutorService executor=Executors.newFixedThreadPool(numOutputJobs,new ThreadFactoryBuilder().setNameFormat("FileSystem Output File Invalidator %d").build());
+  Collection<SkyKey> dirtyKeys=Sets.newConcurrentHashSet();
+  ThrowableRecordingRunnableWrapper wrapper=new ThrowableRecordingRunnableWrapper("FileSystemValueChecker#getDirtyActionValues");
+  modifiedOutputFilesCounter.set(0);
+  for (  List<Pair<SkyKey,ActionExecutionValue>> shard : outputShards) {
+    Runnable job=(batchStatter == null) ? outputStatJob(dirtyKeys,shard) : batchStatJob(dirtyKeys,shard,batchStatter);
+    executor.submit(wrapper.wrap(job));
+  }
+  boolean interrupted=ExecutorShutdownUtil.interruptibleShutdown(executor);
+  Throwables.propagateIfPossible(wrapper.getFirstThrownError());
+  LOG.info("Completed output file stat checks");
+  if (interrupted) {
+    throw new InterruptedException();
+  }
+  return dirtyKeys;
+}

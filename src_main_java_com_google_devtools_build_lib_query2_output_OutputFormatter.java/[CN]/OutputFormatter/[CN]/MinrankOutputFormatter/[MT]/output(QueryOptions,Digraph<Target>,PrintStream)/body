@@ -1,0 +1,22 @@
+{
+  Digraph<Set<Node<Target>>> scGraph=result.getStrongComponentGraph();
+  Set<Node<Set<Node<Target>>>> rankNodes=scGraph.getRoots();
+  Set<Node<Set<Node<Target>>>> seen=new HashSet<>();
+  seen.addAll(rankNodes);
+  for (int rank=0; !rankNodes.isEmpty(); rank++) {
+    for (    Node<Set<Node<Target>>> xScc : rankNodes) {
+      for (      Node<Target> x : xScc.getLabel()) {
+        out.println(rank + " " + x.getLabel().getLabel());
+      }
+    }
+    Set<Node<Set<Node<Target>>>> nextRankNodes=new LinkedHashSet<>();
+    for (    Node<Set<Node<Target>>> x : rankNodes) {
+      for (      Node<Set<Node<Target>>> y : x.getSuccessors()) {
+        if (seen.add(y)) {
+          nextRankNodes.add(y);
+        }
+      }
+    }
+    rankNodes=nextRankNodes;
+  }
+}

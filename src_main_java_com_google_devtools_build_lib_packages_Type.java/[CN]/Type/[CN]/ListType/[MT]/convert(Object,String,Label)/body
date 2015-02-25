@@ -1,0 +1,24 @@
+{
+  if (!(x instanceof Iterable<?>)) {
+    throw new ConversionException(this,x,what);
+  }
+  List<ELEM> result=new ArrayList<>();
+  int index=0;
+  for (  Object elem : (Iterable<?>)x) {
+    ELEM converted=elemType.convert(elem,"element " + index + " of "+ what,currentRule);
+    if (converted != null) {
+      result.add(converted);
+    }
+ else {
+      String message="Converting a list with a null element: " + "element " + index + " of "+ what+ " in "+ currentRule;
+      LoggingUtil.logToRemote(Level.WARNING,message,new ConversionException(message));
+    }
+    ++index;
+  }
+  if (x instanceof GlobList<?>) {
+    return new GlobList<>(((GlobList<?>)x).getCriteria(),result);
+  }
+ else {
+    return result;
+  }
+}

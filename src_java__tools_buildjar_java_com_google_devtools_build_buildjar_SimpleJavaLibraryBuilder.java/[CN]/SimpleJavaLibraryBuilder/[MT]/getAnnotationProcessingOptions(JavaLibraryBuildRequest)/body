@@ -1,0 +1,18 @@
+{
+  List<String> args=new ArrayList<>();
+  args.add("-processorpath");
+  args.add(build.getProcessorPath().isEmpty() ? "" : build.getProcessorPath());
+  if (!build.getProcessors().isEmpty() && !build.getSourceFiles().isEmpty()) {
+    ImmutableSet<String> deduplicatedProcessorNames=ImmutableSet.copyOf(build.getProcessors());
+    args.add("-processor");
+    args.add(Joiner.on(',').join(deduplicatedProcessorNames));
+    if (build.getSourceGenDir() != null) {
+      args.add("-s");
+      args.add(build.getSourceGenDir());
+    }
+  }
+ else {
+    args.add("-proc:none");
+  }
+  return args;
+}

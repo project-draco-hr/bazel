@@ -1,0 +1,25 @@
+{
+  final List<String> runUnderList=new ArrayList<>();
+  try {
+    ShellUtils.tokenize(runUnderList,input);
+  }
+ catch (  TokenizationException e) {
+    throw new OptionsParsingException("Not a valid command prefix " + e.getMessage());
+  }
+  if (runUnderList.isEmpty()) {
+    throw new OptionsParsingException("Empty command");
+  }
+  final String runUnderCommand=runUnderList.get(0);
+  if (runUnderCommand.startsWith("//")) {
+    try {
+      final Label runUnderLabel=Label.parseAbsolute(runUnderCommand);
+      return new RunUnderLabel(input,runUnderLabel,runUnderList);
+    }
+ catch (    SyntaxException e) {
+      throw new OptionsParsingException("Not a valid label " + e.getMessage());
+    }
+  }
+ else {
+    return new RunUnderCommand(input,runUnderCommand,runUnderList);
+  }
+}

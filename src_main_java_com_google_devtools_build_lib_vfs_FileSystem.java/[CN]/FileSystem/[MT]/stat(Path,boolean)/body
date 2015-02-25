@@ -1,0 +1,48 @@
+{
+  FileStatus status=new FileStatus(){
+    volatile Boolean isFile;
+    volatile Boolean isDirectory;
+    volatile Boolean isSymbolicLink;
+    volatile long size=-1;
+    volatile long mtime=-1;
+    @Override public boolean isFile(){
+      if (isFile == null) {
+        isFile=FileSystem.this.isFile(path,followSymlinks);
+      }
+      return isFile;
+    }
+    @Override public boolean isDirectory(){
+      if (isDirectory == null) {
+        isDirectory=FileSystem.this.isDirectory(path,followSymlinks);
+      }
+      return isDirectory;
+    }
+    @Override public boolean isSymbolicLink(){
+      if (isSymbolicLink == null) {
+        isSymbolicLink=FileSystem.this.isSymbolicLink(path);
+      }
+      return isSymbolicLink;
+    }
+    @Override public long getSize() throws IOException {
+      if (size == -1) {
+        size=getFileSize(path,followSymlinks);
+      }
+      return size;
+    }
+    @Override public long getLastModifiedTime() throws IOException {
+      if (mtime == -1) {
+        mtime=FileSystem.this.getLastModifiedTime(path,followSymlinks);
+      }
+      return mtime;
+    }
+    @Override public long getLastChangeTime(){
+      throw new UnsupportedOperationException();
+    }
+    @Override public long getNodeId(){
+      throw new UnsupportedOperationException();
+    }
+  }
+;
+  status.getLastModifiedTime();
+  return status;
+}

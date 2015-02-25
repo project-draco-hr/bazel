@@ -1,0 +1,49 @@
+{
+  final CountDownLatch barrierLatch=new CountDownLatch(2);
+  final CountDownLatch readyLatch=new CountDownLatch(1);
+  FileSystem myfs=new InMemoryFileSystem(BlazeClock.instance()){
+    @Override protected byte[] getMD5Digest(    Path path) throws IOException {
+      try {
+        barrierLatch.countDown();
+        readyLatch.countDown();
+        barrierLatch.await();
+      }
+ catch (      Exception e) {
+        throw new IOException(e);
+      }
+      return super.getMD5Digest(path);
+    }
+    @Override protected String getFastDigestFunctionType(    Path path){
+      return "MD5";
+    }
+    @Override protected byte[] getFastDigest(    Path path) throws IOException {
+      return fastDigest ? super.getMD5Digest(path) : null;
+    }
+  }
+;
+  final Path myFile1=myfs.getPath("/f1.dat");
+  final Path myFile2=myfs.getPath("/f2.dat");
+  FileSystemUtils.writeContentAsLatin1(myFile1,Strings.repeat("a",fileSize1));
+  FileSystemUtils.writeContentAsLatin1(myFile2,Strings.repeat("b",fileSize2));
+  TestThread thread1=new TestThread(){
+    @Override public void runTest() throws Exception {
+      DigestUtils.getDigestOrFail(myFile1,fileSize1);
+    }
+  }
+;
+  TestThread thread2=new TestThread(){
+    @Override public void runTest() throws Exception {
+      DigestUtils.getDigestOrFail(myFile2,fileSize2);
+    }
+  }
+;
+  thread1.start();
+  thread2.start();
+  if (!expectConcurrent) {
+    assertTrue(readyLatch.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS));
+    assertEquals(1,barrierLatch.getCount());
+    barrierLatch.countDown();
+  }
+  thread1.joinAndAssertState(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+  thread2.joinAndAssertState(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+}

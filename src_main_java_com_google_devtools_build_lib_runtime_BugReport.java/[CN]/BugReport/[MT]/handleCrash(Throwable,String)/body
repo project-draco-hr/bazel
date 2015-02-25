@@ -1,0 +1,11 @@
+{
+  BugReport.sendBugReport(throwable,Arrays.asList(args));
+  BugReport.printBug(OutErr.SYSTEM_OUT_ERR,throwable);
+  System.err.println("Blaze crash in async thread:");
+  throwable.printStackTrace();
+  int exitCode=(throwable instanceof OutOfMemoryError) ? ExitCode.OOM_ERROR.getNumericExitCode() : ExitCode.BLAZE_INTERNAL_ERROR.getNumericExitCode();
+  if (runtime != null) {
+    runtime.notifyCommandComplete(exitCode);
+  }
+  System.exit(exitCode);
+}

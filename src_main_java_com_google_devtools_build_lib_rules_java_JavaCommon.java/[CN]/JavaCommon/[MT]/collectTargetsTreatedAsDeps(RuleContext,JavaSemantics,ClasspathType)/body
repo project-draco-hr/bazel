@@ -1,0 +1,14 @@
+{
+  ImmutableList.Builder<TransitiveInfoCollection> builder=new Builder<>();
+  if (!type.equals(ClasspathType.COMPILE_ONLY)) {
+    builder.addAll(getRuntimeDeps(ruleContext));
+    builder.addAll(getExports(ruleContext));
+  }
+  builder.addAll(ruleContext.getPrerequisites("deps",Mode.TARGET));
+  semantics.collectTargetsTreatedAsDeps(ruleContext,builder);
+  TransitiveInfoCollection launcher=JavaHelper.launcherForTarget(semantics,ruleContext);
+  if (launcher != null) {
+    builder.add(launcher);
+  }
+  return builder.build();
+}

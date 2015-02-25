@@ -1,0 +1,18 @@
+{
+  FileValue fileValue=(FileValue)getDependentSkyValue(env,FileValue.key(traversal.path));
+  if (fileValue.exists()) {
+    PathFragment unresolvedLinkTarget=null;
+    FileType type=null;
+    if (fileValue.isSymlink()) {
+      unresolvedLinkTarget=fileValue.getUnresolvedLinkTarget();
+      type=fileValue.isDirectory() ? FileType.SYMLINK_TO_DIRECTORY : FileType.SYMLINK_TO_FILE;
+    }
+ else {
+      type=fileValue.isDirectory() ? FileType.DIRECTORY : FileType.FILE;
+    }
+    return new FileInfo(type,fileValue.realFileStateValue(),fileValue.realRootedPath(),unresolvedLinkTarget);
+  }
+ else {
+    return new FileInfo(fileValue.isSymlink() ? FileType.DANGLING_SYMLINK : FileType.NONEXISTENT,fileValue.realFileStateValue(),null,fileValue.isSymlink() ? fileValue.getUnresolvedLinkTarget() : null);
+  }
+}

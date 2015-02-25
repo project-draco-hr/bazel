@@ -1,0 +1,21 @@
+{
+  ZipInputStream expectedZip=new ZipInputStream(new ByteArrayInputStream(expected));
+  ZipInputStream actualZip=new ZipInputStream(new ByteArrayInputStream(actual));
+  StringBuffer actualFileList=new StringBuffer();
+  StringBuffer expectedFileList=new StringBuffer();
+  Map<String,ZipEntry> actualEntries=new HashMap<String,ZipEntry>();
+  Map<String,ZipEntry> expectedEntries=new HashMap<String,ZipEntry>();
+  Map<String,byte[]> actualEntryContents=new HashMap<String,byte[]>();
+  Map<String,byte[]> expectedEntryContents=new HashMap<String,byte[]>();
+  parseZipEntry(expectedZip,expectedFileList,expectedEntries,expectedEntryContents);
+  parseZipEntry(actualZip,actualFileList,actualEntries,actualEntryContents);
+  assertEquals(expectedFileList.toString(),actualFileList.toString());
+  for (  String name : expectedEntries.keySet()) {
+    ZipEntry expectedEntry=expectedEntries.get(name);
+    ZipEntry actualEntry=actualEntries.get(name);
+    assertEquals("Time differs for " + name,expectedEntry.getTime(),actualEntry.getTime());
+    assertArrayEquals("Extraneous content differs for " + name,expectedEntry.getExtra(),actualEntry.getExtra());
+    assertArrayEquals("Content differs for " + name,expectedEntryContents.get(name),actualEntryContents.get(name));
+  }
+  assertArrayEquals(expected,actual);
+}

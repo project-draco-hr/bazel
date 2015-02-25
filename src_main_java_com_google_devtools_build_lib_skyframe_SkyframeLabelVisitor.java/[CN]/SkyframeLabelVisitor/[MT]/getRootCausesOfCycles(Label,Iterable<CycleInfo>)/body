@@ -1,0 +1,25 @@
+{
+  ImmutableSet.Builder<Label> builder=ImmutableSet.builder();
+  for (  CycleInfo cycleInfo : cycles) {
+    SkyKey culprit=Iterables.getFirst(cycleInfo.getCycle(),null);
+    if (culprit == null) {
+      continue;
+    }
+    if (culprit.functionName().equals(SkyFunctions.TRANSITIVE_TARGET)) {
+      builder.add((Label)culprit.argument());
+    }
+ else {
+      Label furthestTarget=labelToLoad;
+      for (      SkyKey skyKey : cycleInfo.getPathToCycle()) {
+        if (skyKey.functionName().equals(SkyFunctions.TRANSITIVE_TARGET)) {
+          furthestTarget=(Label)skyKey.argument();
+        }
+ else {
+          break;
+        }
+      }
+      builder.add(furthestTarget);
+    }
+  }
+  return builder.build();
+}

@@ -1,0 +1,26 @@
+{
+  Collection<Target> testsToRun=loadingResult.getTestsToRun();
+  Collection<ConfiguredTarget> allTargetsToTest=null;
+  if (testsToRun != null) {
+    allTargetsToTest=Lists.newArrayList(filterTestsByTargets(configuredTargets,Sets.newHashSet(testsToRun)));
+  }
+  skyframeExecutor.injectTopLevelContext(topLevelOptions);
+  Set<Artifact> artifactsToBuild=new HashSet<>();
+  Set<ConfiguredTarget> parallelTests=new HashSet<>();
+  Set<ConfiguredTarget> exclusiveTests=new HashSet<>();
+  Collection<Artifact> buildInfoArtifacts;
+  buildInfoArtifacts=skyframeExecutor.getWorkspaceStatusArtifacts();
+  Preconditions.checkState(buildInfoArtifacts.size() == 2,buildInfoArtifacts);
+  artifactsToBuild.addAll(buildInfoArtifacts);
+  addExtraActionsIfRequested(viewOptions,artifactsToBuild,configuredTargets);
+  if (coverageReportActionFactory != null) {
+    Action action=coverageReportActionFactory.createCoverageReportAction(allTargetsToTest,getBaselineCoverageArtifacts(configuredTargets),artifactFactory,CoverageReportValue.ARTIFACT_OWNER);
+    if (action != null) {
+      skyframeExecutor.injectCoverageReportData(action);
+      artifactsToBuild.addAll(action.getOutputs());
+    }
+  }
+  scheduleTestsIfRequested(parallelTests,exclusiveTests,topLevelOptions,allTargetsToTest);
+  String error=!loadingResult.hasLoadingError() ? (analysisSuccessful ? null : "execution phase succeeded, but not all targets were analyzed") : "execution phase succeeded, but there were loading phase errors";
+  return new AnalysisResult(configuredTargets,allTargetsToTest,error,getActionGraph(),artifactsToBuild,parallelTests,exclusiveTests,topLevelOptions);
+}

@@ -1,0 +1,37 @@
+{
+  List<Object> posargs=new ArrayList<>();
+  Map<String,Object> kwargs=new LinkedHashMap<>();
+  if (obj != null) {
+    Object objValue=obj.eval(env);
+    Function function=env.getFunction(EvalUtils.getSkylarkType(objValue.getClass()),func.getName());
+    if (function != null) {
+      if (!isNamespace(objValue.getClass())) {
+        posargs.add(objValue);
+      }
+      evalArguments(posargs,kwargs,env,function);
+      return EvalUtils.checkNotNull(this,function.call(posargs,kwargs,this,env));
+    }
+ else     if (env.isSkylarkEnabled()) {
+      evalArguments(posargs,kwargs,env,null);
+      if (!kwargs.isEmpty()) {
+        throw new EvalException(func.getLocation(),"Keyword arguments are not allowed when calling a java method");
+      }
+      if (objValue instanceof Class<?>) {
+        return invokeJavaMethod(null,(Class<?>)objValue,func.getName(),posargs);
+      }
+ else {
+        return invokeJavaMethod(objValue,objValue.getClass(),func.getName(),posargs);
+      }
+    }
+ else {
+      throw new EvalException(getLocation(),String.format("function '%s' is not defined on '%s'",func.getName(),EvalUtils.getDatatypeName(objValue)));
+    }
+  }
+  Object funcValue=func.eval(env);
+  if (!(funcValue instanceof Function)) {
+    throw new EvalException(getLocation(),"'" + EvalUtils.getDatatypeName(funcValue) + "' object is not callable");
+  }
+  Function function=(Function)funcValue;
+  evalArguments(posargs,kwargs,env,function);
+  return EvalUtils.checkNotNull(this,function.call(posargs,kwargs,this,env));
+}

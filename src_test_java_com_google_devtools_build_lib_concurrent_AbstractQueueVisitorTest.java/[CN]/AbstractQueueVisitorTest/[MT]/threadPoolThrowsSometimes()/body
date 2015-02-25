@@ -1,0 +1,25 @@
+{
+  ThreadPoolExecutor executor=new ThreadPoolExecutor(3,3,0,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>()){
+    private final AtomicLong count=new AtomicLong();
+    @Override public void execute(    Runnable command){
+      long count=this.count.incrementAndGet();
+      if (count == 6) {
+        throw new Error("Could not create thread (fakeout)");
+      }
+      super.execute(command);
+    }
+  }
+;
+  CountingQueueVisitor counter=new CountingQueueVisitor(executor);
+  counter.enqueue();
+  try {
+    counter.work(false);
+    fail();
+  }
+ catch (  Error expected) {
+    assertEquals("Could not create thread (fakeout)",expected.getMessage());
+  }
+  assertSame(5,counter.getCount());
+  executor.shutdown();
+  assertTrue(executor.awaitTermination(10,TimeUnit.SECONDS));
+}

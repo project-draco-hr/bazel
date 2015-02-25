@@ -1,0 +1,14 @@
+{
+  Preconditions.checkNotNull(staticResources);
+  if (useFreeReading && isAutoSensingEnabled()) {
+    availableResources=new ResourceSet(usedRam + freeReading.getFreeMb(),usedCpu + freeReading.getAvgFreeCpu(),staticResources.getIoUsage());
+    if (FINE) {
+      LOG.fine("Free resources: " + Math.round(freeReading.getFreeMb()) + " MB,"+ Math.round(freeReading.getAvgFreeCpu() * 100)+ "% CPU");
+    }
+    processWaitingThreads();
+  }
+ else {
+    availableResources=new ResourceSet(staticResources.getMemoryMb() * this.ramUtilizationPercentage / 100.0,staticResources.getCpuUsage(),staticResources.getIoUsage());
+    processWaitingThreads();
+  }
+}

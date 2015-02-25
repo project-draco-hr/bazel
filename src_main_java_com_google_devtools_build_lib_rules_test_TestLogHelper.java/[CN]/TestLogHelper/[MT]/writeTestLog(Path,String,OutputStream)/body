@@ -1,0 +1,29 @@
+{
+  InputStream input=null;
+  PrintStream printOut=new PrintStream(new BufferedOutputStream(out));
+  try {
+    final String outputHeader="==================== Test output for " + testName + ":";
+    final String outputFooter="================================================================================";
+    printOut.println(outputHeader);
+    printOut.flush();
+    input=testOutput.getInputStream();
+    FilterTestHeaderOutputStream filteringOutputStream=getHeaderFilteringOutputStream(printOut);
+    ByteStreams.copy(input,filteringOutputStream);
+    if (!filteringOutputStream.foundHeader()) {
+      InputStream inputAgain=testOutput.getInputStream();
+      try {
+        ByteStreams.copy(inputAgain,out);
+      }
+  finally {
+        inputAgain.close();
+      }
+    }
+    printOut.println(outputFooter);
+  }
+  finally {
+    printOut.flush();
+    if (input != null) {
+      input.close();
+    }
+  }
+}

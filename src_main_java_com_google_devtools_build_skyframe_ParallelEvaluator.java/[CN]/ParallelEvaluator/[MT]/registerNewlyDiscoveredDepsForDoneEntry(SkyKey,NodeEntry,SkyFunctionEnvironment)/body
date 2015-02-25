@@ -1,0 +1,13 @@
+{
+  Set<SkyKey> unfinishedDeps=new HashSet<>();
+  Iterables.addAll(unfinishedDeps,Iterables.filter(env.newlyRequestedDeps,Predicates.not(nodeEntryIsDone)));
+  env.newlyRequestedDeps.remove(unfinishedDeps);
+  entry.addTemporaryDirectDeps(env.newlyRequestedDeps);
+  for (  SkyKey newDep : env.newlyRequestedDeps) {
+    NodeEntry depEntry=graph.get(newDep);
+    DependencyState triState=depEntry.addReverseDepAndCheckIfDone(skyKey);
+    Preconditions.checkState(DependencyState.DONE == triState,"new dep %s was not already done for %s. ValueEntry: %s. DepValueEntry: %s",newDep,skyKey,entry,depEntry);
+    entry.signalDep();
+  }
+  Preconditions.checkState(entry.isReady(),"%s %s %s",skyKey,entry,env.newlyRequestedDeps);
+}

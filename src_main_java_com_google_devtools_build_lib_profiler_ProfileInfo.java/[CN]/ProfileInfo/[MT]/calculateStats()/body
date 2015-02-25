@@ -1,0 +1,31 @@
+{
+  if (allTasksById.size() == 0) {
+    return;
+  }
+  Collections.sort(allTasksById);
+  Map<Integer,Task[]> subtaskMap=new TaskMapCreator<Integer>(){
+    @Override public int compare(    Task a,    Task b){
+      return a.parentId != b.parentId ? a.parentId - b.parentId : a.compareTo(b);
+    }
+    @Override public Integer getKey(    Task task){
+      return task.parentId;
+    }
+  }
+.createTaskMap(allTasksById);
+  for (  Task task : allTasksById) {
+    Task[] subtasks=subtaskMap.get(task.id);
+    if (subtasks != null) {
+      task.subtasks=subtasks;
+    }
+  }
+  rootTasksById=Arrays.asList(subtaskMap.get(0));
+  for (  Task task : rootTasksById) {
+    task.calculateRootStats();
+    if (task.type == ProfilerTask.PHASE) {
+      if (!phaseTasks.isEmpty()) {
+        phaseTasks.get(phaseTasks.size() - 1).relatedTask=task;
+      }
+      phaseTasks.add(task);
+    }
+  }
+}

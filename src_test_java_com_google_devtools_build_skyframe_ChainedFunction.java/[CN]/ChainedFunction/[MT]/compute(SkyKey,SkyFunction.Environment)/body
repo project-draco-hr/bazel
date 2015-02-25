@@ -1,0 +1,29 @@
+{
+  try {
+    if (notifyStart != null) {
+      notifyStart.countDown();
+    }
+    if (waitToFinish != null) {
+      TrackingAwaiter.waitAndMaybeThrowInterrupt(waitToFinish,key + " timed out waiting to finish");
+      if (waitForException) {
+        SkyFunctionEnvironment skyEnv=(SkyFunctionEnvironment)env;
+        TrackingAwaiter.waitAndMaybeThrowInterrupt(skyEnv.getExceptionLatchForTesting(),key + " timed out waiting for exception");
+      }
+    }
+    for (    SkyKey dep : deps) {
+      env.getValue(dep);
+    }
+    if (value == null) {
+      throw new GenericFunctionException(new SomeErrorException("oops"),Transience.PERSISTENT);
+    }
+    if (env.valuesMissing()) {
+      return null;
+    }
+    return value;
+  }
+  finally {
+    if (notifyFinish != null) {
+      notifyFinish.countDown();
+    }
+  }
+}

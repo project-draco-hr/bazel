@@ -1,0 +1,26 @@
+{
+  indent(ascii,level);
+  ascii.append(ASCIIPropertyListParser.DICTIONARY_BEGIN_TOKEN);
+  ascii.append(NEWLINE);
+  String[] keys=dict.keySet().toArray(new String[dict.size()]);
+  for (  String key : keys) {
+    NSObject val=objectForKey(key);
+    indent(ascii,level + 1);
+    ascii.append("\"");
+    ascii.append(NSString.escapeStringForASCII(key));
+    ascii.append("\" =");
+    Class<?> objClass=val.getClass();
+    if (objClass.equals(NSDictionary.class) || objClass.equals(NSArray.class) || objClass.equals(NSData.class)) {
+      ascii.append(NEWLINE);
+      val.toASCIIGnuStep(ascii,level + 2);
+    }
+ else {
+      ascii.append(" ");
+      val.toASCIIGnuStep(ascii,0);
+    }
+    ascii.append(ASCIIPropertyListParser.DICTIONARY_ITEM_DELIMITER_TOKEN);
+    ascii.append(NEWLINE);
+  }
+  indent(ascii,level);
+  ascii.append(ASCIIPropertyListParser.DICTIONARY_END_TOKEN);
+}

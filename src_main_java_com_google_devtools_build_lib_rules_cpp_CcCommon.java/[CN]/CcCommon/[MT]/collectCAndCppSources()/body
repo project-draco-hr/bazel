@@ -1,0 +1,28 @@
+{
+  Map<Artifact,Label> map=Maps.newLinkedHashMap();
+  if (!hasAttribute("srcs",Type.LABEL_LIST)) {
+    return ImmutableList.<Pair<Artifact,Label>>of();
+  }
+  Iterable<FileProvider> providers=ruleContext.getPrerequisites("srcs",Mode.TARGET,FileProvider.class);
+  boolean processHeaders=shouldProcessHeaders();
+  if (processHeaders && hasAttribute("hdrs",Type.LABEL_LIST)) {
+    providers=Iterables.concat(providers,ruleContext.getPrerequisites("hdrs",Mode.TARGET,FileProvider.class));
+  }
+  for (  FileProvider provider : providers) {
+    for (    Artifact artifact : FileType.filter(provider.getFilesToBuild(),SOURCE_TYPES)) {
+      boolean isHeader=CppFileTypes.CPP_HEADER.matches(artifact.getExecPath());
+      if ((isHeader && !processHeaders) || CppFileTypes.CPP_TEXTUAL_INCLUDE.matches(artifact.getExecPath())) {
+        continue;
+      }
+      Label oldLabel=map.put(artifact,provider.getLabel());
+      if (!isHeader && oldLabel != null && !oldLabel.equals(provider.getLabel())) {
+        ruleContext.attributeError("srcs",String.format("Artifact '%s' is duplicated (through '%s' and '%s')",artifact.getExecPathString(),oldLabel,provider.getLabel()));
+      }
+    }
+  }
+  ImmutableList.Builder<Pair<Artifact,Label>> result=ImmutableList.builder();
+  for (  Map.Entry<Artifact,Label> entry : map.entrySet()) {
+    result.add(Pair.of(entry.getKey(),entry.getValue()));
+  }
+  return result.build();
+}

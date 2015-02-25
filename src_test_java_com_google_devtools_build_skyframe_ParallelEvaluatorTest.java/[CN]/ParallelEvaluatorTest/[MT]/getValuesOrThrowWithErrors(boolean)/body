@@ -1,0 +1,46 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey parentKey=GraphTester.toSkyKey("parent");
+  final SkyKey errorDep=GraphTester.toSkyKey("errorChild");
+  final SomeErrorException childExn=new SomeErrorException("child error");
+  tester.getOrCreate(errorDep).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+      throw new GenericFunctionException(childExn,Transience.PERSISTENT);
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  final List<SkyKey> deps=new ArrayList<>();
+  for (int i=1; i <= 3; i++) {
+    SkyKey dep=GraphTester.toSkyKey("child" + i);
+    deps.add(dep);
+    tester.set(dep,new StringValue("child" + i));
+  }
+  final SomeErrorException parentExn=new SomeErrorException("parent error");
+  tester.getOrCreate(parentKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+      try {
+        SkyValue value=env.getValueOrThrow(errorDep,SomeErrorException.class);
+        if (value == null) {
+          return null;
+        }
+      }
+ catch (      SomeErrorException e) {
+      }
+      env.getValues(deps);
+      if (env.valuesMissing()) {
+        return null;
+      }
+      throw new GenericFunctionException(parentExn,Transience.PERSISTENT);
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  EvaluationResult<StringValue> evaluationResult=eval(keepGoing,ImmutableList.of(parentKey));
+  assertTrue(evaluationResult.hasError());
+  assertEquals(keepGoing ? parentExn : childExn,evaluationResult.getError().getException());
+}

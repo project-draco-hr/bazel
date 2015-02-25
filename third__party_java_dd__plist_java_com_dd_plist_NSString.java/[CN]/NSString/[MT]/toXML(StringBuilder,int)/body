@@ -1,0 +1,26 @@
+{
+  indent(xml,level);
+  xml.append("<string>");
+synchronized (NSString.class) {
+    if (utf8Encoder == null)     utf8Encoder=Charset.forName("UTF-8").newEncoder();
+ else     utf8Encoder.reset();
+    try {
+      ByteBuffer byteBuf=utf8Encoder.encode(CharBuffer.wrap(content));
+      byte[] bytes=new byte[byteBuf.remaining()];
+      byteBuf.get(bytes);
+      content=new String(bytes,"UTF-8");
+    }
+ catch (    Exception ex) {
+      throw new RuntimeException("Could not encode the NSString into UTF-8: " + String.valueOf(ex.getMessage()));
+    }
+  }
+  if (content.contains("&") || content.contains("<") || content.contains(">")) {
+    xml.append("<![CDATA[");
+    xml.append(content.replaceAll("]]>","]]]]><![CDATA[>"));
+    xml.append("]]>");
+  }
+ else {
+    xml.append(content);
+  }
+  xml.append("</string>");
+}

@@ -1,0 +1,14 @@
+{
+  if (oldMeasurement == null) {
+    return new float[2];
+  }
+  long idleJiffies=newMeasurement.getTotalCpuIdleTimeInJiffies() - oldMeasurement.getTotalCpuIdleTimeInJiffies();
+  long oldProcessJiffies=oldMeasurement.getCpuUtilizationInJiffies()[0] + oldMeasurement.getCpuUtilizationInJiffies()[1];
+  long newProcessJiffies=newMeasurement.getCpuUtilizationInJiffies()[0] + newMeasurement.getCpuUtilizationInJiffies()[1];
+  long processJiffies=newProcessJiffies - oldProcessJiffies;
+  long elapsedTimeJiffies=newMeasurement.getTimeInJiffies() - oldMeasurement.getTimeInJiffies();
+  int processors=getAvailableProcessors();
+  double totalUsage=Math.max(0,1.0D - (double)idleJiffies / elapsedTimeJiffies / processors);
+  double usage=Math.max(0,(double)processJiffies / elapsedTimeJiffies / processors);
+  return new float[]{(float)totalUsage * 100,(float)usage * 100};
+}

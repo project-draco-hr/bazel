@@ -1,0 +1,31 @@
+{
+  Set<EnvironmentGroup> knownGroups=supportedEnvironments.getGroups();
+  for (  TransitiveInfoCollection dependency : getAllPrerequisites(ruleContext)) {
+    SupportedEnvironmentsProvider depProvider=dependency.getProvider(SupportedEnvironmentsProvider.class);
+    if (depProvider == null) {
+      continue;
+    }
+    Collection<Label> depEnvironments=depProvider.getEnvironments().getEnvironments();
+    Set<EnvironmentGroup> groupsKnownToDep=depProvider.getEnvironments().getGroups();
+    Set<Label> disallowedEnvironments=new LinkedHashSet<>();
+    for (    EnvironmentWithGroup supportedEnv : supportedEnvironments.getGroupedEnvironments()) {
+      EnvironmentGroup group=supportedEnv.group();
+      Label environment=supportedEnv.environment();
+      if (!depEnvironments.contains(environment) && (groupsKnownToDep.contains(group) || !group.isDefault(environment))) {
+        disallowedEnvironments.add(environment);
+      }
+    }
+    for (    EnvironmentGroup depGroup : groupsKnownToDep) {
+      if (!knownGroups.contains(depGroup)) {
+        for (        Label defaultEnv : depGroup.getDefaults()) {
+          if (!depEnvironments.contains(defaultEnv)) {
+            disallowedEnvironments.add(defaultEnv);
+          }
+        }
+      }
+    }
+    if (!disallowedEnvironments.isEmpty()) {
+      ruleContext.ruleError("dependency " + dependency.getLabel() + " doesn't support expected environment"+ (disallowedEnvironments.size() == 1 ? "" : "s")+ ": "+ Joiner.on(", ").join(disallowedEnvironments));
+    }
+  }
+}

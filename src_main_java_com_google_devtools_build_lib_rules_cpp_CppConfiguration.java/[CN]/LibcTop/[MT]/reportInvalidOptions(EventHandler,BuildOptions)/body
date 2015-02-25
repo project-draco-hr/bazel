@@ -1,0 +1,31 @@
+{
+  CppOptions cppOptions=buildOptions.get(CppOptions.class);
+  if (stripBinaries) {
+    boolean warn=cppOptions.coptList.contains("-g");
+    for (    PerLabelOptions opt : cppOptions.perFileCopts) {
+      warn|=opt.getOptions().contains("-g");
+    }
+    if (warn) {
+      reporter.handle(Event.warn("Stripping enabled, but '--copt=-g' (or --per_file_copt=...@-g) " + "specified. Debug information will be generated and then stripped away. This is " + "probably not what you want! Use '-c dbg' for debug mode, or use '--strip=never' "+ "to disable stripping"));
+    }
+  }
+  if (cppOptions.fdoInstrument != null && cppOptions.fdoOptimize != null) {
+    reporter.handle(Event.error("Cannot instrument and optimize for FDO at the same time. " + "Remove one of the '--fdo_instrument' and '--fdo_optimize' options"));
+  }
+  if (cppOptions.lipoContext != null) {
+    if (cppOptions.lipoMode != LipoMode.BINARY || cppOptions.fdoOptimize == null) {
+      reporter.handle(Event.warn("The --lipo_context option can only be used together with " + "--fdo_optimize=<profile zip> and --lipo=binary. LIPO context will be ignored."));
+    }
+  }
+ else {
+    if (cppOptions.lipoMode == LipoMode.BINARY && cppOptions.fdoOptimize != null) {
+      reporter.handle(Event.error("The --lipo_context option must be specified when using " + "--fdo_optimize=<profile zip> and --lipo=binary"));
+    }
+  }
+  if (cppOptions.lipoMode == LipoMode.BINARY && compilationMode != CompilationMode.OPT) {
+    reporter.handle(Event.error("'--lipo=binary' can only be used with '--compilation_mode=opt' (or '-c opt')"));
+  }
+  if (cppOptions.fissionModes.contains(compilationMode) && !supportsFission()) {
+    reporter.handle(Event.warn("Fission is not supported by this crosstool. Please use a supporting " + "crosstool to enable fission"));
+  }
+}

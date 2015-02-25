@@ -1,0 +1,18 @@
+{
+  SkyKey childKey=GraphTester.toSkyKey("child");
+  SkyKey parentKey=GraphTester.toSkyKey("parent");
+  StringValue oldVal=new StringValue("old_val");
+  tester.getOrCreate(childKey).setConstantValue(oldVal);
+  tester.getOrCreate(parentKey).addDependency("child").setComputedValue(COPY);
+  EvaluationResult<SkyValue> result=tester.eval(false,parentKey);
+  assertFalse(result.hasError());
+  assertEquals(oldVal,result.get(parentKey));
+  SkyValue val=new StringValue("val");
+  tester.differencer.inject(ImmutableMap.of(childKey,val));
+  assertEquals(val,tester.evalAndGet("child"));
+  Assert.assertNull(tester.getExistingValue("parent"));
+  tester.eval(false,childKey);
+  assertEquals(val,tester.getExistingValue("child"));
+  Assert.assertNull(tester.getExistingValue("parent"));
+  assertEquals(val,tester.evalAndGet("parent"));
+}

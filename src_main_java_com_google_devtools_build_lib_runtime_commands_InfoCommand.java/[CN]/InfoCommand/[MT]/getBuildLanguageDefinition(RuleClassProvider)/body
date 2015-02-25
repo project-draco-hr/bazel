@@ -1,0 +1,26 @@
+{
+  BuildLanguage.Builder resultPb=BuildLanguage.newBuilder();
+  Collection<RuleClass> ruleClasses=provider.getRuleClassMap().values();
+  for (  RuleClass ruleClass : ruleClasses) {
+    if (!ruleClass.isDocumented()) {
+      continue;
+    }
+    RuleDefinition.Builder rulePb=RuleDefinition.newBuilder();
+    rulePb.setName(ruleClass.getName());
+    for (    Attribute attr : ruleClass.getAttributes()) {
+      if (!attr.isDocumented()) {
+        continue;
+      }
+      AttributeDefinition.Builder attrPb=AttributeDefinition.newBuilder();
+      attrPb.setName(attr.getName());
+      attrPb.setType(ProtoUtils.getDiscriminatorFromType(attr.getType()));
+      attrPb.setMandatory(attr.isMandatory());
+      if (Type.isLabelType(attr.getType())) {
+        attrPb.setAllowedRuleClasses(getAllowedRuleClasses(ruleClasses,attr));
+      }
+      rulePb.addAttribute(attrPb);
+    }
+    resultPb.addRule(rulePb);
+  }
+  return resultPb.build().toByteArray();
+}

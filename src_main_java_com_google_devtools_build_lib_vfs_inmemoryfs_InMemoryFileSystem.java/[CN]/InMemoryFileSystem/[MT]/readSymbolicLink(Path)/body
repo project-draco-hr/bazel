@@ -1,0 +1,13 @@
+{
+  InMemoryContentInfo status=scopeLimitedStat(path,false);
+  if (status.outOfScope()) {
+    return getDelegatedPath(status.getEscapingPath()).readSymbolicLink();
+  }
+ else   if (status.isSymbolicLink()) {
+    Preconditions.checkState(status instanceof InMemoryLinkInfo);
+    return ((InMemoryLinkInfo)status).getLinkContent();
+  }
+ else {
+    throw new NotASymlinkException(path);
+  }
+}

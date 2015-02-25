@@ -1,0 +1,18 @@
+{
+  ImmutableCollection<EnvironmentGroup> restrictionGroups=restrictionEnvironments.getGroups();
+  boolean hasErrors=false;
+  for (  EnvironmentGroup group : compatibilityEnvironments.getGroups()) {
+    if (restrictionGroups.contains(group)) {
+      Label compatibilityEnv=compatibilityEnvironments.getEnvironments(group).iterator().next();
+      Label restrictionEnv=restrictionEnvironments.getEnvironments(group).iterator().next();
+      if (compatibilityEnv.equals(restrictionEnv)) {
+        ruleContext.attributeError(compatibilityAttr,compatibilityEnv + " cannot appear both here and in " + restrictionAttr);
+      }
+ else {
+        ruleContext.attributeError(compatibilityAttr,compatibilityEnv + " and " + restrictionEnv+ " belong to the same environment group. They should be declared "+ "together either here or in "+ restrictionAttr);
+      }
+      hasErrors=true;
+    }
+  }
+  return !hasErrors;
+}

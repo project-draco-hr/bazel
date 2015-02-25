@@ -1,0 +1,24 @@
+{
+  RepositoryName repositoryName=(RepositoryName)skyKey.argument();
+  Rule rule=RepositoryFunction.getRule(repositoryName,null,env);
+  if (rule == null) {
+    return null;
+  }
+  RepositoryFunction handler=handlers.get(rule.getRuleClass());
+  if (handler == null) {
+    throw new IllegalStateException("Could not find handler for " + rule);
+  }
+  SkyKey key=new SkyKey(handler.getSkyFunctionName(),repositoryName);
+  try {
+    return env.getValueOrThrow(key,NoSuchPackageException.class,IOException.class,EvalException.class);
+  }
+ catch (  NoSuchPackageException e) {
+    throw new RepositoryFunction.RepositoryFunctionException(e,Transience.PERSISTENT);
+  }
+catch (  IOException e) {
+    throw new RepositoryFunction.RepositoryFunctionException(e,Transience.PERSISTENT);
+  }
+catch (  EvalException e) {
+    throw new RepositoryFunction.RepositoryFunctionException(e,Transience.PERSISTENT);
+  }
+}

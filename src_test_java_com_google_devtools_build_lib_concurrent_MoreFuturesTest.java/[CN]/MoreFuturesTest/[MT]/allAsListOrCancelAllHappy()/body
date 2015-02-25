@@ -1,0 +1,17 @@
+{
+  final List<DelayedFuture> futureList=new ArrayList<>();
+  for (int i=0; i < 5; i++) {
+    DelayedFuture future=new DelayedFuture(i);
+    executorService.execute(future);
+    futureList.add(future);
+  }
+  ListenableFuture<List<Object>> list=MoreFutures.allAsListOrCancelAll(futureList);
+  List<Object> result=list.get();
+  assertEquals(futureList.size(),result.size());
+  for (  DelayedFuture delayedFuture : futureList) {
+    assertFalse(delayedFuture.wasCanceled);
+    assertFalse(delayedFuture.wasInterrupted);
+    assertNotNull(delayedFuture.get());
+    assertTrue(result.contains(delayedFuture.get()));
+  }
+}

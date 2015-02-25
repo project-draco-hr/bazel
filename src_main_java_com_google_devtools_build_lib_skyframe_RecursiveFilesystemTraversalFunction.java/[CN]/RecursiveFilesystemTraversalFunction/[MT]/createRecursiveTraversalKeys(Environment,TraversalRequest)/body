@@ -1,0 +1,10 @@
+{
+  DirectoryListingValue dirListing=(DirectoryListingValue)getDependentSkyValue(env,DirectoryListingValue.key(traversal.path));
+  List<SkyKey> result=new ArrayList<>();
+  for (  Dirent dirent : dirListing.getDirents()) {
+    RootedPath childPath=RootedPath.toRootedPath(traversal.path.getRoot(),traversal.path.getRelativePath().getRelative(dirent.getName()));
+    TraversalRequest childTraversal=traversal.forChildEntry(childPath);
+    result.add(RecursiveFilesystemTraversalValue.key(childTraversal));
+  }
+  return result;
+}

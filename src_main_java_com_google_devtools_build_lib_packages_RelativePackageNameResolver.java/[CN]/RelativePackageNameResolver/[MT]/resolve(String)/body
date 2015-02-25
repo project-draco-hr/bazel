@@ -1,0 +1,25 @@
+{
+  boolean isAbsolute;
+  String relativePkg;
+  if (pkg.startsWith("//")) {
+    isAbsolute=true;
+    relativePkg=pkg.substring(2);
+  }
+ else   if (pkg.startsWith("/")) {
+    throw new InvalidPackageNameException(pkg,"package name cannot start with a single slash");
+  }
+ else {
+    isAbsolute=false;
+    relativePkg=pkg;
+  }
+  PathFragment relative=new PathFragment(relativePkg);
+  if (discardBuild && relative.getBaseName().equals("BUILD")) {
+    relative=relative.getParentDirectory();
+  }
+  PathFragment result=isAbsolute ? relative : offset.getRelative(relative);
+  result=result.normalize();
+  if (result.containsUplevelReferences()) {
+    throw new InvalidPackageNameException(pkg,"package name contains too many '..' segments");
+  }
+  return result.getPathString();
+}

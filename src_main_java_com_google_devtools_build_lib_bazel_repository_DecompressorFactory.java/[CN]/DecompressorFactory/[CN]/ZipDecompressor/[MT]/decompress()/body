@@ -1,0 +1,15 @@
+{
+  Path destinationDirectory=archiveFile.getParentDirectory().getRelative("repository");
+  try (InputStream is=new FileInputStream(archiveFile.getPathString())){
+    ArchiveInputStream in=new ArchiveStreamFactory().createArchiveInputStream(ArchiveStreamFactory.ZIP,is);
+    ZipArchiveEntry entry=(ZipArchiveEntry)in.getNextEntry();
+    while (entry != null) {
+      extractZipEntry(in,entry,destinationDirectory);
+      entry=(ZipArchiveEntry)in.getNextEntry();
+    }
+  }
+ catch (  IOException|ArchiveException e) {
+    throw new DecompressorException("Error extracting " + archiveFile + " to "+ destinationDirectory+ ": "+ e.getMessage());
+  }
+  return destinationDirectory;
+}

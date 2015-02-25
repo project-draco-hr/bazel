@@ -1,0 +1,13 @@
+{
+  initializeTester();
+  SkyKey errorKey=GraphTester.toSkyKey("my_error_value");
+  tester.getOrCreate(errorKey).setHasError(true);
+  SkyKey midKey=GraphTester.toSkyKey("mid");
+  tester.getOrCreate(midKey).addErrorDependency(errorKey,new StringValue("recovered")).setComputedValue(COPY);
+  SkyKey parentKey=GraphTester.toSkyKey("parent");
+  tester.getOrCreate(parentKey).addErrorDependency(midKey,new StringValue("don't use this")).setComputedValue(COPY);
+  EvaluationResult<StringValue> result=tester.eval(false,midKey);
+  assertEquals(null,result.get(midKey));
+  assertThat(result.getError().getRootCauses()).containsExactly(errorKey);
+  assertEquals("recovered",((StringValue)tester.evalAndGet(true,parentKey)).getValue());
+}

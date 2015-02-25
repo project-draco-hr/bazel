@@ -1,0 +1,18 @@
+{
+  StringBuilder builder=new StringBuilder();
+  builder.append("Action cache (" + map.size() + " records):\n");
+  for (  Map.Entry<Integer,byte[]> entry : map.entrySet()) {
+    if (entry.getKey() == VALIDATION_KEY) {
+      continue;
+    }
+    String content;
+    try {
+      content=decode(indexer,entry.getValue()).toString();
+    }
+ catch (    IOException e) {
+      content=e.toString() + "\n";
+    }
+    builder.append("-> ").append(indexer.getStringForIndex(entry.getKey())).append("\n").append(content).append("  packed_len = ").append(entry.getValue().length).append("\n");
+  }
+  return builder.toString();
+}

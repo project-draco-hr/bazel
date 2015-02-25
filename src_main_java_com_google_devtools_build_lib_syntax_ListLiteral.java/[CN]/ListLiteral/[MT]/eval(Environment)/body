@@ -1,0 +1,15 @@
+{
+  List<Object> result=new ArrayList<>();
+  for (  Expression expr : exprs) {
+    if (expr == null) {
+      throw new EvalException(getLocation(),"null expression in " + this);
+    }
+    result.add(expr.eval(env));
+  }
+  if (env.isSkylarkEnabled()) {
+    return isTuple() ? SkylarkList.tuple(result) : SkylarkList.list(result,getLocation());
+  }
+ else {
+    return EvalUtils.makeSequence(result,isTuple());
+  }
+}

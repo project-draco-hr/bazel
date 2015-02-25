@@ -1,0 +1,113 @@
+{
+  List<String> unparsedArgs=Lists.newArrayList();
+  LinkedHashMap<String,List<String>> implicitRequirements=Maps.newLinkedHashMap();
+  for (int pos=0; pos < args.size(); pos++) {
+    String arg=args.get(pos);
+    if (!arg.startsWith("-")) {
+      unparsedArgs.add(arg);
+      continue;
+    }
+    if (arg.equals("--")) {
+      while (++pos < args.size()) {
+        unparsedArgs.add(args.get(pos));
+      }
+      break;
+    }
+    String value=null;
+    Field field;
+    boolean booleanValue=true;
+    if (arg.length() == 2) {
+      field=optionsData.getFieldForAbbrev(arg.charAt(1));
+      booleanValue=true;
+    }
+ else     if (arg.length() == 3 && arg.charAt(2) == '-') {
+      field=optionsData.getFieldForAbbrev(arg.charAt(1));
+      booleanValue=false;
+    }
+ else     if (allowSingleDashLongOptions || arg.startsWith("--")) {
+      int equalsAt=arg.indexOf('=');
+      int nameStartsAt=arg.startsWith("--") ? 2 : 1;
+      String name=equalsAt == -1 ? arg.substring(nameStartsAt) : arg.substring(nameStartsAt,equalsAt);
+      if (name.trim().equals("")) {
+        throw new OptionsParsingException("Invalid options syntax: " + arg,arg);
+      }
+      value=equalsAt == -1 ? null : arg.substring(equalsAt + 1);
+      field=optionsData.getFieldFromName(name);
+      if (field == null && name.startsWith("no")) {
+        String realname=name.substring(name.startsWith("no_") ? 3 : 2);
+        field=optionsData.getFieldFromName(realname);
+        booleanValue=false;
+        if (field != null) {
+          if (!OptionsParserImpl.isBooleanField(field)) {
+            throw new OptionsParsingException("Illegal use of 'no' prefix on non-boolean option: " + arg,arg);
+          }
+          if (value != null) {
+            throw new OptionsParsingException("Unexpected value after boolean option: " + arg,arg);
+          }
+          value="0";
+        }
+      }
+    }
+ else {
+      throw new OptionsParsingException("Invalid options syntax: " + arg,arg);
+    }
+    if (field == null) {
+      throw new OptionsParsingException("Unrecognized option: " + arg,arg);
+    }
+    if (value == null) {
+      if (OptionsParserImpl.isBooleanField(field)) {
+        value=booleanValue ? "1" : "0";
+      }
+ else       if (field.getType().equals(Void.class)) {
+      }
+ else       if (pos != args.size() - 1) {
+        value=args.get(++pos);
+      }
+ else {
+        throw new OptionsParsingException("Expected value after " + arg);
+      }
+    }
+    Option option=field.getAnnotation(Option.class);
+    final String originalName=option.name();
+    if (implicitDependant == null) {
+      unparsedValues.add(new UnparsedOptionValueDescription(originalName,field,value,priority,sourceFunction.apply(originalName),expandedFrom == null));
+    }
+    if (option.expansion().length > 0) {
+      Function<Object,String> expansionSourceFunction=Functions.<String>constant("expanded from option --" + originalName + " from "+ sourceFunction.apply(originalName));
+      maybeAddDeprecationWarning(field);
+      List<String> unparsed=parse(priority,expansionSourceFunction,null,originalName,ImmutableList.copyOf(option.expansion()));
+      if (!unparsed.isEmpty()) {
+        throw new AssertionError("Unparsed options remain after parsing expansion of " + arg + ":"+ Joiner.on(' ').join(unparsed));
+      }
+    }
+ else {
+      Converter<?> converter=optionsData.getConverter(field);
+      Object convertedValue;
+      try {
+        convertedValue=converter.convert(value);
+      }
+ catch (      OptionsParsingException e) {
+        throw new OptionsParsingException("While parsing option " + arg + ": "+ e.getMessage(),e);
+      }
+      if (!option.allowMultiple()) {
+        setValue(field,originalName,convertedValue,priority,sourceFunction.apply(originalName),implicitDependant,expandedFrom);
+      }
+ else {
+        addListValue(field,originalName,convertedValue,priority,sourceFunction.apply(originalName),implicitDependant,expandedFrom);
+      }
+    }
+    if (option.implicitRequirements().length > 0) {
+      implicitRequirements.put(option.name(),Arrays.asList(option.implicitRequirements()));
+    }
+  }
+  if (!implicitRequirements.isEmpty()) {
+    for (    Map.Entry<String,List<String>> entry : implicitRequirements.entrySet()) {
+      Function<Object,String> requirementSourceFunction=Functions.<String>constant("implicit requirement of option --" + entry.getKey() + " from "+ sourceFunction.apply(entry.getKey()));
+      List<String> unparsed=parse(priority,requirementSourceFunction,entry.getKey(),null,entry.getValue());
+      if (!unparsed.isEmpty()) {
+        throw new AssertionError("Unparsed options remain after parsing implicit options:" + Joiner.on(' ').join(unparsed));
+      }
+    }
+  }
+  return unparsedArgs;
+}

@@ -1,0 +1,27 @@
+{
+  Map<PathFragment,Artifact> newManifest=new HashMap<>();
+  outer:   for (Iterator<Entry<PathFragment,Artifact>> i=workingManifest.entrySet().iterator(); i.hasNext(); ) {
+    Entry<PathFragment,Artifact> entry=i.next();
+    PathFragment source=entry.getKey();
+    Artifact symlink=entry.getValue();
+    int n=source.segmentCount();
+    for (int j=1; j < n; ++j) {
+      PathFragment prefix=source.subFragment(0,n - j);
+      Artifact ancestor=workingManifest.get(prefix);
+      if (ancestor != null) {
+        if (eventHandler == null) {
+          continue outer;
+        }
+        PathFragment suffix=source.subFragment(n - j,n);
+        Path viaAncestor=ancestor.getPath().getRelative(suffix);
+        Path expected=symlink.getPath();
+        if (!viaAncestor.equals(expected)) {
+          eventHandler.handle(Event.warn(location,"runfiles symlink " + source + " -> "+ expected+ " obscured by "+ prefix+ " -> "+ ancestor.getPath()));
+        }
+        continue outer;
+      }
+    }
+    newManifest.put(entry.getKey(),entry.getValue());
+  }
+  return newManifest;
+}

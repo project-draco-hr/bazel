@@ -1,0 +1,15 @@
+{
+  SkyKey leaf=GraphTester.toSkyKey("leaf");
+  SkyKey cycle=GraphTester.toSkyKey("cycle");
+  SkyKey top=GraphTester.toSkyKey("top");
+  tester.set(leaf,new StringValue("leaf"));
+  tester.getOrCreate(cycle).addDependency(cycle);
+  tester.getOrCreate(top).addDependency(leaf).addDependency(cycle);
+  tester.eval(true,top);
+  assertThat(tester.invalidationReceiver.evaluated).containsExactly(leaf).inOrder();
+  tester.invalidationReceiver.clear();
+  tester.getOrCreate(leaf,true);
+  tester.invalidate();
+  tester.eval(true,top);
+  assertThat(tester.invalidationReceiver.evaluated).containsExactly(leaf).inOrder();
+}

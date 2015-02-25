@@ -1,0 +1,20 @@
+{
+  if (!dir.isDirectory()) {
+    throw Error.ENOTDIR.exception(path);
+  }
+  InMemoryDirectoryInfo imdi=(InMemoryDirectoryInfo)dir;
+  if (!imdi.isExecutable()) {
+    throw Error.EACCES.exception(path);
+  }
+  InMemoryContentInfo child=imdi.getChild(name);
+  if (child == null) {
+    if (!create) {
+      throw Error.ENOENT.exception(path);
+    }
+ else {
+      child=makeFileInfo(clock,path.asFragment());
+      insert(imdi,name,child,path);
+    }
+  }
+  return child;
+}

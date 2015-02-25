@@ -1,0 +1,20 @@
+{
+  MiddlemanType middlemanType=action.getActionType();
+  if (middlemanType.isMiddleman()) {
+    if (middlemanType != MiddlemanType.ERROR_PROPAGATING_MIDDLEMAN) {
+      checkMiddlemanAction(action,handler,metadataHandler);
+    }
+    return null;
+  }
+  ActionCache.Entry entry=null;
+  boolean inputsKnown=action.inputsKnown();
+  if (!inputsKnown) {
+    Preconditions.checkState(action.discoversInputs());
+    entry=getCacheEntry(action);
+    updateActionInputs(action,entry);
+  }
+  if (mustExecute(action,entry,handler,metadataHandler)) {
+    return new Token(getKeyString(action));
+  }
+  return null;
+}

@@ -1,0 +1,110 @@
+{
+  checkArgument(control.hasPbxproj(),"Must set pbxproj field on control proto.");
+  FileSystem fileSystem=workspaceRoot.getFileSystem();
+  XcodeprojPath<Path> outputPath=XcodeprojPath.converter().fromPath(RelativePaths.fromString(fileSystem,control.getPbxproj()));
+  NSDictionary projBuildConfigMap=new NSDictionary();
+  projBuildConfigMap.put("ARCHS",new NSArray(new NSString("arm7"),new NSString("arm7s"),new NSString("arm64")));
+  projBuildConfigMap.put("CLANG_ENABLE_OBJC_ARC","YES");
+  projBuildConfigMap.put("SDKROOT","iphoneos");
+  projBuildConfigMap.put("IPHONEOS_DEPLOYMENT_TARGET","7.0");
+  projBuildConfigMap.put("GCC_VERSION","com.apple.compilers.llvm.clang.1_0");
+  projBuildConfigMap.put("CODE_SIGN_IDENTITY[sdk=iphoneos*]","iPhone Developer");
+  for (  XcodeprojBuildSetting projectSetting : control.getBuildSettingList()) {
+    projBuildConfigMap.put(projectSetting.getName(),projectSetting.getValue());
+  }
+  PBXProject project=new PBXProject(outputPath.getProjectName());
+  project.getMainGroup().setPath(workspaceRoot.toString());
+  try {
+    project.getBuildConfigurationList().getBuildConfigurationsByName().get(DEFAULT_OPTIONS_NAME).setBuildSettings(projBuildConfigMap);
+  }
+ catch (  ExecutionException e) {
+    throw new RuntimeException(e);
+  }
+  Map<String,TargetInfo> targetInfoByLabel=new HashMap<>();
+  PBXFileReferences fileReferences=new PBXFileReferences();
+  LibraryObjects libraryObjects=new LibraryObjects(fileReferences);
+  PBXBuildFiles pbxBuildFiles=new PBXBuildFiles(fileReferences);
+  Resources resources=Resources.fromTargetControls(fileSystem,pbxBuildFiles,control.getTargetList());
+  Xcdatamodels xcdatamodels=Xcdatamodels.fromTargetControls(fileSystem,pbxBuildFiles,control.getTargetList());
+  Set<PBXReference> projectNavigatorFiles=new LinkedHashSet<>();
+  for (  TargetControl targetControl : control.getTargetList()) {
+    checkArgument(targetControl.hasName(),"TargetControl requires a name: %s",targetControl);
+    checkArgument(targetControl.hasLabel(),"TargetControl requires a label: %s",targetControl);
+    ProductType productType=productType(targetControl);
+    Preconditions.checkArgument((productType != ProductType.APPLICATION) || hasAtLeastOneCompilableSource(targetControl),APP_NEEDS_SOURCE_ERROR);
+    PBXSourcesBuildPhase sourcesBuildPhase=new PBXSourcesBuildPhase();
+    for (    SourceFile source : SourceFile.allSourceFiles(fileSystem,targetControl)) {
+      PBXFileReference fileRef=fileReferences.get(FileReference.of(source.path().toString(),SourceTree.GROUP));
+      projectNavigatorFiles.add(fileRef);
+      if (Equaling.of(source.buildType(),BuildType.NO_BUILD)) {
+        continue;
+      }
+      PBXBuildFile buildFile=new PBXBuildFile(fileRef);
+      if (Equaling.of(source.buildType(),BuildType.NON_ARC_BUILD)) {
+        buildFile.setSettings(Optional.of(nonArcCompileSettings()));
+      }
+      sourcesBuildPhase.getFiles().add(buildFile);
+    }
+    sourcesBuildPhase.getFiles().addAll(xcdatamodels.buildFiles().get(targetControl));
+    PBXFileReference productReference=fileReferences.get(productReference(targetControl));
+    projectNavigatorFiles.add(productReference);
+    NSDictionary targetBuildConfigMap=new NSDictionary();
+    targetBuildConfigMap.put("USER_HEADER_SEARCH_PATHS",headerSearchPaths(plus(targetControl.getUserHeaderSearchPathList(),"$(WORKSPACE_ROOT)")));
+    targetBuildConfigMap.put("HEADER_SEARCH_PATHS",headerSearchPaths(plus(targetControl.getHeaderSearchPathList(),"$(inherited)")));
+    targetBuildConfigMap.put("FRAMEWORK_SEARCH_PATHS",frameworkSearchPaths(targetControl.getFrameworkList()));
+    targetBuildConfigMap.put("WORKSPACE_ROOT",workspaceRoot.toString());
+    if (targetControl.hasPchPath()) {
+      targetBuildConfigMap.put("GCC_PREFIX_HEADER","$(WORKSPACE_ROOT)/" + targetControl.getPchPath());
+    }
+    targetBuildConfigMap.put("PRODUCT_NAME",productName(targetControl));
+    if (targetControl.hasInfoplist()) {
+      targetBuildConfigMap.put("INFOPLIST_FILE","$(WORKSPACE_ROOT)/" + targetControl.getInfoplist());
+    }
+    if (targetControl.getCoptCount() > 0) {
+      targetBuildConfigMap.put("OTHER_CFLAGS",NSObject.wrap(targetControl.getCoptList()));
+    }
+    targetBuildConfigMap.put("OTHER_LDFLAGS",NSObject.wrap(otherLdflags(targetControl)));
+    for (    XcodeprojBuildSetting setting : targetControl.getBuildSettingList()) {
+      String name=setting.getName();
+      String value=setting.getValue();
+      if (name.equals("CODE_SIGN_ENTITLEMENTS") && !value.startsWith("$")) {
+        value="$(WORKSPACE_ROOT)/" + value;
+      }
+      targetBuildConfigMap.put(name,value);
+    }
+    PBXNativeTarget target=new PBXNativeTarget(labelToXcodeTargetName(targetControl.getLabel()),productType);
+    try {
+      target.getBuildConfigurationList().getBuildConfigurationsByName().get(DEFAULT_OPTIONS_NAME).setBuildSettings(targetBuildConfigMap);
+    }
+ catch (    ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+    target.setProductReference(productReference);
+    PBXFrameworksBuildPhase frameworksPhase=buildLibraryInfo(libraryObjects,targetControl);
+    PBXResourcesBuildPhase resourcesPhase=resources.resourcesBuildPhase(targetControl);
+    for (    String importedArchive : targetControl.getImportedLibraryList()) {
+      PBXFileReference fileReference=fileReferences.get(FileReference.of(importedArchive,SourceTree.GROUP).withExplicitFileType(FILE_TYPE_ARCHIVE_LIBRARY));
+      projectNavigatorFiles.add(fileReference);
+    }
+    project.getTargets().add(target);
+    target.getBuildPhases().add(frameworksPhase);
+    target.getBuildPhases().add(sourcesBuildPhase);
+    target.getBuildPhases().add(resourcesPhase);
+    checkState(!Mapping.of(targetInfoByLabel,targetControl.getLabel()).isPresent(),"Mapping already exists for target with label %s in map: %s",targetControl.getLabel(),targetInfoByLabel);
+    targetInfoByLabel.put(targetControl.getLabel(),new TargetInfo(targetControl,target,frameworksPhase,resourcesPhase,new PBXBuildFile(productReference),new LocalPBXTargetDependency(new LocalPBXContainerItemProxy(project,target,ProxyType.TARGET_REFERENCE)),targetBuildConfigMap));
+  }
+  for (  HasProjectNavigatorFiles references : ImmutableList.of(pbxBuildFiles,libraryObjects)) {
+    Iterables.addAll(projectNavigatorFiles,references.mainGroupReferences());
+  }
+  Iterable<PBXReference> processedProjectFiles=projectNavigatorFiles;
+  for (  PbxReferencesProcessor postProcessor : postProcessors) {
+    processedProjectFiles=postProcessor.process(processedProjectFiles);
+  }
+  Iterables.addAll(project.getMainGroup().getChildren(),processedProjectFiles);
+  for (  TargetInfo targetInfo : targetInfoByLabel.values()) {
+    for (    DependencyControl dependency : targetInfo.control.getDependencyList()) {
+      targetInfo.addDependencyInfo(dependency,targetInfoByLabel);
+    }
+  }
+  return project;
+}

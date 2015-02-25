@@ -1,0 +1,29 @@
+{
+  this.workspaceStatusActionFactory=workspaceStatusActionFactory;
+  this.directories=directories;
+  this.workingDirectory=directories.getWorkspace();
+  this.reporter=reporter;
+  this.runfilesPrefix=runfilesPrefix;
+  this.packageFactory=pkgFactory;
+  this.binTools=binTools;
+  this.projectFileProvider=projectFileProvider;
+  this.skyframeExecutor=skyframeExecutor;
+  this.loadingPhaseRunner=new LoadingPhaseRunner(skyframeExecutor.getPackageManager(),pkgFactory.getRuleClassNames());
+  this.clientEnv=clientEnv;
+  this.blazeModules=blazeModules;
+  this.ruleClassProvider=ruleClassProvider;
+  this.configurationFactory=configurationFactory;
+  this.view=new BuildView(directories,getPackageManager(),ruleClassProvider,skyframeExecutor,binTools,getCoverageReportActionFactory(blazeModules));
+  this.clock=clock;
+  this.timestampGranularityMonitor=Preconditions.checkNotNull(timestampGranularityMonitor);
+  this.startupOptionsProvider=startupOptionsProvider;
+  this.eventBusExceptionHandler=eventBusExceptionHandler;
+  this.blazeModuleEnvironment=new BlazeModuleEnvironment();
+  this.buildTool=new BuildTool(this);
+  initEventBus();
+  if (inWorkspace()) {
+    writeOutputBaseReadmeFile();
+    writeOutputBaseDoNotBuildHereFile();
+  }
+  setupExecRoot();
+}

@@ -1,0 +1,26 @@
+{
+  try {
+    ByteArrayOutputStream out=new ByteArrayOutputStream();
+    ZipOutputStream zipper=new ZipOutputStream(out);
+    for (    Entry entry : entries) {
+      ZipEntry zipEntry=new ZipEntry(entry.name);
+      if (entry.compressed) {
+        zipEntry.setMethod(ZipEntry.DEFLATED);
+      }
+ else {
+        zipEntry.setMethod(ZipEntry.STORED);
+        zipEntry.setSize(entry.content.length);
+        zipEntry.setCrc(calculateCrc32(entry.content));
+      }
+      zipEntry.setTime(ZipCombiner.DOS_EPOCH.getTime());
+      zipper.putNextEntry(zipEntry);
+      zipper.write(entry.content);
+      zipper.closeEntry();
+    }
+    zipper.close();
+    return out.toByteArray();
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+}

@@ -1,0 +1,28 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey grandparentKey=GraphTester.toSkyKey("grandparent");
+  SkyKey parentKey1=GraphTester.toSkyKey("parent1");
+  SkyKey parentKey2=GraphTester.toSkyKey("parent2");
+  SkyKey loopKey1=GraphTester.toSkyKey("loop1");
+  SkyKey loopKey2=GraphTester.toSkyKey("loop2");
+  tester.getOrCreate(loopKey1).addDependency(loopKey2);
+  tester.getOrCreate(loopKey2).addDependency(loopKey1);
+  tester.getOrCreate(parentKey1).addDependency(loopKey1);
+  tester.getOrCreate(parentKey2).addDependency(loopKey2);
+  tester.getOrCreate(grandparentKey).addDependency(parentKey1);
+  tester.getOrCreate(grandparentKey).addDependency(parentKey2);
+  ErrorInfo errorInfo=evalValueInError(grandparentKey);
+  List<ImmutableList<SkyKey>> cycles=Lists.newArrayList();
+  for (  CycleInfo cycleInfo : errorInfo.getCycleInfo()) {
+    cycles.add(cycleInfo.getCycle());
+  }
+  assertEquals(2,cycles.size());
+  int numUniqueCycles=0;
+  CycleDeduper<SkyKey> cycleDeduper=new CycleDeduper<SkyKey>();
+  for (  ImmutableList<SkyKey> cycle : cycles) {
+    if (cycleDeduper.seen(cycle)) {
+      numUniqueCycles++;
+    }
+  }
+  assertEquals(1,numUniqueCycles);
+}

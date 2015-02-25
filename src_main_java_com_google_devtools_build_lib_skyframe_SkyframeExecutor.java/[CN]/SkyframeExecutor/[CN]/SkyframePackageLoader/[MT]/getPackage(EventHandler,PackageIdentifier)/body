@@ -1,0 +1,17 @@
+{
+synchronized (valueLookupLock) {
+    SkyKey key=PackageValue.key(pkgName);
+    EvaluationResult<PackageValue> result=buildDriver.evaluate(ImmutableList.of(key),true,DEFAULT_THREAD_COUNT,eventHandler);
+    if (result.hasError()) {
+      ErrorInfo error=result.getError();
+      if (!Iterables.isEmpty(error.getCycleInfo())) {
+        reportCycles(result.getError().getCycleInfo(),key);
+        throw new BuildFileContainsErrorsException(pkgName.toString(),"Cycle encountered while loading package " + pkgName);
+      }
+      Throwable e=error.getException();
+      Throwables.propagateIfInstanceOf(e,NoSuchPackageException.class);
+      throw new IllegalStateException("Unexpected Exception type from PackageValue for '" + pkgName + "'' with root causes: "+ Iterables.toString(error.getRootCauses()),e);
+    }
+    return result.get(key).getPackage();
+  }
+}

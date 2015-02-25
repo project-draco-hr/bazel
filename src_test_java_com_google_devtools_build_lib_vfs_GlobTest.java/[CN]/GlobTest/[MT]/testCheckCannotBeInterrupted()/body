@@ -1,0 +1,20 @@
+{
+  final Thread mainThread=Thread.currentThread();
+  final ThreadPoolExecutor executor=(ThreadPoolExecutor)Executors.newFixedThreadPool(10);
+  final AtomicBoolean sentInterrupt=new AtomicBoolean(false);
+  Predicate<Path> interrupterPredicate=new Predicate<Path>(){
+    @Override public boolean apply(    Path input){
+      if (!sentInterrupt.getAndSet(true)) {
+        mainThread.interrupt();
+      }
+      return true;
+    }
+  }
+;
+  List<Path> result=new UnixGlob.Builder(tmpPath).addPatterns("**","*").setDirectoryFilter(interrupterPredicate).setThreadPool(executor).glob();
+  assertTrue(Thread.interrupted());
+  MoreAsserts.assertSameContents(resolvePaths(".","foo","foo/bar","foo/bar/wiz","foo/bar/wiz/file","foo/barnacle","foo/barnacle/wiz","food","food/barnacle","food/barnacle/wiz","fool","fool/barnacle","fool/barnacle/wiz"),result);
+  assertFalse(executor.isShutdown());
+  executor.shutdown();
+  assertTrue(executor.awaitTermination(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS));
+}

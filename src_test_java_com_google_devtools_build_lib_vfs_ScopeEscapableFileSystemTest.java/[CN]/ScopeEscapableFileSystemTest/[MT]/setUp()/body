@@ -1,0 +1,14 @@
+{
+  super.setUp();
+  Preconditions.checkState(testFS instanceof ScopeEscapableFileSystem,"Not ScopeEscapable: " + testFS);
+  ((ScopeEscapableFileSystem)testFS).enableScopeChecking(false);
+  for (int i=1; i <= SCOPE_ROOT.segmentCount(); i++) {
+    testFS.getPath(SCOPE_ROOT.subFragment(0,i)).createDirectory();
+  }
+  fileLink=testFS.getPath(SCOPE_ROOT.getRelative("link"));
+  fileLinkTarget=new PathFragment("/should/be/delegated/fileLinkTarget");
+  testFS.createSymbolicLink(fileLink,fileLinkTarget);
+  dirLink=testFS.getPath(SCOPE_ROOT.getRelative("dirlink"));
+  dirLinkTarget=new PathFragment("/should/be/delegated/dirLinkTarget");
+  testFS.createSymbolicLink(dirLink,dirLinkTarget);
+}

@@ -1,0 +1,28 @@
+{
+  TestDelegator delegator=new TestDelegator(){
+    @Override protected void renameTo(    Path sourcePath,    Path targetPath){
+      lastPath=sourcePath;
+      setState(targetPath);
+    }
+    @Override protected boolean isDirectory(    Path path,    boolean followSymlinks){
+      return true;
+    }
+  }
+;
+  scopedFS().setDelegator(delegator);
+  delegator.setState(null);
+  fileLink.renameTo(testFS.getPath(SCOPE_ROOT).getRelative("newname"));
+  assertEquals(null,delegator.lastPath());
+  assertEquals(null,delegator.objectState());
+  Path newPath=testFS.getPath(SCOPE_ROOT.getRelative("blah"));
+  try {
+    dirLink.getRelative("a").renameTo(newPath);
+    fail("This is an attempt at a cross-filesystem renaming, which should fail");
+  }
+ catch (  IOException e) {
+  }
+  newPath=dirLink.getRelative("b");
+  dirLink.getRelative("a").renameTo(newPath);
+  assertEquals(dirLinkTarget.getRelative("a"),delegator.lastPath());
+  assertEquals(dirLinkTarget.getRelative("b"),((Path)delegator.objectState()).asFragment());
+}

@@ -1,0 +1,34 @@
+{
+  if (locator == null) {
+    return;
+  }
+  try {
+    Label label=Label.parseAbsolute(labelName);
+    String packageName=label.getPackageFragment().getPathString();
+    Path packagePath=locator.getBuildFileForPackage(packageName);
+    if (packagePath == null) {
+      reportError(location,"Package '" + packageName + "' not found");
+      list.add(mocksubincludeExpression(labelName,"",location));
+      return;
+    }
+    Path path=packagePath.getParentDirectory();
+    Path file=path.getRelative(label.getName());
+    if (this.includedFiles.contains(file)) {
+      reportError(location,"Recursive inclusion of file '" + path + "'");
+      return;
+    }
+    ParserInputSource inputSource=ParserInputSource.create(file);
+    list.add(mocksubincludeExpression(labelName,file.toString(),location));
+    Lexer lexer=new Lexer(inputSource,eventHandler,parsePython);
+    Parser parser=new Parser(lexer,eventHandler,locator,parsePython);
+    parser.addIncludedFiles(this.includedFiles);
+    list.addAll(parser.parseFileInput());
+  }
+ catch (  Label.SyntaxException e) {
+    reportError(location,"Invalid label '" + labelName + "'");
+  }
+catch (  IOException e) {
+    reportError(location,"Include of '" + labelName + "' failed: "+ e.getMessage());
+    list.add(mocksubincludeExpression(labelName,"",location));
+  }
+}

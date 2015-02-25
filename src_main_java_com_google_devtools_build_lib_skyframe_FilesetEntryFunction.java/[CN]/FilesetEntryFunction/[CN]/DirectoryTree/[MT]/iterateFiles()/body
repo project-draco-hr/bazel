@@ -1,0 +1,17 @@
+{
+  final Set<String> fileNames=files.keySet();
+  Iterable<Map.Entry<String,DirectoryTree>> noDirSymlinkes=Iterables.filter(dirs.entrySet(),new Predicate<Map.Entry<String,DirectoryTree>>(){
+    @Override public boolean apply(    Map.Entry<String,DirectoryTree> input){
+      return !fileNames.contains(input.getKey());
+    }
+  }
+);
+  Iterable<Iterable<ResolvedFile>> subdirIters=Iterables.transform(noDirSymlinkes,new Function<Map.Entry<String,DirectoryTree>,Iterable<ResolvedFile>>(){
+    @Override public Iterable<ResolvedFile> apply(    Entry<String,DirectoryTree> input){
+      return input.getValue().iterateFiles();
+    }
+  }
+);
+  Iterable<ResolvedFile> dirsIter=Iterables.concat(subdirIters);
+  return Iterables.concat(files.values(),dirsIter);
+}

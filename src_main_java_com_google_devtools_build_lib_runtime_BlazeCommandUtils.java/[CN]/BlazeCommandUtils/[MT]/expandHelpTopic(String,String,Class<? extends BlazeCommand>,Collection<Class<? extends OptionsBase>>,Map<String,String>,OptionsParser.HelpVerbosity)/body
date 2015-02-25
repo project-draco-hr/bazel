@@ -1,0 +1,20 @@
+{
+  OptionsParser parser=OptionsParser.newOptionsParser(options);
+  String template;
+  if (help.startsWith("resource:")) {
+    String resourceName=help.substring("resource:".length());
+    try {
+      template=ResourceFileLoader.loadResource(commandClass,resourceName);
+    }
+ catch (    IOException e) {
+      throw new IllegalStateException("failed to load help resource '" + resourceName + "' due to I/O error: "+ e.getMessage(),e);
+    }
+  }
+ else {
+    template=help;
+  }
+  if (!template.contains("%{options}")) {
+    throw new IllegalStateException("Help template for '" + topic + "' omits %{options}!");
+  }
+  return template.replace("%{command}",topic).replace("%{options}",parser.describeOptions(categoryDescriptions,helpVerbosity)).trim() + "\n\n" + (helpVerbosity == OptionsParser.HelpVerbosity.MEDIUM ? "(Use 'help --long' for full details or --short to just enumerate options.)\n" : "");
+}

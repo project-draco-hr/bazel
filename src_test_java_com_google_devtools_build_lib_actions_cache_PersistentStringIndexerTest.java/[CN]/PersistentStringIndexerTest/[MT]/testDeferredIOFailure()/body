@@ -1,0 +1,20 @@
+{
+  assertFalse(dataPath.exists());
+  assertFalse(journalPath.exists());
+  setupTestContent();
+  assertFalse(dataPath.exists());
+  assertFalse(journalPath.exists());
+  FileSystemUtils.createDirectoryAndParents(journalPath);
+  clock.advance(4);
+  assertIndex(9,"abc1234");
+  assertFalse(dataPath.exists());
+  clock.advance(4);
+  assertIndex(10,"another record");
+  try {
+    psi.save();
+    fail();
+  }
+ catch (  IOException e) {
+    assertThat(e.getMessage()).contains(journalPath.getPathString() + " (Is a directory)");
+  }
+}

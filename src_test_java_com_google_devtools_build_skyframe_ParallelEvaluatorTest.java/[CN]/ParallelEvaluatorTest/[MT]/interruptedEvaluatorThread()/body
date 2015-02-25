@@ -1,0 +1,19 @@
+{
+  runInterruptionTest(new SkyFunctionFactory(){
+    @Override public SkyFunction create(    final Semaphore threadStarted,    final String[] errorMessage){
+      return new SkyFunction(){
+        private int valueIdCounter=0;
+        @Override public SkyValue compute(        SkyKey key,        Environment env){
+          threadStarted.release();
+          env.getValue(GraphTester.toSkyKey("a" + valueIdCounter++));
+          return null;
+        }
+        @Nullable @Override public String extractTag(        SkyKey skyKey){
+          return null;
+        }
+      }
+;
+    }
+  }
+);
+}

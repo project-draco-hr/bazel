@@ -1,0 +1,92 @@
+{
+  Label label=(Label)key.argument();
+  SkyKey packageKey=PackageValue.key(label.getPackageIdentifier());
+  SkyKey targetKey=TargetMarkerValue.key(label);
+  Target target;
+  boolean packageLoadedSuccessfully;
+  boolean successfulTransitiveLoading=true;
+  NestedSetBuilder<Label> transitiveRootCauses=NestedSetBuilder.stableOrder();
+  NoSuchTargetException errorLoadingTarget=null;
+  try {
+    TargetMarkerValue targetValue=(TargetMarkerValue)env.getValueOrThrow(targetKey,NoSuchThingException.class);
+    if (targetValue == null) {
+      return null;
+    }
+    PackageValue packageValue=(PackageValue)env.getValueOrThrow(packageKey,NoSuchThingException.class);
+    if (packageValue == null) {
+      return null;
+    }
+    packageLoadedSuccessfully=true;
+    target=packageValue.getPackage().getTarget(label.getName());
+  }
+ catch (  NoSuchTargetException e) {
+    target=e.getTarget();
+    if (target == null) {
+      throw new TransitiveTargetFunctionException(e);
+    }
+    successfulTransitiveLoading=false;
+    transitiveRootCauses.add(label);
+    errorLoadingTarget=e;
+    packageLoadedSuccessfully=e.getPackageLoadedSuccessfully();
+  }
+catch (  NoSuchPackageException e) {
+    throw new TransitiveTargetFunctionException(e);
+  }
+catch (  NoSuchThingException e) {
+    throw new IllegalStateException(e + " not NoSuchTargetException or NoSuchPackageException");
+  }
+  NestedSetBuilder<PackageIdentifier> transitiveSuccessfulPkgs=NestedSetBuilder.stableOrder();
+  NestedSetBuilder<PackageIdentifier> transitiveUnsuccessfulPkgs=NestedSetBuilder.stableOrder();
+  NestedSetBuilder<Label> transitiveTargets=NestedSetBuilder.stableOrder();
+  PackageIdentifier packageId=target.getPackage().getPackageIdentifier();
+  if (packageLoadedSuccessfully) {
+    transitiveSuccessfulPkgs.add(packageId);
+  }
+ else {
+    transitiveUnsuccessfulPkgs.add(packageId);
+  }
+  transitiveTargets.add(target.getLabel());
+  for (  Map.Entry<SkyKey,ValueOrException<NoSuchThingException>> entry : env.getValuesOrThrow(getLabelDepKeys(target),NoSuchThingException.class).entrySet()) {
+    Label depLabel=(Label)entry.getKey().argument();
+    TransitiveTargetValue transitiveTargetValue;
+    try {
+      transitiveTargetValue=(TransitiveTargetValue)entry.getValue().get();
+      if (transitiveTargetValue == null) {
+        continue;
+      }
+    }
+ catch (    NoSuchPackageException|NoSuchTargetException e) {
+      successfulTransitiveLoading=false;
+      transitiveRootCauses.add(depLabel);
+      maybeReportErrorAboutMissingEdge(target,depLabel,e,env.getListener());
+      continue;
+    }
+catch (    NoSuchThingException e) {
+      throw new IllegalStateException("Unexpected Exception type from TransitiveTargetValue.",e);
+    }
+    transitiveSuccessfulPkgs.addTransitive(transitiveTargetValue.getTransitiveSuccessfulPackages());
+    transitiveUnsuccessfulPkgs.addTransitive(transitiveTargetValue.getTransitiveUnsuccessfulPackages());
+    transitiveTargets.addTransitive(transitiveTargetValue.getTransitiveTargets());
+    NestedSet<Label> rootCauses=transitiveTargetValue.getTransitiveRootCauses();
+    if (rootCauses != null) {
+      successfulTransitiveLoading=false;
+      transitiveRootCauses.addTransitive(rootCauses);
+      if (transitiveTargetValue.getErrorLoadingTarget() != null) {
+        maybeReportErrorAboutMissingEdge(target,depLabel,transitiveTargetValue.getErrorLoadingTarget(),env.getListener());
+      }
+    }
+  }
+  if (env.valuesMissing()) {
+    return null;
+  }
+  NestedSet<PackageIdentifier> successfullyLoadedPackages=transitiveSuccessfulPkgs.build();
+  NestedSet<PackageIdentifier> unsuccessfullyLoadedPackages=transitiveUnsuccessfulPkgs.build();
+  NestedSet<Label> loadedTargets=transitiveTargets.build();
+  if (successfulTransitiveLoading) {
+    return TransitiveTargetValue.successfulTransitiveLoading(successfullyLoadedPackages,unsuccessfullyLoadedPackages,loadedTargets);
+  }
+ else {
+    NestedSet<Label> rootCauses=transitiveRootCauses.build();
+    return TransitiveTargetValue.unsuccessfulTransitiveLoading(successfullyLoadedPackages,unsuccessfullyLoadedPackages,loadedTargets,rootCauses,errorLoadingTarget);
+  }
+}

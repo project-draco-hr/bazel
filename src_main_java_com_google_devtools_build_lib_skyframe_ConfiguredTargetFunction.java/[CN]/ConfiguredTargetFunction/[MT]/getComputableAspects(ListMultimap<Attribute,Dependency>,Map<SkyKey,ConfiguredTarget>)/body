@@ -1,0 +1,21 @@
+{
+  ListMultimap<Attribute,Dependency> result=ArrayListMultimap.create();
+  for (  Map.Entry<Attribute,Dependency> entry : upperEstimate.entries()) {
+    ConfiguredTarget dep=configuredTargetDeps.get(TO_KEYS.apply(entry.getValue()));
+    List<Class<? extends ConfiguredAspectFactory>> depAspects=new ArrayList<>();
+    for (    Class<? extends ConfiguredAspectFactory> candidate : entry.getValue().getAspects()) {
+      boolean ok=true;
+      for (      Class<?> requiredProvider : AspectFactory.Util.create(candidate).getDefinition().getRequiredProviders()) {
+        if (dep.getProvider((Class<? extends TransitiveInfoProvider>)requiredProvider) == null) {
+          ok=false;
+          break;
+        }
+      }
+      if (ok) {
+        depAspects.add(candidate);
+      }
+    }
+    result.put(entry.getKey(),new Dependency(entry.getValue().getLabel(),entry.getValue().getConfiguration(),ImmutableSet.copyOf(depAspects)));
+  }
+  return result;
+}

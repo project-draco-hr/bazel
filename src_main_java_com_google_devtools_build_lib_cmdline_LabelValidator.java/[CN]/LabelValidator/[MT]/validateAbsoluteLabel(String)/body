@@ -1,0 +1,19 @@
+{
+  PackageAndTarget result=parseAbsoluteLabel(absName);
+  String packageName=result.getPackageName();
+  String targetName=result.getTargetName();
+  String error=validatePackageName(packageName);
+  if (error != null) {
+    error="invalid package name '" + packageName + "': "+ error;
+    if (packageName.endsWith("/" + targetName)) {
+      error+=" (perhaps you meant \":" + targetName + "\"?)";
+    }
+    throw new BadLabelException(error);
+  }
+  error=validateTargetName(targetName);
+  if (error != null) {
+    error="invalid target name '" + targetName + "': "+ error;
+    throw new BadLabelException(error);
+  }
+  return result;
+}

@@ -1,0 +1,24 @@
+{
+  if (isShellCommand && executable == null) {
+    executable=configuration.getShExecutable();
+  }
+  Preconditions.checkNotNull(executable);
+  Preconditions.checkNotNull(executableArgs);
+  if (useDefaultShellEnvironment) {
+    this.environment=configuration.getDefaultShellEnvironment();
+  }
+  ImmutableList<String> argv=ImmutableList.<String>builder().add(executable.getPathString()).addAll(executableArgs).build();
+  Iterable<String> arguments=argumentsBuilder.build();
+  Artifact paramsFile=ParamFileHelper.getParamsFile(argv,arguments,commandLine,paramFileInfo,configuration,analysisEnvironment,outputs);
+  List<Action> actions=new ArrayList<>();
+  CommandLine actualCommandLine;
+  if (paramsFile != null) {
+    actualCommandLine=ParamFileHelper.createWithParamsFile(argv,arguments,commandLine,isShellCommand,owner,actions,paramFileInfo,paramsFile);
+  }
+ else {
+    actualCommandLine=ParamFileHelper.createWithoutParamsFile(argv,arguments,commandLine,isShellCommand);
+  }
+  Iterable<Artifact> actualInputs=collectActualInputs(paramsFile);
+  actions.add(0,new SpawnAction(owner,actualInputs,ImmutableList.copyOf(outputs),resourceSet,actualCommandLine,environment,executionInfo,progressMessage,ImmutableMap.copyOf(inputManifests),mnemonic,extraActionInfoSupplier));
+  return actions.toArray(new Action[actions.size()]);
+}

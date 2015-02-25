@@ -1,0 +1,15 @@
+{
+  PathFragment path=new PathFragment(s);
+  if (!path.isNormalized()) {
+    throw new IllegalArgumentException("The include path '" + s + "' is not normalized.");
+  }
+  if (path.startsWith(SYSROOT_FRAGMENT)) {
+    if (sysroot == null) {
+      throw new IllegalArgumentException("A %sysroot% prefix is only allowed if the " + "default_sysroot option is set");
+    }
+    return sysroot.getRelative(path.relativeTo(SYSROOT_FRAGMENT));
+  }
+ else {
+    return crosstoolTopPathFragment.getRelative(path);
+  }
+}

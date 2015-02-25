@@ -1,0 +1,23 @@
+{
+  final List<SkyKey> valueNames=new ArrayList<>();
+  for (  PackageIdentifier pkgId : packageIds) {
+    valueNames.add(PackageValue.key(pkgId));
+  }
+  try {
+    return callUninterruptibly(new Callable<Set<Package>>(){
+      @Override public Set<Package> call() throws Exception {
+        EvaluationResult<PackageValue> result=buildDriver.evaluate(valueNames,false,ResourceUsage.getAvailableProcessors(),errorEventListener);
+        Preconditions.checkState(!result.hasError(),"unexpected errors: %s",result.errorMap());
+        Set<Package> packages=Sets.newHashSet();
+        for (        PackageValue value : result.values()) {
+          packages.add(value.getPackage());
+        }
+        return packages;
+      }
+    }
+);
+  }
+ catch (  Exception e) {
+    throw new IllegalStateException(e);
+  }
+}

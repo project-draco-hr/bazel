@@ -1,0 +1,18 @@
+{
+  if (args.length != 1) {
+    System.err.println("Expect exactly one argument: path to control file");
+    System.exit(1);
+  }
+  FileSystem fileSystem=FileSystems.getDefault();
+  Control control;
+  try (InputStream in=Files.newInputStream(fileSystem.getPath(args[0]))){
+    control=Control.parseFrom(in);
+  }
+   try {
+    BundleMerging.merge(fileSystem,control);
+  }
+ catch (  ValidationException e) {
+    System.err.print("\nBundle merge failed: " + e.getMessage() + "\n");
+    System.exit(1);
+  }
+}

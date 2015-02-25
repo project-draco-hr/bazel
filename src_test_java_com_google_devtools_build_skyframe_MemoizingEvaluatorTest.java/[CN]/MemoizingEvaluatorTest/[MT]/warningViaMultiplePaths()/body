@@ -1,0 +1,12 @@
+{
+  tester.set("d1",new StringValue("d1")).setWarning("warn-d1");
+  tester.set("d2",new StringValue("d2")).setWarning("warn-d2");
+  tester.getOrCreate("top").setComputedValue(CONCATENATE).addDependency("d1").addDependency("d2");
+  for (int i=0; i < 2; i++) {
+    initializeReporter();
+    tester.evalAndGet("top");
+    JunitTestUtils.assertContainsEvent(eventCollector,"warn-d1");
+    JunitTestUtils.assertContainsEvent(eventCollector,"warn-d2");
+    JunitTestUtils.assertEventCount(2,eventCollector);
+  }
+}

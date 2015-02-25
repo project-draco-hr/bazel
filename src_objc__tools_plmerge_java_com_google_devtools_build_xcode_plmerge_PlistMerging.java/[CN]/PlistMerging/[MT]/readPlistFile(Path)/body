@@ -1,0 +1,17 @@
+{
+  ByteSource rawBytes=new Utf8BomSkippingByteSource(sourceFilePath);
+  try {
+    try (InputStream in=rawBytes.openStream()){
+      return (NSDictionary)PropertyListParser.parse(in);
+    }
+ catch (    PropertyListFormatException|ParseException e) {
+      ByteSource concatenated=ByteSource.concat(ByteSource.wrap(new byte[]{'{'}),rawBytes,ByteSource.wrap(new byte[]{'}'}));
+      try (InputStream in=concatenated.openStream()){
+        return (NSDictionary)PropertyListParser.parse(in);
+      }
+     }
+  }
+ catch (  PropertyListFormatException|ParseException|ParserConfigurationException|SAXException e) {
+    throw new IOException(e);
+  }
+}

@@ -1,0 +1,24 @@
+{
+  indent(xml,level);
+  xml.append("<dict>");
+  xml.append(NSObject.NEWLINE);
+  for (  String key : dict.keySet()) {
+    NSObject val=objectForKey(key);
+    indent(xml,level + 1);
+    xml.append("<key>");
+    if (key.contains("&") || key.contains("<") || key.contains(">")) {
+      xml.append("<![CDATA[");
+      xml.append(key.replaceAll("]]>","]]]]><![CDATA[>"));
+      xml.append("]]>");
+    }
+ else {
+      xml.append(key);
+    }
+    xml.append("</key>");
+    xml.append(NSObject.NEWLINE);
+    val.toXML(xml,level + 1);
+    xml.append(NSObject.NEWLINE);
+  }
+  indent(xml,level);
+  xml.append("</dict>");
+}

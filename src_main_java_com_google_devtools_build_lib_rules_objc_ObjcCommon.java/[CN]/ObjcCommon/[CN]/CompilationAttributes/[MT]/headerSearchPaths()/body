@@ -1,0 +1,12 @@
+{
+  ImmutableList.Builder<PathFragment> paths=new ImmutableList.Builder<>();
+  PathFragment packageFragment=ruleContext.getLabel().getPackageFragment();
+  List<PathFragment> rootFragments=ImmutableList.of(packageFragment,ruleContext.getConfiguration().getGenfilesFragment().getRelative(packageFragment));
+  Iterable<PathFragment> relativeIncludes=Iterables.filter(includes(),Predicates.not(PathFragment.IS_ABSOLUTE));
+  for (  PathFragment include : relativeIncludes) {
+    for (    PathFragment rootFragment : rootFragments) {
+      paths.add(rootFragment.getRelative(include).normalize());
+    }
+  }
+  return paths.build();
+}

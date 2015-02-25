@@ -1,0 +1,101 @@
+{
+  List<String> options=new ArrayList<>();
+  if (CppFileTypes.CPP_MODULE_MAP.matches(sourceFile.getExecPath())) {
+    options.add("-x");
+    options.add("c++");
+  }
+ else   if (CppFileTypes.CPP_HEADER.matches(sourceFile.getExecPath())) {
+    if (features.contains(CppRuleClasses.PARSE_HEADERS)) {
+      options.add("-x");
+      options.add("c++-header");
+      options.add("-fsyntax-only");
+    }
+ else     if (features.contains(CppRuleClasses.PREPROCESS_HEADERS)) {
+      options.add("-E");
+      options.add("-x");
+      options.add("c++");
+    }
+ else {
+      throw new IllegalStateException();
+    }
+  }
+  for (  PathFragment quoteIncludePath : context.getQuoteIncludeDirs()) {
+    options.add("-iquote");
+    options.add(quoteIncludePath.getSafePathString());
+  }
+  for (  PathFragment includePath : context.getIncludeDirs()) {
+    options.add("-I" + includePath.getSafePathString());
+  }
+  for (  PathFragment systemIncludePath : context.getSystemIncludeDirs()) {
+    options.add("-isystem");
+    options.add(systemIncludePath.getSafePathString());
+  }
+  CppConfiguration toolchain=cppConfiguration;
+  options.addAll(pluginOpts);
+  addFilteredOptions(options,toolchain.getCompilerOptions(features));
+  if (isInstrumented) {
+    addFilteredOptions(options,ImmutableList.of("-fprofile-arcs","-ftest-coverage"));
+  }
+  String sourceFilename=sourceFile.getExecPathString();
+  if (CppFileTypes.C_SOURCE.matches(sourceFilename)) {
+    addFilteredOptions(options,toolchain.getCOptions());
+  }
+  if (CppFileTypes.CPP_SOURCE.matches(sourceFilename) || CppFileTypes.CPP_HEADER.matches(sourceFilename) || CppFileTypes.CPP_MODULE_MAP.matches(sourceFilename)) {
+    addFilteredOptions(options,toolchain.getCxxOptions(features));
+  }
+  options.addAll(copts);
+  for (  String warn : cppConfiguration.getCWarns()) {
+    options.add("-W" + warn);
+  }
+  for (  String define : context.getDefines()) {
+    options.add("-D" + define);
+  }
+  if (fdoBuildStamp != null) {
+    options.add("-D" + CppConfiguration.FDO_STAMP_MACRO + "=\""+ fdoBuildStamp+ "\"");
+  }
+  options.addAll(toolchain.getUnfilteredCompilerOptions(features));
+  options.add("-frandom-seed=" + outputFile.getExecPathString());
+  for (  PerLabelOptions perLabelOptions : cppConfiguration.getPerFileCopts()) {
+    if ((sourceLabel != null && perLabelOptions.isIncluded(sourceLabel)) || perLabelOptions.isIncluded(sourceFile)) {
+      options.addAll(perLabelOptions.getOptions());
+    }
+  }
+  if (dotdFile != null) {
+    options.add("-MD");
+    options.add("-MF");
+    options.add(dotdFile.getSafeExecPath().getPathString());
+  }
+  if (cppModuleMap != null && (compileHeaderModules || enableLayeringCheck)) {
+    options.add("-Xclang-only=-fmodule-maps");
+    options.add("-Xclang-only=-fmodule-name=" + cppModuleMap.getName());
+    options.add("-Xclang-only=-fmodule-map-file=" + cppModuleMap.getArtifact().getExecPathString());
+    options.add("-Xclang=-fno-modules-implicit-maps");
+    if (compileHeaderModules) {
+      options.add("-Xclang-only=-fmodules");
+      if (CppFileTypes.CPP_MODULE_MAP.matches(sourceFilename)) {
+        options.add("-Xclang=-emit-module");
+        options.add("-Xcrosstool-module-compilation");
+      }
+      boolean pic=copts.contains("-fPIC");
+      for (      Artifact source : context.getAdditionalInputs()) {
+        if ((pic && source.getFilename().endsWith(".pic.pcm")) || (!pic && !source.getFilename().endsWith(".pic.pcm") && source.getFilename().endsWith(".pcm"))) {
+          options.add("-Xclang=-fmodule-file=" + source.getExecPathString());
+        }
+      }
+    }
+    if (enableLayeringCheck) {
+      options.add("-Xclang-only=-fmodules-strict-decluse");
+    }
+  }
+  if (FileType.contains(outputFile,CppFileTypes.ASSEMBLER,CppFileTypes.PIC_ASSEMBLER)) {
+    options.add("-S");
+  }
+ else   if (FileType.contains(outputFile,CppFileTypes.PREPROCESSED_C,CppFileTypes.PREPROCESSED_CPP,CppFileTypes.PIC_PREPROCESSED_C,CppFileTypes.PIC_PREPROCESSED_CPP)) {
+    options.add("-E");
+  }
+  if (cppConfiguration.useFission()) {
+    options.add("-gsplit-dwarf");
+  }
+  options.addAll(featureConfiguration.getCommandLine(getActionName(),ImmutableMultimap.<String,String>of()));
+  return options;
+}

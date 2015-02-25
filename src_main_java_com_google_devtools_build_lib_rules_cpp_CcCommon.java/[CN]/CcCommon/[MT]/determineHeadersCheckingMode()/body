@@ -1,0 +1,17 @@
+{
+  HeadersCheckingMode headersCheckingMode=cppConfiguration.getHeadersCheckingMode();
+  if (ruleContext.getRule().getPackage().isDefaultHdrsCheckSet()) {
+    String value=ruleContext.getRule().getPackage().getDefaultHdrsCheck().toUpperCase(Locale.ENGLISH);
+    headersCheckingMode=HeadersCheckingMode.valueOf(value);
+  }
+  if (hasAttribute("hdrs_check",Type.STRING) && ruleContext.getRule().isAttributeValueExplicitlySpecified("hdrs_check")) {
+    try {
+      String value=ruleContext.attributes().get("hdrs_check",Type.STRING).toUpperCase(Locale.ENGLISH);
+      headersCheckingMode=HeadersCheckingMode.valueOf(value);
+    }
+ catch (    IllegalArgumentException e) {
+      ruleContext.attributeError("hdrs_check","must be one of: 'loose', 'warn' or 'strict'");
+    }
+  }
+  return headersCheckingMode;
+}

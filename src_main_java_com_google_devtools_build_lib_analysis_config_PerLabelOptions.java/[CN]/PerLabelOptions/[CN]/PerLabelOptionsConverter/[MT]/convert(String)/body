@@ -1,0 +1,18 @@
+{
+  int atIndex=input.indexOf('@');
+  RegexFilterConverter converter=new RegexFilter.RegexFilterConverter();
+  if (atIndex < 0) {
+    return new PerLabelOptions(converter.convert(input),ImmutableList.<String>of());
+  }
+ else {
+    String filterPiece=input.substring(0,atIndex);
+    String optionsPiece=input.substring(atIndex + 1);
+    List<String> optionsList=new ArrayList<>();
+    for (    String option : optionsPiece.split("(?<!\\\\),")) {
+      if (option != null && !option.trim().equals("")) {
+        optionsList.add(option.replace("\\,",","));
+      }
+    }
+    return new PerLabelOptions(converter.convert(filterPiece),optionsList);
+  }
+}

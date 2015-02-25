@@ -1,0 +1,33 @@
+{
+  if (!mapFile.exists()) {
+    return;
+  }
+  DataInputStream in=new DataInputStream(new BufferedInputStream(mapFile.getInputStream()));
+  try {
+    long fileSize=mapFile.getFileSize();
+    if (fileSize < (16)) {
+      if (failFast) {
+        throw new IOException(mapFile + " is too short: Only " + fileSize+ " bytes");
+      }
+ else {
+        return;
+      }
+    }
+    if (in.readLong() != MAGIC) {
+      if (failFast) {
+        throw new IOException("Unexpected format");
+      }
+      return;
+    }
+    if (in.readLong() != version) {
+      if (failFast) {
+        throw new IOException("Unexpected format");
+      }
+      return;
+    }
+    readEntries(in,failFast);
+  }
+  finally {
+    in.close();
+  }
+}

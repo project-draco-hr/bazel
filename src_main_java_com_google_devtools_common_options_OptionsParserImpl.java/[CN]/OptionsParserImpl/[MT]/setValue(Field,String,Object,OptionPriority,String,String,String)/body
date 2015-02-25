@@ -1,0 +1,26 @@
+{
+  ParsedOptionEntry entry=parsedValues.get(field);
+  if (entry != null) {
+    if (priority.compareTo(entry.priority) >= 0) {
+      if ((implicitDependant != null) && (entry.implicitDependant != null)) {
+        if (!implicitDependant.equals(entry.implicitDependant)) {
+          warnings.add("Option '" + name + "' is implicitly defined by both option '"+ entry.implicitDependant+ "' and option '"+ implicitDependant+ "'");
+        }
+      }
+ else       if ((implicitDependant != null) && priority.equals(entry.priority)) {
+        warnings.add("Option '" + name + "' is implicitly defined by option '"+ implicitDependant+ "'; the implicitly set value overrides the previous one");
+      }
+ else       if (entry.implicitDependant != null) {
+        warnings.add("A new value for option '" + name + "' overrides a previous "+ "implicit setting of that option by option '"+ entry.implicitDependant+ "'");
+      }
+ else       if ((priority == entry.priority) && ((entry.expandedFrom == null) && (expandedFrom != null))) {
+        warnings.add("The option '" + expandedFrom + "' was expanded and now overrides a "+ "previous explicitly specified option '"+ name+ "'");
+      }
+      parsedValues.put(field,new ParsedOptionEntry(value,priority,source,implicitDependant,expandedFrom,false));
+    }
+  }
+ else {
+    parsedValues.put(field,new ParsedOptionEntry(value,priority,source,implicitDependant,expandedFrom,false));
+    maybeAddDeprecationWarning(field);
+  }
+}

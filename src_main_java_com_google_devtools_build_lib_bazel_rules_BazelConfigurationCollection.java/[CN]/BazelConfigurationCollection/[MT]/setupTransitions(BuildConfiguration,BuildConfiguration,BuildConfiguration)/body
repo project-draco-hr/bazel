@@ -1,0 +1,31 @@
+{
+  Set<BuildConfiguration> allConfigurations=ImmutableSet.of(targetConfiguration,dataConfiguration,hostConfiguration);
+  Table<BuildConfiguration,Transition,ConfigurationHolder> transitionBuilder=HashBasedTable.create();
+  for (  BuildConfiguration from : allConfigurations) {
+    for (    ConfigurationTransition transition : ConfigurationTransition.values()) {
+      BuildConfiguration to;
+      if (transition == ConfigurationTransition.HOST) {
+        to=hostConfiguration;
+      }
+ else       if (transition == ConfigurationTransition.DATA && from == targetConfiguration) {
+        to=dataConfiguration;
+      }
+ else {
+        to=from;
+      }
+      transitionBuilder.put(from,transition,new ConfigurationHolder(to));
+    }
+  }
+  for (  BuildConfiguration config : allConfigurations) {
+    transitionBuilder.put(config,CppTransition.LIPO_COLLECTOR,new ConfigurationHolder(config));
+    transitionBuilder.put(config,CppTransition.TARGET_CONFIG_FOR_LIPO,new ConfigurationHolder(config.isHostConfiguration() ? null : config));
+  }
+  for (  BuildConfiguration config : allConfigurations) {
+    Transitions outgoingTransitions=new BuildConfigurationCollection.Transitions(config,transitionBuilder.row(config));
+    if (config.isHostConfiguration() && config.getTransitions() != null) {
+      continue;
+    }
+    config.setConfigurationTransitions(outgoingTransitions);
+  }
+  return targetConfiguration;
+}

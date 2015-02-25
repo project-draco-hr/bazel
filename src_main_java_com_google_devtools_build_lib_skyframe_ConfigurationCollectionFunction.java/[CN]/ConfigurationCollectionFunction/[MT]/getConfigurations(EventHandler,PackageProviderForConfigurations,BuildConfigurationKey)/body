@@ -1,0 +1,23 @@
+{
+  List<BuildConfiguration> targetConfigurations=new ArrayList<>();
+  if (!key.getMultiCpu().isEmpty()) {
+    for (    String cpu : key.getMultiCpu()) {
+      BuildConfiguration targetConfiguration=createConfiguration(eventHandler,loadedPackageProvider,key,cpu);
+      if (targetConfiguration == null || targetConfigurations.contains(targetConfiguration)) {
+        continue;
+      }
+      targetConfigurations.add(targetConfiguration);
+    }
+    if (loadedPackageProvider.valuesMissing()) {
+      return null;
+    }
+  }
+ else {
+    BuildConfiguration targetConfiguration=createConfiguration(eventHandler,loadedPackageProvider,key,null);
+    if (targetConfiguration == null) {
+      return null;
+    }
+    targetConfigurations.add(targetConfiguration);
+  }
+  return new BuildConfigurationCollection(targetConfigurations);
+}

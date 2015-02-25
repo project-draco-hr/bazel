@@ -1,0 +1,9 @@
+{
+  NestedSetBuilder<Artifact> debugSymbolBuilder=NestedSetBuilder.<Artifact>stableOrder().addTransitive(objcProvider.get(ObjcProvider.DEBUG_SYMBOLS));
+  if (linkedBinary == LinkedBinary.LOCAL_AND_DEPENDENCIES && ObjcRuleClasses.objcConfiguration(ruleContext).generateDebugSymbols()) {
+    IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
+    debugSymbolBuilder.add(intermediateArtifacts.dsymPlist()).add(intermediateArtifacts.dsymSymbol()).add(intermediateArtifacts.breakpadSym());
+  }
+  filesToBuild.add(ruleContext.getImplicitOutputArtifact(ApplicationSupport.IPA)).addTransitive(debugSymbolBuilder.build());
+  return this;
+}

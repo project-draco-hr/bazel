@@ -1,0 +1,18 @@
+{
+  ObjcCommon common=common(ruleContext);
+  OptionsProvider optionsProvider=optionsProvider(ruleContext);
+  ObjcProvider objcProvider=common.getObjcProvider();
+  if (!hasLibraryOrSources(objcProvider)) {
+    ruleContext.ruleError(REQUIRES_AT_LEAST_ONE_LIBRARY_OR_SOURCE_FILE);
+    return null;
+  }
+  XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
+  NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
+  new CompilationSupport(ruleContext).registerJ2ObjcCompileAndArchiveActions(optionsProvider,common.getObjcProvider()).registerCompileAndArchiveActions(common,optionsProvider).addXcodeSettings(xcodeProviderBuilder,common,optionsProvider).registerLinkActions(common.getObjcProvider(),new ExtraLinkArgs(),new ExtraLinkInputs()).validateAttributes();
+  ApplicationSupport applicationSupport=new ApplicationSupport(ruleContext,common.getObjcProvider(),optionsProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES).registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateAttributes();
+  new ResourceSupport(ruleContext).registerActions(common.getStoryboards()).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
+  XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),APPLICATION).addDependencies(xcodeProviderBuilder).addFilesToBuild(filesToBuild);
+  XcodeProvider xcodeProvider=xcodeProviderBuilder.build();
+  xcodeSupport.registerActions(xcodeProvider);
+  return common.configuredTarget(filesToBuild.build(),Optional.of(xcodeProvider),Optional.<ObjcProvider>absent(),Optional.of(applicationSupport.xcTestAppProvider()),Optional.<J2ObjcSrcsProvider>absent());
+}

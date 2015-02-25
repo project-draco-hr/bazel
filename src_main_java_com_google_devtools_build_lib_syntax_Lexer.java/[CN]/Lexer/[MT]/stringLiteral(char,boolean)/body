@@ -1,0 +1,33 @@
+{
+  int oldPos=pos - 1;
+  if (skipTripleQuote(quot)) {
+    pos-=2;
+    return escapedStringLiteral(quot);
+  }
+  while (pos < buffer.length) {
+    char c=buffer[pos++];
+switch (c) {
+case '\n':
+      error("unterminated string literal at eol",oldPos,pos);
+    Token t=new Token(TokenKind.STRING,oldPos,pos,bufferSlice(oldPos + 1,pos - 1));
+  newline();
+return t;
+case '\\':
+if (isRaw) {
+pos++;
+break;
+}
+ else {
+pos=oldPos + 1;
+return escapedStringLiteral(quot);
+}
+case '\'':
+case '"':
+if (c == quot) {
+return new Token(TokenKind.STRING,oldPos,pos,bufferSlice(oldPos + 1,pos - 1));
+}
+}
+}
+error("unterminated string literal at eof",oldPos,pos);
+return new Token(TokenKind.STRING,oldPos,pos,bufferSlice(oldPos + 1,pos));
+}

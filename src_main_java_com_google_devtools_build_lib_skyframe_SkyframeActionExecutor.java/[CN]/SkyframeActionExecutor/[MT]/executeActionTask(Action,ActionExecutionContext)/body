@@ -1,0 +1,18 @@
+{
+  profiler.startTask(ProfilerTask.ACTION_EXECUTE,action);
+  FileOutErr outErrBuffer=actionExecutionContext.getFileOutErr();
+  try {
+    action.execute(actionExecutionContext);
+    if (outErrBuffer.hasRecordedOutput() && (action.showsOutputUnconditionally() || reporter.showOutput(Label.print(action.getOwner().getLabel())))) {
+      dumpRecordedOutErr(action,outErrBuffer);
+      return true;
+    }
+  }
+ catch (  ActionExecutionException e) {
+    processAndThrow(e,action,outErrBuffer);
+  }
+ finally {
+    profiler.completeTask(ProfilerTask.ACTION_EXECUTE);
+  }
+  return false;
+}

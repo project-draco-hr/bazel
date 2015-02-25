@@ -1,0 +1,24 @@
+{
+  if (output instanceof Artifact) {
+    Artifact artifact=(Artifact)output;
+    Preconditions.checkState(injectedArtifacts.add(artifact),artifact);
+    FileValue fileValue;
+    try {
+      fileValue=fileValueFromArtifact(artifact,FileStatusWithDigestAdapter.adapt(statNoFollow),tsgm);
+      byte[] fileDigest=fileValue.getDigest();
+      Preconditions.checkState(fileDigest == null || Arrays.equals(digest,fileDigest),"%s %s %s",artifact,digest,fileDigest);
+      outputArtifactData.put(artifact,fileValue);
+    }
+ catch (    IOException e) {
+      return;
+    }
+    try {
+      maybeStoreAdditionalData(artifact,fileValue,digest);
+    }
+ catch (    IOException e) {
+      if (fileValue.getSize() != 0) {
+        throw new IllegalStateException("Filesystem should not have been accessed while injecting data for " + artifact.prettyPrint(),e);
+      }
+    }
+  }
+}

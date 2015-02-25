@@ -1,0 +1,48 @@
+{
+  final Path xFile=workingDir.getRelative("file");
+  FileSystemUtils.createEmptyFile(xFile);
+  final Path xLinkToFile=workingDir.getRelative("link");
+  final boolean[] run={true};
+  final IOException[] exception={null};
+  Thread createThread=new Thread(){
+    @Override public void run(){
+      while (run[0]) {
+        if (!xLinkToFile.exists()) {
+          try {
+            xLinkToFile.createSymbolicLink(xFile);
+          }
+ catch (          IOException e) {
+            exception[0]=e;
+            return;
+          }
+        }
+      }
+    }
+  }
+;
+  Thread deleteThread=new Thread(){
+    @Override public void run(){
+      while (run[0]) {
+        if (xLinkToFile.exists(Symlinks.NOFOLLOW)) {
+          try {
+            xLinkToFile.delete();
+          }
+ catch (          IOException e) {
+            exception[0]=e;
+            return;
+          }
+        }
+      }
+    }
+  }
+;
+  createThread.start();
+  deleteThread.start();
+  Thread.sleep(1000);
+  run[0]=false;
+  createThread.join(0);
+  deleteThread.join(0);
+  if (exception[0] != null) {
+    throw exception[0];
+  }
+}

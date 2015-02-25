@@ -1,0 +1,28 @@
+{
+  StringBuilder result=new StringBuilder();
+  while (offset < length) {
+    char c=buffer[offset];
+    if (c == '$') {
+      offset++;
+      if (offset >= length) {
+        throw new ExpansionException("unterminated $");
+      }
+      if (buffer[offset] == '$') {
+        result.append('$');
+      }
+ else {
+        String var=scanVariable();
+        String value=context.lookupMakeVariable(var);
+        if (!value.equals(var)) {
+          value=expand(value,context,depth + 1);
+        }
+        result.append(value);
+      }
+    }
+ else {
+      result.append(c);
+    }
+    offset++;
+  }
+  return result.toString();
+}

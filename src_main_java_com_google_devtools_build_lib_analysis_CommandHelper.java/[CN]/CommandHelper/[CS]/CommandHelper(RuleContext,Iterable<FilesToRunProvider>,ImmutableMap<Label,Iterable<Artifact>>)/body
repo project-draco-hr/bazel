@@ -1,0 +1,32 @@
+{
+  this.ruleContext=ruleContext;
+  ImmutableList.Builder<Artifact> resolvedToolsBuilder=ImmutableList.builder();
+  ImmutableMap.Builder<PathFragment,Artifact> remoteRunfileManifestBuilder=ImmutableMap.builder();
+  Map<Label,Collection<Artifact>> tempLabelMap=new HashMap<>();
+  for (  Map.Entry<Label,Iterable<Artifact>> entry : labelMap.entrySet()) {
+    Iterables.addAll(mapGet(tempLabelMap,entry.getKey()),entry.getValue());
+  }
+  for (  FilesToRunProvider tool : tools) {
+    Label label=tool.getLabel();
+    Collection<Artifact> files=tool.getFilesToRun();
+    resolvedToolsBuilder.addAll(files);
+    Artifact executableArtifact=tool.getExecutable();
+    if (executableArtifact != null) {
+      mapGet(tempLabelMap,label).add(executableArtifact);
+      Artifact runfilesManifest=tool.getRunfilesManifest();
+      if (runfilesManifest != null) {
+        remoteRunfileManifestBuilder.put(BaseSpawn.runfilesForFragment(executableArtifact.getExecPath()),runfilesManifest);
+      }
+    }
+ else {
+      Iterables.addAll(mapGet(tempLabelMap,label),files);
+    }
+  }
+  this.resolvedTools=resolvedToolsBuilder.build();
+  this.remoteRunfileManifestMap=remoteRunfileManifestBuilder.build();
+  ImmutableMap.Builder<Label,ImmutableCollection<Artifact>> labelMapBuilder=ImmutableMap.builder();
+  for (  Entry<Label,Collection<Artifact>> entry : tempLabelMap.entrySet()) {
+    labelMapBuilder.put(entry.getKey(),ImmutableList.copyOf(entry.getValue()));
+  }
+  this.labelMap=labelMapBuilder.build();
+}

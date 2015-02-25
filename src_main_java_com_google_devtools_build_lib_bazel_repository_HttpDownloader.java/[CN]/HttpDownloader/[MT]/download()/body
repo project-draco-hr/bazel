@@ -1,0 +1,30 @@
+{
+  String filename=new PathFragment(url.getPath()).getBaseName();
+  if (filename.isEmpty()) {
+    filename="temp";
+  }
+  Path destination=outputDirectory.getRelative(filename);
+  try (OutputStream outputStream=destination.getOutputStream()){
+    ReadableByteChannel rbc=getChannel(url);
+    ByteBuffer byteBuffer=ByteBuffer.allocate(BUFFER_SIZE);
+    while (rbc.read(byteBuffer) > 0) {
+      byteBuffer.flip();
+      while (byteBuffer.hasRemaining()) {
+        outputStream.write(byteBuffer.get());
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new IOException("Error downloading " + url + " to "+ destination+ ": "+ e.getMessage());
+  }
+  try {
+    String downloadedSha256=getSha256(destination);
+    if (!downloadedSha256.equals(sha256)) {
+      throw new IOException("Downloaded file at " + destination + " has SHA-256 of "+ downloadedSha256+ ", does not match expected SHA-256 ("+ sha256+ ")");
+    }
+  }
+ catch (  IOException e) {
+    throw new IOException("Could not hash file " + destination + ": "+ e.getMessage()+ ", expected SHA-256 of "+ sha256+ ")");
+  }
+  return destination;
+}

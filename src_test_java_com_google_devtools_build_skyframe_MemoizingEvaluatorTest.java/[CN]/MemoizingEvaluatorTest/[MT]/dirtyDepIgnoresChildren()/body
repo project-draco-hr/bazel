@@ -1,0 +1,26 @@
+{
+  initializeTester();
+  SkyKey leaf=GraphTester.toSkyKey("leaf");
+  SkyKey mid=GraphTester.toSkyKey("mid");
+  SkyKey top=GraphTester.toSkyKey("top");
+  tester.set(mid,new StringValue("ignore"));
+  tester.getOrCreate(top).addDependency(mid).setComputedValue(COPY);
+  tester.getOrCreate(mid).addDependency(leaf);
+  tester.set(leaf,new StringValue("leafy"));
+  StringValue topValue=(StringValue)tester.evalAndGet("top");
+  assertEquals("ignore",topValue.getValue());
+  assertThat(tester.getDirtyValues()).isEmpty();
+  assertThat(tester.getDeletedValues()).isEmpty();
+  tester.set(leaf,new StringValue("crunchy"));
+  tester.invalidate();
+  topValue=(StringValue)tester.evalAndGet("top");
+  assertEquals("ignore",topValue.getValue());
+  assertThat(tester.getDirtyValues()).containsExactly(new StringValue("leafy"));
+  assertThat(tester.getDeletedValues()).isEmpty();
+  tester.set(leaf,new StringValue("smushy"));
+  tester.invalidate();
+  topValue=(StringValue)tester.evalAndGet("top");
+  assertEquals("ignore",topValue.getValue());
+  assertThat(tester.getDirtyValues()).containsExactly(new StringValue("crunchy"));
+  assertThat(tester.getDeletedValues()).isEmpty();
+}

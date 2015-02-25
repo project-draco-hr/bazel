@@ -1,0 +1,12 @@
+{
+  ImmutableList.Builder<Artifact> filtered=new ImmutableList.Builder<Artifact>();
+  for (  Artifact artifact : artifacts) {
+    if (fileType.apply(artifact.getFilename())) {
+      filtered.add(artifact);
+    }
+ else     if (errorsForNonMatching) {
+      ruleContext.attributeError(attributeName,String.format("%s does not match expected type: %s",artifact,fileType));
+    }
+  }
+  return new PrerequisiteArtifacts(ruleContext,attributeName,filtered.build());
+}

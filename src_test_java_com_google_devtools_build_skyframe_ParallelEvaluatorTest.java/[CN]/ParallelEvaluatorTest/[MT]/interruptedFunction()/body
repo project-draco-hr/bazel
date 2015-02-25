@@ -1,0 +1,19 @@
+{
+  runInterruptionTest(new SkyFunctionFactory(){
+    @Override public SkyFunction create(    final Semaphore threadStarted,    final String[] errorMessage){
+      return new SkyFunction(){
+        @Override public SkyValue compute(        SkyKey key,        Environment env) throws InterruptedException {
+          threadStarted.release();
+          Thread.sleep(10 * 1000);
+          errorMessage[0]="SkyFunction should have been interrupted";
+          return null;
+        }
+        @Nullable @Override public String extractTag(        SkyKey skyKey){
+          return null;
+        }
+      }
+;
+    }
+  }
+);
+}

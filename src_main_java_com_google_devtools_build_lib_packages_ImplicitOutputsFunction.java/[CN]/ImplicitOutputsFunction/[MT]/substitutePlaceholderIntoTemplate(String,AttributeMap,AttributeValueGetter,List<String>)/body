@@ -1,0 +1,20 @@
+{
+  List<String> placeholders=(placeholdersInTemplate == null) ? Lists.<String>newArrayList() : placeholdersInTemplate;
+  String formatStr=createPlaceholderSubstitutionFormatString(template,placeholders);
+  if (placeholders.isEmpty()) {
+    return ImmutableList.of(template);
+  }
+  List<Set<String>> values=Lists.newArrayListWithCapacity(placeholders.size());
+  for (  String placeholder : placeholders) {
+    Set<String> attrValues=attributeGetter.get(rule,placeholder);
+    if (attrValues.isEmpty()) {
+      return ImmutableList.<String>of();
+    }
+    values.add(attrValues);
+  }
+  ImmutableList.Builder<String> out=new ImmutableList.Builder<>();
+  for (  List<String> combination : Sets.cartesianProduct(values)) {
+    out.add(String.format(formatStr,combination.toArray()));
+  }
+  return out.build();
+}

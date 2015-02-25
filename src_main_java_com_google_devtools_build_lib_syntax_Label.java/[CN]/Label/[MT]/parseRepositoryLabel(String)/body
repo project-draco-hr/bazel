@@ -1,0 +1,15 @@
+{
+  String repo=PackageIdentifier.DEFAULT_REPOSITORY;
+  int packageStartPos=absName.indexOf("//");
+  if (packageStartPos > 0) {
+    repo=absName.substring(0,packageStartPos);
+    absName=absName.substring(packageStartPos);
+  }
+  try {
+    LabelValidator.PackageAndTarget labelParts=LabelValidator.parseAbsoluteLabel(absName);
+    return new Label(new PackageIdentifier(repo,new PathFragment(labelParts.getPackageName())),labelParts.getTargetName());
+  }
+ catch (  BadLabelException e) {
+    throw new SyntaxException(e.getMessage());
+  }
+}

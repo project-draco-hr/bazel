@@ -1,0 +1,34 @@
+{
+  if (preorder.containsKey(node)) {
+    return;
+  }
+  preorder.put(node,counter);
+  stack.add(node);
+  preorderStack.add(counter++);
+  int preorderLength=preorderStack.size();
+  for (  Node<T> succ : node.getSuccessors()) {
+    Integer succPreorder=preorder.get(succ);
+    if (succPreorder == null) {
+      visit(visitor,succ);
+    }
+ else {
+      if (!assigned.contains(succ)) {
+        while (preorderStack.get(preorderStack.size() - 1) > succPreorder) {
+          preorderStack.remove(preorderStack.size() - 1);
+        }
+      }
+    }
+  }
+  if (preorderLength == preorderStack.size()) {
+    preorderStack.remove(preorderStack.size() - 1);
+    Set<Node<T>> scc=new HashSet<Node<T>>();
+    Node<T> compNode;
+    do {
+      compNode=stack.remove(stack.size() - 1);
+      assigned.add(compNode);
+      scc.add(compNode);
+    }
+ while (!node.equals(compNode));
+    visitor.accept(scc);
+  }
+}

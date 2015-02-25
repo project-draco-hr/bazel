@@ -1,0 +1,18 @@
+{
+  try {
+    String cpuinfoContent=readContent(cpuinfoFile);
+    ProcMeminfoParser memInfo=new ProcMeminfoParser(meminfoFile);
+    int logicalCpuCount=getLogicalCpuCount(cpuinfoContent);
+    int physicalCpuCount=getPhysicalCpuCount(cpuinfoContent,logicalCpuCount);
+    int coresPerCpu=getCoresPerCpu(cpuinfoContent);
+    int totalCores=coresPerCpu * physicalCpuCount;
+    boolean hyperthreading=(logicalCpuCount != totalCores);
+    double ramMb=ProcMeminfoParser.kbToMb(memInfo.getTotalKb());
+    final double EFFECTIVE_CPUS_PER_HYPERTHREADED_CPU=0.6;
+    return new ResourceSet(ramMb,logicalCpuCount * (hyperthreading ? EFFECTIVE_CPUS_PER_HYPERTHREADED_CPU : 1.0),1.0);
+  }
+ catch (  IOException|IllegalArgumentException e) {
+    disableProcFsUse(e);
+    return DEFAULT_RESOURCES;
+  }
+}

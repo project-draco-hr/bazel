@@ -1,0 +1,10 @@
+{
+  ImmutableSet.Builder<Xcdatamodel> result=new ImmutableSet.Builder<>();
+  Multimap<PathFragment,Artifact> artifactsByContainer=byContainer(xcdatamodels);
+  for (  Map.Entry<PathFragment,Collection<Artifact>> modelDirEntry : artifactsByContainer.asMap().entrySet()) {
+    PathFragment container=modelDirEntry.getKey();
+    Artifact outputZip=intermediateArtifacts.compiledMomZipArtifact(container);
+    result.add(new Xcdatamodel(outputZip,ImmutableSet.copyOf(modelDirEntry.getValue()),container));
+  }
+  return result.build();
+}

@@ -1,0 +1,12 @@
+{
+  UnixGlob.FilesystemCalls syscalls=new UnixGlob.FilesystemCalls(){
+    @Override public FileStatus statNullable(    Path path,    Symlinks symlinks){
+      return UnixGlob.DEFAULT_SYSCALLS.statNullable(path,symlinks);
+    }
+    @Override public Collection<Dirent> readdir(    Path path,    Symlinks symlinks){
+      throw new IllegalStateException();
+    }
+  }
+;
+  MoreAsserts.assertSameContents(ImmutableList.of(tmpPath.getRelative("foo/bar/wiz/file")),new UnixGlob.Builder(tmpPath).addPattern("foo/bar/wiz/file").setFilesystemCalls(new AtomicReference<>(syscalls)).glob());
+}

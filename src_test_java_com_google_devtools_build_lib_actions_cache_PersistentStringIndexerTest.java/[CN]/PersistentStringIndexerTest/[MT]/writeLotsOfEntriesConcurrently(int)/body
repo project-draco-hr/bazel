@@ -1,0 +1,23 @@
+{
+  final int NUM_THREADS=10;
+  final CountDownLatch synchronizerLatch=new CountDownLatch(NUM_THREADS);
+class IndexAdder extends TestThread {
+    @Override public void runTest() throws Exception {
+      for (int i=0; i < numToWrite; i++) {
+        synchronizerLatch.countDown();
+        synchronizerLatch.await();
+        String value="fooconcurrent" + i;
+        mappings.put(psi.getOrCreateIndex(value),value);
+      }
+    }
+  }
+  Collection<TestThread> threads=new ArrayList<>();
+  for (int i=0; i < NUM_THREADS; i++) {
+    TestThread thread=new IndexAdder();
+    thread.start();
+    threads.add(thread);
+  }
+  for (  TestThread thread : threads) {
+    thread.joinAndAssertState(0);
+  }
+}

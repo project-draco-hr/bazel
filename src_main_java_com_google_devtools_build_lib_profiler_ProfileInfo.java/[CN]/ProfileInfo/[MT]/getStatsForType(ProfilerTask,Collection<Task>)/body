@@ -1,0 +1,17 @@
+{
+  long totalTime=0;
+  int count=0;
+  for (  Task task : tasks) {
+    if (task.parentId > 0) {
+      throw new IllegalArgumentException("task " + task.id + " is not a root task");
+    }
+    AggregateAttr attr=task.aggregatedStats.getAttr(type);
+    count+=attr.count;
+    totalTime+=attr.totalTime;
+    if (task.type == type) {
+      count++;
+      totalTime+=(task.duration - task.getInheritedDuration());
+    }
+  }
+  return new AggregateAttr(count,totalTime);
+}

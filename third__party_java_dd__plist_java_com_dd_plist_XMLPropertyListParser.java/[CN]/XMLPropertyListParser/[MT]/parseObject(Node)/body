@@ -1,0 +1,44 @@
+{
+  String type=n.getNodeName();
+  if (type.equals("dict")) {
+    NSDictionary dict=new NSDictionary();
+    List<Node> children=filterElementNodes(n.getChildNodes());
+    for (int i=0; i < children.size(); i+=2) {
+      Node key=children.get(i);
+      Node val=children.get(i + 1);
+      String keyString=getNodeTextContents(key);
+      dict.put(keyString,parseObject(val));
+    }
+    return dict;
+  }
+ else   if (type.equals("array")) {
+    List<Node> children=filterElementNodes(n.getChildNodes());
+    NSArray array=new NSArray(children.size());
+    for (int i=0; i < children.size(); i++) {
+      array.setValue(i,parseObject(children.get(i)));
+    }
+    return array;
+  }
+ else   if (type.equals("true")) {
+    return new NSNumber(true);
+  }
+ else   if (type.equals("false")) {
+    return new NSNumber(false);
+  }
+ else   if (type.equals("integer")) {
+    return new NSNumber(getNodeTextContents(n));
+  }
+ else   if (type.equals("real")) {
+    return new NSNumber(getNodeTextContents(n));
+  }
+ else   if (type.equals("string")) {
+    return new NSString(getNodeTextContents(n));
+  }
+ else   if (type.equals("data")) {
+    return new NSData(getNodeTextContents(n));
+  }
+ else   if (type.equals("date")) {
+    return new NSDate(getNodeTextContents(n));
+  }
+  return null;
+}

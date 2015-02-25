@@ -1,0 +1,21 @@
+{
+  if (path.equals(rootPath)) {
+    throw Error.EBUSY.exception(path);
+  }
+  if (!exists(path,false)) {
+    return false;
+  }
+  InMemoryDirectoryInfo parent;
+synchronized (this) {
+    parent=getDirectory(path.getParentDirectory());
+    if (!parent.outOfScope()) {
+      InMemoryContentInfo child=parent.getChild(path.getBaseName());
+      if (child.isDirectory() && child.getSize() > 2) {
+        throw Error.ENOTEMPTY.exception(path);
+      }
+      unlink(parent,path.getBaseName(),path);
+      return true;
+    }
+  }
+  return getDelegatedPath(parent.getEscapingPath(),path).delete();
+}

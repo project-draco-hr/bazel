@@ -1,0 +1,18 @@
+{
+  NSDictionary merged=PlistMerging.merge(sourceFiles);
+  Set<String> conflictingEntries=Intersection.of(automaticEntries.keySet(),merged.keySet());
+  Preconditions.checkArgument(conflictingEntries.isEmpty(),"The following plist entries are generated automatically, but are present in one of the " + "input lists: %s",conflictingEntries);
+  merged.putAll(automaticEntries);
+  for (  Map.Entry<String,NSObject> entry : merged.entrySet()) {
+    if (entry.getValue().toJavaObject() instanceof String) {
+      String newValue=substituteEnvironmentVariable(substitutions,(String)entry.getValue().toJavaObject());
+      merged.put(entry.getKey(),newValue);
+    }
+  }
+  for (  String key : keysToRemoveIfEmptyString) {
+    if (Equaling.of(Mapping.of(merged,key),Optional.<NSObject>of(new NSString("")))) {
+      merged.remove(key);
+    }
+  }
+  return new PlistMerging(merged);
+}

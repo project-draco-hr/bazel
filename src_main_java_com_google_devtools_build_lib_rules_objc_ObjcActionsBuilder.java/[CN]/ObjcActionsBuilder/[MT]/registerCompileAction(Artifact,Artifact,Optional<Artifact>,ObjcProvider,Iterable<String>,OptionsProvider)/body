@@ -1,0 +1,8 @@
+{
+  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder();
+  if (ObjcRuleClasses.CPP_SOURCES.matches(sourceFile.getExecPath())) {
+    commandLine.add("-stdlib=libc++");
+  }
+  commandLine.add(IosSdkCommands.compileArgsForClang(objcConfiguration)).add(IosSdkCommands.commonLinkAndCompileArgsForClang(objcProvider,objcConfiguration)).add(objcConfiguration.getCoptsForCompilationMode()).addBeforeEachPath("-iquote",ObjcCommon.userHeaderSearchPaths(buildConfiguration)).addBeforeEachExecPath("-include",pchFile.asSet()).addBeforeEachPath("-I",objcProvider.get(INCLUDE)).add(otherFlags).addFormatEach("-D%s",objcProvider.get(DEFINE)).add(objcConfiguration.getCopts()).add(optionsProvider.getCopts()).addExecPath("-c",sourceFile).addExecPath("-o",objFile);
+  register(spawnOnDarwinActionBuilder().setMnemonic("ObjcCompile").setExecutable(CLANG).setCommandLine(commandLine.build()).addInput(sourceFile).addOutput(objFile).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(pchFile.asSet()).build(context));
+}

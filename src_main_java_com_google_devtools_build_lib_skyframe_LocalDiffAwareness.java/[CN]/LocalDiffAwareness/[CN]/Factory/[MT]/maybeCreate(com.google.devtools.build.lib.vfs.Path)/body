@@ -1,0 +1,23 @@
+{
+  com.google.devtools.build.lib.vfs.Path resolvedPathEntry;
+  try {
+    resolvedPathEntry=pathEntry.resolveSymbolicLinks();
+  }
+ catch (  IOException e) {
+    return null;
+  }
+  PathFragment resolvedPathEntryFragment=resolvedPathEntry.asFragment();
+  for (  String prefix : Constants.WATCHFS_BLACKLIST) {
+    if (resolvedPathEntryFragment.startsWith(new PathFragment(prefix))) {
+      return null;
+    }
+  }
+  WatchService watchService;
+  try {
+    watchService=FileSystems.getDefault().newWatchService();
+  }
+ catch (  IOException e) {
+    return null;
+  }
+  return new LocalDiffAwareness(resolvedPathEntryFragment.toString(),watchService);
+}

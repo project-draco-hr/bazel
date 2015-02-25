@@ -1,0 +1,15 @@
+{
+  NestedSetBuilder<ResolvedFile> paths=NestedSetBuilder.stableOrder();
+  for (  RecursiveFilesystemTraversalValue child : subdirTraversals) {
+    paths.addTransitive(child.getTransitiveFiles());
+  }
+  ResolvedFile root;
+  if (rootInfo.type.isSymlink()) {
+    root=ResolvedFile.symlinkToDirectory(rootInfo.realPath,traversal.path,rootInfo.unresolvedSymlinkTarget,rootInfo.metadata);
+    paths.add(root);
+  }
+ else {
+    root=ResolvedFile.directory(rootInfo.realPath);
+  }
+  return RecursiveFilesystemTraversalValue.of(root,paths.build());
+}

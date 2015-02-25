@@ -1,0 +1,17 @@
+{
+  return new AbstractFunction(ruleClass){
+    @Override public Object call(    List<Object> args,    Map<String,Object> kwargs,    FuncallExpression ast,    Environment env) throws EvalException {
+      if (!args.isEmpty()) {
+        throw new EvalException(ast.getLocation(),"build rules do not accept positional parameters");
+      }
+      try {
+        addRule(ruleFactory,ruleClass,getContext(env,ast),kwargs,ast);
+      }
+ catch (      RuleFactory.InvalidRuleException|Package.NameConflictException e) {
+        throw new EvalException(ast.getLocation(),e.getMessage());
+      }
+      return Environment.NONE;
+    }
+  }
+;
+}

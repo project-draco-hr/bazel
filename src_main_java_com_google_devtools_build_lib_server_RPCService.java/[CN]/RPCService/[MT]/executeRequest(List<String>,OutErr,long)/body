@@ -1,0 +1,16 @@
+{
+  if (isShutdown) {
+    throw new IllegalStateException("Received request after shutdown.");
+  }
+  String command=request.isEmpty() ? "" : request.get(0);
+  if (appCommand != null && command.equals("blaze")) {
+    int result=appCommand.exec(request.subList(1,request.size()),outErr,firstContactTime);
+    if (appCommand.shutdown()) {
+      shutdown();
+    }
+    return result;
+  }
+ else {
+    throw new UnknownCommandException(command);
+  }
+}

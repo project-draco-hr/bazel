@@ -1,0 +1,32 @@
+{
+  if (toTarget instanceof InputFile || toTarget instanceof PackageGroup) {
+    return NULL_LIST;
+  }
+  if (isHostConfiguration()) {
+    return ImmutableList.of(this);
+  }
+  if (toTarget instanceof Rule && ((Rule)toTarget).getRuleClass().equals("config_setting")) {
+    return ImmutableList.of(this);
+  }
+  List<BuildConfiguration> toConfigurations;
+  if (attribute.getConfigurationTransition() instanceof SplitTransition) {
+    Preconditions.checkState(attribute.getConfigurator() == null);
+    toConfigurations=getSplitConfigurations((SplitTransition<?>)attribute.getConfigurationTransition());
+  }
+ else {
+    @SuppressWarnings("unchecked") Configurator<BuildConfiguration,Rule> configurator=(Configurator<BuildConfiguration,Rule>)attribute.getConfigurator();
+    toConfigurations=ImmutableList.of((configurator != null) ? configurator.apply(fromRule,this,attribute,toTarget) : getConfiguration(attribute.getConfigurationTransition()));
+  }
+  return Iterables.transform(toConfigurations,new Function<BuildConfiguration,BuildConfiguration>(){
+    @Override public BuildConfiguration apply(    BuildConfiguration input){
+      BuildConfiguration actual=getTransitions().configurationHook(fromRule,attribute,toTarget,input);
+      Rule associatedRule=toTarget.getAssociatedRule();
+      if (associatedRule != null) {
+        @SuppressWarnings("unchecked") RuleClass.Configurator<BuildConfiguration,Rule> func=associatedRule.getRuleClassObject().<BuildConfiguration,Rule>getConfigurator();
+        actual=func.apply(associatedRule,actual);
+      }
+      return actual;
+    }
+  }
+);
+}

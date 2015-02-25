@@ -1,0 +1,17 @@
+{
+  initializeTester();
+  final SkyKey top=GraphTester.toSkyKey("top");
+  SkyKey leaf=GraphTester.toSkyKey("leaf");
+  tester.set(leaf,new StringValue("leaf"));
+  tester.getOrCreate(top).addDependency(leaf).setHasTransientError(true);
+  EvaluationResult<StringValue> result=tester.eval(false,top);
+  assertTrue(result.toString(),result.hasError());
+  tester.getOrCreate(leaf,true);
+  tester.invalidate();
+  SkyKey irrelevant=GraphTester.toSkyKey("irrelevant");
+  tester.set(irrelevant,new StringValue("irrelevant"));
+  tester.eval(true,irrelevant);
+  tester.invalidateTransientErrors();
+  result=tester.eval(true,top);
+  assertTrue(result.toString(),result.hasError());
+}

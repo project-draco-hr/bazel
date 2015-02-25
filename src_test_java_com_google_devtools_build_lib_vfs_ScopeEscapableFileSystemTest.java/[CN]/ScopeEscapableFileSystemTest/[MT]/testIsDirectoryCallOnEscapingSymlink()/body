@@ -1,0 +1,22 @@
+{
+  TestDelegator delegator=new TestDelegator(){
+    @Override protected boolean isDirectory(    Path path,    boolean followSymlinks){
+      lastPath=path;
+      return booleanState();
+    }
+    @Override protected boolean exists(    Path path,    boolean followSymlinks){
+      return true;
+    }
+    @Override protected long getLastModifiedTime(    Path path,    boolean followSymlinks){
+      return 0;
+    }
+  }
+;
+  scopedFS().setDelegator(delegator);
+  delegator.setState(false);
+  assertFalseWithPathCheck(fileLink.isDirectory(),delegator,fileLinkTarget);
+  assertFalseWithPathCheck(dirLink.getRelative("a").isDirectory(),delegator,dirLinkTarget.getRelative("a"));
+  delegator.setState(true);
+  assertTrueWithPathCheck(fileLink.isDirectory(),delegator,fileLinkTarget);
+  assertTrueWithPathCheck(dirLink.getRelative("a").isDirectory(),delegator,dirLinkTarget.getRelative("a"));
+}

@@ -1,0 +1,11 @@
+{
+  if (isEmpty()) {
+    return NestedSetBuilder.emptySet(Order.STABLE_ORDER);
+  }
+  NestedSetBuilder<Artifact> allArtifacts=NestedSetBuilder.stableOrder();
+  allArtifacts.addTransitive(unconditionalArtifacts).addAll(Iterables.transform(symlinks,TO_ARTIFACT)).addAll(Iterables.transform(rootSymlinks,TO_ARTIFACT));
+  for (  PruningManifest manifest : getPruningManifests()) {
+    allArtifacts.addTransitive(manifest.getCandidateRunfiles());
+  }
+  return allArtifacts.build();
+}

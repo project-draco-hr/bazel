@@ -1,0 +1,21 @@
+{
+  Path destinationDirectory=archiveFile.getParentDirectory().getRelative("repository");
+  String baseName=archiveFile.getBaseName();
+  try {
+    FileSystemUtils.createDirectoryAndParents(destinationDirectory);
+    Path workspaceFile=destinationDirectory.getRelative("WORKSPACE");
+    FileSystemUtils.writeContent(workspaceFile,Charset.forName("UTF-8"),"# DO NOT EDIT: automatically generated WORKSPACE file for " + target.getTargetKind() + " rule "+ target.getName());
+    Path jarDirectory=destinationDirectory.getRelative("jar");
+    FileSystemUtils.createDirectoryAndParents(jarDirectory);
+    Path jarSymlink=jarDirectory.getRelative(baseName);
+    if (!jarSymlink.exists()) {
+      jarSymlink.createSymbolicLink(archiveFile);
+    }
+    Path buildFile=jarDirectory.getRelative("BUILD");
+    FileSystemUtils.writeLinesAs(buildFile,Charset.forName("UTF-8"),"# DO NOT EDIT: automatically generated BUILD file for " + target.getTargetKind() + " rule "+ target.getName(),"java_import(","    name = 'jar',","    jars = ['" + baseName + "'],","    visibility = ['//visibility:public']",")");
+  }
+ catch (  IOException e) {
+    throw new DecompressorException(e.getMessage());
+  }
+  return destinationDirectory;
+}

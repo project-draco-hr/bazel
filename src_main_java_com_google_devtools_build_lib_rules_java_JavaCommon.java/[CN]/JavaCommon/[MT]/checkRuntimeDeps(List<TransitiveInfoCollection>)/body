@@ -1,0 +1,18 @@
+{
+  for (  TransitiveInfoCollection c : runtimeDepInfo) {
+    JavaNeverlinkInfoProvider neverLinkedness=c.getProvider(JavaNeverlinkInfoProvider.class);
+    if (neverLinkedness == null) {
+      continue;
+    }
+    boolean reportError=!ruleContext.getConfiguration().getAllowRuntimeDepsOnNeverLink();
+    if (neverLinkedness.isNeverlink()) {
+      String msg=String.format("neverlink dep %s not allowed in runtime deps",c.getLabel());
+      if (reportError) {
+        ruleContext.attributeError("runtime_deps",msg);
+      }
+ else {
+        ruleContext.attributeWarning("runtime_deps",msg);
+      }
+    }
+  }
+}

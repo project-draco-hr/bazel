@@ -1,0 +1,7 @@
+{
+  Preconditions.checkState(ruleContext.getRule().hasBinaryOutput());
+  final Artifact instrumentedFileManifest=ruleContext.getAnalysisEnvironment().getDerivedArtifact(FileSystemUtils.appendExtension(Util.getWorkspaceRelativePath(ruleContext.getTarget()),".instrumented_files"),ruleContext.getConfiguration().getBinDirectory());
+  ImmutableList<Artifact> inputs=ImmutableList.<Artifact>builder().addAll(additionalSourceFiles).addAll(metadataFiles).build();
+  ruleContext.registerAction(new InstrumentedFileManifestAction(ruleContext.getActionOwner(),inputs,additionalSourceFiles,metadataFiles,instrumentedFileManifest,ruleContext.getConfiguration().getInstrumentationFilter()));
+  return instrumentedFileManifest;
+}

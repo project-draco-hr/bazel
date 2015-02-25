@@ -1,0 +1,13 @@
+{
+  Preconditions.checkArgument(versionAgeLimit >= 0);
+  final Version threshold=new IntVersion(lastGraphVersion.getVal() - versionAgeLimit);
+  valuesToDelete.addAll(Sets.filter(dirtyKeyTracker.getDirtyKeys(),new Predicate<SkyKey>(){
+    @Override public boolean apply(    SkyKey skyKey){
+      NodeEntry entry=graph.get(skyKey);
+      Preconditions.checkNotNull(entry,skyKey);
+      Preconditions.checkState(entry.isDirty(),skyKey);
+      return entry.getVersion().atMost(threshold);
+    }
+  }
+));
+}

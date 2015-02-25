@@ -1,0 +1,40 @@
+{
+  Type<?> attrType=attribute.getType();
+  String label=null;
+  if (attribute.getAllowedFileTypesPredicate() != FileTypeSet.NO_FILE) {
+    String extension=null;
+    if (attribute.getAllowedFileTypesPredicate() == FileTypeSet.ANY_FILE) {
+      extension=".txt";
+    }
+ else {
+      FileTypeSet fileTypes=attribute.getAllowedFileTypesPredicate();
+      Preconditions.checkArgument(fileTypes.getExtensions().size() > 0);
+      extension=fileTypes.getExtensions().get(0);
+    }
+    label=getDummyFileLabel(rulePkg,filePkg,extension,attrType);
+  }
+ else {
+    Predicate<RuleClass> allowedRuleClasses=attribute.getAllowedRuleClassesPredicate();
+    if (allowedRuleClasses != Predicates.<RuleClass>alwaysFalse()) {
+      BuildRuleBuilder referencedRuleBuilder=getFirstApplicableRule(allowedRuleClasses);
+      if (referencedRuleBuilder != null) {
+        label=":" + referencedRuleBuilder.ruleName;
+      }
+ else {
+        RuleClass referencedRuleClass=getFirstApplicableRuleClass(allowedRuleClasses);
+        if (referencedRuleClass != null) {
+          label=":" + getDummyRuleLabel(rulePkg,referencedRuleClass);
+        }
+      }
+    }
+  }
+  if (label != null) {
+    if (attrType == Type.LABEL_LIST || attrType == Type.OUTPUT_LIST) {
+      setMultiValueAttribute(attribute.getName(),label);
+    }
+ else {
+      setSingleValueAttribute(attribute.getName(),label);
+    }
+  }
+  return this;
+}

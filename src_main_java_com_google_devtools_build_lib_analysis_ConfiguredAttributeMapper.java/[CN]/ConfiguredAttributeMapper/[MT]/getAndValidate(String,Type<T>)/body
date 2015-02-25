@@ -1,0 +1,28 @@
+{
+  Type.Selector<T> selector=getSelector(attributeName,type);
+  if (selector == null) {
+    return super.get(attributeName,type);
+  }
+  Label matchingCondition=null;
+  T matchingValue=null;
+  for (  Map.Entry<Label,T> entry : selector.getEntries().entrySet()) {
+    Label curCondition=entry.getKey();
+    if (Type.Selector.isReservedLabel(curCondition)) {
+      continue;
+    }
+ else     if (Preconditions.checkNotNull(configConditions.get(curCondition)).matches()) {
+      if (matchingCondition != null) {
+        throw new EvalException(rule.getAttributeLocation(attributeName),"Both " + matchingCondition.toString() + " and "+ curCondition.toString()+ " match configurable attribute \""+ attributeName+ "\" in "+ getLabel()+ ". At most one match is allowed");
+      }
+      matchingCondition=curCondition;
+      matchingValue=entry.getValue();
+    }
+  }
+  if (matchingCondition == null) {
+    if (!selector.hasDefault()) {
+      throw new EvalException(rule.getAttributeLocation(attributeName),"Configurable attribute \"" + attributeName + "\" doesn't match this "+ "configuration (would a default condition help?)");
+    }
+    matchingValue=selector.getDefault();
+  }
+  return matchingValue;
+}

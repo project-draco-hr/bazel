@@ -1,0 +1,12 @@
+{
+  Iterable<Artifact> artifacts=LinkerInputs.toLibraryArtifacts(executionDynamicLibraries);
+  if (!Iterables.isEmpty(artifacts)) {
+    return NestedSetBuilder.wrap(Order.STABLE_ORDER,artifacts);
+  }
+  Iterable<CcExecutionDynamicLibrariesProvider> deps=ruleContext.getPrerequisites("deps",Mode.TARGET,CcExecutionDynamicLibrariesProvider.class);
+  NestedSetBuilder<Artifact> builder=NestedSetBuilder.stableOrder();
+  for (  CcExecutionDynamicLibrariesProvider dep : deps) {
+    builder.addTransitive(dep.getExecutionDynamicLibraryArtifacts());
+  }
+  return builder.build();
+}

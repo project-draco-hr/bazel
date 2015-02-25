@@ -1,0 +1,20 @@
+{
+  if (pathEntriesWithoutDiffInformation.isEmpty()) {
+    return;
+  }
+  buildDriver.evaluate(ImmutableList.<SkyKey>of(),false,DEFAULT_THREAD_COUNT,reporter);
+  FilesystemValueChecker fsnc=new FilesystemValueChecker(memoizingEvaluator,tsgm);
+  Iterable<SkyKey> filesystemSkyKeys=fsnc.getFilesystemSkyKeys();
+  Multimap<Path,SkyKey> skyKeysByPathEntry=partitionSkyKeysByPackagePathEntry(ImmutableSet.copyOf(pkgLocator.get().getPathEntries()),filesystemSkyKeys);
+  List<Iterable<SkyKey>> valuesToCheckManually=Lists.newArrayList();
+  for (  Pair<Path,DiffAwarenessManager.ProcessableModifiedFileSet> pair : pathEntriesWithoutDiffInformation) {
+    Path pathEntry=pair.getFirst();
+    valuesToCheckManually.add(skyKeysByPathEntry.get(pathEntry));
+  }
+  Differencer.Diff diff=fsnc.getDirtyFilesystemValues(Iterables.concat(valuesToCheckManually));
+  handleChangedFiles(diff);
+  for (  Pair<Path,DiffAwarenessManager.ProcessableModifiedFileSet> pair : pathEntriesWithoutDiffInformation) {
+    DiffAwarenessManager.ProcessableModifiedFileSet processableModifiedFileSet=pair.getSecond();
+    processableModifiedFileSet.markProcessed();
+  }
+}

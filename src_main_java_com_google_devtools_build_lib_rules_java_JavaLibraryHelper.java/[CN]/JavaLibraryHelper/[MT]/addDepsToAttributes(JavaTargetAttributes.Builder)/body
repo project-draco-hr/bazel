@@ -1,0 +1,14 @@
+{
+  NestedSet<Artifact> directJars=null;
+  if (isStrict()) {
+    directJars=getNonRecursiveCompileTimeJarsFromDeps();
+    if (directJars != null) {
+      attributes.addDirectCompileTimeClassPathEntries(directJars);
+      attributes.addDirectJars(directJars);
+    }
+  }
+  JavaCompilationArgs args=JavaCompilationArgs.builder().addTransitiveDependencies(transformDeps(),true).build();
+  attributes.addCompileTimeClassPathEntries(args.getCompileTimeJars());
+  attributes.addRuntimeClassPathEntries(args.getRuntimeJars());
+  attributes.addInstrumentationMetadataEntries(args.getInstrumentationMetadata());
+}

@@ -1,0 +1,17 @@
+{
+  String sourcesDir=build.getTempDir();
+  File sourceDirFile=new File(sourcesDir);
+  if (sourceDirFile.exists()) {
+    cleanupDirectory(sourceDirFile,true);
+  }
+  if (build.getSourceJars().isEmpty()) {
+    return;
+  }
+  List<SourceJarEntryListener> listeners=getSourceJarEntryListeners(build);
+  for (  String sourceJar : build.getSourceJars()) {
+    setUpSourceJar(new File(sourceJar),sourcesDir,listeners);
+  }
+  for (  SourceJarEntryListener listener : listeners) {
+    listener.finish();
+  }
+}

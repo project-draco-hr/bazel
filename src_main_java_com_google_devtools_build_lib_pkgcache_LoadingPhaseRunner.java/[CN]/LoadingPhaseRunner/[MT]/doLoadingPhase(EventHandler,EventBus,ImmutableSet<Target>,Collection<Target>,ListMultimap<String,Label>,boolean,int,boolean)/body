@@ -1,0 +1,45 @@
+{
+  eventHandler.handle(Event.progress("Loading..."));
+  Stopwatch timer=Stopwatch.createStarted();
+  LOG.info("Starting loading phase");
+  Set<Label> labelsToLoad=ImmutableSet.copyOf(labelsToLoadUnconditionally.values());
+  boolean loadingSuccessful=pkgLoader.sync(eventHandler,targetsToLoad,labelsToLoad,keepGoing,loadingPhaseThreads,Integer.MAX_VALUE);
+  ImmutableSet<Target> targetsToAnalyze;
+  if (loadingSuccessful) {
+    targetsToAnalyze=targetsToLoad;
+  }
+ else   if (keepGoing) {
+    targetsToAnalyze=filterErrorFreeTargets(eventBus,targetsToLoad,pkgLoader,labelsToLoadUnconditionally);
+    int requested=targetsToLoad.size();
+    int loaded=targetsToAnalyze.size();
+    if (0 < loaded && loaded < requested) {
+      String message=String.format("Loading succeeded for only %d of %d targets",loaded,requested);
+      eventHandler.handle(Event.info(message));
+      LOG.info(message);
+    }
+  }
+ else {
+    throw new LoadingFailedException("Loading failed; build aborted");
+  }
+  Set<Target> filteredTargets=targetsToAnalyze;
+  try {
+    ResolvedTargets<Target> expandedResult=TestTargetUtils.expandTestSuites(packageManager,eventHandler,targetsToAnalyze,true,true);
+    targetsToAnalyze=expandedResult.getTargets();
+    filteredTargets=Sets.difference(filteredTargets,targetsToAnalyze);
+    if (expandedResult.hasError()) {
+      if (!keepGoing) {
+        throw new LoadingFailedException("Could not expand test suite target");
+      }
+      loadingSuccessful=false;
+    }
+  }
+ catch (  TargetParsingException e) {
+    throw (AssertionError)(new AssertionError("Unexpected target failure").initCause(e));
+  }
+  ImmutableMap<PackageIdentifier,Path> packageRoots=collectPackageRoots(pkgLoader.getErrorFreeVisitedPackages());
+  Set<PackageIdentifier> visitedPackageNames=pkgLoader.getVisitedPackageNames();
+  packageManager.partiallyClear();
+  eventBus.post(new LoadingPhaseCompleteEvent(targetsToAnalyze,filteredTargets,packageManager.getStatistics(),timer.stop().elapsed(TimeUnit.MILLISECONDS)));
+  LOG.info("Loading phase finished");
+  return new LoadingResult(hasError,!loadingSuccessful,targetsToAnalyze,testsToRun,packageRoots,visitedPackageNames);
+}

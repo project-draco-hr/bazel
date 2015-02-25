@@ -1,0 +1,22 @@
+{
+  Path embeddedDir=directories.getEmbeddedBinariesRoot();
+  FileSystemUtils.createDirectoryAndParents(embeddedDir);
+  Path runfiles=directories.getFileSystem().getPath(BlazeTestUtils.runfilesDir());
+  Path embeddedScripts=runfiles.getRelative(TestConstants.EMBEDDED_SCRIPTS_PATH);
+  Collection<Path> files=new ArrayList<Path>();
+  if (embeddedScripts.exists()) {
+    files.addAll(embeddedScripts.getDirectoryEntries());
+  }
+ else {
+    System.err.println("test does not have " + embeddedScripts);
+  }
+  for (  Path fromFile : files) {
+    try {
+      embeddedDir.getChild(fromFile.getBaseName()).createSymbolicLink(fromFile);
+    }
+ catch (    IOException e) {
+      System.err.println("Could not symlink: " + e.getMessage());
+    }
+  }
+  return BinTools.forIntegrationTesting(directories,embeddedDir.toString(),TestConstants.EMBEDDED_TOOLS);
+}

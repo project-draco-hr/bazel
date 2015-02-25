@@ -1,0 +1,30 @@
+{
+  boolean keepLooking=false;
+  try {
+    Method superMethod=classObj.getMethod(method.getName(),method.getParameterTypes());
+    if (classObj.isAnnotationPresent(SkylarkModule.class) && superMethod.isAnnotationPresent(SkylarkCallable.class)) {
+      return superMethod.getAnnotation(SkylarkCallable.class);
+    }
+ else {
+      keepLooking=true;
+    }
+  }
+ catch (  NoSuchMethodException e) {
+    keepLooking=true;
+  }
+  if (keepLooking) {
+    if (classObj.getSuperclass() != null) {
+      SkylarkCallable annotation=getAnnotationFromParentClass(classObj.getSuperclass(),method);
+      if (annotation != null) {
+        return annotation;
+      }
+    }
+    for (    Class<?> interfaceObj : classObj.getInterfaces()) {
+      SkylarkCallable annotation=getAnnotationFromParentClass(interfaceObj,method);
+      if (annotation != null) {
+        return annotation;
+      }
+    }
+  }
+  return null;
+}

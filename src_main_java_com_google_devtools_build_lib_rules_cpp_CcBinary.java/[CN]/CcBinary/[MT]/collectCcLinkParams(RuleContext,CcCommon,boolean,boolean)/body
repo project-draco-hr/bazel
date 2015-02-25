@@ -1,0 +1,12 @@
+{
+  CcLinkParams.Builder builder=CcLinkParams.builder(linkingStatically,linkShared);
+  if (isLinkShared(context)) {
+    builder.addCcLibrary(context,common,false,CcLinkingOutputs.EMPTY);
+  }
+ else {
+    builder.addTransitiveTargets(context.getPrerequisites("deps",Mode.TARGET),CcLinkParamsProvider.TO_LINK_PARAMS,CcSpecificLinkParamsProvider.TO_LINK_PARAMS);
+    builder.addTransitiveTarget(CppHelper.mallocForTarget(context));
+    builder.addLinkOpts(getBinaryLinkopts(context,common));
+  }
+  return builder.build();
+}

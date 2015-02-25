@@ -1,0 +1,14 @@
+{
+  if (followSymlinks) {
+    return pathWalk(path,false);
+  }
+ else {
+    if (path.equals(rootPath)) {
+      return rootInode;
+    }
+ else {
+      InMemoryContentInfo status=getNoFollowStatOrOutOfScopeParent(path);
+      return status.outOfScope() ? new OutOfScopeFileStatus(status.getEscapingPath().getRelative(path.getBaseName())) : status;
+    }
+  }
+}

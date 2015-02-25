@@ -1,0 +1,30 @@
+{
+  return new DeterministicWriter(){
+    @Override public void writeOutputFile(    OutputStream out) throws IOException {
+      StringBuilder content=new StringBuilder();
+      PathFragment fragment=cppModuleMap.getArtifact().getExecPath();
+      int segmentsToExecPath=fragment.segmentCount() - 1;
+      String leadingPeriods=moduleMapHomeIsCwd ? "" : Strings.repeat("../",segmentsToExecPath);
+      content.append("module \"").append(cppModuleMap.getName()).append("\" {\n");
+      content.append("  export *\n");
+      for (      Artifact artifact : privateHeaders) {
+        appendHeader(content,"private",artifact.getExecPath(),leadingPeriods,true);
+      }
+      for (      Artifact artifact : publicHeaders) {
+        appendHeader(content,"",artifact.getExecPath(),leadingPeriods,true);
+      }
+      for (      PathFragment additionalExportedHeader : additionalExportedHeaders) {
+        appendHeader(content,"",additionalExportedHeader,leadingPeriods,false);
+      }
+      for (      CppModuleMap dep : dependencies) {
+        content.append("  use \"").append(dep.getName()).append("\"\n");
+      }
+      content.append("}");
+      for (      CppModuleMap dep : dependencies) {
+        content.append("\nextern module \"").append(dep.getName()).append("\" \"").append(leadingPeriods).append(dep.getArtifact().getExecPath()).append("\"");
+      }
+      out.write(content.toString().getBytes(StandardCharsets.ISO_8859_1));
+    }
+  }
+;
+}

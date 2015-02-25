@@ -1,0 +1,14 @@
+{
+  for (  Entry<PathFragment,Artifact> manifest : this.manifests.entrySet()) {
+    String path=manifest.getValue().getPath().getPathString();
+    for (    String line : Files.readLines(new File(path),Charset.defaultCharset())) {
+      String[] fields=line.split(" ");
+      String targetPath=sandboxPath.getPathString() + PathFragment.SEPARATOR_CHAR + fields[0];
+      String sourcePath=fields[1];
+      File source=new File(sourcePath);
+      File target=new File(targetPath);
+      Files.createParentDirs(target);
+      Files.copy(source,target);
+    }
+  }
+}

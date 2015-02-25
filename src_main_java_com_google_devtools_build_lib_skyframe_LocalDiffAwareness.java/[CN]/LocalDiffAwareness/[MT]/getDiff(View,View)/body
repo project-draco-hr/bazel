@@ -1,0 +1,15 @@
+{
+  SequentialView oldSequentialView;
+  SequentialView newSequentialView;
+  try {
+    oldSequentialView=(SequentialView)oldView;
+    newSequentialView=(SequentialView)newView;
+  }
+ catch (  ClassCastException e) {
+    throw new IncompatibleViewException("Given views are not from LocalDiffAwareness");
+  }
+  if (!SequentialView.areInSequence(oldSequentialView,newSequentialView)) {
+    return ModifiedFileSet.EVERYTHING_MODIFIED;
+  }
+  return ModifiedFileSet.builder().modifyAll(Iterables.transform(newSequentialView.modifiedAbsolutePaths,nioAbsolutePathToPathFragment)).build();
+}

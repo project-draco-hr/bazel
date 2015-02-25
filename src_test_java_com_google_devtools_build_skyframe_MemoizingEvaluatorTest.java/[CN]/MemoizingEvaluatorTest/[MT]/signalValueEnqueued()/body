@@ -1,0 +1,13 @@
+{
+  tester.getOrCreate("top1").setComputedValue(CONCATENATE).addDependency("d1").addDependency("d2");
+  tester.getOrCreate("top2").setComputedValue(CONCATENATE).addDependency("d3");
+  tester.getOrCreate("top3");
+  assertThat(tester.getEnqueuedValues()).isEmpty();
+  tester.set("d1",new StringValue("1"));
+  tester.set("d2",new StringValue("2"));
+  tester.set("d3",new StringValue("3"));
+  tester.eval(true,"top1");
+  assertThat(tester.getEnqueuedValues()).containsExactlyElementsIn(Arrays.asList(MemoizingEvaluatorTester.toSkyKeys("top1","d1","d2")));
+  tester.eval(true,"top2");
+  assertThat(tester.getEnqueuedValues()).containsExactlyElementsIn(Arrays.asList(MemoizingEvaluatorTester.toSkyKeys("top1","d1","d2","top2","d3")));
+}

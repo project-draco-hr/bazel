@@ -1,0 +1,19 @@
+{
+  StringBuilder sb=new StringBuilder();
+  sb.append("<table id=\"rules\" summary=\"Table of rules sorted by language\">\n").append("<colgroup span=\"5\" width=\"20%\"></colgroup>\n").append("<tr><th>Language</th><th>Binary rules</th><th>Library rules</th>" + "<th>Test rules</th><th>Other rules</th><th></th></tr>\n");
+  Set<String> languageSpecificRuleFamilies=new TreeSet<>();
+  Set<String> genericRuleFamilies=new TreeSet<>();
+  separateRuleFamilies(docEntries,languageSpecificRuleFamilies,genericRuleFamilies);
+  Map<String,ListMultimap<RuleType,RuleDocumentation>> ruleMapping=new HashMap<>();
+  createRuleMapping(docEntries,ruleMapping);
+  for (  String ruleFamily : languageSpecificRuleFamilies) {
+    generateHeaderTableRuleFamily(sb,ruleMapping.get(ruleFamily),ruleFamily);
+  }
+  sb.append("<tr><th>&nbsp;</th></tr>");
+  sb.append("<tr><th colspan=\"5\">Rules that do not apply to a " + "specific programming language</th></tr>");
+  for (  String ruleFamily : genericRuleFamilies) {
+    generateHeaderTableRuleFamily(sb,ruleMapping.get(ruleFamily),ruleFamily);
+  }
+  sb.append("</table>\n");
+  return ImmutableMap.<String,String>of(DocgenConsts.VAR_HEADER_TABLE,sb.toString(),DocgenConsts.VAR_COMMON_ATTRIBUTE_DEFINITION,generateCommonAttributeDocs(PredefinedAttributes.COMMON_ATTRIBUTES,DocgenConsts.COMMON_ATTRIBUTES),DocgenConsts.VAR_TEST_ATTRIBUTE_DEFINITION,generateCommonAttributeDocs(PredefinedAttributes.TEST_ATTRIBUTES,DocgenConsts.TEST_ATTRIBUTES),DocgenConsts.VAR_BINARY_ATTRIBUTE_DEFINITION,generateCommonAttributeDocs(PredefinedAttributes.BINARY_ATTRIBUTES,DocgenConsts.BINARY_ATTRIBUTES),DocgenConsts.VAR_LEFT_PANEL,generateLeftNavigationPanel(docEntries));
+}

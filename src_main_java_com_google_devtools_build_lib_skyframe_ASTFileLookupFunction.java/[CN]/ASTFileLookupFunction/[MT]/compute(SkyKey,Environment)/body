@@ -1,0 +1,22 @@
+{
+  PathFragment astFilePathFragment=(PathFragment)skyKey.argument();
+  FileLookupResult lookupResult=getASTFile(env,astFilePathFragment);
+  if (lookupResult == null) {
+    return null;
+  }
+  BuildFileAST ast=null;
+  if (!lookupResult.lookupSuccessful()) {
+    return ASTFileLookupValue.NO_FILE;
+  }
+ else {
+    Path path=lookupResult.rootedPath().asPath();
+    boolean parseAsSkylark=astFilePathFragment.getPathString().endsWith(".bzl");
+    try {
+      ast=parseAsSkylark ? BuildFileAST.parseSkylarkFile(path,env.getListener(),packageManager,ruleClassProvider.getSkylarkValidationEnvironment().clone()) : BuildFileAST.parseBuildFile(path,env.getListener(),packageManager,false);
+    }
+ catch (    IOException e) {
+      throw new ASTLookupFunctionException(new ErrorReadingSkylarkExtensionException(e.getMessage()),Transience.TRANSIENT);
+    }
+  }
+  return new ASTFileLookupValue(ast);
+}

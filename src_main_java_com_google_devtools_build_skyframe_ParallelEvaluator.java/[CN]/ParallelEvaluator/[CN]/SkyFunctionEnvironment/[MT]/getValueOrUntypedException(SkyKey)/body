@@ -1,0 +1,44 @@
+{
+  checkActive();
+  depKey=KEY_CANONICALIZER.intern(depKey);
+  ValueWithMetadata value=getValueMaybeFromError(depKey,bubbleErrorInfo);
+  if (value == null) {
+    valuesMissing=true;
+    if (bubbleErrorInfo != null) {
+      return ValueOrExceptionUtils.ofNull();
+    }
+    Preconditions.checkState(!directDeps.contains(depKey),"%s %s %s",skyKey,depKey,value);
+    addDep(depKey);
+    valuesMissing=true;
+    return ValueOrExceptionUtils.ofNull();
+  }
+  if (!directDeps.contains(depKey)) {
+    addDep(depKey);
+  }
+  replayingNestedSetEventVisitor.visit(value.getTransitiveEvents());
+  ErrorInfo errorInfo=value.getErrorInfo();
+  if (errorInfo != null) {
+    childErrorInfos.add(errorInfo);
+  }
+  if (value.getValue() != null && (keepGoing || errorInfo == null)) {
+    return ValueOrExceptionUtils.ofValueUntyped(value.getValue());
+  }
+  Preconditions.checkNotNull(errorInfo,"%s %s %s",skyKey,depKey,value);
+  if (!keepGoing && errorInfo.getException() != null && bubbleErrorInfo == null) {
+    if (depErrorKey == null) {
+      depErrorKey=depKey;
+    }
+    valuesMissing=true;
+    return ValueOrExceptionUtils.ofNull();
+  }
+  if (bubbleErrorInfo != null) {
+    Thread.currentThread().interrupt();
+  }
+  if (errorInfo.getException() != null) {
+    Exception e=errorInfo.getException();
+    return ValueOrExceptionUtils.ofExn(e);
+  }
+  Preconditions.checkState(!Iterables.isEmpty(errorInfo.getCycleInfo()),"%s %s %s %s",skyKey,depKey,errorInfo,value);
+  valuesMissing=true;
+  return ValueOrExceptionUtils.ofNull();
+}

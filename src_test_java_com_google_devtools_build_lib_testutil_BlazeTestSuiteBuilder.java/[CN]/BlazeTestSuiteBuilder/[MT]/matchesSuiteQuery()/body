@@ -1,0 +1,26 @@
+{
+  final String suiteProperty=System.getProperty("blaze.suite");
+  if (suiteProperty == null) {
+    throw new IllegalArgumentException("blaze.suite property not found");
+  }
+  final Set<String> queryTokens=splitCommas(suiteProperty);
+  return new Predicate<Class<?>>(){
+    @Override public boolean apply(    Class<?> testClass){
+      Set<String> suiteTags=splitCommas(getSuite(testClass));
+      for (      String queryToken : queryTokens) {
+        if (queryToken.startsWith("!")) {
+          if (suiteTags.contains(queryToken.substring(1))) {
+            return false;
+          }
+        }
+ else {
+          if (!suiteTags.contains(queryToken)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+  }
+;
+}

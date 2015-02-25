@@ -1,0 +1,24 @@
+{
+  SkyframeBuildView view=buildViewProvider.getSkyframeBuildView();
+  BuildConfiguration configuration=associatedTarget.getConfiguration();
+  boolean extendedSanityChecks=configuration != null && configuration.extendedSanityChecks();
+  StoredEventHandler events=new StoredEventHandler();
+  CachingAnalysisEnvironment analysisEnvironment=view.createAnalysisEnvironment(key,false,extendedSanityChecks,events,env,true);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  ConfiguredAspectFactory aspectFactory=(ConfiguredAspectFactory)AspectFactory.Util.create(key.getAspect());
+  Aspect aspect=view.createAspect(analysisEnvironment,associatedTarget,aspectFactory,directDeps,configConditions);
+  events.replayOn(env.getListener());
+  if (events.hasErrors()) {
+    analysisEnvironment.disable(associatedTarget.getTarget());
+    throw new AspectFunctionException(new AspectCreationException("Analysis of target '" + associatedTarget.getLabel() + "' failed; build aborted"));
+  }
+  Preconditions.checkState(!analysisEnvironment.hasErrors(),"Analysis environment hasError() but no errors reported");
+  if (env.valuesMissing()) {
+    return null;
+  }
+  analysisEnvironment.disable(associatedTarget.getTarget());
+  Preconditions.checkNotNull(aspect);
+  return new AspectValue(aspect,ImmutableList.copyOf(analysisEnvironment.getRegisteredActions()));
+}

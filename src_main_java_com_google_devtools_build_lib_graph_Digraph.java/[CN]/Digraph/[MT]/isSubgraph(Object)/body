@@ -1,0 +1,33 @@
+{
+  if (this == thatObject) {
+    return true;
+  }
+  if (!(thatObject instanceof Digraph)) {
+    return false;
+  }
+  @SuppressWarnings("unchecked") Digraph<T> that=(Digraph<T>)thatObject;
+  if (this.getNodeCount() > that.getNodeCount()) {
+    return false;
+  }
+  for (  Node<T> n1 : nodes.values()) {
+    Node<T> n2=that.getNodeMaybe(n1.getLabel());
+    if (n2 == null) {
+      return false;
+    }
+    Collection<Node<T>> n1succs=n1.getSuccessors();
+    Collection<Node<T>> n2succs=n2.getSuccessors();
+    if (n1succs.size() > n2succs.size()) {
+      return false;
+    }
+    for (    Node<T> succ1 : n1succs) {
+      Node<T> succ2=that.getNodeMaybe(succ1.getLabel());
+      if (succ2 == null) {
+        return false;
+      }
+      if (!n2succs.contains(succ2)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}

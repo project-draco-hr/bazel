@@ -1,0 +1,21 @@
+{
+  ArgumentsParsing argsParsing=ArgumentsParsing.parse(FileSystems.getDefault(),argsArray,wrapper.name(),wrapper.subtoolName());
+  for (  String error : argsParsing.error().asSet()) {
+    System.err.printf(error);
+    System.exit(1);
+  }
+  for (  Arguments args : argsParsing.arguments().asSet()) {
+    Path outputDir=Files.createTempDirectory("ZippingOutput");
+    Path rootedOutputDir=outputDir.resolve(args.bundleRoot());
+    Files.createDirectories(wrapper.outputDirectoryMustExist() ? rootedOutputDir : rootedOutputDir.getParent());
+    ImmutableList<String> subCommandArguments=ImmutableList.copyOf(wrapper.subCommand(args,rootedOutputDir.toString()));
+    Process subProcess=new ProcessBuilder(subCommandArguments).inheritIO().start();
+    int exit=subProcess.waitFor();
+    if (exit != 0) {
+      System.exit(exit);
+    }
+    try (OutputStream out=Files.newOutputStream(Paths.get(args.outputZip()));ZipCombiner combiner=new ZipCombiner(out)){
+      ZipInputEntry.addAll(combiner,ZipInputEntry.fromDirectory(outputDir));
+    }
+   }
+}

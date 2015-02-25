@@ -1,0 +1,19 @@
+{
+  visitedMap.clear();
+  visitedTargets.clear();
+  Visitor visitor=new Visitor(eventHandler,keepGoing,parallelThreads,maxDepth,observers);
+  Throwable uncaught=null;
+  boolean result;
+  try {
+    visitor.visitTargets(visitation.targetsToVisit);
+  }
+ catch (  Throwable t) {
+    visitor.stopNewActions();
+    uncaught=t;
+  }
+ finally {
+    result=visitor.finish();
+  }
+  Throwables.propagateIfPossible(uncaught);
+  return result;
+}

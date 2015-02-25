@@ -1,0 +1,16 @@
+{
+  TestDelegator delegator=new TestDelegator(){
+    @Override protected boolean isExecutable(    Path path){
+      lastPath=path;
+      return booleanState();
+    }
+  }
+;
+  scopedFS().setDelegator(delegator);
+  delegator.setState(false);
+  assertFalseWithPathCheck(fileLink.isExecutable(),delegator,fileLinkTarget);
+  assertFalseWithPathCheck(dirLink.getRelative("a").isExecutable(),delegator,dirLinkTarget.getRelative("a"));
+  delegator.setState(true);
+  assertTrueWithPathCheck(fileLink.isExecutable(),delegator,fileLinkTarget);
+  assertTrueWithPathCheck(dirLink.getRelative("a").isExecutable(),delegator,dirLinkTarget.getRelative("a"));
+}

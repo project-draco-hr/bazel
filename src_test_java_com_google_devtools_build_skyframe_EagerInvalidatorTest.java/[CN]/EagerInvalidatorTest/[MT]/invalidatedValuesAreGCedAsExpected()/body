@@ -1,0 +1,19 @@
+{
+  SkyKey key=GraphTester.skyKey("a");
+  HeavyValue heavyValue=new HeavyValue();
+  WeakReference<HeavyValue> weakRef=new WeakReference<>(heavyValue);
+  tester.set("a",heavyValue);
+  graph=new InMemoryGraph();
+  eval(false,key);
+  invalidate(graph,null,key);
+  tester=null;
+  heavyValue=null;
+  if (gcExpected()) {
+    GcFinalization.awaitClear(weakRef);
+  }
+ else {
+    System.gc();
+    Thread.sleep(300);
+    assertNotNull(weakRef.get());
+  }
+}

@@ -1,0 +1,28 @@
+{
+  ExecutorService executor=Executors.newFixedThreadPool(DIRTINESS_CHECK_THREADS,new ThreadFactoryBuilder().setNameFormat("FileSystem Value Invalidator %d").build());
+  final BatchDirtyResult batchResult=new BatchDirtyResult();
+  ThrowableRecordingRunnableWrapper wrapper=new ThrowableRecordingRunnableWrapper("FilesystemValueChecker#getDirtyValues");
+  for (  final SkyKey key : values) {
+    Preconditions.checkState(keyFilter.apply(key),key);
+    final SkyValue value=valuesSupplier.get().get(key);
+    executor.execute(wrapper.wrap(new Runnable(){
+      @Override public void run(){
+        if (value == null) {
+          batchResult.add(key,null);
+          return;
+        }
+        DirtyResult result=checker.check(key,value,tsgm);
+        if (result.isDirty()) {
+          batchResult.add(key,result.getNewValue());
+        }
+      }
+    }
+));
+  }
+  boolean interrupted=ExecutorShutdownUtil.interruptibleShutdown(executor);
+  Throwables.propagateIfPossible(wrapper.getFirstThrownError());
+  if (interrupted) {
+    throw new InterruptedException();
+  }
+  return batchResult;
+}

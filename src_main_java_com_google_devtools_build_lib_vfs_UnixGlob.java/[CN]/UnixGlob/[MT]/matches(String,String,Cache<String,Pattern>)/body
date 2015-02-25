@@ -1,0 +1,29 @@
+{
+  if (pattern.length() == 0 || str.length() == 0) {
+    return false;
+  }
+  if (pattern.equals("**")) {
+    return true;
+  }
+  if (pattern.equals("*")) {
+    return true;
+  }
+  if (str.charAt(0) == '.' && pattern.charAt(0) != '.') {
+    return false;
+  }
+  if (pattern.charAt(0) == '*' && pattern.lastIndexOf('*') == 0) {
+    return str.endsWith(pattern.substring(1));
+  }
+  int lastIndex=pattern.length() - 1;
+  if (pattern.charAt(lastIndex) == '*' && pattern.indexOf('*') == lastIndex) {
+    return str.startsWith(pattern.substring(0,lastIndex));
+  }
+  Pattern regex=patternCache == null ? null : patternCache.getIfPresent(pattern);
+  if (regex == null) {
+    regex=makePatternFromWildcard(pattern);
+    if (patternCache != null) {
+      patternCache.put(pattern,regex);
+    }
+  }
+  return regex.matcher(str).matches();
+}

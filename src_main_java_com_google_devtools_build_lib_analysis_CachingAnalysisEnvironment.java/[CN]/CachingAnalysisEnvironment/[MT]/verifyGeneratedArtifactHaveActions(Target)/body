@@ -1,0 +1,16 @@
+{
+  Collection<String> orphanArtifacts=getOrphanArtifactMap().values();
+  List<String> checkedActions=null;
+  if (!orphanArtifacts.isEmpty()) {
+    checkedActions=Lists.newArrayListWithCapacity(actions.size());
+    for (    Action action : actions) {
+      StringBuilder sb=shortDescription(action);
+      for (      Artifact o : action.getOutputs()) {
+        sb.append("\n    ");
+        sb.append(o.getExecPathString());
+      }
+      checkedActions.add(sb.toString());
+    }
+    throw new IllegalStateException(String.format("%s %s : These artifacts miss a generating action:\n%s\n" + "These actions we checked:\n%s\n",target.getTargetKind(),target.getLabel(),Joiner.on('\n').join(orphanArtifacts),Joiner.on('\n').join(checkedActions)));
+  }
+}

@@ -1,0 +1,50 @@
+{
+  if (pos > 1) {
+    addToken(new Token(TokenKind.NEWLINE,pos - 1,pos));
+  }
+  int indentLen=0;
+  while (pos < buffer.length) {
+    char c=buffer[pos];
+    if (c == ' ') {
+      indentLen++;
+      pos++;
+    }
+ else     if (c == '\t') {
+      indentLen+=8 - indentLen % 8;
+      pos++;
+    }
+ else     if (c == '\n') {
+      indentLen=0;
+      pos++;
+    }
+ else     if (c == '#') {
+      int oldPos=pos;
+      while (pos < buffer.length && c != '\n') {
+        c=buffer[pos++];
+      }
+      addToken(new Token(TokenKind.COMMENT,oldPos,pos - 1,bufferSlice(oldPos,pos - 1)));
+      indentLen=0;
+    }
+ else {
+      break;
+    }
+  }
+  if (pos == buffer.length) {
+    indentLen=0;
+  }
+  int peekedIndent=indentStack.peek();
+  if (peekedIndent < indentLen) {
+    indentStack.push(indentLen);
+    addToken(new Token(TokenKind.INDENT,pos - 1,pos));
+  }
+ else   if (peekedIndent > indentLen) {
+    while (peekedIndent > indentLen) {
+      indentStack.pop();
+      addToken(new Token(TokenKind.OUTDENT,pos - 1,pos));
+      peekedIndent=indentStack.peek();
+    }
+    if (peekedIndent < indentLen) {
+      error("indentation error");
+    }
+  }
+}

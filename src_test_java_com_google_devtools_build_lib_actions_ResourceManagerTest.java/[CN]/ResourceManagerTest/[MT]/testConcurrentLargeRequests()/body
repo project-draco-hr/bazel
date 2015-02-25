@@ -1,0 +1,45 @@
+{
+  assertFalse(rm.inUse());
+  TestThread thread1=new TestThread(){
+    @Override public void runTest() throws Exception {
+      acquire(2000,2,0);
+      sync.await();
+      validate(1);
+      sync.await();
+      while (rm.getWaitCount() == 0) {
+        Thread.yield();
+      }
+      release(2000,2,0);
+      assertEquals(0,rm.getWaitCount());
+      acquire(2000,2,0);
+      validate(3);
+      release(2000,2,0);
+    }
+  }
+;
+  TestThread thread2=new TestThread(){
+    @Override public void runTest() throws Exception {
+      sync2.await();
+      assertFalse(rm.isAvailable(2000,2,0));
+      acquire(2000,2,0);
+      validate(2);
+      sync2.await();
+      while (rm.getWaitCount() == 0) {
+        Thread.yield();
+      }
+      release(2000,2,0);
+    }
+  }
+;
+  thread1.start();
+  thread2.start();
+  sync.await(1,TimeUnit.SECONDS);
+  assertTrue(rm.inUse());
+  assertEquals(0,rm.getWaitCount());
+  sync2.await(1,TimeUnit.SECONDS);
+  sync.await(1,TimeUnit.SECONDS);
+  sync2.await(1,TimeUnit.SECONDS);
+  thread1.joinAndAssertState(1000);
+  thread2.joinAndAssertState(1000);
+  assertFalse(rm.inUse());
+}

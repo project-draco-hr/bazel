@@ -1,0 +1,21 @@
+{
+  try {
+    List<Target> targets=new ArrayList<>();
+    for (    Label label : NonconfigurableAttributeMapper.of(testSuite).get(attrName,Type.LABEL_LIST)) {
+      targets.add(targetProvider.getTarget(eventHandler,label));
+    }
+    return targets;
+  }
+ catch (  NoSuchThingException e) {
+    if (keepGoing) {
+      hasError=true;
+      eventHandler.handle(Event.error(e.getMessage()));
+      return ImmutableList.of();
+    }
+    throw new TargetParsingException(e.getMessage(),e);
+  }
+catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+    throw new TargetParsingException("interrupted",e);
+  }
+}

@@ -1,0 +1,27 @@
+{
+  if (containingPkgLookupValue == null) {
+    return true;
+  }
+  if (!containingPkgLookupValue.hasContainingPackage()) {
+    return false;
+  }
+  PackageIdentifier containingPkg=containingPkgLookupValue.getContainingPackageName();
+  if (containingPkg.equals(label.getPackageIdentifier())) {
+    return false;
+  }
+  if (!containingPkg.getPackageFragment().startsWith(label.getPackageFragment())) {
+    return false;
+  }
+  PathFragment labelNameFragment=new PathFragment(label.getName());
+  String message=String.format("Label '%s' crosses boundary of subpackage '%s'",label,containingPkg);
+  Path containingRoot=containingPkgLookupValue.getContainingPackageRoot();
+  if (pkgRoot.equals(containingRoot)) {
+    PathFragment labelNameInContainingPackage=labelNameFragment.subFragment(containingPkg.getPackageFragment().segmentCount() - label.getPackageFragment().segmentCount(),labelNameFragment.segmentCount());
+    message+=" (perhaps you meant to put the colon here: " + "'//" + containingPkg + ":"+ labelNameInContainingPackage+ "'?)";
+  }
+ else {
+    message+=" (have you deleted " + containingPkg + "/BUILD? "+ "If so, use the --deleted_packages="+ containingPkg+ " option)";
+  }
+  pkgBuilder.addEvent(Event.error(location,message));
+  return true;
+}

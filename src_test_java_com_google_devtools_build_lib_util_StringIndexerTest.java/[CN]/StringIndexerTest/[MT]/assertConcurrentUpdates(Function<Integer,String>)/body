@@ -1,0 +1,38 @@
+{
+  final AtomicInteger safeIndex=new AtomicInteger(-1);
+  List<String> keys=Lists.newArrayListWithCapacity(ATTEMPTS);
+  ThreadPoolExecutor executor=new ThreadPoolExecutor(3,3,5,TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(ATTEMPTS));
+synchronized (indexer) {
+    for (int i=0; i < ATTEMPTS; i++) {
+      final String key=keyGenerator.apply(i);
+      keys.add(key);
+      executor.execute(new Runnable(){
+        @Override public void run(){
+          int index=indexer.getOrCreateIndex(key);
+          if (safeIndex.get() < index) {
+            safeIndex.set(index);
+          }
+          indexer.addString(key);
+        }
+      }
+);
+    }
+  }
+  try {
+    while (!executor.getQueue().isEmpty()) {
+      if (safeIndex.get() >= 0) {
+        int index=safeIndex.get();
+        String key=indexer.getStringForIndex(index);
+        assertNotNull(key);
+        assertEquals(index,indexer.getIndex(key));
+      }
+    }
+  }
+  finally {
+    executor.shutdown();
+    executor.awaitTermination(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS);
+  }
+  for (  String key : keys) {
+    assertEquals(key,indexer.getStringForIndex(indexer.getIndex(key)));
+  }
+}

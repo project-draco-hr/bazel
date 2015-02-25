@@ -1,0 +1,10 @@
+{
+  NestedSetBuilder<Artifact> prerequisites=NestedSetBuilder.stableOrder();
+  if (ruleContext.getRule().getRuleClassObject().hasAttr("srcs",Type.LABEL_LIST)) {
+    for (    FileProvider provider : ruleContext.getPrerequisites("srcs",Mode.TARGET,FileProvider.class)) {
+      prerequisites.addAll(FileType.filter(provider.getFilesToBuild(),SOURCE_TYPES));
+    }
+  }
+  prerequisites.addTransitive(context.getDeclaredIncludeSrcs());
+  return new CompilationPrerequisitesProvider(prerequisites.build());
+}

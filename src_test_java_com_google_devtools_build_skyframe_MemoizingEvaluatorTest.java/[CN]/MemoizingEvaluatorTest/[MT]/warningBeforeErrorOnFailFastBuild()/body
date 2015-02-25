@@ -1,0 +1,15 @@
+{
+  tester.set("dep",new StringValue("dep")).setWarning("warn-dep");
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  tester.getOrCreate(topKey).setHasError(true).addDependency("dep");
+  for (int i=0; i < 2; i++) {
+    initializeReporter();
+    EvaluationResult<StringValue> result=tester.eval(false,"top");
+    assertTrue(result.hasError());
+    assertThat(result.getError(topKey).getRootCauses()).containsExactly(topKey);
+    assertEquals(topKey.toString(),result.getError(topKey).getException().getMessage());
+    assertTrue(result.getError(topKey).getException() instanceof SomeErrorException);
+    JunitTestUtils.assertContainsEvent(eventCollector,"warn-dep");
+    JunitTestUtils.assertEventCount(1,eventCollector);
+  }
+}

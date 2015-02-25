@@ -1,0 +1,13 @@
+{
+  int start=token.left;
+  Ident ident=parseIdent();
+  if (token.kind == TokenKind.EQUALS) {
+    nextToken();
+    Expression expr=parseExpression();
+    return setLocation(new Argument(ident,expr),start,expr);
+  }
+ else   if (onlyOptional) {
+    reportError(ident.getLocation(),"Optional arguments are only allowed at the end of the argument list.");
+  }
+  return setLocation(new Argument(ident),start,ident);
+}

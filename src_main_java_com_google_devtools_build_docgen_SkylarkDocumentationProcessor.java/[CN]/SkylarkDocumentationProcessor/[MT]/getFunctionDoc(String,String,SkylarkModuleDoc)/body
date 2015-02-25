@@ -1,0 +1,23 @@
+{
+  if (module.getBuiltinMethods().containsKey(methodName)) {
+    SkylarkBuiltinMethod method=module.getBuiltinMethods().get(methodName);
+    StringBuilder sb=new StringBuilder();
+    printBuiltinFunctionDoc(moduleName,method.annotation,sb);
+    printParams(moduleName,method.annotation,sb);
+    return DocgenConsts.removeDuplicatedNewLines(DocgenConsts.toCommandLineFormat(sb.toString()));
+  }
+ else {
+    StringBuilder sb=new StringBuilder();
+    boolean foundMatchingMethod=false;
+    for (    SkylarkJavaMethod method : module.getJavaMethods()) {
+      if (method.name.equals(methodName)) {
+        printJavaFunctionDoc(moduleName,method,sb);
+        foundMatchingMethod=true;
+      }
+    }
+    if (foundMatchingMethod) {
+      return DocgenConsts.toCommandLineFormat(sb.toString());
+    }
+  }
+  return null;
+}

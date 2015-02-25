@@ -1,0 +1,15 @@
+{
+  Parser parser=new Parser(lexer,eventHandler,locator).setSkylarkMode(true);
+  List<Statement> statements=parser.parseFileInput();
+  boolean hasSemanticalErrors=false;
+  try {
+    for (    Statement statement : statements) {
+      statement.validate(validationEnvironment);
+    }
+  }
+ catch (  EvalException e) {
+    eventHandler.handle(Event.error(e.getLocation(),e.getMessage()));
+    hasSemanticalErrors=true;
+  }
+  return new ParseResult(statements,parser.comments,parser.errorsCount > 0 || lexer.containsErrors() || hasSemanticalErrors);
+}

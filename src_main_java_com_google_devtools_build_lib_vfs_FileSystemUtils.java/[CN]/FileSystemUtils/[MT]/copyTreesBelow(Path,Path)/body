@@ -1,0 +1,21 @@
+{
+  if (to.startsWith(from)) {
+    throw new IllegalArgumentException(to + " is a subdirectory of " + from);
+  }
+  Collection<Path> entries=from.getDirectoryEntries();
+  for (  Path entry : entries) {
+    if (entry.isDirectory(Symlinks.NOFOLLOW)) {
+      Path subDir=to.getChild(entry.getBaseName());
+      subDir.createDirectory();
+      copyTreesBelow(entry,subDir);
+    }
+ else     if (entry.isSymbolicLink()) {
+      Path newLink=to.getChild(entry.getBaseName());
+      newLink.createSymbolicLink(entry.readSymbolicLink());
+    }
+ else {
+      Path newEntry=to.getChild(entry.getBaseName());
+      copyFile(entry,newEntry);
+    }
+  }
+}

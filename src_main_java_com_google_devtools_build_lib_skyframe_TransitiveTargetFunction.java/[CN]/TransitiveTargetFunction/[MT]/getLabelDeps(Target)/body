@@ -1,0 +1,19 @@
+{
+  final Set<Label> labels=new HashSet<>();
+  if (target instanceof OutputFile) {
+    Rule rule=((OutputFile)target).getGeneratingRule();
+    labels.add(rule.getLabel());
+    visitTargetVisibility(target,labels);
+  }
+ else   if (target instanceof InputFile) {
+    visitTargetVisibility(target,labels);
+  }
+ else   if (target instanceof Rule) {
+    visitTargetVisibility(target,labels);
+    labels.addAll(((Rule)target).getLabels(Rule.NO_NODEP_ATTRIBUTES));
+  }
+ else   if (target instanceof PackageGroup) {
+    visitPackageGroup((PackageGroup)target,labels);
+  }
+  return labels;
+}

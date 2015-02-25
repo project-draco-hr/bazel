@@ -1,0 +1,16 @@
+{
+  initializeTester();
+  SkyKey errorKey=GraphTester.toSkyKey("my_error_value");
+  tester.getOrCreate(errorKey).setHasError(true);
+  tester.set("after",new StringValue("after"));
+  SkyKey parentKey=GraphTester.toSkyKey("parent");
+  tester.getOrCreate(parentKey).addErrorDependency(errorKey,new StringValue("recovered")).setComputedValue(CONCATENATE).addDependency("after");
+  EvaluationResult<StringValue> result=tester.eval(true,parentKey);
+  assertThat(result.errorMap()).isEmpty();
+  assertEquals("recoveredafter",result.get(parentKey).getValue());
+  tester.set("after",new StringValue("before"));
+  tester.invalidate();
+  result=tester.eval(true,parentKey);
+  assertThat(result.errorMap()).isEmpty();
+  assertEquals("recoveredbefore",result.get(parentKey).getValue());
+}

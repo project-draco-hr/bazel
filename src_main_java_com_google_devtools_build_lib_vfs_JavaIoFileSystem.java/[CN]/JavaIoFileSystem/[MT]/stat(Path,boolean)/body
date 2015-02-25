@@ -1,0 +1,35 @@
+{
+  File file=getIoFile(path);
+  final BasicFileAttributes attributes;
+  try {
+    attributes=Files.readAttributes(file.toPath(),BasicFileAttributes.class,linkOpts(followSymlinks));
+  }
+ catch (  java.nio.file.FileSystemException e) {
+    throw new FileNotFoundException(path + ERR_NO_SUCH_FILE_OR_DIR);
+  }
+  FileStatus status=new FileStatus(){
+    @Override public boolean isFile(){
+      return attributes.isRegularFile();
+    }
+    @Override public boolean isDirectory(){
+      return attributes.isDirectory();
+    }
+    @Override public boolean isSymbolicLink(){
+      return attributes.isSymbolicLink();
+    }
+    @Override public long getSize() throws IOException {
+      return attributes.size();
+    }
+    @Override public long getLastModifiedTime() throws IOException {
+      return attributes.lastModifiedTime().toMillis();
+    }
+    @Override public long getLastChangeTime(){
+      return attributes.lastModifiedTime().toMillis();
+    }
+    @Override public long getNodeId(){
+      return -1;
+    }
+  }
+;
+  return status;
+}

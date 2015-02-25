@@ -1,0 +1,26 @@
+{
+  assertFalse(dataPath.exists());
+  assertFalse(journalPath.exists());
+  setupTestContent();
+  psi.save();
+  assertTrue(dataPath.exists());
+  assertFalse(journalPath.exists());
+  long oldDataFileLen=dataPath.getFileSize();
+  int size=psi.size();
+  int numToWrite=50000;
+  writeLotsOfEntriesConcurrently(numToWrite);
+  assertFalse(journalPath.exists());
+  clock.advance(4);
+  assertIndex(size + numToWrite,"another record");
+  assertSize(size + numToWrite + 1);
+  assertTrue(dataPath.exists());
+  assertTrue(journalPath.exists());
+  psi=PersistentStringIndexer.newPersistentStringIndexer(dataPath,clock);
+  assertTrue(dataPath.exists());
+  assertFalse(journalPath.exists());
+  assertTrue(dataPath.getFileSize() > oldDataFileLen);
+  clock.advance(4);
+  assertSize(size + numToWrite + 1);
+  assertContent();
+  assertFalse(journalPath.exists());
+}

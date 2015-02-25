@@ -1,0 +1,41 @@
+{
+  initializeTester();
+  final SkyKey buildFile=GraphTester.toSkyKey("buildFile");
+  ValueComputer authorDrink=new ValueComputer(){
+    @Override public SkyValue compute(    Map<SkyKey,SkyValue> deps,    SkyFunction.Environment env){
+      String author=((StringValue)deps.get(buildFile)).getValue();
+      StringValue beverage;
+switch (author) {
+case "hemingway":
+        beverage=(StringValue)env.getValue(GraphTester.toSkyKey("absinthe"));
+      break;
+case "joyce":
+    beverage=(StringValue)env.getValue(GraphTester.toSkyKey("whiskey"));
+  break;
+default :
+throw new IllegalStateException(author);
+}
+if (beverage == null) {
+return null;
+}
+return new StringValue(author + " drank " + beverage.getValue());
+}
+}
+;
+tester.set(buildFile,new StringValue("hemingway"));
+SkyKey absinthe=GraphTester.toSkyKey("absinthe");
+tester.set(absinthe,new StringValue("absinthe"));
+SkyKey whiskey=GraphTester.toSkyKey("whiskey");
+tester.set(whiskey,new StringValue("whiskey"));
+SkyKey top=GraphTester.toSkyKey("top");
+tester.getOrCreate(top).addDependency(buildFile).setComputedValue(authorDrink);
+StringValue topValue=(StringValue)tester.evalAndGet("top");
+assertEquals("hemingway drank absinthe",topValue.getValue());
+tester.set(buildFile,new StringValue("joyce"));
+tester.getOrCreate(absinthe).setHasError(true);
+tester.invalidate();
+topValue=(StringValue)tester.evalAndGet("top");
+assertEquals("joyce drank whiskey",topValue.getValue());
+assertThat(tester.getDirtyValues()).containsExactly(new StringValue("hemingway"),new StringValue("hemingway drank absinthe"));
+assertThat(tester.getDeletedValues()).isEmpty();
+}

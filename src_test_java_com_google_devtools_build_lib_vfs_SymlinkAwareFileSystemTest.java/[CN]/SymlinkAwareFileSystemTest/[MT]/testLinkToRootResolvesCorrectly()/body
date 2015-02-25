@@ -1,0 +1,16 @@
+{
+  Path rootPath=testFS.getPath("/");
+  Path linkPath=absolutize("link");
+  createSymbolicLink(linkPath,rootPath);
+  try {
+    linkPath.getRelative("test").resolveSymbolicLinks();
+    fail();
+  }
+ catch (  FileNotFoundException e) {
+  }
+  Path rootChild=testFS.getPath("/sbin");
+  if (!rootChild.isDirectory()) {
+    rootChild.createDirectory();
+  }
+  assertEquals(rootChild,linkPath.getRelative("sbin").resolveSymbolicLinks());
+}

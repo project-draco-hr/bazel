@@ -1,0 +1,19 @@
+{
+  initializeTester();
+  SkyKey leaf=GraphTester.toSkyKey("leaf");
+  SkyKey mid=GraphTester.toSkyKey("mid");
+  SkyKey top=GraphTester.toSkyKey("top");
+  tester.getOrCreate(top).addDependency(mid).setComputedValue(COPY);
+  tester.getOrCreate(mid).addDependency(leaf).setComputedValue(COPY);
+  tester.set(leaf,new StringValue("leafy"));
+  tester.set("dummy",new StringValue("dummy"));
+  StringValue topValue=(StringValue)tester.evalAndGet("top");
+  assertEquals("leafy",topValue.getValue());
+  tester.set(leaf,new StringValue("crunchy"));
+  tester.invalidate();
+  tester.evalAndGet("dummy");
+  tester.getOrCreate(mid,true);
+  tester.invalidate();
+  topValue=(StringValue)tester.evalAndGet("top");
+  assertEquals("crunchy",topValue.getValue());
+}

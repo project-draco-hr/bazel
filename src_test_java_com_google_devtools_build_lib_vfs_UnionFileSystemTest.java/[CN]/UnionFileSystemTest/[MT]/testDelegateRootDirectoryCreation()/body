@@ -1,0 +1,19 @@
+{
+  Path foo=unionfs.getPath("/foo");
+  Path bar=unionfs.getPath("/bar");
+  Path out=unionfs.getPath("/out");
+  assertTrue(unionfs.createDirectory(foo));
+  assertTrue(unionfs.createDirectory(bar));
+  assertTrue(unionfs.createDirectory(out));
+  Path outFile=unionfs.getPath("/out/in");
+  FileSystemUtils.writeContentAsLatin1(outFile,"Out");
+  Path testDirUnderRoot=unionfs.getPath(workingDir.asFragment().subFragment(0,1));
+  assertThat(unionfs.getDirectoryEntries(unionfs.getRootDirectory())).containsExactly(foo,bar,out,testDirUnderRoot);
+  assertThat(unionfs.getDirectoryEntries(out)).containsExactly(outFile);
+  assertSame(unionfs.getDelegate(foo),defaultDelegate);
+  assertEquals(foo.asFragment(),unionfs.adjustPath(foo,defaultDelegate).asFragment());
+  assertSame(unionfs.getDelegate(bar),defaultDelegate);
+  assertSame(unionfs.getDelegate(outFile),outDelegate);
+  assertSame(unionfs.getDelegate(out),outDelegate);
+  assertEquals(outFile.asFragment(),unionfs.adjustPath(outFile,outDelegate).asFragment());
+}

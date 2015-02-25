@@ -1,0 +1,14 @@
+{
+  join(timeout);
+  Throwable exception=this.testException;
+  if (isAlive()) {
+    exception=new AssertionError("Test thread " + getName() + " is still alive");
+    exception.setStackTrace(getStackTrace());
+  }
+  if (exception != null) {
+    AssertionError error=new AssertionError("Test thread " + getName() + " failed to execute");
+    error.initCause(exception);
+    throw error;
+  }
+  assertWithMessage("Test thread " + getName() + " has not run successfully").that(isSucceeded).isTrue();
+}

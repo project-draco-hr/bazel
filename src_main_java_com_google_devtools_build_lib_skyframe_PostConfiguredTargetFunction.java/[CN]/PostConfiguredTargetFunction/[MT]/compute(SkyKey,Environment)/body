@@ -1,0 +1,25 @@
+{
+  ImmutableMap<Action,ConflictException> badActions=PrecomputedValue.BAD_ACTIONS.get(env);
+  ConfiguredTargetValue ctValue=(ConfiguredTargetValue)env.getValue(ConfiguredTargetValue.key((ConfiguredTargetKey)skyKey.argument()));
+  SkyframeDependencyResolver resolver=buildViewProvider.getSkyframeBuildView().createDependencyResolver(env);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  for (  Action action : ctValue.getActions()) {
+    if (badActions.containsKey(action)) {
+      throw new ActionConflictFunctionException(badActions.get(action));
+    }
+  }
+  ConfiguredTarget ct=ctValue.getConfiguredTarget();
+  TargetAndConfiguration ctgValue=new TargetAndConfiguration(ct.getTarget(),ct.getConfiguration());
+  Set<ConfigMatchingProvider> configConditions=getConfigurableAttributeConditions(ctgValue,env);
+  if (configConditions == null) {
+    return null;
+  }
+  Collection<Dependency> deps=resolver.dependentNodes(ctgValue,configConditions);
+  env.getValues(Iterables.transform(deps,TO_KEYS));
+  if (env.valuesMissing()) {
+    return null;
+  }
+  return new PostConfiguredTargetValue(ct);
+}

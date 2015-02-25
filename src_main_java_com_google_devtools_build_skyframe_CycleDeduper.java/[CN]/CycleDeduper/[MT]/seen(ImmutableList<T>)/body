@@ -1,0 +1,19 @@
+{
+  ImmutableSet<T> cycleMembers=ImmutableSet.copyOf(cycle);
+  Preconditions.checkState(!cycle.isEmpty());
+  Preconditions.checkState(cycle.size() == cycleMembers.size(),"cycle doesn't have unique members: " + cycle);
+  if (knownCyclesByMembers.containsEntry(cycleMembers,cycle)) {
+    return false;
+  }
+  boolean found=false;
+  for (  ImmutableList<T> candidateCycle : knownCyclesByMembers.get(cycleMembers)) {
+    int startPos=candidateCycle.indexOf(cycle.get(0));
+    Preconditions.checkState(startPos >= 0);
+    if (equalsWithSingleLoopFrom(cycle,candidateCycle,startPos)) {
+      found=true;
+      break;
+    }
+  }
+  knownCyclesByMembers.put(cycleMembers,cycle);
+  return !found;
+}

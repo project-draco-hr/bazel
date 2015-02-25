@@ -1,0 +1,15 @@
+{
+  ParameterizedType t=(ParameterizedType)method.getGenericReturnType();
+  Type type=t.getActualTypeArguments()[0];
+  if (type instanceof Class) {
+    return (Class<?>)type;
+  }
+  if (type instanceof WildcardType) {
+    WildcardType wildcard=(WildcardType)type;
+    Type upperBound=wildcard.getUpperBounds()[0];
+    if (upperBound instanceof Class) {
+      return (Class<?>)upperBound;
+    }
+  }
+  throw new IllegalStateException("Cannot infer type from method signature " + method);
+}

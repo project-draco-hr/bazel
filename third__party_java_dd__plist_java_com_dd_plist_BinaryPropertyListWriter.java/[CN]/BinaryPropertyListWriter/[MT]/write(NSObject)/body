@@ -1,0 +1,53 @@
+{
+  write(new byte[]{'b','p','l','i','s','t'});
+switch (version) {
+case VERSION_00:
+{
+      write(new byte[]{'0','0'});
+      break;
+    }
+case VERSION_10:
+{
+    write(new byte[]{'1','0'});
+    break;
+  }
+case VERSION_15:
+{
+  write(new byte[]{'1','5'});
+  break;
+}
+case VERSION_20:
+{
+write(new byte[]{'2','0'});
+break;
+}
+}
+root.assignIDs(this);
+idSizeInBytes=computeIdSizeInBytes(idMap.size());
+long[] offsets=new long[idMap.size()];
+for (Map.Entry<NSObject,Integer> entry : idMap.entrySet()) {
+NSObject obj=entry.getKey();
+int id=entry.getValue();
+offsets[id]=count;
+if (obj == null) {
+write(0x00);
+}
+ else {
+obj.toBinary(this);
+}
+}
+long offsetTableOffset=count;
+int offsetSizeInBytes=computeOffsetSizeInBytes(count);
+for (long offset : offsets) {
+writeBytes(offset,offsetSizeInBytes);
+}
+if (version != VERSION_15) {
+write(new byte[6]);
+write(offsetSizeInBytes);
+write(idSizeInBytes);
+writeLong(idMap.size());
+writeLong(idMap.get(root));
+writeLong(offsetTableOffset);
+}
+out.flush();
+}

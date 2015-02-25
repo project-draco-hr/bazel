@@ -1,0 +1,40 @@
+{
+  long entrypos=pos - 4;
+  String entryDesc="file directory entry '" + entry.name + "' at "+ Long.toHexString(entrypos);
+  byte[] entryBuffer=new byte[DIRECTORY_ENTRY_BUFFER_SIZE];
+  readFully(entryBuffer,"reading central directory entry");
+  int versionMadeBy=getUnsignedShort(entryBuffer,0);
+  int versionToExtract=getUnsignedShort(entryBuffer,2);
+  int flags=getUnsignedShort(entryBuffer,4);
+  int method=getUnsignedShort(entryBuffer,6);
+  int dosTime=(int)getUnsignedInt(entryBuffer,8);
+  int crc32=(int)getUnsignedInt(entryBuffer,12);
+  long compressedSize=getUnsignedInt(entryBuffer,16);
+  long uncompressedSize=getUnsignedInt(entryBuffer,20);
+  int filenameLength=getUnsignedShort(entryBuffer,24);
+  int extraLength=getUnsignedShort(entryBuffer,26);
+  int commentLength=getUnsignedShort(entryBuffer,28);
+  int diskNumberStart=getUnsignedShort(entryBuffer,30);
+  int internalAttributes=getUnsignedShort(entryBuffer,32);
+  int externalAttributes=(int)getUnsignedInt(entryBuffer,34);
+  long offset=getUnsignedInt(entryBuffer,38);
+  byte[] filename=new byte[filenameLength];
+  readFully(filename,"reading file name");
+  skip(extraLength,"skipping extra data");
+  String name=new String(filename,"UTF-8");
+  if (!name.equals(entry.name)) {
+    throw new IOException(entryDesc + ": file name in central directory does not match original " + "name");
+  }
+  if (offset != entry.pos) {
+    throw new IOException(entryDesc);
+  }
+  if (flags != entry.flags) {
+    throw new IOException(entryDesc);
+  }
+  if (method != entry.method) {
+    throw new IOException(entryDesc);
+  }
+  if (dosTime != entry.dosTime) {
+    throw new IOException(entryDesc);
+  }
+}

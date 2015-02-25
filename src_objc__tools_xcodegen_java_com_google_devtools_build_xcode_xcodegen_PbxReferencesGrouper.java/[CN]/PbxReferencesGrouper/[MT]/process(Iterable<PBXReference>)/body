@@ -1,0 +1,19 @@
+{
+  Map<SourceTree,Groups> groupsBySourceTree=ImmutableMap.of(SourceTree.GROUP,new Groups("workspace_root",SourceTree.GROUP),SourceTree.SDKROOT,new Groups("SDKROOT",SourceTree.SDKROOT),SourceTree.BUILT_PRODUCTS_DIR,new Groups("BUILT_PRODUCTS_DIR",SourceTree.BUILT_PRODUCTS_DIR));
+  ImmutableList.Builder<PBXReference> result=new ImmutableList.Builder<>();
+  for (  PBXReference reference : references) {
+    if (Containing.key(groupsBySourceTree,reference.getSourceTree())) {
+      Path containingDir=dirOfContainingPbxGroup(reference);
+      Mapping.of(groupsBySourceTree,reference.getSourceTree()).get().add(containingDir,reference);
+    }
+ else {
+      result.add(reference);
+    }
+  }
+  for (  Groups groupsRoot : groupsBySourceTree.values()) {
+    if (!groupsRoot.rootGroup().getChildren().isEmpty()) {
+      result.add(groupsRoot.rootGroup());
+    }
+  }
+  return result.build();
+}

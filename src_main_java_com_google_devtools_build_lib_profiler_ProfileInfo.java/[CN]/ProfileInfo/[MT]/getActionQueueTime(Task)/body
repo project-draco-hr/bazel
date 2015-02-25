@@ -1,0 +1,16 @@
+{
+  if (actionTask.type == ProfilerTask.CRITICAL_PATH_COMPONENT) {
+    return 0;
+  }
+  Preconditions.checkArgument(actionTask.type == ProfilerTask.ACTION);
+  Task related=parallelBuilderCompletionQueueTasks.get(actionTask);
+  if (related != null) {
+    Preconditions.checkState(related.type == ProfilerTask.ACTION_BUILDER);
+    long time=related.startTime - (actionTask.startTime + actionTask.duration);
+    Preconditions.checkState(time >= 0);
+    return time;
+  }
+ else {
+    return 0L;
+  }
+}

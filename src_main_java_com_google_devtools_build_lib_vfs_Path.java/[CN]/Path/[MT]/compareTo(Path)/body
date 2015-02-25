@@ -1,0 +1,39 @@
+{
+  if (equals(o)) {
+    return 0;
+  }
+  FileSystem otherFs=o.getFileSystem();
+  if (!fileSystem.equals(otherFs)) {
+    int thisFileSystemHash=System.identityHashCode(fileSystem);
+    int otherFileSystemHash=System.identityHashCode(otherFs);
+    if (thisFileSystemHash < otherFileSystemHash) {
+      return -1;
+    }
+ else     if (thisFileSystemHash > otherFileSystemHash) {
+      return 1;
+    }
+ else {
+      return 0;
+    }
+  }
+  Path a=this, b=o;
+  int maxDepth=Math.min(a.depth,b.depth);
+  while (a.depth > maxDepth) {
+    a=a.getParentDirectory();
+  }
+  while (b.depth > maxDepth) {
+    b=b.getParentDirectory();
+  }
+  if (a.equals(b)) {
+    return equals(a) ? -1 : 1;
+  }
+  Path previousa, previousb;
+  do {
+    previousa=a;
+    previousb=b;
+    a=a.getParentDirectory();
+    b=b.getParentDirectory();
+  }
+ while (a != b);
+  return previousa.name.compareTo(previousb.name);
+}

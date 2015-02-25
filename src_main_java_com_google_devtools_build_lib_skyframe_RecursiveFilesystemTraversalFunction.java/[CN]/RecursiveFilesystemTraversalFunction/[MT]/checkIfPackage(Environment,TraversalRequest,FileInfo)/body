@@ -1,0 +1,21 @@
+{
+  Preconditions.checkArgument(rootInfo.type.exists() && !rootInfo.type.isFile(),"{%s} {%s}",traversal,rootInfo);
+  PackageLookupValue pkgLookup=(PackageLookupValue)getDependentSkyValue(env,PackageLookupValue.key(traversal.path.getRelativePath()));
+  if (pkgLookup.packageExists()) {
+    if (traversal.isGenerated) {
+      return PkgLookupResult.conflict(traversal,rootInfo);
+    }
+ else {
+      Path pkgRoot=pkgLookup.getRoot();
+      if (!pkgRoot.equals(traversal.path.getRoot())) {
+        traversal=traversal.forChangedRootPath(pkgRoot);
+        rootInfo=lookUpFileInfo(env,traversal);
+        Verify.verify(rootInfo.type.exists(),"{%s} {%s}",traversal,rootInfo);
+      }
+      return PkgLookupResult.pkg(traversal,rootInfo);
+    }
+  }
+ else {
+    return PkgLookupResult.directory(traversal,rootInfo);
+  }
+}

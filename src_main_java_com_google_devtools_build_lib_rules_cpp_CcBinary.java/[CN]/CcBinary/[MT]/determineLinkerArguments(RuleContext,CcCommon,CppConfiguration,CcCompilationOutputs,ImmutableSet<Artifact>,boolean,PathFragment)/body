@@ -1,0 +1,28 @@
+{
+  CppLinkAction.Builder builder=new CppLinkAction.Builder(context,executableName).setCrosstoolInputs(CppHelper.getToolchain(context).getLink()).addNonLibraryInputs(compilationPrerequisites);
+  boolean usePic=CppHelper.usePic(context,!isLinkShared(context)) && !fake;
+  Iterable<Artifact> compiledObjectFiles=compilationOutputs.getObjectFiles(usePic);
+  if (fake) {
+    builder.addFakeNonLibraryInputs(compiledObjectFiles);
+  }
+ else {
+    builder.addNonLibraryInputs(compiledObjectFiles);
+  }
+  builder.addNonLibraryInputs(common.getObjectFilesFromSrcs(usePic));
+  builder.addNonLibraryInputs(common.getLinkerScripts());
+  for (  Artifact library : common.getLibrariesFromSrcs()) {
+    if (SHARED_LIBRARY_FILETYPES.matches(library.getFilename())) {
+      builder.addLibrary(common.getDynamicLibrarySymlink(library,true));
+    }
+ else {
+      builder.addLibrary(LinkerInputs.opaqueLibraryToLink(library));
+    }
+  }
+  List<String> linkopts=new ArrayList<>();
+  Map<Artifact,ImmutableList<Artifact>> linkstamps=new LinkedHashMap<>();
+  NestedSet<LibraryToLink> librariesInDepsClosure=findLibrariesToLinkInDepsClosure(context,common,cppConfiguration,linkopts,linkstamps);
+  builder.addLinkopts(linkopts);
+  builder.addLinkstamps(linkstamps);
+  builder.addLibraries(librariesInDepsClosure);
+  return builder;
+}

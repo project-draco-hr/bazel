@@ -1,0 +1,16 @@
+{
+  String[] resultSegments=new String[depth];
+  Path currentPath=this;
+  for (int pos=depth - 1; pos >= 0; pos--) {
+    resultSegments[pos]=currentPath.getBaseName();
+    currentPath=currentPath.getParentDirectory();
+  }
+  char driveLetter='\0';
+  if (resultSegments.length > 0) {
+    driveLetter=PathFragment.getWindowsDriveLetter(resultSegments[0]);
+    if (driveLetter != '\0') {
+      resultSegments=Arrays.copyOfRange(resultSegments,1,resultSegments.length);
+    }
+  }
+  return new PathFragment(driveLetter,true,resultSegments);
+}

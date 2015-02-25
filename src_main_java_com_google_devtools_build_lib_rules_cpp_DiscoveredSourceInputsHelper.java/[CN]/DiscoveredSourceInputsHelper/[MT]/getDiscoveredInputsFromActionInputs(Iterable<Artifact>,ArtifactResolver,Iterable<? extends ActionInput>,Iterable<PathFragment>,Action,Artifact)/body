@@ -1,0 +1,39 @@
+{
+  List<PathFragment> systemIncludePrefixes=new ArrayList<>();
+  for (  PathFragment includePath : builtInIncludeDirectories) {
+    if (includePath.isAbsolute()) {
+      systemIncludePrefixes.add(includePath);
+    }
+  }
+  Set<Artifact> knownInputs=new HashSet<>();
+  Iterables.addAll(knownInputs,mandatoryInputs);
+  ImmutableList.Builder<Artifact> foundInputs=ImmutableList.builder();
+  IncludeProblems problems=new IncludeProblems();
+  for (  ActionInput input : discoveredInputs) {
+    if (input instanceof Artifact) {
+      Artifact artifact=(Artifact)input;
+      if (knownInputs.add(artifact)) {
+        foundInputs.add(artifact);
+      }
+      continue;
+    }
+    PathFragment execPath=new PathFragment(input.getExecPathString());
+    if (execPath.isAbsolute()) {
+      if (FileSystemUtils.startsWithAny(execPath,systemIncludePrefixes)) {
+        continue;
+      }
+      problems.add(execPath.getPathString());
+    }
+    Artifact artifact=artifactResolver.resolveSourceArtifact(execPath);
+    if (artifact != null) {
+      if (knownInputs.add(artifact)) {
+        foundInputs.add(artifact);
+      }
+    }
+ else {
+      problems.add(execPath.getPathString());
+    }
+  }
+  problems.assertProblemFree(action,primaryInput);
+  return foundInputs.build();
+}

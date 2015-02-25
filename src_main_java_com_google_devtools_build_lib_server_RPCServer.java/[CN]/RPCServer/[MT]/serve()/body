@@ -1,0 +1,96 @@
+{
+  final AtomicBoolean inAction=new AtomicBoolean(false);
+  final AtomicBoolean allowingInterrupt=new AtomicBoolean(true);
+  final AtomicLong cmdNum=new AtomicLong();
+  final Thread mainThread=Thread.currentThread();
+  final Object interruptLock=new Object();
+  InterruptSignalHandler sigintHandler=new InterruptSignalHandler(){
+    @Override public void run(){
+      LOG.severe("User interrupt");
+synchronized (interruptLock) {
+        if (allowingInterrupt.get()) {
+          mainThread.interrupt();
+        }
+      }
+      Runnable interruptWatcher=new Runnable(){
+        @Override public void run(){
+          try {
+            long originalCmd=cmdNum.get();
+            Thread.sleep(10 * 1000);
+            if (inAction.get() && cmdNum.get() == originalCmd) {
+              ThreadUtils.warnAboutSlowInterrupt();
+            }
+          }
+ catch (          InterruptedException e) {
+          }
+        }
+      }
+;
+      if (inAction.get()) {
+        Thread interruptWatcherThread=new Thread(interruptWatcher,"interrupt-watcher-" + cmdNum);
+        interruptWatcherThread.setDaemon(true);
+        interruptWatcherThread.start();
+      }
+    }
+  }
+;
+  try {
+    while (!lameDuck) {
+      try {
+        IdleServerTasks idleChecker=new IdleServerTasks(workspaceDir);
+        idleChecker.idle();
+        RequestIo requestIo;
+        long startTime=clock.currentTimeMillis();
+        while (true) {
+          try {
+            allowingInterrupt.set(true);
+            Socket socket=serverSocket.accept();
+            long firstContactTime=clock.currentTimeMillis();
+            requestIo=new RequestIo(socket,firstContactTime);
+            break;
+          }
+ catch (          SocketTimeoutException e) {
+            long idleTime=clock.currentTimeMillis() - startTime;
+            if (lameDuck) {
+              closeServerSocket();
+              return;
+            }
+ else             if (idleTime > maxIdleMillis || (idleTime > statusCheckMillis && !idleChecker.continueProcessing(idleTime))) {
+              enterLameDuck();
+            }
+          }
+        }
+        idleChecker.busy();
+        try {
+          cmdNum.incrementAndGet();
+          inAction.set(true);
+          executeRequest(requestIo);
+        }
+  finally {
+          inAction.set(false);
+synchronized (interruptLock) {
+            allowingInterrupt.set(false);
+            Thread.interrupted();
+          }
+          requestIo.shutdown();
+          if (rpcService.isShutdown()) {
+            return;
+          }
+        }
+      }
+ catch (      IOException e) {
+        if (e.getMessage().equals("Broken pipe")) {
+          LOG.info("Connection to the client lost: " + e.getMessage());
+        }
+ else {
+          printStack(e);
+        }
+      }
+    }
+  }
+  finally {
+    rpcService.shutdown();
+    LOG.info("Logging finished");
+    sigintHandler.uninstall();
+  }
+}

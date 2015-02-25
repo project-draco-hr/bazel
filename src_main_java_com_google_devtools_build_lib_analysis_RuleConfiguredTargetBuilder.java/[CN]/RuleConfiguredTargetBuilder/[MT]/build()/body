@@ -1,0 +1,17 @@
+{
+  if (ruleContext.getConfiguration().enforceConstraints()) {
+    checkConstraints();
+  }
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
+  FilesToRunProvider filesToRunProvider=new FilesToRunProvider(ruleContext.getLabel(),RuleContext.getFilesToRun(runfilesSupport,filesToBuild),runfilesSupport,executable);
+  add(FileProvider.class,new FileProvider(ruleContext.getLabel(),filesToBuild));
+  add(FilesToRunProvider.class,filesToRunProvider);
+  if (TargetUtils.isTestRule(ruleContext.getTarget())) {
+    Preconditions.checkState(runfilesSupport != null);
+    add(TestProvider.class,initializeTestProvider(filesToRunProvider));
+  }
+  add(ExtraActionArtifactsProvider.class,initializeExtraActions());
+  return new RuleConfiguredTarget(ruleContext,mandatoryStampFiles,skylarkProviders.build(),providers);
+}

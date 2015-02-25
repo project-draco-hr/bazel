@@ -1,0 +1,15 @@
+{
+  if (followSymlinks) {
+    InMemoryContentInfo status=scopeLimitedStat(path,true);
+    return status.outOfScope() ? statWithDelegator(status.getEscapingPath(),true) : status;
+  }
+ else {
+    if (path.equals(rootPath)) {
+      return rootInode;
+    }
+ else {
+      InMemoryContentInfo status=getNoFollowStatOrOutOfScopeParent(path);
+      return status.outOfScope() ? getDelegatedPath(status.getEscapingPath().getRelative(path.getBaseName())).stat(Symlinks.NOFOLLOW) : status;
+    }
+  }
+}

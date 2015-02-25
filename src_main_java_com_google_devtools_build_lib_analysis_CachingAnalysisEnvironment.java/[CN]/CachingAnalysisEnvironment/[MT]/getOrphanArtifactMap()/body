@@ -1,0 +1,14 @@
+{
+  Set<Artifact> artifactsWithActions=new HashSet<>();
+  for (  Action action : actions) {
+    artifactsWithActions.addAll(action.getOutputs());
+  }
+  Map<Artifact,String> orphanArtifacts=new TreeMap<>();
+  for (  Map.Entry<Artifact,String> entry : artifacts.entrySet()) {
+    Artifact a=entry.getKey();
+    if (!a.isSourceArtifact() && !artifactsWithActions.contains(a)) {
+      orphanArtifacts.put(a,String.format("%s\n%s",a.getExecPathString(),entry.getValue()));
+    }
+  }
+  return orphanArtifacts;
+}

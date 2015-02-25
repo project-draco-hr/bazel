@@ -1,0 +1,42 @@
+{
+  if ((stack.size() & 0x1F) == 0 && Integer.bitCount(stack.size()) == 1) {
+    if (stack.contains(actionTask)) {
+      throw new IllegalStateException("Dependency graph contains loop:\n" + actionTask + " in the\n"+ Joiner.on('\n').join(stack));
+    }
+  }
+  stack.addLast(actionTask);
+  CriticalPathEntry entry;
+  try {
+    entry=cache.get(actionTask);
+    long entryDuration=0;
+    if (entry == null) {
+      Task[] actionPrerequisites=actionDependencyMap.get(actionTask);
+      if (actionPrerequisites != null) {
+        for (        Task task : actionPrerequisites) {
+          CriticalPathEntry candidate=computeCriticalPathForAction(ignoredTypes,ignoredTasks,task,cache,stack);
+          if (entry == null || entryDuration < candidate.cumulativeDuration) {
+            entry=candidate;
+            entryDuration=candidate.cumulativeDuration;
+          }
+        }
+      }
+      if (actionTask.type == ProfilerTask.ACTION) {
+        long duration=actionTask.duration;
+        if (ignoredTasks.contains(actionTask)) {
+          duration=0L;
+        }
+ else {
+          for (          ProfilerTask type : ignoredTypes) {
+            duration-=actionTask.aggregatedStats.getAttr(type).totalTime;
+          }
+        }
+        entry=new CriticalPathEntry(actionTask,duration,entry);
+        cache.put(actionTask,entry);
+      }
+    }
+  }
+  finally {
+    stack.removeLast();
+  }
+  return entry;
+}

@@ -1,0 +1,19 @@
+{
+  int offset=0;
+  int length=data.length;
+  if (preamble != null) {
+    offset+=preamble.length;
+    length-=offset;
+    byte[] maybePreamble=Arrays.copyOfRange(data,0,offset);
+    assertTrue(Arrays.equals(preamble,maybePreamble));
+  }
+  ZipInputStream zipInput=new ZipInputStream(new ByteArrayInputStream(data,offset,length));
+  for (  FakeZipEntry entry : entries) {
+    entry.assertNext(zipInput);
+  }
+  assertNull(zipInput.getNextEntry());
+  int count=getUnsignedShort(data,data.length - 14);
+  assertEquals(entries.size(),count);
+  count=getUnsignedShort(data,data.length - 12);
+  assertEquals(entries.size(),count);
+}

@@ -1,0 +1,15 @@
+{
+  ImmutableSetMultimap.Builder<TargetControl,PBXBuildFile> buildFiles=new ImmutableSetMultimap.Builder<>();
+  for (  TargetControl targetControl : targetControls) {
+    List<PBXBuildFile> targetBuildFiles=new ArrayList<>();
+    Iterable<String> simpleImports=Iterables.concat(targetControl.getXcassetsDirList(),targetControl.getBundleImportList());
+    for (    String simpleImport : simpleImports) {
+      targetBuildFiles.add(pbxBuildFiles.getStandalone(FileReference.of(simpleImport,SourceTree.GROUP)));
+    }
+    Iterables.addAll(targetBuildFiles,pbxBuildFiles.get(AggregateReferenceType.PBXVariantGroup,RelativePaths.fromStrings(fileSystem,targetControl.getGeneralResourceFileList())));
+    if (!Equaling.of(ProductType.STATIC_LIBRARY,XcodeprojGeneration.productType(targetControl))) {
+      buildFiles.putAll(targetControl,targetBuildFiles);
+    }
+  }
+  return new Resources(buildFiles.build());
+}

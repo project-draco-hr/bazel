@@ -1,0 +1,40 @@
+{
+  Preconditions.checkNotNull(form);
+  final int APPROXIMATE_MAXIMUM_MESSAGE_LENGTH=200;
+  StringBuilder message=new StringBuilder();
+  int size=commandLineElements.size();
+  int numberRemaining=size;
+  if (form == CommandDescriptionForm.COMPLETE) {
+    describeCommandImpl.describeCommandBeginIsolate(message);
+  }
+  if (form != CommandDescriptionForm.ABBREVIATED) {
+    if (cwd != null) {
+      describeCommandImpl.describeCommandCwd(cwd,message);
+    }
+    describeCommandImpl.describeCommandExec(message);
+    if (environment != null) {
+      describeCommandImpl.describeCommandEnvPrefix(message);
+      for (      Map.Entry<String,String> entry : Ordering.from(mapEntryComparator).sortedCopy(environment.entrySet())) {
+        message.append("  ");
+        describeCommandImpl.describeCommandEnvVar(message,entry);
+      }
+    }
+  }
+  for (  String commandElement : commandLineElements) {
+    if (form == CommandDescriptionForm.ABBREVIATED && message.length() + commandElement.length() > APPROXIMATE_MAXIMUM_MESSAGE_LENGTH) {
+      message.append(" ... (remaining " + numberRemaining + " argument(s) skipped)");
+      break;
+    }
+ else {
+      if (numberRemaining < size) {
+        message.append(' ');
+      }
+      describeCommandImpl.describeCommandElement(message,commandElement);
+      numberRemaining--;
+    }
+  }
+  if (form == CommandDescriptionForm.COMPLETE) {
+    describeCommandImpl.describeCommandEndIsolate(message);
+  }
+  return message.toString();
+}

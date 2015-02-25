@@ -1,0 +1,28 @@
+{
+  DocumentType docType=doc.getDoctype();
+  if (docType == null) {
+    if (!doc.getDocumentElement().getNodeName().equals("plist")) {
+      throw new UnsupportedOperationException("The given XML document is not a property list.");
+    }
+  }
+ else   if (!docType.getName().equals("plist")) {
+    throw new UnsupportedOperationException("The given XML document is not a property list.");
+  }
+  Node rootNode;
+  if (doc.getDocumentElement().getNodeName().equals("plist")) {
+    List<Node> rootNodes=filterElementNodes(doc.getDocumentElement().getChildNodes());
+    if (rootNodes.isEmpty()) {
+      throw new PropertyListFormatException("The given XML property list has no root element!");
+    }
+ else     if (rootNodes.size() == 1) {
+      rootNode=rootNodes.get(0);
+    }
+ else {
+      throw new PropertyListFormatException("The given XML property list has more than one root element!");
+    }
+  }
+ else {
+    rootNode=doc.getDocumentElement();
+  }
+  return parseObject(rootNode);
+}

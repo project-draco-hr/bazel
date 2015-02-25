@@ -1,0 +1,77 @@
+{
+  int cyclesFound=0;
+  List<SkyKey> graphPath=new ArrayList<>();
+  Set<SkyKey> pathSet=new HashSet<>();
+  Deque<SkyKey> toVisit=new ArrayDeque<>();
+  toVisit.push(root);
+  while (!toVisit.isEmpty()) {
+    SkyKey key=toVisit.pop();
+    NodeEntry entry=graph.get(key);
+    if (key == CHILDREN_FINISHED) {
+      key=graphPath.remove(graphPath.size() - 1);
+      entry=graph.get(key);
+      pathSet.remove(key);
+      if (entry.isDone()) {
+        continue;
+      }
+      if (!keepGoing) {
+        continue;
+      }
+      if (cyclesFound < MAX_CYCLES) {
+        Preconditions.checkState(entry.isReady(),"%s not ready. ValueEntry: %s",key,entry);
+      }
+ else       if (!entry.isReady()) {
+        removeIncompleteChildrenForCycle(key,entry,entry.getTemporaryDirectDeps());
+      }
+      Set<SkyKey> directDeps=entry.getTemporaryDirectDeps();
+      List<ErrorInfo> errorDeps=getChildrenErrorsForCycle(directDeps);
+      Preconditions.checkState(!errorDeps.isEmpty(),"Value %s was not successfully evaluated, but had no child errors. ValueEntry: %s",key,entry);
+      SkyFunctionEnvironment env=new SkyFunctionEnvironment(key,directDeps,visitor);
+      env.setError(new ErrorInfo(key,errorDeps));
+      env.commit(false);
+    }
+    if (entry.isDone()) {
+      continue;
+    }
+    if (cyclesFound == MAX_CYCLES) {
+      continue;
+    }
+    if (pathSet.contains(key)) {
+      int cycleStart=graphPath.indexOf(key);
+      cyclesFound++;
+      Iterable<SkyKey> cycle=graphPath.subList(cycleStart,graphPath.size());
+      if (entry.isDirty() && entry.getDirtyState() == DirtyState.CHECK_DEPENDENCIES) {
+        entry.signalDep();
+      }
+      if (keepGoing) {
+        SkyKey cycleChild=selectCycleChild(key,graphPath,cycleStart);
+        removeDescendantsOfCycleValue(key,entry,cycleChild,toVisit,graphPath.size() - cycleStart);
+        ValueWithMetadata dummyValue=ValueWithMetadata.wrapWithMetadata(new SkyValue(){
+        }
+);
+        SkyFunctionEnvironment env=new SkyFunctionEnvironment(key,entry.getTemporaryDirectDeps(),ImmutableMap.of(cycleChild,dummyValue),visitor);
+        List<ErrorInfo> allErrors=getChildrenErrors(entry.getTemporaryDirectDeps(),cycleChild);
+        CycleInfo cycleInfo=new CycleInfo(cycle);
+        allErrors.add(new ErrorInfo(cycleInfo));
+        env.setError(new ErrorInfo(key,allErrors));
+        env.commit(false);
+        continue;
+      }
+ else {
+        Preconditions.checkState(graphPath.get(0).equals(root),"%s not reached from %s. ValueEntry: %s",key,root,entry);
+        return new ErrorInfo(new CycleInfo(graphPath.subList(0,cycleStart),cycle));
+      }
+    }
+    Iterable<? extends SkyKey> children=graph.get(key).getTemporaryDirectDeps();
+    if (Iterables.isEmpty(children)) {
+      continue;
+    }
+    toVisit.push(CHILDREN_FINISHED);
+    graphPath.add(key);
+    pathSet.add(key);
+    for (    SkyKey nextValue : children) {
+      toVisit.push(nextValue);
+    }
+  }
+  return keepGoing ? getAndCheckDone(root).getErrorInfo() : null;
+}

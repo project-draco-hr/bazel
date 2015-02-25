@@ -1,0 +1,12 @@
+{
+  NestedSetBuilder<Label> builder=NestedSetBuilder.stableOrder();
+  List<TransitiveInfoCollection> currentRuleExports=getExports(ruleContext);
+  builder.addAll(Iterables.transform(currentRuleExports,GET_COLLECTION_LABEL));
+  for (  TransitiveInfoCollection dep : currentRuleExports) {
+    JavaExportsProvider exportsProvider=dep.getProvider(JavaExportsProvider.class);
+    if (exportsProvider != null) {
+      builder.addTransitive(exportsProvider.getTransitiveExports());
+    }
+  }
+  return builder.build();
+}

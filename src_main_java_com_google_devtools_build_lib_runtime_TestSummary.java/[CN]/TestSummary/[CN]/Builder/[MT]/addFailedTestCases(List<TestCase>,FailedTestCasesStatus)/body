@@ -1,0 +1,24 @@
+{
+  checkMutation(status);
+  checkMutation(testCases);
+  if (summary.failedTestCasesStatus == null) {
+    summary.failedTestCasesStatus=status;
+  }
+ else   if (summary.failedTestCasesStatus != status) {
+    summary.failedTestCasesStatus=FailedTestCasesStatus.PARTIAL;
+  }
+  if (testCases.isEmpty()) {
+    return this;
+  }
+  Map<String,TestCase> allCases=new TreeMap<>();
+  if (summary.failedTestCases != null) {
+    for (    TestCase detail : summary.failedTestCases) {
+      allCases.put(detail.getClassName() + "." + detail.getName(),detail);
+    }
+  }
+  for (  TestCase detail : testCases) {
+    allCases.put(detail.getClassName() + "." + detail.getName(),detail);
+  }
+  summary.failedTestCases=new ArrayList<TestCase>(allCases.values());
+  return this;
+}

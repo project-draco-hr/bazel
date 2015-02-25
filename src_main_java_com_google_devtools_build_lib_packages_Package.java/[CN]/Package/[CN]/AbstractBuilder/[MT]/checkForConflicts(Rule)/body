@@ -1,0 +1,35 @@
+{
+  String name=rule.getName();
+  Target existing=targets.get(name);
+  if (existing != null) {
+    throw nameConflict(rule,existing);
+  }
+  Map<String,OutputFile> outputFiles=new HashMap<>();
+  for (  OutputFile outputFile : rule.getOutputFiles()) {
+    String outputFileName=outputFile.getName();
+    if (outputFiles.put(outputFileName,outputFile) != null) {
+      throw duplicateOutputFile(outputFile,outputFile);
+    }
+    existing=targets.get(outputFileName);
+    if (existing != null) {
+      throw duplicateOutputFile(outputFile,existing);
+    }
+    if (outputFilePrefixes.containsKey(outputFileName)) {
+      throw conflictingOutputFile(outputFile,outputFilePrefixes.get(outputFileName));
+    }
+    PathFragment outputFileFragment=new PathFragment(outputFileName);
+    for (int i=1; i < outputFileFragment.segmentCount(); i++) {
+      String prefix=outputFileFragment.subFragment(0,i).toString();
+      if (outputFiles.containsKey(prefix)) {
+        throw conflictingOutputFile(outputFile,outputFiles.get(prefix));
+      }
+      if (targets.containsKey(prefix) && targets.get(prefix) instanceof OutputFile) {
+        throw conflictingOutputFile(outputFile,(OutputFile)targets.get(prefix));
+      }
+      if (!outputFilePrefixes.containsKey(prefix)) {
+        outputFilePrefixes.put(prefix,outputFile);
+      }
+    }
+  }
+  checkForInputOutputConflicts(rule,outputFiles.keySet());
+}

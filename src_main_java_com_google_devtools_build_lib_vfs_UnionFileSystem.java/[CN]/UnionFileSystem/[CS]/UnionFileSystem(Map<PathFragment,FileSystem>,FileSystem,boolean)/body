@@ -1,0 +1,16 @@
+{
+  super();
+  Preconditions.checkNotNull(prefixMapping);
+  Preconditions.checkNotNull(rootFileSystem);
+  Preconditions.checkArgument(rootFileSystem != this,"Circular root filesystem.");
+  Preconditions.checkArgument(!prefixMapping.containsKey(PathFragment.EMPTY_FRAGMENT),"Attempted to specify an explicit root prefix mapping; " + "please use the rootFileSystem argument instead.");
+  this.readOnly=readOnly;
+  this.pathDelegate=new StringTrie<FileSystem>();
+  for (  Map.Entry<PathFragment,FileSystem> prefix : prefixMapping.entrySet()) {
+    FileSystem delegate=prefix.getValue();
+    PathFragment prefixPath=prefix.getKey();
+    String path=prefixPath.getPathString();
+    pathDelegate.put(path,delegate);
+  }
+  pathDelegate.put(PathFragment.EMPTY_FRAGMENT.getPathString(),rootFileSystem);
+}

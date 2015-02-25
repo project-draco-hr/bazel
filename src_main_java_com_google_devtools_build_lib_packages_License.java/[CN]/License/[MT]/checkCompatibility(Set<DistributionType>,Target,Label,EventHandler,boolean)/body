@@ -1,0 +1,30 @@
+{
+  Location location=(target instanceof Rule) ? ((Rule)target).getLocation() : null;
+  LicenseType leastRestrictiveLicense;
+  if (licenseTypes.contains(LicenseType.RESTRICTED_IF_STATICALLY_LINKED)) {
+    Set<LicenseType> tempLicenses=EnumSet.copyOf(licenseTypes);
+    tempLicenses.remove(LicenseType.RESTRICTED_IF_STATICALLY_LINKED);
+    if (staticallyLinked) {
+      tempLicenses.add(LicenseType.RESTRICTED);
+    }
+ else {
+      tempLicenses.add(LicenseType.UNENCUMBERED);
+    }
+    leastRestrictiveLicense=leastRestrictive(tempLicenses);
+  }
+ else {
+    leastRestrictiveLicense=leastRestrictive(licenseTypes);
+  }
+  for (  DistributionType dt : dists) {
+    if (LICENSE_INCOMPATIBILIES.contains(dt,leastRestrictiveLicense)) {
+      if (!exceptions.contains(target.getLabel())) {
+        eventHandler.handle(Event.error(location,"Build target '" + target.getLabel() + "' is not compatible with license '"+ this+ "' from target '"+ licensedTarget+ "'"));
+        return false;
+      }
+    }
+ else     if (LICENSE_WARNINGS.contains(dt,leastRestrictiveLicense)) {
+      eventHandler.handle(Event.warn(location,"Build target '" + target + "' has a potential licensing issue "+ "with a '"+ this+ "' license from target '"+ licensedTarget+ "'"));
+    }
+  }
+  return true;
+}

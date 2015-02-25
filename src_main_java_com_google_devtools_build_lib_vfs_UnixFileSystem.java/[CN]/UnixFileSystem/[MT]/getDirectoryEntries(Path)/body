@@ -1,0 +1,16 @@
+{
+  String name=path.getPathString();
+  String[] entries;
+  long startTime=Profiler.nanoTimeMaybe();
+  try {
+    entries=FilesystemUtils.readdir(name);
+  }
+  finally {
+    profiler.logSimpleTask(startTime,ProfilerTask.VFS_DIR,name);
+  }
+  Collection<Path> result=new ArrayList<>(entries.length);
+  for (  String entry : entries) {
+    result.add(path.getChild(entry));
+  }
+  return result;
+}

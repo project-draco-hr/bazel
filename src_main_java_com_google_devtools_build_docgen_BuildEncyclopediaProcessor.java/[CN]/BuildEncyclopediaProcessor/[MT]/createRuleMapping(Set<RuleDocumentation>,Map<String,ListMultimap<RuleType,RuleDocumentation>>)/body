@@ -1,0 +1,17 @@
+{
+  for (  RuleDocumentation ruleDoc : docEntries) {
+    RuleClass ruleClass=ruleClassProvider.getRuleClassMap().get(ruleDoc.getRuleName());
+    if (ruleClass != null) {
+      String ruleFamily=ruleDoc.getRuleFamily();
+      if (!ruleMapping.containsKey(ruleFamily)) {
+        ruleMapping.put(ruleFamily,LinkedListMultimap.<RuleType,RuleDocumentation>create());
+      }
+      if (ruleClass.isDocumented()) {
+        ruleMapping.get(ruleFamily).put(ruleDoc.getRuleType(),ruleDoc);
+      }
+    }
+ else {
+      throw ruleDoc.createException("Can't find RuleClass for " + ruleDoc.getRuleName());
+    }
+  }
+}

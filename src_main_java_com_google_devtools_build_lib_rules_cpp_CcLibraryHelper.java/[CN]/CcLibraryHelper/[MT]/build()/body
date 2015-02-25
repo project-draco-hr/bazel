@@ -1,0 +1,53 @@
+{
+  Preconditions.checkState(ruleContext.getRule().getRuleClass().equals("cc_inc_library") || ruleContext.getRule().isAttrDefined(":lipo_context_collector",Type.LABEL));
+  if (checkDepsGenerateCpp) {
+    for (    LanguageDependentFragment dep : AnalysisUtils.getProviders(deps,LanguageDependentFragment.class)) {
+      LanguageDependentFragment.Checker.depSupportsLanguage(ruleContext,dep,CppRuleClasses.LANGUAGE);
+    }
+  }
+  CcLinkingOutputs ccLinkingOutputs=CcLinkingOutputs.EMPTY;
+  CcCompilationOutputs ccOutputs=new CcCompilationOutputs.Builder().build();
+  FeatureConfiguration featureConfiguration=CcCommon.configureFeatures(ruleContext);
+  CppModel model=new CppModel(ruleContext,semantics).addSources(sources).addCopts(copts).setLinkTargetType(linkType).setNeverLink(neverlink).setFake(fake).setAllowInterfaceSharedObjects(emitInterfaceSharedObjects).setCreateDynamicLibrary(emitDynamicLibrary).setSaveTemps(true).setEnableLayeringCheck(enableLayeringCheck).setCompileHeaderModules(compileHeaderModules).setNoCopts(nocopts).setDynamicLibraryPath(dynamicLibraryPath).addLinkopts(linkopts).setFeatureConfiguration(featureConfiguration);
+  CppCompilationContext cppCompilationContext=initializeCppCompilationContext(model,featureConfiguration);
+  model.setContext(cppCompilationContext);
+  if (emitCompileActionsIfEmpty || !sources.isEmpty() || compileHeaderModules) {
+    Preconditions.checkState(!compileHeaderModules || cppCompilationContext.getCppModuleMap() != null,"All cc rules must support module maps.");
+    ccOutputs=model.createCcCompileActions();
+    if (!objectFiles.isEmpty() || !picObjectFiles.isEmpty()) {
+      ccOutputs=new CcCompilationOutputs.Builder().merge(ccOutputs).addObjectFiles(objectFiles).addPicObjectFiles(picObjectFiles).build();
+    }
+    if (linkType.isStaticLibraryLink()) {
+      ccLinkingOutputs=model.createCcLinkActions(ccOutputs);
+    }
+  }
+  CcLinkingOutputs originalLinkingOutputs=ccLinkingOutputs;
+  if (!(staticLibraries.isEmpty() && picStaticLibraries.isEmpty() && dynamicLibraries.isEmpty())) {
+    ccLinkingOutputs=new CcLinkingOutputs.Builder().merge(ccLinkingOutputs).addStaticLibraries(staticLibraries).addPicStaticLibraries(picStaticLibraries).addDynamicLibraries(dynamicLibraries).addExecutionDynamicLibraries(dynamicLibraries).build();
+  }
+  DwoArtifactsCollector dwoArtifacts=DwoArtifactsCollector.transitiveCollector(ccOutputs,deps);
+  Runfiles cppStaticRunfiles=collectCppRunfiles(ccLinkingOutputs,true);
+  Runfiles cppSharedRunfiles=collectCppRunfiles(ccLinkingOutputs,false);
+  Map<Class<? extends TransitiveInfoProvider>,TransitiveInfoProvider> providers=new LinkedHashMap<>();
+  providers.put(CppRunfilesProvider.class,new CppRunfilesProvider(cppStaticRunfiles,cppSharedRunfiles));
+  providers.put(CppCompilationContext.class,cppCompilationContext);
+  providers.put(CppDebugFileProvider.class,new CppDebugFileProvider(dwoArtifacts.getDwoArtifacts(),dwoArtifacts.getPicDwoArtifacts()));
+  providers.put(TransitiveLipoInfoProvider.class,collectTransitiveLipoInfo(ccOutputs));
+  providers.put(TempsProvider.class,getTemps(ccOutputs));
+  if (emitCompileProviders) {
+    providers.put(FilesToCompileProvider.class,new FilesToCompileProvider(getFilesToCompile(ccOutputs)));
+    providers.put(CompilationPrerequisitesProvider.class,CcCommon.collectCompilationPrerequisites(ruleContext,cppCompilationContext));
+  }
+  if (emitCcNativeLibrariesProvider) {
+    providers.put(CcNativeLibraryProvider.class,new CcNativeLibraryProvider(collectNativeCcLibraries(ccLinkingOutputs)));
+  }
+  providers.put(CcExecutionDynamicLibrariesProvider.class,collectExecutionDynamicLibraryArtifacts(ccLinkingOutputs.getExecutionDynamicLibraries()));
+  boolean forcePic=ruleContext.getFragment(CppConfiguration.class).forcePic();
+  if (emitCcSpecificLinkParamsProvider) {
+    providers.put(CcSpecificLinkParamsProvider.class,new CcSpecificLinkParamsProvider(createCcLinkParamsStore(ccLinkingOutputs,cppCompilationContext,forcePic)));
+  }
+ else {
+    providers.put(CcLinkParamsProvider.class,new CcLinkParamsProvider(createCcLinkParamsStore(ccLinkingOutputs,cppCompilationContext,forcePic)));
+  }
+  return new Info(providers,ccOutputs,ccLinkingOutputs,originalLinkingOutputs,cppCompilationContext);
+}

@@ -1,0 +1,14 @@
+{
+  for (  SkyKey root : badRoots) {
+    ErrorInfo errorInfo=checkForCycles(root,visitor,keepGoing);
+    if (errorInfo == null) {
+      Preconditions.checkState(!keepGoing,"",root,badRoots);
+      continue;
+    }
+    Preconditions.checkState(!Iterables.isEmpty(errorInfo.getCycleInfo()),"%s was not evaluated, but was not part of a cycle",root);
+    result.addError(root,errorInfo);
+    if (!keepGoing) {
+      return;
+    }
+  }
+}

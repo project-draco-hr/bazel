@@ -1,0 +1,29 @@
+{
+  final String name=path.toString();
+  if (profiler.isActive() && (profiler.isProfiling(ProfilerTask.VFS_WRITE) || profiler.isProfiling(ProfilerTask.VFS_OPEN))) {
+    long startTime=Profiler.nanoTimeMaybe();
+    try {
+      return new FileOutputStream(name,append){
+        @Override public void write(        byte b[]) throws IOException {
+          write(b,0,b.length);
+        }
+        @Override public void write(        byte b[],        int off,        int len) throws IOException {
+          long startTime=Profiler.nanoTimeMaybe();
+          try {
+            super.write(b,off,len);
+          }
+  finally {
+            profiler.logSimpleTask(startTime,ProfilerTask.VFS_WRITE,name);
+          }
+        }
+      }
+;
+    }
+  finally {
+      profiler.logSimpleTask(startTime,ProfilerTask.VFS_OPEN,name);
+    }
+  }
+ else {
+    return new FileOutputStream(name,append);
+  }
+}

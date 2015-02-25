@@ -1,0 +1,24 @@
+{
+  int i=0;
+  if (state == State.NORMAL) {
+    while ((i < len) && (b[off + i] != 0x1b)) {
+      i++;
+    }
+    if (i == len) {
+      output.write(b,off,len);
+      return;
+    }
+  }
+  outputBuffer=new byte[len + ESCAPE_BUFFER_LENGTH];
+  System.arraycopy(b,off,outputBuffer,0,i);
+  outputBufferPos=i;
+  for (; i < len; i++) {
+    processByte(b[off + i]);
+  }
+  try {
+    output.write(outputBuffer,0,outputBufferPos);
+  }
+  finally {
+    outputBuffer=null;
+  }
+}

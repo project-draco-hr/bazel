@@ -1,0 +1,42 @@
+{
+  Preconditions.checkArgument(lipoInputProvider == null || isLipoEnabled());
+  if ((fdoInstrument == null) && (fdoRoot == null)) {
+    return;
+  }
+  List<String> fdoCopts=new ArrayList<>();
+  if (fdoInstrument != null) {
+    fdoCopts.add("-fprofile-generate=" + fdoInstrument.getPathString());
+    if (lipoMode != LipoMode.OFF) {
+      fdoCopts.add("-fripa");
+    }
+  }
+  if (fdoRoot != null) {
+    if (env.getSkyframeEnv().valuesMissing()) {
+      return;
+    }
+    Iterable<Artifact> auxiliaryInputs=getAuxiliaryInputs(ruleContext,env,lipoLabel,sourceName,usePic,lipoInputProvider);
+    builder.addMandatoryInputs(auxiliaryInputs);
+    if (!Iterables.isEmpty(auxiliaryInputs)) {
+      if (useAutoFdo) {
+        fdoCopts.add("-fauto-profile=" + getAutoProfilePath().getPathString());
+      }
+ else {
+        fdoCopts.add("-fprofile-use=" + fdoRootExecPath);
+      }
+      fdoCopts.add("-fprofile-correction");
+      if (lipoInputProvider != null) {
+        fdoCopts.add("-fripa");
+      }
+    }
+  }
+  Iterable<String> filteredCopts=fdoCopts;
+  if (nocopts != null) {
+    filteredCopts=Iterables.filter(fdoCopts,new Predicate<String>(){
+      @Override public boolean apply(      String copt){
+        return !nocopts.matcher(copt).matches();
+      }
+    }
+);
+  }
+  builder.addCopts(0,filteredCopts);
+}

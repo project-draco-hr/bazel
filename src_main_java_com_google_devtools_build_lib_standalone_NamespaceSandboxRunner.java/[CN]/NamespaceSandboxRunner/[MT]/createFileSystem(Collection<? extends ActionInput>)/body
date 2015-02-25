@@ -1,0 +1,45 @@
+{
+  if (!sandboxPath.getParentDirectory().isDirectory()) {
+    FilesystemUtils.mkdir(sandboxPath.getParentDirectory().getPathString(),0755);
+  }
+  FilesystemUtils.mkdir(sandboxPath.getPathString(),0755);
+  String[] dirs={"bin","etc"};
+  for (  String dir : dirs) {
+    FilesystemUtils.mkdir(sandboxPath.getChild(dir).getPathString(),0755);
+    mounts.add("/" + dir);
+  }
+  String[] dirsUsr={"bin","include"};
+  FilesystemUtils.mkdir(sandboxPath.getChild("usr").getPathString(),0755);
+  Path usr=sandboxPath.getChild("usr");
+  for (  String dir : dirsUsr) {
+    FilesystemUtils.mkdir(usr.getChild(dir).getPathString(),0755);
+    mounts.add("/usr/" + dir);
+  }
+  FileSystemUtils.createDirectoryAndParents(usr.getChild("local").getChild("include"));
+  mounts.add("/usr/local/include");
+  String[] rootDirs=FilesystemUtils.readdir("/");
+  for (  String entry : rootDirs) {
+    if (entry.startsWith("lib")) {
+      FilesystemUtils.mkdir(sandboxPath.getChild(entry).getPathString(),0755);
+      mounts.add("/" + entry);
+    }
+  }
+  String[] usrDirs=FilesystemUtils.readdir("/usr/");
+  for (  String entry : usrDirs) {
+    if (entry.startsWith("lib")) {
+      String lib=usr.getChild(entry).getPathString();
+      FilesystemUtils.mkdir(lib,0755);
+      mounts.add("/usr/" + entry);
+    }
+  }
+  if (this.includePrefix != null) {
+    FilesystemUtils.mkdir(sandboxPath.getRelative(includePrefix).getPathString(),0755);
+    for (    PathFragment fullPath : includeDirectories) {
+      FileSystemUtils.createDirectoryAndParents(sandboxPath.getRelative(includePrefix).getRelative(fullPath.getPathString().substring(1)));
+    }
+  }
+  for (  ActionInput output : outputs) {
+    PathFragment parentDirectory=new PathFragment(output.getExecPathString()).getParentDirectory();
+    FileSystemUtils.createDirectoryAndParents(sandboxPath.getRelative(parentDirectory));
+  }
+}

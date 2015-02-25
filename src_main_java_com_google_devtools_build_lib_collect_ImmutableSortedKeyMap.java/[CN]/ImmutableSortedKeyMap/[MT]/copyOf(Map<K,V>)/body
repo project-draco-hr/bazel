@@ -1,0 +1,22 @@
+{
+  if (data.isEmpty()) {
+    return EMPTY_MAP;
+  }
+  if (data instanceof ImmutableSortedKeyMap) {
+    return (ImmutableSortedKeyMap<K,V>)data;
+  }
+  Set<K> keySet=data.keySet();
+  int size=keySet.size();
+  K[] sortedKeys=(K[])new Comparable<?>[size];
+  int index=0;
+  for (  K key : keySet) {
+    sortedKeys[index]=Preconditions.checkNotNull(key);
+    index++;
+  }
+  Arrays.sort(sortedKeys);
+  V[] values=(V[])new Object[size];
+  for (int i=0; i < size; i++) {
+    values[i]=data.get(sortedKeys[i]);
+  }
+  return new ImmutableSortedKeyMap<>(sortedKeys,values);
+}

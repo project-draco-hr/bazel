@@ -1,0 +1,19 @@
+{
+  PathFragment escapingPath;
+  if (linkTarget.isAbsolute()) {
+    escapingPath=linkTarget;
+  }
+ else {
+    int leadingParentRefs=leadingParentReferences(linkTarget);
+    int baseDepth=parentDepth - leadingParentRefs;
+    Preconditions.checkState(baseDepth < scopeRoot.segmentCount());
+    escapingPath=baseDepth > 0 ? scopeRoot.subFragment(0,baseDepth) : scopeRoot.subFragment(0,0);
+    for (int i=leadingParentRefs; i < linkTarget.segmentCount(); i++) {
+      escapingPath=escapingPath.getRelative(linkTarget.getSegment(i));
+    }
+  }
+  while (!descendantSegments.empty()) {
+    escapingPath=escapingPath.getRelative(descendantSegments.pop());
+  }
+  return new OutOfScopeFileStatus(escapingPath);
+}

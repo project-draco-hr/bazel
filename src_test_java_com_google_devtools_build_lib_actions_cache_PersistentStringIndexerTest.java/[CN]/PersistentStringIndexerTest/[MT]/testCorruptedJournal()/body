@@ -1,0 +1,49 @@
+{
+  FileSystemUtils.createDirectoryAndParents(journalPath.getParentDirectory());
+  FileSystemUtils.writeContentAsLatin1(journalPath,"bogus content");
+  try {
+    psi=PersistentStringIndexer.newPersistentStringIndexer(dataPath,clock);
+    fail();
+  }
+ catch (  IOException e) {
+    assertThat(e.getMessage()).contains("too short: Only 13 bytes");
+  }
+  journalPath.delete();
+  setupTestContent();
+  assertFalse(dataPath.exists());
+  assertFalse(journalPath.exists());
+  clock.advance(4);
+  assertIndex(9,"abc1234");
+  assertFalse(dataPath.exists());
+  assertTrue(journalPath.exists());
+  byte[] journalContent=FileSystemUtils.readContent(journalPath);
+  psi=PersistentStringIndexer.newPersistentStringIndexer(dataPath,clock);
+  assertTrue(dataPath.exists());
+  assertFalse(journalPath.exists());
+  assertTrue(dataPath.delete());
+  FileSystemUtils.writeContent(journalPath,Arrays.copyOf(journalContent,journalContent.length - 1));
+  try {
+    psi=PersistentStringIndexer.newPersistentStringIndexer(dataPath,clock);
+    fail();
+  }
+ catch (  EOFException e) {
+  }
+  byte[] journalCopy=Arrays.copyOf(journalContent,journalContent.length);
+  journalCopy[95]=-2;
+  FileSystemUtils.writeContent(journalPath,journalCopy);
+  try {
+    psi=PersistentStringIndexer.newPersistentStringIndexer(dataPath,clock);
+    fail();
+  }
+ catch (  IOException e) {
+    assertThat(e.getMessage()).contains("corrupt key length");
+  }
+  journalContent[journalContent.length - 13]=100;
+  FileSystemUtils.writeContent(journalPath,journalContent);
+  try {
+    psi=PersistentStringIndexer.newPersistentStringIndexer(dataPath,clock);
+    fail();
+  }
+ catch (  IOException e) {
+  }
+}

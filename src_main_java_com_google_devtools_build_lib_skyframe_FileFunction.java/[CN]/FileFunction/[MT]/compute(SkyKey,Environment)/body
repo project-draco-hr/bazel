@@ -1,0 +1,38 @@
+{
+  RootedPath rootedPath=(RootedPath)skyKey.argument();
+  RootedPath realRootedPath=rootedPath;
+  FileStateValue realFileStateValue=null;
+  PathFragment relativePath=rootedPath.getRelativePath();
+  if (!relativePath.equals(PathFragment.EMPTY_FRAGMENT) && !externalFilesHelper.shouldAssumeImmutable(rootedPath)) {
+    Pair<RootedPath,FileStateValue> resolvedState=resolveFromAncestors(rootedPath,env);
+    if (resolvedState == null) {
+      return null;
+    }
+    realRootedPath=resolvedState.getFirst();
+    realFileStateValue=resolvedState.getSecond();
+  }
+  FileStateValue fileStateValue=(FileStateValue)env.getValue(FileStateValue.key(rootedPath));
+  if (fileStateValue == null) {
+    return null;
+  }
+  if (realFileStateValue == null) {
+    realFileStateValue=fileStateValue;
+  }
+  LinkedHashSet<RootedPath> seenPaths=Sets.newLinkedHashSet();
+  while (realFileStateValue.getType().equals(FileStateValue.Type.SYMLINK)) {
+    if (!seenPaths.add(realRootedPath)) {
+      FileSymlinkCycleException fileSymlinkCycleException=makeFileSymlinkCycleException(realRootedPath,seenPaths);
+      if (env.getValue(FileSymlinkCycleUniquenessValue.key(fileSymlinkCycleException.getCycle())) == null) {
+        return null;
+      }
+      throw new FileFunctionException(fileSymlinkCycleException);
+    }
+    Pair<RootedPath,FileStateValue> resolvedState=getSymlinkTargetRootedPath(realRootedPath,realFileStateValue.getSymlinkTarget(),env);
+    if (resolvedState == null) {
+      return null;
+    }
+    realRootedPath=resolvedState.getFirst();
+    realFileStateValue=resolvedState.getSecond();
+  }
+  return FileValue.value(rootedPath,fileStateValue,realRootedPath,realFileStateValue);
+}

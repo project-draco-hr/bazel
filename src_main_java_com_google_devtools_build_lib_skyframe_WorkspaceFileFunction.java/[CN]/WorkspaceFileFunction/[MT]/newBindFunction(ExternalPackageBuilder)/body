@@ -1,0 +1,19 @@
+{
+  List<String> params=ImmutableList.of("name","actual");
+  return new MixedModeFunction(BIND,params,2,true){
+    @Override public Object call(    Object[] namedArgs,    FuncallExpression ast) throws EvalException, ConversionException {
+      String name=Type.STRING.convert(namedArgs[0],"'name' argument");
+      String actual=Type.STRING.convert(namedArgs[1],"'actual' argument");
+      Label nameLabel=null;
+      try {
+        nameLabel=Label.parseAbsolute("//external:" + name);
+        builder.addBinding(nameLabel,new Binding(Label.parseRepositoryLabel(actual),ast.getLocation()));
+      }
+ catch (      SyntaxException e) {
+        throw new EvalException(ast.getLocation(),e.getMessage());
+      }
+      return NONE;
+    }
+  }
+;
+}

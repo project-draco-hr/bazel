@@ -1,0 +1,24 @@
+{
+  Preconditions.checkState(isDynamicLibrary(input));
+  Preconditions.checkState(!Link.useStartEndLib(input,cppConfiguration.archiveType()));
+  Artifact inputArtifact=input.getArtifact();
+  PathFragment libDir=inputArtifact.getExecPath().getParentDirectory();
+  if (rpathRoot != null && !libDir.equals(solibDir) && (runtimeSolibDir == null || !runtimeSolibDir.equals(libDir))) {
+    String dotdots="";
+    PathFragment commonParent=solibDir;
+    while (!libDir.startsWith(commonParent)) {
+      dotdots+="../";
+      commonParent=commonParent.getParentDirectory();
+    }
+    libOpts.add(rpathRoot + dotdots + libDir.relativeTo(commonParent).getPathString());
+  }
+  libOpts.add("-L" + inputArtifact.getExecPath().getParentDirectory().getPathString());
+  String name=inputArtifact.getFilename();
+  if (CppFileTypes.SHARED_LIBRARY.matches(name)) {
+    String libName=name.replaceAll("(^lib|\\.so$)","");
+    options.add("-l" + libName);
+  }
+ else {
+    options.add(inputArtifact.getExecPathString());
+  }
+}

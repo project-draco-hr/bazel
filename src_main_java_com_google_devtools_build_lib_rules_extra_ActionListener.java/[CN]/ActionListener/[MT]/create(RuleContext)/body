@@ -1,0 +1,12 @@
+{
+  List<ExtraActionSpec> extraActions;
+  Multimap<String,ExtraActionSpec> extraActionMap;
+  Set<String> mnemonics=Sets.newHashSet(ruleContext.attributes().get("mnemonics",Type.STRING_LIST));
+  extraActions=retrieveAndValidateExtraActions(ruleContext);
+  ImmutableSortedKeyListMultimap.Builder<String,ExtraActionSpec> extraActionMapBuilder=ImmutableSortedKeyListMultimap.builder();
+  for (  String mnemonic : mnemonics) {
+    extraActionMapBuilder.putAll(mnemonic,extraActions);
+  }
+  extraActionMap=extraActionMapBuilder.build();
+  return new RuleConfiguredTargetBuilder(ruleContext).add(RunfilesProvider.class,RunfilesProvider.simple(Runfiles.EMPTY)).add(ExtraActionMapProvider.class,new ExtraActionMapProvider(extraActionMap)).build();
+}

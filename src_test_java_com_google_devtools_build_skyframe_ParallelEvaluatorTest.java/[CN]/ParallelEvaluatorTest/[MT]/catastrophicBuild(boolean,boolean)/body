@@ -1,0 +1,40 @@
+{
+  graph=new InMemoryGraph(keepEdges);
+  SkyKey catastropheKey=GraphTester.toSkyKey("catastrophe");
+  SkyKey otherKey=GraphTester.toSkyKey("someKey");
+  tester.getOrCreate(catastropheKey).setBuilder(new SkyFunction(){
+    @Nullable @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+      throw new SkyFunctionException(new SomeErrorException("bad"),Transience.PERSISTENT){
+        @Override public boolean isCatastrophic(){
+          return true;
+        }
+      }
+;
+    }
+    @Nullable @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  tester.getOrCreate(otherKey).setBuilder(new SkyFunction(){
+    @Nullable @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws InterruptedException {
+      new CountDownLatch(1).await();
+      throw new RuntimeException("can't get here");
+    }
+    @Nullable @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  tester.getOrCreate(topKey).addDependency(catastropheKey).setComputedValue(CONCATENATE);
+  EvaluationResult<StringValue> result=eval(keepGoing,topKey,otherKey);
+  if (!keepGoing) {
+    ErrorInfo error=result.getError(topKey);
+    assertThat(error.getRootCauses()).containsExactly(catastropheKey);
+  }
+ else {
+    assertTrue(result.hasError());
+    assertThat(result.errorMap()).isEmpty();
+  }
+}

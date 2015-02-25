@@ -1,0 +1,22 @@
+{
+  checkTestsAndSuites(ruleContext,"tests");
+  checkTestsAndSuites(ruleContext,"suites");
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
+  List<String> tagsAttribute=new ArrayList<>(ruleContext.attributes().get("tags",Type.STRING_LIST));
+  tagsAttribute.remove("manual");
+  Pair<Collection<String>,Collection<String>> requiredExcluded=TestTargetUtils.sortTagsBySense(tagsAttribute);
+  List<TransitiveInfoCollection> directTestsAndSuitesBuilder=new ArrayList<>();
+  for (  TransitiveInfoCollection dep : Iterables.concat(ruleContext.getPrerequisites("tests",Mode.TARGET),ruleContext.getPrerequisites("suites",Mode.TARGET),ruleContext.getPrerequisites("$implicit_tests",Mode.TARGET))) {
+    if (dep.getProvider(TestProvider.class) != null) {
+      List<String> tags=dep.getProvider(TestProvider.class).getTestTags();
+      if (!TestTargetUtils.testMatchesFilters(tags,requiredExcluded.first,requiredExcluded.second,true)) {
+        continue;
+      }
+    }
+    directTestsAndSuitesBuilder.add(dep);
+  }
+  Runfiles runfiles=new Runfiles.Builder().addTargets(directTestsAndSuitesBuilder,RunfilesProvider.DATA_RUNFILES).build();
+  return new RuleConfiguredTargetBuilder(ruleContext).add(RunfilesProvider.class,RunfilesProvider.withData(Runfiles.EMPTY,runfiles)).add(TransitiveTestsProvider.class,new TransitiveTestsProvider()).build();
+}

@@ -1,0 +1,38 @@
+{
+  Preconditions.checkState(!keepGoing || catastrophe || bubbleErrorInfo == null,"",skyKeys,bubbleErrorInfo);
+  EvaluationResult.Builder<T> result=EvaluationResult.builder();
+  List<SkyKey> cycleRoots=new ArrayList<>();
+  boolean hasError=false;
+  for (  SkyKey skyKey : skyKeys) {
+    ValueWithMetadata valueWithMetadata=getValueMaybeFromError(skyKey,bubbleErrorInfo);
+    if (valueWithMetadata == null) {
+      if (bubbleErrorInfo == null) {
+        cycleRoots.add(skyKey);
+      }
+      hasError=true;
+      continue;
+    }
+    SkyValue value=valueWithMetadata.getValue();
+    replayingNestedSetEventVisitor.visit(valueWithMetadata.getTransitiveEvents());
+    ErrorInfo errorInfo=valueWithMetadata.getErrorInfo();
+    Preconditions.checkState(value != null || errorInfo != null,skyKey);
+    hasError=hasError || (errorInfo != null);
+    if (!keepGoing && errorInfo != null) {
+      result.addError(skyKey,errorInfo);
+      continue;
+    }
+    if (value == null) {
+      result.addError(skyKey,errorInfo);
+    }
+ else {
+      result.addResult(skyKey,value);
+    }
+  }
+  if (!cycleRoots.isEmpty()) {
+    Preconditions.checkState(visitor != null,skyKeys);
+    checkForCycles(cycleRoots,result,visitor,keepGoing);
+  }
+  Preconditions.checkState(bubbleErrorInfo == null || hasError,"If an error bubbled up, some top-level node must be in error",bubbleErrorInfo,skyKeys);
+  result.setHasError(hasError);
+  return result.build();
+}

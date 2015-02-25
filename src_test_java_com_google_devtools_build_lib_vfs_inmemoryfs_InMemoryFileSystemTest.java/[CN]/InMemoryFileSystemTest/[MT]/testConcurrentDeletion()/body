@@ -1,0 +1,43 @@
+{
+  final int NUM_TO_WRITE=10000;
+  final AtomicInteger baseSelector=new AtomicInteger();
+  final Path base=testFS.getPath("/base");
+  base.createDirectory();
+  for (int i=0; i < NUM_TO_WRITE; i++) {
+    writeToFile(base.getRelative("file" + i),TEST_FILE_DATA);
+  }
+class FileDeleter extends TestThread {
+    @Override public void runTest() throws Exception {
+      for (int i=0; i < NUM_TO_WRITE / NUM_THREADS_FOR_CONCURRENCY_TESTS; i++) {
+        int whichFile=baseSelector.getAndIncrement();
+        Path file=base.getRelative("file" + whichFile);
+        if (whichFile % 25 != 0) {
+          assertTrue(file.delete());
+        }
+ else {
+          file.setExecutable(whichFile % 2 == 0);
+        }
+        assertFalse(base.getRelative("doesnotexist" + whichFile).delete());
+      }
+    }
+  }
+  Collection<TestThread> threads=Lists.newArrayListWithCapacity(NUM_THREADS_FOR_CONCURRENCY_TESTS);
+  for (int i=0; i < NUM_THREADS_FOR_CONCURRENCY_TESTS; i++) {
+    TestThread thread=new FileDeleter();
+    thread.start();
+    threads.add(thread);
+  }
+  for (  TestThread thread : threads) {
+    thread.joinAndAssertState(0);
+  }
+  for (int i=0; i < NUM_TO_WRITE; i++) {
+    Path file=base.getRelative("file" + i);
+    if (i % 25 != 0) {
+      assertFalse(file.exists());
+    }
+ else {
+      assertTrue(file.exists());
+      assertEquals(i % 2 == 0,file.isExecutable());
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  skip();
+  ByteArrayOutputStream quotedString=new ByteArrayOutputStream();
+  boolean unescapedBackslash=true;
+  while (data[index] != QUOTEDSTRING_END_TOKEN || (data[index - 1] == QUOTEDSTRING_ESCAPE_TOKEN && unescapedBackslash)) {
+    quotedString.write(data[index]);
+    if (accept(QUOTEDSTRING_ESCAPE_TOKEN)) {
+      unescapedBackslash=!(data[index - 1] == QUOTEDSTRING_ESCAPE_TOKEN && unescapedBackslash);
+    }
+    skip();
+  }
+  String unescapedString;
+  try {
+    unescapedString=parseQuotedString(toUtf8String(quotedString));
+  }
+ catch (  Exception ex) {
+    throw new ParseException("The quoted string could not be parsed.",index);
+  }
+  skip();
+  return unescapedString;
+}

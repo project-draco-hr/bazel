@@ -1,0 +1,17 @@
+{
+  Preconditions.checkState(!entry.isDone(),"%s %s",skyKey,entry);
+  Preconditions.checkState(!ErrorTransienceValue.key().equals(child),"%s cannot request ErrorTransienceValue as a dep: %s",skyKey,entry);
+  NodeEntry depEntry=graph.createIfAbsent(child);
+switch (depEntry.addReverseDepAndCheckIfDone(skyKey)) {
+case DONE:
+    if (entry.signalDep(depEntry.getVersion())) {
+      visitor.enqueueEvaluation(skyKey);
+    }
+  break;
+case ADDED_DEP:
+break;
+case NEEDS_SCHEDULING:
+visitor.enqueueEvaluation(child);
+break;
+}
+}

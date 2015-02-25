@@ -1,0 +1,65 @@
+{
+  final CcCommon common=new CcCommon(ruleContext);
+  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,semantics).setLinkType(linkType).enableCcNativeLibrariesProvider().enableInterfaceSharedObjects().enableCompileProviders().setNeverLink(neverLink).setHeadersCheckingMode(common.determineHeadersCheckingMode()).addCopts(common.getCopts()).setNoCopts(common.getNoCopts()).addLinkopts(common.getLinkopts()).addDefines(common.getDefines()).addCompilationPrerequisites(common.getSharedLibrariesFromSrcs()).addCompilationPrerequisites(common.getStaticLibrariesFromSrcs()).addSources(common.getCAndCppSources()).addPublicHeaders(common.getHeaders()).addObjectFiles(common.getObjectFilesFromSrcs(false)).addPicObjectFiles(common.getObjectFilesFromSrcs(true)).addPicIndependentObjectFiles(common.getLinkerScripts()).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).setEnableLayeringCheck(ruleContext.getFeatures().contains(CppRuleClasses.LAYERING_CHECK)).setCompileHeaderModules(ruleContext.getFeatures().contains(CppRuleClasses.HEADER_MODULES)).addSystemIncludeDirs(common.getSystemIncludeDirs()).addIncludeDirs(common.getIncludeDirs()).addLooseIncludeDirs(common.getLooseIncludeDirs()).setEmitHeaderTargetModuleMaps(ruleContext.getRule().getRuleClass().equals("cc_public_library"));
+  if (collectLinkstamp) {
+    helper.addLinkstamps(ruleContext.getPrerequisites("linkstamp",Mode.TARGET));
+  }
+  if (ruleContext.getRule().isAttrDefined("implements",Type.LABEL_LIST)) {
+    helper.addDeps(ruleContext.getPrerequisites("implements",Mode.TARGET));
+  }
+  if (ruleContext.getRule().isAttrDefined("implementation",Type.LABEL_LIST)) {
+    helper.addDeps(ruleContext.getPrerequisites("implementation",Mode.TARGET));
+  }
+  PathFragment soImplFilename=null;
+  if (ruleContext.getRule().isAttrDefined("outs",Type.STRING_LIST)) {
+    List<String> outs=ruleContext.attributes().get("outs",Type.STRING_LIST);
+    if (outs.size() > 1) {
+      ruleContext.attributeError("outs","must be a singleton list");
+    }
+ else     if (outs.size() == 1) {
+      soImplFilename=CppHelper.getLinkedFilename(ruleContext,LinkTargetType.DYNAMIC_LIBRARY);
+      soImplFilename=soImplFilename.replaceName(outs.get(0));
+      if (!soImplFilename.getPathString().endsWith(".so")) {
+        ruleContext.attributeError("outs","file name must end in '.so'");
+      }
+    }
+  }
+  if (ruleContext.getRule().isAttrDefined("srcs",Type.LABEL_LIST)) {
+    helper.addPrivateHeaders(FileType.filter(ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list(),CppFileTypes.CPP_HEADER));
+    ruleContext.checkSrcsSamePackage(true);
+  }
+  if (common.getLinkopts().contains("-static")) {
+    ruleContext.attributeWarning("linkopts","Using '-static' here won't work. " + "Did you mean to use 'linkstatic=1' instead?");
+  }
+  boolean createDynamicLibrary=!linkStatic && !appearsToHaveNoObjectFiles(ruleContext.attributes());
+  helper.setCreateDynamicLibrary(createDynamicLibrary);
+  helper.setDynamicLibraryPath(soImplFilename);
+  Iterable<LibraryToLink> staticLibrariesFromSrcs=LinkerInputs.opaqueLibrariesToLink(common.getStaticLibrariesFromSrcs());
+  helper.addStaticLibraries(staticLibrariesFromSrcs);
+  helper.addPicStaticLibraries(Iterables.filter(staticLibrariesFromSrcs,PIC_STATIC_FILTER));
+  helper.addPicStaticLibraries(common.getPicStaticLibrariesFromSrcs());
+  helper.addDynamicLibraries(Iterables.transform(common.getSharedLibrariesFromSrcs(),new Function<Artifact,LibraryToLink>(){
+    @Override public LibraryToLink apply(    Artifact library){
+      return common.getDynamicLibrarySymlink(library,true);
+    }
+  }
+));
+  CcLibraryHelper.Info info=helper.build();
+  CcLinkingOutputs linkedLibraries=info.getCcLinkingOutputsExcludingPrecompiledLibraries();
+  NestedSet<Artifact> artifactsToForce=collectArtifactsToForce(ruleContext,common,info.getCcCompilationOutputs());
+  NestedSetBuilder<Artifact> filesBuilder=NestedSetBuilder.stableOrder();
+  filesBuilder.addAll(LinkerInputs.toLibraryArtifacts(linkedLibraries.getStaticLibraries()));
+  filesBuilder.addAll(LinkerInputs.toLibraryArtifacts(linkedLibraries.getPicStaticLibraries()));
+  filesBuilder.addAll(LinkerInputs.toNonSolibArtifacts(linkedLibraries.getDynamicLibraries()));
+  filesBuilder.addAll(LinkerInputs.toNonSolibArtifacts(linkedLibraries.getExecutionDynamicLibraries()));
+  CcLinkingOutputs linkingOutputs=info.getCcLinkingOutputs();
+  warnAboutEmptyLibraries(ruleContext,info.getCcCompilationOutputs(),linkType,linkStatic);
+  NestedSet<Artifact> filesToBuild=filesBuilder.build();
+  Runfiles staticRunfiles=collectRunfiles(ruleContext,linkingOutputs,neverLink,addDynamicRuntimeInputArtifactsToRunfiles,true);
+  Runfiles sharedRunfiles=collectRunfiles(ruleContext,linkingOutputs,neverLink,addDynamicRuntimeInputArtifactsToRunfiles,false);
+  List<Artifact> instrumentedObjectFiles=new ArrayList<>();
+  instrumentedObjectFiles.addAll(info.getCcCompilationOutputs().getObjectFiles(false));
+  instrumentedObjectFiles.addAll(info.getCcCompilationOutputs().getObjectFiles(true));
+  InstrumentedFilesProvider instrumentedFilesProvider=common.getInstrumentedFilesProvider(instrumentedObjectFiles);
+  targetBuilder.setFilesToBuild(filesToBuild).addProviders(info.getProviders()).add(InstrumentedFilesProvider.class,instrumentedFilesProvider).add(RunfilesProvider.class,RunfilesProvider.withData(staticRunfiles,sharedRunfiles)).add(CppRunfilesProvider.class,new CppRunfilesProvider(staticRunfiles,sharedRunfiles)).setBaselineCoverageArtifacts(BaselineCoverageAction.getBaselineCoverageArtifacts(ruleContext,instrumentedFilesProvider.getInstrumentedFiles())).add(ImplementedCcPublicLibrariesProvider.class,new ImplementedCcPublicLibrariesProvider(getImplementedCcPublicLibraries(ruleContext))).add(AlwaysBuiltArtifactsProvider.class,new AlwaysBuiltArtifactsProvider(artifactsToForce));
+}

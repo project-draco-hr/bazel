@@ -1,0 +1,28 @@
+{
+  if (unconditionalExecution(action)) {
+    Preconditions.checkState(action.isVolatile());
+    reportUnconditionalExecution(handler,action);
+    return true;
+  }
+  if (entry == null) {
+    entry=getCacheEntry(action);
+  }
+  if (entry == null) {
+    reportNewAction(handler,action);
+    return true;
+  }
+  if (entry.isCorrupted()) {
+    reportCorruptedCacheEntry(handler,action);
+    return true;
+  }
+ else   if (validateArtifacts(entry,action,metadataHandler,true)) {
+    reportChanged(handler,action);
+    return true;
+  }
+ else   if (!entry.getActionKey().equals(action.getKey())) {
+    reportCommand(handler,action);
+    return true;
+  }
+  entry.getFileDigest();
+  return false;
+}

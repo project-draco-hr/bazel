@@ -1,0 +1,34 @@
+{
+  FileArtifactValue value=getInputFileArtifactValue(artifact);
+  if (value != null) {
+    return metadataFromValue(value);
+  }
+  if (artifact.isSourceArtifact()) {
+    return null;
+  }
+ else   if (artifact.isMiddlemanArtifact()) {
+    value=additionalOutputData.get(artifact);
+    if (value != null) {
+      return metadataFromValue(value);
+    }
+    value=FileArtifactValue.DEFAULT_MIDDLEMAN;
+    FileArtifactValue oldValue=additionalOutputData.putIfAbsent(artifact,value);
+    checkInconsistentData(artifact,oldValue,value);
+    return metadataFromValue(value);
+  }
+  FileValue fileValue=outputArtifactData.get(artifact);
+  if (fileValue != null) {
+    value=additionalOutputData.get(artifact);
+    if (value != null) {
+      return metadataFromValue(value);
+    }
+    if (!fileValue.exists()) {
+      throw new FileNotFoundException(artifact.prettyPrint() + " does not exist");
+    }
+    return new Metadata(Preconditions.checkNotNull(fileValue.getDigest(),artifact));
+  }
+  fileValue=fileValueFromArtifact(artifact,null,tsgm);
+  FileValue oldFileValue=outputArtifactData.putIfAbsent(artifact,fileValue);
+  checkInconsistentData(artifact,oldFileValue,value);
+  return maybeStoreAdditionalData(artifact,fileValue,null);
+}

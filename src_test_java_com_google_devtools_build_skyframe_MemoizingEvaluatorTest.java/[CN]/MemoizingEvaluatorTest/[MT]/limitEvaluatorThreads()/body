@@ -1,0 +1,30 @@
+{
+  initializeTester();
+  int numKeys=10;
+  final Object lock=new Object();
+  final AtomicInteger inProgressCount=new AtomicInteger();
+  final int[] maxValue={0};
+  SkyKey topLevel=GraphTester.toSkyKey("toplevel");
+  TestFunction topLevelBuilder=tester.getOrCreate(topLevel);
+  for (int i=0; i < numKeys; i++) {
+    topLevelBuilder.addDependency("subKey" + i);
+    tester.getOrCreate("subKey" + i).setComputedValue(new ValueComputer(){
+      @Override public SkyValue compute(      Map<SkyKey,SkyValue> deps,      SkyFunction.Environment env){
+        int val=inProgressCount.incrementAndGet();
+synchronized (lock) {
+          if (val > maxValue[0]) {
+            maxValue[0]=val;
+          }
+        }
+        Uninterruptibles.sleepUninterruptibly(5,TimeUnit.SECONDS);
+        inProgressCount.decrementAndGet();
+        return new StringValue("abc");
+      }
+    }
+);
+  }
+  topLevelBuilder.setConstantValue(new StringValue("xyz"));
+  EvaluationResult<StringValue> result=tester.eval(true,5,topLevel);
+  assertFalse(result.hasError());
+  assertEquals(5,maxValue[0]);
+}

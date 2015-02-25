@@ -1,0 +1,23 @@
+{
+  Preconditions.checkArgument(target instanceof Rule);
+  List<Target> result=new ArrayList<>();
+  Rule rule=(Rule)target;
+  AggregatingAttributeMapper attrMap=AggregatingAttributeMapper.of(rule);
+  Type<?> attrType=attrMap.getAttributeType(attrName);
+  if (attrType == null) {
+    return ImmutableList.of();
+  }
+  for (  Object value : attrMap.visitAttribute(attrName,attrType)) {
+    if (value != null) {
+      for (      Label label : attrType.getLabels(value)) {
+        try {
+          result.add(getTarget(label).getLabel());
+        }
+ catch (        TargetNotFoundException e) {
+          reportBuildFileError(caller,errorMsgPrefix + e.getMessage());
+        }
+      }
+    }
+  }
+  return result;
+}

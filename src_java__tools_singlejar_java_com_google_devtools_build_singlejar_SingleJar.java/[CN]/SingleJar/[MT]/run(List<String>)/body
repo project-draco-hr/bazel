@@ -1,0 +1,73 @@
+{
+  List<String> expandedArgs=new OptionFileExpander(fileSystem).expandArguments(args);
+  processCommandlineArgs(expandedArgs);
+  InputStream buildInfo=createBuildData();
+  ZipCombiner combiner=null;
+  try {
+    combiner=new ZipCombiner(outputMode,createEntryFilter(normalize,allowedPaths),fileSystem.getOutputStream(outputJar));
+    if (launcherBin != null) {
+      combiner.prependExecutable(fileSystem.getInputStream(launcherBin));
+    }
+    Date date=normalize ? ZipCombiner.DOS_EPOCH : null;
+    JarUtils.addMetaInf(combiner,date);
+    combiner.addFile(MANIFEST_FILENAME,date,createManifest());
+    if (includeBuildData) {
+      combiner.addFile(BUILD_DATA_FILENAME,date,buildInfo);
+    }
+    for (    String classpathResource : classpathResources) {
+      String entryName=getName(classpathResource);
+      if (warnDuplicateFiles && combiner.containsFile(entryName)) {
+        System.err.println("File " + entryName + " clashes with a previous file");
+        continue;
+      }
+      combiner.addFile(entryName,date,fileSystem.getInputStream(classpathResource));
+    }
+    for (    String resource : resources) {
+      String from, to;
+      int i=resource.indexOf(':');
+      if (i < 0) {
+        to=from=resource;
+      }
+ else {
+        from=resource.substring(0,i);
+        to=resource.substring(i + 1);
+      }
+      if (warnDuplicateFiles && combiner.containsFile(to)) {
+        System.err.println("File " + from + " at "+ to+ " clashes with a previous file");
+        continue;
+      }
+      combiner.addFile(to,date,fileSystem.getInputStream(from));
+    }
+    for (    String inputJar : inputJars) {
+      InputStream in=fileSystem.getInputStream(inputJar);
+      try {
+        combiner.addZip(inputJar,in);
+        InputStream inToClose=in;
+        in=null;
+        inToClose.close();
+      }
+  finally {
+        if (in != null) {
+          try {
+            in.close();
+          }
+ catch (          IOException e) {
+          }
+        }
+      }
+    }
+    combiner.close();
+    combiner=null;
+  }
+  finally {
+    if (combiner != null) {
+      try {
+        combiner.close();
+      }
+ catch (      IOException e) {
+      }
+      fileSystem.delete(outputJar);
+    }
+  }
+  return 0;
+}

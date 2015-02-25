@@ -1,0 +1,16 @@
+{
+  int start=token.left;
+  List<ConditionalStatements> thenBlocks=new ArrayList<>();
+  thenBlocks.add(parseConditionalStatements(TokenKind.IF));
+  while (token.kind == TokenKind.ELIF) {
+    thenBlocks.add(parseConditionalStatements(TokenKind.ELIF));
+  }
+  List<Statement> elseBlock=new ArrayList<>();
+  if (token.kind == TokenKind.ELSE) {
+    expect(TokenKind.ELSE);
+    expect(TokenKind.COLON);
+    parseSuite(elseBlock);
+  }
+  Statement stmt=new IfStatement(thenBlocks,elseBlock);
+  list.add(setLocation(stmt,start,token.right));
+}

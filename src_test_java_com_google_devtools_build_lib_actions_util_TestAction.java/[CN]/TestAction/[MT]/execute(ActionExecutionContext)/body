@@ -1,0 +1,24 @@
+{
+  for (  Artifact artifact : getInputs()) {
+    if (!artifact.getPath().exists() && !artifact.getExecPath().getBaseName().endsWith(".optional")) {
+      throw new IllegalStateException("action's input file does not exist: " + artifact.getPath());
+    }
+  }
+  try {
+    effect.call();
+  }
+ catch (  RuntimeException|Error e) {
+    throw e;
+  }
+catch (  Exception e) {
+    throw new ActionExecutionException("TestAction failed due to exception",e,this,false);
+  }
+  try {
+    for (    Artifact artifact : getOutputs()) {
+      FileSystemUtils.touchFile(artifact.getPath());
+    }
+  }
+ catch (  IOException e) {
+    throw new AssertionError(e);
+  }
+}

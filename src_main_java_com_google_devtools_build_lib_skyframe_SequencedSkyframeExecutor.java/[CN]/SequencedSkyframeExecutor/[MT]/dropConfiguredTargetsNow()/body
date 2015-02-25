@@ -1,0 +1,19 @@
+{
+  dropConfiguredTargets();
+  try {
+    progressReceiver.ignoreInvalidations=true;
+    callUninterruptibly(new Callable<Void>(){
+      @Override public Void call() throws InterruptedException {
+        buildDriver.evaluate(ImmutableList.<SkyKey>of(),false,ResourceUsage.getAvailableProcessors(),reporter);
+        return null;
+      }
+    }
+);
+  }
+ catch (  Exception e) {
+    throw new IllegalStateException(e);
+  }
+ finally {
+    progressReceiver.ignoreInvalidations=false;
+  }
+}

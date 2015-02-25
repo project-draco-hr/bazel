@@ -1,0 +1,32 @@
+{
+synchronized (path) {
+    File file=getIoFile(path);
+    if (file.mkdir()) {
+      return true;
+    }
+    Path parentDirectory=path.getParentDirectory();
+synchronized (parentDirectory) {
+      if (fileIsSymbolicLink(file)) {
+        throw new IOException(path + ERR_FILE_EXISTS);
+      }
+      if (file.isDirectory()) {
+        return false;
+      }
+ else       if (file.exists()) {
+        throw new IOException(path + ERR_FILE_EXISTS);
+      }
+ else       if (!file.getParentFile().exists()) {
+        throw new FileNotFoundException(path.getParentDirectory() + ERR_NO_SUCH_FILE_OR_DIR);
+      }
+      if (file.mkdir()) {
+        return true;
+      }
+ else       if (!file.getParentFile().canWrite()) {
+        throw new FileAccessException(path + ERR_PERMISSION_DENIED);
+      }
+ else {
+        throw new FileNotFoundException(path.getParentDirectory() + ERR_NOT_A_DIRECTORY);
+      }
+    }
+  }
+}

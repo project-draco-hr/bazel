@@ -1,0 +1,43 @@
+{
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  final SkyKey midKey=GraphTester.toSkyKey("mid");
+  SkyKey badKey=GraphTester.toSkyKey("bad");
+  final AtomicBoolean waitForSecondCall=new AtomicBoolean(false);
+  final TrackingAwaiter trackingAwaiter=new TrackingAwaiter();
+  final CountDownLatch otherThreadWinning=new CountDownLatch(1);
+  final AtomicReference<Thread> firstThread=new AtomicReference<>();
+  graph=new NotifyingInMemoryGraph(new Listener(){
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+      if (!waitForSecondCall.get()) {
+        return;
+      }
+      if (key.equals(midKey)) {
+        if (type == EventType.CREATE_IF_ABSENT) {
+          firstThread.compareAndSet(null,Thread.currentThread());
+          return;
+        }
+        if (type == EventType.ADD_REVERSE_DEP) {
+          if (order == Order.BEFORE && Thread.currentThread().equals(firstThread.get())) {
+            trackingAwaiter.awaitLatchAndTrackExceptions(otherThreadWinning,"other thread didn't pass this one");
+          }
+ else           if (order == Order.AFTER && !Thread.currentThread().equals(firstThread.get())) {
+            otherThreadWinning.countDown();
+          }
+        }
+      }
+    }
+  }
+);
+  tester.getOrCreate(topKey).addDependency(midKey).setComputedValue(CONCATENATE);
+  tester.getOrCreate(midKey).addDependency(badKey).setComputedValue(CONCATENATE);
+  tester.getOrCreate(badKey).setHasError(true);
+  EvaluationResult<SkyValue> result=eval(false,topKey,midKey);
+  assertThat(result.getError(midKey).getRootCauses()).containsExactly(badKey);
+  waitForSecondCall.set(true);
+  result=eval(true,topKey,midKey);
+  trackingAwaiter.assertNoErrors();
+  assertNotNull(firstThread.get());
+  assertEquals(0,otherThreadWinning.getCount());
+  assertThat(result.getError(midKey).getRootCauses()).containsExactly(badKey);
+  assertThat(result.getError(topKey).getRootCauses()).containsExactly(badKey);
+}

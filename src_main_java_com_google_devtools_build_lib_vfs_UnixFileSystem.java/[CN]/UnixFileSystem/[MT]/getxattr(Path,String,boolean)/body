@@ -1,0 +1,13 @@
+{
+  String pathName=path.toString();
+  long startTime=Profiler.nanoTimeMaybe();
+  try {
+    return followSymlinks ? FilesystemUtils.getxattr(pathName,name) : FilesystemUtils.lgetxattr(pathName,name);
+  }
+ catch (  UnsupportedOperationException e) {
+    return null;
+  }
+ finally {
+    profiler.logSimpleTask(startTime,ProfilerTask.VFS_XATTR,pathName);
+  }
+}

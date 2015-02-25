@@ -1,0 +1,22 @@
+{
+synchronized (mutex) {
+    if (len == 0) {
+      multiplexed.flush();
+      return;
+    }
+    byte lastByte=buffer[len - 1];
+    boolean lineIsIncomplete=lastByte != NEWLINE;
+    multiplexed.write(AT);
+    multiplexed.write(markerByte);
+    if (lineIsIncomplete) {
+      multiplexed.write(AT);
+    }
+    multiplexed.write(NEWLINE);
+    multiplexed.write(buffer,0,len);
+    if (lineIsIncomplete) {
+      multiplexed.write(NEWLINE);
+    }
+    multiplexed.flush();
+  }
+  len=0;
+}

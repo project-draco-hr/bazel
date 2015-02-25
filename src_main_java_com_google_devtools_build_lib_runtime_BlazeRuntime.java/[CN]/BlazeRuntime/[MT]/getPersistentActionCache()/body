@@ -1,0 +1,22 @@
+{
+  if (actionCache == null) {
+    if (OS.getCurrent() == OS.WINDOWS) {
+      actionCache=new NullActionCache();
+      return actionCache;
+    }
+    long startTime=Profiler.nanoTimeMaybe();
+    try {
+      actionCache=new CompactPersistentActionCache(getCacheDirectory(),clock);
+    }
+ catch (    IOException e) {
+      LOG.log(Level.WARNING,"Failed to load action cache: " + e.getMessage(),e);
+      LoggingUtil.logToRemote(Level.WARNING,"Failed to load action cache: " + e.getMessage(),e);
+      getReporter().handle(Event.error("Error during action cache initialization: " + e.getMessage() + ". Corrupted files were renamed to '"+ getCacheDirectory()+ "/*.bad'. "+ "Blaze will now reset action cache data, causing a full rebuild"));
+      actionCache=new CompactPersistentActionCache(getCacheDirectory(),clock);
+    }
+ finally {
+      Profiler.instance().logSimpleTask(startTime,ProfilerTask.INFO,"Loading action cache");
+    }
+  }
+  return actionCache;
+}

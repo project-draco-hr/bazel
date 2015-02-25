@@ -1,0 +1,20 @@
+{
+  if (ruleDocMap == null) {
+    try {
+      BuildEncyclopediaProcessor processor=new BuildEncyclopediaProcessor(provider);
+      Set<RuleDocumentation> ruleDocs=processor.collectAndProcessRuleDocs(new String[]{"java/com/google/devtools/build/lib/view","java/com/google/devtools/build/lib/rules"},false);
+      ruleDocMap=new HashMap<>();
+      for (      RuleDocumentation ruleDoc : ruleDocs) {
+        ruleDocMap.put(ruleDoc.getRuleName(),ruleDoc);
+      }
+    }
+ catch (    BuildEncyclopediaDocException e) {
+      return e.getErrorMsg();
+    }
+catch (    IOException e) {
+      return e.getMessage();
+    }
+  }
+  Preconditions.checkState(ruleDocMap.containsKey(ruleName),String.format("ERROR: Documentation of rule %s does not exist.",ruleName));
+  return "Rule " + ruleName + ":"+ ruleDocMap.get(ruleName).getCommandLineDocumentation()+ "\n";
+}

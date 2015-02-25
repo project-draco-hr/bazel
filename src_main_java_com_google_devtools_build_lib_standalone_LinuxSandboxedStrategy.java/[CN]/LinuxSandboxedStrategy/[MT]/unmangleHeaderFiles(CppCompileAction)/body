@@ -1,0 +1,15 @@
+{
+  Path execPath=this.directories.getExecRoot();
+  CppCompileAction.DotdFile dotdfile=cppCompileAction.getDotdFile();
+  DependencySet depset=new DependencySet(execPath).read(dotdfile.getPath());
+  DependencySet unmangled=new DependencySet(execPath);
+  PathFragment sandboxIncludeDir=getSandboxIncludeDir(cppCompileAction);
+  PathFragment prefix=sandboxIncludeDir.getRelative(execPath.asFragment().relativeTo("/"));
+  for (  PathFragment dep : depset.getDependencies()) {
+    if (dep.startsWith(prefix)) {
+      dep=dep.relativeTo(prefix);
+    }
+    unmangled.addDependency(dep);
+  }
+  unmangled.write(execPath.getRelative(depset.getOutputFileName()),".d");
+}

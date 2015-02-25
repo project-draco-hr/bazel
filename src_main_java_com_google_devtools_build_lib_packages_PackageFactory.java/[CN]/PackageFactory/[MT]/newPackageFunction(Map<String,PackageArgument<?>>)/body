@@ -1,0 +1,27 @@
+{
+  return new MixedModeFunction("package",packageArguments.keySet(),0,true){
+    @Override public Object call(    Object[] namedArguments,    FuncallExpression ast,    Environment env) throws EvalException, ConversionException {
+      Package.LegacyBuilder pkgBuilder=getContext(env,ast).pkgBuilder;
+      if (pkgBuilder.isPackageFunctionUsed()) {
+        throw new EvalException(ast.getLocation(),"'package' can only be used once per BUILD file");
+      }
+      pkgBuilder.setPackageFunctionUsed();
+      boolean foundParameter=false;
+      int argNumber=0;
+      for (      Map.Entry<String,PackageArgument<?>> entry : packageArguments.entrySet()) {
+        Object arg=namedArguments[argNumber];
+        argNumber+=1;
+        if (arg == null) {
+          continue;
+        }
+        foundParameter=true;
+        entry.getValue().convertAndProcess(pkgBuilder,ast.getLocation(),arg);
+      }
+      if (!foundParameter) {
+        throw new EvalException(ast.getLocation(),"at least one argument must be given to the 'package' function");
+      }
+      return Environment.NONE;
+    }
+  }
+;
+}

@@ -1,0 +1,17 @@
+{
+  setupUncaughtHandler(args);
+  List<BlazeModule> modules=createModules(moduleClasses);
+  if (args.length >= 1 && args[0].equals("--batch")) {
+    System.exit(batchMain(modules,args));
+  }
+  LOG.info("Starting Blaze server with args " + Arrays.toString(args));
+  try {
+    System.exit(serverMain(modules,OutErr.SYSTEM_OUT_ERR,args));
+  }
+ catch (  RuntimeException|Error e) {
+    BugReport.printBug(OutErr.SYSTEM_OUT_ERR,e);
+    BugReport.sendBugReport(e,Arrays.asList(args));
+    System.exit(ExitCode.BLAZE_INTERNAL_ERROR.getNumericExitCode());
+    throw e;
+  }
+}

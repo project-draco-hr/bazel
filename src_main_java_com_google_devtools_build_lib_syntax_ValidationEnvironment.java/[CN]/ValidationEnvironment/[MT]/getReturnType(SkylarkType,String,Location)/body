@@ -1,0 +1,13 @@
+{
+  Map<String,SkylarkType> functions=topLevel().variableTypes.get(objectType);
+  if (functions != null) {
+    SkylarkType functionType=functions.get(funcName);
+    if (functionType != null && functionType != SkylarkType.UNKNOWN) {
+      if (!(functionType instanceof SkylarkFunctionType)) {
+        throw new EvalException(loc,(objectType == SkylarkType.GLOBAL ? "" : objectType + ".") + funcName + " is not a function");
+      }
+      return ((SkylarkFunctionType)functionType).getReturnType();
+    }
+  }
+  return SkylarkType.UNKNOWN;
+}

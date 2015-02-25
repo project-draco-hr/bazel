@@ -1,0 +1,23 @@
+{
+  try {
+    if (link.readSymbolicLink().equals(target)) {
+      return;
+    }
+  }
+ catch (  IOException e) {
+  }
+  if (link.isSymbolicLink()) {
+    link.delete();
+  }
+ else {
+    createDirectoryAndParents(link.getParentDirectory());
+  }
+  try {
+    link.createSymbolicLink(target);
+  }
+ catch (  IOException e) {
+    if (!link.isSymbolicLink() || !link.resolveSymbolicLinks().equals(link.getRelative(target))) {
+      throw e;
+    }
+  }
+}

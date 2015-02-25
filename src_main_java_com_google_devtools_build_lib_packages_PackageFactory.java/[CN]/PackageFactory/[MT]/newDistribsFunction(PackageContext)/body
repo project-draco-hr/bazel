@@ -1,0 +1,16 @@
+{
+  return new MixedModeFunction("distribs",ImmutableList.of("object"),1,false){
+    @Override public Object call(    Object[] args,    FuncallExpression ast){
+      try {
+        Set<DistributionType> distribs=Type.DISTRIBUTIONS.convert(args[0],"'distribs' operand");
+        context.pkgBuilder.setDefaultDistribs(distribs);
+      }
+ catch (      ConversionException e) {
+        context.eventHandler.handle(Event.error(ast.getLocation(),e.getMessage()));
+        context.pkgBuilder.setContainsErrors();
+      }
+      return Environment.NONE;
+    }
+  }
+;
+}

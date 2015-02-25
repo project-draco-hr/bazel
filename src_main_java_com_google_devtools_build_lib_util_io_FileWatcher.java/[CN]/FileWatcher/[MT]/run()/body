@@ -1,0 +1,33 @@
+{
+  try {
+    while (!outputFile.exists() && !finishPumping) {
+      Thread.sleep(WATCH_INTERVAL);
+    }
+    if (outputFile.exists()) {
+      try (InputStream inputStream=outputFile.getInputStream();OutputStream outputStream=output.getOutputStream()){
+        byte[] buffer=new byte[1024];
+        while (!finishPumping || (inputStream.available() != 0)) {
+          if (inputStream.available() != 0) {
+            if (toSkip > 0) {
+              toSkip-=inputStream.skip(toSkip);
+            }
+ else {
+              int read=inputStream.read(buffer);
+              if (read > 0) {
+                outputStream.write(buffer,0,read);
+              }
+            }
+          }
+ else {
+            Thread.sleep(WATCH_INTERVAL);
+          }
+        }
+      }
+     }
+  }
+ catch (  IOException ex) {
+    output.printOutLn("Failure reading or writing: " + ex.getMessage());
+  }
+catch (  InterruptedException ex) {
+  }
+}

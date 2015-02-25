@@ -1,0 +1,13 @@
+{
+  Path linkedTo=absolutize("linkedTo");
+  linkedTo.createDirectory();
+  Path child=linkedTo.getChild("child");
+  FileSystemUtils.createEmptyFile(child);
+  byte[] outputData="This is a test".getBytes();
+  FileSystemUtils.writeContent(child,outputData);
+  Path link=absolutize("link");
+  createSymbolicLink(link,linkedTo);
+  Path linkedChild=link.getChild("child");
+  byte[] inputData=FileSystemUtils.readContent(linkedChild);
+  assertArrayEquals(outputData,inputData);
+}

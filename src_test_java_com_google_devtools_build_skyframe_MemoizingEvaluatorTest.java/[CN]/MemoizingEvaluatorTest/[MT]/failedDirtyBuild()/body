@@ -1,0 +1,17 @@
+{
+  initializeTester();
+  SkyKey leaf=GraphTester.toSkyKey("leaf");
+  SkyKey top=GraphTester.toSkyKey("top");
+  tester.getOrCreate(top).addErrorDependency(leaf,new StringValue("recover")).setComputedValue(COPY);
+  tester.set(leaf,new StringValue("leafy"));
+  StringValue topValue=(StringValue)tester.evalAndGet("top");
+  assertEquals("leafy",topValue.getValue());
+  assertThat(tester.getDirtyValues()).isEmpty();
+  assertThat(tester.getDeletedValues()).isEmpty();
+  tester.getOrCreate(leaf,true).setHasError(true);
+  tester.getOrCreate(top,false).setHasError(true);
+  tester.invalidate();
+  EvaluationResult<StringValue> result=tester.eval(false,top);
+  assertNull("value should not have completed evaluation",result.get(top));
+  assertWithMessage("The error thrown by leaf should have been swallowed by the error thrown by top").that(result.getError().getRootCauses()).containsExactly(top);
+}

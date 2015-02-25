@@ -1,0 +1,9 @@
+{
+  List<String> buildInfo=getBuildInfo();
+  mockFs.addFile("my1.properties",makePropertyFileFromBuildInfo(buildInfo.subList(0,4)));
+  mockFs.addFile("my2.properties",makePropertyFileFromBuildInfo(buildInfo.subList(4,buildInfo.size())));
+  List<String> args=ImmutableList.<String>builder().add("--output").add(target).add("--build_info_file").add("my1.properties").add("--build_info_file").add("my2.properties").addAll(infoPropertyArguments(buildInfo.subList(4,buildInfo.size()))).build();
+  singleJar.run(args);
+  FakeZipFile expectedResult=new FakeZipFile().addEntry("META-INF/",EXTRA_FOR_META_INF,false).addEntry(JarFile.MANIFEST_NAME,new ManifestValidator("Manifest-Version: 1.0","Created-By: blaze-singlejar"),false).addEntry("build-data.properties",new BuildInfoValidator(buildInfo),false);
+  expectedResult.assertSame(mockFs.toByteArray());
+}

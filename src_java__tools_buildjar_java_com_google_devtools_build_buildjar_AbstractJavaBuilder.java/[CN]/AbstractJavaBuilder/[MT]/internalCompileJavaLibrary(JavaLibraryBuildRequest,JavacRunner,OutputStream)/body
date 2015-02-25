@@ -1,0 +1,16 @@
+{
+  Result result=Result.OK;
+  if (!build.getSourceFiles().isEmpty()) {
+    PrintWriter javacErrorOutputWriter=new PrintWriter(err);
+    try {
+      result=compileSources(build,javacRunner,javacErrorOutputWriter);
+    }
+  finally {
+      javacErrorOutputWriter.flush();
+    }
+  }
+  if (!result.isOK()) {
+    throw new JavacException(result);
+  }
+  runClassPostProcessing(build);
+}

@@ -1,0 +1,14 @@
+{
+  ImmutableList.Builder<PBXBuildFile> result=new ImmutableList.Builder<>();
+  SetMultimap<AggregateKey,Path> keyedPaths=type.aggregates(paths);
+  for (  Map.Entry<AggregateKey,Collection<Path>> aggregation : keyedPaths.asMap().entrySet()) {
+    if (!aggregation.getKey().isStandalone()) {
+      ImmutableSet<Path> itemPaths=ImmutableSet.copyOf(aggregation.getValue());
+      result.add(aggregateBuildFile(itemPaths,type.create(aggregation.getKey(),fileReferences(itemPaths))));
+    }
+  }
+  for (  Path generalResource : keyedPaths.get(AggregateKey.standalone())) {
+    result.add(getStandalone(FileReference.of(generalResource.toString(),SourceTree.GROUP)));
+  }
+  return result.build();
+}

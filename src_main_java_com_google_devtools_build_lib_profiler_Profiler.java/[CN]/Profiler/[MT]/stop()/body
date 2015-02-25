@@ -1,0 +1,24 @@
+{
+  if (saveException != null) {
+    throw saveException;
+  }
+  if (!isActive()) {
+    return;
+  }
+  logEvent(ProfilerTask.INFO,"Finishing");
+  save();
+  clear();
+  for (  SlowestTaskAggregator aggregator : slowestTasks) {
+    if (aggregator != null) {
+      aggregator.clear();
+    }
+  }
+  if (saveException != null) {
+    throw saveException;
+  }
+  if (out != null) {
+    out.writeInt(EOF_MARKER);
+    out.close();
+    out=null;
+  }
+}

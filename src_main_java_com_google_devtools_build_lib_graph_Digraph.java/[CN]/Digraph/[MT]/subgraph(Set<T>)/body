@@ -1,0 +1,56 @@
+{
+  final Set<Node<T>> toRemove=new HashSet<>();
+  final Set<Node<T>> keepNeighbors=new HashSet<>();
+  for (  Node<T> node : nodes.values()) {
+    if (keepLabels.contains(node.getLabel())) {
+      keepNeighbors.addAll(node.getPredecessors());
+      keepNeighbors.addAll(node.getSuccessors());
+    }
+ else {
+      toRemove.add(node);
+    }
+  }
+  if (toRemove.isEmpty()) {
+    return;
+  }
+  final PriorityQueue<Node<T>> reachables=new PriorityQueue<>(toRemove.size(),new Comparator<Node<T>>(){
+    @Override public int compare(    Node<T> o1,    Node<T> o2){
+      return Long.compare((long)o1.numPredecessors() * (long)o1.numSuccessors(),(long)o2.numPredecessors() * (long)o2.numSuccessors());
+    }
+  }
+);
+  keepNeighbors.retainAll(toRemove);
+  reachables.addAll(keepNeighbors);
+  toRemove.removeAll(reachables);
+  while (!reachables.isEmpty()) {
+    Node<T> node=reachables.poll();
+    for (    Node<T> s : node.getSuccessors()) {
+      if (s == node) {
+        continue;
+      }
+      for (      Node<T> p : node.getPredecessors()) {
+        if (p == node) {
+          continue;
+        }
+        addEdge(p,s);
+      }
+      s.removePredecessor(node);
+      if (toRemove.remove(s)) {
+        reachables.add(s);
+      }
+    }
+    for (    Node<T> p : node.getPredecessors()) {
+      if (p == node) {
+        continue;
+      }
+      p.removeSuccessor(node);
+      if (toRemove.remove(p)) {
+        reachables.add(p);
+      }
+    }
+    nodes.remove(node.getLabel());
+  }
+  for (  Node<T> node : toRemove) {
+    removeNode(node,false);
+  }
+}

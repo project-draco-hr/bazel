@@ -1,0 +1,30 @@
+{
+  List<SkyKey> reverseDepsToRemove=getReverseDepsToRemove(container);
+  Object reverseDeps=getReverseDepsObject(container);
+  if (reverseDepsToRemove == null) {
+    return;
+  }
+  Preconditions.checkState(!isSingleReverseDep(container),"We do not use reverseDepsToRemove for single lists: %s",container);
+  Preconditions.checkState((!((List<?>)reverseDeps).isEmpty()),"Could not remove %s elements from %s.\nReverse deps to remove: %s. %s",reverseDepsToRemove.size(),reverseDeps,reverseDepsToRemove,container);
+  Set<SkyKey> toRemove=Sets.newHashSet(reverseDepsToRemove);
+  int expectedRemovals=toRemove.size();
+  Preconditions.checkState(expectedRemovals == reverseDepsToRemove.size(),"A reverse dependency tried to remove itself twice: %s. %s",reverseDepsToRemove,container);
+  @SuppressWarnings("unchecked") List<SkyKey> reverseDepsAsList=(List<SkyKey>)reverseDeps;
+  List<SkyKey> newReverseDeps=Lists.newArrayListWithExpectedSize(Math.max(0,reverseDepsAsList.size() - expectedRemovals));
+  for (  SkyKey reverseDep : reverseDepsAsList) {
+    if (!toRemove.contains(reverseDep)) {
+      newReverseDeps.add(reverseDep);
+    }
+  }
+  Preconditions.checkState(newReverseDeps.size() == reverseDepsAsList.size() - expectedRemovals,"Could not remove some elements from %s.\nReverse deps to remove: %s. %s",reverseDeps,toRemove,container);
+  if (newReverseDeps.isEmpty()) {
+    overwriteReverseDepsList(container,ImmutableList.<SkyKey>of());
+  }
+ else   if (newReverseDeps.size() == 1) {
+    overwriteReverseDepsWithObject(container,newReverseDeps.get(0));
+  }
+ else {
+    overwriteReverseDepsList(container,newReverseDeps);
+  }
+  setReverseDepsToRemove(container,null);
+}

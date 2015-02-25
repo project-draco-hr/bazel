@@ -1,0 +1,24 @@
+{
+  Throwable cause=e.getCause();
+  Throwable innerCause=cause.getCause();
+  if (innerCause instanceof TestExecException) {
+    throw (TestExecException)innerCause;
+  }
+  if (cause instanceof ActionExecutionException) {
+    ActionExecutionException actionExecutionCause=(ActionExecutionException)cause;
+    String message=(actionExecutionCause.getLocation() != null) ? (actionExecutionCause.getLocation().print() + " " + cause.getMessage()) : e.getMessage();
+    throw new BuildFailedException(message,actionExecutionCause.isCatastrophe(),actionExecutionCause.getAction(),actionExecutionCause.getRootCauses(),!actionExecutionCause.showError());
+  }
+ else   if (cause instanceof MissingInputFileException) {
+    throw new BuildFailedException(cause.getMessage());
+  }
+ else   if (cause instanceof RuntimeException) {
+    throw (RuntimeException)cause;
+  }
+ else   if (cause instanceof Error) {
+    throw (Error)cause;
+  }
+ else {
+    throw new IllegalArgumentException("action terminated with " + "unexpected exception: " + cause.getMessage(),cause);
+  }
+}

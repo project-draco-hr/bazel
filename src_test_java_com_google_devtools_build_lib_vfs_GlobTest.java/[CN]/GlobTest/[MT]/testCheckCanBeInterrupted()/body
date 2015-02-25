@@ -1,0 +1,20 @@
+{
+  final Thread mainThread=Thread.currentThread();
+  final ThreadPoolExecutor executor=(ThreadPoolExecutor)Executors.newFixedThreadPool(10);
+  Predicate<Path> interrupterPredicate=new Predicate<Path>(){
+    @Override public boolean apply(    Path input){
+      mainThread.interrupt();
+      return true;
+    }
+  }
+;
+  try {
+    new UnixGlob.Builder(tmpPath).addPattern("**").setDirectoryFilter(interrupterPredicate).setThreadPool(executor).globInterruptible();
+    fail();
+  }
+ catch (  InterruptedException e) {
+  }
+  assertFalse(executor.isShutdown());
+  executor.shutdown();
+  assertTrue(executor.awaitTermination(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS));
+}

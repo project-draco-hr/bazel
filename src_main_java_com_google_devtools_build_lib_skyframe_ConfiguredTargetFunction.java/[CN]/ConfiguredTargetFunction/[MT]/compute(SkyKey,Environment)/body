@@ -1,0 +1,39 @@
+{
+  SkyframeBuildView view=buildViewProvider.getSkyframeBuildView();
+  ConfiguredTargetKey configuredTargetKey=(ConfiguredTargetKey)key.argument();
+  LabelAndConfiguration lc=LabelAndConfiguration.of(configuredTargetKey.getLabel(),configuredTargetKey.getConfiguration());
+  BuildConfiguration configuration=lc.getConfiguration();
+  PackageValue packageValue=(PackageValue)env.getValue(PackageValue.key(lc.getLabel().getPackageIdentifier()));
+  if (packageValue == null) {
+    return null;
+  }
+  Target target;
+  try {
+    target=packageValue.getPackage().getTarget(lc.getLabel().getName());
+  }
+ catch (  NoSuchTargetException e1) {
+    throw new ConfiguredTargetFunctionException(new NoSuchTargetException(lc.getLabel(),"No such target"));
+  }
+  if (target instanceof InputFile) {
+    configuration=null;
+  }
+ else   if (target instanceof PackageGroup) {
+    configuration=null;
+  }
+  TargetAndConfiguration ctgValue=new TargetAndConfiguration(target,configuration);
+  SkyframeDependencyResolver resolver=view.createDependencyResolver(env);
+  if (resolver == null) {
+    return null;
+  }
+  try {
+    Set<ConfigMatchingProvider> configConditions=getConfigConditions(ctgValue.getTarget(),env,resolver,ctgValue);
+    if (configConditions == null) {
+      return null;
+    }
+    ListMultimap<Attribute,ConfiguredTarget> depValueMap=computeDependencies(env,resolver,ctgValue,null,configConditions);
+    return createConfiguredTarget(view,env,target,configuration,depValueMap,configConditions);
+  }
+ catch (  DependencyEvaluationException e) {
+    throw new ConfiguredTargetFunctionException(e.getRootCauseSkyKey(),e.getCause());
+  }
+}

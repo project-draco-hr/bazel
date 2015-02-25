@@ -1,0 +1,52 @@
+{
+  for (  BlazeModule module : blazeModules) {
+    module.globalInit(options);
+  }
+  BlazeServerStartupOptions startupOptions=options.getOptions(BlazeServerStartupOptions.class);
+  PathFragment workspaceDirectory=startupOptions.workspaceDirectory;
+  PathFragment installBase=startupOptions.installBase;
+  PathFragment outputBase=startupOptions.outputBase;
+  OsUtils.maybeForceJNI(installBase);
+  if (installBase == null || !installBase.isAbsolute()) {
+    throw new IllegalArgumentException("Bad --install_base option specified: '" + installBase + "'");
+  }
+  if (outputBase != null && !outputBase.isAbsolute()) {
+    throw new IllegalArgumentException("Bad --output_base option specified: '" + outputBase + "'");
+  }
+  PathFragment outputPathFragment=BlazeDirectories.outputPathFromOutputBase(outputBase,workspaceDirectory);
+  FileSystem fs=null;
+  for (  BlazeModule module : blazeModules) {
+    FileSystem moduleFs=module.getFileSystem(options,outputPathFragment);
+    if (moduleFs != null) {
+      Preconditions.checkState(fs == null,"more than one module returns a file system");
+      fs=moduleFs;
+    }
+  }
+  if (fs == null) {
+    fs=fileSystemImplementation();
+  }
+  Path.setFileSystemForSerialization(fs);
+  Path installBasePath=fs.getPath(installBase);
+  Path outputBasePath=fs.getPath(outputBase);
+  Path workspaceDirectoryPath=null;
+  if (!workspaceDirectory.equals(PathFragment.EMPTY_FRAGMENT)) {
+    workspaceDirectoryPath=fs.getPath(workspaceDirectory);
+  }
+  BlazeDirectories directories=new BlazeDirectories(installBasePath,outputBasePath,workspaceDirectoryPath);
+  Clock clock=BlazeClock.instance();
+  BinTools binTools;
+  try {
+    binTools=BinTools.forProduction(directories);
+  }
+ catch (  IOException e) {
+    throw new AbruptExitException("Cannot enumerate embedded binaries: " + e.getMessage(),ExitCode.LOCAL_ENVIRONMENTAL_ERROR);
+  }
+  BlazeRuntime.Builder runtimeBuilder=new BlazeRuntime.Builder().setDirectories(directories).setStartupOptionsProvider(options).setBinTools(binTools).setClock(clock).setEventBusExceptionHandler(startupOptions.fatalEventBusExceptions || !BlazeVersionInfo.instance().isReleasedBlaze() ? new BlazeRuntime.BugReportingExceptionHandler() : new BlazeRuntime.RemoteExceptionHandler());
+  runtimeBuilder.setRunfilesPrefix(new PathFragment(Constants.RUNFILES_PREFIX));
+  for (  BlazeModule blazeModule : blazeModules) {
+    runtimeBuilder.addBlazeModule(blazeModule);
+  }
+  BlazeRuntime runtime=runtimeBuilder.build();
+  BugReport.setRuntime(runtime);
+  return runtime;
+}

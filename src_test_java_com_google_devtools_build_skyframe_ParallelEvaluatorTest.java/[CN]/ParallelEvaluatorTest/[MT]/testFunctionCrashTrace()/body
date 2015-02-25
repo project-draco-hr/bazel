@@ -1,0 +1,34 @@
+{
+  final SkyFunctionName childType=new SkyFunctionName("child",false);
+  final SkyFunctionName parentType=new SkyFunctionName("parent",false);
+class ChildFunction implements SkyFunction {
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env){
+      throw new IllegalStateException("I WANT A PONY!!!");
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+class ParentFunction implements SkyFunction {
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env){
+      SkyValue dep=env.getValue(new SkyKey(childType,"billy the kid"));
+      if (dep == null) {
+        return null;
+      }
+      throw new IllegalStateException();
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+  ImmutableMap<SkyFunctionName,SkyFunction> skyFunctions=ImmutableMap.of(childType,new ChildFunction(),parentType,new ParentFunction());
+  ParallelEvaluator evaluator=makeEvaluator(new InMemoryGraph(),skyFunctions,false);
+  try {
+    evaluator.eval(ImmutableList.of(new SkyKey(parentType,"octodad")));
+    fail();
+  }
+ catch (  RuntimeException e) {
+    assertEquals("I WANT A PONY!!!",e.getCause().getMessage());
+    assertEquals("Unrecoverable error while evaluating node 'child:billy the kid' " + "(requested by nodes 'parent:octodad')",e.getMessage());
+  }
+}

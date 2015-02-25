@@ -1,0 +1,45 @@
+{
+  Executor executor=actionExecutionContext.getExecutor();
+  if (executor.reportsSubcommands()) {
+    executor.reportSubcommand(Label.print(spawn.getOwner().getLabel()),spawn.asShellCommand(executor.getExecRoot()));
+  }
+  boolean processHeaders=spawn.getResourceOwner() instanceof CppCompileAction;
+  Path execPath=this.directories.getExecRoot();
+  List<String> spawnArguments=new ArrayList<>();
+  for (  String arg : spawn.getArguments()) {
+    if (arg.startsWith(execPath.getPathString())) {
+      spawnArguments.add(arg.substring(execPath.getPathString().length()));
+    }
+ else {
+      spawnArguments.add(arg);
+    }
+  }
+  List<? extends ActionInput> expandedInputs=ActionInputHelper.expandMiddlemen(spawn.getInputFiles(),actionExecutionContext.getMiddlemanExpander());
+  String cwd=executor.getExecRoot().getPathString();
+  FileOutErr outErr=actionExecutionContext.getFileOutErr();
+  try {
+    PathFragment includePrefix=null;
+    List<PathFragment> includeDirectories=ImmutableList.of();
+    if (processHeaders) {
+      CppCompileAction cppAction=(CppCompileAction)spawn.getResourceOwner();
+      includeDirectories=extractIncludeDirs(execPath,cppAction,spawnArguments);
+      includePrefix=getSandboxIncludeDir(cppAction);
+    }
+    NamespaceSandboxRunner runner=new NamespaceSandboxRunner(directories,spawn,includePrefix,includeDirectories,spawn.getRunfilesManifests());
+    runner.setupSandbox(expandedInputs,spawn.getOutputFiles());
+    runner.run(spawnArguments,spawn.getEnvironment(),new File(cwd),outErr);
+    runner.copyOutputs(spawn.getOutputFiles(),outErr);
+    if (processHeaders) {
+      CppCompileAction cppAction=(CppCompileAction)spawn.getResourceOwner();
+      unmangleHeaderFiles(cppAction);
+    }
+    runner.cleanup();
+  }
+ catch (  CommandException e) {
+    String message=CommandFailureUtils.describeCommandFailure(verboseFailures,spawn.getArguments(),spawn.getEnvironment(),cwd);
+    throw new UserExecException(String.format("%s: %s",message,e));
+  }
+catch (  IOException e) {
+    throw new UserExecException(e.getMessage());
+  }
+}

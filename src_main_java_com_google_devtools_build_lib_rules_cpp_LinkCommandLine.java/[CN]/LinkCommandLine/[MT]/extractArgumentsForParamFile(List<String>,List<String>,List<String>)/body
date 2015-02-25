@@ -1,0 +1,48 @@
+{
+  commandlineArgs.add(args.get(0));
+  int argsSize=args.size();
+  for (int i=1; i < argsSize; i++) {
+    String arg=args.get(i);
+    if (arg.equals("-Wl,-no-whole-archive")) {
+      paramFileArgs.add("-no-whole-archive");
+    }
+ else     if (arg.equals("-Wl,-whole-archive")) {
+      paramFileArgs.add("-whole-archive");
+    }
+ else     if (arg.equals("-Wl,--start-group")) {
+      paramFileArgs.add("--start-group");
+    }
+ else     if (arg.equals("-Wl,--end-group")) {
+      paramFileArgs.add("--end-group");
+    }
+ else     if (arg.equals("-Wl,--start-lib")) {
+      paramFileArgs.add("--start-lib");
+    }
+ else     if (arg.equals("-Wl,--end-lib")) {
+      paramFileArgs.add("--end-lib");
+    }
+ else     if (arg.equals("--incremental-unchanged")) {
+      paramFileArgs.add(arg);
+    }
+ else     if (arg.equals("--incremental-changed")) {
+      paramFileArgs.add(arg);
+    }
+ else     if (arg.charAt(0) == '-') {
+      if (arg.startsWith("-l")) {
+        paramFileArgs.add(arg);
+      }
+ else {
+        commandlineArgs.add(arg);
+        if (arg.equals("-o")) {
+          commandlineArgs.add(args.get(++i));
+        }
+      }
+    }
+ else     if (arg.endsWith(".a") || arg.endsWith(".lo") || arg.endsWith(".so")|| arg.endsWith(".ifso")|| arg.endsWith(".o")|| CppFileTypes.VERSIONED_SHARED_LIBRARY.matches(arg)) {
+      paramFileArgs.add(arg);
+    }
+ else {
+      commandlineArgs.add(arg);
+    }
+  }
+}

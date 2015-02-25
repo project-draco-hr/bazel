@@ -1,0 +1,14 @@
+{
+  SkyKey key=GraphTester.toSkyKey("key");
+  SkyValue val=new StringValue("val");
+  tester.differencer.inject(ImmutableMap.of(key,val));
+  Thread.currentThread().interrupt();
+  try {
+    tester.evalAndGet("key");
+    fail();
+  }
+ catch (  InterruptedException expected) {
+  }
+  SkyValue newVal=tester.evalAndGet("key");
+  assertEquals(val,newVal);
+}

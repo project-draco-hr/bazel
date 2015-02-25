@@ -1,0 +1,39 @@
+{
+  if (linkstamps.isEmpty()) {
+    return ImmutableList.of();
+  }
+  String compilerCommand=cppConfiguration.getCppExecutable().getPathString();
+  List<String> commands=Lists.newArrayListWithCapacity(linkstamps.size());
+  for (  Map.Entry<Artifact,Artifact> linkstamp : linkstamps.entrySet()) {
+    List<String> optionList=new ArrayList<>();
+    for (    Artifact header : buildInfoHeaderArtifacts) {
+      optionList.add("-include");
+      optionList.add(header.getExecPathString());
+    }
+    String labelReplacement=Matcher.quoteReplacement(isSharedNativeLibrary() ? output.getExecPathString() : Label.print(owner.getLabel()));
+    String outputPathReplacement=Matcher.quoteReplacement(output.getExecPathString());
+    for (    String option : linkstampCompileOptions) {
+      optionList.add(option.replaceAll(Pattern.quote("${LABEL}"),labelReplacement).replaceAll(Pattern.quote("${OUTPUT_PATH}"),outputPathReplacement));
+    }
+    optionList.add("-DGPLATFORM=\"" + cppConfiguration + "\"");
+    optionList.add("-I.");
+    PathFragment sysroot=cppConfiguration.getSysroot();
+    if (sysroot != null) {
+      optionList.add("--sysroot=" + sysroot.getPathString());
+    }
+    optionList.addAll(cppConfiguration.getCompilerOptions(features));
+    optionList.addAll(cppConfiguration.getCOptions());
+    optionList.addAll(cppConfiguration.getUnfilteredCompilerOptions(features));
+    if (linkTargetType == LinkTargetType.DYNAMIC_LIBRARY && cppConfiguration.toolchainNeedsPic()) {
+      optionList.add("-fPIC");
+    }
+    String fdoBuildStamp=CppHelper.getFdoBuildStamp(cppConfiguration);
+    if (fdoBuildStamp != null) {
+      optionList.add("-D" + CppConfiguration.FDO_STAMP_MACRO + "=\""+ fdoBuildStamp+ "\"");
+    }
+    optionList.add("-c");
+    optionList.add(linkstamp.getKey().getExecPathString());
+    commands.add(compilerCommand + " " + ShellEscaper.escapeJoinAll(optionList)+ " -o "+ outputPrefix+ ShellEscaper.escapeString(linkstamp.getValue().getExecPathString()));
+  }
+  return commands;
+}

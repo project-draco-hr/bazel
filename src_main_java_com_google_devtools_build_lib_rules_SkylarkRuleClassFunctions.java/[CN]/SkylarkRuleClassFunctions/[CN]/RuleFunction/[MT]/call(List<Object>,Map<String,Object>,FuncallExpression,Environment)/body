@@ -1,0 +1,17 @@
+{
+  try {
+    String ruleClassName=ast.getFunction().getName();
+    if (ruleClassName.startsWith("_")) {
+      throw new EvalException(ast.getLocation(),"Invalid rule class name '" + ruleClassName + "', cannot be private");
+    }
+    if (type == RuleClassType.TEST != TargetUtils.isTestRuleName(ruleClassName)) {
+      throw new EvalException(ast.getLocation(),"Invalid rule class name '" + ruleClassName + "', test rule class names must end with '_test' and other rule classes must not");
+    }
+    RuleClass ruleClass=builder.build(ruleClassName);
+    PackageContext pkgContext=(PackageContext)env.lookup(PackageFactory.PKG_CONTEXT);
+    return RuleFactory.createAndAddRule(pkgContext,ruleClass,kwargs,ast);
+  }
+ catch (  InvalidRuleException|NameConflictException|NoSuchVariableException e) {
+    throw new EvalException(ast.getLocation(),e.getMessage());
+  }
+}

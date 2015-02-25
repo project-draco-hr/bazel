@@ -1,0 +1,15 @@
+{
+  CppLinkInfo.Builder info=CppLinkInfo.newBuilder();
+  info.addAllInputFile(Artifact.toExecPaths(LinkerInputs.toLibraryArtifacts(getLinkCommandLine().getLinkerInputs())));
+  info.addAllInputFile(Artifact.toExecPaths(LinkerInputs.toLibraryArtifacts(getLinkCommandLine().getRuntimeInputs())));
+  info.setOutputFile(getPrimaryOutput().getExecPathString());
+  if (interfaceOutputLibrary != null) {
+    info.setInterfaceOutputFile(interfaceOutputLibrary.getArtifact().getExecPathString());
+  }
+  info.setLinkTargetType(getLinkCommandLine().getLinkTargetType().name());
+  info.setLinkStaticness(getLinkCommandLine().getLinkStaticness().name());
+  info.addAllLinkStamp(Artifact.toExecPaths(getLinkCommandLine().getLinkstamps().values()));
+  info.addAllBuildInfoHeaderArtifact(Artifact.toExecPaths(getLinkCommandLine().getBuildInfoHeaderArtifacts()));
+  info.addAllLinkOpt(getLinkCommandLine().getLinkopts());
+  return super.getExtraActionInfo().setExtension(CppLinkInfo.cppLinkInfo,info.build());
+}

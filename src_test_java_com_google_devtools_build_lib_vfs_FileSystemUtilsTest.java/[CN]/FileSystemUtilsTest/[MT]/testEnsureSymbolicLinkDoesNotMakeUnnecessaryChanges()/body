@@ -1,0 +1,10 @@
+{
+  PathFragment target=new PathFragment("/b");
+  Path file=fileSystem.getPath("/a");
+  file.createSymbolicLink(target);
+  long prevTimeMillis=clock.currentTimeMillis();
+  clock.advanceMillis(1000);
+  FileSystemUtils.ensureSymbolicLink(file,target);
+  long timestamp=file.getLastModifiedTime(Symlinks.NOFOLLOW);
+  assertTrue(timestamp == prevTimeMillis);
+}

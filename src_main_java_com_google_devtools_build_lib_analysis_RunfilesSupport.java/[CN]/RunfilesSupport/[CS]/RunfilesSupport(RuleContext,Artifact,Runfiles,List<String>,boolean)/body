@@ -1,0 +1,20 @@
+{
+  owningExecutable=executable;
+  this.createSymlinks=createSymlinks;
+  RunUnder runUnder=ruleContext.getConfiguration().getRunUnder();
+  if (runUnder != null && runUnder.getLabel() != null && TargetUtils.isTestRule(ruleContext.getRule())) {
+    TransitiveInfoCollection runUnderTarget=ruleContext.getPrerequisite(":run_under",Mode.DATA);
+    runfiles=new Runfiles.Builder().merge(getRunfiles(runUnderTarget)).merge(runfiles).build();
+  }
+  this.runfiles=runfiles;
+  Preconditions.checkState(!runfiles.isEmpty());
+  Map<PathFragment,Artifact> symlinks=getRunfilesSymlinks();
+  if (executable != null && !symlinks.values().contains(executable)) {
+    throw new IllegalStateException("main program " + executable + " not included in runfiles");
+  }
+  runfilesInputManifest=createRunfilesInputManifestArtifact(ruleContext);
+  this.runfilesManifest=createRunfilesAction(ruleContext,runfiles);
+  this.runfilesMiddleman=createRunfilesMiddleman(ruleContext,runfiles.getAllArtifacts());
+  sourcesManifest=createSourceManifest(ruleContext,runfiles);
+  args=ImmutableList.<String>builder().addAll(ruleContext.getTokenizedStringListAttr("args")).addAll(appendingArgs).build();
+}

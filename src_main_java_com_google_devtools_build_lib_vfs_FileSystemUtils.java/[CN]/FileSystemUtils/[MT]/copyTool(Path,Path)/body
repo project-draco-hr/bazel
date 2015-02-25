@@ -1,0 +1,14 @@
+{
+  FileStatus sourceStat=null;
+  FileStatus targetStat=target.statNullable();
+  if (targetStat != null) {
+    sourceStat=source.stat(Symlinks.FOLLOW);
+  }
+  if (targetStat == null || targetStat.getLastModifiedTime() != sourceStat.getLastModifiedTime() || targetStat.getSize() != sourceStat.getSize()) {
+    copyFile(source,target);
+    target.setWritable(source.isWritable());
+    target.setExecutable(source.isExecutable());
+    target.setLastModifiedTime(source.getLastModifiedTime());
+  }
+  return target;
+}

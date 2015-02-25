@@ -1,0 +1,76 @@
+{
+  if (!(target instanceof FileTarget)) {
+    throw new TargetParsingException("--compile_one_dependency target '" + target.getLabel() + "' must be a file");
+  }
+  Package pkg;
+  try {
+    pkg=pkgManager.getLoadedPackage(target.getLabel().getPackageIdentifier());
+  }
+ catch (  NoSuchPackageException e) {
+    throw new IllegalStateException(e);
+  }
+  Iterable<Rule> orderedRuleList=getOrderedRuleList(pkg);
+  Rule fallbackRule=null;
+  for (  Rule rule : orderedRuleList) {
+    try {
+      if (SrcTargetUtil.getSrcTargets(eventHandler,rule,pkgManager).contains(target)) {
+        if (rule.getRuleClassObject().isPreferredDependency(target.getName())) {
+          return rule;
+        }
+ else         if (fallbackRule == null) {
+          fallbackRule=rule;
+        }
+      }
+    }
+ catch (    NoSuchThingException e) {
+    }
+catch (    InterruptedException e) {
+      throw new TargetParsingException("interrupted");
+    }
+  }
+  Rule result=null;
+  for (  Rule rule : orderedRuleList) {
+    if (rule.getLabels(Rule.DIRECT_COMPILE_TIME_INPUT).contains(target.getLabel())) {
+      if (rule.getRuleClassObject().isPreferredDependency(target.getName())) {
+        result=rule;
+      }
+ else       if (fallbackRule == null) {
+        fallbackRule=rule;
+      }
+    }
+  }
+  if (result == null) {
+    result=fallbackRule;
+  }
+  if (result == null) {
+    throw new TargetParsingException("Couldn't find dependency on target '" + target.getLabel() + "'");
+  }
+  try {
+    if (!SrcTargetUtil.getSrcTargets(eventHandler,result,pkgManager).isEmpty()) {
+      return result;
+    }
+  }
+ catch (  NoSuchThingException e) {
+    throw new TargetParsingException("Couldn't find dependency on target '" + target.getLabel() + "'");
+  }
+catch (  InterruptedException e) {
+    throw new TargetParsingException("interrupted");
+  }
+  for (  Rule rule : orderedRuleList) {
+    RawAttributeMapper attributes=RawAttributeMapper.of(rule);
+    if (attributes.isConfigurable("deps",Type.LABEL_LIST) || attributes.isConfigurable("srcs",Type.LABEL_LIST)) {
+      continue;
+    }
+    RuleClass ruleClass=rule.getRuleClassObject();
+    if (ruleClass.hasAttr("deps",Type.LABEL_LIST) && ruleClass.hasAttr("srcs",Type.LABEL_LIST)) {
+      for (      Label dep : attributes.get("deps",Type.LABEL_LIST)) {
+        if (dep.equals(result.getLabel())) {
+          if (!attributes.get("srcs",Type.LABEL_LIST).isEmpty()) {
+            return rule;
+          }
+        }
+      }
+    }
+  }
+  throw new TargetParsingException("Couldn't find dependency on target '" + target.getLabel() + "'");
+}

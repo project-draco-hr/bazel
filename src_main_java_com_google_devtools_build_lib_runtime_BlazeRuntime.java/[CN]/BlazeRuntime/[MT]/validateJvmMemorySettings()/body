@@ -1,0 +1,21 @@
+{
+  boolean is64BitVM="64".equals(System.getProperty("sun.arch.data.model"));
+  if (is64BitVM) {
+    return null;
+  }
+  MemoryMXBean mem=ManagementFactory.getMemoryMXBean();
+  long heapSize=mem.getHeapMemoryUsage().getMax();
+  long nonHeapSize=mem.getNonHeapMemoryUsage().getMax();
+  if (heapSize == -1 || nonHeapSize == -1) {
+    return null;
+  }
+  if (heapSize + nonHeapSize > MAX_BLAZE32_RESERVED_MEMORY) {
+    return String.format("WARNING: JVM reserved %d MB of virtual memory (above threshold of %d MB). " + "This may result in OOMs at runtime. Use lower values of MaxPermSize " + "or switch to blaze64.",(heapSize + nonHeapSize) >> 20,MAX_BLAZE32_RESERVED_MEMORY >> 20);
+  }
+ else   if (heapSize < MIN_BLAZE32_HEAP_SIZE) {
+    return String.format("WARNING: JVM heap size is %d MB. You probably have a custom -Xmx setting in your " + "local Blaze configuration. This may result in OOMs. Removing overrides of -Xmx " + "settings is advised.",heapSize >> 20);
+  }
+ else {
+    return null;
+  }
+}

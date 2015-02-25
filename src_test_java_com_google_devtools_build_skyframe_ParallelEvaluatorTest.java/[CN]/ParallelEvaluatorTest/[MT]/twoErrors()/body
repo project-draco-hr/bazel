@@ -1,0 +1,12 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey firstError=GraphTester.toSkyKey("error1");
+  SkyKey secondError=GraphTester.toSkyKey("error2");
+  CountDownLatch firstStart=new CountDownLatch(1);
+  CountDownLatch secondStart=new CountDownLatch(1);
+  tester.getOrCreate(firstError).setBuilder(new ChainedFunction(firstStart,secondStart,null,false,null,ImmutableList.<SkyKey>of()));
+  tester.getOrCreate(secondError).setBuilder(new ChainedFunction(secondStart,firstStart,null,false,null,ImmutableList.<SkyKey>of()));
+  EvaluationResult<StringValue> result=eval(false,firstError,secondError);
+  assertTrue(result.toString(),result.hasError());
+  assertThat(ImmutableSet.of(firstError,secondError)).contains(Iterables.getOnlyElement(result.errorMap().keySet()));
+}

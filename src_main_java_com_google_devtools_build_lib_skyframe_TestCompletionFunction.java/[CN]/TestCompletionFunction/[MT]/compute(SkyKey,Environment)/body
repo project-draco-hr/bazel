@@ -1,0 +1,26 @@
+{
+  TestCompletionValue.TestCompletionKey key=(TestCompletionValue.TestCompletionKey)skyKey.argument();
+  LabelAndConfiguration lac=key.getLabelAndConfiguration();
+  if (env.getValue(TargetCompletionValue.key(lac)) == null) {
+    return null;
+  }
+  ConfiguredTargetValue ctValue=(ConfiguredTargetValue)env.getValue(ConfiguredTargetValue.key(lac.getLabel(),lac.getConfiguration()));
+  if (ctValue == null) {
+    return null;
+  }
+  ConfiguredTarget ct=ctValue.getConfiguredTarget();
+  if (key.isExclusiveTesting()) {
+    for (    Artifact testArtifact : TestProvider.getTestStatusArtifacts(ct)) {
+      if (env.getValue(ArtifactValue.key(testArtifact,true)) == null) {
+        return null;
+      }
+    }
+  }
+ else {
+    env.getValues(ArtifactValue.mandatoryKeys(TestProvider.getTestStatusArtifacts(ct)));
+    if (env.valuesMissing()) {
+      return null;
+    }
+  }
+  return TestCompletionValue.TEST_COMPLETION_MARKER;
+}

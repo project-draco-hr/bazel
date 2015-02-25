@@ -1,0 +1,16 @@
+{
+  Label label=ruleContext.getLabel();
+  Package pkg=ruleContext.getRule().getPackage();
+  EnvironmentGroup group=null;
+  for (  EnvironmentGroup pkgGroup : pkg.getTargets(EnvironmentGroup.class)) {
+    if (pkgGroup.getEnvironments().contains(label)) {
+      group=pkgGroup;
+      break;
+    }
+  }
+  if (group == null) {
+    ruleContext.ruleError("no matching environment group from the same package");
+    return null;
+  }
+  return new RuleConfiguredTargetBuilder(ruleContext).addProvider(SupportedEnvironmentsProvider.class,new SupportedEnvironments(new EnvironmentCollection.Builder().put(group,label).build())).addProvider(RunfilesProvider.class,RunfilesProvider.EMPTY).add(FileProvider.class,new FileProvider(ruleContext.getLabel(),NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER))).add(FilesToRunProvider.class,new FilesToRunProvider(ruleContext.getLabel(),ImmutableList.<Artifact>of(),null,null)).build();
+}

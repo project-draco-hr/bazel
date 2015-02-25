@@ -1,0 +1,26 @@
+{
+  if (state != State.LISTENING) {
+    throw new SocketException("socket is not in listening state");
+  }
+  if (soTimeoutMillis != 0) {
+    poll(fd,soTimeoutMillis);
+  }
+  FileDescriptor clientFd=new FileDescriptor();
+  accept(fd,clientFd);
+  final LocalSocketImpl impl=new LocalSocketImpl(clientFd);
+  return new Socket(impl){
+    @Override public boolean isConnected(){
+      return true;
+    }
+    @Override public synchronized void close() throws IOException {
+      if (isClosed()) {
+        return;
+      }
+ else {
+        super.close();
+        impl.close();
+      }
+    }
+  }
+;
+}

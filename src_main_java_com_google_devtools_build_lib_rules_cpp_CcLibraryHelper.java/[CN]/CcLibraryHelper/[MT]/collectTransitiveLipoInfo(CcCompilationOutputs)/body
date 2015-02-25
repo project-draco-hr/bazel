@@ -1,0 +1,21 @@
+{
+  if (ruleContext.getFragment(CppConfiguration.class).getFdoSupport().getFdoRoot() == null) {
+    return TransitiveLipoInfoProvider.EMPTY;
+  }
+  NestedSetBuilder<IncludeScannable> scannableBuilder=NestedSetBuilder.stableOrder();
+  TransitiveInfoCollection stl=ruleContext.getPrerequisite(":stl",Mode.TARGET);
+  if (stl != null) {
+    TransitiveLipoInfoProvider provider=stl.getProvider(TransitiveLipoInfoProvider.class);
+    if (provider != null) {
+      scannableBuilder.addTransitive(provider.getTransitiveIncludeScannables());
+    }
+  }
+  for (  TransitiveLipoInfoProvider dep : AnalysisUtils.getProviders(deps,TransitiveLipoInfoProvider.class)) {
+    scannableBuilder.addTransitive(dep.getTransitiveIncludeScannables());
+  }
+  for (  IncludeScannable scannable : outputs.getLipoScannables()) {
+    Preconditions.checkState(scannable.getIncludeScannerSources().size() == 1);
+    scannableBuilder.add(scannable);
+  }
+  return new TransitiveLipoInfoProvider(scannableBuilder.build());
+}

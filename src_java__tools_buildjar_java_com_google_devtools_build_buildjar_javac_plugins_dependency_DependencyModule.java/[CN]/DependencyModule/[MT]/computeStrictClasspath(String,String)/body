@@ -1,0 +1,18 @@
+{
+  if (!strictClasspathMode) {
+    return originalClasspath;
+  }
+  requiredClasspath=new HashSet<>(directJarsToTargets.keySet());
+  for (  String depsArtifact : depsArtifacts) {
+    collectDependenciesFromArtifact(depsArtifact);
+  }
+  StringBuilder sb=new StringBuilder();
+  String[] originalClasspathEntries=originalClasspath.split(":");
+  for (  String entry : originalClasspathEntries) {
+    if (requiredClasspath.contains(entry)) {
+      sb.append(entry).append(":");
+    }
+  }
+  sb.append(classDir);
+  return sb.toString();
+}

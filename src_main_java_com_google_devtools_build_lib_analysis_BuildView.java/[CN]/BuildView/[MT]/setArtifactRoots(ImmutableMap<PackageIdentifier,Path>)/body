@@ -1,0 +1,19 @@
+{
+  Map<Path,Root> rootMap=new HashMap<>();
+  Map<PackageIdentifier,Root> realPackageRoots=new HashMap<>();
+  for (  Map.Entry<PackageIdentifier,Path> entry : packageRoots.entrySet()) {
+    Root root=rootMap.get(entry.getValue());
+    if (root == null) {
+      root=Root.asSourceRoot(entry.getValue());
+      rootMap.put(entry.getValue(),root);
+    }
+    realPackageRoots.put(entry.getKey(),root);
+  }
+  artifactFactory.setPackageRoots(realPackageRoots);
+  ImmutableList.Builder<Root> roots=ImmutableList.builder();
+  roots.add(directories.getBuildDataDirectory());
+  for (  BuildConfiguration cfg : configurations.getAllConfigurations()) {
+    roots.addAll(cfg.getRoots());
+  }
+  artifactFactory.setDerivedArtifactRoots(roots.build());
+}

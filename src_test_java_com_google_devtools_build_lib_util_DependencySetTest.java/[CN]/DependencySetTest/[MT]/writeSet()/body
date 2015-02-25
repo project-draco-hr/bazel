@@ -1,0 +1,19 @@
+{
+  PathFragment file1=new PathFragment("/usr/local/blah/blah/genhello/hello.cc");
+  PathFragment file2=new PathFragment("/usr/local/blah/blah/genhello/hello.h");
+  PathFragment file3=new PathFragment("/usr/local/blah/blah/genhello/other.h");
+  String filename="/usr/local/blah/blah/genhello/hello.o";
+  DependencySet depSet1=newDependencySet();
+  depSet1.addDependency(file1);
+  depSet1.addDependency(file2);
+  depSet1.addDependency(file3);
+  depSet1.setOutputFileName(filename);
+  Path outfile=scratch.path(filename);
+  Path dotd=scratch.path("/usr/local/blah/blah/genhello/hello.d");
+  FileSystemUtils.createDirectoryAndParents(dotd.getParentDirectory());
+  depSet1.write(outfile,".d");
+  String dotdContents=new String(FileSystemUtils.readContentAsLatin1(dotd));
+  String expected="usr/local/blah/blah/genhello/hello.o:  \\\n" + "  /usr/local/blah/blah/genhello/hello.cc \\\n" + "  /usr/local/blah/blah/genhello/hello.h \\\n"+ "  /usr/local/blah/blah/genhello/other.h\n";
+  assertEquals(expected,dotdContents);
+  assertEquals(filename,depSet1.getOutputFileName());
+}

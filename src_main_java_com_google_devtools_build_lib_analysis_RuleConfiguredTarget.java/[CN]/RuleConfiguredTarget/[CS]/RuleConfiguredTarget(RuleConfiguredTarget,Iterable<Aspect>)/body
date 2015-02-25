@@ -1,0 +1,16 @@
+{
+  super(base.getTarget(),base.getConfiguration());
+  Set<Class<? extends TransitiveInfoProvider>> providers=new HashSet<>();
+  providers.addAll(base.providers.keySet());
+  for (  Aspect aspect : aspects) {
+    for (    TransitiveInfoProvider aspectProvider : aspect) {
+      if (!providers.add(aspectProvider.getClass())) {
+        throw new IllegalStateException("Provider " + aspectProvider.getClass() + " provided twice");
+      }
+    }
+  }
+  this.providers=base.providers;
+  this.mandatoryStampFiles=base.mandatoryStampFiles;
+  this.configConditions=base.configConditions;
+  this.aspects=ImmutableList.copyOf(aspects);
+}

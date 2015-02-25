@@ -1,0 +1,11 @@
+{
+  Iterable<Artifact> artifacts=LinkerInputs.toLibraryArtifacts(executionDynamicLibraries);
+  if (!Iterables.isEmpty(artifacts)) {
+    return new CcExecutionDynamicLibrariesProvider(NestedSetBuilder.wrap(Order.STABLE_ORDER,artifacts));
+  }
+  NestedSetBuilder<Artifact> builder=NestedSetBuilder.stableOrder();
+  for (  CcExecutionDynamicLibrariesProvider dep : AnalysisUtils.getProviders(deps,CcExecutionDynamicLibrariesProvider.class)) {
+    builder.addTransitive(dep.getExecutionDynamicLibraryArtifacts());
+  }
+  return builder.isEmpty() ? CcExecutionDynamicLibrariesProvider.EMPTY : new CcExecutionDynamicLibrariesProvider(builder.build());
+}

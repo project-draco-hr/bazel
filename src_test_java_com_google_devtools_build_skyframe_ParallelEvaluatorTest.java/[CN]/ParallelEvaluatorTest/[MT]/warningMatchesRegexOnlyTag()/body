@@ -1,0 +1,10 @@
+{
+  graph=new InMemoryGraph();
+  ((Reporter)reporter).setOutputFilter(RegexOutputFilter.forRegex("a"));
+  set("a","a value").setWarning("warning on 'a'");
+  SkyKey a=GraphTester.toSkyKey("a");
+  tester.getOrCreate(a).setTag("b");
+  StringValue value=(StringValue)eval(false,a);
+  assertEquals("a value",value.getValue());
+  JunitTestUtils.assertEventCount(0,eventCollector);
+}

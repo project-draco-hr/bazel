@@ -1,0 +1,20 @@
+{
+  if (reverseDep != null) {
+    if (keepEdges()) {
+      REVERSE_DEPS_UTIL.consolidateReverseDepsRemovals(this);
+      REVERSE_DEPS_UTIL.maybeCheckReverseDepNotPresent(this,reverseDep);
+    }
+    if (isDone()) {
+      if (keepEdges()) {
+        REVERSE_DEPS_UTIL.addReverseDeps(this,ImmutableList.of(reverseDep));
+      }
+    }
+ else {
+      buildingState.addReverseDepToSignal(reverseDep);
+    }
+  }
+  if (isDone()) {
+    return DependencyState.DONE;
+  }
+  return buildingState.startEvaluating() ? DependencyState.NEEDS_SCHEDULING : DependencyState.ADDED_DEP;
+}

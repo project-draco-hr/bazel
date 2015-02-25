@@ -1,0 +1,19 @@
+{
+  long actionCacheSizeInBytes=0;
+  long actionCacheSaveTime;
+  long startTime=BlazeClock.nanoTime();
+  try {
+    LOG.info("saving action cache...");
+    actionCacheSizeInBytes=actionCache.save();
+    LOG.info("action cache saved");
+  }
+ catch (  IOException e) {
+    getReporter().handle(Event.error("I/O error while writing action log: " + e.getMessage()));
+  }
+ finally {
+    long stopTime=BlazeClock.nanoTime();
+    actionCacheSaveTime=TimeUnit.MILLISECONDS.convert(stopTime - startTime,TimeUnit.NANOSECONDS);
+    Profiler.instance().logSimpleTask(startTime,stopTime,ProfilerTask.INFO,"Saving action cache");
+  }
+  runtime.getEventBus().post(new CachesSavedEvent(actionCacheSaveTime,actionCacheSizeInBytes));
+}

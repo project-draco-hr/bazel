@@ -1,0 +1,32 @@
+{
+  for (int i=0; i < indent; i++) {
+    builder.append("  ");
+  }
+  builder.append(node).append(": ");
+  if (node >= nodes.size()) {
+    builder.append("OUT_OF_BOUNDS\n");
+    return 0;
+  }
+ else   if (seen[node]) {
+    builder.append("ALREADY_SEEN\n");
+    return 0;
+  }
+  seen[node]=true;
+  byte[] content=nodes.get(node);
+  if (content == null) {
+    builder.append("NULL\n");
+    return 0;
+  }
+  dumpNodeContent(builder,content);
+  builder.append("\n");
+  int contentSize=content.length;
+  int[] intHolder=new int[1];
+  int contentOffset=VarInt.getVarInt(content,0,intHolder);
+  contentOffset=VarInt.getVarInt(content,contentOffset,intHolder);
+  contentOffset+=intHolder[0];
+  while (contentOffset < content.length) {
+    contentOffset=VarInt.getVarInt(content,contentOffset + 1,intHolder);
+    contentSize+=dumpContent(builder,intHolder[0],indent + 1,seen);
+  }
+  return contentSize;
+}

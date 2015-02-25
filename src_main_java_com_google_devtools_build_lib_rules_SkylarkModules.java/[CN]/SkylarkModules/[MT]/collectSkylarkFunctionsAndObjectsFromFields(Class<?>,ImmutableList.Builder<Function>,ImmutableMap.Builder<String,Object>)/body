@@ -1,0 +1,23 @@
+{
+  try {
+    for (    Field field : type.getDeclaredFields()) {
+      if (field.isAnnotationPresent(SkylarkBuiltin.class)) {
+        field.setAccessible(true);
+        SkylarkBuiltin annotation=field.getAnnotation(SkylarkBuiltin.class);
+        if (SkylarkFunction.class.isAssignableFrom(field.getType())) {
+          SkylarkFunction function=(SkylarkFunction)field.get(null);
+          if (!function.isConfigured()) {
+            function.configure(annotation);
+          }
+          functions.add(function);
+        }
+ else {
+          objects.put(annotation.name(),field.get(null));
+        }
+      }
+    }
+  }
+ catch (  IllegalArgumentException|IllegalAccessException e) {
+    throw new RuntimeException(e);
+  }
+}

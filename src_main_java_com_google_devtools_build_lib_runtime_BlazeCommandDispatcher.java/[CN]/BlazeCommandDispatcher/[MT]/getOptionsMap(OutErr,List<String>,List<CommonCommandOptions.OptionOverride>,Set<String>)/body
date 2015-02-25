@@ -1,0 +1,33 @@
+{
+  List<Pair<String,ListMultimap<String,String>>> result=new ArrayList<>();
+  String lastRcFile=null;
+  ListMultimap<String,String> lastMap=null;
+  for (  CommonCommandOptions.OptionOverride override : overrides) {
+    if (override.blazeRc < 0 || override.blazeRc >= rcFiles.size()) {
+      outErr.printErrLn("WARNING: inconsistency in generated command line " + "args. Ignoring bogus argument\n");
+      continue;
+    }
+    String rcFile=rcFiles.get(override.blazeRc);
+    String command=override.command;
+    int index=command.indexOf(':');
+    if (index > 0) {
+      command=command.substring(0,index);
+    }
+    if (!validCommands.contains(command) && !command.equals("common")) {
+      outErr.printErrLn("WARNING: while reading option defaults file '" + rcFile + "':\n"+ "  invalid command name '"+ override.command+ "'.");
+      continue;
+    }
+    if (!rcFile.equals(lastRcFile)) {
+      if (lastRcFile != null) {
+        result.add(Pair.of(lastRcFile,lastMap));
+      }
+      lastRcFile=rcFile;
+      lastMap=ArrayListMultimap.create();
+    }
+    lastMap.put(override.command,override.option);
+  }
+  if (lastRcFile != null) {
+    result.add(Pair.of(lastRcFile,lastMap));
+  }
+  return result;
+}

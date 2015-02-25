@@ -1,0 +1,13 @@
+{
+  super.init(context,log,compiler);
+  errWriter=log.getWriter(WriterKind.ERROR);
+  JavaFileManager fileManager=context.get(JavaFileManager.class);
+  implicitDependencyExtractor=new ImplicitDependencyExtractor(dependencyModule.getUsedClasspath(),dependencyModule.getImplicitDependenciesMap(),fileManager);
+  checkingTreeScanner=context.get(CheckingTreeScanner.class);
+  if (checkingTreeScanner == null) {
+    Set<JavaFileObject> platformClasses=getPlatformClasses(fileManager);
+    checkingTreeScanner=new CheckingTreeScanner(dependencyModule,log,missingTargets,platformClasses);
+    context.put(CheckingTreeScanner.class,checkingTreeScanner);
+  }
+  initTargetMap();
+}

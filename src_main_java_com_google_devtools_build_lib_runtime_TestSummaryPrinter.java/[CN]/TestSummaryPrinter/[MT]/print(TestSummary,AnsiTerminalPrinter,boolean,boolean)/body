@@ -1,0 +1,43 @@
+{
+  if (summary.getStatus() == BlazeTestStatus.FAILED_TO_BUILD) {
+    return;
+  }
+  String message=getCacheMessage(summary) + statusString(summary.getStatus());
+  terminalPrinter.print(Strings.padEnd(summary.getTarget().getLabel().toString(),78 - message.length(),' ') + " " + TestSummary.getStatusMode(summary.getStatus())+ message+ Mode.DEFAULT+ (verboseSummary ? getAttemptSummary(summary) + getTimeSummary(summary) : "")+ "\n");
+  if (printFailedTestCases && summary.getStatus() == BlazeTestStatus.FAILED) {
+    if (summary.getFailedTestCasesStatus() == FailedTestCasesStatus.NOT_AVAILABLE) {
+      terminalPrinter.print(Mode.WARNING + "    (individual test case information not available) " + Mode.DEFAULT+ "\n");
+    }
+ else {
+      for (      TestCase testCase : summary.getFailedTestCases()) {
+        if (testCase.getStatus() != TestCase.Status.PASSED) {
+          TestSummaryPrinter.printTestCase(terminalPrinter,testCase);
+        }
+      }
+      if (summary.getFailedTestCasesStatus() != FailedTestCasesStatus.FULL) {
+        terminalPrinter.print(Mode.WARNING + "    (some shards did not report details, list of failed test" + " cases incomplete)\n"+ Mode.DEFAULT);
+      }
+    }
+  }
+  if (printFailedTestCases) {
+    return;
+  }
+  for (  String warning : summary.getWarnings()) {
+    terminalPrinter.print("  " + AnsiTerminalPrinter.Mode.WARNING + "WARNING: "+ AnsiTerminalPrinter.Mode.DEFAULT+ warning+ "\n");
+  }
+  for (  Path path : summary.getFailedLogs()) {
+    if (path.exists()) {
+      terminalPrinter.print("  " + path.getPathString() + "\n");
+    }
+  }
+  for (  Path path : summary.getCoverageFiles()) {
+    try {
+      if (path.exists() && path.getFileSize() > 0) {
+        terminalPrinter.print("  " + path.getPathString() + "\n");
+      }
+    }
+ catch (    IOException e) {
+      LoggingUtil.logToRemote(Level.WARNING,"Error while reading coverage data file size",e);
+    }
+  }
+}

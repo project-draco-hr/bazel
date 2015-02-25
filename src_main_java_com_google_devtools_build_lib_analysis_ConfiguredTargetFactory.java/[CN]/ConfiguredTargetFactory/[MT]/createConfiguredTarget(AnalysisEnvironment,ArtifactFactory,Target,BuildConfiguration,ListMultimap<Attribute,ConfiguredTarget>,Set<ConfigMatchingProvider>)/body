@@ -1,0 +1,31 @@
+{
+  if (target instanceof Rule) {
+    return createRule(analysisEnvironment,(Rule)target,config,prerequisiteMap,configConditions);
+  }
+  NestedSet<PackageSpecification> visibility=convertVisibility(prerequisiteMap,analysisEnvironment.getEventHandler(),target,null);
+  TargetContext targetContext=new TargetContext(analysisEnvironment,target,config,prerequisiteMap.get(null),visibility);
+  if (target instanceof OutputFile) {
+    OutputFile outputFile=(OutputFile)target;
+    boolean isFileset=outputFile.getGeneratingRule().getRuleClass().equals("Fileset");
+    Artifact artifact=getOutputArtifact(outputFile,config,isFileset,artifactFactory);
+    TransitiveInfoCollection rule=targetContext.findDirectPrerequisite(outputFile.getGeneratingRule().getLabel(),config);
+    if (isFileset) {
+      return new FilesetOutputConfiguredTarget(targetContext,outputFile,rule,artifact);
+    }
+ else {
+      return new OutputFileConfiguredTarget(targetContext,outputFile,rule,artifact);
+    }
+  }
+ else   if (target instanceof InputFile) {
+    InputFile inputFile=(InputFile)target;
+    Artifact artifact=artifactFactory.getSourceArtifact(inputFile.getExecPath(),Root.asSourceRoot(inputFile.getPackage().getSourceRoot()),new ConfiguredTargetKey(target.getLabel(),config));
+    return new InputFileConfiguredTarget(targetContext,inputFile,artifact);
+  }
+ else   if (target instanceof PackageGroup) {
+    PackageGroup packageGroup=(PackageGroup)target;
+    return new PackageGroupConfiguredTarget(targetContext,packageGroup);
+  }
+ else {
+    throw new AssertionError("Unexpected target class: " + target.getClass().getName());
+  }
+}

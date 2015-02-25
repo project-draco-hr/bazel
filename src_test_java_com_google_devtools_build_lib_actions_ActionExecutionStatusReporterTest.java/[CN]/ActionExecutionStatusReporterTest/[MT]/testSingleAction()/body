@@ -1,0 +1,16 @@
+{
+  Action action=mockAction("action1",true);
+  verifyNoOutput();
+  setPreparing(action);
+  clock.advanceBy(1200);
+  verifyOutput("Still waiting for 1 job to complete:","Preparing:","action1, 1 s");
+  clock.advanceBy(5000);
+  setScheduling(action);
+  clock.advanceBy(1200);
+  verifyOutput("Still waiting for 1 job to complete:","Scheduling:","action1, 1 s");
+  setRunning(action);
+  clock.advanceBy(3000);
+  verifyOutput("Still waiting for 1 job to complete:","Running (remote):","action1, 3 s");
+  statusReporter.remove(action);
+  verifyNoOutput();
+}

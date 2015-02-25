@@ -1,0 +1,36 @@
+{
+  if (this.waitASecond || this.waitAMillisecond) {
+    long startedWaiting=Profiler.nanoTimeMaybe();
+    boolean interrupted=false;
+    if (waitASecond) {
+      while (clock.currentTimeMillis() < commandStartTimeMillisRounded + 1050) {
+        try {
+          Thread.sleep(50);
+        }
+ catch (        InterruptedException e) {
+          if (!interrupted) {
+            outErr.printErrLn("INFO: Hang on a second...");
+            interrupted=true;
+          }
+        }
+      }
+    }
+ else {
+      while (clock.currentTimeMillis() == commandStartTimeMillis) {
+        try {
+          Thread.sleep(1);
+        }
+ catch (        InterruptedException e) {
+          if (!interrupted) {
+            outErr.printErrLn("INFO: Hang on a millisecond...");
+            interrupted=true;
+          }
+        }
+      }
+    }
+    if (interrupted) {
+      Thread.currentThread().interrupt();
+    }
+    Profiler.instance().logSimpleTask(startedWaiting,ProfilerTask.WAIT,"Timestamp granularity");
+  }
+}

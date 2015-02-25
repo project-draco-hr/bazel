@@ -1,0 +1,28 @@
+{
+  initializeTester();
+  String[] values=new String[TEST_NODE_COUNT];
+  StringBuilder expected=new StringBuilder();
+  for (int i=0; i < values.length; i++) {
+    values[i]=Integer.toString(i);
+    tester.set(values[i],new StringValue(values[i]));
+    expected.append(values[i]);
+  }
+  SkyKey rootKey=new SkyKey(GraphTester.NODE_TYPE,"root");
+  TestFunction value=tester.getOrCreate(rootKey).setComputedValue(CONCATENATE);
+  for (int i=0; i < values.length; i++) {
+    value.addDependency(values[i]);
+  }
+  EvaluationResult<StringValue> result=tester.eval(false,rootKey);
+  assertEquals(new StringValue(expected.toString()),result.get(rootKey));
+  for (int j=0; j < 10; j++) {
+    expected.setLength(0);
+    for (int i=0; i < values.length; i++) {
+      String s="other" + i + " "+ j;
+      tester.set(values[i],new StringValue(s));
+      expected.append(s);
+    }
+    tester.invalidate();
+    result=tester.eval(false,rootKey);
+    assertEquals(new StringValue(expected.toString()),result.get(rootKey));
+  }
+}

@@ -1,0 +1,40 @@
+{
+  initializeTester();
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  final SkyKey groupDepA=GraphTester.toSkyKey("groupDepA");
+  final SkyKey groupDepB=GraphTester.toSkyKey("groupDepB");
+  SkyKey depC=GraphTester.toSkyKey("depC");
+  tester.set(groupDepA,new StringValue("depC"));
+  tester.set(groupDepB,new StringValue(""));
+  tester.getOrCreate(depC).setHasError(true);
+  tester.getOrCreate(topKey).setBuilder(new NoExtractorFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+      StringValue val=((StringValue)env.getValues(ImmutableList.of(groupDepA,groupDepB)).get(groupDepA));
+      if (env.valuesMissing()) {
+        return null;
+      }
+      String nextDep=val.getValue();
+      try {
+        env.getValueOrThrow(GraphTester.toSkyKey(nextDep),SomeErrorException.class);
+      }
+ catch (      SomeErrorException e) {
+        throw new GenericFunctionException(e,Transience.PERSISTENT);
+      }
+      return env.valuesMissing() ? null : new StringValue("top");
+    }
+  }
+);
+  EvaluationResult<StringValue> evaluationResult=tester.eval(true,groupDepA,depC);
+  assertTrue(evaluationResult.hasError());
+  assertEquals("depC",evaluationResult.get(groupDepA).getValue());
+  assertThat(evaluationResult.getError(depC).getRootCauses()).containsExactly(depC).inOrder();
+  evaluationResult=tester.eval(false,topKey);
+  assertTrue(evaluationResult.hasError());
+  assertThat(evaluationResult.getError(topKey).getRootCauses()).containsExactly(topKey).inOrder();
+  tester.set(groupDepA,new StringValue("groupDepB"));
+  tester.getOrCreate(depC,true);
+  tester.invalidate();
+  evaluationResult=tester.eval(false,topKey);
+  assertFalse(evaluationResult.toString(),evaluationResult.hasError());
+  assertEquals("top",evaluationResult.get(topKey).getValue());
+}

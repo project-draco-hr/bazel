@@ -1,0 +1,13 @@
+{
+  int start=template.indexOf("%{");
+  if (start < 0) {
+    return formatBuilder.append(PERCENT_ESCAPER.escape(template)).toString();
+  }
+  int end=template.indexOf("}",start + 2);
+  if (end < 0) {
+    return formatBuilder.append(PERCENT_ESCAPER.escape(template)).toString();
+  }
+  formatBuilder.append(PERCENT_ESCAPER.escape(template.substring(0,start))).append("%s");
+  placeholders.add(template.substring(start + 2,end));
+  return createPlaceholderSubstitutionFormatStringRecursive(template.substring(end + 1),placeholders,formatBuilder);
+}

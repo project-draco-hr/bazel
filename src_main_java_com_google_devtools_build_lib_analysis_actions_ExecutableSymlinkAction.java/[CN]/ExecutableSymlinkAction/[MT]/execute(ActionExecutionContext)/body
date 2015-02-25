@@ -1,0 +1,15 @@
+{
+  Path inputPath=actionExecutionContext.getExecutor().getExecRoot().getRelative(getInputPath());
+  try {
+    if (!inputPath.isFile()) {
+      throw new ActionExecutionException("'" + Iterables.getOnlyElement(getInputs()).prettyPrint() + "' is not a file",this,false);
+    }
+    if (!inputPath.isExecutable()) {
+      throw new ActionExecutionException("failed to create symbolic link '" + Iterables.getOnlyElement(getOutputs()).prettyPrint() + "': file '"+ Iterables.getOnlyElement(getInputs()).prettyPrint()+ "' is not executable",this,false);
+    }
+  }
+ catch (  IOException e) {
+    throw new ActionExecutionException("failed to create symbolic link '" + Iterables.getOnlyElement(getOutputs()).prettyPrint() + "' to the '"+ Iterables.getOnlyElement(getInputs()).prettyPrint()+ "' due to I/O error: "+ e.getMessage(),e,this,false);
+  }
+  super.execute(actionExecutionContext);
+}

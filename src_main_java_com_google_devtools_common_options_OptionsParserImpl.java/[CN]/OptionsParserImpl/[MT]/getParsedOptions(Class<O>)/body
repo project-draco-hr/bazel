@@ -1,0 +1,26 @@
+{
+  O optionsInstance;
+  try {
+    Constructor<O> constructor=optionsData.getConstructor(optionsClass);
+    if (constructor == null) {
+      return null;
+    }
+    optionsInstance=constructor.newInstance(new Object[0]);
+  }
+ catch (  Exception e) {
+    throw new IllegalStateException(e);
+  }
+  for (  Field field : optionsData.getFieldsForClass(optionsClass)) {
+    Object value=getValue(field);
+    if (value == null) {
+      value=optionsData.getDefaultValue(field);
+    }
+    try {
+      field.set(optionsInstance,value);
+    }
+ catch (    IllegalAccessException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+  return optionsInstance;
+}

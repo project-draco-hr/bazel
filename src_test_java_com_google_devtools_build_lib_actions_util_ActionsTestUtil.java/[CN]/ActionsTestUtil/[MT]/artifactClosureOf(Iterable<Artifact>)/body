@@ -1,0 +1,15 @@
+{
+  Set<Artifact> visited=new LinkedHashSet<>();
+  List<Artifact> toVisit=Lists.newArrayList(artifacts);
+  while (!toVisit.isEmpty()) {
+    Artifact current=toVisit.remove(0);
+    if (!visited.add(current)) {
+      continue;
+    }
+    Action generatingAction=actionGraph.getGeneratingAction(current);
+    if (generatingAction != null) {
+      Iterables.addAll(toVisit,generatingAction.getInputs());
+    }
+  }
+  return visited;
+}

@@ -1,0 +1,22 @@
+{
+  Preconditions.checkState(!isDynamicLibrary(input));
+  if (Link.useStartEndLib(input,cppConfiguration.archiveType())) {
+    Iterable<Artifact> archiveMembers=input.getObjectFiles();
+    if (!Iterables.isEmpty(archiveMembers)) {
+      options.add("-Wl,--start-lib");
+      for (      Artifact member : archiveMembers) {
+        options.add(member.getExecPathString());
+      }
+      options.add("-Wl,--end-lib");
+    }
+  }
+ else {
+    Artifact inputArtifact=input.getArtifact();
+    if (input.isFake()) {
+      options.add(Link.FAKE_OBJECT_PREFIX + inputArtifact.getExecPathString());
+    }
+ else {
+      options.add(inputArtifact.getExecPathString());
+    }
+  }
+}

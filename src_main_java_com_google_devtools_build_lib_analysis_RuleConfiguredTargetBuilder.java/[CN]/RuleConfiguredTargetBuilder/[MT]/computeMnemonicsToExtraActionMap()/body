@@ -1,0 +1,13 @@
+{
+  Multimap<String,ExtraActionSpec> mnemonicToExtraActionMap=HashMultimap.create();
+  for (  TransitiveInfoCollection actionListener : ruleContext.getPrerequisites(":action_listener",Mode.HOST)) {
+    ExtraActionMapProvider provider=actionListener.getProvider(ExtraActionMapProvider.class);
+    if (provider == null) {
+      ruleContext.ruleError(String.format("Unable to match experimental_action_listeners to this rule. " + "Specified target %s is not an action_listener rule",actionListener.getLabel().toString()));
+    }
+ else {
+      mnemonicToExtraActionMap.putAll(provider.getExtraActionMap());
+    }
+  }
+  return mnemonicToExtraActionMap;
+}

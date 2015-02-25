@@ -1,0 +1,22 @@
+{
+  Preconditions.checkNotNull(object);
+  Preconditions.checkState(startTime > 0,"startTime was " + startTime);
+  if (duration < 0) {
+    duration=0;
+  }
+  TaskData parent=taskStack.peek();
+  if (parent != null) {
+    parent.aggregateChild(type,duration);
+  }
+  if (wasTaskSlowEnoughToRecord(type,duration)) {
+    TaskData data=taskStack.create(startTime,type,object);
+    data.duration=duration;
+    if (out != null) {
+      taskQueue.add(data);
+    }
+    SlowestTaskAggregator aggregator=slowestTasks[type.ordinal()];
+    if (aggregator != null) {
+      aggregator.add(data);
+    }
+  }
+}

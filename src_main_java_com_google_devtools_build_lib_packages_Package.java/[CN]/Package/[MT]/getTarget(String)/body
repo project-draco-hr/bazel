@@ -1,0 +1,26 @@
+{
+  Target target=targets.get(targetName);
+  if (target != null) {
+    return target;
+  }
+  Path filename=getPackageDirectory().getRelative(targetName);
+  String suffix;
+  if (!new PathFragment(targetName).isNormalized()) {
+    suffix="";
+  }
+ else   if (filename.isDirectory()) {
+    suffix="; however, a source directory of this name exists.  (Perhaps add " + "'exports_files([\"" + targetName + "\"])' to "+ name+ "/BUILD, or define a "+ "filegroup?)";
+  }
+ else   if (filename.exists()) {
+    suffix="; however, a source file of this name exists.  (Perhaps add " + "'exports_files([\"" + targetName + "\"])' to "+ name+ "/BUILD?)";
+  }
+ else {
+    suffix="";
+  }
+  try {
+    throw new NoSuchTargetException(createLabel(targetName),"target '" + targetName + "' not declared in package '"+ name+ "'"+ suffix+ " defined by "+ this.filename);
+  }
+ catch (  Label.SyntaxException e) {
+    throw new IllegalArgumentException(targetName);
+  }
+}

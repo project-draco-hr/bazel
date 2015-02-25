@@ -1,0 +1,20 @@
+{
+  ConfigurationFragmentKey configurationFragmentKey=(ConfigurationFragmentKey)skyKey.argument();
+  BuildOptions buildOptions=configurationFragmentKey.getBuildOptions();
+  ConfigurationFragmentFactory factory=getFactory(configurationFragmentKey.getFragmentType());
+  try {
+    PackageProviderForConfigurations loadedPackageProvider=new SkyframePackageLoaderWithValueEnvironment(env,configurationPackages.get());
+    ConfigurationEnvironment confEnv=new ConfigurationBuilderEnvironment(loadedPackageProvider);
+    Fragment fragment=factory.create(confEnv,buildOptions);
+    if (env.valuesMissing()) {
+      return null;
+    }
+    return new ConfigurationFragmentValue(fragment);
+  }
+ catch (  InvalidConfigurationException e) {
+    if (env.valuesMissing()) {
+      return null;
+    }
+    throw new ConfigurationFragmentFunctionException(e);
+  }
+}

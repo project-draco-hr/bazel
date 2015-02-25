@@ -1,0 +1,27 @@
+{
+  CcCompilationOutputs.Builder result=new CcCompilationOutputs.Builder();
+  Preconditions.checkNotNull(context);
+  AnalysisEnvironment env=ruleContext.getAnalysisEnvironment();
+  PathFragment objectDir=CppHelper.getObjDirectory(ruleContext.getLabel());
+  if (compileHeaderModules) {
+    Artifact moduleMapArtifact=context.getCppModuleMap().getArtifact();
+    Label moduleMapLabel=Label.parseAbsoluteUnchecked(context.getCppModuleMap().getName());
+    PathFragment outputName=getObjectOutputPath(moduleMapArtifact,objectDir);
+    CppCompileActionBuilder builder=initializeCompileAction(moduleMapArtifact,moduleMapLabel);
+    createSourceAction(outputName,result,env,moduleMapArtifact,builder,".pcm");
+  }
+  for (  Pair<Artifact,Label> source : sourceFiles) {
+    Artifact sourceArtifact=source.getFirst();
+    Label sourceLabel=source.getSecond();
+    PathFragment outputName=getObjectOutputPath(sourceArtifact,objectDir);
+    CppCompileActionBuilder builder=initializeCompileAction(sourceArtifact,sourceLabel);
+    if (CppFileTypes.CPP_HEADER.matches(source.first.getExecPath())) {
+      createHeaderAction(outputName,result,env,builder);
+    }
+ else {
+      createSourceAction(outputName,result,env,sourceArtifact,builder,".o");
+    }
+  }
+  compilationOutputs=result.build();
+  return compilationOutputs;
+}

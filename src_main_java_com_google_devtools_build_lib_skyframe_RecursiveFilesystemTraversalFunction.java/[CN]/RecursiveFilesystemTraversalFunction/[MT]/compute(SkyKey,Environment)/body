@@ -1,0 +1,36 @@
+{
+  TraversalRequest traversal=(TraversalRequest)skyKey.argument();
+  try {
+    FileInfo rootInfo=lookUpFileInfo(env,traversal);
+    if (!rootInfo.type.exists()) {
+      if (rootInfo.type.isSymlink()) {
+        return resultForDanglingSymlink(traversal.path,rootInfo);
+      }
+ else {
+        return RecursiveFilesystemTraversalValue.EMPTY;
+      }
+    }
+    if (rootInfo.type.isFile()) {
+      return resultForFileRoot(traversal.path,rootInfo);
+    }
+    PkgLookupResult pkgLookupResult=checkIfPackage(env,traversal,rootInfo);
+    traversal=pkgLookupResult.traversal;
+    if (pkgLookupResult.isConflicting()) {
+      throw new RecursiveFilesystemTraversalFunctionException(new GeneratedPathConflictException(traversal));
+    }
+ else     if (pkgLookupResult.isPackage() && !traversal.skipTestingForSubpackage) {
+      if (traversal.crossPkgBoundaries) {
+        String msg=traversal.errorInfo + " crosses package boundary into package rooted at " + traversal.path.getRelativePath().getPathString();
+        env.getListener().handle(new Event(EventKind.WARNING,null,msg));
+      }
+ else {
+        return RecursiveFilesystemTraversalValue.EMPTY;
+      }
+    }
+    Collection<SkyKey> dependentKeys=createRecursiveTraversalKeys(env,traversal);
+    return resultForDirectory(traversal,rootInfo,traverseChildren(env,dependentKeys));
+  }
+ catch (  MissingDepException e) {
+    return null;
+  }
+}

@@ -1,0 +1,27 @@
+{
+  StringBuilder buf=new StringBuilder();
+  buf.append('[');
+  String sep="";
+  for (  String s : requestStrings) {
+    buf.append(sep);
+    if (s.startsWith("--client_env")) {
+      int varStart="--client_env=".length();
+      int varEnd=s.indexOf('=',varStart);
+      String varName=s.substring(varStart,varEnd);
+      if (suppressFromLog.matcher(varName).matches()) {
+        buf.append("--client_env=");
+        buf.append(varName);
+        buf.append("=__private_value_removed__");
+      }
+ else {
+        buf.append(s);
+      }
+    }
+ else {
+      buf.append(s);
+    }
+    sep=", ";
+  }
+  buf.append(']');
+  return buf.toString();
+}

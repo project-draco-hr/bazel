@@ -1,0 +1,19 @@
+{
+  PathFragment relativePath=new PathFragment(entry.getName());
+  if (relativePath.isAbsolute()) {
+    throw new DecompressorException("Failed to extract " + relativePath + ", zipped paths cannot be absolute");
+  }
+  Path outputPath=destinationDirectory.getRelative(relativePath);
+  FileSystemUtils.createDirectoryAndParents(outputPath.getParentDirectory());
+  if (entry.isDirectory()) {
+    FileSystemUtils.createDirectoryAndParents(outputPath);
+  }
+ else {
+    try (OutputStream out=new FileOutputStream(new File(outputPath.getPathString()))){
+      IOUtils.copy(in,out);
+    }
+ catch (    IOException e) {
+      throw new DecompressorException("Error writing " + outputPath + " from "+ archiveFile);
+    }
+  }
+}

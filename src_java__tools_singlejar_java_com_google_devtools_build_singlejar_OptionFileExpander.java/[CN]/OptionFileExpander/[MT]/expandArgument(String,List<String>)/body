@@ -1,0 +1,34 @@
+{
+  if (arg.startsWith("@")) {
+    InputStream in=fileSystem.getInputStream(arg.substring(1));
+    try {
+      for (      String line : readAllLines(new InputStreamReader(in,ISO_8859_1))) {
+        List<String> parsedTokens=new ArrayList<>();
+        try {
+          ShellUtils.tokenize(parsedTokens,line);
+        }
+ catch (        TokenizationException e) {
+          throw new IOException("Could not tokenize parameter file!",e);
+        }
+        for (        String token : parsedTokens) {
+          expandArgument(token,expanded);
+        }
+      }
+      InputStream inToClose=in;
+      in=null;
+      inToClose.close();
+    }
+  finally {
+      if (in != null) {
+        try {
+          in.close();
+        }
+ catch (        IOException e) {
+        }
+      }
+    }
+  }
+ else {
+    expanded.add(arg);
+  }
+}

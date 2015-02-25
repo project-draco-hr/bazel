@@ -1,0 +1,23 @@
+{
+  prepareSourceCompilation(build);
+  final String[] message={null};
+  final JavacRunner javacRunner=new JavacRunnerImpl(build.getPlugins());
+  runWithLargeStack(new Runnable(){
+    @Override public void run(){
+      try {
+        internalCompileJavaLibrary(build,javacRunner,err);
+      }
+ catch (      JavacException e) {
+        message[0]=e.getMessage();
+      }
+catch (      Exception e) {
+        e.printStackTrace();
+        message[0]="java compilation threw exception: " + e.getMessage();
+      }
+    }
+  }
+,4L * 1024 * 1024);
+  if (message[0] != null) {
+    throw new IOException("Error compiling java source: " + message[0]);
+  }
+}

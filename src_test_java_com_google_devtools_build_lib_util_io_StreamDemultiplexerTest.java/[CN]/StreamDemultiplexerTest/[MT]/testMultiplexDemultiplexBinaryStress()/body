@@ -1,0 +1,19 @@
+{
+  StreamDemultiplexer demux=new StreamDemultiplexer((byte)'1',out,err,ctl);
+  StreamMultiplexer mux=new StreamMultiplexer(demux);
+  OutputStream[] muxOuts={mux.createStdout(),mux.createStderr(),mux.createControl()};
+  ByteArrayOutputStream[] expectedOuts={new ByteArrayOutputStream(),new ByteArrayOutputStream(),new ByteArrayOutputStream()};
+  Random random=new Random(0xdeadbeef);
+  for (int round=0; round < 100; round++) {
+    byte[] buffer=new byte[random.nextInt(100)];
+    random.nextBytes(buffer);
+    int streamId=random.nextInt(3);
+    expectedOuts[streamId].write(buffer);
+    expectedOuts[streamId].flush();
+    muxOuts[streamId].write(buffer);
+    muxOuts[streamId].flush();
+  }
+  assertArrayEquals(expectedOuts[0].toByteArray(),out.toByteArray());
+  assertArrayEquals(expectedOuts[1].toByteArray(),err.toByteArray());
+  assertArrayEquals(expectedOuts[2].toByteArray(),ctl.toByteArray());
+}

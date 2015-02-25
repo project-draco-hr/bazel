@@ -1,0 +1,61 @@
+{
+  Path buildFile=fileSystem.getPath(packagePb.getBuildFilePath());
+  Preconditions.checkNotNull(buildFile);
+  Context context=new Context(buildFile,builder);
+  builder.setFilename(buildFile);
+  if (packagePb.hasDefaultVisibilitySet() && packagePb.getDefaultVisibilitySet()) {
+    builder.setDefaultVisibility(PackageFactory.getVisibility(deserializeLabels(packagePb.getDefaultVisibilityLabelList())));
+  }
+  builder.setDefaultVisibilitySet(packagePb.getDefaultVisibilitySet());
+  if (packagePb.hasDefaultObsolete()) {
+    builder.setDefaultObsolete(packagePb.getDefaultObsolete());
+  }
+  if (packagePb.hasDefaultTestonly()) {
+    builder.setDefaultTestonly(packagePb.getDefaultTestonly());
+  }
+  if (packagePb.hasDefaultDeprecation()) {
+    builder.setDefaultDeprecation(packagePb.getDefaultDeprecation());
+  }
+  builder.setDefaultCopts(packagePb.getDefaultCoptList());
+  if (packagePb.hasDefaultHdrsCheck()) {
+    builder.setDefaultHdrsCheck(packagePb.getDefaultHdrsCheck());
+  }
+  if (packagePb.hasDefaultLicense()) {
+    builder.setDefaultLicense(deserializeLicense(packagePb.getDefaultLicense()));
+  }
+  builder.setDefaultDistribs(deserializeDistribs(packagePb.getDefaultDistribList()));
+  for (  String subinclude : packagePb.getSubincludeLabelList()) {
+    Label label=deserializeLabel(subinclude);
+    builder.addSubinclude(label,null);
+  }
+  ImmutableList.Builder<Label> skylarkFileDependencies=ImmutableList.builder();
+  for (  String skylarkFile : packagePb.getSkylarkLabelList()) {
+    skylarkFileDependencies.add(deserializeLabel(skylarkFile));
+  }
+  builder.setSkylarkFileDependencies(skylarkFileDependencies.build());
+  MakeEnvironment.Builder makeEnvBuilder=new MakeEnvironment.Builder();
+  for (  Build.MakeVar makeVar : packagePb.getMakeVariableList()) {
+    for (    Build.MakeVarBinding binding : makeVar.getBindingList()) {
+      makeEnvBuilder.update(makeVar.getName(),binding.getValue(),binding.getPlatformSetRegexp());
+    }
+  }
+  builder.setMakeEnv(makeEnvBuilder);
+  for (  Build.SourceFile sourceFile : packagePb.getSourceFileList()) {
+    context.deserializeInputFile(sourceFile);
+  }
+  for (  Build.PackageGroup packageGroupPb : packagePb.getPackageGroupList()) {
+    context.deserializePackageGroup(packageGroupPb);
+  }
+  for (  Build.Rule rulePb : packagePb.getRuleList()) {
+    context.deserializeRule(rulePb);
+  }
+  for (  Build.Event event : packagePb.getEventList()) {
+    deserializeEvent(context,eventHandler,event);
+  }
+  if (packagePb.hasContainsErrors() && packagePb.getContainsErrors()) {
+    builder.setContainsErrors();
+  }
+  if (packagePb.hasContainsTemporaryErrors() && packagePb.getContainsTemporaryErrors()) {
+    builder.setContainsTemporaryErrors();
+  }
+}

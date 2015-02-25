@@ -1,0 +1,26 @@
+{
+  try {
+    ByteBuffer source=ByteBuffer.wrap(data);
+    byte[] actionKeyBytes=new byte[VarInt.getVarInt(source)];
+    source.get(actionKeyBytes);
+    String actionKey=new String(actionKeyBytes,ISO_8859_1);
+    Digest digest=Digest.read(source);
+    int count=VarInt.getVarInt(source);
+    ImmutableList.Builder<String> builder=new ImmutableList.Builder<>();
+    for (int i=0; i < count; i++) {
+      int id=VarInt.getVarInt(source);
+      String filename=(id >= 0 ? indexer.getStringForIndex(id) : null);
+      if (filename == null) {
+        throw new IOException("Corrupted file index");
+      }
+      builder.add(filename);
+    }
+    if (source.remaining() > 0) {
+      throw new IOException("serialized entry data has not been fully decoded");
+    }
+    return new Entry(actionKey,builder.build(),digest);
+  }
+ catch (  BufferUnderflowException e) {
+    throw new IOException("encoded entry data is incomplete",e);
+  }
+}

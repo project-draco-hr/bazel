@@ -1,0 +1,17 @@
+{
+  PackageIdentifier dir=(PackageIdentifier)skyKey.argument();
+  PackageLookupValue pkgLookupValue=null;
+  pkgLookupValue=(PackageLookupValue)env.getValue(PackageLookupValue.key(dir));
+  if (pkgLookupValue == null) {
+    return null;
+  }
+  if (pkgLookupValue.packageExists()) {
+    return ContainingPackageLookupValue.withContainingPackage(dir,pkgLookupValue.getRoot());
+  }
+  PathFragment parentDir=dir.getPackageFragment().getParentDirectory();
+  if (parentDir == null) {
+    return ContainingPackageLookupValue.noContainingPackage();
+  }
+  PackageIdentifier parentId=new PackageIdentifier(dir.getRepository(),parentDir);
+  return env.getValue(ContainingPackageLookupValue.key(parentId));
+}

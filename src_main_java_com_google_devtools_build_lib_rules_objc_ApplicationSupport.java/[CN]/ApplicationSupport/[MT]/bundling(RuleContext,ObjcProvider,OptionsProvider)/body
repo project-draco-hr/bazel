@@ -1,0 +1,11 @@
+{
+  ImmutableList<BundleableFile> extraBundleFiles;
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  if (objcConfiguration.getPlatform() == Platform.DEVICE) {
+    extraBundleFiles=ImmutableList.of(new BundleableFile(attributes.provisioningProfile(),PROVISIONING_PROFILE_BUNDLE_FILE));
+  }
+ else {
+    extraBundleFiles=ImmutableList.of();
+  }
+  return new Bundling.Builder().setName(ruleContext.getLabel().getName()).setBundleDirSuffix(".app").setExtraBundleFiles(extraBundleFiles).setObjcProvider(objcProvider).setInfoplistMerging(BundleSupport.infoPlistMerging(ruleContext,objcProvider,optionsProvider)).setIntermediateArtifacts(intermediateArtifacts).build();
+}

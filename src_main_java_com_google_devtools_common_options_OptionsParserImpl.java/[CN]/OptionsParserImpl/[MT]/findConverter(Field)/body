@@ -1,0 +1,25 @@
+{
+  Option annotation=optionField.getAnnotation(Option.class);
+  if (annotation.converter() == Converter.class) {
+    Type type;
+    if (annotation.allowMultiple()) {
+      type=((ParameterizedType)optionField.getGenericType()).getActualTypeArguments()[0];
+    }
+ else {
+      type=optionField.getType();
+    }
+    Converter<?> converter=DEFAULT_CONVERTERS.get(type);
+    if (converter == null) {
+      throw new AssertionError("No converter found for " + type + "; possible fix: add "+ "converter=... to @Option annotation for "+ optionField.getName());
+    }
+    return converter;
+  }
+  try {
+    Class<?> converter=annotation.converter();
+    Constructor<?> constructor=converter.getConstructor(new Class<?>[0]);
+    return (Converter<?>)constructor.newInstance(new Object[0]);
+  }
+ catch (  Exception e) {
+    throw new AssertionError(e);
+  }
+}

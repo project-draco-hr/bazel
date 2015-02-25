@@ -1,0 +1,15 @@
+{
+  if (left.isTuple() != right.isTuple()) {
+    throw new EvalException(loc,"cannot concatenate lists and tuples");
+  }
+  if (left == EMPTY_LIST) {
+    return right;
+  }
+  if (right == EMPTY_LIST) {
+    return left;
+  }
+  if (!left.genericType.equals(right.genericType)) {
+    throw new EvalException(loc,String.format("cannot concatenate list of %s with list of %s",EvalUtils.getDataTypeNameFromClass(left.genericType),EvalUtils.getDataTypeNameFromClass(right.genericType)));
+  }
+  return new ConcatenatedSkylarkList(left,right,left.isTuple(),left.genericType);
+}

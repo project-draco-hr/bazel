@@ -1,0 +1,17 @@
+{
+  NestedSetBuilder<TaggedEvents> eventBuilder=NestedSetBuilder.stableOrder();
+  ImmutableList<Event> events=eventHandler.getEvents();
+  if (!events.isEmpty()) {
+    eventBuilder.add(new TaggedEvents(getTagFromKey(),events));
+  }
+  for (  SkyKey dep : graph.get(skyKey).getTemporaryDirectDeps()) {
+    ValueWithMetadata value=getValueMaybeFromError(dep,bubbleErrorInfo);
+    if (value != null) {
+      eventBuilder.addTransitive(value.getTransitiveEvents());
+    }
+ else {
+      Preconditions.checkState(missingChildren,"",dep,skyKey);
+    }
+  }
+  return eventBuilder.build();
+}

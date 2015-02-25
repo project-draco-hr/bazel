@@ -1,0 +1,106 @@
+{
+  boolean inTriplequote=skipTripleQuote(quot);
+  int oldPos=pos - 1;
+  StringBuilder literal=new StringBuilder();
+  while (pos < buffer.length) {
+    char c=buffer[pos];
+    pos++;
+switch (c) {
+case '\n':
+      if (inTriplequote) {
+        literal.append(c);
+        break;
+      }
+ else {
+        error("unterminated string literal at eol",oldPos,pos);
+        newline();
+        return new Token(TokenKind.STRING,oldPos,pos,literal.toString());
+      }
+case '\\':
+    if (pos == buffer.length) {
+      error("unterminated string literal at eof",oldPos,pos);
+      return new Token(TokenKind.STRING,oldPos,pos,literal.toString());
+    }
+  c=buffer[pos];
+pos++;
+switch (c) {
+case '\n':
+break;
+case 'n':
+literal.append('\n');
+break;
+case 'r':
+literal.append('\r');
+break;
+case 't':
+literal.append('\t');
+break;
+case '\\':
+literal.append('\\');
+break;
+case '\'':
+literal.append('\'');
+break;
+case '"':
+literal.append('"');
+break;
+case '0':
+case '1':
+case '2':
+case '3':
+case '4':
+case '5':
+case '6':
+case '7':
+{
+int octal=c - '0';
+if (pos < buffer.length) {
+c=buffer[pos];
+if (c >= '0' && c <= '7') {
+pos++;
+octal=(octal << 3) | (c - '0');
+if (pos < buffer.length) {
+c=buffer[pos];
+if (c >= '0' && c <= '7') {
+pos++;
+octal=(octal << 3) | (c - '0');
+}
+}
+}
+}
+literal.append((char)(octal & 0xff));
+break;
+}
+case 'a':
+case 'b':
+case 'f':
+case 'N':
+case 'u':
+case 'U':
+case 'v':
+case 'x':
+error("escape sequence not implemented: \\" + c,oldPos,pos);
+break;
+default :
+literal.append('\\');
+literal.append(c);
+break;
+}
+break;
+case '\'':
+case '"':
+if (c != quot || (inTriplequote && !skipTripleQuote(quot))) {
+literal.append(c);
+}
+ else {
+return new Token(TokenKind.STRING,oldPos,pos,literal.toString());
+}
+break;
+default :
+literal.append(c);
+break;
+}
+}
+error("unterminated string literal at eof",oldPos,pos);
+return new Token(TokenKind.STRING,oldPos,pos,literal.toString());
+}

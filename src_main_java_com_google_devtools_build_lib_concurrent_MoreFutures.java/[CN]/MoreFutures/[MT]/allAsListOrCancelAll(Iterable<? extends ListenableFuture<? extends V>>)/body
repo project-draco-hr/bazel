@@ -1,0 +1,18 @@
+{
+  ListenableFuture<List<V>> combinedFuture=Futures.allAsList(futures);
+  Futures.addCallback(combinedFuture,new FutureCallback<List<V>>(){
+    @Override public void onSuccess(    @Nullable List<V> vs){
+    }
+    /** 
+ * In case of a failure of any of the futures (that gets propagated to combinedFuture) we
+ * cancel all the futures in the list.
+ */
+    @Override public void onFailure(    Throwable ignore){
+      for (      ListenableFuture<? extends V> future : futures) {
+        future.cancel(true);
+      }
+    }
+  }
+);
+  return combinedFuture;
+}

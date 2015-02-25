@@ -1,0 +1,18 @@
+{
+  final List<String> linkstampExecPaths=Artifact.asExecPaths(linkstampOutputs);
+  ImmutableList.Builder<String> escapedArgs=ImmutableList.builder();
+  for (  String rawArg : rawLinkArgv) {
+    String escapedArg;
+    if (rawArg.equals(getPrimaryOutput().getExecPathString()) || linkstampExecPaths.contains(rawArg)) {
+      escapedArg=outputPrefix + ShellEscaper.escapeString(rawArg);
+    }
+ else     if (rawArg.startsWith(Link.FAKE_OBJECT_PREFIX)) {
+      escapedArg=outputPrefix + ShellEscaper.escapeString(rawArg.substring(Link.FAKE_OBJECT_PREFIX.length()));
+    }
+ else {
+      escapedArg=ShellEscaper.escapeString(rawArg);
+    }
+    escapedArgs.add(escapedArg);
+  }
+  return escapedArgs.build();
+}

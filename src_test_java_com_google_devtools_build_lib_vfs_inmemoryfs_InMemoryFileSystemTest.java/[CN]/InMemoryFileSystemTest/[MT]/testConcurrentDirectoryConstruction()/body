@@ -1,0 +1,65 @@
+{
+  final int NUM_TO_WRITE=10000;
+  final AtomicInteger baseSelector=new AtomicInteger();
+class PathCreator extends TestThread {
+    @Override public void runTest() throws Exception {
+      final int threadId=baseSelector.getAndIncrement();
+      Path base=testFS.getPath("/common_dir");
+      base.createDirectory();
+      for (int i=0; i < NUM_TO_WRITE; i++) {
+        Path file=base.getRelative("somefile_" + threadId + "_"+ i);
+        writeToFile(file,TEST_FILE_DATA);
+        file.setReadable(i % 2 == 0);
+        file.setWritable(i % 3 == 0);
+        file.setExecutable(i % 4 == 0);
+        file.setLastModifiedTime(i);
+        Path symlink=base.getRelative("symlink_" + threadId + "_"+ i);
+        symlink.createSymbolicLink(file);
+      }
+    }
+  }
+  Collection<TestThread> threads=Lists.newArrayListWithCapacity(NUM_THREADS_FOR_CONCURRENCY_TESTS);
+  for (int i=0; i < NUM_THREADS_FOR_CONCURRENCY_TESTS; i++) {
+    TestThread thread=new PathCreator();
+    thread.start();
+    threads.add(thread);
+  }
+  for (  TestThread thread : threads) {
+    thread.joinAndAssertState(0);
+  }
+class PathValidator extends TestThread {
+    @Override public void runTest() throws Exception {
+      final int threadId=baseSelector.getAndIncrement();
+      Path base=testFS.getPath("/common_dir");
+      assertTrue(base.exists());
+      for (int i=0; i < NUM_TO_WRITE; i++) {
+        Path file=base.getRelative("somefile_" + threadId + "_"+ i);
+        assertTrue(file.exists());
+        assertTrue(file.isFile());
+        assertEquals(i % 2 == 0,file.isReadable());
+        assertEquals(i % 3 == 0,file.isWritable());
+        assertEquals(i % 4 == 0,file.isExecutable());
+        assertEquals(i,file.getLastModifiedTime());
+        if (file.isReadable()) {
+          BufferedReader reader=new BufferedReader(new InputStreamReader(file.getInputStream(),Charset.defaultCharset()));
+          assertEquals(TEST_FILE_DATA,reader.readLine());
+          assertEquals(null,reader.readLine());
+        }
+        Path symlink=base.getRelative("symlink_" + threadId + "_"+ i);
+        assertTrue(symlink.exists());
+        assertTrue(symlink.isSymbolicLink());
+        assertEquals(file.asFragment(),symlink.readSymbolicLink());
+      }
+    }
+  }
+  baseSelector.set(0);
+  threads=Lists.newArrayListWithCapacity(NUM_THREADS_FOR_CONCURRENCY_TESTS);
+  for (int i=0; i < NUM_THREADS_FOR_CONCURRENCY_TESTS; i++) {
+    TestThread thread=new PathValidator();
+    thread.start();
+    threads.add(thread);
+  }
+  for (  TestThread thread : threads) {
+    thread.joinAndAssertState(0);
+  }
+}

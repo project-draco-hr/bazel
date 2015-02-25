@@ -1,0 +1,52 @@
+{
+  final SkyKey parent=GraphTester.toSkyKey("parent");
+  final AtomicBoolean blockingEnabled=new AtomicBoolean(false);
+  final CountDownLatch waitForChanged=new CountDownLatch(1);
+  final CountDownLatch threadsStarted=new CountDownLatch(3);
+  final TrackingAwaiter trackingAwaiter=new TrackingAwaiter();
+  setGraphForTesting(new NotifyingInMemoryGraph(new Listener(){
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+      if (!blockingEnabled.get()) {
+        return;
+      }
+      if (!key.equals(parent)) {
+        return;
+      }
+      if (type == EventType.IS_CHANGED && order == Order.BEFORE) {
+        threadsStarted.countDown();
+      }
+      if (type == EventType.IS_DIRTY && order == Order.BEFORE) {
+        threadsStarted.countDown();
+      }
+      if (type == EventType.MARK_DIRTY) {
+        trackingAwaiter.awaitLatchAndTrackExceptions(threadsStarted,"Both threads did not query if value isChanged in time");
+        boolean isChanged=(Boolean)context;
+        if (order == Order.BEFORE && !isChanged) {
+          trackingAwaiter.awaitLatchAndTrackExceptions(waitForChanged,"'changed' thread did not mark value changed in time");
+          return;
+        }
+        if (order == Order.AFTER && isChanged) {
+          waitForChanged.countDown();
+        }
+      }
+    }
+  }
+));
+  SkyKey leaf=GraphTester.toSkyKey("leaf");
+  tester.set(leaf,new StringValue("leaf"));
+  tester.getOrCreate(parent).addDependency(leaf).setComputedValue(CONCATENATE);
+  EvaluationResult<StringValue> result;
+  result=tester.eval(false,parent);
+  assertEquals("leaf",result.get(parent).getValue());
+  tester.getOrCreate(leaf,true);
+  SkyKey other2=GraphTester.toSkyKey("other2");
+  tester.set(other2,new StringValue("other2"));
+  tester.getOrCreate(parent,true).addDependency(other2);
+  tester.invalidate();
+  blockingEnabled.set(true);
+  result=tester.eval(false,parent);
+  assertEquals("leafother2",result.get(parent).getValue());
+  trackingAwaiter.assertNoErrors();
+  assertEquals(0,waitForChanged.getCount());
+  assertEquals(0,threadsStarted.getCount());
+}

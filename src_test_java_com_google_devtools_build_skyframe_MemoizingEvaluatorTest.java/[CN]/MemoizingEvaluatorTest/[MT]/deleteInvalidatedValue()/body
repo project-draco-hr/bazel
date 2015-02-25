@@ -1,0 +1,19 @@
+{
+  initializeTester();
+  SkyKey top=GraphTester.toSkyKey("top");
+  SkyKey toDelete=GraphTester.toSkyKey("toDelete");
+  tester.getOrCreate(top).addDependency(toDelete).setComputedValue(CONCATENATE);
+  tester.set(toDelete,new StringValue("toDelete"));
+  SkyValue value=tester.evalAndGet("top");
+  SkyKey forceInvalidation=GraphTester.toSkyKey("forceInvalidation");
+  tester.set(forceInvalidation,new StringValue("forceInvalidation"));
+  tester.getOrCreate(toDelete,true);
+  tester.invalidate();
+  tester.eval(false,forceInvalidation);
+  tester.delete("toDelete");
+  WeakReference<SkyValue> ref=new WeakReference<>(value);
+  value=null;
+  tester.eval(false,forceInvalidation);
+  tester.invalidate();
+  GcFinalization.awaitClear(ref);
+}

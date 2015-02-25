@@ -1,0 +1,30 @@
+{
+  TestDelegator d=newExistsDelegator();
+  scopedFS().setDelegator(d);
+  testFS.createDirectory(testFS.getPath(SCOPE_ROOT.getRelative("dir")));
+  testFS.createDirectory(testFS.getPath(SCOPE_ROOT.getRelative("dir/dir2")));
+  testFS.createDirectory(testFS.getPath(SCOPE_ROOT.getRelative("dir/dir2/dir3")));
+  String scopeRoot=SCOPE_ROOT.getPathString();
+  String scopeBase=SCOPE_ROOT.getBaseName();
+  assertInScopeLink("ilink1","target",d);
+  assertInScopeLink("ilink2","dir/../otherdir/target",d);
+  assertInScopeLink("dir/ilink3","../target",d);
+  assertInScopeLink("dir/dir2/ilink4","../../target",d);
+  assertInScopeLink("dir/dir2/ilink5",".././../dir/./target",d);
+  assertInScopeLink("dir/dir2/ilink6","../dir2/../../dir/dir2/dir3/../../../target",d);
+  assertOutOfScopeLink("olink1","../target",chopScopeRoot(1) + "/target",d);
+  assertOutOfScopeLink("dir/olink2","../../target",chopScopeRoot(1) + "/target",d);
+  assertOutOfScopeLink("olink3","../" + scopeBase + "/target",scopeRoot + "/target",d);
+  assertOutOfScopeLink("dir/dir2/olink5","../../../target",chopScopeRoot(1) + "/target",d);
+  assertOutOfScopeLink("dir/dir2/olink6","../dir2/../../dir/dir2/../../../target",chopScopeRoot(1) + "/target",d);
+  assertOutOfScopeLink("dir/olink7","../../../target",chopScopeRoot(2) + "target",d);
+  assertOutOfScopeLink("olink8","../../../../../target","/target",d);
+  Path iDirLink=testFS.getPath(SCOPE_ROOT.getRelative("dir/dir2/ilinkdir"));
+  testFS.createSymbolicLink(iDirLink,new PathFragment("../../dir"));
+  iDirLink.getRelative("file").exists();
+  assertNull(d.lastPath());
+  Path oDirLink=testFS.getPath(SCOPE_ROOT.getRelative("dir/dir2/olinkdir"));
+  testFS.createSymbolicLink(oDirLink,new PathFragment("../../../other/dir"));
+  oDirLink.getRelative("file").exists();
+  assertEquals(chopScopeRoot(1) + "/other/dir/file",d.lastPath().getPathString());
+}

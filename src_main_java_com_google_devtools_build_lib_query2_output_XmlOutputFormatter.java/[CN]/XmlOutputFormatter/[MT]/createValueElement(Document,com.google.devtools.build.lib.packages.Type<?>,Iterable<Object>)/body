@@ -1,0 +1,74 @@
+{
+  com.google.devtools.build.lib.packages.Type<?> FILESET_ENTRY=com.google.devtools.build.lib.packages.Type.FILESET_ENTRY, LABEL_LIST=com.google.devtools.build.lib.packages.Type.LABEL_LIST, LICENSE=com.google.devtools.build.lib.packages.Type.LICENSE, STRING_LIST=com.google.devtools.build.lib.packages.Type.STRING_LIST;
+  final Element elem;
+  final boolean hasMultipleValues=Iterables.size(values) > 1;
+  com.google.devtools.build.lib.packages.Type<?> elemType=type.getListElementType();
+  if (elemType != null) {
+    elem=doc.createElement("list");
+    for (    Object value : values) {
+      for (      Object elemValue : (Collection<?>)value) {
+        elem.appendChild(createValueElement(doc,elemType,elemValue));
+      }
+    }
+  }
+ else   if (type instanceof com.google.devtools.build.lib.packages.Type.DictType) {
+    Set<Object> visitedValues=new HashSet<>();
+    elem=doc.createElement("dict");
+    com.google.devtools.build.lib.packages.Type.DictType<?,?> dictType=(com.google.devtools.build.lib.packages.Type.DictType<?,?>)type;
+    for (    Object value : values) {
+      for (      Map.Entry<?,?> entry : ((Map<?,?>)value).entrySet()) {
+        if (visitedValues.add(entry.getKey())) {
+          Element pairElem=doc.createElement("pair");
+          elem.appendChild(pairElem);
+          pairElem.appendChild(createValueElement(doc,dictType.getKeyType(),entry.getKey()));
+          pairElem.appendChild(createValueElement(doc,dictType.getValueType(),entry.getValue()));
+        }
+      }
+    }
+  }
+ else   if (type == LICENSE) {
+    elem=createSingleValueElement(doc,"license",hasMultipleValues);
+    if (!hasMultipleValues) {
+      License license=(License)Iterables.getOnlyElement(values);
+      Element exceptions=createValueElement(doc,LABEL_LIST,license.getExceptions());
+      exceptions.setAttribute("name","exceptions");
+      elem.appendChild(exceptions);
+      Element licenseTypes=createValueElement(doc,STRING_LIST,license.getLicenseTypes());
+      licenseTypes.setAttribute("name","license-types");
+      elem.appendChild(licenseTypes);
+    }
+  }
+ else   if (type == FILESET_ENTRY) {
+    FilesetEntry filesetEntry=(FilesetEntry)Iterables.getOnlyElement(values);
+    elem=doc.createElement("fileset-entry");
+    elem.setAttribute("srcdir",filesetEntry.getSrcLabel().toString());
+    elem.setAttribute("destdir",filesetEntry.getDestDir().toString());
+    elem.setAttribute("symlinks",filesetEntry.getSymlinkBehavior().toString());
+    elem.setAttribute("strip_prefix",filesetEntry.getStripPrefix());
+    if (filesetEntry.getExcludes() != null) {
+      Element excludes=createValueElement(doc,LABEL_LIST,filesetEntry.getExcludes());
+      excludes.setAttribute("name","excludes");
+      elem.appendChild(excludes);
+    }
+    if (filesetEntry.getFiles() != null) {
+      Element files=createValueElement(doc,LABEL_LIST,filesetEntry.getFiles());
+      files.setAttribute("name","files");
+      elem.appendChild(files);
+    }
+  }
+ else {
+    elem=createSingleValueElement(doc,type.toString(),hasMultipleValues);
+    if (!hasMultipleValues && !Iterables.isEmpty(values)) {
+      Object value=Iterables.getOnlyElement(values);
+      if (value != null) {
+        try {
+          elem.setAttribute("value",value.toString());
+        }
+ catch (        DOMException e) {
+          elem.setAttribute("value","[[[ERROR: could not be encoded as XML]]]");
+        }
+      }
+    }
+  }
+  return elem;
+}

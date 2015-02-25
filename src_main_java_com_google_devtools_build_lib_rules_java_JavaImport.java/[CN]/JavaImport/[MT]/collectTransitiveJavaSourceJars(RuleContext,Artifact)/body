@@ -1,0 +1,10 @@
+{
+  NestedSetBuilder<Artifact> transitiveJavaSourceJarBuilder=NestedSetBuilder.stableOrder();
+  if (srcJar != null) {
+    transitiveJavaSourceJarBuilder.add(srcJar);
+  }
+  for (  JavaSourceJarsProvider other : ruleContext.getPrerequisites("exports",Mode.TARGET,JavaSourceJarsProvider.class)) {
+    transitiveJavaSourceJarBuilder.addTransitive(other.getTransitiveSourceJars());
+  }
+  return transitiveJavaSourceJarBuilder.build();
+}

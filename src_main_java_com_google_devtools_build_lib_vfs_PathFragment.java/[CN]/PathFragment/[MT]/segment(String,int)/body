@@ -1,0 +1,37 @@
+{
+  char[] chars=toSegment.toCharArray();
+  int length=chars.length;
+  if (length == offset) {
+    return new String[0];
+  }
+  int seg=0;
+  int start=offset;
+  for (int i=offset; i < length; i++) {
+    if (isSeparator(chars[i])) {
+      if (i > start) {
+        seg++;
+      }
+      start=i + 1;
+    }
+  }
+  if (start < length) {
+    seg++;
+  }
+  String[] result=new String[seg];
+  seg=0;
+  start=offset;
+  for (int i=offset; i < length; i++) {
+    if (isSeparator(chars[i])) {
+      if (i > start) {
+        result[seg]=StringCanonicalizer.intern(new String(chars,start,i - start));
+        seg++;
+      }
+      start=i + 1;
+    }
+  }
+  if (start < length) {
+    result[seg]=StringCanonicalizer.intern(new String(chars,start,length - start));
+    seg++;
+  }
+  return result;
+}

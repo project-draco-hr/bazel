@@ -1,0 +1,20 @@
+{
+  List<String> inclusionList=new ArrayList<>();
+  List<String> exclusionList=new ArrayList<>();
+  for (  String piece : input.split("(?<!\\\\),")) {
+    piece=piece.replace("\\,",",");
+    boolean isExcluded=piece.startsWith("-");
+    if (isExcluded || piece.startsWith("+")) {
+      piece=piece.substring(1);
+    }
+    if (piece.length() > 0) {
+      (isExcluded ? exclusionList : inclusionList).add(piece);
+    }
+  }
+  try {
+    return new RegexFilter(inclusionList,exclusionList);
+  }
+ catch (  PatternSyntaxException e) {
+    throw new OptionsParsingException("Failed to build valid regular expression: " + e.getMessage());
+  }
+}

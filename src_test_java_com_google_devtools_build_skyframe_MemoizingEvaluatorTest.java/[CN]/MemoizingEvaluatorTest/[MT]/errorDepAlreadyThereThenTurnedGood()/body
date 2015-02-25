@@ -1,0 +1,22 @@
+{
+  initializeTester();
+  SkyKey errorKey=GraphTester.toSkyKey("my_error_value");
+  tester.getOrCreate(errorKey).setHasError(true);
+  SkyKey parentKey=GraphTester.toSkyKey("parent");
+  tester.getOrCreate(parentKey).addErrorDependency(errorKey,new StringValue("recovered")).setHasError(true);
+  assertThat(tester.evalAndGetError(errorKey).getRootCauses()).containsExactly(errorKey);
+  EvaluationResult<StringValue> result=tester.eval(false,parentKey);
+  assertThat(result.getError(parentKey).getRootCauses()).containsExactly(parentKey).inOrder();
+  tester.set(errorKey,new StringValue("reformed")).setHasError(false);
+  tester.getOrCreate(parentKey,false).setHasError(false).setComputedValue(COPY);
+  tester.differencer.invalidate(ImmutableList.of(errorKey));
+  tester.invalidate();
+  result=tester.eval(false,parentKey);
+  assertThat(result.errorMap()).isEmpty();
+  assertEquals("reformed",result.get(parentKey).getValue());
+  tester.getOrCreate(parentKey,false).setHasError(true);
+  tester.invalidateTransientErrors();
+  result=tester.eval(false,parentKey);
+  assertThat(result.errorMap()).isEmpty();
+  assertEquals("reformed",result.get(parentKey).getValue());
+}

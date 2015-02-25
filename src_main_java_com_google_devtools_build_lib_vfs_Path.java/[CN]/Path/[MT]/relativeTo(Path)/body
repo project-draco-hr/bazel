@@ -1,0 +1,16 @@
+{
+  checkSameFilesystem(ancestorPath);
+  int resultSegmentCount=depth - ancestorPath.depth;
+  if (resultSegmentCount >= 0) {
+    String[] resultSegments=new String[resultSegmentCount];
+    Path currentPath=this;
+    for (int pos=resultSegmentCount - 1; pos >= 0; pos--) {
+      resultSegments[pos]=currentPath.getBaseName();
+      currentPath=currentPath.getParentDirectory();
+    }
+    if (ancestorPath.equals(currentPath)) {
+      return new PathFragment('\0',false,resultSegments);
+    }
+  }
+  throw new IllegalArgumentException("Path " + this + " is not beneath "+ ancestorPath);
+}

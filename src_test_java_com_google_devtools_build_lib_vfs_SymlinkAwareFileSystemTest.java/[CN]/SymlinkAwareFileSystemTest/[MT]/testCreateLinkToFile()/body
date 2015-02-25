@@ -1,0 +1,19 @@
+{
+  Path newPath=xEmptyDirectory.getChild("new-file");
+  FileSystemUtils.createEmptyFile(newPath);
+  Path linkPath=xEmptyDirectory.getChild("some-link");
+  createSymbolicLink(linkPath,newPath);
+  assertTrue(linkPath.isSymbolicLink());
+  assertTrue(linkPath.isFile());
+  assertFalse(linkPath.isFile(Symlinks.NOFOLLOW));
+  assertTrue(linkPath.isFile(Symlinks.FOLLOW));
+  assertFalse(linkPath.isDirectory());
+  assertFalse(linkPath.isDirectory(Symlinks.NOFOLLOW));
+  assertFalse(linkPath.isDirectory(Symlinks.FOLLOW));
+  if (supportsSymlinks) {
+    assertEquals(newPath.toString().length(),linkPath.getFileSize(Symlinks.NOFOLLOW));
+    assertEquals(newPath.getFileSize(Symlinks.NOFOLLOW),linkPath.getFileSize());
+  }
+  assertEquals(2,linkPath.getParentDirectory().getDirectoryEntries().size());
+  assertThat(linkPath.getParentDirectory().getDirectoryEntries()).containsExactly(newPath,linkPath);
+}

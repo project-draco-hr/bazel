@@ -1,0 +1,11 @@
+{
+  Set<TransitiveInfoCollection> prerequisites=new LinkedHashSet<>();
+  AttributeMap attributes=ruleContext.attributes();
+  for (  String attr : attributes.getAttributeNames()) {
+    Type<?> attrType=attributes.getAttributeType(attr);
+    if ((attrType == Type.LABEL || attrType == Type.LABEL_LIST) && !RuleClass.isConstraintAttribute(attr) && !attr.equals("visibility")) {
+      prerequisites.addAll(ruleContext.getPrerequisites(attr,RuleConfiguredTarget.Mode.DONT_CHECK));
+    }
+  }
+  return prerequisites;
+}

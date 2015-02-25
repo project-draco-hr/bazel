@@ -1,0 +1,17 @@
+{
+  Action action=event.getAction();
+  C component=createComponent(action,TimeUnit.NANOSECONDS.toMillis(event.getNanoTimeStart()));
+  boolean duplicate=false;
+  for (  Artifact output : action.getOutputs()) {
+    C old=outputArtifactToComponent.putIfAbsent(output,component);
+    if (old != null) {
+      if (!Actions.canBeShared(action,old.getAction())) {
+        throw new IllegalStateException("Duplicate output artifact found for middleman." + "This could happen  if a previous event registered the action.\n" + "Old action: " + old.getAction() + "\n\n"+ "New action: "+ action+ "\n\n"+ "Artifact: "+ output+ "\n");
+      }
+      duplicate=true;
+    }
+  }
+  if (!duplicate) {
+    finalizeActionStat(action,component);
+  }
+}

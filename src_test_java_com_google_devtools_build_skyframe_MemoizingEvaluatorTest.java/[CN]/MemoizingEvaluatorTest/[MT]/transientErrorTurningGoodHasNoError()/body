@@ -1,0 +1,21 @@
+{
+  initializeTester();
+  SkyKey errorKey=GraphTester.toSkyKey("my_error_value");
+  tester.getOrCreate(errorKey).setHasTransientError(true);
+  ErrorInfo errorInfo=tester.evalAndGetError(errorKey);
+  assertNotNull(errorInfo);
+  assertThat(errorInfo.getRootCauses()).containsExactly(errorKey);
+  tester.invalidateTransientErrors();
+  errorInfo=tester.evalAndGetError(errorKey);
+  assertNotNull(errorInfo);
+  StringValue value=new StringValue("reformed");
+  assertThat(errorInfo.getRootCauses()).containsExactly(errorKey);
+  tester.getOrCreate(errorKey,false).setHasTransientError(false).setConstantValue(value);
+  tester.invalidateTransientErrors();
+  StringValue stringValue=(StringValue)tester.evalAndGet(true,errorKey);
+  assertSame(stringValue,value);
+  tester.getOrCreate(errorKey,false).setHasTransientError(true);
+  tester.invalidateTransientErrors();
+  stringValue=(StringValue)tester.evalAndGet(true,errorKey);
+  assertSame(stringValue,value);
+}

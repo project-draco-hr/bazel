@@ -1,0 +1,40 @@
+{
+  OptionsProvider options=parseOptions(modules,args);
+  BlazeServerStartupOptions startupOptions=options.getOptions(BlazeServerStartupOptions.class);
+  final BlazeRuntime runtime=newRuntime(modules,options);
+  final BlazeCommandDispatcher dispatcher=new BlazeCommandDispatcher(runtime,getBuiltinCommandList());
+  final String memoryWarning=validateJvmMemorySettings();
+  final ServerCommand blazeCommand;
+  blazeCommand=new ServerCommand(){
+    private boolean shutdown=false;
+    @Override public int exec(    List<String> args,    OutErr outErr,    long firstContactTime){
+      LOG.info(getRequestLogString(args));
+      if (memoryWarning != null) {
+        outErr.printErrLn(memoryWarning);
+      }
+      try {
+        return dispatcher.exec(args,outErr,firstContactTime);
+      }
+ catch (      BlazeCommandDispatcher.ShutdownBlazeServerException e) {
+        if (e.getCause() != null) {
+          StringWriter message=new StringWriter();
+          message.write("Shutting down due to exception:\n");
+          PrintWriter writer=new PrintWriter(message,true);
+          e.printStackTrace(writer);
+          writer.flush();
+          LOG.severe(message.toString());
+        }
+        shutdown=true;
+        runtime.shutdown();
+        dispatcher.shutdown();
+        return e.getExitStatus();
+      }
+    }
+    @Override public boolean shutdown(){
+      return shutdown;
+    }
+  }
+;
+  RPCServer server=RPCServer.newServerWith(runtime.getClock(),blazeCommand,runtime.getServerDirectory(),runtime.getWorkspace(),startupOptions.maxIdleSeconds);
+  return server;
+}

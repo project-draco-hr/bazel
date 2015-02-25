@@ -1,0 +1,44 @@
+{
+  NSObject obj=null;
+  skip();
+  if (accept(DATA_GSOBJECT_BEGIN_TOKEN)) {
+    skip();
+    expect(DATA_GSBOOL_BEGIN_TOKEN,DATA_GSDATE_BEGIN_TOKEN,DATA_GSINT_BEGIN_TOKEN,DATA_GSREAL_BEGIN_TOKEN);
+    if (accept(DATA_GSBOOL_BEGIN_TOKEN)) {
+      skip();
+      expect(DATA_GSBOOL_TRUE_TOKEN,DATA_GSBOOL_FALSE_TOKEN);
+      if (accept(DATA_GSBOOL_TRUE_TOKEN)) {
+        obj=new NSNumber(true);
+      }
+ else {
+        obj=new NSNumber(false);
+      }
+      skip();
+    }
+ else     if (accept(DATA_GSDATE_BEGIN_TOKEN)) {
+      skip();
+      String dateString=readInputUntil(DATA_END_TOKEN);
+      obj=new NSDate(dateString);
+    }
+ else     if (accept(DATA_GSINT_BEGIN_TOKEN,DATA_GSREAL_BEGIN_TOKEN)) {
+      skip();
+      String numberString=readInputUntil(DATA_END_TOKEN);
+      obj=new NSNumber(numberString);
+    }
+    read(DATA_END_TOKEN);
+  }
+ else {
+    String dataString=readInputUntil(DATA_END_TOKEN);
+    dataString=dataString.replaceAll("\\s+","");
+    int numBytes=dataString.length() / 2;
+    byte[] bytes=new byte[numBytes];
+    for (int i=0; i < bytes.length; i++) {
+      String byteString=dataString.substring(i * 2,i * 2 + 2);
+      int byteValue=Integer.parseInt(byteString,16);
+      bytes[i]=(byte)byteValue;
+    }
+    obj=new NSData(bytes);
+    skip();
+  }
+  return obj;
+}

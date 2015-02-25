@@ -1,0 +1,16 @@
+{
+  if (classSymbol != null) {
+    if (haveSourceForSymbol(classSymbol)) {
+      return null;
+    }
+    JavaFileObject classfile=unwrapFileObject(classSymbol.classfile);
+    if (classfile instanceof ZipArchive.ZipFileObject || classfile instanceof ZipFileIndexArchive.ZipFileIndexFileObject) {
+      String name=classfile.getName();
+      String jarName=name.split("\\(")[0];
+      if (!platformClasses.contains(classfile)) {
+        return jarName;
+      }
+    }
+  }
+  return null;
+}

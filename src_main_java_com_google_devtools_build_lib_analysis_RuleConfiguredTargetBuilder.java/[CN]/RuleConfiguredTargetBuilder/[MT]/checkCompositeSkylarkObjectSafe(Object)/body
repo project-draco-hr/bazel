@@ -1,0 +1,34 @@
+{
+  if (object instanceof SkylarkList) {
+    SkylarkList list=(SkylarkList)object;
+    if (list == SkylarkList.EMPTY_LIST || isSimpleSkylarkObjectSafe(list.getGenericType())) {
+      return;
+    }
+    for (    Object listItem : list) {
+      checkSkylarkObjectSafe(listItem);
+    }
+    return;
+  }
+ else   if (object instanceof SkylarkNestedSet) {
+    Class<?> genericType=((SkylarkNestedSet)object).getGenericType();
+    if (!genericType.equals(Object.class) && !isSimpleSkylarkObjectSafe(genericType)) {
+      throw new IllegalArgumentException(EvalUtils.getDatatypeName(genericType));
+    }
+    return;
+  }
+ else   if (object instanceof Map<?,?>) {
+    for (    Map.Entry<?,?> entry : ((Map<?,?>)object).entrySet()) {
+      checkSkylarkObjectSafe(entry.getKey());
+      checkSkylarkObjectSafe(entry.getValue());
+    }
+    return;
+  }
+ else   if (object instanceof ClassObject) {
+    ClassObject struct=(ClassObject)object;
+    for (    String key : struct.getKeys()) {
+      checkSkylarkObjectSafe(struct.getValue(key));
+    }
+    return;
+  }
+  throw new IllegalArgumentException(EvalUtils.getDatatypeName(object));
+}

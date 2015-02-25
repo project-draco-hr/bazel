@@ -1,0 +1,17 @@
+{
+  List<String> warnings=new ArrayList<>();
+  int jobs=getBuildOptions().jobs;
+  if (jobs < 0 || jobs > MAX_JOBS) {
+    throw new InvalidConfigurationException(String.format("Invalid parameter for --jobs: %d. Only values 0 <= jobs <= %d are allowed.",jobs,MAX_JOBS));
+  }
+  if (jobs > JOBS_TOO_HIGH_WARNING) {
+    warnings.add(String.format("High value for --jobs: %d. You may run into memory issues",jobs));
+  }
+  if (getBuildOptions().verboseExplanations && getBuildOptions().explanationPath == null) {
+    warnings.add("--verbose_explanations has no effect when --explain=<file> is not enabled");
+  }
+  if (getBuildOptions().compileOnly && getBuildOptions().compilationPrerequisitesOnly) {
+    throw new InvalidConfigurationException("--compile_only and --compilation_prerequisites_only are not compatible");
+  }
+  return warnings;
+}

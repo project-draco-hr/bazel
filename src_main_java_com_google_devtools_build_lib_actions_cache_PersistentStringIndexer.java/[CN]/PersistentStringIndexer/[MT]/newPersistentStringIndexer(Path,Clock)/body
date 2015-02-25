@@ -1,0 +1,10 @@
+{
+  PersistentIndexMap persistentIndexMap=new PersistentIndexMap(dataPath,FileSystemUtils.replaceExtension(dataPath,".journal"),clock);
+  Map<Integer,String> reverseMapping=newConcurrentMap(INITIAL_ENTRIES);
+  for (  Map.Entry<String,Integer> entry : persistentIndexMap.entrySet()) {
+    if (reverseMapping.put(entry.getValue(),entry.getKey()) != null) {
+      throw new IOException("Corrupted filename index has duplicate entry: " + entry.getKey());
+    }
+  }
+  return new PersistentStringIndexer(persistentIndexMap,reverseMapping);
+}

@@ -1,0 +1,13 @@
+{
+  if (configuration.cacheTestResults() == TriState.NO || testProperties.isExternal() || (configuration.cacheTestResults() == TriState.AUTO && configuration.getRunsPerTestForLabel(getOwner().getLabel()) > 1)) {
+    return true;
+  }
+  TestResultData status=readCacheStatus();
+  if (status != null) {
+    if (!status.getCachable()) {
+      return true;
+    }
+    return (configuration.cacheTestResults() == TriState.AUTO && !status.getTestPassed());
+  }
+  return false;
+}

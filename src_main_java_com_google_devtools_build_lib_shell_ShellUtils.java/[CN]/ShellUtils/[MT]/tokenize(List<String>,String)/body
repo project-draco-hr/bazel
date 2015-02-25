@@ -1,0 +1,54 @@
+{
+  StringBuilder token=new StringBuilder();
+  boolean forceToken=false;
+  char quotation='\0';
+  for (int ii=0, len=optionString.length(); ii < len; ii++) {
+    char c=optionString.charAt(ii);
+    if (quotation != '\0') {
+      if (c == quotation) {
+        quotation='\0';
+      }
+ else       if (c == '\\' && quotation == '"') {
+        if (++ii == len) {
+          throw new TokenizationException("backslash at end of string");
+        }
+        c=optionString.charAt(ii);
+        if (c != '\\' && c != '"') {
+          token.append('\\');
+        }
+        token.append(c);
+      }
+ else {
+        token.append(c);
+      }
+    }
+ else {
+      if (c == '\'' || c == '"') {
+        quotation=c;
+        forceToken=true;
+      }
+ else       if (c == ' ' || c == '\t') {
+        if (forceToken || token.length() > 0) {
+          options.add(token.toString());
+          token=new StringBuilder();
+          forceToken=false;
+        }
+      }
+ else       if (c == '\\') {
+        if (++ii == len) {
+          throw new TokenizationException("backslash at end of string");
+        }
+        token.append(optionString.charAt(ii));
+      }
+ else {
+        token.append(c);
+      }
+    }
+  }
+  if (quotation != '\0') {
+    throw new TokenizationException("unterminated quotation");
+  }
+  if (forceToken || token.length() > 0) {
+    options.add(token.toString());
+  }
+}

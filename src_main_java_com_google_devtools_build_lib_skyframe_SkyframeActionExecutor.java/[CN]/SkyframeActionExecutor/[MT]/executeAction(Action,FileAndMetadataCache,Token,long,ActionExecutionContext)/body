@@ -1,0 +1,36 @@
+{
+  Exception exception=badActionMap.get(action);
+  if (exception != null) {
+    reportError(exception.getMessage(),exception,action,null);
+  }
+  Artifact primaryOutput=action.getPrimaryOutput();
+  FutureTask<ActionExecutionValue> actionTask=new FutureTask<>(new ActionRunner(action,graphFileCache,token,actionStartTime,actionExecutionContext));
+  Pair<Action,FutureTask<ActionExecutionValue>> oldAction=buildActionMap.putIfAbsent(primaryOutput,Pair.of(action,actionTask));
+  if (oldAction == null) {
+    actionTask.run();
+  }
+ else   if (action == oldAction.first) {
+    Preconditions.checkState(action.discoversInputs(),"Same action shouldn't execute twice in build: %s",action);
+    actionTask=oldAction.second;
+  }
+ else {
+    Preconditions.checkState(Actions.canBeShared(oldAction.first,action),"Actions cannot be shared: %s %s",oldAction.first,action);
+    actionTask=oldAction.second;
+  }
+  try {
+    return actionTask.get();
+  }
+ catch (  ExecutionException e) {
+    Throwables.propagateIfPossible(e.getCause(),ActionExecutionException.class,InterruptedException.class);
+    throw new IllegalStateException(e);
+  }
+ finally {
+    String message=action.getProgressMessage();
+    if (message != null) {
+      if (completionReceiver != null) {
+        completionReceiver.actionCompleted(action);
+      }
+      reporter.finishTask(null,prependExecPhaseStats(message));
+    }
+  }
+}

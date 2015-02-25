@@ -1,0 +1,48 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey parentKey=GraphTester.toSkyKey("parent");
+  final SkyKey childKey=GraphTester.toSkyKey("child");
+  tester.getOrCreate(childKey).setHasError(true);
+  final AtomicInteger numParentInvocations=new AtomicInteger(0);
+  tester.getOrCreate(parentKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+      int invocations=numParentInvocations.incrementAndGet();
+      if (handleChildError) {
+        try {
+          SkyValue value=env.getValueOrThrow(childKey,SomeErrorException.class);
+          assertTrue("bogus non-null value " + value,value == null);
+          assertEquals("parent incorrectly re-computed during normal evaluation",1,invocations);
+          assertFalse("child error not propagated during error bubbling",env.inErrorBubblingForTesting());
+          return value;
+        }
+ catch (        SomeErrorException e) {
+          assertTrue("child error propagated during normal evaluation",env.inErrorBubblingForTesting());
+          assertEquals(2,invocations);
+          return null;
+        }
+      }
+ else {
+        if (invocations == 1) {
+          assertFalse("parent's first computation should be during normal evaluation",env.inErrorBubblingForTesting());
+          return env.getValue(childKey);
+        }
+ else {
+          assertEquals(2,invocations);
+          assertTrue("parent incorrectly re-computed during normal evaluation",env.inErrorBubblingForTesting());
+          return env.getValue(childKey);
+        }
+      }
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  if (childErrorCached) {
+    evalValueInError(childKey);
+  }
+  EvaluationResult<StringValue> result=eval(false,ImmutableList.of(parentKey));
+  assertEquals(2,numParentInvocations.get());
+  assertTrue(result.hasError());
+  assertEquals(childKey,result.getError().getRootCauseOfException());
+}

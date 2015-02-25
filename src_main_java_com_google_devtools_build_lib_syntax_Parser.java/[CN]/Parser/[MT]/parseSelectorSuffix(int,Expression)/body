@@ -1,0 +1,17 @@
+{
+  expect(TokenKind.DOT);
+  if (token.kind == TokenKind.IDENTIFIER) {
+    Ident ident=parseIdent();
+    if (token.kind == TokenKind.LPAREN) {
+      return parseFuncallSuffix(start,receiver,ident);
+    }
+ else {
+      return setLocation(new DotExpression(receiver,ident),start,token.right);
+    }
+  }
+ else {
+    syntaxError(token);
+    int end=syncTo(EXPR_TERMINATOR_SET);
+    return makeErrorExpression(start,end);
+  }
+}

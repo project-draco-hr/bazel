@@ -1,0 +1,22 @@
+{
+  if (attribute.isSkipAnalysisTimeFileTypeCheck()) {
+    return;
+  }
+  FileTypeSet allowedFileTypes=attribute.getAllowedFileTypesPredicate();
+  if (allowedFileTypes == FileTypeSet.ANY_FILE && !attribute.isNonEmpty() && !attribute.isSingleArtifact()) {
+    return;
+  }
+  if (allowedFileTypes != FileTypeSet.NO_FILE) {
+    Iterable<Artifact> artifacts=prerequisite.getProvider(FileProvider.class).getFilesToBuild();
+    if (attribute.isSingleArtifact() && Iterables.size(artifacts) != 1) {
+      attributeError(attribute.getName(),"'" + prerequisite.getLabel() + "' must produce a single file");
+      return;
+    }
+    for (    Artifact sourceArtifact : artifacts) {
+      if (allowedFileTypes.apply(sourceArtifact.getFilename())) {
+        return;
+      }
+    }
+    attributeError(attribute.getName(),"'" + prerequisite.getLabel() + "' does not produce any "+ rule.getRuleClass()+ " "+ attribute.getName()+ " files (expected "+ allowedFileTypes+ ")");
+  }
+}

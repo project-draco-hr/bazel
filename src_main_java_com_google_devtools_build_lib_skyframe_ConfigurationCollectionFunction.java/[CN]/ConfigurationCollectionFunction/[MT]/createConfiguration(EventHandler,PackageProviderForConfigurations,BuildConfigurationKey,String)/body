@@ -1,0 +1,17 @@
+{
+  StoredEventHandler errorEventListener=new StoredEventHandler();
+  BuildOptions buildOptions=key.getBuildOptions();
+  if (cpuOverride != null) {
+    buildOptions=buildOptions.clone();
+    buildOptions.get(BuildConfiguration.Options.class).cpu=cpuOverride;
+  }
+  BuildConfiguration targetConfig=configurationFactory.get().createConfiguration(loadedPackageProvider,buildOptions,key,errorEventListener);
+  if (targetConfig == null) {
+    return null;
+  }
+  errorEventListener.replayOn(originalEventListener);
+  if (errorEventListener.hasErrors()) {
+    throw new InvalidConfigurationException("Build options are invalid");
+  }
+  return targetConfig;
+}

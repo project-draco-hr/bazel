@@ -1,0 +1,10 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey parentKey=GraphTester.toSkyKey("parent");
+  final SkyKey errorKey=GraphTester.toSkyKey("error");
+  final CountDownLatch latch=new CountDownLatch(1);
+  tester.getOrCreate(errorKey).setBuilder(new ChainedFunction(null,latch,null,false,null,ImmutableList.<SkyKey>of()));
+  tester.getOrCreate(parentKey).setBuilder(new ChainedFunction(latch,null,null,false,new StringValue("unused"),ImmutableList.of(errorKey)));
+  EvaluationResult<StringValue> result=eval(false,ImmutableList.of(parentKey,errorKey));
+  assertEquals(result.toString(),2,result.errorMap().size());
+}

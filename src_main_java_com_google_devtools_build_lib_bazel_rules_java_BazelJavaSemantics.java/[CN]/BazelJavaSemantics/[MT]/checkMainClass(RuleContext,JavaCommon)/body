@@ -1,0 +1,16 @@
+{
+  boolean createExecutable=ruleContext.attributes().get("create_executable",Type.BOOLEAN);
+  String mainClass=getMainClassInternal(ruleContext);
+  if (!createExecutable && !mainClass.isEmpty()) {
+    ruleContext.ruleError("main class must not be specified when executable is not created");
+  }
+  if (createExecutable && mainClass.isEmpty()) {
+    if (javaCommon.getSrcsArtifacts().isEmpty()) {
+      ruleContext.ruleError("need at least one of 'main_class', 'use_testrunner' or Java source files");
+    }
+    mainClass=javaCommon.determinePrimaryClass(javaCommon.getSrcsArtifacts());
+    if (mainClass == null) {
+      ruleContext.ruleError("cannot determine main class for launching " + "(found neither a source file '" + ruleContext.getTarget().getName() + ".java', nor a main_class attribute, and package name "+ "doesn't include 'java' or 'javatests')");
+    }
+  }
+}

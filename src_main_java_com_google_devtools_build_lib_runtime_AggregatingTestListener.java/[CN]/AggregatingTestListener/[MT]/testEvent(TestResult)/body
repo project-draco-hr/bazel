@@ -1,0 +1,20 @@
+{
+  Preconditions.checkState(statusMap.put(result.getTestStatusArtifact(),result) == null,"Duplicate result reported for an individual test shard");
+  ActionOwner testOwner=result.getTestAction().getOwner();
+  LabelAndConfiguration targetLabel=LabelAndConfiguration.of(testOwner.getLabel(),result.getTestAction().getConfiguration());
+  TestSummary finalTestSummary=null;
+synchronized (summaryLock) {
+    TestSummary.Builder summary=summaries.get(targetLabel);
+    preconditionHelper.checkNotNull(summary);
+    if (!remainingRuns.remove(targetLabel,result.getTestStatusArtifact())) {
+      return;
+    }
+    summary=analyzer.incrementalAnalyze(summary,result);
+    if (!remainingRuns.containsKey(targetLabel)) {
+      finalTestSummary=summary.build();
+    }
+  }
+  if (finalTestSummary != null) {
+    eventBus.post(finalTestSummary);
+  }
+}

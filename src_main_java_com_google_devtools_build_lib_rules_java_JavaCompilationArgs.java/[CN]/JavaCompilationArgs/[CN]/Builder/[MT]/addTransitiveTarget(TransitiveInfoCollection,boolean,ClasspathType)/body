@@ -1,0 +1,15 @@
+{
+  JavaCompilationArgsProvider provider=dep.getProvider(JavaCompilationArgsProvider.class);
+  if (provider != null) {
+    addTransitiveCompilationArgs(provider,recursive,type);
+    return this;
+  }
+ else {
+    NestedSet<Artifact> filesToBuild=dep.getProvider(FileProvider.class).getFilesToBuild();
+    for (    Artifact jar : FileType.filter(filesToBuild,JavaSemantics.JAR)) {
+      addCompileTimeJar(jar);
+      addRuntimeJar(jar);
+    }
+  }
+  return this;
+}

@@ -1,0 +1,50 @@
+{
+  try {
+    Label label=Label.parseAbsolute(javaHome);
+    label=RedirectChaser.followRedirects(lookup,label,"jdk");
+    if (label == null) {
+      return null;
+    }
+    Target javaHomeTarget=lookup.getTarget(label);
+    if (javaHomeTarget == null) {
+      return null;
+    }
+    if ((javaHomeTarget instanceof Rule) && "filegroup".equals(((Rule)javaHomeTarget).getRuleClass())) {
+      RawAttributeMapper javaHomeAttributes=RawAttributeMapper.of((Rule)javaHomeTarget);
+      if (javaHomeAttributes.isConfigurable("srcs",Type.LABEL_LIST)) {
+        throw new InvalidConfigurationException("\"srcs\" in " + javaHome + " is configurable. JAVABASE targets don't support configurable attributes");
+      }
+      List<Label> labels=javaHomeAttributes.get("srcs",Type.LABEL_LIST);
+      for (      Label jvmLabel : labels) {
+        if (jvmLabel.getName().endsWith("-" + cpu)) {
+          Target jvmTarget=lookup.getTarget(jvmLabel);
+          if (jvmTarget == null) {
+            return null;
+          }
+          PathFragment javaHomePath=jvmLabel.getPackageFragment();
+          if ((jvmTarget instanceof Rule) && "filegroup".equals(((Rule)jvmTarget).getRuleClass())) {
+            RawAttributeMapper jvmTargetAttributes=RawAttributeMapper.of((Rule)jvmTarget);
+            if (jvmTargetAttributes.isConfigurable("path",Type.STRING)) {
+              throw new InvalidConfigurationException("\"path\" in " + jvmTarget + " is configurable. JVM targets don't support configurable attributes");
+            }
+            String path=jvmTargetAttributes.get("path",Type.STRING);
+            if (path != null) {
+              javaHomePath=javaHomePath.getRelative(path);
+            }
+          }
+          return new Jvm(javaHomePath,jvmLabel);
+        }
+      }
+    }
+    throw new InvalidConfigurationException("No JVM target found under " + javaHome + " that would work for "+ cpu);
+  }
+ catch (  NoSuchPackageException e) {
+    throw new InvalidConfigurationException(e.getMessage(),e);
+  }
+catch (  NoSuchTargetException e) {
+    throw new InvalidConfigurationException("No such target: " + e.getMessage(),e);
+  }
+catch (  SyntaxException e) {
+    throw new InvalidConfigurationException(e.getMessage(),e);
+  }
+}

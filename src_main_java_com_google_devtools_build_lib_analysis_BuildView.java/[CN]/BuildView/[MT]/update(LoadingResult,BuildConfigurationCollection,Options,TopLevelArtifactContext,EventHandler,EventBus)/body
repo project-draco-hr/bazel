@@ -1,0 +1,63 @@
+{
+  ErrorCollector errorCollector=null;
+  if (!viewOptions.keepGoing) {
+    eventHandler=errorCollector=new ErrorCollector(eventHandler);
+  }
+  WarningsAsErrorsEventHandler warningsHandler=null;
+  if (viewOptions.analysisWarningsAsErrors) {
+    eventHandler=warningsHandler=new WarningsAsErrorsEventHandler(eventHandler);
+  }
+  skyframeBuildView.setWarningListener(eventHandler);
+  skyframeExecutor.setErrorEventListener(eventHandler);
+  LOG.info("Starting analysis");
+  pollInterruptedStatus();
+  skyframeBuildView.resetEvaluatedConfiguredTargetKeysSet();
+  Collection<Target> targets=loadingResult.getTargets();
+  eventBus.post(new AnalysisPhaseStartedEvent(targets));
+  skyframeCacheWasInvalidated=false;
+  if ((this.configurations != null && !configurations.equals(this.configurations)) || skyframeAnalysisWasDiscarded) {
+    skyframeExecutor.dropConfiguredTargets();
+    skyframeCacheWasInvalidated=true;
+    clear();
+  }
+  skyframeAnalysisWasDiscarded=false;
+  ImmutableMap<PackageIdentifier,Path> packageRoots=loadingResult.getPackageRoots();
+  if (buildHasIncompatiblePackageRoots(packageRoots)) {
+    LOG.info("Discarding analysis cache: package roots have changed.");
+    skyframeExecutor.dropConfiguredTargets();
+    skyframeCacheWasInvalidated=true;
+    clear();
+  }
+  cumulativePackageRoots.putAll(packageRoots);
+  this.configurations=configurations;
+  setArtifactRoots(packageRoots);
+  List<TargetAndConfiguration> nodes=nodesForTargets(targets);
+  List<ConfiguredTargetKey> targetSpecs=Lists.transform(nodes,new Function<TargetAndConfiguration,ConfiguredTargetKey>(){
+    @Override public ConfiguredTargetKey apply(    TargetAndConfiguration node){
+      return new ConfiguredTargetKey(node.getLabel(),node.getConfiguration());
+    }
+  }
+);
+  prepareToBuild(new SkyframePackageRootResolver(skyframeExecutor));
+  skyframeBuildView.setWarningListener(warningsHandler);
+  skyframeExecutor.injectWorkspaceStatusData();
+  Collection<ConfiguredTarget> configuredTargets;
+  try {
+    configuredTargets=skyframeBuildView.configureTargets(targetSpecs,eventBus,viewOptions.keepGoing);
+  }
+  finally {
+    skyframeBuildView.clearInvalidatedConfiguredTargets();
+  }
+  int numTargetsToAnalyze=nodes.size();
+  int numSuccessful=configuredTargets.size();
+  boolean analysisSuccessful=(numSuccessful == numTargetsToAnalyze);
+  if (0 < numSuccessful && numSuccessful < numTargetsToAnalyze) {
+    String msg=String.format("Analysis succeeded for only %d of %d top-level targets",numSuccessful,numTargetsToAnalyze);
+    eventHandler.handle(Event.info(msg));
+    LOG.info(msg);
+  }
+  postUpdateValidation(errorCollector,warningsHandler);
+  AnalysisResult result=createResult(loadingResult,topLevelOptions,viewOptions,configuredTargets,analysisSuccessful);
+  LOG.info("Finished analysis");
+  return result;
+}

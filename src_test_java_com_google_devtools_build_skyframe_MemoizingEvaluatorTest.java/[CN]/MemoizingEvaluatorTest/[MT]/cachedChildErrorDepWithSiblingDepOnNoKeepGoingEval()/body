@@ -1,0 +1,30 @@
+{
+  SkyKey parent1Key=GraphTester.toSkyKey("parent1");
+  SkyKey parent2Key=GraphTester.toSkyKey("parent2");
+  final SkyKey errorKey=GraphTester.toSkyKey("error");
+  final SkyKey otherKey=GraphTester.toSkyKey("other");
+  SkyFunction parentBuilder=new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env){
+      env.getValue(errorKey);
+      env.getValue(otherKey);
+      if (env.valuesMissing()) {
+        return null;
+      }
+      return new StringValue("parent");
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+;
+  tester.getOrCreate(parent1Key).setBuilder(parentBuilder);
+  tester.getOrCreate(parent2Key).setBuilder(parentBuilder);
+  tester.getOrCreate(errorKey).setConstantValue(new StringValue("no error yet"));
+  tester.getOrCreate(otherKey).setConstantValue(new StringValue("other"));
+  tester.eval(true,parent1Key);
+  tester.eval(false,parent2Key);
+  tester.getOrCreate(errorKey,true).setHasError(true);
+  tester.invalidate();
+  tester.eval(true,parent1Key);
+  tester.eval(false,parent2Key);
+}

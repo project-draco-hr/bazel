@@ -1,0 +1,19 @@
+{
+  if (strictJavaDepsMode.isEnabled()) {
+    String target=indirectJarsToTargets.get(jarName);
+    if (target != null && seenTargets.add(target)) {
+      String canonicalTargetName=canonicalizeTarget(target);
+      missingTargets.add(canonicalTargetName);
+      if (strictJavaDepsMode == ERROR) {
+        log.error(node.pos,"proc.messager",MessageFormat.format(transitiveDepMessage,sym,canonicalTargetName));
+      }
+ else {
+        log.warning(node.pos,"proc.messager",MessageFormat.format(transitiveDepMessage,sym,canonicalTargetName));
+      }
+    }
+  }
+  if (!directDependenciesMap.containsKey(jarName)) {
+    Dependency dep=Dependency.newBuilder().setPath(jarName).setKind(Dependency.Kind.EXPLICIT).build();
+    directDependenciesMap.put(jarName,dep);
+  }
+}

@@ -1,0 +1,22 @@
+{
+  Preconditions.checkState(failFastOnInterrupt || !interruptWorkers);
+  Throwables.propagateIfPossible(catastrophe);
+  try {
+synchronized (zeroRemainingTasks) {
+      while (remainingTasks != 0 && !jobsMustBeStopped) {
+        zeroRemainingTasks.wait();
+      }
+    }
+  }
+ catch (  InterruptedException e) {
+    setInterrupted();
+  }
+  reallyAwaitTermination(interruptWorkers);
+  if (isInterrupted()) {
+    Thread.currentThread().interrupt();
+  }
+  Throwables.propagateIfPossible(unhandled);
+  if (Thread.interrupted()) {
+    throw new InterruptedException();
+  }
+}

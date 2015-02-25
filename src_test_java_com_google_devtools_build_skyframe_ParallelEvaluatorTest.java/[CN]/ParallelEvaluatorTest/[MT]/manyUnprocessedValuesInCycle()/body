@@ -1,0 +1,32 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey lastSelfKey=GraphTester.toSkyKey("lastSelf");
+  SkyKey firstSelfKey=GraphTester.toSkyKey("firstSelf");
+  SkyKey midSelfKey=GraphTester.toSkyKey("midSelf");
+  tester.getOrCreate(firstSelfKey).addDependency(firstSelfKey);
+  for (int i=0; i < 100; i++) {
+    SkyKey firstDep=GraphTester.toSkyKey("first" + i);
+    SkyKey midDep=GraphTester.toSkyKey("mid" + i);
+    SkyKey lastDep=GraphTester.toSkyKey("last" + i);
+    tester.getOrCreate(firstSelfKey).addDependency(firstDep);
+    tester.getOrCreate(midSelfKey).addDependency(midDep);
+    tester.getOrCreate(lastSelfKey).addDependency(lastDep);
+    if (i == 90) {
+      tester.getOrCreate(midSelfKey).addDependency(midSelfKey);
+    }
+    tester.getOrCreate(firstDep).addDependency(firstDep);
+    tester.getOrCreate(midDep).addDependency(midDep);
+    tester.getOrCreate(lastDep).addDependency(lastDep);
+  }
+  tester.getOrCreate(lastSelfKey).addDependency(lastSelfKey);
+  EvaluationResult<StringValue> result=eval(true,ImmutableList.of(lastSelfKey,firstSelfKey,midSelfKey));
+  assertWithMessage(result.toString()).that(result.keyNames()).isEmpty();
+  assertThat(result.errorMap().keySet()).containsExactly(lastSelfKey,firstSelfKey,midSelfKey);
+  ErrorInfo errorInfo=result.getError(lastSelfKey);
+  assertEquals(errorInfo.toString(),1,Iterables.size(errorInfo.getCycleInfo()));
+  CycleInfo cycleInfo=Iterables.getOnlyElement(errorInfo.getCycleInfo());
+  assertThat(cycleInfo.getCycle()).containsExactly(lastSelfKey);
+  assertThat(cycleInfo.getPathToCycle()).isEmpty();
+  assertManyCycles(result.getError(firstSelfKey),firstSelfKey,false);
+  assertManyCycles(result.getError(midSelfKey),midSelfKey,true);
+}

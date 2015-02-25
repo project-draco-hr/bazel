@@ -1,0 +1,29 @@
+{
+  final String name=path.toString();
+  if (profiler.isActive() && (profiler.isProfiling(ProfilerTask.VFS_READ) || profiler.isProfiling(ProfilerTask.VFS_OPEN))) {
+    long startTime=Profiler.nanoTimeMaybe();
+    try {
+      return new FileInputStream(name){
+        @Override public int read(        byte b[]) throws IOException {
+          return read(b,0,b.length);
+        }
+        @Override public int read(        byte b[],        int off,        int len) throws IOException {
+          long startTime=Profiler.nanoTimeMaybe();
+          try {
+            return super.read(b,off,len);
+          }
+  finally {
+            profiler.logSimpleTask(startTime,ProfilerTask.VFS_READ,name);
+          }
+        }
+      }
+;
+    }
+  finally {
+      profiler.logSimpleTask(startTime,ProfilerTask.VFS_OPEN,name);
+    }
+  }
+ else {
+    return new FileInputStream(path.toString());
+  }
+}

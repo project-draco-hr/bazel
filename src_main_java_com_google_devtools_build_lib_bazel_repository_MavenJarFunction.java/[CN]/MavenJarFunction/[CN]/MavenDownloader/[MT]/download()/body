@@ -1,0 +1,16 @@
+{
+  RepositorySystem system=newRepositorySystem();
+  RepositorySystemSession session=newRepositorySystemSession(system);
+  ArtifactRequest artifactRequest=new ArtifactRequest();
+  Artifact artifact=new DefaultArtifact(groupId + ":" + artifactId+ ":"+ version);
+  artifactRequest.setArtifact(artifact);
+  artifactRequest.setRepositories(repositories);
+  try {
+    ArtifactResult artifactResult=system.resolveArtifact(session,artifactRequest);
+    artifact=artifactResult.getArtifact();
+  }
+ catch (  ArtifactResolutionException e) {
+    throw new IOException("Failed to fetch Maven dependency: " + e.getMessage());
+  }
+  return outputDirectory.getRelative(artifact.getFile().getAbsolutePath());
+}

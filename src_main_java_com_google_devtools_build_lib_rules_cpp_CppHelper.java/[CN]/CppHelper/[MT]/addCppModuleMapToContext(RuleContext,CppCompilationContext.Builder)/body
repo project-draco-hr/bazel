@@ -1,0 +1,13 @@
+{
+  if (!ruleContext.getFragment(CppConfiguration.class).createCppModuleMaps()) {
+    return null;
+  }
+  if (getToolchain(ruleContext).getCppCompilationContext().getCppModuleMap() == null) {
+    return null;
+  }
+  PathFragment mapPath=FileSystemUtils.appendExtension(ruleContext.getLabel().toPathFragment(),Iterables.getOnlyElement(CppFileTypes.CPP_MODULE_MAP.getExtensions()));
+  Artifact mapFile=ruleContext.getAnalysisEnvironment().getDerivedArtifact(mapPath,ruleContext.getConfiguration().getGenfilesDirectory());
+  CppModuleMap moduleMap=new CppModuleMap(mapFile,ruleContext.getLabel().toString());
+  contextBuilder.setCppModuleMap(moduleMap);
+  return moduleMap;
+}

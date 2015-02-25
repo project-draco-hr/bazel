@@ -1,0 +1,22 @@
+{
+  List<String> defines=new ArrayList<>();
+  for (  String define : ruleContext.attributes().get(DEFINES_ATTRIBUTE,Type.STRING_LIST)) {
+    List<String> tokens=new ArrayList<>();
+    try {
+      ShellUtils.tokenize(tokens,ruleContext.expandMakeVariables(DEFINES_ATTRIBUTE,define));
+      if (tokens.size() == 1) {
+        defines.add(tokens.get(0));
+      }
+ else       if (tokens.isEmpty()) {
+        ruleContext.attributeError(DEFINES_ATTRIBUTE,"empty definition not allowed");
+      }
+ else {
+        ruleContext.attributeError(DEFINES_ATTRIBUTE,"definition contains too many tokens (found " + tokens.size() + ", expecting exactly one)");
+      }
+    }
+ catch (    ShellUtils.TokenizationException e) {
+      ruleContext.attributeError(DEFINES_ATTRIBUTE,e.getMessage());
+    }
+  }
+  return defines;
+}

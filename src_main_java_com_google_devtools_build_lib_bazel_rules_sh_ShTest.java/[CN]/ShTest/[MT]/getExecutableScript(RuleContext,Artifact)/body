@@ -1,0 +1,11 @@
+{
+  if (ruleContext.attributes().get("bash_version",Type.STRING).equals(BazelShRuleClasses.SYSTEM_BASH_VERSION)) {
+    return src;
+  }
+  PathFragment newOutput=src.getRootRelativePath().getParentDirectory().getRelative(ruleContext.getLabel().getName() + "_runner.sh");
+  Artifact testRunner=ruleContext.getAnalysisEnvironment().getDerivedArtifact(newOutput,ruleContext.getConfiguration().getBinDirectory());
+  String bashPath=BazelShRuleClasses.BASH_BINARY_BINDINGS.get(BazelShRuleClasses.SYSTEM_BASH_VERSION).execPath;
+  String runnerContents="#!/bin/bash\n" + bashPath + " \""+ src.getRootRelativePath().getPathString()+ "\" \"$@\"\n";
+  ruleContext.registerAction(new FileWriteAction(ruleContext.getActionOwner(),testRunner,runnerContents,true));
+  return testRunner;
+}

@@ -1,0 +1,12 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey aKey=GraphTester.toSkyKey("a");
+  SkyKey bKey=GraphTester.toSkyKey("b");
+  SkyKey cKey=GraphTester.toSkyKey("c");
+  tester.getOrCreate(aKey).addDependency(bKey);
+  tester.getOrCreate(bKey).addDependency(cKey);
+  tester.getOrCreate(cKey).addDependency(aKey).addDependency(bKey);
+  EvaluationResult<StringValue> result=eval(true,ImmutableList.of(aKey));
+  assertEquals(null,result.get(aKey));
+  assertThat(result.getError(aKey).getCycleInfo()).containsExactly(new CycleInfo(ImmutableList.of(aKey,bKey,cKey)),new CycleInfo(ImmutableList.of(aKey),ImmutableList.of(bKey,cKey)));
+}

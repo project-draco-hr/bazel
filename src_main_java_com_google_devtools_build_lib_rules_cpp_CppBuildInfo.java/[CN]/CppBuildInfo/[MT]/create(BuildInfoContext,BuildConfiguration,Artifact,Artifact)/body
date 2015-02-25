@@ -1,0 +1,10 @@
+{
+  List<Action> actions=new ArrayList<>();
+  WriteBuildInfoHeaderAction redactedInfo=getHeader(buildInfoContext,config,BUILD_INFO_REDACTED_HEADER_NAME,Artifact.NO_ARTIFACTS,true,true);
+  WriteBuildInfoHeaderAction nonvolatileInfo=getHeader(buildInfoContext,config,BUILD_INFO_NONVOLATILE_HEADER_NAME,ImmutableList.of(buildInfo),false,true);
+  WriteBuildInfoHeaderAction volatileInfo=getHeader(buildInfoContext,config,BUILD_INFO_VOLATILE_HEADER_NAME,ImmutableList.of(buildChangelist),true,false);
+  actions.add(redactedInfo);
+  actions.add(nonvolatileInfo);
+  actions.add(volatileInfo);
+  return new BuildInfoCollection(actions,ImmutableList.of(nonvolatileInfo.getPrimaryOutput(),volatileInfo.getPrimaryOutput()),ImmutableList.of(redactedInfo.getPrimaryOutput()));
+}

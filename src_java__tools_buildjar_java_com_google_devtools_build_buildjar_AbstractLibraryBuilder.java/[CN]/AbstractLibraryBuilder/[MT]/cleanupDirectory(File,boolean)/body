@@ -1,0 +1,25 @@
+{
+  boolean isEmpty=true;
+  File[] files=dir.listFiles();
+  if (files == null) {
+    return false;
+  }
+  for (  File file : files) {
+    if (file.isDirectory()) {
+      isEmpty&=cleanupDirectory(file,removeEverything);
+    }
+ else     if (!removeEverything && keepClassFilesDuringCleanup() && file.getName().endsWith(".class")) {
+      isEmpty=false;
+    }
+ else     if (!removeEverything && keepFileDuringCleanup(file)) {
+      isEmpty=false;
+    }
+ else {
+      file.delete();
+    }
+  }
+  if (isEmpty) {
+    dir.delete();
+  }
+  return isEmpty;
+}

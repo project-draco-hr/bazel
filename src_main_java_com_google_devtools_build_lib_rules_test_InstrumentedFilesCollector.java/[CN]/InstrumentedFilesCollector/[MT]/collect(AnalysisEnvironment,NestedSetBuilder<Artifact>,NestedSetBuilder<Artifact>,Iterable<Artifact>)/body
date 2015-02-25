@@ -1,0 +1,19 @@
+{
+  for (  TransitiveInfoCollection dep : getAllPrerequisites()) {
+    InstrumentedFilesProvider provider=dep.getProvider(InstrumentedFilesProvider.class);
+    if (provider != null) {
+      instrumentedFilesBuilder.addTransitive(provider.getInstrumentedFiles());
+      metadataFilesBuilder.addTransitive(provider.getInstrumentationMetadataFiles());
+    }
+ else     if (shouldIncludeLocalSources()) {
+      for (      Artifact artifact : dep.getProvider(FileProvider.class).getFilesToBuild()) {
+        if (artifact.isSourceArtifact() && spec.instrumentedFileTypes.matches(artifact.getFilename())) {
+          instrumentedFilesBuilder.add(artifact);
+        }
+      }
+    }
+  }
+  if (localMetadataCollector != null) {
+    localMetadataCollector.collectMetadataArtifacts(rootFiles,analysisEnvironment,metadataFilesBuilder);
+  }
+}

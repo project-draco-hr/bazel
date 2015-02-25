@@ -1,0 +1,32 @@
+{
+  Options cleanOptions=options.getOptions(Options.class);
+  cleanOptions.expunge_async=cleanOptions.cleanStyle.equals("expunge_async");
+  cleanOptions.expunge=cleanOptions.cleanStyle.equals("expunge");
+  if (cleanOptions.expunge == false && cleanOptions.expunge_async == false && !cleanOptions.cleanStyle.isEmpty()) {
+    runtime.getReporter().handle(Event.error(null,"Invalid clean_style value '" + cleanOptions.cleanStyle + "'"));
+    return ExitCode.COMMAND_LINE_ERROR;
+  }
+  String cleanBanner=cleanOptions.expunge_async ? "Starting clean." : "Starting clean (this may take a while). " + "Consider using --expunge_async if the clean takes more than several minutes.";
+  runtime.getReporter().handle(Event.info(null,cleanBanner));
+  try {
+    String symlinkPrefix=options.getOptions(BuildRequest.BuildRequestOptions.class).symlinkPrefix;
+    actuallyClean(runtime,runtime.getOutputBase(),cleanOptions,symlinkPrefix);
+    return ExitCode.SUCCESS;
+  }
+ catch (  IOException e) {
+    runtime.getReporter().handle(Event.error(e.getMessage()));
+    return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
+  }
+catch (  CommandException e) {
+    runtime.getReporter().handle(Event.error(e.getMessage()));
+    return ExitCode.RUN_FAILURE;
+  }
+catch (  ExecException e) {
+    runtime.getReporter().handle(Event.error(e.getMessage()));
+    return ExitCode.RUN_FAILURE;
+  }
+catch (  InterruptedException e) {
+    runtime.getReporter().handle(Event.error("clean interrupted"));
+    return ExitCode.INTERRUPTED;
+  }
+}

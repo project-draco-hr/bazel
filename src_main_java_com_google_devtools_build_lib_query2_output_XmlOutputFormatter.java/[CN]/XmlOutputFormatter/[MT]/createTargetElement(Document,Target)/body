@@ -1,0 +1,73 @@
+{
+  Element elem;
+  if (target instanceof Rule) {
+    Rule rule=(Rule)target;
+    elem=doc.createElement("rule");
+    elem.setAttribute("class",rule.getRuleClass());
+    for (    Attribute attr : rule.getAttributes()) {
+      Pair<Iterable<Object>,AttributeValueSource> values=getAttributeValues(rule,attr);
+      if (values.second == AttributeValueSource.RULE || showDefaultValues) {
+        Element attrElem=createValueElement(doc,attr.getType(),values.first);
+        attrElem.setAttribute("name",attr.getName());
+        elem.appendChild(attrElem);
+      }
+    }
+    for (    Label label : rule.getLabels(dependencyFilter)) {
+      Element inputElem=doc.createElement("rule-input");
+      inputElem.setAttribute("name",label.toString());
+      elem.appendChild(inputElem);
+    }
+    for (    OutputFile outputFile : rule.getOutputFiles()) {
+      Element outputElem=doc.createElement("rule-output");
+      outputElem.setAttribute("name",outputFile.getLabel().toString());
+      elem.appendChild(outputElem);
+    }
+    for (    String feature : rule.getFeatures()) {
+      Element outputElem=doc.createElement("rule-default-setting");
+      outputElem.setAttribute("name",feature);
+      elem.appendChild(outputElem);
+    }
+  }
+ else   if (target instanceof PackageGroup) {
+    PackageGroup packageGroup=(PackageGroup)target;
+    elem=doc.createElement("package-group");
+    elem.setAttribute("name",packageGroup.getName());
+    Element includes=createValueElement(doc,com.google.devtools.build.lib.packages.Type.LABEL_LIST,packageGroup.getIncludes());
+    includes.setAttribute("name","includes");
+    elem.appendChild(includes);
+    Element packages=createValueElement(doc,com.google.devtools.build.lib.packages.Type.STRING_LIST,packageGroup.getContainedPackages());
+    packages.setAttribute("name","packages");
+    elem.appendChild(packages);
+  }
+ else   if (target instanceof OutputFile) {
+    OutputFile outputFile=(OutputFile)target;
+    elem=doc.createElement("generated-file");
+    elem.setAttribute("generating-rule",outputFile.getGeneratingRule().getLabel().toString());
+  }
+ else   if (target instanceof InputFile) {
+    elem=doc.createElement("source-file");
+    InputFile inputFile=(InputFile)target;
+    if (inputFile.getName().equals("BUILD")) {
+      addSubincludedFilesToElement(doc,elem,inputFile);
+      addSkylarkFilesToElement(doc,elem,inputFile);
+      addFeaturesToElement(doc,elem,inputFile);
+    }
+    addPackageGroupsToElement(doc,elem,inputFile);
+  }
+ else   if (target instanceof FakeSubincludeTarget) {
+    elem=doc.createElement("source-file");
+  }
+ else {
+    throw new IllegalArgumentException(target.toString());
+  }
+  elem.setAttribute("name",target.getLabel().toString());
+  String location=target.getLocation().print();
+  if (!xmlLineNumbers) {
+    int firstColon=location.indexOf(":");
+    if (firstColon != -1) {
+      location=location.substring(0,firstColon);
+    }
+  }
+  elem.setAttribute("location",location);
+  return elem;
+}

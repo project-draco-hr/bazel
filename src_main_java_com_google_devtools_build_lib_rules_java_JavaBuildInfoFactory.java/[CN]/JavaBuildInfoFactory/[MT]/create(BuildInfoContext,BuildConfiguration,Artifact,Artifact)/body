@@ -1,0 +1,10 @@
+{
+  WriteBuildInfoPropertiesAction redactedInfo=getHeader(context,config,BUILD_INFO_REDACTED_PROPERTIES_NAME,Artifact.NO_ARTIFACTS,createRedactedTranslator(),true,true);
+  WriteBuildInfoPropertiesAction nonvolatileInfo=getHeader(context,config,BUILD_INFO_NONVOLATILE_PROPERTIES_NAME,ImmutableList.of(stableStatus),createNonVolatileTranslator(),false,true);
+  WriteBuildInfoPropertiesAction volatileInfo=getHeader(context,config,BUILD_INFO_VOLATILE_PROPERTIES_NAME,ImmutableList.of(volatileStatus),createVolatileTranslator(),true,false);
+  List<Action> actions=new ArrayList<Action>(3);
+  actions.add(redactedInfo);
+  actions.add(nonvolatileInfo);
+  actions.add(volatileInfo);
+  return new BuildInfoCollection(actions,ImmutableList.of(nonvolatileInfo.getPrimaryOutput(),volatileInfo.getPrimaryOutput()),ImmutableList.of(redactedInfo.getPrimaryOutput()));
+}

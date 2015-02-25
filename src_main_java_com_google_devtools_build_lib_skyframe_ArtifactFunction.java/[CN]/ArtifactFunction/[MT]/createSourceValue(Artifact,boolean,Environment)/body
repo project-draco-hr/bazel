@@ -1,0 +1,27 @@
+{
+  SkyKey fileSkyKey=FileValue.key(RootedPath.toRootedPath(artifact.getRoot().getPath(),artifact.getPath()));
+  FileValue fileValue;
+  try {
+    fileValue=(FileValue)env.getValueOrThrow(fileSkyKey,IOException.class,InconsistentFilesystemException.class,FileSymlinkCycleException.class);
+  }
+ catch (  IOException|InconsistentFilesystemException|FileSymlinkCycleException e) {
+    throw makeMissingInputFileExn(artifact,mandatory,e,env.getListener());
+  }
+  if (fileValue == null) {
+    return null;
+  }
+  if (!fileValue.exists()) {
+    if (allowedMissingInputs.apply(((RootedPath)fileSkyKey.argument()).getRelativePath())) {
+      return FileArtifactValue.MISSING_FILE_MARKER;
+    }
+ else {
+      return missingInputFile(artifact,mandatory,null,env.getListener());
+    }
+  }
+  try {
+    return FileArtifactValue.create(artifact,fileValue);
+  }
+ catch (  IOException e) {
+    throw makeMissingInputFileExn(artifact,mandatory,e,env.getListener());
+  }
+}

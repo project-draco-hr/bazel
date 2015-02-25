@@ -1,0 +1,23 @@
+{
+  String compressedClasspath=build.getClassPath();
+  if (!build.getSourceFiles().isEmpty()) {
+    compressedClasspath=build.getDependencyModule().computeStrictClasspath(build.getClassPath(),build.getClassDir());
+  }
+  String[] javacArguments=makeJavacArguments(build,compressedClasspath);
+  StringWriter javacOutput=new StringWriter();
+  PrintWriter javacOutputWriter=new PrintWriter(javacOutput);
+  Result result=javacRunner.invokeJavac(javacArguments,javacOutputWriter);
+  javacOutputWriter.close();
+  if (!result.isOK() && hasRecognizedError(javacOutput.toString())) {
+    if (debug) {
+      err.println("warning: [transitive] Target uses transitive classpath to compile.");
+    }
+    prepareSourceCompilation(build);
+    javacArguments=makeJavacArguments(build);
+    result=javacRunner.invokeJavac(javacArguments,err);
+  }
+ else {
+    err.print(javacOutput.getBuffer());
+  }
+  return result;
+}

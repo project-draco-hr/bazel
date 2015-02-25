@@ -1,0 +1,32 @@
+{
+  final Object WHITE=null;
+  final Object GREY=new Object();
+  final Object BLACK=new Object();
+  final Map<Node<T>,Object> nodeToColor=new HashMap<Node<T>,Object>();
+class CycleDetector {
+    boolean visit(    Node<T> node){
+      nodeToColor.put(node,GREY);
+      for (      Node<T> succ : node.getSuccessors()) {
+        if (nodeToColor.get(succ) == GREY) {
+          return true;
+        }
+ else         if (nodeToColor.get(succ) == WHITE) {
+          if (visit(succ)) {
+            return true;
+          }
+        }
+      }
+      nodeToColor.put(node,BLACK);
+      return false;
+    }
+  }
+  CycleDetector detector=new CycleDetector();
+  for (  Node<T> node : nodes.values()) {
+    if (nodeToColor.get(node) == WHITE) {
+      if (detector.visit(node)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}

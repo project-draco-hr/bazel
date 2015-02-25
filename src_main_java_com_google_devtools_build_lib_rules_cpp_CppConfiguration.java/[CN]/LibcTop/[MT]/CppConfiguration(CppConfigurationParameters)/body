@@ -1,0 +1,213 @@
+{
+  CrosstoolConfig.CToolchain toolchain=params.toolchain;
+  cppOptions=params.buildOptions.get(CppOptions.class);
+  this.hostSystemName=toolchain.getHostSystemName();
+  this.compiler=toolchain.getCompiler();
+  this.targetCpu=toolchain.getTargetCpu();
+  this.lipoMode=cppOptions.getLipoMode();
+  this.targetSystemName=toolchain.getTargetSystemName();
+  this.targetLibc=toolchain.getTargetLibc();
+  this.crosstoolTop=params.crosstoolTop;
+  this.ccToolchainLabel=params.ccToolchainLabel;
+  this.compilationMode=params.buildOptions.get(BuildConfiguration.Options.class).compilationMode;
+  this.lipoContextCollector=cppOptions.lipoCollector;
+  this.execRoot=params.execRoot;
+  this.greppedIncludesDirectory=Root.asDerivedRoot(execRoot,execRoot.getRelative(IncludeScanningUtil.GREPPED_INCLUDES));
+  this.crosstoolTopPathFragment=crosstoolTop.getPackageFragment();
+  try {
+    this.staticRuntimeLibsLabel=crosstoolTop.getRelative(toolchain.hasStaticRuntimesFilegroup() ? toolchain.getStaticRuntimesFilegroup() : "static-runtime-libs-" + targetCpu);
+    this.dynamicRuntimeLibsLabel=crosstoolTop.getRelative(toolchain.hasDynamicRuntimesFilegroup() ? toolchain.getDynamicRuntimesFilegroup() : "dynamic-runtime-libs-" + targetCpu);
+  }
+ catch (  SyntaxException e) {
+    throw new AssertionError(e);
+  }
+  if (cppOptions.lipoMode == LipoMode.BINARY) {
+    this.dynamicMode=DynamicMode.OFF;
+  }
+ else {
+switch (cppOptions.dynamicMode) {
+case DEFAULT:
+      this.dynamicMode=DynamicMode.DEFAULT;
+    break;
+case OFF:
+  this.dynamicMode=DynamicMode.OFF;
+break;
+case FULLY:
+this.dynamicMode=DynamicMode.FULLY;
+break;
+default :
+throw new IllegalStateException("Invalid dynamicMode.");
+}
+}
+this.fdoSupport=new FdoSupport(params.buildOptions.get(CppOptions.class).fdoInstrument,params.fdoZip,cppOptions.lipoMode,execRoot);
+this.stripBinaries=(cppOptions.stripBinaries == StripMode.ALWAYS || (cppOptions.stripBinaries == StripMode.SOMETIMES && compilationMode == CompilationMode.FASTBUILD));
+CrosstoolConfigurationIdentifier crosstoolConfig=CrosstoolConfigurationIdentifier.fromToolchain(toolchain);
+Preconditions.checkState(crosstoolConfig.getCpu().equals(targetCpu));
+Preconditions.checkState(crosstoolConfig.getCompiler().equals(compiler));
+Preconditions.checkState(crosstoolConfig.getLibc().equals(targetLibc));
+this.solibDirectory="_solib_" + targetCpu;
+this.toolchainIdentifier=toolchain.getToolchainIdentifier();
+this.cacheKey=this + ":" + crosstoolTop+ ":"+ params.cacheKeySuffix+ ":"+ lipoContextCollector;
+this.toolchainFeatures=new CcToolchainFeatures(toolchain);
+this.supportsGoldLinker=toolchain.getSupportsGoldLinker();
+this.supportsThinArchives=toolchain.getSupportsThinArchives();
+this.supportsStartEndLib=toolchain.getSupportsStartEndLib();
+this.supportsInterfaceSharedObjects=toolchain.getSupportsInterfaceSharedObjects();
+this.supportsEmbeddedRuntimes=toolchain.getSupportsEmbeddedRuntimes();
+this.supportsFission=toolchain.getSupportsFission();
+this.toolchainNeedsPic=toolchain.getNeedsPic();
+this.usePicForBinaries=toolchain.getNeedsPic() && compilationMode != CompilationMode.OPT;
+this.toolPaths=Maps.newHashMap();
+for (CrosstoolConfig.ToolPath tool : toolchain.getToolPathList()) {
+PathFragment path=new PathFragment(tool.getPath());
+if (!path.isNormalized()) {
+throw new IllegalArgumentException("The include path '" + tool.getPath() + "' is not normalized.");
+}
+toolPaths.put(tool.getName(),crosstoolTopPathFragment.getRelative(path));
+}
+if (toolPaths.isEmpty()) {
+for (Tool tool : Tool.values()) {
+toolPaths.put(tool.getNamePart(),crosstoolTopPathFragment.getRelative(tool.getNamePart()));
+}
+}
+ else {
+Iterable<Tool> neededTools=Iterables.filter(EnumSet.allOf(Tool.class),new Predicate<Tool>(){
+@Override public boolean apply(Tool tool){
+if (tool == Tool.DWP) {
+return supportsFission();
+}
+ else if (tool == Tool.GCOVTOOL) {
+return false;
+}
+ else {
+return true;
+}
+}
+}
+);
+for (Tool tool : neededTools) {
+if (!toolPaths.containsKey(tool.getNamePart())) {
+throw new IllegalArgumentException("Tool path for '" + tool.getNamePart() + "' is missing");
+}
+}
+}
+Map<String,String> commandLineDefinesBuilder=new HashMap<>();
+for (Map.Entry<String,String> define : cppOptions.commandLineDefinedVariables) {
+commandLineDefinesBuilder.put(define.getKey(),define.getValue());
+}
+commandLineDefines=ImmutableMap.copyOf(commandLineDefinesBuilder);
+ListMultimap<CompilationMode,String> cFlags=ArrayListMultimap.create();
+ListMultimap<CompilationMode,String> cxxFlags=ArrayListMultimap.create();
+linkOptionsFromCompilationMode=ArrayListMultimap.create();
+for (CrosstoolConfig.CompilationModeFlags flags : toolchain.getCompilationModeFlagsList()) {
+if (flags.getMode() == CrosstoolConfig.CompilationMode.COVERAGE) {
+continue;
+}
+CompilationMode realmode=importCompilationMode(flags.getMode());
+cFlags.putAll(realmode,flags.getCompilerFlagList());
+cxxFlags.putAll(realmode,flags.getCxxFlagList());
+linkOptionsFromCompilationMode.putAll(realmode,flags.getLinkerFlagList());
+}
+ListMultimap<LipoMode,String> lipoCFlags=ArrayListMultimap.create();
+ListMultimap<LipoMode,String> lipoCxxFlags=ArrayListMultimap.create();
+linkOptionsFromLipoMode=ArrayListMultimap.create();
+for (CrosstoolConfig.LipoModeFlags flags : toolchain.getLipoModeFlagsList()) {
+LipoMode realmode=flags.getMode();
+lipoCFlags.putAll(realmode,flags.getCompilerFlagList());
+lipoCxxFlags.putAll(realmode,flags.getCxxFlagList());
+linkOptionsFromLipoMode.putAll(realmode,flags.getLinkerFlagList());
+}
+linkOptionsFromLinkingMode=ArrayListMultimap.create();
+for (LinkingModeFlags flags : toolchain.getLinkingModeFlagsList()) {
+LinkingMode realmode=importLinkingMode(flags.getMode());
+linkOptionsFromLinkingMode.putAll(realmode,flags.getLinkerFlagList());
+}
+this.commonLinkOptions=ImmutableList.copyOf(toolchain.getLinkerFlagList());
+dynamicLibraryLinkFlags=new FlagList(ImmutableList.copyOf(toolchain.getDynamicLibraryLinkerFlagList()),convertOptionalOptions(toolchain.getOptionalDynamicLibraryLinkerFlagList()),Collections.<String>emptyList());
+this.objcopyOptions=ImmutableList.copyOf(toolchain.getObjcopyEmbedFlagList());
+this.ldOptions=ImmutableList.copyOf(toolchain.getLdEmbedFlagList());
+this.arOptions=copyOrDefaultIfEmpty(toolchain.getArFlagList(),"rcsD");
+this.arThinArchivesOptions=copyOrDefaultIfEmpty(toolchain.getArThinArchivesFlagList(),"rcsDT");
+this.abi=toolchain.getAbiVersion();
+this.abiGlibcVersion=toolchain.getAbiLibcVersion();
+PathFragment defaultSysroot=toolchain.getBuiltinSysroot().length() == 0 ? null : new PathFragment(toolchain.getBuiltinSysroot());
+if ((defaultSysroot != null) && !defaultSysroot.isNormalized()) {
+throw new IllegalArgumentException("The built-in sysroot '" + defaultSysroot + "' is not normalized.");
+}
+if ((cppOptions.libcTop != null) && (defaultSysroot == null)) {
+throw new InvalidConfigurationException("The selected toolchain " + toolchainIdentifier + " does not support setting --grte_top.");
+}
+LibcTop libcTop=cppOptions.libcTop;
+if ((libcTop == null) && !toolchain.getDefaultGrteTop().isEmpty()) {
+try {
+libcTop=new CppOptions.LibcTopConverter().convert(toolchain.getDefaultGrteTop());
+}
+ catch (OptionsParsingException e) {
+throw new InvalidConfigurationException(e.getMessage(),e);
+}
+}
+if ((libcTop != null) && (libcTop.getLabel() != null)) {
+libcLabel=libcTop.getLabel();
+}
+ else {
+libcLabel=null;
+}
+ImmutableList.Builder<PathFragment> builtInIncludeDirectoriesBuilder=ImmutableList.builder();
+sysroot=libcTop == null ? defaultSysroot : libcTop.getSysroot();
+for (String s : toolchain.getCxxBuiltinIncludeDirectoryList()) {
+builtInIncludeDirectoriesBuilder.add(resolveIncludeDir(s,sysroot,crosstoolTopPathFragment));
+}
+builtInIncludeDirectories=builtInIncludeDirectoriesBuilder.build();
+runtimeSysroot=defaultSysroot;
+String sysrootFlag;
+if (sysroot != null && !sysroot.equals(defaultSysroot)) {
+sysrootFlag="--sysroot=" + sysroot;
+}
+ else {
+sysrootFlag=null;
+}
+ImmutableList.Builder<String> unfilteredCoptsBuilder=ImmutableList.builder();
+if (sysrootFlag != null) {
+unfilteredCoptsBuilder.add(sysrootFlag);
+}
+unfilteredCoptsBuilder.addAll(toolchain.getUnfilteredCxxFlagList());
+unfilteredCompilerFlags=new FlagList(unfilteredCoptsBuilder.build(),convertOptionalOptions(toolchain.getOptionalUnfilteredCxxFlagList()),Collections.<String>emptyList());
+ImmutableList.Builder<String> linkoptsBuilder=ImmutableList.builder();
+linkoptsBuilder.addAll(cppOptions.linkoptList);
+if (cppOptions.experimentalOmitfp) {
+linkoptsBuilder.add("-Wl,--eh-frame-hdr");
+}
+if (sysrootFlag != null) {
+linkoptsBuilder.add(sysrootFlag);
+}
+this.linkOptions=linkoptsBuilder.build();
+ImmutableList.Builder<String> coptsBuilder=ImmutableList.<String>builder().addAll(toolchain.getCompilerFlagList()).addAll(cFlags.get(compilationMode)).addAll(lipoCFlags.get(cppOptions.getLipoMode()));
+if (cppOptions.experimentalOmitfp) {
+coptsBuilder.add("-fomit-frame-pointer");
+coptsBuilder.add("-fasynchronous-unwind-tables");
+coptsBuilder.add("-DNO_FRAME_POINTER");
+}
+this.compilerFlags=new FlagList(coptsBuilder.build(),convertOptionalOptions(toolchain.getOptionalCompilerFlagList()),cppOptions.coptList);
+this.cOptions=ImmutableList.copyOf(cppOptions.conlyoptList);
+ImmutableList.Builder<String> cxxOptsBuilder=ImmutableList.<String>builder().addAll(toolchain.getCxxFlagList()).addAll(cxxFlags.get(compilationMode)).addAll(lipoCxxFlags.get(cppOptions.getLipoMode()));
+this.cxxFlags=new FlagList(cxxOptsBuilder.build(),convertOptionalOptions(toolchain.getOptionalCxxFlagList()),cppOptions.cxxoptList);
+this.ldExecutable=getToolPathFragment(CppConfiguration.Tool.LD);
+boolean stripBinaries=(cppOptions.stripBinaries == StripMode.ALWAYS) || ((cppOptions.stripBinaries == StripMode.SOMETIMES) && (compilationMode == CompilationMode.FASTBUILD));
+fullyStaticLinkFlags=new FlagList(configureLinkerOptions(compilationMode,lipoMode,LinkingMode.FULLY_STATIC,ldExecutable,stripBinaries),convertOptionalOptions(toolchain.getOptionalLinkerFlagList()),Collections.<String>emptyList());
+mostlyStaticLinkFlags=new FlagList(configureLinkerOptions(compilationMode,lipoMode,LinkingMode.MOSTLY_STATIC,ldExecutable,stripBinaries),convertOptionalOptions(toolchain.getOptionalLinkerFlagList()),Collections.<String>emptyList());
+mostlyStaticSharedLinkFlags=new FlagList(configureLinkerOptions(compilationMode,lipoMode,LinkingMode.MOSTLY_STATIC_LIBRARIES,ldExecutable,stripBinaries),convertOptionalOptions(toolchain.getOptionalLinkerFlagList()),Collections.<String>emptyList());
+dynamicLinkFlags=new FlagList(configureLinkerOptions(compilationMode,lipoMode,LinkingMode.DYNAMIC,ldExecutable,stripBinaries),convertOptionalOptions(toolchain.getOptionalLinkerFlagList()),Collections.<String>emptyList());
+testOnlyLinkFlags=ImmutableList.copyOf(toolchain.getTestOnlyLinkerFlagList());
+Map<String,String> makeVariablesBuilder=new HashMap<>();
+makeVariablesBuilder.put("STACK_FRAME_UNLIMITED","");
+makeVariablesBuilder.put("CC_FLAGS","");
+for (CrosstoolConfig.MakeVariable variable : toolchain.getMakeVariableList()) {
+makeVariablesBuilder.put(variable.getName(),variable.getValue());
+}
+if (sysrootFlag != null) {
+String ccFlags=makeVariablesBuilder.get("CC_FLAGS");
+ccFlags=ccFlags.isEmpty() ? sysrootFlag : ccFlags + " " + sysrootFlag;
+makeVariablesBuilder.put("CC_FLAGS",ccFlags);
+}
+this.additionalMakeVariables=ImmutableMap.copyOf(makeVariablesBuilder);
+}

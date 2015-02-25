@@ -1,0 +1,25 @@
+{
+  if (input.equals("")) {
+    return Collections.emptySet();
+  }
+  EnumSet<E> includedSet=EnumSet.noneOf(typeClass);
+  EnumSet<E> excludedSet=EnumSet.noneOf(typeClass);
+  for (  String value : input.split(",",-1)) {
+    boolean excludeFlag=value.startsWith("-");
+    String s=(excludeFlag ? value.substring(1) : value).toUpperCase();
+    if (!allowedValues.contains(s)) {
+      throw new OptionsParsingException("Invalid " + prettyEnumName + " filter '"+ value+ "' in the input '"+ input+ "'");
+    }
+    (excludeFlag ? excludedSet : includedSet).add(E.valueOf(typeClass,s));
+  }
+  if (includedSet.isEmpty()) {
+    includedSet=EnumSet.complementOf(excludedSet);
+  }
+ else {
+    includedSet.removeAll(excludedSet);
+  }
+  if (includedSet.isEmpty()) {
+    throw new OptionsParsingException(Character.toUpperCase(prettyEnumName.charAt(0)) + prettyEnumName.substring(1) + " filter '"+ input+ "' definition cannot match any tests");
+  }
+  return includedSet;
+}

@@ -1,0 +1,33 @@
+{
+  Preconditions.checkState(!isActive(),"Profiler already active");
+  taskStack=new TaskStack();
+  taskQueue=new ConcurrentLinkedQueue<>();
+  describer=new ObjectDescriber();
+  this.profiledTaskKinds=profiledTaskKinds;
+  this.clock=clock;
+  Preconditions.checkState(TASK_COUNT < 256,"The profiler implementation supports only up to 255 different ProfilerTask values.");
+  taskId.set(0);
+  this.recordAllDurations=recordAllDurations;
+  this.saveException=null;
+  if (stream != null) {
+    this.timer=new Timer("ProfilerTimer",true);
+    this.out=new DataOutputStream(new BufferedOutputStream(new DeflaterOutputStream(stream,new Deflater(Deflater.BEST_SPEED,false),65536),262144));
+    this.out.writeInt(MAGIC);
+    this.out.writeInt(VERSION);
+    this.out.writeUTF(comment);
+    this.out.writeInt(TASK_COUNT);
+    for (    ProfilerTask type : ProfilerTask.values()) {
+      this.out.writeUTF(type.toString());
+    }
+    timer.schedule(new TimerTask(){
+      @Override public void run(){
+        save();
+      }
+    }
+,SAVE_DELAY,SAVE_DELAY);
+  }
+ else {
+    this.out=null;
+  }
+  profileStartTime=execStartTimeNanos;
+}

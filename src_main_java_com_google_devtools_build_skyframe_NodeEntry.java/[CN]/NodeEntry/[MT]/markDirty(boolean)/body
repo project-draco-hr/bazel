@@ -1,0 +1,18 @@
+{
+  assertKeepEdges();
+  if (isDone()) {
+    GroupedList<SkyKey> lastDirectDeps=GroupedList.create(directDeps);
+    buildingState=BuildingState.newDirtyState(isChanged,lastDirectDeps,value);
+    Pair<? extends Iterable<SkyKey>,? extends SkyValue> result=Pair.of(lastDirectDeps.toSet(),value);
+    value=null;
+    directDeps=null;
+    return result;
+  }
+  Preconditions.checkState(isChanged != isChanged(),"Cannot mark node dirty twice or changed twice: %s",this);
+  Preconditions.checkState(value == null,"Value should have been reset already %s",this);
+  Preconditions.checkState(directDeps == null,"direct deps not already reset %s",this);
+  if (isChanged) {
+    buildingState.markChanged();
+  }
+  return null;
+}

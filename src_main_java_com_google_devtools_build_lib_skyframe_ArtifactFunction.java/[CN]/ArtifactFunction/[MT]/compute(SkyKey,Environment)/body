@@ -1,0 +1,33 @@
+{
+  OwnedArtifact ownedArtifact=(OwnedArtifact)skyKey.argument();
+  Artifact artifact=ownedArtifact.getArtifact();
+  if (artifact.isSourceArtifact()) {
+    try {
+      return createSourceValue(artifact,ownedArtifact.isMandatory(),env);
+    }
+ catch (    MissingInputFileException e) {
+      throw new ArtifactFunctionException(e,Transience.TRANSIENT);
+    }
+  }
+  Action action=extractActionFromArtifact(artifact,env);
+  if (action == null) {
+    return null;
+  }
+  ActionExecutionValue actionValue=(ActionExecutionValue)env.getValue(ActionExecutionValue.key(action));
+  if (actionValue == null) {
+    return null;
+  }
+  if (!isAggregatingValue(action)) {
+    try {
+      return createSimpleValue(artifact,actionValue);
+    }
+ catch (    IOException e) {
+      ActionExecutionException ex=new ActionExecutionException(e,action,false);
+      env.getListener().handle(Event.error(ex.getLocation(),ex.getMessage()));
+      throw new ArtifactFunctionException(ex,Transience.TRANSIENT);
+    }
+  }
+ else {
+    return createAggregatingValue(artifact,action,actionValue.getArtifactValue(artifact),env);
+  }
+}

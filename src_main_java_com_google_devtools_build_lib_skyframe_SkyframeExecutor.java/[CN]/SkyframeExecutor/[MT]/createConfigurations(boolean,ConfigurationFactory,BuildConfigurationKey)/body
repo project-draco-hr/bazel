@@ -1,0 +1,25 @@
+{
+  this.configurationPackages.set(Sets.<Package>newConcurrentHashSet());
+  this.clientEnv.set(configurationKey.getClientEnv());
+  this.configurationFactory.set(configurationFactory);
+  this.configurationFragments.set(ImmutableList.copyOf(configurationFactory.getFactories()));
+  BuildOptions buildOptions=configurationKey.getBuildOptions();
+  Map<String,String> testEnv=BuildConfiguration.getTestEnv(buildOptions.get(BuildConfiguration.Options.class).testEnvironment,configurationKey.getClientEnv());
+  PrecomputedValue.TEST_ENVIRONMENT_VARIABLES.set(injectable(),testEnv);
+  PrecomputedValue.BLAZE_DIRECTORIES.set(injectable(),configurationKey.getDirectories());
+  SkyKey skyKey=ConfigurationCollectionValue.key(configurationKey.getBuildOptions(),configurationKey.getMultiCpu());
+  setConfigurationSkyKey(skyKey);
+  EvaluationResult<ConfigurationCollectionValue> result=buildDriver.evaluate(Arrays.asList(skyKey),keepGoing,DEFAULT_THREAD_COUNT,errorEventListener);
+  if (result.hasError()) {
+    Throwable e=result.getError(skyKey).getException();
+    if (e instanceof NoSuchThingException) {
+      e=new InvalidConfigurationException(e);
+    }
+    Throwables.propagateIfInstanceOf(e,InvalidConfigurationException.class);
+    throw new IllegalStateException("Unknown error during ConfigurationCollectionValue evaluation",e);
+  }
+  Preconditions.checkState(result.values().size() == 1,"Result of evaluate() must contain exactly one value %s",result);
+  ConfigurationCollectionValue configurationValue=Iterables.getOnlyElement(result.values());
+  this.configurationPackages.set(Sets.newConcurrentHashSet(configurationValue.getConfigurationPackages()));
+  return configurationValue.getConfigurationCollection();
+}

@@ -1,0 +1,16 @@
+{
+  RootedPath dirRootedPath=(RootedPath)skyKey.argument();
+  FileValue dirFileValue=(FileValue)env.getValue(FileValue.key(dirRootedPath));
+  if (dirFileValue == null) {
+    return null;
+  }
+  RootedPath realDirRootedPath=dirFileValue.realRootedPath();
+  if (!dirFileValue.isDirectory()) {
+    throw new DirectoryListingFunctionException(new InconsistentFilesystemException(dirRootedPath.asPath() + " is no longer an existing directory. Did you delete it during " + "the build?"));
+  }
+  DirectoryListingStateValue directoryListingStateValue=(DirectoryListingStateValue)env.getValue(DirectoryListingStateValue.key(realDirRootedPath));
+  if (directoryListingStateValue == null) {
+    return null;
+  }
+  return DirectoryListingValue.value(dirRootedPath,dirFileValue,directoryListingStateValue);
+}

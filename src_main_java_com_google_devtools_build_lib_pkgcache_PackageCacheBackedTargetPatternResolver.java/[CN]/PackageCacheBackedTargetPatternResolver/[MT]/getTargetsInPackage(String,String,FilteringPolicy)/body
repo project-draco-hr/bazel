@@ -1,0 +1,17 @@
+{
+  packageName=new PathFragment(packageName).toString();
+  if (LabelValidator.validatePackageName(packageName) != null) {
+    return handleParsingError(eventHandler,originalPattern,new TargetParsingException("'" + packageName + "' is not a valid package name"),keepGoing);
+  }
+  Package pkg;
+  try {
+    pkg=packageProvider.getPackage(eventHandler,PackageIdentifier.createInDefaultRepo(packageName));
+  }
+ catch (  NoSuchPackageException e) {
+    return handleParsingError(eventHandler,originalPattern,new TargetParsingException(TargetPatternResolverUtil.getParsingErrorMessage(e.getMessage(),originalPattern)),keepGoing);
+  }
+  if (pkg.containsErrors()) {
+    handleParsingError(eventHandler,originalPattern,new TargetParsingException(TargetPatternResolverUtil.getParsingErrorMessage("package contains errors",originalPattern)),keepGoing);
+  }
+  return TargetPatternResolverUtil.resolvePackageTargets(pkg,policy);
+}

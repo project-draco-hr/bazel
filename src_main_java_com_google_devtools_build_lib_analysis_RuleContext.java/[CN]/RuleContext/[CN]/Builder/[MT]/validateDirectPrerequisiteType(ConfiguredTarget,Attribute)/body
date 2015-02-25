@@ -1,0 +1,35 @@
+{
+  Target prerequisiteTarget=prerequisite.getTarget();
+  Label prerequisiteLabel=prerequisiteTarget.getLabel();
+  if (prerequisiteTarget instanceof Rule) {
+    Rule prerequisiteRule=(Rule)prerequisiteTarget;
+    String reason=attribute.getValidityPredicate().checkValid(rule,prerequisiteRule);
+    if (reason != null) {
+      reportBadPrerequisite(attribute,prerequisiteTarget.getTargetKind(),prerequisiteLabel,reason,false);
+    }
+  }
+  if (attribute.isStrictLabelCheckingEnabled()) {
+    if (prerequisiteTarget instanceof Rule) {
+      RuleClass ruleClass=((Rule)prerequisiteTarget).getRuleClassObject();
+      if (!attribute.getAllowedRuleClassesPredicate().apply(ruleClass)) {
+        boolean allowedWithWarning=attribute.getAllowedRuleClassesWarningPredicate().apply(ruleClass);
+        reportBadPrerequisite(attribute,prerequisiteTarget.getTargetKind(),prerequisiteLabel,"expected " + attribute.getAllowedRuleClassesPredicate().toString(),allowedWithWarning);
+      }
+    }
+ else     if (prerequisiteTarget instanceof FileTarget) {
+      if (!attribute.getAllowedFileTypesPredicate().apply(((FileTarget)prerequisiteTarget).getFilename())) {
+        if (prerequisiteTarget instanceof InputFile && !((InputFile)prerequisiteTarget).getPath().exists()) {
+          if (attribute.getAllowedFileTypesPredicate().isNone() && !((InputFile)prerequisiteTarget).getFilename().contains(".")) {
+            attributeError(attribute.getName(),"rule '" + prerequisiteLabel + "' does not exist");
+          }
+ else {
+            attributeError(attribute.getName(),"target '" + prerequisiteLabel + "' does not exist");
+          }
+        }
+ else {
+          reportBadPrerequisite(attribute,"file",prerequisiteLabel,"expected " + attribute.getAllowedFileTypesPredicate().toString(),false);
+        }
+      }
+    }
+  }
+}

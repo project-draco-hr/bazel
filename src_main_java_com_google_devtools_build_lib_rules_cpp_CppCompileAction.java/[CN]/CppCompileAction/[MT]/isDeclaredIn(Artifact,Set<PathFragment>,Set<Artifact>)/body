@@ -1,0 +1,32 @@
+{
+  if (declaredIncludeSrcs.contains(input)) {
+    return true;
+  }
+  if (!input.isSourceArtifact() && !input.getRoot().getExecPath().getBaseName().equals("include")) {
+    return false;
+  }
+  PathFragment includeDir=input.getRootRelativePath().getParentDirectory();
+  if (includeDir.segmentCount() == 0 || declaredIncludeDirs.contains(includeDir)) {
+    return true;
+  }
+  for (  PathFragment declared : declaredIncludeDirs) {
+    if (declared.getBaseName().equals("**")) {
+      if (includeDir.startsWith(declared.getParentDirectory())) {
+        return true;
+      }
+    }
+  }
+  Path root=input.getRoot().getPath();
+  for (Path dir=input.getPath().getParentDirectory(); ; ) {
+    if (dir.getRelative("BUILD").exists()) {
+      return false;
+    }
+    dir=dir.getParentDirectory();
+    if (dir.equals(root)) {
+      return false;
+    }
+    if (declaredIncludeDirs.contains(dir.relativeTo(root))) {
+      return true;
+    }
+  }
+}

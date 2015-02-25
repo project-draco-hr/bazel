@@ -1,0 +1,10 @@
+{
+  NestedSetBuilder<Artifact> compileTimeBuilder=NestedSetBuilder.stableOrder();
+  NestedSetBuilder<Artifact> runTimeBuilder=NestedSetBuilder.stableOrder();
+  for (  JavaCompilationArgsProvider provider : AnalysisUtils.getProviders(deps,JavaCompilationArgsProvider.class)) {
+    compileTimeBuilder.addTransitive(provider.getCompileTimeJavaDependencyArtifacts());
+    runTimeBuilder.addTransitive(provider.getRunTimeJavaDependencyArtifacts());
+  }
+  attributes.addCompileTimeDependencyArtifacts(compileTimeBuilder.build());
+  attributes.addRuntimeDependencyArtifacts(runTimeBuilder.build());
+}

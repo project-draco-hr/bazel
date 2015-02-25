@@ -1,0 +1,31 @@
+{
+  Preconditions.checkNotNull(eventHandler);
+  if (!canReportCycle(topLevelKey,cycleInfo)) {
+    return false;
+  }
+  if (alreadyReported) {
+    Label label=getLabel(topLevelKey);
+    Target target=getTargetForLabel(label);
+    eventHandler.handle(Event.error(target.getLocation(),"in " + target.getTargetKind() + " "+ label+ ": cycle in dependency graph: target depends on an already-reported cycle"));
+  }
+ else {
+    StringBuilder cycleMessage=new StringBuilder("cycle in dependency graph:");
+    ImmutableList<SkyKey> pathToCycle=cycleInfo.getPathToCycle();
+    ImmutableList<SkyKey> cycle=cycleInfo.getCycle();
+    for (    SkyKey value : pathToCycle) {
+      cycleMessage.append("\n    ");
+      cycleMessage.append(prettyPrint(value));
+    }
+    SkyKey cycleValue=printCycle(cycle,cycleMessage,new Function<SkyKey,String>(){
+      @Override public String apply(      SkyKey input){
+        return prettyPrint(input);
+      }
+    }
+);
+    cycleMessage.append(getAdditionalMessageAboutCycle(topLevelKey,cycleInfo));
+    Label label=getLabel(cycleValue);
+    Target target=getTargetForLabel(label);
+    eventHandler.handle(Event.error(target.getLocation(),"in " + target.getTargetKind() + " "+ label+ ": "+ cycleMessage.toString()));
+  }
+  return true;
+}

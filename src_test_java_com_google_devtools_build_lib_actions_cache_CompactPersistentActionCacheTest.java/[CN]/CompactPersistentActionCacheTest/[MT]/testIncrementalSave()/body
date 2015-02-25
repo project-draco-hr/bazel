@@ -1,0 +1,29 @@
+{
+  for (int i=0; i < 300; i++) {
+    putKey(Integer.toString(i));
+  }
+  assertFullSave();
+  putKey("abc");
+  putKey("123");
+  assertIncrementalSave(cache);
+  CompactPersistentActionCache newcache=new CompactPersistentActionCache(dataRoot,clock);
+  for (int i=0; i < 100; i++) {
+    assertKeyEquals(cache,newcache,Integer.toString(i));
+  }
+  assertKeyEquals(cache,newcache,"abc");
+  assertKeyEquals(cache,newcache,"123");
+  putKey("xyz",newcache);
+  assertIncrementalSave(newcache);
+  CompactPersistentActionCache newerCache=new CompactPersistentActionCache(dataRoot,clock);
+  for (int i=0; i < 100; i++) {
+    assertKeyEquals(cache,newerCache,Integer.toString(i));
+  }
+  assertKeyEquals(cache,newerCache,"abc");
+  assertKeyEquals(cache,newerCache,"123");
+  assertNotNull(newerCache.get("xyz"));
+  assertNull(newerCache.get("not_a_key"));
+  for (int i=300; i < 310; i++) {
+    putKey(Integer.toString(i));
+  }
+  assertFullSave();
+}

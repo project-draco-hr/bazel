@@ -1,0 +1,17 @@
+{
+  this.ruleContext=ruleContext;
+  this.spec=spec;
+  this.localMetadataCollector=localMetadataCollector;
+  Preconditions.checkNotNull(ruleContext,"RuleContext already cleared. That means that the" + " collector data was already memoized. You do not have to call it again.");
+  if (!ruleContext.getConfiguration().isCodeCoverageEnabled()) {
+    instrumentedFiles=NestedSetBuilder.emptySet(Order.STABLE_ORDER);
+    instrumentationMetadataFiles=NestedSetBuilder.emptySet(Order.STABLE_ORDER);
+  }
+ else {
+    NestedSetBuilder<Artifact> instrumentedFilesBuilder=NestedSetBuilder.stableOrder();
+    NestedSetBuilder<Artifact> metadataFilesBuilder=NestedSetBuilder.stableOrder();
+    collect(ruleContext.getAnalysisEnvironment(),instrumentedFilesBuilder,metadataFilesBuilder,rootFiles);
+    instrumentedFiles=instrumentedFilesBuilder.build();
+    instrumentationMetadataFiles=metadataFilesBuilder.build();
+  }
+}

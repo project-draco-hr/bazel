@@ -1,0 +1,20 @@
+{
+  Writer manifestFile=new BufferedWriter(new OutputStreamWriter(out,ISO_8859_1));
+  Comparator<Map.Entry<PathFragment,Artifact>> fragmentComparator=new Comparator<Map.Entry<PathFragment,Artifact>>(){
+    @Override public int compare(    Map.Entry<PathFragment,Artifact> path1,    Map.Entry<PathFragment,Artifact> path2){
+      return path1.getKey().compareTo(path2.getKey());
+    }
+  }
+;
+  List<Map.Entry<PathFragment,Artifact>> sortedRootLinks=new ArrayList<>(output.second.entrySet());
+  Collections.sort(sortedRootLinks,fragmentComparator);
+  List<Map.Entry<PathFragment,Artifact>> sortedManifest=new ArrayList<>(output.first.entrySet());
+  Collections.sort(sortedManifest,fragmentComparator);
+  for (  Map.Entry<PathFragment,Artifact> line : sortedRootLinks) {
+    manifestWriter.writeEntry(manifestFile,line.getKey(),line.getValue());
+  }
+  for (  Map.Entry<PathFragment,Artifact> line : sortedManifest) {
+    manifestWriter.writeEntry(manifestFile,line.getKey(),line.getValue());
+  }
+  manifestFile.flush();
+}

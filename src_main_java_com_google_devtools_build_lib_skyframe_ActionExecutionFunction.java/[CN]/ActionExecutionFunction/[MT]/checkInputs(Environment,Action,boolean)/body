@@ -1,0 +1,58 @@
+{
+  Map<SkyKey,ValueOrException2<MissingInputFileException,ActionExecutionException>> inputDeps=env.getValuesOrThrow(toKeys(action.getInputs(),action.discoversInputs() ? action.getMandatoryInputs() : null),MissingInputFileException.class,ActionExecutionException.class);
+  if (alreadyRan) {
+    return null;
+  }
+  int missingCount=0;
+  int actionFailures=0;
+  boolean catastrophe=false;
+  boolean populateInputData=!env.valuesMissing();
+  NestedSetBuilder<Label> rootCauses=NestedSetBuilder.stableOrder();
+  Map<Artifact,FileArtifactValue> inputArtifactData=new HashMap<>(populateInputData ? inputDeps.size() : 0);
+  Map<Artifact,Collection<Artifact>> expandedMiddlemen=new HashMap<>(populateInputData ? 128 : 0);
+  ActionExecutionException firstActionExecutionException=null;
+  for (  Map.Entry<SkyKey,ValueOrException2<MissingInputFileException,ActionExecutionException>> depsEntry : inputDeps.entrySet()) {
+    Artifact input=ArtifactValue.artifact(depsEntry.getKey());
+    try {
+      ArtifactValue value=(ArtifactValue)depsEntry.getValue().get();
+      if (populateInputData && value instanceof AggregatingArtifactValue) {
+        AggregatingArtifactValue aggregatingValue=(AggregatingArtifactValue)value;
+        for (        Pair<Artifact,FileArtifactValue> entry : aggregatingValue.getInputs()) {
+          inputArtifactData.put(entry.first,entry.second);
+        }
+        inputArtifactData.put(input,aggregatingValue.getSelfData());
+        expandedMiddlemen.put(input,Collections2.transform(aggregatingValue.getInputs(),Pair.<Artifact,FileArtifactValue>firstFunction()));
+      }
+ else       if (populateInputData && value instanceof FileArtifactValue) {
+        inputArtifactData.put(input,(FileArtifactValue)value);
+      }
+    }
+ catch (    MissingInputFileException e) {
+      missingCount++;
+      if (input.getOwner() != null) {
+        rootCauses.add(input.getOwner());
+      }
+    }
+catch (    ActionExecutionException e) {
+      actionFailures++;
+      if (firstActionExecutionException == null) {
+        firstActionExecutionException=e;
+      }
+      catastrophe=catastrophe || e.isCatastrophe();
+      rootCauses.addTransitive(e.getRootCauses());
+    }
+  }
+  if (firstActionExecutionException != null) {
+    if (missingCount == 0 && actionFailures == 1) {
+      throw firstActionExecutionException;
+    }
+    throw new ActionExecutionException(firstActionExecutionException.getMessage(),firstActionExecutionException.getCause(),action,rootCauses.build(),catastrophe);
+  }
+  if (missingCount > 0) {
+    for (    Label missingInput : rootCauses.build()) {
+      env.getListener().handle(Event.error(action.getOwner().getLocation(),String.format("%s: missing input file '%s'",action.getOwner().getLabel(),missingInput)));
+    }
+    throw new ActionExecutionException(missingCount + " input file(s) do not exist",action,rootCauses.build(),false);
+  }
+  return Pair.of(Collections.unmodifiableMap(inputArtifactData),Collections.unmodifiableMap(expandedMiddlemen));
+}

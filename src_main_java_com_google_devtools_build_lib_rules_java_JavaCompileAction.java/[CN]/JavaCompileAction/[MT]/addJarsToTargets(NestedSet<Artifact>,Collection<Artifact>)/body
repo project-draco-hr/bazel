@@ -1,0 +1,10 @@
+{
+  ImmutableList.Builder<String> builder=ImmutableList.builder();
+  for (  Artifact jar : classpath) {
+    builder.add(directJars.contains(jar) ? "--direct_dependency" : "--indirect_dependency");
+    builder.add(jar.getExecPathString());
+    Label label=getTargetName(jar);
+    builder.add(label.getPackageIdentifier().getRepository().isDefault() ? label.toString() : label.toPathFragment().toString());
+  }
+  return builder.build();
+}

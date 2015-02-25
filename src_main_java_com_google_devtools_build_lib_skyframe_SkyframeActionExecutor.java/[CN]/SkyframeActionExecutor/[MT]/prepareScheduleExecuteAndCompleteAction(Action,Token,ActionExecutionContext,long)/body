@@ -1,0 +1,30 @@
+{
+  Preconditions.checkNotNull(token,action);
+  context.getMetadataHandler().discardMetadata(action.getOutputs());
+  try {
+    action.prepare(context.getExecutor().getExecRoot());
+  }
+ catch (  IOException e) {
+    reportError("failed to delete output files before executing action",e,action,null);
+  }
+  postEvent(new ActionStartedEvent(action,actionStartTime));
+  ResourceSet estimate=action.estimateResourceConsumption(executorEngine);
+  ActionExecutionStatusReporter statusReporter=statusReporterRef.get();
+  try {
+    if (estimate == null || estimate == ResourceSet.ZERO) {
+      statusReporter.setRunningFromBuildData(action);
+    }
+ else {
+      resourceManager.acquireResources(action,estimate);
+    }
+    boolean outputDumped=executeActionTask(action,context);
+    completeAction(action,token,context.getMetadataHandler(),context.getFileOutErr(),outputDumped);
+  }
+  finally {
+    if (estimate != null) {
+      resourceManager.releaseResources(action,estimate);
+    }
+    statusReporter.remove(action);
+    postEvent(new ActionCompletionEvent(action));
+  }
+}

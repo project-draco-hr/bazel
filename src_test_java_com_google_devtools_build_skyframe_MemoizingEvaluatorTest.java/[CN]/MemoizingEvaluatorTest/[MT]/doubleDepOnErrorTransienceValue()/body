@@ -1,0 +1,12 @@
+{
+  initializeTester();
+  SkyKey leafKey=GraphTester.toSkyKey("leaf");
+  tester.set(leafKey,new StringValue("leaf"));
+  assertEquals(new StringValue("leaf"),tester.evalAndGet(false,leafKey));
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  tester.getOrCreate(topKey).addDependency(leafKey).setHasError(true);
+  assertThat(tester.evalAndGetError(topKey).getRootCauses()).containsExactly(topKey).inOrder();
+  tester.set(leafKey,new StringValue("leaf2"));
+  tester.invalidate();
+  assertThat(tester.evalAndGetError(topKey).getRootCauses()).containsExactly(topKey).inOrder();
+}

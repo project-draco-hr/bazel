@@ -1,0 +1,35 @@
+{
+  if (deferredIOFailure != null) {
+    try {
+      throw new IOException(deferredIOFailure);
+    }
+  finally {
+      deferredIOFailure=null;
+    }
+  }
+  if (dirty) {
+    if (!fullSave && keepJournal()) {
+      forceFlush();
+      journalOut.close();
+      journalOut=null;
+      return journalSize() + cacheSize();
+    }
+ else {
+      dirty=false;
+      Path mapTemp=mapFile.getRelative(FileSystemUtils.replaceExtension(mapFile.asFragment(),".tmp"));
+      try {
+        saveEntries(delegate(),mapTemp);
+        mapTemp.renameTo(mapFile);
+      }
+  finally {
+        mapTemp.delete();
+      }
+      clearJournal();
+      journalFile.delete();
+      return cacheSize();
+    }
+  }
+ else {
+    return cacheSize();
+  }
+}

@@ -1,0 +1,58 @@
+{
+  BuildConfiguration config=ruleContext.getConfiguration();
+  AnalysisEnvironment env=ruleContext.getAnalysisEnvironment();
+  Root root=config.getTestLogsDirectory();
+  NestedSetBuilder<Artifact> inputsBuilder=NestedSetBuilder.stableOrder();
+  inputsBuilder.addTransitive(NestedSetBuilder.create(Order.STABLE_ORDER,runfilesSupport.getRunfilesMiddleman()));
+  for (  TransitiveInfoCollection dep : ruleContext.getPrerequisites("$test_runtime",Mode.HOST)) {
+    inputsBuilder.addTransitive(dep.getProvider(FileProvider.class).getFilesToBuild());
+  }
+  TestTargetProperties testProperties=new TestTargetProperties(ruleContext,executionRequirements);
+  final boolean collectCodeCoverage=config.isCodeCoverageEnabled() && instrumentedFiles != null;
+  TestTargetExecutionSettings executionSettings;
+  if (collectCodeCoverage) {
+    Collection<Artifact> metadataFiles=ImmutableList.copyOf(instrumentedFiles.getInstrumentationMetadataFiles());
+    inputsBuilder.addTransitive(NestedSetBuilder.wrap(Order.STABLE_ORDER,metadataFiles));
+    for (    TransitiveInfoCollection dep : ruleContext.getPrerequisites(":coverage_support",Mode.HOST)) {
+      inputsBuilder.addTransitive(dep.getProvider(FileProvider.class).getFilesToBuild());
+    }
+    Artifact instrumentedFileManifest=InstrumentedFileManifestAction.getInstrumentedFileManifest(ruleContext,ImmutableList.copyOf(instrumentedFiles.getInstrumentedFiles()),metadataFiles);
+    executionSettings=new TestTargetExecutionSettings(ruleContext,runfilesSupport,executable,instrumentedFileManifest,shards);
+    inputsBuilder.add(instrumentedFileManifest);
+  }
+ else {
+    executionSettings=new TestTargetExecutionSettings(ruleContext,runfilesSupport,executable,null,shards);
+  }
+  if (config.getRunUnder() != null) {
+    Artifact runUnderExecutable=executionSettings.getRunUnderExecutable();
+    if (runUnderExecutable != null) {
+      inputsBuilder.add(runUnderExecutable);
+    }
+  }
+  int runsPerTest=config.getRunsPerTestForLabel(ruleContext.getLabel());
+  Iterable<Artifact> inputs=inputsBuilder.build();
+  int shardRuns=(shards > 0 ? shards : 1);
+  List<Artifact> results=Lists.newArrayListWithCapacity(runsPerTest * shardRuns);
+  ImmutableList.Builder<Artifact> coverageArtifacts=ImmutableList.builder();
+  for (int run=0; run < runsPerTest; run++) {
+    String runSuffix=runsPerTest > 1 ? String.format("_run_%d_of_%d",run + 1,runsPerTest) : "";
+    for (int shard=0; shard < shardRuns; shard++) {
+      String suffix=(shardRuns > 1 ? String.format("_shard_%d_of_%d",shard + 1,shards) : "") + runSuffix;
+      Artifact testLog=env.getDerivedArtifact(targetName.getChild("test" + suffix + ".log"),root);
+      Artifact cacheStatus=env.getDerivedArtifact(targetName.getChild("test" + suffix + ".cache_status"),root);
+      Artifact coverageArtifact=null;
+      if (collectCodeCoverage) {
+        coverageArtifact=env.getDerivedArtifact(targetName.getChild("coverage" + suffix + ".dat"),root);
+        coverageArtifacts.add(coverageArtifact);
+      }
+      Artifact microCoverageArtifact=null;
+      if (collectCodeCoverage && config.isMicroCoverageEnabled()) {
+        microCoverageArtifact=env.getDerivedArtifact(targetName.getChild("coverage" + suffix + ".micro.dat"),root);
+      }
+      env.registerAction(new TestRunnerAction(ruleContext.getActionOwner(),inputs,testLog,cacheStatus,coverageArtifact,microCoverageArtifact,testProperties,executionSettings,shard,run,config));
+      results.add(cacheStatus);
+    }
+  }
+  Artifact reportGenerator=collectCodeCoverage ? ruleContext.getPrerequisiteArtifact(":coverage_report_generator",Mode.HOST) : null;
+  return new TestParams(runsPerTest,shards,TestTimeout.getTestTimeout(ruleContext.getRule()),ruleContext.getRule().getRuleClass(),ImmutableList.copyOf(results),coverageArtifacts.build(),reportGenerator);
+}

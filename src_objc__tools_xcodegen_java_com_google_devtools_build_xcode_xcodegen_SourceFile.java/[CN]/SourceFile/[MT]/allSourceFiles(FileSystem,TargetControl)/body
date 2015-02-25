@@ -1,0 +1,16 @@
+{
+  ImmutableList.Builder<SourceFile> result=new ImmutableList.Builder<>();
+  for (  Path plainSource : RelativePaths.fromStrings(fileSystem,control.getSourceFileList())) {
+    result.add(new SourceFile(BuildType.BUILD,plainSource));
+  }
+  for (  Path nonArcSource : RelativePaths.fromStrings(fileSystem,control.getNonArcSourceFileList())) {
+    result.add(new SourceFile(BuildType.NON_ARC_BUILD,nonArcSource));
+  }
+  for (  Path supportSource : RelativePaths.fromStrings(fileSystem,control.getSupportFileList())) {
+    result.add(new SourceFile(BuildType.NO_BUILD,supportSource));
+  }
+  if (control.hasInfoplist()) {
+    result.add(new SourceFile(BuildType.NO_BUILD,RelativePaths.fromString(fileSystem,control.getInfoplist())));
+  }
+  return result.build();
+}

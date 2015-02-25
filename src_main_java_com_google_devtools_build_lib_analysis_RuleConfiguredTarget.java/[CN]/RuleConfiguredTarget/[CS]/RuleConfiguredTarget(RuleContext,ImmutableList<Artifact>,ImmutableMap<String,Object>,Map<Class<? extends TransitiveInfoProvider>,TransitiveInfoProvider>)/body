@@ -1,0 +1,24 @@
+{
+  super(ruleContext);
+  Map<Class<? extends TransitiveInfoProvider>,Object> providerBuilder=new LinkedHashMap<>();
+  providerBuilder.putAll(providers);
+  Preconditions.checkState(providerBuilder.containsKey(RunfilesProvider.class));
+  Preconditions.checkState(providerBuilder.containsKey(FileProvider.class));
+  Preconditions.checkState(providerBuilder.containsKey(FilesToRunProvider.class));
+  providerBuilder.put(SkylarkProviders.class,new SkylarkProviders(skylarkProviders));
+  this.providers=ImmutableMap.copyOf(providerBuilder);
+  this.mandatoryStampFiles=mandatoryStampFiles;
+  this.configConditions=ruleContext.getConfigConditions();
+  this.aspects=ImmutableList.of();
+  RunUnder runUnder=getConfiguration().getRunUnder();
+  if (runUnder != null && getLabel().equals(runUnder.getLabel())) {
+    if (getProvider(FilesToRunProvider.class).getExecutable() == null) {
+      ruleContext.ruleError("run_under target " + runUnder.getLabel() + " is not executable");
+    }
+  }
+  if (!ruleContext.hasErrors()) {
+    for (    OutputFile out : ruleContext.getRule().getOutputFiles()) {
+      ruleContext.createOutputArtifact(out);
+    }
+  }
+}

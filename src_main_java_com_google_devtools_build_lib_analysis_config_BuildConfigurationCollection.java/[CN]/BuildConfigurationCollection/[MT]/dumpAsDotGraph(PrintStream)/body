@@ -1,0 +1,16 @@
+{
+  out.println("digraph g {");
+  out.println("  ratio = 0.3;");
+  for (  BuildConfiguration config : getAllConfigurations()) {
+    String from=config.shortCacheKey();
+    for (    Map.Entry<? extends Transition,ConfigurationHolder> entry : config.getTransitions().getTransitionTable().entrySet()) {
+      BuildConfiguration toConfig=entry.getValue().getConfiguration();
+      if (toConfig == config) {
+        continue;
+      }
+      String to=toConfig == null ? "ERROR" : toConfig.shortCacheKey();
+      out.println("  \"" + from + "\" -> \""+ to+ "\" [label=\""+ entry.getKey()+ "\"]");
+    }
+  }
+  out.println("}");
+}

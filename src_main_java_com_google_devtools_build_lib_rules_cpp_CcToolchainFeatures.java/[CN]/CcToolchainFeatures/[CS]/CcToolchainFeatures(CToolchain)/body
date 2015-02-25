@@ -1,0 +1,39 @@
+{
+  ImmutableList.Builder<Feature> features=ImmutableList.builder();
+  HashMap<String,Feature> featuresByName=new HashMap<>();
+  for (  CToolchain.Feature toolchainFeature : toolchain.getFeatureList()) {
+    Feature feature=new Feature(toolchainFeature);
+    features.add(feature);
+    if (featuresByName.put(feature.getName(),feature) != null) {
+      throw new InvalidConfigurationException("Invalid toolchain configuration: feature '" + feature.getName() + "' was specified multiple times.");
+    }
+  }
+  this.features=features.build();
+  this.featuresByName=ImmutableMap.copyOf(featuresByName);
+  ImmutableMultimap.Builder<Feature,Feature> implies=ImmutableMultimap.builder();
+  ImmutableMultimap.Builder<Feature,ImmutableSet<Feature>> requires=ImmutableMultimap.builder();
+  ImmutableMultimap.Builder<Feature,Feature> impliedBy=ImmutableMultimap.builder();
+  ImmutableMultimap.Builder<Feature,Feature> requiredBy=ImmutableMultimap.builder();
+  for (  CToolchain.Feature toolchainFeature : toolchain.getFeatureList()) {
+    String name=toolchainFeature.getName();
+    Feature feature=featuresByName.get(name);
+    for (    CToolchain.FeatureSet requiredFeatures : toolchainFeature.getRequiresList()) {
+      ImmutableSet.Builder<Feature> allOf=ImmutableSet.builder();
+      for (      String requiredName : requiredFeatures.getFeatureList()) {
+        Feature required=getFeatureOrFail(requiredName,name);
+        allOf.add(required);
+        requiredBy.put(required,feature);
+      }
+      requires.put(feature,allOf.build());
+    }
+    for (    String impliedName : toolchainFeature.getImpliesList()) {
+      Feature implied=getFeatureOrFail(impliedName,name);
+      impliedBy.put(implied,feature);
+      implies.put(feature,implied);
+    }
+  }
+  this.implies=implies.build();
+  this.requires=requires.build();
+  this.impliedBy=impliedBy.build();
+  this.requiredBy=requiredBy.build();
+}

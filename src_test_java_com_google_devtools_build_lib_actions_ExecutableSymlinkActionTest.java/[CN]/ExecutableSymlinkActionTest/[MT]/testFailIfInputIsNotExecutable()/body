@@ -1,0 +1,17 @@
+{
+  Path file=inputRoot.getPath().getChild("some-file");
+  FileSystemUtils.createEmptyFile(file);
+  file.setExecutable(false);
+  Artifact input=new Artifact(file,inputRoot);
+  Artifact output=new Artifact(outputRoot.getPath().getChild("some-output"),outputRoot);
+  ExecutableSymlinkAction action=new ExecutableSymlinkAction(NULL_ACTION_OWNER,input,output);
+  try {
+    action.execute(createContext());
+    fail();
+  }
+ catch (  ActionExecutionException e) {
+    String want="'some-file' is not executable";
+    String got=e.getMessage();
+    assertTrue(String.format("got %s, want %s",got,want),got.contains(want));
+  }
+}

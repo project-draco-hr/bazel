@@ -1,0 +1,39 @@
+{
+  int pos=expectIncludeKeyword(chars,lineBegin,lineEnd);
+  if (pos == -1 || pos == lineEnd) {
+    return null;
+  }
+  boolean isNext=false;
+  int npos=expect(chars,pos,lineEnd,"_next");
+  if (npos >= 0) {
+    isNext=true;
+    pos=npos;
+  }
+  if ((pos=skipWhitespace(chars,pos,lineEnd)) == lineEnd) {
+    return null;
+  }
+  if (chars[pos] == '"' || chars[pos] == '<') {
+    char qchar=chars[pos++];
+    int spos=pos;
+    pos=indexOf(chars,pos + 1,lineEnd,qchar == '<' ? '>' : '"');
+    if (pos < 0) {
+      return null;
+    }
+    if (chars[spos] == '/') {
+      return null;
+    }
+    String name=new String(chars,spos,pos - spos);
+    if (name.contains("\n")) {
+      name=BS_NL_PAT.matcher(name).replaceAll("");
+    }
+    if (isNext) {
+      return new Inclusion(name,qchar == '"' ? Kind.NEXT_QUOTE : Kind.NEXT_ANGLE);
+    }
+ else {
+      return new Inclusion(name,qchar == '"' ? Kind.QUOTE : Kind.ANGLE);
+    }
+  }
+ else {
+    return createOtherInclusion(new String(chars,pos,lineEnd - pos));
+  }
+}

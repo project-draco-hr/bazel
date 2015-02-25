@@ -1,0 +1,21 @@
+{
+  Preconditions.checkState(!configured);
+  Preconditions.checkArgument(getName().equals(annotation.name()),getName() + " != " + annotation.name());
+  mandatoryParamNum=0;
+  ImmutableList.Builder<String> paramListBuilder=ImmutableList.builder();
+  ImmutableMap.Builder<String,SkylarkBuiltin.Param> paramTypeBuilder=ImmutableMap.builder();
+  for (  SkylarkBuiltin.Param param : annotation.mandatoryParams()) {
+    paramListBuilder.add(param.name());
+    paramTypeBuilder.put(param.name(),param);
+    mandatoryParamNum++;
+  }
+  for (  SkylarkBuiltin.Param param : annotation.optionalParams()) {
+    paramListBuilder.add(param.name());
+    paramTypeBuilder.put(param.name(),param);
+  }
+  parameters=paramListBuilder.build();
+  parameterTypes=paramTypeBuilder.build();
+  this.objectType=annotation.objectType().equals(Object.class) ? null : annotation.objectType();
+  this.onlyLoadingPhase=annotation.onlyLoadingPhase();
+  configured=true;
+}

@@ -1,0 +1,12 @@
+{
+  MockZipEntryFilter mockFilter=new MockZipEntryFilter();
+  mockFilter.behavior.put("hello.txt",new SlowConcatenateStrategy());
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  ZipCombiner singleJar=new ZipCombiner(mockFilter,out);
+  singleJar.addZip(specialZipWithMinusOne());
+  singleJar.close();
+  assertEquals(Arrays.asList("hello.txt"),mockFilter.calls);
+  ZipInputStream zipInput=new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
+  assertEntry(zipInput,"hello.txt",new byte[]{-1});
+  assertNull(zipInput.getNextEntry());
+}

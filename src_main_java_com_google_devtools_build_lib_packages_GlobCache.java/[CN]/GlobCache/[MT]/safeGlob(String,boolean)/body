@@ -1,0 +1,10 @@
+{
+  if (pattern.indexOf('?') != -1) {
+    throw new BadGlobException("glob pattern '" + pattern + "' contains forbidden '?' wildcard");
+  }
+  String error=UnixGlob.checkPatternForError(pattern);
+  if (error != null) {
+    throw new BadGlobException(error + " (in glob pattern '" + pattern+ "')");
+  }
+  return UnixGlob.forPath(packageDirectory).addPattern(pattern).setExcludeDirectories(excludeDirs).setDirectoryFilter(childDirectoryPredicate).setThreadPool(globExecutor).setFilesystemCalls(syscalls).globAsync(true);
+}

@@ -1,0 +1,10 @@
+{
+  Attributes sdkFrameworkAttributes=new Attributes(ruleContext);
+  ImmutableList<Artifact> frameworkImports=ruleContext.getPrerequisiteArtifacts("framework_imports",Mode.TARGET).list();
+  ObjcCommon common=new ObjcCommon.Builder(ruleContext).addFrameworkImports(frameworkImports).addExtraSdkFrameworks(sdkFrameworkAttributes.sdkFrameworks()).addExtraWeakSdkFrameworks(sdkFrameworkAttributes.weakSdkFrameworks()).addExtraSdkDylibs(sdkFrameworkAttributes.sdkDylibs()).build();
+  Iterable<String> containerErrors=ObjcCommon.notInContainerErrors(frameworkImports,ObjcCommon.FRAMEWORK_CONTAINER_TYPE);
+  for (  String error : containerErrors) {
+    ruleContext.attributeError("framework_imports",error);
+  }
+  return common.configuredTarget(NestedSetBuilder.<Artifact>emptySet(STABLE_ORDER),Optional.<XcodeProvider>absent(),Optional.of(common.getObjcProvider()),Optional.<XcTestAppProvider>absent(),Optional.<J2ObjcSrcsProvider>absent());
+}

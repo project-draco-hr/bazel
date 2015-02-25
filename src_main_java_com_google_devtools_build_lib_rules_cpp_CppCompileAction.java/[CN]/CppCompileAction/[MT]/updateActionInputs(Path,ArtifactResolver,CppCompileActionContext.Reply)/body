@@ -1,0 +1,23 @@
+{
+  if (!cppConfiguration.shouldScanIncludes()) {
+    return;
+  }
+  inputsKnown=false;
+  NestedSetBuilder<Artifact> inputs=NestedSetBuilder.stableOrder();
+  Profiler.instance().startTask(ProfilerTask.ACTION_UPDATE,this);
+  try {
+    inputs.addTransitive(mandatoryInputs);
+    if (optionalSourceFile != null) {
+      inputs.add(optionalSourceFile);
+    }
+    inputs.addAll(context.getCompilationPrerequisites());
+    populateActionInputs(execRoot,artifactResolver,reply,inputs);
+    inputsKnown=true;
+  }
+  finally {
+    Profiler.instance().completeTask(ProfilerTask.ACTION_UPDATE);
+synchronized (this) {
+      setInputs(inputs.build());
+    }
+  }
+}

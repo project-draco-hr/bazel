@@ -1,0 +1,17 @@
+{
+  if (entry == null || entry.isCorrupted()) {
+    return;
+  }
+  List<PathFragment> outputs=new ArrayList<>();
+  for (  Artifact output : action.getOutputs()) {
+    outputs.add(output.getExecPath());
+  }
+  List<PathFragment> inputs=new ArrayList<>();
+  for (  String path : entry.getPaths()) {
+    PathFragment execPath=new PathFragment(path);
+    if (!outputs.contains(execPath)) {
+      inputs.add(execPath);
+    }
+  }
+  action.updateInputsFromCache(artifactResolver,inputs);
+}

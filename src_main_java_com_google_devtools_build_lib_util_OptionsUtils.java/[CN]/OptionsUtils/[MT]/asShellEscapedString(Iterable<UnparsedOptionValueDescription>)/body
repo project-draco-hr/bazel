@@ -1,0 +1,29 @@
+{
+  StringBuffer result=new StringBuffer();
+  for (  UnparsedOptionValueDescription option : optionsList) {
+    if (option.isHidden()) {
+      continue;
+    }
+    if (result.length() != 0) {
+      result.append(' ');
+    }
+    String value=option.getUnparsedValue();
+    if (option.isBooleanOption()) {
+      boolean isEnabled=false;
+      try {
+        isEnabled=new Converters.BooleanConverter().convert(value);
+      }
+ catch (      OptionsParsingException e) {
+        throw new RuntimeException("Unexpected parsing exception",e);
+      }
+      result.append(isEnabled ? "--" : "--no").append(option.getName());
+    }
+ else {
+      result.append("--").append(option.getName());
+      if (value != null) {
+        result.append("=").append(ShellEscaper.escapeString(value));
+      }
+    }
+  }
+  return result.toString();
+}

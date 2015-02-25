@@ -1,0 +1,20 @@
+{
+  setupTestContent();
+  assertFalse(dataPath.exists());
+  assertFalse(journalPath.exists());
+  assertIndex(9,"abc1234");
+  psi.save();
+  assertTrue(dataPath.exists());
+  assertFalse(journalPath.exists());
+  byte[] content=FileSystemUtils.readContent(dataPath);
+  assertTrue(dataPath.delete());
+  content[content.length - 1]=content[content.length - 1] == 1 ? (byte)2 : (byte)1;
+  FileSystemUtils.writeContent(journalPath,content);
+  try {
+    psi=PersistentStringIndexer.newPersistentStringIndexer(dataPath,clock);
+    fail();
+  }
+ catch (  IOException e) {
+    assertThat(e.getMessage()).contains("Corrupted filename index has duplicate entry");
+  }
+}

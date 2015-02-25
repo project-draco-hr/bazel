@@ -1,0 +1,29 @@
+{
+  int srcIndex=size() - 1;
+  if (dstIndex < srcIndex) {
+    elements[dstIndex]=elements[srcIndex];
+    elements[srcIndex]=null;
+    long lastEntry=entries[srcIndex];
+    entries[dstIndex]=lastEntry;
+    entries[srcIndex]=UNSET;
+    int tableIndex=getHash(lastEntry) & hashTableMask();
+    int lastNext=table[tableIndex];
+    if (lastNext == srcIndex) {
+      table[tableIndex]=dstIndex;
+    }
+ else {
+      int previous;
+      long entry;
+      do {
+        previous=lastNext;
+        lastNext=getNext(entry=entries[lastNext]);
+      }
+ while (lastNext != srcIndex);
+      entries[previous]=swapNext(entry,dstIndex);
+    }
+  }
+ else {
+    elements[dstIndex]=null;
+    entries[dstIndex]=UNSET;
+  }
+}

@@ -1,0 +1,29 @@
+{
+  List<UnparsedOptionValueDescription> processed=Lists.newArrayList(unparsedValues);
+  Collections.sort(processed,new Comparator<UnparsedOptionValueDescription>(){
+    @Override public int compare(    UnparsedOptionValueDescription o1,    UnparsedOptionValueDescription o2){
+      if (o1.isImplicitRequirement()) {
+        return o2.isImplicitRequirement() ? 0 : 1;
+      }
+      if (o2.isImplicitRequirement()) {
+        return -1;
+      }
+      return o1.getName().compareTo(o2.getName());
+    }
+  }
+);
+  List<String> result=Lists.newArrayList();
+  for (int i=0; i < processed.size(); i++) {
+    UnparsedOptionValueDescription value=processed.get(i);
+    if (!value.allowMultiple()) {
+      if ((i < processed.size() - 1) && value.getName().equals(processed.get(i + 1).getName())) {
+        continue;
+      }
+    }
+    if (value.isExpansion()) {
+      continue;
+    }
+    result.add("--" + value.getName() + "="+ value.getUnparsedValue());
+  }
+  return result;
+}

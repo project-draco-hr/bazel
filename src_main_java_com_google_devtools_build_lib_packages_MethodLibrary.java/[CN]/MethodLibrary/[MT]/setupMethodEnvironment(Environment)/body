@@ -1,0 +1,17 @@
+{
+  env.registerFunction(Map.class,index.getName(),index);
+  setupMethodEnvironment(env,Map.class,dictFunctions.keySet());
+  env.registerFunction(String.class,index.getName(),index);
+  setupMethodEnvironment(env,String.class,stringFunctions.keySet());
+  if (env.isSkylarkEnabled()) {
+    env.registerFunction(SkylarkList.class,index.getName(),index);
+    setupMethodEnvironment(env,skylarkGlobalFunctions.keySet());
+  }
+ else {
+    env.registerFunction(List.class,index.getName(),index);
+    env.registerFunction(ImmutableList.class,index.getName(),index);
+    setupMethodEnvironment(env,List.class,listFunctions);
+    setupMethodEnvironment(env,stringFunctions.keySet());
+    setupMethodEnvironment(env,pureGlobalFunctions.keySet());
+  }
+}

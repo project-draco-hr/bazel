@@ -1,0 +1,88 @@
+{
+  final JavaCommon common=new JavaCommon(ruleContext,semantics);
+  DeployArchiveBuilder deployArchiveBuilder=new DeployArchiveBuilder(semantics,ruleContext);
+  Runfiles.Builder runfilesBuilder=new Runfiles.Builder();
+  List<String> jvmFlags=new ArrayList<>();
+  common.initializeJavacOpts();
+  JavaTargetAttributes.Builder attributesBuilder=common.initCommon();
+  attributesBuilder.addClassPathResources(ruleContext.getPrerequisiteArtifacts("classpath_resources",Mode.TARGET).list());
+  List<String> userJvmFlags=common.getJvmFlags();
+  ruleContext.checkSrcsSamePackage(true);
+  boolean createExecutable=ruleContext.attributes().get("create_executable",Type.BOOLEAN);
+  List<TransitiveInfoCollection> deps=Lists.newArrayList(common.targetsTreatedAsDeps(ClasspathType.COMPILE_ONLY));
+  semantics.checkRule(ruleContext,common);
+  String mainClass=semantics.getMainClass(ruleContext,common);
+  String originalMainClass=mainClass;
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
+  JavaCompilationHelper helper=new JavaCompilationHelper(ruleContext,semantics,common.getJavacOpts(),attributesBuilder);
+  helper.addLibrariesToAttributes(deps);
+  helper.addProvidersToAttributes(common.compilationArgsFromSources(),false);
+  attributesBuilder.addNativeLibraries(collectNativeLibraries(common.targetsTreatedAsDeps(ClasspathType.BOTH)));
+  if (ruleContext.getRule().isAttrDefined("deploy_env",Type.LABEL_LIST)) {
+    for (    JavaRuntimeClasspathProvider envTarget : ruleContext.getPrerequisites("deploy_env",Mode.TARGET,JavaRuntimeClasspathProvider.class)) {
+      attributesBuilder.addExcludedArtifacts(envTarget.getRuntimeClasspath());
+    }
+  }
+  Artifact srcJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_SOURCE_JAR);
+  Artifact classJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_CLASS_JAR);
+  ImmutableList<Artifact> srcJars=ImmutableList.of(srcJar);
+  Artifact launcher=semantics.getLauncher(ruleContext,common,deployArchiveBuilder,runfilesBuilder,jvmFlags,attributesBuilder);
+  JavaCompilationArtifacts.Builder javaArtifactsBuilder=new JavaCompilationArtifacts.Builder();
+  Artifact instrumentationMetadata=helper.createInstrumentationMetadata(classJar,javaArtifactsBuilder);
+  NestedSetBuilder<Artifact> filesBuilder=NestedSetBuilder.stableOrder();
+  Artifact executable=null;
+  if (createExecutable) {
+    executable=ruleContext.createOutputArtifact();
+    filesBuilder.add(classJar).add(executable);
+    if (ruleContext.getConfiguration().isCodeCoverageEnabled()) {
+      mainClass=semantics.addCoverageSupport(helper,attributesBuilder,executable,instrumentationMetadata,javaArtifactsBuilder,mainClass);
+    }
+  }
+ else {
+    filesBuilder.add(classJar);
+  }
+  JavaTargetAttributes attributes=helper.getAttributes();
+  List<Artifact> nativeLibraries=attributes.getNativeLibraries();
+  if (!nativeLibraries.isEmpty()) {
+    jvmFlags.add("-Djava.library.path=" + JavaCommon.javaLibraryPath(nativeLibraries));
+  }
+  JavaConfiguration javaConfig=ruleContext.getFragment(JavaConfiguration.class);
+  if (attributes.hasMessages()) {
+    helper.addTranslations(semantics.translate(ruleContext,javaConfig,attributes.getMessages()));
+  }
+  if (attributes.hasSourceFiles() || attributes.hasSourceJars() || attributes.hasResources()|| attributes.hasClassPathResources()) {
+    javaArtifactsBuilder.addRuntimeJar(classJar);
+  }
+  javaArtifactsBuilder.addRuntimeJars(attributes.getJarFiles());
+  Artifact outputDepsProto=helper.createOutputDepsProtoArtifact(classJar,javaArtifactsBuilder);
+  common.setJavaCompilationArtifacts(javaArtifactsBuilder.build());
+  Artifact gensrcJar=helper.createGensrcJar(classJar);
+  helper.createCompileAction(classJar,gensrcJar,outputDepsProto,instrumentationMetadata);
+  helper.createSourceJarAction(srcJar,gensrcJar);
+  common.setClassPathFragment(new ClasspathConfiguredFragment(common.getJavaCompilationArtifacts(),attributes,false));
+  Iterable<Artifact> dynamicRuntimeActionInputs=CppHelper.getToolchain(ruleContext).getDynamicRuntimeLinkInputs();
+  Iterables.addAll(jvmFlags,semantics.getJvmFlags(ruleContext,common,launcher,userJvmFlags));
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
+  if (createExecutable) {
+    semantics.createStubAction(ruleContext,common,jvmFlags,executable,mainClass,common.getJavaBinSubstitution(launcher));
+  }
+  NestedSet<Artifact> transitiveSourceJars=collectTransitiveSourceJars(common,srcJar);
+  helper.createSourceJarAction(semantics,ImmutableList.<Artifact>of(),transitiveSourceJars.toCollection(),ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_DEPLOY_SOURCE_JAR));
+  RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
+  semantics.addProviders(ruleContext,common,jvmFlags,classJar,srcJar,gensrcJar,ImmutableMap.<Artifact,Artifact>of(),helper,filesBuilder,builder);
+  NestedSet<Artifact> filesToBuild=filesBuilder.build();
+  collectDefaultRunfiles(runfilesBuilder,ruleContext,common,filesToBuild,launcher,dynamicRuntimeActionInputs);
+  Runfiles defaultRunfiles=runfilesBuilder.build();
+  RunfilesSupport runfilesSupport=createExecutable ? runfilesSupport=RunfilesSupport.withExecutable(ruleContext,defaultRunfiles,executable,semantics.getExtraArguments(ruleContext,common)) : null;
+  RunfilesProvider runfilesProvider=RunfilesProvider.withData(defaultRunfiles,new Runfiles.Builder().merge(runfilesSupport).build());
+  ImmutableList<String> deployManifestLines=getDeployManifestLines(ruleContext,originalMainClass);
+  Artifact deployJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_DEPLOY_JAR);
+  deployArchiveBuilder.setOutputJar(deployJar).setJavaStartClass(mainClass).setDeployManifestLines(deployManifestLines).setAttributes(attributes).addRuntimeJars(common.getJavaCompilationArtifacts().getRuntimeJars()).setIncludeBuildData(true).setRunfilesMiddleman(runfilesSupport == null ? null : runfilesSupport.getRunfilesMiddleman()).setCompression(COMPRESSED).setLauncher(launcher);
+  deployArchiveBuilder.build();
+  common.addTransitiveInfoProviders(builder,filesToBuild,classJar);
+  return builder.setFilesToBuild(filesToBuild).add(RunfilesProvider.class,runfilesProvider).setRunfilesSupport(runfilesSupport,executable).add(JavaRuntimeClasspathProvider.class,new JavaRuntimeClasspathProvider(common.getRuntimeClasspath())).add(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(transitiveSourceJars,srcJars)).add(TopLevelArtifactProvider.class,new TopLevelArtifactProvider(JavaSemantics.SOURCE_JARS_OUTPUT_GROUP,transitiveSourceJars)).build();
+}

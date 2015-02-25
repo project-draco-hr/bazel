@@ -1,0 +1,25 @@
+{
+  NodeEntry entry=new NodeEntry();
+  entry.addReverseDepAndCheckIfDone(null);
+  SkyKey dep1=key("dep1");
+  addTemporaryDirectDep(entry,dep1);
+  assertFalse(entry.isReady());
+  assertTrue(entry.signalDep());
+  assertTrue(entry.isReady());
+  assertThat(entry.getTemporaryDirectDeps()).containsExactly(dep1);
+  SkyKey dep2=key("dep2");
+  SkyKey dep3=key("dep3");
+  addTemporaryDirectDep(entry,dep2);
+  addTemporaryDirectDep(entry,dep3);
+  assertFalse(entry.isReady());
+  assertFalse(entry.signalDep());
+  assertFalse(entry.isReady());
+  assertTrue(entry.signalDep());
+  assertTrue(entry.isReady());
+  assertThat(setValue(entry,new SkyValue(){
+  }
+,null,0L)).isEmpty();
+  assertTrue(entry.isDone());
+  assertEquals(new IntVersion(0L),entry.getVersion());
+  assertThat(entry.getDirectDeps()).containsExactly(dep1,dep2,dep3);
+}

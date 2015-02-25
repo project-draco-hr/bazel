@@ -1,0 +1,37 @@
+{
+  ListMultimap<SkyKey,Aspect> result=ArrayListMultimap.create();
+  Set<SkyKey> aspectKeys=new HashSet<>();
+  for (  Dependency dep : deps) {
+    for (    Class<? extends ConfiguredAspectFactory> depAspect : dep.getAspects()) {
+      aspectKeys.add(AspectValue.key(dep.getLabel(),dep.getConfiguration(),depAspect));
+    }
+  }
+  Map<SkyKey,ValueOrException3<AspectCreationException,NoSuchThingException,ConfiguredValueCreationException>> depAspects=env.getValuesOrThrow(aspectKeys,AspectCreationException.class,NoSuchThingException.class,ConfiguredValueCreationException.class);
+  for (  Dependency dep : deps) {
+    SkyKey depKey=TO_KEYS.apply(dep);
+    ConfiguredTarget depConfiguredTarget=configuredTargetMap.get(depKey);
+    List<AspectValue> aspects=new ArrayList<>();
+    for (    Class<? extends ConfiguredAspectFactory> depAspect : dep.getAspects()) {
+      if (!aspectMatchesConfiguredTarget(depConfiguredTarget,depAspect)) {
+        continue;
+      }
+      SkyKey aspectKey=AspectValue.key(dep.getLabel(),dep.getConfiguration(),depAspect);
+      AspectValue aspectValue=null;
+      try {
+        aspectValue=(AspectValue)depAspects.get(aspectKey).get();
+      }
+ catch (      ConfiguredValueCreationException e) {
+        throw new IllegalStateException(e);
+      }
+catch (      NoSuchThingException|AspectCreationException e) {
+        AspectFactory depAspectFactory=AspectFactory.Util.create(depAspect);
+        throw new DependencyEvaluationException(new ConfiguredValueCreationException(String.format("Evaluation of aspect %s on %s failed: %s",depAspectFactory.getDefinition().getName(),dep.getLabel(),e.toString())));
+      }
+      if (aspectValue == null) {
+        return null;
+      }
+      result.put(depKey,aspectValue.get());
+    }
+  }
+  return result;
+}

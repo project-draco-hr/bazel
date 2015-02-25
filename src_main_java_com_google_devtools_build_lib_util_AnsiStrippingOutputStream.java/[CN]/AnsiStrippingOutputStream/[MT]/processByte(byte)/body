@@ -1,0 +1,50 @@
+{
+switch (state) {
+case NORMAL:
+    if (escapeCodeBufferPos != 0) {
+      throw new IllegalStateException();
+    }
+  if (b == 0x1b) {
+    state=State.AFTER_ESCAPE;
+    addByteToEscapeBuffer(b);
+  }
+ else {
+    dumpByte(b);
+  }
+break;
+case AFTER_ESCAPE:
+if (b == '[') {
+state=State.PARAMETER;
+addByteToEscapeBuffer(b);
+}
+ else if (b == 0x1b) {
+dumpEscapeBuffer();
+state=State.AFTER_ESCAPE;
+addByteToEscapeBuffer(b);
+}
+ else {
+dumpEscapeBuffer();
+dumpByte(b);
+state=State.NORMAL;
+}
+break;
+case PARAMETER:
+if ((b >= '0' && b <= '9') || b == ';') {
+addByteToEscapeBuffer(b);
+}
+ else if ((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z')) {
+discardEscapeBuffer();
+state=State.NORMAL;
+}
+ else if (b == 0x1b) {
+dumpEscapeBuffer();
+state=State.AFTER_ESCAPE;
+addByteToEscapeBuffer(b);
+}
+ else {
+dumpEscapeBuffer();
+state=State.NORMAL;
+}
+break;
+}
+}

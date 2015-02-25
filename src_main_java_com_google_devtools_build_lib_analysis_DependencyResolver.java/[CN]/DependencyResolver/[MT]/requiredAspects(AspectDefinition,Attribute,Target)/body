@@ -1,0 +1,19 @@
+{
+  if (!(target instanceof Rule)) {
+    return ImmutableSet.of();
+  }
+  RuleClass ruleClass=((Rule)target).getRuleClassObject();
+  Set<Class<? extends AspectFactory<?,?,?>>> aspectCandidates=new LinkedHashSet<>();
+  aspectCandidates.addAll(attribute.getAspects());
+  if (aspect != null) {
+    aspectCandidates.addAll(aspect.getAttributeAspects().get(attribute.getName()));
+  }
+  ImmutableSet.Builder<Class<? extends ConfiguredAspectFactory>> result=ImmutableSet.builder();
+  for (  Class<? extends AspectFactory<?,?,?>> candidateClass : aspectCandidates) {
+    ConfiguredAspectFactory candidate=(ConfiguredAspectFactory)AspectFactory.Util.create(candidateClass);
+    if (Sets.difference(candidate.getDefinition().getRequiredProviders(),ruleClass.getAdvertisedProviders()).isEmpty()) {
+      result.add(candidateClass.asSubclass(ConfiguredAspectFactory.class));
+    }
+  }
+  return result.build();
+}

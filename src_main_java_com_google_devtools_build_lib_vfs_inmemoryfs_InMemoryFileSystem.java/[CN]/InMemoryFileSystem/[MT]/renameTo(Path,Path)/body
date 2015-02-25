@@ -1,0 +1,54 @@
+{
+  if (sourcePath.equals(rootPath)) {
+    throw Error.EACCES.exception(sourcePath);
+  }
+  if (targetPath.equals(rootPath)) {
+    throw Error.EACCES.exception(targetPath);
+  }
+  InMemoryDirectoryInfo sourceParent;
+  InMemoryDirectoryInfo targetParent;
+synchronized (this) {
+    sourceParent=getDirectory(sourcePath.getParentDirectory());
+    targetParent=getDirectory(targetPath.getParentDirectory());
+    if (!sourceParent.outOfScope() && !targetParent.outOfScope()) {
+      InMemoryContentInfo sourceInode=sourceParent.getChild(sourcePath.getBaseName());
+      if (sourceInode == null) {
+        throw Error.ENOENT.exception(sourcePath);
+      }
+      InMemoryContentInfo targetInode=targetParent.getChild(targetPath.getBaseName());
+      unlink(sourceParent,sourcePath.getBaseName(),sourcePath);
+      try {
+        if (targetInode != null) {
+          if (targetInode.isDirectory()) {
+            if (!sourceInode.isDirectory()) {
+              throw new IOException(sourcePath + " -> " + targetPath+ " ("+ Error.EISDIR+ ")");
+            }
+            if (targetInode.getSize() > 2) {
+              throw Error.ENOTEMPTY.exception(targetPath);
+            }
+          }
+ else           if (sourceInode.isDirectory()) {
+            throw new IOException(sourcePath + " -> " + targetPath+ " ("+ Error.ENOTDIR+ ")");
+          }
+          unlink(targetParent,targetPath.getBaseName(),targetPath);
+        }
+        sourceInode.movedTo(targetPath);
+        insert(targetParent,targetPath.getBaseName(),sourceInode,targetPath);
+        return;
+      }
+ catch (      IOException e) {
+        sourceInode.movedTo(sourcePath);
+        insert(sourceParent,sourcePath.getBaseName(),sourceInode,sourcePath);
+        throw e;
+      }
+    }
+  }
+  if (sourceParent.outOfScope() && targetParent.outOfScope()) {
+    Path delegatedSource=getDelegatedPath(sourceParent.getEscapingPath(),sourcePath);
+    Path delegatedTarget=getDelegatedPath(targetParent.getEscapingPath(),targetPath);
+    delegatedSource.renameTo(delegatedTarget);
+  }
+ else {
+    throw Error.EACCES.exception(targetPath);
+  }
+}

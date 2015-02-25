@@ -1,0 +1,18 @@
+{
+  Attribute ruleDefinition=getRule().getAttributeDefinition(attributeName);
+  if (ruleDefinition == null) {
+    throw new IllegalStateException(getRule().getRuleClass() + " attribute " + attributeName+ " is not defined");
+  }
+  if (!ruleDefinition.isExecutable()) {
+    throw new IllegalStateException(getRule().getRuleClass() + " attribute " + attributeName+ " is not configured to be executable");
+  }
+  TransitiveInfoCollection prerequisite=getPrerequisite(attributeName,mode);
+  if (prerequisite == null) {
+    return null;
+  }
+  FilesToRunProvider result=prerequisite.getProvider(FilesToRunProvider.class);
+  if (result == null || result.getExecutable() == null) {
+    attributeError(attributeName,prerequisite.getLabel() + " does not refer to a valid executable target");
+  }
+  return result;
+}

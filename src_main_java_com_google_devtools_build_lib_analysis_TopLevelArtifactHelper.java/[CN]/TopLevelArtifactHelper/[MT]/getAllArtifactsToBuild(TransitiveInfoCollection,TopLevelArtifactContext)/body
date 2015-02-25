@@ -1,0 +1,49 @@
+{
+  NestedSetBuilder<Artifact> allArtifacts=NestedSetBuilder.stableOrder();
+  TempsProvider tempsProvider=target.getProvider(TempsProvider.class);
+  if (tempsProvider != null) {
+    allArtifacts.addAll(tempsProvider.getTemps());
+  }
+  TopLevelArtifactProvider topLevelArtifactProvider=target.getProvider(TopLevelArtifactProvider.class);
+  if (topLevelArtifactProvider != null) {
+    for (    String outputGroup : options.outputGroups()) {
+      NestedSet<Artifact> results=topLevelArtifactProvider.getOutputGroup(outputGroup);
+      if (results != null) {
+        allArtifacts.addTransitive(results);
+      }
+    }
+  }
+  if (options.compileOnly()) {
+    FilesToCompileProvider provider=target.getProvider(FilesToCompileProvider.class);
+    if (provider != null) {
+      allArtifacts.addAll(provider.getFilesToCompile());
+    }
+  }
+ else   if (options.compilationPrerequisitesOnly()) {
+    CompilationPrerequisitesProvider provider=target.getProvider(CompilationPrerequisitesProvider.class);
+    if (provider != null) {
+      allArtifacts.addTransitive(provider.getCompilationPrerequisites());
+    }
+  }
+ else {
+    FilesToRunProvider filesToRunProvider=target.getProvider(FilesToRunProvider.class);
+    boolean hasRunfilesSupport=false;
+    if (filesToRunProvider != null) {
+      allArtifacts.addAll(filesToRunProvider.getFilesToRun());
+      hasRunfilesSupport=filesToRunProvider.getRunfilesSupport() != null;
+    }
+    if (!hasRunfilesSupport) {
+      RunfilesProvider runfilesProvider=target.getProvider(RunfilesProvider.class);
+      if (runfilesProvider != null) {
+        allArtifacts.addTransitive(runfilesProvider.getDefaultRunfiles().getAllArtifacts());
+      }
+    }
+    AlwaysBuiltArtifactsProvider forcedArtifacts=target.getProvider(AlwaysBuiltArtifactsProvider.class);
+    if (forcedArtifacts != null) {
+      allArtifacts.addTransitive(forcedArtifacts.getArtifactsToAlwaysBuild());
+    }
+  }
+  allArtifacts.addAll(getCommandArtifacts(target,options.buildCommand()));
+  allArtifacts.addAll(getCoverageArtifacts(target,options));
+  return allArtifacts.build();
+}

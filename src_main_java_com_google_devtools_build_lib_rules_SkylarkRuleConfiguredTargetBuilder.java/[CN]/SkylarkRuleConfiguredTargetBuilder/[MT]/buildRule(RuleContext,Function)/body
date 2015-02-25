@@ -1,0 +1,34 @@
+{
+  String expectError=ruleContext.attributes().get("expect_failure",Type.STRING);
+  try {
+    SkylarkRuleContext skylarkRuleContext=new SkylarkRuleContext(ruleContext);
+    SkylarkEnvironment env=ruleContext.getRule().getRuleClassObject().getRuleDefinitionEnvironment().cloneEnv(ruleContext.getAnalysisEnvironment().getEventHandler());
+    env.disableOnlyLoadingPhaseObjects();
+    Object target=ruleImplementation.call(ImmutableList.<Object>of(skylarkRuleContext),ImmutableMap.<String,Object>of(),null,env);
+    if (ruleContext.hasErrors()) {
+      return null;
+    }
+ else     if (!(target instanceof SkylarkClassObject) && target != Environment.NONE) {
+      ruleContext.ruleError("Rule implementation doesn't return a struct");
+      return null;
+    }
+ else     if (!expectError.isEmpty()) {
+      ruleContext.ruleError("Expected error not found: " + expectError);
+      return null;
+    }
+    ConfiguredTarget configuredTarget=createTarget(ruleContext,target);
+    checkOrphanArtifacts(ruleContext);
+    return configuredTarget;
+  }
+ catch (  InterruptedException e) {
+    ruleContext.ruleError(e.getMessage());
+    return null;
+  }
+catch (  EvalException e) {
+    if (!expectError.isEmpty() && e.getMessage().matches(expectError)) {
+      return new com.google.devtools.build.lib.analysis.RuleConfiguredTargetBuilder(ruleContext).add(RunfilesProvider.class,RunfilesProvider.EMPTY).build();
+    }
+    ruleContext.ruleError("\n" + e.print());
+    return null;
+  }
+}

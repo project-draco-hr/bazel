@@ -1,0 +1,35 @@
+{
+  List<Integer> values=new ArrayList<>();
+  for (  String token : Splitter.on(',').limit(6).split(input)) {
+    if (!token.isEmpty() || values.size() > 1) {
+      try {
+        values.add(Integer.valueOf(token));
+      }
+ catch (      NumberFormatException e) {
+        throw new OptionsParsingException("'" + input + "' is not an int");
+      }
+    }
+  }
+  EnumMap<TestTimeout,Integer> timeouts=Maps.newEnumMap(TestTimeout.class);
+  if (values.size() == 1) {
+    timeouts.put(SHORT,values.get(0));
+    timeouts.put(MODERATE,values.get(0));
+    timeouts.put(LONG,values.get(0));
+    timeouts.put(ETERNAL,values.get(0));
+  }
+ else   if (values.size() == 4) {
+    timeouts.put(SHORT,values.get(0));
+    timeouts.put(MODERATE,values.get(1));
+    timeouts.put(LONG,values.get(2));
+    timeouts.put(ETERNAL,values.get(3));
+  }
+ else {
+    throw new OptionsParsingException("Invalid number of comma-separated entries");
+  }
+  for (  TestTimeout label : values()) {
+    if (!timeouts.containsKey(label) || timeouts.get(label) <= 0) {
+      timeouts.put(label,label.getTimeout());
+    }
+  }
+  return timeouts;
+}

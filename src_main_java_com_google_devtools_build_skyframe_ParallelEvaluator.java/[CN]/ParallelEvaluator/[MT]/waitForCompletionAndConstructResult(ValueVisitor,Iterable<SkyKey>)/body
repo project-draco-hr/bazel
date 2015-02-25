@@ -1,0 +1,23 @@
+{
+  Map<SkyKey,ValueWithMetadata> bubbleErrorInfo=null;
+  boolean catastrophe=false;
+  try {
+    visitor.waitForCompletion();
+  }
+ catch (  final SchedulerException e) {
+    Throwables.propagateIfPossible(e.getCause(),InterruptedException.class);
+    if (Thread.interrupted()) {
+      throw new InterruptedException();
+    }
+    SkyKey errorKey=Preconditions.checkNotNull(e.getFailedValue(),e);
+    ErrorInfo errorInfo=Preconditions.checkNotNull(e.getErrorInfo(),errorKey);
+    catastrophe=errorInfo.isCatastrophic();
+    if (!catastrophe || !keepGoing) {
+      bubbleErrorInfo=bubbleErrorUp(errorInfo,errorKey,skyKeys,visitor);
+    }
+ else {
+      bubbleErrorInfo=ImmutableMap.of(errorKey,graph.get(errorKey).getValueWithMetadata());
+    }
+  }
+  return constructResult(visitor,skyKeys,bubbleErrorInfo,catastrophe);
+}

@@ -1,0 +1,15 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey errorKey=GraphTester.toSkyKey("my_error_value");
+  tester.getOrCreate(errorKey).setHasError(true);
+  tester.set("after",new StringValue("after"));
+  SkyKey parentErrorKey=GraphTester.toSkyKey("parent");
+  tester.getOrCreate(parentErrorKey).addErrorDependency(errorKey,new StringValue("recovered"));
+  tester.set(parentErrorKey,new StringValue("parent value"));
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  tester.getOrCreate(topKey).addDependency(parentErrorKey).addDependency("after").setComputedValue(CONCATENATE);
+  EvaluationResult<StringValue> result=eval(true,ImmutableList.of(topKey));
+  assertThat(ImmutableList.<String>copyOf(result.<String>keyNames())).containsExactly("top");
+  assertEquals("parent valueafter",result.get(topKey).getValue());
+  assertThat(result.errorMap()).isEmpty();
+}

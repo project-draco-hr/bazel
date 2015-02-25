@@ -1,0 +1,21 @@
+{
+  Set<T> argumentValue=args.get(0).getExpression().eval(env);
+  int depthBound=args.size() > 1 ? args.get(1).getInteger() : Integer.MAX_VALUE;
+  env.buildTransitiveClosure(expression,argumentValue,depthBound);
+  Set<T> visited=new LinkedHashSet<>();
+  Collection<T> current=argumentValue;
+  for (int i=0; i <= depthBound; i++) {
+    List<T> next=new ArrayList<>();
+    for (    T node : current) {
+      if (!visited.add(node)) {
+        continue;
+      }
+      next.addAll(env.getFwdDeps(node));
+    }
+    if (next.isEmpty()) {
+      break;
+    }
+    current=next;
+  }
+  return visited;
+}

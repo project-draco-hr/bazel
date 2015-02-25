@@ -1,0 +1,20 @@
+{
+  return new Runnable(){
+    @Override public void run(){
+      if (started != null) {
+        started.countDown();
+      }
+      try {
+        assertTrue(interrupt ? visitor.awaitInterruptionForTestingOnly(1,TimeUnit.MINUTES) : visitor.getExceptionLatchForTestingOnly().await(1,TimeUnit.MINUTES));
+      }
+ catch (      InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+      list.add(toAdd);
+      if (toEnqueue != null) {
+        visitor.enqueue(toEnqueue);
+      }
+    }
+  }
+;
+}

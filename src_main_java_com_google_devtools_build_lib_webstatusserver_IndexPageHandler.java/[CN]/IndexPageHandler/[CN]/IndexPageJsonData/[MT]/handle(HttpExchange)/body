@@ -1,0 +1,18 @@
+{
+  exchange.getResponseHeaders().put("Content-Type",ImmutableList.of("application/json"));
+  JsonArray response=new JsonArray();
+  for (  TestStatusHandler handler : this.pageHandler.testHandlers) {
+    WebStatusBuildLog buildLog=handler.getBuildLog();
+    JsonObject test=new JsonObject();
+    test.add("targets",gson.toJsonTree(buildLog.getTargetList()));
+    test.addProperty("startTime",buildLog.getStartTime());
+    test.addProperty("finished",buildLog.finished());
+    test.addProperty("uuid",buildLog.getCommandId().toString());
+    response.add(test);
+  }
+  String serializedResponse=response.toString();
+  exchange.sendResponseHeaders(200,serializedResponse.length());
+  OutputStream os=exchange.getResponseBody();
+  os.write(serializedResponse.getBytes());
+  os.close();
+}

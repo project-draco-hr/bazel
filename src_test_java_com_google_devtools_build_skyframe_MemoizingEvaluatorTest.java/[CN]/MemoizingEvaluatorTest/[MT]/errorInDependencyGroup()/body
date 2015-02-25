@@ -1,0 +1,35 @@
+{
+  initializeTester();
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  CountDownLatch slowStart=new CountDownLatch(1);
+  CountDownLatch errorFinish=new CountDownLatch(1);
+  final SkyKey errorKey=GraphTester.toSkyKey("error");
+  tester.getOrCreate(errorKey).setBuilder(new ChainedFunction(null,slowStart,errorFinish,false,null,ImmutableList.<SkyKey>of()));
+  SkyKey slowKey=GraphTester.toSkyKey("slow");
+  tester.getOrCreate(slowKey).setBuilder(new ChainedFunction(slowStart,errorFinish,null,true,new StringValue("slow"),ImmutableList.<SkyKey>of()));
+  final SkyKey midKey=GraphTester.toSkyKey("mid");
+  tester.getOrCreate(midKey).addDependency(slowKey).setComputedValue(COPY);
+  final SkyKey mid2Key=GraphTester.toSkyKey("mid2");
+  tester.getOrCreate(mid2Key).addDependency(slowKey).setComputedValue(COPY);
+  tester.set(topKey,null);
+  tester.getOrCreate(topKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException, InterruptedException {
+      env.getValues(ImmutableList.of(errorKey,midKey,mid2Key));
+      if (env.valuesMissing()) {
+        return null;
+      }
+      return new StringValue("top");
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  EvaluationResult<StringValue> result=tester.eval(false,topKey);
+  assertTrue(result.hasError());
+  assertThat(result.getError(topKey).getRootCauses()).containsExactly(errorKey);
+  tester.getOrCreate(errorKey).setBuilder(null);
+  tester.set(errorKey,new StringValue("ok"));
+  tester.invalidate();
+  assertEquals(new StringValue("top"),tester.evalAndGet("top"));
+}

@@ -1,0 +1,39 @@
+{
+  Preconditions.checkState(invalidationType != InvalidationType.DELETED,key);
+  final boolean isChanged=(invalidationType == InvalidationType.CHANGED);
+  final Pair<SkyKey,InvalidationType> invalidationPair=Pair.of(key,invalidationType);
+  if (!visited.add(invalidationPair)) {
+    return;
+  }
+  pendingVisitations.add(invalidationPair);
+  enqueue(new Runnable(){
+    @Override public void run(){
+      NodeEntry entry=graph.get(key);
+      if (entry == null) {
+        Preconditions.checkState(!mustExist,"%s does not exist in the graph but was enqueued for dirtying by another node",key);
+        pendingVisitations.remove(invalidationPair);
+        return;
+      }
+      if (entry.isChanged() || (!isChanged && entry.isDirty())) {
+        pendingVisitations.remove(invalidationPair);
+        return;
+      }
+      Pair<? extends Iterable<SkyKey>,? extends SkyValue> depsAndValue=entry.markDirty(isChanged);
+      if (depsAndValue == null) {
+        pendingVisitations.remove(invalidationPair);
+        return;
+      }
+      for (      SkyKey reverseDep : entry.getReverseDeps()) {
+        visit(reverseDep,InvalidationType.DIRTIED,MUST_EXIST);
+      }
+      for (      SkyKey dep : depsAndValue.first) {
+        graph.get(dep).removeReverseDep(key);
+      }
+      SkyValue value=ValueWithMetadata.justValue(depsAndValue.second);
+      informInvalidationReceiver(value,EvaluationProgressReceiver.InvalidationState.DIRTY);
+      dirtyKeyTracker.dirty(key);
+      pendingVisitations.remove(invalidationPair);
+    }
+  }
+);
+}

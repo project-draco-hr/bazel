@@ -1,0 +1,39 @@
+{
+  for (  Attribute attribute : ruleClass.getAttributes()) {
+    if (attribute.isMandatory()) {
+      if (attribute.getType() == Type.LABEL_LIST || attribute.getType() == Type.OUTPUT_LIST) {
+        if (attribute.isNonEmpty()) {
+          popuplateLabelAttribute(rulePkg,attribute);
+        }
+ else {
+          popuplateLabelAttribute(rulePkg,attribute);
+        }
+      }
+ else       if (attribute.getType() == Type.LABEL || attribute.getType() == Type.OUTPUT) {
+        popuplateLabelAttribute(rulePkg,attribute);
+      }
+ else {
+        if (attribute.getAllowedValues() instanceof AllowedValueSet) {
+          Collection<Object> allowedValues=((AllowedValueSet)attribute.getAllowedValues()).getAllowedValues();
+          setSingleValueAttribute(attribute.getName(),allowedValues.iterator().next());
+        }
+ else         if (attribute.getType() == Type.STRING) {
+          popuplateStringAttribute(attribute);
+        }
+ else         if (attribute.getType() == Type.BOOLEAN) {
+          popuplateBooleanAttribute(attribute);
+        }
+ else         if (attribute.getType() == Type.INTEGER) {
+          popuplateIntegerAttribute(attribute);
+        }
+ else         if (attribute.getType() == Type.STRING_LIST) {
+          popuplateStringListAttribute(attribute);
+        }
+      }
+    }
+ else     if (heuristics) {
+      populateAttributesHeuristics(rulePkg,attribute);
+    }
+  }
+  return this;
+}

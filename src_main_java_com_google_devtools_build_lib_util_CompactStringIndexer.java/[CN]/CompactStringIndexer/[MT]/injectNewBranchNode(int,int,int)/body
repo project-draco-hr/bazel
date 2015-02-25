@@ -1,0 +1,21 @@
+{
+  byte[] content=nodes.get(originalNode);
+  int parentId=getParentId(content);
+  if (originalNode == parentId) {
+    rootId=newBranchNode;
+  }
+ else {
+    updateJumpEntry(parentId,originalNode,newBranchNode);
+  }
+  int[] intHolder=new int[1];
+  int suffixOffset=VarInt.getVarInt(content,0,intHolder);
+  suffixOffset=VarInt.getVarInt(content,suffixOffset,intHolder);
+  int len=intHolder[0] - commonPrefixLength;
+  Preconditions.checkState(len >= 0);
+  suffixOffset+=commonPrefixLength;
+  byte[] newContent=new byte[VarInt.varIntSize(newBranchNode) + VarInt.varIntSize(len) + (content.length - suffixOffset)];
+  int contentOffset=VarInt.putVarInt(newBranchNode,newContent,0);
+  contentOffset=VarInt.putVarInt(len,newContent,contentOffset);
+  System.arraycopy(content,suffixOffset,newContent,contentOffset,content.length - suffixOffset);
+  updateNode(originalNode,newContent);
+}

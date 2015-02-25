@@ -1,0 +1,22 @@
+{
+  SkylarkModule annotation=module.getAnnotation();
+  sb.append(String.format("<h2 id=\"modules.%s\">%s</h2>\n",getModuleId(annotation),annotation.name())).append(annotation.doc()).append("\n");
+  sb.append("<ul>");
+  TreeMap<String,Object> methodMap=new TreeMap<>();
+  for (  SkylarkJavaMethod method : module.getJavaMethods()) {
+    methodMap.put(method.name + method.method.getParameterTypes().length,method);
+  }
+  for (  SkylarkBuiltinMethod builtin : module.getBuiltinMethods().values()) {
+    methodMap.put(builtin.annotation.name(),builtin);
+  }
+  for (  Object object : methodMap.values()) {
+    if (object instanceof SkylarkJavaMethod) {
+      SkylarkJavaMethod method=(SkylarkJavaMethod)object;
+      generateDirectJavaMethodDoc(annotation.name(),method.name,method.method,method.callable,sb);
+    }
+    if (object instanceof SkylarkBuiltinMethod) {
+      generateBuiltinItemDoc(getModuleId(annotation),(SkylarkBuiltinMethod)object,sb);
+    }
+  }
+  sb.append("</ul>");
+}

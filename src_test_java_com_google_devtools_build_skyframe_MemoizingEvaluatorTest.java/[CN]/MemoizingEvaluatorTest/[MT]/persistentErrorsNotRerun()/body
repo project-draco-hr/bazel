@@ -1,0 +1,16 @@
+{
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  SkyKey transientErrorKey=GraphTester.toSkyKey("transientError");
+  SkyKey persistentErrorKey1=GraphTester.toSkyKey("persistentError1");
+  SkyKey persistentErrorKey2=GraphTester.toSkyKey("persistentError2");
+  tester.getOrCreate(topKey).addErrorDependency(transientErrorKey,new StringValue("doesn't matter")).addErrorDependency(persistentErrorKey1,new StringValue("doesn't matter")).setHasError(true);
+  tester.getOrCreate(persistentErrorKey1).setHasError(true);
+  tester.getOrCreate(transientErrorKey).addErrorDependency(persistentErrorKey2,new StringValue("doesn't matter")).setHasTransientError(true);
+  tester.getOrCreate(persistentErrorKey2).setHasError(true);
+  tester.evalAndGetError(topKey);
+  assertThat(tester.getEnqueuedValues()).containsExactly(topKey,transientErrorKey,persistentErrorKey1,persistentErrorKey2);
+  tester.invalidate();
+  tester.invalidateTransientErrors();
+  tester.evalAndGetError(topKey);
+  assertThat(tester.getEnqueuedValues()).containsExactly(topKey,transientErrorKey);
+}

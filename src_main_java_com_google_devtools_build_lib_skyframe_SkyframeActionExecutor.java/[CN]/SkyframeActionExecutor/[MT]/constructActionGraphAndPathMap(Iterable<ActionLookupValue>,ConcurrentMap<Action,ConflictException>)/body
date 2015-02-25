@@ -1,0 +1,20 @@
+{
+  MutableActionGraph actionGraph=new MapBasedActionGraph();
+  ConcurrentNavigableMap<PathFragment,Artifact> artifactPathMap=new ConcurrentSkipListMap<>();
+  int numJobs=Runtime.getRuntime().availableProcessors();
+  Sharder<ActionLookupValue> actionShards=new Sharder<>(numJobs,5000);
+  for (  ActionLookupValue value : values) {
+    actionShards.add(value);
+  }
+  ThrowableRecordingRunnableWrapper wrapper=new ThrowableRecordingRunnableWrapper("SkyframeActionExecutor#constructActionGraphAndPathMap");
+  ExecutorService executor=Executors.newFixedThreadPool(numJobs,new ThreadFactoryBuilder().setNameFormat("ActionLookupValue Processor %d").build());
+  for (  List<ActionLookupValue> shard : actionShards) {
+    executor.execute(wrapper.wrap(actionRegistration(shard,actionGraph,artifactPathMap,badActionMap)));
+  }
+  boolean interrupted=ExecutorShutdownUtil.interruptibleShutdown(executor);
+  Throwables.propagateIfPossible(wrapper.getFirstThrownError());
+  if (interrupted) {
+    throw new InterruptedException();
+  }
+  return Pair.<ActionGraph,SortedMap<PathFragment,Artifact>>of(actionGraph,artifactPathMap);
+}

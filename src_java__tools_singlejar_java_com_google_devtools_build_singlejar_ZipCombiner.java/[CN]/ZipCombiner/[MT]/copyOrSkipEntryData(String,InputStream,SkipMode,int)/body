@@ -1,0 +1,25 @@
+{
+  final int flags=getUnsignedShort(headerBuffer,GENERAL_PURPOSE_FLAGS_OFFSET);
+  final int method=getUnsignedShort(headerBuffer,COMPRESSION_METHOD_OFFSET);
+  if ((flags & SIZE_MASKED_FLAG) != 0) {
+    if (method != DEFLATE_METHOD) {
+      throw new AssertionError("This should have been checked in validateHeader().");
+    }
+    copyOrSkipDeflateData(in,skip);
+    readFully(in,16);
+    if (getUnsignedInt(buffer,bufferOffset) != DATA_DESCRIPTOR_MARKER) {
+      throw new IOException("Missing data descriptor for " + filename + " in "+ currentInputFile+ ".");
+    }
+    long crc32=getUnsignedInt(buffer,bufferOffset + 4);
+    long compressedSize=getUnsignedInt(buffer,bufferOffset + 8);
+    long uncompressedSize=getUnsignedInt(buffer,bufferOffset + 12);
+    if (skip == SkipMode.COPY) {
+      fixDirectoryEntry(directoryOffset,crc32,compressedSize,uncompressedSize);
+    }
+    copyOrSkipData(in,16,skip);
+  }
+ else {
+    long compressedSize=getUnsignedInt(headerBuffer,COMPRESSED_SIZE_OFFSET);
+    copyOrSkipData(in,compressedSize,skip);
+  }
+}

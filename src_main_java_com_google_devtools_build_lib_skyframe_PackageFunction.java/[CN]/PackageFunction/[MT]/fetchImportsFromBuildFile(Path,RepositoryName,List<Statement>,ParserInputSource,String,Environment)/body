@@ -1,0 +1,37 @@
+{
+  StoredEventHandler eventHandler=new StoredEventHandler();
+  BuildFileAST buildFileAST=BuildFileAST.parseBuildFile(inputSource,preludeStatements,eventHandler,null,true);
+  if (eventHandler.hasErrors()) {
+    return new SkylarkImportResult(ImmutableMap.<PathFragment,SkylarkEnvironment>of(),ImmutableList.<Label>of());
+  }
+  ImmutableCollection<PathFragment> imports=buildFileAST.getImports();
+  Map<PathFragment,SkylarkEnvironment> importMap=new HashMap<>();
+  ImmutableList.Builder<SkylarkFileDependency> fileDependencies=ImmutableList.builder();
+  try {
+    for (    PathFragment importFile : imports) {
+      SkyKey importsLookupKey=SkylarkImportLookupValue.key(repo,importFile);
+      SkylarkImportLookupValue importLookupValue=(SkylarkImportLookupValue)env.getValueOrThrow(importsLookupKey,SkylarkImportFailedException.class,InconsistentFilesystemException.class,ASTLookupInputException.class,BuildFileNotFoundException.class);
+      if (importLookupValue != null) {
+        importMap.put(importFile,importLookupValue.getImportedEnvironment());
+        fileDependencies.add(importLookupValue.getDependency());
+      }
+    }
+  }
+ catch (  SkylarkImportFailedException e) {
+    env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
+    throw new PackageFunctionException(new BuildFileContainsErrorsException(packageName,e.getMessage()),Transience.PERSISTENT);
+  }
+catch (  InconsistentFilesystemException e) {
+    throw new PackageFunctionException(new InternalInconsistentFilesystemException(packageName,e),Transience.PERSISTENT);
+  }
+catch (  ASTLookupInputException e) {
+    throw new PackageFunctionException(new BuildFileContainsErrorsException(packageName,e.getMessage()),Transience.PERSISTENT);
+  }
+catch (  BuildFileNotFoundException e) {
+    throw new PackageFunctionException(e,Transience.PERSISTENT);
+  }
+  if (env.valuesMissing()) {
+    return null;
+  }
+  return new SkylarkImportResult(importMap,transitiveClosureOfLabels(fileDependencies.build()));
+}

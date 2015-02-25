@@ -1,0 +1,27 @@
+{
+  FileSystem oldFileSystem=Path.getFileSystemForSerialization();
+  try {
+    Path.setFileSystemForSerialization(filesystem);
+    Path root=filesystem.getPath("/");
+    Path p1=filesystem.getPath("/foo");
+    Path p2=filesystem.getPath("/foo/bar");
+    ByteArrayOutputStream bos=new ByteArrayOutputStream();
+    ObjectOutputStream oos=new ObjectOutputStream(bos);
+    oos.writeObject(root);
+    oos.writeObject(p1);
+    oos.writeObject(p2);
+    ByteArrayInputStream bis=new ByteArrayInputStream(bos.toByteArray());
+    ObjectInputStream ois=new ObjectInputStream(bis);
+    Path dsRoot=(Path)ois.readObject();
+    Path dsP1=(Path)ois.readObject();
+    Path dsP2=(Path)ois.readObject();
+    new EqualsTester().addEqualityGroup(root,dsRoot).addEqualityGroup(p1,dsP1).addEqualityGroup(p2,dsP2).testEquals();
+    assertTrue(p2.startsWith(p1));
+    assertTrue(p2.startsWith(dsP1));
+    assertTrue(dsP2.startsWith(p1));
+    assertTrue(dsP2.startsWith(dsP1));
+  }
+  finally {
+    Path.setFileSystemForSerialization(oldFileSystem);
+  }
+}

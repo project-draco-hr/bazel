@@ -1,0 +1,21 @@
+{
+  NestedSetBuilder<ExtraArtifactSet> builder=NestedSetBuilder.stableOrder();
+  for (  ConfiguredTarget topLevel : topLevelTargets) {
+    ExtraActionArtifactsProvider provider=topLevel.getProvider(ExtraActionArtifactsProvider.class);
+    if (provider != null) {
+      if (viewOptions.extraActionTopLevelOnly) {
+        builder.add(ExtraArtifactSet.of(topLevel.getLabel(),provider.getExtraActionArtifacts()));
+      }
+ else {
+        builder.addTransitive(provider.getTransitiveExtraActionArtifacts());
+      }
+    }
+  }
+  RegexFilter filter=viewOptions.extraActionFilter;
+  for (  ExtraArtifactSet set : builder.build()) {
+    boolean filterMatches=filter == null || filter.isIncluded(set.getLabel().toString());
+    if (filterMatches) {
+      Iterables.addAll(artifactsToBuild,set.getArtifacts());
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  Set<TransitiveTargetValue> currentBuildTargetValueSet=new HashSet<>(targetValues);
+  if (Objects.equals(previousBuildTargetValueSet,currentBuildTargetValueSet)) {
+    return;
+  }
+  NestedSetBuilder<PackageIdentifier> nestedAllPkgsBuilder=NestedSetBuilder.stableOrder();
+  NestedSetBuilder<PackageIdentifier> nestedErrorFreePkgsBuilder=NestedSetBuilder.stableOrder();
+  NestedSetBuilder<Label> nestedTargetBuilder=NestedSetBuilder.stableOrder();
+  for (  TransitiveTargetValue value : targetValues) {
+    nestedAllPkgsBuilder.addTransitive(value.getTransitiveSuccessfulPackages());
+    nestedAllPkgsBuilder.addTransitive(value.getTransitiveUnsuccessfulPackages());
+    nestedErrorFreePkgsBuilder.addTransitive(value.getTransitiveSuccessfulPackages());
+    nestedTargetBuilder.addTransitive(value.getTransitiveTargets());
+  }
+  allVisitedPackages=nestedAllPkgsBuilder.build().toSet();
+  errorFreeVisitedPackages=nestedErrorFreePkgsBuilder.build().toSet();
+  visitedTargets=nestedTargetBuilder.build().toSet();
+  previousBuildTargetValueSet=currentBuildTargetValueSet;
+}

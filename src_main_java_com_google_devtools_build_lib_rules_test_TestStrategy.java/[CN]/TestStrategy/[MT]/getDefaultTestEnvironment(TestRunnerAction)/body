@@ -1,0 +1,20 @@
+{
+  Map<String,String> env=new HashMap<>();
+  env.putAll(action.getConfiguration().getDefaultShellEnvironment());
+  env.remove("LANG");
+  env.put("TZ","UTC");
+  env.put("TEST_SIZE",action.getTestProperties().getSize().toString());
+  env.put("TEST_TIMEOUT",Integer.toString(getTimeout(action)));
+  if (action.isSharded()) {
+    env.put("TEST_SHARD_INDEX",Integer.toString(action.getShardNum()));
+    env.put("TEST_TOTAL_SHARDS",Integer.toString(action.getExecutionSettings().getTotalShards()));
+  }
+  if (action.getConfiguration().getRunsPerTestForLabel(action.getOwner().getLabel()) > 1) {
+    env.put("TEST_RANDOM_SEED",Integer.toString(action.getRunNumber() + 1));
+  }
+  String testFilter=action.getExecutionSettings().getTestFilter();
+  if (testFilter != null) {
+    env.put(TEST_BRIDGE_TEST_FILTER_ENV,testFilter);
+  }
+  return env;
+}

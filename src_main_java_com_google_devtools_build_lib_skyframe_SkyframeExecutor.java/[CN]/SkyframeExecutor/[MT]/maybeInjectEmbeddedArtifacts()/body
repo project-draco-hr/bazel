@@ -1,0 +1,21 @@
+{
+  if (!needToInjectEmbeddedArtifacts) {
+    return;
+  }
+  Preconditions.checkNotNull(artifactFactory.get());
+  Preconditions.checkNotNull(binTools);
+  Map<SkyKey,SkyValue> values=Maps.newHashMap();
+  for (  Artifact artifact : binTools.getAllEmbeddedArtifacts(artifactFactory.get())) {
+    FileArtifactValue fileArtifactValue;
+    try {
+      fileArtifactValue=FileArtifactValue.create(artifact);
+    }
+ catch (    IOException e) {
+      String message="Error: corrupt installation: file " + artifact.getPath() + " missing. "+ "Please remove '"+ directories.getInstallBase()+ "' and try again.";
+      throw new AbruptExitException(message,ExitCode.LOCAL_ENVIRONMENTAL_ERROR,e);
+    }
+    values.put(ArtifactValue.key(artifact,true),fileArtifactValue);
+  }
+  injectable().inject(values);
+  needToInjectEmbeddedArtifacts=false;
+}

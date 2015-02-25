@@ -1,0 +1,41 @@
+{
+switch (data[index]) {
+case ARRAY_BEGIN_TOKEN:
+{
+      return parseArray();
+    }
+case DICTIONARY_BEGIN_TOKEN:
+{
+    return parseDictionary();
+  }
+case DATA_BEGIN_TOKEN:
+{
+  return parseData();
+}
+case QUOTEDSTRING_BEGIN_TOKEN:
+{
+String quotedString=parseQuotedString();
+if (quotedString.length() == 20 && quotedString.charAt(4) == DATE_DATE_FIELD_DELIMITER) {
+  try {
+    return new NSDate(quotedString);
+  }
+ catch (  Exception ex) {
+    return new NSString(quotedString);
+  }
+}
+ else {
+  return new NSString(quotedString);
+}
+}
+default :
+{
+if (data[index] > 0x2F && data[index] < 0x3A) {
+return parseDateString();
+}
+ else {
+String parsedString=parseString();
+return new NSString(parsedString);
+}
+}
+}
+}

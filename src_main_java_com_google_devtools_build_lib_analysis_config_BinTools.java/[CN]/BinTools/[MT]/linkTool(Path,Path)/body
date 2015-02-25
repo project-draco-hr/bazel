@@ -1,0 +1,21 @@
+{
+  if (linkPath.getFileSystem().supportsSymbolicLinks()) {
+    try {
+      if (!linkPath.isSymbolicLink()) {
+        linkPath.delete();
+      }
+      FileSystemUtils.ensureSymbolicLink(linkPath,sourcePath);
+    }
+ catch (    IOException e) {
+      throw new EnvironmentalExecException("failed to link '" + sourcePath + "'",e);
+    }
+  }
+ else {
+    try {
+      FileSystemUtils.copyTool(sourcePath,linkPath);
+    }
+ catch (    IOException e) {
+      throw new EnvironmentalExecException("failed to copy '" + sourcePath + "'",e);
+    }
+  }
+}

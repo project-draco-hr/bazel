@@ -1,0 +1,16 @@
+{
+  ResourceManager resourceMgr=ResourceManager.instance();
+  ExecutionOptions options=request.getOptions(ExecutionOptions.class);
+  if (options.availableResources != null) {
+    resourceMgr.setAvailableResources(options.availableResources);
+    resourceMgr.setRamUtilizationPercentage(100);
+  }
+ else {
+    resourceMgr.setAvailableResources(LocalHostCapacity.getLocalHostCapacity());
+    resourceMgr.setRamUtilizationPercentage(options.ramUtilizationPercentage);
+    if (options.useResourceAutoSense) {
+      getReporter().handle(Event.warn("Not using resource autosense due to known responsiveness issues"));
+    }
+    ResourceManager.instance().setAutoSensing(false);
+  }
+}

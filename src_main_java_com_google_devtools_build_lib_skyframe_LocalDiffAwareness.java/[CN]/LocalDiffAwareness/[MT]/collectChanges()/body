@@ -1,0 +1,59 @@
+{
+  Set<Path> createdFilesAndDirectories=new HashSet<Path>();
+  Set<Path> deletedOrModifiedFilesAndDirectories=new HashSet<Path>();
+  Set<Path> deletedTrackedDirectories=new HashSet<Path>();
+  WatchKey watchKey;
+  while ((watchKey=watchService.poll()) != null) {
+    Path dir=watchKeyToDirBiMap.get(watchKey);
+    Preconditions.checkArgument(dir != null);
+    for (    WatchEvent<?> event : watchKey.pollEvents()) {
+      Kind<?> kind=event.kind();
+      if (kind == StandardWatchEventKinds.OVERFLOW) {
+        throw new BrokenDiffAwarenessException("Overflow when watching local filesystem for " + "changes");
+      }
+      if (event.context() == null) {
+        throw new BrokenDiffAwarenessException("Insufficient information from local file system " + "watcher");
+      }
+      Path relativePath=(Path)event.context();
+      Path path=dir.resolve(relativePath);
+      Preconditions.checkState(path.isAbsolute(),path);
+      if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+        createdFilesAndDirectories.add(path);
+        deletedOrModifiedFilesAndDirectories.remove(path);
+      }
+ else       if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+        createdFilesAndDirectories.remove(path);
+        deletedOrModifiedFilesAndDirectories.add(path);
+        if (watchKeyToDirBiMap.containsValue(path)) {
+          deletedTrackedDirectories.add(path);
+        }
+      }
+ else       if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+        if (!createdFilesAndDirectories.contains(path)) {
+          deletedOrModifiedFilesAndDirectories.add(path);
+        }
+      }
+    }
+    if (!watchKey.reset()) {
+      watchKeyToDirBiMap.remove(watchKey);
+    }
+  }
+  for (  Path path : deletedTrackedDirectories) {
+    WatchKey staleKey=watchKeyToDirBiMap.inverse().get(path);
+    watchKeyToDirBiMap.remove(staleKey);
+  }
+  if (watchKeyToDirBiMap.isEmpty()) {
+    throw new IOException("Root directory " + watchRootPath + " became inaccessible.");
+  }
+  Set<Path> changedPaths=new HashSet<Path>();
+  for (  Path path : createdFilesAndDirectories) {
+    if (Files.isDirectory(path,LinkOption.NOFOLLOW_LINKS)) {
+      changedPaths.addAll(registerSubDirectoriesAndReturnContents(path));
+    }
+ else {
+      changedPaths.add(path);
+    }
+  }
+  changedPaths.addAll(deletedOrModifiedFilesAndDirectories);
+  return changedPaths;
+}

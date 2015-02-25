@@ -1,0 +1,30 @@
+{
+  ObjcCommon common=common(ruleContext);
+  OptionsProvider optionsProvider=optionsProvider(ruleContext);
+  if (!common.getCompilationArtifacts().get().getArchive().isPresent()) {
+    ruleContext.ruleError(REQUIRES_SOURCE_ERROR);
+  }
+  XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
+  NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().addTransitive(common.getStoryboards().getOutputZips()).addAll(Xcdatamodel.outputZips(common.getDatamodels()));
+  XcodeProductType productType;
+  ExtraLinkArgs extraLinkArgs;
+  ExtraLinkInputs extraLinkInputs;
+  if (!isXcTest(ruleContext)) {
+    productType=XcodeProductType.APPLICATION;
+    extraLinkArgs=new ExtraLinkArgs();
+    extraLinkInputs=new ExtraLinkInputs();
+  }
+ else {
+    productType=XcodeProductType.UNIT_TEST;
+    XcodeProvider appIpaXcodeProvider=ruleContext.getPrerequisite(XCTEST_APP,Mode.TARGET,XcodeProvider.class);
+    xcodeProviderBuilder.setTestHost(appIpaXcodeProvider).setProductType(productType);
+    Artifact bundleLoader=xcTestAppProvider(ruleContext).getBundleLoader();
+    extraLinkArgs=new ExtraLinkArgs("-bundle","-bundle_loader",bundleLoader.getExecPathString());
+    extraLinkInputs=new ExtraLinkInputs(bundleLoader);
+  }
+  new CompilationSupport(ruleContext).registerLinkActions(common.getObjcProvider(),extraLinkArgs,extraLinkInputs).registerJ2ObjcCompileAndArchiveActions(optionsProvider,common.getObjcProvider()).registerCompileAndArchiveActions(common,optionsProvider).addXcodeSettings(xcodeProviderBuilder,common,optionsProvider).validateAttributes();
+  new ApplicationSupport(ruleContext,common.getObjcProvider(),optionsProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES).registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateAttributes();
+  new ResourceSupport(ruleContext).registerActions(common.getStoryboards()).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
+  new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),productType).addDependencies(xcodeProviderBuilder).addFilesToBuild(filesToBuild).registerActions(xcodeProviderBuilder.build());
+  return create(ruleContext,common,xcodeProviderBuilder.build(),filesToBuild.build());
+}

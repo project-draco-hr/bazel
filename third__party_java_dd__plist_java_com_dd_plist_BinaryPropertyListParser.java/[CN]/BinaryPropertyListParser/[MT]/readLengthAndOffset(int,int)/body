@@ -1,0 +1,21 @@
+{
+  int length=objInfo;
+  int stroffset=1;
+  if (objInfo == 0xF) {
+    int int_type=bytes[offset + 1];
+    int intType=(int_type & 0xF0) >> 4;
+    if (intType != 0x1) {
+      System.err.println("BinaryPropertyListParser: Length integer has an unexpected type" + intType + ". Attempting to parse anyway...");
+    }
+    int intInfo=int_type & 0x0F;
+    int intLength=(int)Math.pow(2,intInfo);
+    stroffset=2 + intLength;
+    if (intLength < 3) {
+      length=(int)parseUnsignedInt(copyOfRange(bytes,offset + 2,offset + 2 + intLength));
+    }
+ else {
+      length=new BigInteger(copyOfRange(bytes,offset + 2,offset + 2 + intLength)).intValue();
+    }
+  }
+  return new int[]{length,stroffset};
+}

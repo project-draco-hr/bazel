@@ -1,0 +1,25 @@
+{
+  Set<SkyKey> unvisitedDeps=new HashSet<>(entry.getTemporaryDirectDeps());
+  unvisitedDeps.remove(cycleChild);
+  removeIncompleteChildrenForCycle(key,entry,unvisitedDeps);
+  if (!entry.isReady()) {
+    entry.signalDep();
+  }
+  Preconditions.checkState(entry.isReady(),"%s %s %s",key,cycleChild,entry);
+  Iterator<SkyKey> it=toVisit.iterator();
+  while (it.hasNext()) {
+    SkyKey descendant=it.next();
+    if (descendant == CHILDREN_FINISHED) {
+      cycleLength--;
+      if (cycleLength == 0) {
+        return;
+      }
+      continue;
+    }
+    if (cycleLength == 1) {
+      Preconditions.checkState(unvisitedDeps.contains(descendant),"%s %s %s %s %s",key,descendant,cycleChild,unvisitedDeps,entry);
+      it.remove();
+    }
+  }
+  throw new IllegalStateException("There were not " + cycleLength + " groups of children in "+ toVisit+ " when trying to remove children of "+ key+ " other than "+ cycleChild);
+}

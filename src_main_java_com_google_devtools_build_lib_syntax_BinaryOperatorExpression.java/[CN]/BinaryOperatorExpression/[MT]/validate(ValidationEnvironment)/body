@@ -1,0 +1,104 @@
+{
+  SkylarkType ltype=lhs.validate(env);
+  SkylarkType rtype=rhs.validate(env);
+  String lname=EvalUtils.getDataTypeNameFromClass(ltype.getType());
+  String rname=EvalUtils.getDataTypeNameFromClass(rtype.getType());
+switch (operator) {
+case AND:
+{
+      return ltype.infer(rtype,"and operator",rhs.getLocation(),lhs.getLocation());
+    }
+case OR:
+{
+    return ltype.infer(rtype,"or operator",rhs.getLocation(),lhs.getLocation());
+  }
+case PLUS:
+{
+  if (ltype == SkylarkType.INT && rtype == SkylarkType.INT) {
+    return SkylarkType.INT;
+  }
+  if (ltype == SkylarkType.STRING && rtype == SkylarkType.STRING) {
+    return SkylarkType.STRING;
+  }
+  if (ltype.isList() && rtype.isList()) {
+    return ltype.infer(rtype,"list concatenation",rhs.getLocation(),lhs.getLocation());
+  }
+  if (ltype.isDict() && rtype.isDict()) {
+    return ltype.infer(rtype,"dict concatenation",rhs.getLocation(),lhs.getLocation());
+  }
+  if (ltype.isStruct() && rtype.isStruct()) {
+    return SkylarkType.of(ClassObject.class);
+  }
+  if (ltype.isNset()) {
+    if (rtype.isNset()) {
+      return ltype.infer(rtype,"nested set",rhs.getLocation(),lhs.getLocation());
+    }
+ else     if (rtype.isList()) {
+      return ltype.infer(SkylarkType.of(SkylarkNestedSet.class,rtype.getGenericType1()),"nested set",rhs.getLocation(),lhs.getLocation());
+    }
+    if (rtype != SkylarkType.UNKNOWN) {
+      throw new EvalException(getLocation(),String.format("can only concatenate nested sets " + "with other nested sets or list of items, not '" + rname + "'"));
+    }
+  }
+  break;
+}
+case MULT:
+{
+if (ltype == SkylarkType.INT && rtype == SkylarkType.INT) {
+  return SkylarkType.INT;
+}
+if (ltype == SkylarkType.STRING && rtype == SkylarkType.INT) {
+  return SkylarkType.STRING;
+}
+if (ltype == SkylarkType.INT && rtype == SkylarkType.STRING) {
+  return SkylarkType.STRING;
+}
+break;
+}
+case MINUS:
+{
+if (ltype == SkylarkType.INT && rtype == SkylarkType.INT) {
+return SkylarkType.INT;
+}
+break;
+}
+case PERCENT:
+{
+if (ltype == SkylarkType.INT && rtype == SkylarkType.INT) {
+return SkylarkType.INT;
+}
+if (ltype == SkylarkType.STRING) {
+return SkylarkType.STRING;
+}
+break;
+}
+case EQUALS_EQUALS:
+case NOT_EQUALS:
+case LESS:
+case LESS_EQUALS:
+case GREATER:
+case GREATER_EQUALS:
+{
+if (ltype != SkylarkType.UNKNOWN && !(Comparable.class.isAssignableFrom(ltype.getType()))) {
+throw new EvalException(getLocation(),lname + " is not comparable");
+}
+ltype.infer(rtype,"comparison",lhs.getLocation(),rhs.getLocation());
+return SkylarkType.BOOL;
+}
+case IN:
+{
+if (rtype.isList() || rtype.isSet() || rtype.isDict()|| rtype == SkylarkType.STRING) {
+return SkylarkType.BOOL;
+}
+ else {
+if (rtype != SkylarkType.UNKNOWN) {
+throw new EvalException(getLocation(),String.format("operand 'in' only works on " + "strings, dictionaries, lists, sets or tuples, not on a(n) %s",EvalUtils.getDataTypeNameFromClass(rtype.getType())));
+}
+}
+}
+}
+if (ltype != SkylarkType.UNKNOWN && rtype != SkylarkType.UNKNOWN) {
+throw new EvalException(getLocation(),"unsupported operand types for '" + operator + "': '"+ lname+ "' and '"+ rname+ "'");
+}
+return SkylarkType.UNKNOWN;
+}

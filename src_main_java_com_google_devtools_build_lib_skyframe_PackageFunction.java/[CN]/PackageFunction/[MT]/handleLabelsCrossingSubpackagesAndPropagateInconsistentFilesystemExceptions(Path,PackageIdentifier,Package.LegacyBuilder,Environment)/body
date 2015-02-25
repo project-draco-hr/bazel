@@ -1,0 +1,50 @@
+{
+  Set<SkyKey> containingPkgLookupKeys=Sets.newHashSet();
+  Map<Target,SkyKey> targetToKey=new HashMap<>();
+  for (  Target target : pkgBuilder.getTargets()) {
+    PathFragment dir=target.getLabel().toPathFragment().getParentDirectory();
+    PackageIdentifier dirId=new PackageIdentifier(pkgId.getRepository(),dir);
+    if (dir.equals(pkgId.getPackageFragment())) {
+      continue;
+    }
+    SkyKey key=ContainingPackageLookupValue.key(dirId);
+    targetToKey.put(target,key);
+    containingPkgLookupKeys.add(key);
+  }
+  Map<Label,SkyKey> subincludeToKey=new HashMap<>();
+  for (  Label subincludeLabel : pkgBuilder.getSubincludeLabels()) {
+    PathFragment dir=subincludeLabel.toPathFragment().getParentDirectory();
+    PackageIdentifier dirId=new PackageIdentifier(pkgId.getRepository(),dir);
+    if (dir.equals(pkgId.getPackageFragment())) {
+      continue;
+    }
+    SkyKey key=ContainingPackageLookupValue.key(dirId);
+    subincludeToKey.put(subincludeLabel,key);
+    containingPkgLookupKeys.add(ContainingPackageLookupValue.key(dirId));
+  }
+  Map<SkyKey,ValueOrException3<BuildFileNotFoundException,InconsistentFilesystemException,FileSymlinkCycleException>> containingPkgLookupValues=env.getValuesOrThrow(containingPkgLookupKeys,BuildFileNotFoundException.class,InconsistentFilesystemException.class,FileSymlinkCycleException.class);
+  if (env.valuesMissing()) {
+    return;
+  }
+  for (  Target target : ImmutableSet.copyOf(pkgBuilder.getTargets())) {
+    SkyKey key=targetToKey.get(target);
+    if (!containingPkgLookupValues.containsKey(key)) {
+      continue;
+    }
+    ContainingPackageLookupValue containingPackageLookupValue=getContainingPkgLookupValueAndPropagateInconsistentFilesystemExceptions(pkgId.getPackageFragment().getPathString(),containingPkgLookupValues.get(key),env);
+    if (maybeAddEventAboutLabelCrossingSubpackage(pkgBuilder,pkgRoot,target.getLabel(),target.getLocation(),containingPackageLookupValue)) {
+      pkgBuilder.removeTarget(target);
+      pkgBuilder.setContainsErrors();
+    }
+  }
+  for (  Label subincludeLabel : pkgBuilder.getSubincludeLabels()) {
+    SkyKey key=subincludeToKey.get(subincludeLabel);
+    if (!containingPkgLookupValues.containsKey(key)) {
+      continue;
+    }
+    ContainingPackageLookupValue containingPackageLookupValue=getContainingPkgLookupValueAndPropagateInconsistentFilesystemExceptions(pkgId.getPackageFragment().getPathString(),containingPkgLookupValues.get(key),env);
+    if (maybeAddEventAboutLabelCrossingSubpackage(pkgBuilder,pkgRoot,subincludeLabel,null,containingPackageLookupValue)) {
+      pkgBuilder.setContainsErrors();
+    }
+  }
+}

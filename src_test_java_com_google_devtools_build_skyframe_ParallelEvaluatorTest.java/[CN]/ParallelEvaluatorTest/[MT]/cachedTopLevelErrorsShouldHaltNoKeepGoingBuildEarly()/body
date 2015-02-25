@@ -1,0 +1,24 @@
+{
+  graph=new DeterministicInMemoryGraph();
+  tester=new GraphTester();
+  SkyKey errorKey=GraphTester.toSkyKey("error");
+  tester.getOrCreate(errorKey).setHasError(true);
+  EvaluationResult<StringValue> result=eval(true,ImmutableList.of(errorKey));
+  assertTrue(result.hasError());
+  assertEquals(errorKey,result.getError().getRootCauseOfException());
+  SkyKey rogueKey=GraphTester.toSkyKey("rogue");
+  tester.getOrCreate(rogueKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env){
+      fail("eval call should have already terminated");
+      return null;
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  result=eval(false,ImmutableList.of(errorKey,rogueKey));
+  assertTrue(result.hasError());
+  assertEquals(errorKey,result.getError(errorKey).getRootCauseOfException());
+  assertFalse(result.errorMap().containsKey(rogueKey));
+}

@@ -1,0 +1,22 @@
+{
+  String indentString=Strings.repeat(" ",indent);
+  StringBuilder out=new StringBuilder();
+  String sep="";
+  for (  String paragraph : NEWLINE_SPLITTER.split(in)) {
+    BreakIterator boundary=BreakIterator.getLineInstance();
+    boundary.setText(paragraph);
+    out.append(sep).append(indentString);
+    int cursor=indent;
+    for (int start=boundary.first(), end=boundary.next(); end != BreakIterator.DONE; start=end, end=boundary.next()) {
+      String word=paragraph.substring(start,end);
+      if (word.length() + cursor > width) {
+        out.append('\n').append(indentString);
+        cursor=indent;
+      }
+      out.append(word);
+      cursor+=word.length();
+    }
+    sep="\n";
+  }
+  return out.toString();
+}

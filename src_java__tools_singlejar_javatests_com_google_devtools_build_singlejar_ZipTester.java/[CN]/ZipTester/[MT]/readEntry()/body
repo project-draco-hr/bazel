@@ -1,0 +1,76 @@
+{
+  long entrypos=pos - 4;
+  String entryDesc="file entry at " + Long.toHexString(entrypos);
+  byte[] entryBuffer=new byte[FILE_HEADER_BUFFER_SIZE];
+  readFully(entryBuffer,"reading file header");
+  int versionToExtract=getUnsignedShort(entryBuffer,0);
+  int flags=getUnsignedShort(entryBuffer,2);
+  int method=getUnsignedShort(entryBuffer,4);
+  int dosTime=(int)getUnsignedInt(entryBuffer,6);
+  int crc32=(int)getUnsignedInt(entryBuffer,10);
+  long compressedSize=getUnsignedInt(entryBuffer,14);
+  long uncompressedSize=getUnsignedInt(entryBuffer,18);
+  int filenameLength=getUnsignedShort(entryBuffer,22);
+  int extraLength=getUnsignedShort(entryBuffer,24);
+  byte[] filename=new byte[filenameLength];
+  readFully(filename,"reading file name");
+  skip(extraLength,"skipping extra data");
+  String name=new String(filename,"UTF-8");
+  for (int i=0; i < filename.length; i++) {
+    if ((filename[i] < ' ') || (filename[i] > 127)) {
+      warn(entryDesc + ": file name has unexpected non-ascii characters");
+    }
+  }
+  entryDesc="file entry '" + name + "' at "+ Long.toHexString(entrypos);
+  if ((method != STORED_METHOD) && (method != DEFLATE_METHOD)) {
+    throw new IOException(entryDesc + ": unknown method " + method);
+  }
+  if ((flags != 0) && (flags != SIZE_MASKED_FLAG)) {
+    throw new IOException(entryDesc + ": unknown flags " + flags);
+  }
+  if ((method == STORED_METHOD) && (versionToExtract != VERSION_STORED)) {
+    warn(entryDesc + ": unexpected version to extract for stored entry " + versionToExtract);
+  }
+  if ((method == DEFLATE_METHOD) && (versionToExtract != VERSION_DEFLATE)) {
+  }
+  if (method == STORED_METHOD) {
+    if (compressedSize != uncompressedSize) {
+      throw new IOException(entryDesc + ": stored entries should have identical compressed and " + "uncompressed sizes");
+    }
+    skip(compressedSize,entryDesc + "skipping data");
+  }
+ else {
+    @SuppressWarnings("resource") DeflateInputStream deflater=new DeflateInputStream();
+    long generatedBytes=0;
+    byte[] deflated=new byte[1024];
+    int readBytes;
+    CRC32 crc=new CRC32();
+    while ((readBytes=deflater.read(deflated)) > 0) {
+      crc.update(deflated,0,readBytes);
+      generatedBytes+=readBytes;
+    }
+    int actualCrc32=(int)crc.getValue();
+    long consumedBytes=deflater.totalBytesRead;
+    if (flags == SIZE_MASKED_FLAG) {
+      long id=getUnsignedInt("reading footer marker");
+      if (id != DATA_DESCRIPTOR_MARKER) {
+        throw new IOException(entryDesc + ": expected footer at " + Long.toHexString(pos - 4)+ ", but found "+ Long.toHexString(id));
+      }
+      byte[] footer=new byte[DATA_DESCRIPTOR_BUFFER_SIZE];
+      readFully(footer,"reading footer");
+      crc32=(int)getUnsignedInt(footer,0);
+      compressedSize=getUnsignedInt(footer,4);
+      uncompressedSize=getUnsignedInt(footer,8);
+    }
+    if (consumedBytes != compressedSize) {
+      throw new IOException(entryDesc + ": amount of compressed data does not match value " + "specified in the zip (specified: "+ compressedSize+ ", actual: "+ consumedBytes+ ")");
+    }
+    if (generatedBytes != uncompressedSize) {
+      throw new IOException(entryDesc + ": amount of uncompressed data does not match value " + "specified in the zip (specified: "+ uncompressedSize+ ", actual: "+ generatedBytes+ ")");
+    }
+    if (crc32 != actualCrc32) {
+      throw new IOException(entryDesc + ": specified crc checksum does not match actual check " + "sum");
+    }
+  }
+  entries.add(new Entry(entrypos,name,flags,method,dosTime));
+}

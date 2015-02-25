@@ -1,0 +1,31 @@
+{
+  for (  ConfiguredTarget configuredTarget : configuredTargets) {
+    final Target target=configuredTarget.getTarget();
+    if (TargetUtils.isTestRule(target)) {
+      continue;
+    }
+    final Set<DistributionType> distribs=target.getDistributions();
+    BuildConfiguration config=configuredTarget.getConfiguration();
+    boolean staticallyLinked=(config != null) && config.performsStaticLink();
+    staticallyLinked|=(config != null) && (target instanceof Rule) && ((Rule)target).getRuleClassObject().hasAttr("linkopts",Type.STRING_LIST)&& ConfiguredAttributeMapper.of((RuleConfiguredTarget)configuredTarget).get("linkopts",Type.STRING_LIST).contains("-static");
+    LicensesProvider provider=configuredTarget.getProvider(LicensesProvider.class);
+    if (provider != null) {
+      NestedSet<TargetLicense> licenses=provider.getTransitiveLicenses();
+      for (      TargetLicense targetLicense : licenses) {
+        if (!targetLicense.getLicense().checkCompatibility(distribs,target,targetLicense.getLabel(),getReporter(),staticallyLinked)) {
+          if (!keepGoing) {
+            throw new ViewCreationFailedException("Build aborted due to licensing error");
+          }
+        }
+      }
+    }
+ else     if (configuredTarget.getTarget() instanceof InputFile) {
+      License license=configuredTarget.getTarget().getLicense();
+      if (!license.checkCompatibility(distribs,target,configuredTarget.getLabel(),getReporter(),staticallyLinked)) {
+        if (!keepGoing) {
+          throw new ViewCreationFailedException("Build aborted due to licensing error");
+        }
+      }
+    }
+  }
+}

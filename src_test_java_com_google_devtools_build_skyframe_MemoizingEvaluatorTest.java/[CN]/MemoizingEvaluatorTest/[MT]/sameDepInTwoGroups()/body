@@ -1,0 +1,43 @@
+{
+  initializeTester();
+  final SkyKey leaf4=GraphTester.toSkyKey("leaf4");
+  final AtomicBoolean shouldNotBuildLeaf4=new AtomicBoolean(false);
+  setGraphForTesting(new NotifyingInMemoryGraph(new Listener(){
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+      if (shouldNotBuildLeaf4.get() && key.equals(leaf4)) {
+        throw new IllegalStateException("leaf4 should not have been considered this build: " + type + ", "+ order+ ", "+ context);
+      }
+    }
+  }
+));
+  tester.set(leaf4,new StringValue("leaf4"));
+  final List<SkyKey> leaves=new ArrayList<>();
+  for (int i=0; i <= 2; i++) {
+    SkyKey leaf=GraphTester.toSkyKey("leaf" + i);
+    leaves.add(leaf);
+    tester.set(leaf,new StringValue("leaf" + (i + 2)));
+  }
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  final SkyValue topValue=new StringValue("top");
+  tester.getOrCreate(topKey).setBuilder(new NoExtractorFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException, InterruptedException {
+      Map<SkyKey,SkyValue> values=env.getValues(leaves);
+      if (env.valuesMissing()) {
+        return null;
+      }
+      env.getValues(ImmutableList.of(leaves.get(2),GraphTester.toSkyKey(((StringValue)values.get(leaves.get(2))).getValue())));
+      if (env.valuesMissing()) {
+        return null;
+      }
+      return topValue;
+    }
+  }
+);
+  assertEquals(topValue,tester.evalAndGet(false,topKey));
+  final SkyKey leaf5=GraphTester.toSkyKey("leaf5");
+  tester.set(leaf5,new StringValue("leaf5"));
+  tester.set(leaves.get(2),new StringValue("leaf5"));
+  tester.invalidate();
+  shouldNotBuildLeaf4.set(true);
+  assertEquals(topValue,tester.evalAndGet(false,topKey));
+}

@@ -1,0 +1,18 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  SkyKey recoveryKey=GraphTester.toSkyKey("midRecovery");
+  SkyKey badKey=GraphTester.toSkyKey("bad");
+  tester.getOrCreate(topKey).addDependency(recoveryKey).setComputedValue(CONCATENATE);
+  tester.getOrCreate(recoveryKey).addErrorDependency(badKey,new StringValue("i recovered")).setComputedValue(CONCATENATE);
+  tester.getOrCreate(badKey).setHasError(true);
+  EvaluationResult<SkyValue> result=eval(true,ImmutableList.of(recoveryKey));
+  assertThat(result.errorMap()).isEmpty();
+  assertTrue(result.hasError());
+  assertEquals(new StringValue("i recovered"),result.get(recoveryKey));
+  result=eval(false,ImmutableList.of(topKey));
+  assertTrue(result.hasError());
+  assertThat(result.keyNames()).isEmpty();
+  assertEquals(1,result.errorMap().size());
+  assertNotNull(result.getError(topKey).getException());
+}

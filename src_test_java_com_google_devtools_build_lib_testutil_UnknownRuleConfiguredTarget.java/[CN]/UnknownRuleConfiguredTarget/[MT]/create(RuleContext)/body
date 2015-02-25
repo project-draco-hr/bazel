@@ -1,0 +1,14 @@
+{
+  context.ruleWarning("cannot build " + context.getRule().getRuleClass() + " rules");
+  ImmutableList<Artifact> outputArtifacts=context.getOutputArtifacts();
+  NestedSet<Artifact> filesToBuild;
+  if (outputArtifacts.isEmpty()) {
+    filesToBuild=NestedSetBuilder.create(Order.STABLE_ORDER,context.createOutputArtifact());
+  }
+ else {
+    filesToBuild=NestedSetBuilder.wrap(Order.STABLE_ORDER,outputArtifacts);
+  }
+  Rule rule=context.getRule();
+  context.registerAction(new FailAction(context.getActionOwner(),filesToBuild,"cannot build " + rule.getRuleClass() + " rules such as "+ rule.getLabel()));
+  return new RuleConfiguredTargetBuilder(context).setFilesToBuild(filesToBuild).add(RunfilesProvider.class,RunfilesProvider.simple(Runfiles.EMPTY)).build();
+}

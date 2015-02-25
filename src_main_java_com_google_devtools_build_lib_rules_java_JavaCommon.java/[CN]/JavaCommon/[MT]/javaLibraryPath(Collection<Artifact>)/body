@@ -1,0 +1,15 @@
+{
+  StringBuilder buffer=new StringBuilder();
+  Set<PathFragment> entries=new HashSet<>();
+  for (  Artifact sharedLibrary : sharedLibraries) {
+    PathFragment entry=sharedLibrary.getRootRelativePath().getParentDirectory();
+    if (entries.add(entry)) {
+      if (buffer.length() > 0) {
+        buffer.append(':');
+      }
+      buffer.append("${JAVA_RUNFILES}/" + Constants.RUNFILES_PREFIX + "/");
+      buffer.append(entry.getPathString());
+    }
+  }
+  return buffer.toString();
+}

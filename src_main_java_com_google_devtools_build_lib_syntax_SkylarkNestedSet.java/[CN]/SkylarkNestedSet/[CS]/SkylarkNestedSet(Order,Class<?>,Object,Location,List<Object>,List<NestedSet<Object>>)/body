@@ -1,0 +1,32 @@
+{
+  if (item instanceof SkylarkNestedSet) {
+    SkylarkNestedSet nestedSet=(SkylarkNestedSet)item;
+    if (!nestedSet.isEmpty()) {
+      genericType=checkType(genericType,nestedSet.genericType,loc);
+      transitiveItems.add((NestedSet<Object>)nestedSet.set);
+    }
+  }
+ else   if (item instanceof SkylarkList) {
+    for (    Object object : (SkylarkList)item) {
+      genericType=checkType(genericType,object.getClass(),loc);
+      items.add(object);
+    }
+  }
+ else {
+    throw new EvalException(loc,String.format("cannot add '%s'-s to nested sets",EvalUtils.getDatatypeName(item)));
+  }
+  this.genericType=Preconditions.checkNotNull(genericType,"type cannot be null");
+  NestedSetBuilder<Object> builder=new NestedSetBuilder<Object>(order);
+  builder.addAll(items);
+  try {
+    for (    NestedSet<Object> nestedSet : transitiveItems) {
+      builder.addTransitive(nestedSet);
+    }
+  }
+ catch (  IllegalStateException e) {
+    throw new EvalException(loc,e.getMessage());
+  }
+  this.set=builder.build();
+  this.items=ImmutableList.copyOf(items);
+  this.transitiveItems=ImmutableList.copyOf(transitiveItems);
+}

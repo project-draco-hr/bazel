@@ -1,0 +1,13 @@
+{
+  if (cppConfiguration.getFdoSupport().getFdoRoot() == null || !cppConfiguration.isLipoContextCollector()) {
+    return TransitiveLipoInfoProvider.EMPTY;
+  }
+  NestedSetBuilder<IncludeScannable> scannableBuilder=NestedSetBuilder.stableOrder();
+  CppHelper.addTransitiveLipoInfoForCommonAttributes(ruleContext,outputs,scannableBuilder);
+  if (hasAttribute("implementation",Type.LABEL_LIST)) {
+    for (    TransitiveLipoInfoProvider impl : AnalysisUtils.getProviders(ruleContext.getPrerequisites("implementation",Mode.TARGET),TransitiveLipoInfoProvider.class)) {
+      scannableBuilder.addTransitive(impl.getTransitiveIncludeScannables());
+    }
+  }
+  return new TransitiveLipoInfoProvider(scannableBuilder.build());
+}

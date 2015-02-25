@@ -1,0 +1,74 @@
+{
+  DataInputStream in=new DataInputStream(new BufferedInputStream(new InflaterInputStream(profileFile.getInputStream(),new Inflater(false),65536),1024 * 1024));
+  if (in.readInt() != Profiler.MAGIC) {
+    in.close();
+    throw new UnsupportedEncodingException("Invalid profile datafile format");
+  }
+  if (in.readInt() != Profiler.VERSION) {
+    in.close();
+    throw new UnsupportedEncodingException("Incompatible profile datafile version");
+  }
+  String fileComment=in.readUTF();
+  int typeCount=in.readInt();
+  boolean hasUnknownTypes=false;
+  Set<String> supportedTasks=new HashSet<>();
+  for (  ProfilerTask task : ProfilerTask.values()) {
+    supportedTasks.add(task.toString());
+  }
+  List<ProfilerTask> typeList=new ArrayList<>();
+  for (int i=0; i < typeCount; i++) {
+    String name=in.readUTF();
+    if (supportedTasks.contains(name)) {
+      typeList.add(ProfilerTask.valueOf(name));
+    }
+ else {
+      hasUnknownTypes=true;
+      typeList.add(ProfilerTask.UNKNOWN);
+    }
+  }
+  ProfileInfo info=new ProfileInfo(fileComment);
+  try {
+    int size;
+    while ((size=in.readInt()) != Profiler.EOF_MARKER) {
+      byte[] backingArray=new byte[size];
+      in.readFully(backingArray);
+      ByteBuffer buffer=ByteBuffer.wrap(backingArray);
+      long threadId=VarInt.getVarLong(buffer);
+      int id=VarInt.getVarInt(buffer);
+      int parentId=VarInt.getVarInt(buffer);
+      long startTime=VarInt.getVarLong(buffer);
+      long duration=VarInt.getVarLong(buffer);
+      int descIndex=VarInt.getVarInt(buffer) - 1;
+      if (descIndex == -1) {
+        String desc=in.readUTF();
+        descIndex=info.descriptionList.size();
+        info.descriptionList.add(desc);
+      }
+      ProfilerTask type=typeList.get(buffer.get());
+      byte[] stats=null;
+      if (buffer.hasRemaining()) {
+        int offset=buffer.position();
+        stats=Arrays.copyOfRange(backingArray,offset,size);
+        if (hasUnknownTypes) {
+          while (buffer.hasRemaining()) {
+            byte attrType=buffer.get();
+            if (typeList.get(attrType) == ProfilerTask.UNKNOWN) {
+              stats[buffer.position() - 1 - offset]=(byte)ProfilerTask.UNKNOWN.ordinal();
+            }
+            VarInt.getVarInt(buffer);
+            VarInt.getVarLong(buffer);
+          }
+        }
+      }
+      ProfileInfo.Task task=info.new Task(threadId,id,parentId,startTime,duration,type,descIndex,new CompactStatistics(stats));
+      info.addTask(task);
+    }
+  }
+ catch (  IOException e) {
+    info.corruptedOrIncomplete=true;
+  }
+ finally {
+    in.close();
+  }
+  return info;
+}

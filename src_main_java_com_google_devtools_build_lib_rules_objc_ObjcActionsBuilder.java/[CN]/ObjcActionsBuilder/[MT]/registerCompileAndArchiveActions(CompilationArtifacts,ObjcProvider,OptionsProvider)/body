@@ -1,0 +1,16 @@
+{
+  ImmutableList.Builder<Artifact> objFiles=new ImmutableList.Builder<>();
+  for (  Artifact sourceFile : compilationArtifacts.getSrcs()) {
+    Artifact objFile=intermediateArtifacts.objFile(sourceFile);
+    objFiles.add(objFile);
+    registerCompileAction(sourceFile,objFile,compilationArtifacts.getPchFile(),objcProvider,ARC_ARGS,optionsProvider);
+  }
+  for (  Artifact nonArcSourceFile : compilationArtifacts.getNonArcSrcs()) {
+    Artifact objFile=intermediateArtifacts.objFile(nonArcSourceFile);
+    objFiles.add(objFile);
+    registerCompileAction(nonArcSourceFile,objFile,compilationArtifacts.getPchFile(),objcProvider,NON_ARC_ARGS,optionsProvider);
+  }
+  for (  Artifact archive : compilationArtifacts.getArchive().asSet()) {
+    registerAll(archiveActions(context,objFiles.build(),archive,objcConfiguration,intermediateArtifacts.objList()));
+  }
+}

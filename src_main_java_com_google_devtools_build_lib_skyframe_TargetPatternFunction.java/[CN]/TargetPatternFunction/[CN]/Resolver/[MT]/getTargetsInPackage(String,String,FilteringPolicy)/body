@@ -1,0 +1,18 @@
+{
+  PathFragment packageNameFragment=new PathFragment(packageName);
+  packageName=packageNameFragment.toString();
+  if (LabelValidator.validatePackageName(packageName) != null) {
+    throw new TargetParsingException("'" + packageName + "' is not a valid package name");
+  }
+  if (!isPackage(packageName)) {
+    throw new TargetParsingException(TargetPatternResolverUtil.getParsingErrorMessage("no such package '" + packageName + "': BUILD file not found on package path",originalPattern));
+  }
+  try {
+    Package pkg=getPackage(PackageIdentifier.createInDefaultRepo(packageNameFragment.toString()));
+    return TargetPatternResolverUtil.resolvePackageTargets(pkg,policy);
+  }
+ catch (  NoSuchThingException e) {
+    String message=TargetPatternResolverUtil.getParsingErrorMessage("package contains errors",originalPattern);
+    throw new TargetParsingException(message,e);
+  }
+}

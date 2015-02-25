@@ -1,0 +1,30 @@
+{
+  Preconditions.checkNotNull(otherContext);
+  compilationPrerequisites.addAll(otherContext.getCompilationPrerequisites());
+  includeDirs.addAll(otherContext.getIncludeDirs());
+  quoteIncludeDirs.addAll(otherContext.getQuoteIncludeDirs());
+  systemIncludeDirs.addAll(otherContext.getSystemIncludeDirs());
+  declaredIncludeDirs.addTransitive(otherContext.getDeclaredIncludeDirs());
+  declaredIncludeWarnDirs.addTransitive(otherContext.getDeclaredIncludeWarnDirs());
+  declaredIncludeSrcs.addTransitive(otherContext.getDeclaredIncludeSrcs());
+  pregreppedHdrs.addTransitive(otherContext.getPregreppedHeaders());
+  transitiveAuxiliaryInputs.addTransitive(otherContext.getTransitiveAuxiliaryInputs());
+  transitiveModuleMaps.addTransitive(otherContext.getTransitiveModuleMaps());
+  transitiveHeaderModuleSrcs.addTransitive(otherContext.getTransitiveHeaderModuleSrcs());
+  if (otherContext.getCppModuleMap() != null) {
+    auxiliaryInputs.add(otherContext.getCppModuleMap().getArtifact());
+  }
+  if (otherContext.getHeaderModule() != null || otherContext.getPicHeaderModule() != null) {
+    if (otherContext.getHeaderModule() != null) {
+      transitiveAuxiliaryInputs.add(otherContext.getHeaderModule());
+    }
+    if (otherContext.getPicHeaderModule() != null) {
+      transitiveAuxiliaryInputs.add(otherContext.getPicHeaderModule());
+    }
+    transitiveAuxiliaryInputs.addAll(otherContext.getTransitiveModuleMaps());
+    transitiveHeaderModuleSrcs.addAll(otherContext.getHeaderModuleSrcs());
+  }
+  auxiliaryInputs.addAll(transitiveAuxiliaryInputs.build().toCollection());
+  defines.addAll(otherContext.getDefines());
+  return this;
+}

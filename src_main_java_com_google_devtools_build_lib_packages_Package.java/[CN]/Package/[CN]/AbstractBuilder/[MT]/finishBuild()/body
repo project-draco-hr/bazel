@@ -1,0 +1,17 @@
+{
+  if (alreadyBuilt) {
+    return pkg;
+  }
+  targets=ImmutableMap.copyOf(targets);
+  defaultDistributionSet=Collections.unmodifiableSet(defaultDistributionSet);
+  for (  EnvironmentGroup envGroup : ImmutableSet.copyOf(environmentGroups.values())) {
+    Collection<Event> errors=envGroup.checkEnvironmentsExist(targets);
+    if (!errors.isEmpty()) {
+      addEvents(errors);
+      setContainsErrors();
+    }
+  }
+  pkg.finishInit(this);
+  alreadyBuilt=true;
+  return pkg;
+}

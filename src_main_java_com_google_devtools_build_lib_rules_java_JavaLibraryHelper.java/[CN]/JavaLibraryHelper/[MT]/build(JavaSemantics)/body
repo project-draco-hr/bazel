@@ -1,0 +1,27 @@
+{
+  Preconditions.checkState(output != null,"must have an output file; use setOutput()");
+  JavaTargetAttributes.Builder attributes=new JavaTargetAttributes.Builder(semantics);
+  attributes.addSourceJars(sourceJars);
+  addDepsToAttributes(attributes);
+  attributes.setStrictJavaDeps(strictDepsMode);
+  attributes.setRuleKind(ruleContext.getRule().getRuleClass());
+  attributes.setTargetLabel(ruleContext.getLabel());
+  if (isStrict() && classpathMode != JavaClasspathMode.OFF) {
+    addDependencyArtifactsToAttributes(attributes);
+  }
+  JavaCompilationArtifacts.Builder artifactsBuilder=new JavaCompilationArtifacts.Builder();
+  JavaCompilationHelper helper=new JavaCompilationHelper(ruleContext,semantics,javacOpts,attributes);
+  Artifact outputDepsProto=helper.createOutputDepsProtoArtifact(output,artifactsBuilder);
+  helper.createCompileAction(output,null,outputDepsProto,null);
+  helper.createCompileTimeJarAction(output,outputDepsProto,artifactsBuilder);
+  artifactsBuilder.addRuntimeJar(output);
+  JavaCompilationArtifacts compilationArtifacts=artifactsBuilder.build();
+  Map<Class<? extends TransitiveInfoProvider>,TransitiveInfoProvider> providers=new LinkedHashMap<>();
+  if (emitProviders) {
+    providers.put(JavaCompilationArgsProvider.class,collectJavaCompilationArgs(compilationArtifacts));
+    providers.put(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(collectTransitiveJavaSourceJars(),sourceJars));
+    providers.put(JavaRunfilesProvider.class,collectJavaRunfiles(compilationArtifacts));
+    providers.put(JavaCcLinkParamsProvider.class,new JavaCcLinkParamsProvider(createJavaCcLinkParamsStore()));
+  }
+  return new Info(providers,compilationArtifacts);
+}

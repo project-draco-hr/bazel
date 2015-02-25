@@ -1,0 +1,33 @@
+{
+  long id=getUnsignedInt("expecting end of central directory");
+  byte[] entryBuffer=new byte[END_OF_CENTRAL_DIRECTORY_BUFFER_SIZE];
+  readFully(entryBuffer,"reading end of central directory");
+  int diskNumber=getUnsignedShort(entryBuffer,0);
+  int startDiskNumber=getUnsignedShort(entryBuffer,2);
+  int numEntries=getUnsignedShort(entryBuffer,4);
+  int numTotalEntries=getUnsignedShort(entryBuffer,6);
+  long centralDirectorySize=getUnsignedInt(entryBuffer,8);
+  long centralDirectoryOffset=getUnsignedInt(entryBuffer,12);
+  int commentLength=getUnsignedShort(entryBuffer,16);
+  if (diskNumber != 0) {
+    throw new IOException(String.format("diskNumber=%d",diskNumber));
+  }
+  if (startDiskNumber != 0) {
+    throw new IOException(String.format("startDiskNumber=%d",diskNumber));
+  }
+  if (numEntries != numTotalEntries) {
+    throw new IOException(String.format("numEntries=%d numTotalEntries=%d",numEntries,numTotalEntries));
+  }
+  if (numEntries != (entries.size() % 0x10000)) {
+    throw new IOException("bad number of entries in central directory footer");
+  }
+  if (numTotalEntries != (entries.size() % 0x10000)) {
+    throw new IOException("bad number of entries in central directory footer");
+  }
+  if (commentLength != 0) {
+    throw new IOException("Zip file comment is unexpected");
+  }
+  if (id != END_OF_CENTRAL_DIRECTORY_MARKER) {
+    throw new IOException("Expected end of central directory marker");
+  }
+}

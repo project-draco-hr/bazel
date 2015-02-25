@@ -1,0 +1,18 @@
+{
+  String name=path.getPathString();
+  long startTime=Profiler.nanoTimeMaybe();
+  try {
+    ErrnoFileStatus stat=followSymlinks ? FilesystemUtils.errnoStat(name) : FilesystemUtils.errnoLstat(name);
+    if (!stat.hasError()) {
+      return new UnixFileStatus(stat);
+    }
+    int errno=stat.getErrno();
+    if (errno == ErrnoFileStatus.ENOENT || errno == ErrnoFileStatus.ENOTDIR) {
+      return null;
+    }
+    return stat(path,followSymlinks);
+  }
+  finally {
+    profiler.logSimpleTask(startTime,ProfilerTask.VFS_STAT,name);
+  }
+}

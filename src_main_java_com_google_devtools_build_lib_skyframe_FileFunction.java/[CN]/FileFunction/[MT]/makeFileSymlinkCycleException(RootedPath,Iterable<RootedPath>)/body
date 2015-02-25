@@ -1,0 +1,17 @@
+{
+  boolean inPathToCycle=true;
+  ImmutableList.Builder<RootedPath> pathToCycleBuilder=ImmutableList.builder();
+  ImmutableList.Builder<RootedPath> cycleBuilder=ImmutableList.builder();
+  for (  RootedPath path : symlinkPaths) {
+    if (path.equals(startOfCycle)) {
+      inPathToCycle=false;
+    }
+    if (inPathToCycle) {
+      pathToCycleBuilder.add(path);
+    }
+ else {
+      cycleBuilder.add(path);
+    }
+  }
+  return new FileSymlinkCycleException(pathToCycleBuilder.build(),cycleBuilder.build());
+}

@@ -1,0 +1,39 @@
+{
+  SkyframeBuildView view=buildViewProvider.getSkyframeBuildView();
+  AspectKey key=(AspectKey)skyKey.argument();
+  ConfiguredAspectFactory aspectFactory=(ConfiguredAspectFactory)AspectFactory.Util.create(key.getAspect());
+  PackageValue packageValue=(PackageValue)env.getValue(PackageValue.key(key.getLabel().getPackageIdentifier()));
+  if (packageValue == null) {
+    return null;
+  }
+  Target target;
+  try {
+    target=packageValue.getPackage().getTarget(key.getLabel().getName());
+  }
+ catch (  NoSuchTargetException e) {
+    throw new AspectFunctionException(skyKey,e);
+  }
+  if (!(target instanceof Rule)) {
+    throw new AspectFunctionException(new AspectCreationException("aspects must be attached to rules"));
+  }
+  RuleConfiguredTarget associatedTarget=(RuleConfiguredTarget)((ConfiguredTargetValue)env.getValue(ConfiguredTargetValue.key(key.getLabel(),key.getConfiguration()))).getConfiguredTarget();
+  if (associatedTarget == null) {
+    return null;
+  }
+  SkyframeDependencyResolver resolver=view.createDependencyResolver(env);
+  if (resolver == null) {
+    return null;
+  }
+  TargetAndConfiguration ctgValue=new TargetAndConfiguration(target,key.getConfiguration());
+  try {
+    Set<ConfigMatchingProvider> configConditions=ConfiguredTargetFunction.getConfigConditions(target,env,resolver,ctgValue);
+    if (configConditions == null) {
+      return null;
+    }
+    ListMultimap<Attribute,ConfiguredTarget> depValueMap=ConfiguredTargetFunction.computeDependencies(env,resolver,ctgValue,aspectFactory.getDefinition(),configConditions);
+    return createAspect(env,key,associatedTarget,configConditions,depValueMap);
+  }
+ catch (  DependencyEvaluationException e) {
+    throw new AspectFunctionException(e.getRootCauseSkyKey(),e.getCause());
+  }
+}

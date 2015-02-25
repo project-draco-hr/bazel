@@ -1,0 +1,15 @@
+{
+  getReporter().setOutputFilter(OutputFilter.OUTPUT_EVERYTHING);
+  notifyCommandComplete(exitCode);
+  for (  BlazeModule module : blazeModules) {
+    module.afterCommand();
+  }
+  clearEventBus();
+  try {
+    Profiler.instance().stop();
+    MemoryProfiler.instance().stop();
+  }
+ catch (  IOException e) {
+    getReporter().handle(Event.error("Error while writing profile file: " + e.getMessage()));
+  }
+}

@@ -1,0 +1,37 @@
+{
+  super(name,path,sourceTree);
+  sortPolicy=SortPolicy.BY_NAME;
+  children=Lists.newArrayList();
+  childGroupsByName=CacheBuilder.newBuilder().build(new CacheLoader<String,PBXGroup>(){
+    @Override public PBXGroup load(    String key) throws Exception {
+      PBXGroup group=new PBXGroup(key,null,SourceTree.GROUP);
+      children.add(group);
+      return group;
+    }
+  }
+);
+  childVariantGroupsByName=CacheBuilder.newBuilder().build(new CacheLoader<String,PBXVariantGroup>(){
+    @Override public PBXVariantGroup load(    String key) throws Exception {
+      PBXVariantGroup group=new PBXVariantGroup(key,null,SourceTree.GROUP);
+      children.add(group);
+      return group;
+    }
+  }
+);
+  fileReferencesBySourceTreePath=CacheBuilder.newBuilder().build(new CacheLoader<SourceTreePath,PBXFileReference>(){
+    @Override public PBXFileReference load(    SourceTreePath key) throws Exception {
+      PBXFileReference ref=new PBXFileReference(key.getPath().getFileName().toString(),key.getPath().toString(),key.getSourceTree());
+      children.add(ref);
+      return ref;
+    }
+  }
+);
+  childVersionGroupsBySourceTreePath=CacheBuilder.newBuilder().build(new CacheLoader<SourceTreePath,XCVersionGroup>(){
+    @Override public XCVersionGroup load(    SourceTreePath key) throws Exception {
+      XCVersionGroup ref=new XCVersionGroup(key.getPath().getFileName().toString(),key.getPath().toString(),key.getSourceTree());
+      children.add(ref);
+      return ref;
+    }
+  }
+);
+}

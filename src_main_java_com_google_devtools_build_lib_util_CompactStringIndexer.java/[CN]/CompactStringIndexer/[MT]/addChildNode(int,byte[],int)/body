@@ -1,0 +1,11 @@
+{
+  int child=createNode(parentNode,key,keyOffset);
+  byte[] content=nodes.get(parentNode);
+  int entryOffset=content.length;
+  byte[] newContent=new byte[entryOffset + 1 + VarInt.varIntSize(child)];
+  System.arraycopy(content,0,newContent,0,entryOffset);
+  newContent[entryOffset]=key[keyOffset];
+  VarInt.putVarInt(child,newContent,entryOffset + 1);
+  updateNode(parentNode,newContent);
+  return child;
+}

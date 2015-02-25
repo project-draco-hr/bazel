@@ -1,0 +1,27 @@
+{
+  Collection<Artifact> extraActionOutputs=new LinkedHashSet<>();
+  ImmutableSet.Builder<Artifact> extraActionInputs=ImmutableSet.builder();
+  ActionOwner owner=actionToShadow.getOwner();
+  Label ownerLabel=owner.getLabel();
+  if (requiresActionOutput) {
+    extraActionInputs.addAll(actionToShadow.getOutputs());
+  }
+  extraActionInputs.addAll(resolvedTools);
+  extraActionInputs.addAll(resolvedData);
+  boolean createDummyOutput=false;
+  for (  String outputTemplate : outputTemplates) {
+    extraActionOutputs.add(getExtraActionOutputArtifact(owningRule,actionToShadow,owner,outputTemplate));
+  }
+  if (extraActionOutputs.size() == 0) {
+    createDummyOutput=true;
+    extraActionOutputs.add(getExtraActionOutputArtifact(owningRule,actionToShadow,owner,"$(ACTION_ID).dummy"));
+  }
+  Artifact extraActionInfoFile=getExtraActionOutputArtifact(owningRule,actionToShadow,owner,"$(ACTION_ID).xa");
+  extraActionOutputs.add(extraActionInfoFile);
+  String command=createExpandedCommand(owningRule,actionToShadow,owner,extraActionInfoFile);
+  Map<String,String> env=owningRule.getConfiguration().getDefaultShellEnvironment();
+  List<String> argv=CommandHelper.buildCommandLine(owningRule,command,extraActionInputs,".extra_action_script.sh");
+  String commandMessage=String.format("Executing extra_action %s on %s",label,ownerLabel);
+  owningRule.registerAction(new ExtraAction(actionToShadow.getOwner(),extraActionInputs.build(),manifests,extraActionInfoFile,extraActionOutputs,actionToShadow,createDummyOutput,CommandLine.of(argv,false),env,commandMessage,label.getName()));
+  return extraActionOutputs;
+}

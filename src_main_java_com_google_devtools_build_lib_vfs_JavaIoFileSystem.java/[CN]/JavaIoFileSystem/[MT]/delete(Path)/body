@@ -1,0 +1,23 @@
+{
+  File file=getIoFile(path);
+  long startTime=Profiler.nanoTimeMaybe();
+synchronized (path) {
+    try {
+      if (file.delete()) {
+        return true;
+      }
+      if (file.exists()) {
+        if (file.isDirectory() && file.list().length > 0) {
+          throw new IOException(path + ERR_DIRECTORY_NOT_EMPTY);
+        }
+ else {
+          throw new IOException(path + ERR_PERMISSION_DENIED);
+        }
+      }
+      return false;
+    }
+  finally {
+      profiler.logSimpleTask(startTime,ProfilerTask.VFS_DELETE,file.getPath());
+    }
+  }
+}

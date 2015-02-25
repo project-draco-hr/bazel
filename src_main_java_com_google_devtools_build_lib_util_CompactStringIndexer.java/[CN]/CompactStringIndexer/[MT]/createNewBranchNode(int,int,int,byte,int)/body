@@ -1,0 +1,19 @@
+{
+  byte[] content=nodes.get(originalNode);
+  int[] intHolder=new int[1];
+  int keyOffset=VarInt.getVarInt(content,0,intHolder);
+  int parentIndex=(originalNode == intHolder[0] ? newBranchNode : intHolder[0]);
+  keyOffset=VarInt.getVarInt(content,keyOffset,intHolder);
+  Preconditions.checkState(intHolder[0] >= splitOffset);
+  int newSize=VarInt.varIntSize(parentIndex) + VarInt.varIntSize(splitOffset) + splitOffset+ 1+ VarInt.varIntSize(originalNode)+ (childIndex != NOT_FOUND ? 1 + VarInt.varIntSize(childIndex) : 0);
+  byte[] newContent=new byte[newSize];
+  int contentOffset=VarInt.putVarInt(parentIndex,newContent,0);
+  contentOffset=VarInt.putVarInt(splitOffset,newContent,contentOffset);
+  System.arraycopy(content,keyOffset,newContent,contentOffset,splitOffset + 1);
+  contentOffset=VarInt.putVarInt(originalNode,newContent,contentOffset + splitOffset + 1);
+  if (childIndex != NOT_FOUND) {
+    newContent[contentOffset]=indexKey;
+    VarInt.putVarInt(childIndex,newContent,contentOffset + 1);
+  }
+  updateNode(newBranchNode,newContent);
+}

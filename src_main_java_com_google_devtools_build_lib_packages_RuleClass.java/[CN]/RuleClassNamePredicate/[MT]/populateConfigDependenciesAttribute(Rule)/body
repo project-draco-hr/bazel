@@ -1,0 +1,19 @@
+{
+  RawAttributeMapper attributes=RawAttributeMapper.of(rule);
+  Attribute configDepsAttribute=attributes.getAttributeDefinition("$config_dependencies");
+  if (configDepsAttribute == null) {
+    return;
+  }
+  Set<Label> configLabels=new LinkedHashSet<>();
+  for (  Attribute attr : rule.getAttributes()) {
+    Type.Selector<?> selector=attributes.getSelector(attr.getName(),attr.getType());
+    if (selector != null) {
+      for (      Label label : selector.getEntries().keySet()) {
+        if (!Type.Selector.isReservedLabel(label)) {
+          configLabels.add(label);
+        }
+      }
+    }
+  }
+  rule.setAttributeValue(configDepsAttribute,ImmutableList.copyOf(configLabels),false);
+}

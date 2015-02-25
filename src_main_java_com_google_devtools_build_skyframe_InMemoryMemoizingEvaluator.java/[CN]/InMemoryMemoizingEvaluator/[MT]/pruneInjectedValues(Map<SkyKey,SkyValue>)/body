@@ -1,0 +1,15 @@
+{
+  for (Iterator<Entry<SkyKey,SkyValue>> it=valuesToInject.entrySet().iterator(); it.hasNext(); ) {
+    Entry<SkyKey,SkyValue> entry=it.next();
+    SkyKey key=entry.getKey();
+    SkyValue newValue=entry.getValue();
+    NodeEntry prevEntry=graph.get(key);
+    if (prevEntry != null && prevEntry.isDone()) {
+      Iterable<SkyKey> directDeps=prevEntry.getDirectDeps();
+      Preconditions.checkState(Iterables.isEmpty(directDeps),"existing entry for %s has deps: %s",key,directDeps);
+      if (newValue.equals(prevEntry.getValue()) && !valuesToDirty.contains(key) && !valuesToDelete.contains(key)) {
+        it.remove();
+      }
+    }
+  }
+}

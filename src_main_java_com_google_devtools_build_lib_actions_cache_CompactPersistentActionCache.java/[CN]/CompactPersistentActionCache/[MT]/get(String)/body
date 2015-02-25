@@ -1,0 +1,16 @@
+{
+  int index=indexer.getIndex(key);
+  if (index < 0) {
+    return null;
+  }
+  byte[] data;
+synchronized (this) {
+    data=map.get(index);
+  }
+  try {
+    return data != null ? CompactPersistentActionCache.decode(indexer,data) : null;
+  }
+ catch (  IOException e) {
+    return CORRUPTED;
+  }
+}

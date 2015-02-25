@@ -1,0 +1,48 @@
+{
+  this.runtime=runtime;
+  this.request=request;
+  List<ActionContextConsumer> actionContextConsumers=new ArrayList<>();
+  actionContextProviders=new ArrayList<>();
+  for (  BlazeModule module : runtime.getBlazeModules()) {
+    ActionContextProvider provider=module.getActionContextProvider();
+    if (provider != null) {
+      actionContextProviders.add(provider);
+    }
+    ActionContextConsumer consumer=module.getActionContextConsumer();
+    if (consumer != null) {
+      actionContextConsumers.add(consumer);
+    }
+  }
+  actionContextProviders.add(new FilesetActionContextImpl.Provider(runtime.getReporter(),runtime.getWorkspaceName()));
+  strategies.add(new SourceManifestActionContextImpl(runtime.getRunfilesPrefix()));
+  strategies.add(new SymlinkTreeStrategy(runtime.getOutputService(),runtime.getBinTools()));
+  StrategyConverter strategyConverter=new StrategyConverter(actionContextProviders);
+  strategies.add(strategyConverter.getStrategy(FilesetActionContext.class,""));
+  strategies.add(strategyConverter.getStrategy(WorkspaceStatusAction.Context.class,""));
+  for (  ActionContextConsumer consumer : actionContextConsumers) {
+    for (    Map.Entry<String,String> entry : consumer.getSpawnActionContexts().entrySet()) {
+      SpawnActionContext context=strategyConverter.getStrategy(SpawnActionContext.class,entry.getValue());
+      if (context == null) {
+        throw makeExceptionForInvalidStrategyValue(entry.getValue(),"spawn",strategyConverter.getValidValues(SpawnActionContext.class));
+      }
+      spawnStrategyMap.put(entry.getKey(),context);
+    }
+    for (    Map.Entry<Class<? extends ActionContext>,String> entry : consumer.getActionContexts().entrySet()) {
+      ActionContext context=strategyConverter.getStrategy(entry.getKey(),entry.getValue());
+      if (context != null) {
+        strategies.add(context);
+      }
+ else       if (!entry.getValue().isEmpty()) {
+        throw makeExceptionForInvalidStrategyValue(entry.getValue(),strategyConverter.getUserFriendlyName(entry.getKey()),strategyConverter.getValidValues(entry.getKey()));
+      }
+    }
+  }
+  if (request.shouldRunTests()) {
+    String testStrategyValue=request.getOptions(ExecutionOptions.class).testStrategy;
+    ActionContext context=strategyConverter.getStrategy(TestActionContext.class,testStrategyValue);
+    if (context == null) {
+      throw makeExceptionForInvalidStrategyValue(testStrategyValue,"test",strategyConverter.getValidValues(TestActionContext.class));
+    }
+    strategies.add(context);
+  }
+}

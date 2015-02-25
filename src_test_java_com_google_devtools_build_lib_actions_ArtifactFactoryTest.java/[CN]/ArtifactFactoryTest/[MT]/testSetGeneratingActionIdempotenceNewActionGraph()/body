@@ -1,0 +1,16 @@
+{
+  Artifact a=artifactFactory.getDerivedArtifact(fooRelative,outRoot,NULL_ARTIFACT_OWNER);
+  Artifact b=artifactFactory.getDerivedArtifact(barRelative,outRoot,NULL_ARTIFACT_OWNER);
+  MutableActionGraph actionGraph=new MapBasedActionGraph();
+  Action originalAction=new ActionsTestUtil.NullAction(NULL_ACTION_OWNER,a);
+  actionGraph.registerAction(originalAction);
+  try {
+    Action action=new ActionsTestUtil.NullAction(NULL_ACTION_OWNER,a,b);
+    actionGraph.registerAction(action);
+    fail();
+  }
+ catch (  ActionConflictException e) {
+    assertSame(a,e.getArtifact());
+    assertSame(originalAction,actionGraph.getGeneratingAction(a));
+  }
+}

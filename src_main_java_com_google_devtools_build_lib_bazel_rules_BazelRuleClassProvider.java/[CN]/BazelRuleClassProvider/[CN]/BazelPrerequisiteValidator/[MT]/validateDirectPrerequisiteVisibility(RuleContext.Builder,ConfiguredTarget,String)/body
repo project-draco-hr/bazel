@@ -1,0 +1,18 @@
+{
+  Rule rule=context.getRule();
+  Target prerequisiteTarget=prerequisite.getTarget();
+  Label prerequisiteLabel=prerequisiteTarget.getLabel();
+  if (!context.getRule().getLabel().getPackageName().equals(prerequisite.getTarget().getLabel().getPackageName()) && !context.isVisible(prerequisite)) {
+    if (!context.getConfiguration().checkVisibility()) {
+      context.ruleWarning(String.format("Target '%s' violates visibility of target " + "'%s'. Continuing because --nocheck_visibility is active",rule.getLabel(),prerequisiteLabel));
+    }
+ else {
+      context.reportError(rule.getLocation(),String.format("Target '%s' is not visible from target '%s'. Check " + "the visibility declaration of the former target if you think " + "the dependency is legitimate",prerequisiteLabel,rule.getLabel()));
+    }
+  }
+  if (prerequisiteTarget instanceof PackageGroup) {
+    if (!attrName.equals("visibility")) {
+      context.reportError(rule.getAttributeLocation(attrName),"in " + attrName + " attribute of "+ rule.getRuleClass()+ " rule "+ rule.getLabel()+ ": package group '"+ prerequisiteLabel+ "' is misplaced here "+ "(they are only allowed in the visibility attribute)");
+    }
+  }
+}

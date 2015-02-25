@@ -1,0 +1,10 @@
+{
+synchronized (summaryLock) {
+    for (    ConfiguredTarget target : event.getTestTargets()) {
+      Iterable<Artifact> statusArtifacts=target.getProvider(TestProvider.class).getTestParams().getTestStatusArtifacts();
+      preconditionHelper.checkState(remainingRuns.putAll(asKey(target),statusArtifacts));
+      TestSummary.Builder summary=TestSummary.newBuilder().setTarget(target).setStatus(BlazeTestStatus.NO_STATUS);
+      preconditionHelper.checkState(summaries.put(asKey(target),summary) == null);
+    }
+  }
+}

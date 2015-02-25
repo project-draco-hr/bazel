@@ -1,0 +1,16 @@
+{
+  return getDirtyValues(values,FILE_STATE_AND_DIRECTORY_LISTING_STATE_FILTER,new DirtyChecker(){
+    @Override public DirtyResult check(    SkyKey key,    SkyValue oldValue,    TimestampGranularityMonitor tsgm){
+      if (key.functionName() == SkyFunctions.FILE_STATE) {
+        return checkFileStateValue((RootedPath)key.argument(),(FileStateValue)oldValue,tsgm);
+      }
+ else       if (key.functionName() == SkyFunctions.DIRECTORY_LISTING_STATE) {
+        return checkDirectoryListingStateValue((RootedPath)key.argument(),(DirectoryListingStateValue)oldValue);
+      }
+ else {
+        throw new IllegalStateException("Unexpected key type " + key);
+      }
+    }
+  }
+);
+}

@@ -1,0 +1,48 @@
+{
+  Iterable<BundleableFile> bundleImports=BundleableFile.bundleImportsFromRule(context);
+  ObjcProvider.Builder objcProvider=new ObjcProvider.Builder().addAll(IMPORTED_LIBRARY,extraImportLibraries).addAll(BUNDLE_FILE,bundleImports).addAll(BUNDLE_IMPORT_DIR,uniqueContainers(BundleableFile.toArtifacts(bundleImports),BUNDLE_CONTAINER_TYPE)).addAll(SDK_FRAMEWORK,extraSdkFrameworks).addAll(WEAK_SDK_FRAMEWORK,extraWeakSdkFrameworks).addAll(SDK_DYLIB,extraSdkDylibs).addAll(FRAMEWORK_FILE,frameworkImports).addAll(FRAMEWORK_DIR,uniqueContainers(frameworkImports,FRAMEWORK_CONTAINER_TYPE)).addAll(INCLUDE,userHeaderSearchPaths).addAll(DEFINE,defines).addAll(HEADER,headers).addTransitiveAndPropagate(depObjcProviders).addTransitiveWithoutPropagating(directDepObjcProviders);
+  Storyboards storyboards;
+  Iterable<Xcdatamodel> datamodels;
+  if (compilationAttributes.isPresent()) {
+    CompilationAttributes attributes=compilationAttributes.get();
+    ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(context);
+    Iterable<PathFragment> sdkIncludes=Iterables.transform(Interspersing.prependEach(IosSdkCommands.sdkDir(objcConfiguration) + "/usr/include/",PathFragment.safePathStrings(attributes.sdkIncludes())),TO_PATH_FRAGMENT);
+    objcProvider.addAll(HEADER,attributes.hdrs()).addAll(INCLUDE,attributes.headerSearchPaths()).addAll(INCLUDE,sdkIncludes).addAll(SDK_FRAMEWORK,attributes.sdkFrameworks()).addAll(WEAK_SDK_FRAMEWORK,attributes.weakSdkFrameworks()).addAll(SDK_DYLIB,attributes.sdkDylibs());
+  }
+  if (resourceAttributes.isPresent()) {
+    ResourceAttributes attributes=resourceAttributes.get();
+    storyboards=Storyboards.fromInputs(attributes.storyboards(),intermediateArtifacts);
+    datamodels=Xcdatamodels.xcdatamodels(intermediateArtifacts,attributes.datamodels());
+    Iterable<CompiledResourceFile> compiledResources=CompiledResourceFile.fromStringsFiles(intermediateArtifacts,attributes.strings());
+    XibFiles xibFiles=new XibFiles(attributes.xibs());
+    objcProvider.addTransitiveAndPropagate(MERGE_ZIP,storyboards.getOutputZips()).addAll(MERGE_ZIP,xibFiles.compiledZips(intermediateArtifacts)).addAll(GENERAL_RESOURCE_FILE,storyboards.getInputs()).addAll(GENERAL_RESOURCE_FILE,attributes.resources()).addAll(GENERAL_RESOURCE_FILE,attributes.strings()).addAll(GENERAL_RESOURCE_FILE,attributes.xibs()).addAll(BUNDLE_FILE,BundleableFile.nonCompiledResourceFiles(attributes.resources())).addAll(BUNDLE_FILE,Iterables.transform(compiledResources,CompiledResourceFile.TO_BUNDLED)).addAll(XCASSETS_DIR,uniqueContainers(attributes.assetCatalogs(),ASSET_CATALOG_CONTAINER_TYPE)).addAll(ASSET_CATALOG,attributes.assetCatalogs()).addAll(XCDATAMODEL,datamodels);
+  }
+ else {
+    storyboards=Storyboards.empty();
+    datamodels=ImmutableList.of();
+  }
+  for (  CompilationArtifacts artifacts : compilationArtifacts.asSet()) {
+    objcProvider.addAll(LIBRARY,artifacts.getArchive().asSet());
+    boolean usesCpp=false;
+    for (    Artifact sourceFile : Iterables.concat(artifacts.getSrcs(),artifacts.getNonArcSrcs())) {
+      usesCpp=usesCpp || ObjcRuleClasses.CPP_SOURCES.matches(sourceFile.getExecPath());
+    }
+    if (usesCpp) {
+      objcProvider.add(FLAG,USES_CPP);
+    }
+  }
+  if (alwayslink) {
+    for (    CompilationArtifacts artifacts : compilationArtifacts.asSet()) {
+      for (      Artifact archive : artifacts.getArchive().asSet()) {
+        objcProvider.add(FORCE_LOAD_LIBRARY,archive);
+        objcProvider.add(FORCE_LOAD_FOR_XCODEGEN,"$(BUILT_PRODUCTS_DIR)/" + archive.getExecPath().getBaseName());
+      }
+    }
+    for (    Artifact archive : extraImportLibraries) {
+      objcProvider.add(FORCE_LOAD_LIBRARY,archive);
+      objcProvider.add(FORCE_LOAD_FOR_XCODEGEN,"$(WORKSPACE_ROOT)/" + archive.getExecPath().getSafePathString());
+    }
+  }
+  objcProvider.addAll(LINKED_BINARY,linkedBinary.asSet());
+  return new ObjcCommon(context,objcProvider.build(),storyboards,datamodels,compilationArtifacts);
+}

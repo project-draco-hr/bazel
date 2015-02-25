@@ -1,0 +1,37 @@
+{
+  final Thread thread=Thread.currentThread();
+  final AtomicBoolean interruptInvalidation=new AtomicBoolean(false);
+  initializeTester(new TrackingInvalidationReceiver(){
+    private final AtomicBoolean firstInvalidation=new AtomicBoolean(true);
+    @Override public void invalidated(    SkyValue value,    InvalidationState state){
+      if (interruptInvalidation.get() && !firstInvalidation.getAndSet(false)) {
+        thread.interrupt();
+      }
+      super.invalidated(value,state);
+    }
+  }
+);
+  SkyKey key=null;
+  for (int i=0; i < TEST_NODE_COUNT; i++) {
+    key=GraphTester.toSkyKey("node" + i);
+    if (i > 0) {
+      tester.getOrCreate(key).addDependency("node" + (i - 1)).setComputedValue(COPY);
+    }
+ else {
+      tester.set(key,new StringValue("node0"));
+    }
+  }
+  assertEquals("node0",((StringValue)tester.evalAndGet(false,key)).getValue());
+  tester.set("node0",new StringValue("new"));
+  tester.invalidate();
+  interruptInvalidation.set(true);
+  try {
+    tester.eval(false,key);
+    fail();
+  }
+ catch (  InterruptedException e) {
+  }
+  interruptInvalidation.set(false);
+  tester.graph.delete(Predicates.<SkyKey>alwaysTrue());
+  assertEquals("new",((StringValue)tester.evalAndGet(false,key)).getValue());
+}

@@ -1,0 +1,21 @@
+{
+  Preconditions.checkState(javacOpts != null);
+  sources=ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list();
+  activePlugins=collectPlugins();
+  JavaTargetAttributes.Builder javaTargetAttributes=new JavaTargetAttributes.Builder(semantics);
+  processSrcs(javaTargetAttributes,javacOpts);
+  javaTargetAttributes.addSourceArtifacts(extraSrcs);
+  processRuntimeDeps(javaTargetAttributes);
+  semantics.commonDependencyProcessing(ruleContext,javaTargetAttributes,targetsTreatedAsDeps(ClasspathType.COMPILE_ONLY));
+  if ((javaTargetAttributes.hasSourceFiles() || javaTargetAttributes.hasSourceJars()) && javaTargetAttributes.hasJarFiles()) {
+    ruleContext.attributeWarning("srcs","cannot use both Java sources - source " + "jars or source files - and precompiled jars");
+  }
+  if (disallowDepsWithoutSrcs(ruleContext.getRule().getRuleClass()) && ruleContext.attributes().get("srcs",Type.LABEL_LIST).isEmpty() && ruleContext.getRule().isAttributeValueExplicitlySpecified("deps")) {
+    ruleContext.attributeError("deps","deps not allowed without srcs; move to runtime_deps?");
+  }
+  javaTargetAttributes.addResources(semantics.collectResources(ruleContext));
+  addPlugins(javaTargetAttributes);
+  javaTargetAttributes.setRuleKind(ruleContext.getRule().getRuleClass());
+  javaTargetAttributes.setTargetLabel(ruleContext.getLabel());
+  return javaTargetAttributes;
+}

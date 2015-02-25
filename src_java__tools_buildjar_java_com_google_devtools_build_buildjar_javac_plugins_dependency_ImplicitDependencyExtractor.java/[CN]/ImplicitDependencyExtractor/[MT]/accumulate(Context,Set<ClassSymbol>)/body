@@ -1,0 +1,18 @@
+{
+  Symtab symtab=Symtab.instance(context);
+  if (symtab.classes == null) {
+    return;
+  }
+  for (  ClassSymbol root : roots) {
+    root.type.accept(typeVisitor,null);
+  }
+  Set<JavaFileObject> platformClasses=getPlatformClasses(fileManager);
+  for (  ClassSymbol cs : symtab.classes.values()) {
+    if (cs.classfile != null) {
+      collectJarOf(cs.classfile,platformClasses);
+    }
+ else     if (cs.sourcefile != null) {
+      collectJarOf(cs.sourcefile,platformClasses);
+    }
+  }
+}

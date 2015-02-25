@@ -1,0 +1,37 @@
+{
+  ExternalFilesHelper externalFilesHelper=new ExternalFilesHelper(pkgLocator,immutableDirectories);
+  ImmutableMap.Builder<SkyFunctionName,SkyFunction> map=ImmutableMap.builder();
+  map.put(SkyFunctions.PRECOMPUTED,new PrecomputedFunction());
+  map.put(SkyFunctions.FILE_STATE,new FileStateFunction(tsgm,externalFilesHelper));
+  map.put(SkyFunctions.DIRECTORY_LISTING_STATE,new DirectoryListingStateFunction(externalFilesHelper));
+  map.put(SkyFunctions.FILE_SYMLINK_CYCLE_UNIQUENESS,new FileSymlinkCycleUniquenessFunction());
+  map.put(SkyFunctions.FILE,new FileFunction(pkgLocator,externalFilesHelper));
+  map.put(SkyFunctions.DIRECTORY_LISTING,new DirectoryListingFunction());
+  map.put(SkyFunctions.PACKAGE_LOOKUP,new PackageLookupFunction(deletedPackages));
+  map.put(SkyFunctions.CONTAINING_PACKAGE_LOOKUP,new ContainingPackageLookupFunction());
+  map.put(SkyFunctions.AST_FILE_LOOKUP,new ASTFileLookupFunction(pkgLocator,packageManager,pkgFactory.getRuleClassProvider()));
+  map.put(SkyFunctions.SKYLARK_IMPORTS_LOOKUP,new SkylarkImportLookupFunction(pkgFactory.getRuleClassProvider(),pkgFactory));
+  map.put(SkyFunctions.GLOB,new GlobFunction());
+  map.put(SkyFunctions.TARGET_PATTERN,new TargetPatternFunction(pkgLocator));
+  map.put(SkyFunctions.RECURSIVE_PKG,new RecursivePkgFunction());
+  map.put(SkyFunctions.PACKAGE,new PackageFunction(reporter,pkgFactory,packageManager,showLoadingProgress,packageFunctionCache,eventBus,numPackagesLoaded));
+  map.put(SkyFunctions.TARGET_MARKER,new TargetMarkerFunction());
+  map.put(SkyFunctions.TRANSITIVE_TARGET,new TransitiveTargetFunction());
+  map.put(SkyFunctions.CONFIGURED_TARGET,new ConfiguredTargetFunction(new BuildViewProvider()));
+  map.put(SkyFunctions.ASPECT,new AspectFunction(new BuildViewProvider()));
+  map.put(SkyFunctions.POST_CONFIGURED_TARGET,new PostConfiguredTargetFunction(new BuildViewProvider()));
+  map.put(SkyFunctions.CONFIGURATION_COLLECTION,new ConfigurationCollectionFunction(configurationFactory,clientEnv,configurationPackages));
+  map.put(SkyFunctions.CONFIGURATION_FRAGMENT,new ConfigurationFragmentFunction(configurationFragments,configurationPackages));
+  map.put(SkyFunctions.WORKSPACE_FILE,new WorkspaceFileFunction(pkgFactory));
+  map.put(SkyFunctions.TARGET_COMPLETION,new TargetCompletionFunction(eventBus));
+  map.put(SkyFunctions.TEST_COMPLETION,new TestCompletionFunction());
+  map.put(SkyFunctions.ARTIFACT,new ArtifactFunction(allowedMissingInputs));
+  map.put(SkyFunctions.BUILD_INFO_COLLECTION,new BuildInfoCollectionFunction(artifactFactory,buildDataDirectory));
+  map.put(SkyFunctions.BUILD_INFO,new WorkspaceStatusFunction());
+  map.put(SkyFunctions.COVERAGE_REPORT,new CoverageReportFunction());
+  map.put(SkyFunctions.ACTION_EXECUTION,new ActionExecutionFunction(skyframeActionExecutor,tsgm));
+  map.put(SkyFunctions.RECURSIVE_FILESYSTEM_TRAVERSAL,new RecursiveFilesystemTraversalFunction());
+  map.put(SkyFunctions.FILESET_ENTRY,new FilesetEntryFunction());
+  map.putAll(extraSkyFunctions);
+  return map.build();
+}

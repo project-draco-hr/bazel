@@ -1,0 +1,22 @@
+{
+  Map<K,Task[]> taskMap=Maps.newHashMapWithExpectedSize(10000);
+  if (taskList.size() == 0) {
+    return taskMap;
+  }
+  Task[] taskArray=taskList.toArray(new Task[taskList.size()]);
+  Arrays.sort(taskArray,this);
+  K key=getKey(taskArray[0]);
+  int start=0;
+  for (int i=0; i < taskArray.length; i++) {
+    K currentKey=getKey(taskArray[i]);
+    if (!key.equals(currentKey)) {
+      taskMap.put(key,Arrays.copyOfRange(taskArray,start,i));
+      key=currentKey;
+      start=i;
+    }
+  }
+  if (start < taskArray.length) {
+    taskMap.put(key,Arrays.copyOfRange(taskArray,start,taskArray.length));
+  }
+  return taskMap;
+}

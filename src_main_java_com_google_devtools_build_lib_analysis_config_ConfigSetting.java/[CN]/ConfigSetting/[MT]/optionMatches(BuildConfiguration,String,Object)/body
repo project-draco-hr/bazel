@@ -1,0 +1,27 @@
+{
+  Object actualValue=config.getOptionValue(optionName);
+  if (actualValue == null) {
+    return expectedValue == null;
+  }
+ else   if (!config.allowsMultipleValues(optionName)) {
+    return actualValue.equals(expectedValue);
+  }
+  Preconditions.checkState(actualValue instanceof List);
+  Preconditions.checkState(expectedValue instanceof List);
+  List<?> actualList=(List<?>)actualValue;
+  List<?> expectedList=(List<?>)expectedValue;
+  if (actualList.isEmpty() || expectedList.isEmpty()) {
+    return actualList.isEmpty() && expectedList.isEmpty();
+  }
+  Object expectedSingleValue=Iterables.getOnlyElement(expectedList);
+  if (actualList.get(0) instanceof Map.Entry) {
+    Map.Entry<?,?> expectedEntry=(Map.Entry<?,?>)expectedSingleValue;
+    for (    Map.Entry<?,?> actualEntry : Lists.reverse((List<Map.Entry<?,?>>)actualList)) {
+      if (actualEntry.getKey().equals(expectedEntry.getKey())) {
+        return actualEntry.getValue().equals(expectedEntry.getValue());
+      }
+    }
+    return false;
+  }
+  return actualList.contains(expectedSingleValue);
+}

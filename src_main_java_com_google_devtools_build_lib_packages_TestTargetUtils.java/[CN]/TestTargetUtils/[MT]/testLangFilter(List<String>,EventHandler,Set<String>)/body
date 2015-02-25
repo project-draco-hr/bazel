@@ -1,0 +1,23 @@
+{
+  final Set<String> requiredLangs=new HashSet<>();
+  final Set<String> excludedLangs=new HashSet<>();
+  for (  String lang : langFilterList) {
+    if (lang.startsWith("-")) {
+      lang=lang.substring(1);
+      excludedLangs.add(lang);
+    }
+ else {
+      requiredLangs.add(lang);
+    }
+    if (!allRuleNames.contains(lang + "_test")) {
+      reporter.handle(Event.warn("Unknown language '" + lang + "' in --test_lang_filters option"));
+    }
+  }
+  return new Predicate<Target>(){
+    @Override public boolean apply(    Target rule){
+      String ruleLang=TargetUtils.getRuleLanguage(rule);
+      return (requiredLangs.isEmpty() || requiredLangs.contains(ruleLang)) && !excludedLangs.contains(ruleLang);
+    }
+  }
+;
+}

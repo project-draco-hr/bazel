@@ -1,0 +1,20 @@
+{
+  createTestDirectoryTree();
+  Path originalFile=file1;
+  byte[] content=new byte[]{'a','b','c',23,42};
+  FileSystemUtils.writeContent(originalFile,content);
+  file1.setLastModifiedTime(12345L);
+  file1.setWritable(false);
+  file1.setExecutable(false);
+  Path copyTarget=file2;
+  copyFile(originalFile,copyTarget);
+  assertEquals(12345L,file2.getLastModifiedTime());
+  assertFalse(file2.isExecutable());
+  assertFalse(file2.isWritable());
+  file1.setWritable(true);
+  file1.setExecutable(true);
+  copyFile(originalFile,copyTarget);
+  assertEquals(12345L,file2.getLastModifiedTime());
+  assertTrue(file2.isExecutable());
+  assertTrue(file2.isWritable());
+}

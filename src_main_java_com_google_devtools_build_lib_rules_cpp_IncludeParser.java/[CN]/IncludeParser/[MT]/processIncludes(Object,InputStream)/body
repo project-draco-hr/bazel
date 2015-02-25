@@ -1,0 +1,22 @@
+{
+  List<Inclusion> inclusions=new ArrayList<>();
+  InputStreamReader reader=new InputStreamReader(is,ISO_8859_1);
+  try {
+    for (    String line : CharStreams.readLines(reader)) {
+      char qchar=line.charAt(0);
+      String name=line.substring(1);
+      Inclusion.Kind kind=KIND_MAP.get(qchar);
+      if (kind == null) {
+        throw new IOException("Illegal inclusion kind '" + qchar + "'");
+      }
+      inclusions.add(new Inclusion(name,kind));
+    }
+  }
+ catch (  IOException e) {
+    throw new IOException("Error reading include file " + streamName + ": "+ e.getMessage());
+  }
+ finally {
+    reader.close();
+  }
+  return inclusions;
+}

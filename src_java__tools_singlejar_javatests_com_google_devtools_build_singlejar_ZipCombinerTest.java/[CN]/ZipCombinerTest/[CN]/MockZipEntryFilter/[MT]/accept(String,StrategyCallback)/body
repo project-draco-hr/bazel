@@ -1,0 +1,26 @@
+{
+  calls.add(filename);
+  CustomMergeStrategy strategy=behavior.get(filename);
+  if (strategy == null) {
+    callback.copy(null);
+  }
+ else   if (strategy == COPY_PLACEHOLDER) {
+    List<String> names=renameMap.get(filename);
+    if (names != null && !names.isEmpty()) {
+      String newName=names.get(0);
+      callback.rename(newName,null);
+      if (names.size() > 1) {
+        names.remove(0);
+      }
+    }
+ else {
+      callback.copy(null);
+    }
+  }
+ else   if (strategy == SKIP_PLACEHOLDER) {
+    callback.skip();
+  }
+ else {
+    callback.customMerge(date,strategy);
+  }
+}

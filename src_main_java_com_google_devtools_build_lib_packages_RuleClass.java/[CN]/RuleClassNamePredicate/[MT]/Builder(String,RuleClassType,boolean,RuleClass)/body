@@ -1,0 +1,30 @@
+{
+  this.name=name;
+  this.skylark=skylark;
+  this.type=type;
+  this.documented=type != RuleClassType.ABSTRACT;
+  for (  RuleClass parent : parents) {
+    if (parent.getValidityPredicate() != PredicatesWithMessage.<Rule>alwaysTrue()) {
+      setValidityPredicate(parent.getValidityPredicate());
+    }
+    if (parent.preferredDependencyPredicate != Predicates.<String>alwaysFalse()) {
+      setPreferredDependencyPredicate(parent.preferredDependencyPredicate);
+    }
+    configurationFragments.addAll(parent.requiredConfigurationFragments);
+    failIfMissingConfigurationFragment|=parent.failIfMissingConfigurationFragment;
+    for (    Attribute attribute : parent.getAttributes()) {
+      String attrName=attribute.getName();
+      Preconditions.checkArgument(!attributes.containsKey(attrName) || attributes.get(attrName) == attribute,String.format("Attribute %s is inherited multiple times in %s ruleclass",attrName,name));
+      attributes.put(attrName,attribute);
+    }
+  }
+  if (this.type.equals(RuleClassType.TEST)) {
+    Attribute.Builder<Boolean> testOnlyAttr=attr("testonly",BOOLEAN).value(true).nonconfigurable("policy decision: this shouldn't depend on the configuration");
+    if (attributes.containsKey("testonly")) {
+      override(testOnlyAttr);
+    }
+ else {
+      add(testOnlyAttr);
+    }
+  }
+}

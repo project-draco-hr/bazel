@@ -1,0 +1,12 @@
+{
+  List<String> buildInfo=getBuildInfo();
+  FakeZipFile expectedResult=new FakeZipFile().addEntry("META-INF/",EXTRA_FOR_META_INF,false).addEntry(JarFile.MANIFEST_NAME,new ManifestValidator("Manifest-Version: 1.0","Created-By: blaze-singlejar"),false).addEntry("build-data.properties",new BuildInfoValidator(buildInfo),false);
+  MockSimpleFileSystem mockFs=new MockSimpleFileSystem("output.jar");
+  SingleJar singleJar=new SingleJar(mockFs);
+  List<String> args=new ArrayList<String>();
+  args.add("--output");
+  args.add("output.jar");
+  args.addAll(infoPropertyArguments(buildInfo));
+  singleJar.run(args);
+  expectedResult.assertSame(mockFs.toByteArray());
+}

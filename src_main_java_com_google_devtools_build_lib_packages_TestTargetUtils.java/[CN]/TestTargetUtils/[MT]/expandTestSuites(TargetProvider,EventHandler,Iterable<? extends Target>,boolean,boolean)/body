@@ -1,0 +1,19 @@
+{
+  Closure closure=new Closure(targetProvider,eventHandler,strict,keepGoing);
+  ResolvedTargets.Builder<Target> result=ResolvedTargets.builder();
+  for (  Target target : targets) {
+    if (TargetUtils.isTestRule(target)) {
+      result.add(target);
+    }
+ else     if (TargetUtils.isTestSuiteRule(target)) {
+      result.addAll(closure.getTestsInSuite((Rule)target));
+    }
+ else {
+      result.add(target);
+    }
+  }
+  if (closure.hasError) {
+    result.setError();
+  }
+  return result.build();
+}

@@ -1,0 +1,18 @@
+{
+  byte[] content=nodes.get(node);
+  Preconditions.checkNotNull(content);
+  int[] intHolder=new int[1];
+  int contentOffset=VarInt.getVarInt(content,0,intHolder);
+  int parentNode=intHolder[0];
+  contentOffset=VarInt.getVarInt(content,contentOffset,intHolder);
+  int len=intHolder[0];
+  byte[] key;
+  if (node != parentNode) {
+    key=reconstructKeyInternal(parentNode,suffixSize + len);
+  }
+ else {
+    key=new byte[suffixSize + len];
+  }
+  System.arraycopy(content,contentOffset,key,key.length - suffixSize - len,len);
+  return key;
+}

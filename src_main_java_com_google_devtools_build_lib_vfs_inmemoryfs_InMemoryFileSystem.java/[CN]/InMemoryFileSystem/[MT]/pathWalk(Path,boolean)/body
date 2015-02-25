@@ -1,0 +1,36 @@
+{
+  Stack<String> stack=new Stack<>();
+  PathFragment rootPathFragment=rootPath.asFragment();
+  for (Path p=path; !p.asFragment().equals(rootPathFragment); p=p.getParentDirectory()) {
+    stack.push(p.getBaseName());
+  }
+  InMemoryContentInfo inode=rootInode;
+  int parentDepth=-1;
+  int traversals=0;
+  while (!stack.isEmpty()) {
+    traversals++;
+    String name=stack.pop();
+    parentDepth+=name.equals("..") ? -1 : 1;
+    InMemoryContentInfo child=directoryLookup(inode,name,create && stack.isEmpty(),path);
+    if (child.isSymbolicLink()) {
+      PathFragment linkTarget=((InMemoryLinkInfo)child).getNormalizedLinkContent();
+      if (!inScope(parentDepth,linkTarget)) {
+        return outOfScopeStatus(linkTarget,parentDepth,stack);
+      }
+      if (linkTarget.isAbsolute()) {
+        inode=rootInode;
+        parentDepth=-1;
+      }
+      if (traversals > MAX_TRAVERSALS) {
+        throw Error.ELOOP.exception(path);
+      }
+      for (int ii=linkTarget.segmentCount() - 1; ii >= 0; --ii) {
+        stack.push(linkTarget.getSegment(ii));
+      }
+    }
+ else {
+      inode=child;
+    }
+  }
+  return inode;
+}

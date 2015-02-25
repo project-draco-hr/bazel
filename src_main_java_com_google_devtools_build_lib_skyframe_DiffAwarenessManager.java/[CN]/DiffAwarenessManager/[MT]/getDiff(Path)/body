@@ -1,0 +1,33 @@
+{
+  DiffAwarenessState diffAwarenessState=maybeGetDiffAwarenessState(pathEntry);
+  if (diffAwarenessState == null) {
+    return BrokenProcessableModifiedFileSet.INSTANCE;
+  }
+  DiffAwareness diffAwareness=diffAwarenessState.diffAwareness;
+  View newView;
+  try {
+    newView=diffAwareness.getCurrentView();
+  }
+ catch (  BrokenDiffAwarenessException e) {
+    handleBrokenDiffAwareness(pathEntry,e);
+    return BrokenProcessableModifiedFileSet.INSTANCE;
+  }
+  View baselineView=diffAwarenessState.baselineView;
+  if (baselineView == null) {
+    diffAwarenessState.baselineView=newView;
+    return BrokenProcessableModifiedFileSet.INSTANCE;
+  }
+  ModifiedFileSet diff;
+  try {
+    diff=diffAwareness.getDiff(baselineView,newView);
+  }
+ catch (  BrokenDiffAwarenessException e) {
+    handleBrokenDiffAwareness(pathEntry,e);
+    return BrokenProcessableModifiedFileSet.INSTANCE;
+  }
+catch (  IncompatibleViewException e) {
+    throw new IllegalStateException(pathEntry + " " + baselineView+ " "+ newView,e);
+  }
+  ProcessableModifiedFileSet result=new ProcessableModifiedFileSetImpl(diff,pathEntry,newView);
+  return result;
+}

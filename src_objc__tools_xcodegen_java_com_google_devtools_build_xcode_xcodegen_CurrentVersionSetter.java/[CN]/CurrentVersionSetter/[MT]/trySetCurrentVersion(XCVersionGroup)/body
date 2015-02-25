@@ -1,0 +1,27 @@
+{
+  if (group.getSourceTree() != SourceTree.GROUP) {
+    return;
+  }
+  Path groupPath=workspaceRoot.resolve(group.getPath());
+  Path currentVersionPlist=groupPath.resolve(".xccurrentversion");
+  if (!Files.isReadable(currentVersionPlist)) {
+    return;
+  }
+  NSDictionary plist;
+  try {
+    plist=PlistMerging.readPlistFile(currentVersionPlist);
+  }
+ catch (  IOException e) {
+    return;
+  }
+  NSString currentVersion=(NSString)plist.get("_XCCurrentVersionName");
+  if (currentVersion == null) {
+    return;
+  }
+  for (  PBXFileReference child : group.getChildren()) {
+    if (child.getName().equals(currentVersion.getContent())) {
+      group.setCurrentVersion(Optional.of(child));
+      return;
+    }
+  }
+}

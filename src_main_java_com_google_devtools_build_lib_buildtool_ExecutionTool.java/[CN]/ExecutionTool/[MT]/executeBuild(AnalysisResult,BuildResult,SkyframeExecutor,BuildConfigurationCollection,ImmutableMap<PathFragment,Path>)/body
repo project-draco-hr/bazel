@@ -1,0 +1,82 @@
+{
+  Stopwatch timer=Stopwatch.createStarted();
+  prepare(packageRoots,configurations);
+  ActionGraph actionGraph=analysisResult.getActionGraph();
+  ImmutableSet<Artifact> additionalArtifacts=analysisResult.getAdditionalArtifactsToBuild();
+  if (!request.getBuildOptions().performExecutionPhase) {
+    return;
+  }
+  if (getWorkspace().getFileSystem().supportsSymbolicLinks()) {
+    List<BuildConfiguration> targetConfigurations=getView().getConfigurationCollection().getTargetConfigurations();
+    if (targetConfigurations.size() == 1) {
+      OutputDirectoryLinksUtils.createOutputDirectoryLinks(runtime.getWorkspaceName(),getWorkspace(),getExecRoot(),runtime.getOutputPath(),getReporter(),targetConfigurations.get(0),request.getSymlinkPrefix());
+    }
+  }
+  OutputService outputService=runtime.getOutputService();
+  if (outputService != null) {
+    outputService.startBuild();
+  }
+ else {
+    startLocalOutputBuild();
+  }
+  ActionCache actionCache=getActionCache();
+  Builder builder=createBuilder(request,executor,actionCache,skyframeExecutor);
+  Collection<ConfiguredTarget> configuredTargets=buildResult.getActualTargets();
+  getEventBus().post(new ExecutionStartingEvent(configuredTargets));
+  getReporter().handle(Event.progress("Building..."));
+  ExplanationHandler explanationHandler=installExplanationHandler(request.getBuildOptions().explanationPath,request.getOptionsDescription());
+  Set<ConfiguredTarget> builtTargets=new HashSet<>();
+  boolean interrupted=false;
+  try {
+    Iterable<Artifact> allArtifactsForProviders=Iterables.concat(additionalArtifacts,TopLevelArtifactHelper.getAllArtifactsToBuild(analysisResult.getTargetsToBuild(),analysisResult.getTopLevelContext()),TopLevelArtifactHelper.getAllArtifactsToTest(analysisResult.getTargetsToTest()));
+    if (request.isRunningInEmacs()) {
+      request.getOutErr().printErrLn("blaze: Entering directory `" + getExecRoot() + "/'");
+    }
+    for (    ActionContextProvider actionContextProvider : actionContextProviders) {
+      actionContextProvider.executionPhaseStarting(fileCache,actionGraph,allArtifactsForProviders);
+    }
+    executor.executionPhaseStarting();
+    skyframeExecutor.drainChangedFiles();
+    if (request.getViewOptions().discardAnalysisCache) {
+      getView().clearAnalysisCache(analysisResult.getTargetsToBuild());
+      actionGraph=null;
+    }
+    configureResourceManager(request);
+    Profiler.instance().markPhase(ProfilePhase.EXECUTE);
+    builder.buildArtifacts(additionalArtifacts,analysisResult.getParallelTests(),analysisResult.getExclusiveTests(),analysisResult.getTargetsToBuild(),executor,builtTargets,request.getBuildOptions().explanationPath != null);
+  }
+ catch (  InterruptedException e) {
+    interrupted=true;
+    throw e;
+  }
+ finally {
+    if (request.isRunningInEmacs()) {
+      request.getOutErr().printErrLn("blaze: Leaving directory `" + getExecRoot() + "/'");
+    }
+    if (!interrupted) {
+      getReporter().handle(Event.progress("Building complete."));
+    }
+    runtime.getEventBus().post(new ExecutionFinishedEvent(ImmutableMap.<String,Long>of(),0));
+    ResourceManager.instance().setAutoSensing(false);
+    executor.executionPhaseEnding();
+    for (    ActionContextProvider actionContextProvider : actionContextProviders) {
+      actionContextProvider.executionPhaseEnding();
+    }
+    Profiler.instance().markPhase(ProfilePhase.FINISH);
+    if (!interrupted) {
+      saveCaches(actionCache);
+    }
+    long startTime=Profiler.nanoTimeMaybe();
+    determineSuccessfulTargets(buildResult,configuredTargets,builtTargets,timer);
+    showBuildResult(request,buildResult,configuredTargets);
+    Preconditions.checkNotNull(buildResult.getSuccessfulTargets());
+    Profiler.instance().logSimpleTask(startTime,ProfilerTask.INFO,"Show results");
+    if (explanationHandler != null) {
+      uninstallExplanationHandler(explanationHandler);
+    }
+    if (runtime.getOutputService() != null) {
+      boolean isBuildSuccessful=buildResult.getSuccessfulTargets().size() == configuredTargets.size();
+      runtime.getOutputService().finalizeBuild(isBuildSuccessful);
+    }
+  }
+}

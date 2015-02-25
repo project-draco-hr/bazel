@@ -1,0 +1,13 @@
+{
+  Map<String,JsonObject> testInfo=testStatusHandler.buildLog.getTestCases();
+  exchange.getResponseHeaders().put("Content-Type",ImmutableList.of("application/json"));
+  JsonObject response=new JsonObject();
+  for (  Entry<String,JsonObject> testCase : testInfo.entrySet()) {
+    response.add(testCase.getKey(),testCase.getValue());
+  }
+  String serializedResponse=response.toString();
+  exchange.sendResponseHeaders(200,serializedResponse.length());
+  OutputStream os=exchange.getResponseBody();
+  os.write(serializedResponse.getBytes());
+  os.close();
+}

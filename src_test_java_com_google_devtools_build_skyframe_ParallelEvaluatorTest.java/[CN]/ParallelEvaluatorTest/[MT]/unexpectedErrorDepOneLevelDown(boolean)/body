@@ -1,0 +1,53 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey errorKey=GraphTester.toSkyKey("my_error_value");
+  final SomeErrorException exception=new SomeErrorException("error exception");
+  final SomeErrorException topException=new SomeErrorException("top exception");
+  final StringValue topValue=new StringValue("top");
+  tester.getOrCreate(errorKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws GenericFunctionException {
+      throw new GenericFunctionException(exception,Transience.PERSISTENT);
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      throw new UnsupportedOperationException();
+    }
+  }
+);
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  final SkyKey parentKey=GraphTester.toSkyKey("parent");
+  tester.getOrCreate(parentKey).addDependency(errorKey).setComputedValue(CONCATENATE);
+  tester.getOrCreate(topKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws GenericFunctionException {
+      try {
+        if (env.getValueOrThrow(parentKey,SomeErrorException.class) == null) {
+          return null;
+        }
+      }
+ catch (      SomeErrorException e) {
+        assertEquals(e.toString(),exception,e);
+      }
+      if (keepGoing) {
+        return topValue;
+      }
+ else {
+        throw new GenericFunctionException(topException,Transience.PERSISTENT);
+      }
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      throw new UnsupportedOperationException();
+    }
+  }
+);
+  tester.getOrCreate(topKey).addErrorDependency(errorKey,new StringValue("recovered")).setComputedValue(CONCATENATE);
+  EvaluationResult<StringValue> result=eval(keepGoing,ImmutableList.of(topKey));
+  if (!keepGoing) {
+    assertThat(result.keyNames()).isEmpty();
+    assertEquals(topException,result.getError(topKey).getException());
+    assertThat(result.getError(topKey).getRootCauses()).containsExactly(topKey);
+    assertTrue(result.hasError());
+  }
+ else {
+    assertTrue(result.hasError());
+    assertSame(topValue,result.get(topKey));
+  }
+}

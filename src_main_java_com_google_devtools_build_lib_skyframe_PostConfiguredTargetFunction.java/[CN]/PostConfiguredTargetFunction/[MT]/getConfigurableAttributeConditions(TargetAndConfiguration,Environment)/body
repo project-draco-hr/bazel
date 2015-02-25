@@ -1,0 +1,25 @@
+{
+  if (!(ctg.getTarget() instanceof Rule)) {
+    return ImmutableSet.of();
+  }
+  Rule rule=(Rule)ctg.getTarget();
+  RawAttributeMapper mapper=RawAttributeMapper.of(rule);
+  Set<SkyKey> depKeys=new LinkedHashSet<>();
+  for (  Attribute attribute : rule.getAttributes()) {
+    for (    Label label : mapper.getConfigurabilityKeys(attribute.getName(),attribute.getType())) {
+      if (!Type.Selector.isReservedLabel(label)) {
+        depKeys.add(ConfiguredTargetValue.key(label,ctg.getConfiguration()));
+      }
+    }
+  }
+  Map<SkyKey,SkyValue> cts=env.getValues(depKeys);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  ImmutableSet.Builder<ConfigMatchingProvider> conditions=ImmutableSet.builder();
+  for (  SkyValue ctValue : cts.values()) {
+    ConfiguredTarget ct=((ConfiguredTargetValue)ctValue).getConfiguredTarget();
+    conditions.add(Preconditions.checkNotNull(ct.getProvider(ConfigMatchingProvider.class)));
+  }
+  return conditions.build();
+}

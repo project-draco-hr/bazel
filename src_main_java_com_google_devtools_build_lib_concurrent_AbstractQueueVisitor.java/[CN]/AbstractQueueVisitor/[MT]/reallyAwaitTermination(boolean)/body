@@ -1,0 +1,32 @@
+{
+  if (interruptWorkers && !jobs.isEmpty()) {
+    interruptInFlightTasks();
+  }
+  if (isInterrupted()) {
+    interruptedLatch.countDown();
+  }
+  Throwables.propagateIfPossible(catastrophe);
+synchronized (zeroRemainingTasks) {
+    while (remainingTasks != 0) {
+      try {
+        zeroRemainingTasks.wait();
+      }
+ catch (      InterruptedException e) {
+        setInterrupted();
+      }
+    }
+  }
+  if (ownThreadPool) {
+    pool.shutdown();
+    for (; ; ) {
+      try {
+        Throwables.propagateIfPossible(catastrophe);
+        pool.awaitTermination(Integer.MAX_VALUE,TimeUnit.SECONDS);
+        break;
+      }
+ catch (      InterruptedException e) {
+        setInterrupted();
+      }
+    }
+  }
+}

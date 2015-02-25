@@ -1,0 +1,10 @@
+{
+  CountDownLatch blocker=new CountDownLatch(1);
+  SkyKey successKey=GraphTester.toSkyKey("success");
+  tester.getOrCreate(successKey).setBuilder(new ChainedFunction(null,null,blocker,false,new StringValue("yippee"),ImmutableList.<SkyKey>of()));
+  SkyKey slowFailKey=GraphTester.toSkyKey("slow_then_fail");
+  tester.getOrCreate(slowFailKey).setBuilder(new ChainedFunction(null,blocker,null,false,null,ImmutableList.<SkyKey>of()));
+  EvaluationResult<StringValue> result=tester.eval(false,slowFailKey,successKey);
+  assertThat(result.getError().getRootCauses()).containsExactly(slowFailKey);
+  assertThat(result.values()).containsExactly(new StringValue("yippee"));
+}

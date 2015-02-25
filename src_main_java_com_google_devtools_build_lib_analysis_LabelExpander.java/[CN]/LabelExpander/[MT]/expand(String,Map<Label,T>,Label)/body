@@ -1,0 +1,21 @@
+{
+  if (Strings.isNullOrEmpty(expression)) {
+    return "";
+  }
+  Preconditions.checkNotNull(labelMap);
+  Preconditions.checkNotNull(labelResolver);
+  int offset=0;
+  StringBuilder result=new StringBuilder();
+  while (offset < expression.length()) {
+    String labelText=scanLabel(expression,offset);
+    if (labelText != null) {
+      offset+=labelText.length();
+      result.append(tryResolvingLabelTextToArtifactPath(labelText,labelMap,labelResolver));
+    }
+ else {
+      result.append(expression.charAt(offset));
+      offset++;
+    }
+  }
+  return result.toString();
+}

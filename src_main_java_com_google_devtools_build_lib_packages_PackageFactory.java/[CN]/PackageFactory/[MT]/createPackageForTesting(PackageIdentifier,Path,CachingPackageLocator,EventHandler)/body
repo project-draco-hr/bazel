@@ -1,0 +1,13 @@
+{
+  String error=LabelValidator.validatePackageName(packageId.getPackageFragment().getPathString());
+  if (error != null) {
+    throw new BuildFileNotFoundException(packageId.toString(),"illegal package name: '" + packageId.toString() + "' ("+ error+ ")");
+  }
+  ParserInputSource inputSource=maybeGetParserInputSource(buildFile,eventHandler);
+  if (inputSource == null) {
+    throw new BuildFileContainsErrorsException(packageId.toString(),"IOException occured");
+  }
+  Package result=createPackage(packageId,buildFile,ImmutableList.<Statement>of(),inputSource,ImmutableMap.<PathFragment,SkylarkEnvironment>of(),ImmutableList.<Label>of(),locator,ConstantRuleVisibility.PUBLIC,createLegacyGlobber(buildFile.getParentDirectory(),packageId,locator)).build();
+  Event.replayEventsOn(eventHandler,result.getEvents());
+  return result;
+}

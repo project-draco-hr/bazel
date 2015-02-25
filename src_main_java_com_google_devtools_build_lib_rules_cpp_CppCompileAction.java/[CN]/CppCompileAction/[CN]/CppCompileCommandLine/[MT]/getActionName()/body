@@ -1,0 +1,27 @@
+{
+  PathFragment sourcePath=sourceFile.getExecPath();
+  if (CppFileTypes.CPP_MODULE_MAP.matches(sourcePath)) {
+    return CPP_MODULE_COMPILE;
+  }
+ else   if (CppFileTypes.CPP_HEADER.matches(sourcePath)) {
+    if (features.contains(CppRuleClasses.PARSE_HEADERS)) {
+      return CPP_HEADER_PARSING;
+    }
+ else     if (features.contains(CppRuleClasses.PREPROCESS_HEADERS)) {
+      return CPP_HEADER_PREPROCESSING;
+    }
+ else {
+      throw new IllegalStateException();
+    }
+  }
+ else   if (CppFileTypes.C_SOURCE.matches(sourcePath)) {
+    return C_COMPILE;
+  }
+ else   if (CppFileTypes.CPP_SOURCE.matches(sourcePath)) {
+    return CPP_COMPILE;
+  }
+ else   if (CppFileTypes.ASSEMBLER_WITH_C_PREPROCESSOR.matches(sourcePath)) {
+    return PREPROCESS_ASSEMBLE;
+  }
+  throw new IllegalStateException();
+}

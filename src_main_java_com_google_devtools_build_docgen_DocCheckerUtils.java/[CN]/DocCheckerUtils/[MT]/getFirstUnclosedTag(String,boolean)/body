@@ -1,0 +1,27 @@
+{
+  Matcher commentMatcher=COMMENT_PATTERN.matcher(src);
+  src=commentMatcher.replaceAll("");
+  Matcher tagMatcher=TAG_PATTERN.matcher(src);
+  Deque<String> tagStack=new ArrayDeque<>();
+  while (tagMatcher.find()) {
+    String tag=tagMatcher.group(1);
+    String rest=tagMatcher.group(2);
+    String strippedTag=tag.substring(1);
+    if (!rest.endsWith("/") && !UNCHECKED_HTML_TAGS.contains(tag) && !UNCHECKED_HTML_TAGS.contains(strippedTag)) {
+      if (tag.startsWith("/")) {
+        tag=strippedTag;
+        String lastTag=tagStack.removeLast();
+        if (!lastTag.equals(tag)) {
+          if (printHelp) {
+            System.err.println("Unclosed tag: " + lastTag + "\n"+ "Trying to close with: "+ tag+ "\n"+ "Stack of open tags: "+ tagStack+ "\n"+ "Last 200 characters:\n"+ src.substring(Math.max(tagMatcher.start() - 200,0),tagMatcher.start()));
+          }
+          return lastTag;
+        }
+      }
+ else {
+        tagStack.addLast(tag);
+      }
+    }
+  }
+  return null;
+}

@@ -1,0 +1,17 @@
+{
+  Rule rule=ruleContext.getRule();
+  Preconditions.checkState(TargetUtils.isTestRule(rule));
+  size=TestSize.getTestSize(rule);
+  timeout=TestTimeout.getTestTimeout(rule);
+  tags=ruleContext.attributes().get("tags",Type.STRING_LIST);
+  isLocal=TargetUtils.isLocalTestRule(rule) || TargetUtils.isExclusiveTestRule(rule);
+  isFlaky=ruleContext.attributes().get("flaky",Type.BOOLEAN);
+  isExternal=TargetUtils.isExternalTestRule(rule);
+  Map<String,String> executionInfo=Maps.newLinkedHashMap();
+  executionInfo.putAll(TargetUtils.getExecutionInfo(rule));
+  if (executionRequirements != null) {
+    executionInfo.putAll(executionRequirements.getExecutionInfo());
+  }
+  this.executionInfo=ImmutableMap.copyOf(executionInfo);
+  language=TargetUtils.getRuleLanguage(rule);
+}

@@ -1,0 +1,34 @@
+{
+  int start=token.left;
+  expect(TokenKind.LBRACE);
+  if (token.kind == TokenKind.RBRACE) {
+    DictionaryLiteral literal=new DictionaryLiteral(ImmutableList.<DictionaryEntryLiteral>of());
+    setLocation(literal,start,token.right);
+    nextToken();
+    return literal;
+  }
+  DictionaryEntryLiteral entry=parseDictEntry();
+  if (token.kind == TokenKind.FOR) {
+    nextToken();
+    Ident loopVar=parseForLoopVariables();
+    expect(TokenKind.IN);
+    Expression listExpression=parseExpression();
+    expect(TokenKind.RBRACE);
+    return setLocation(new DictComprehension(entry.getKey(),entry.getValue(),loopVar,listExpression),start,token.right);
+  }
+  List<DictionaryEntryLiteral> entries=new ArrayList<>();
+  entries.add(entry);
+  if (token.kind == TokenKind.COMMA) {
+    expect(TokenKind.COMMA);
+    entries.addAll(parseDictEntryList());
+  }
+  if (token.kind == TokenKind.RBRACE) {
+    DictionaryLiteral literal=new DictionaryLiteral(entries);
+    setLocation(literal,start,token.right);
+    nextToken();
+    return literal;
+  }
+  syntaxError(token);
+  int end=syncPast(DICT_TERMINATOR_SET);
+  return makeErrorExpression(start,end);
+}

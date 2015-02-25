@@ -1,0 +1,22 @@
+{
+  assertTrue(unionfs.createDirectory(unionfs.getPath("/out")));
+  assertTrue(inDelegate.getPath("/in").createDirectory());
+  OutputStream outStream=inDelegate.getPath("/in/bar.txt").getOutputStream();
+  outStream.write('i');
+  outStream.close();
+  Path outFoo=unionfs.getPath("/out/foo");
+  unionfs.createSymbolicLink(outFoo,new PathFragment("../in/bar.txt"));
+  assertTrue(unionfs.stat(outFoo,false).isSymbolicLink());
+  try {
+    unionfs.stat(outFoo,true).isFile();
+    fail("Stat on cross-device symlink succeeded!");
+  }
+ catch (  FileNotFoundException expected) {
+  }
+  Path resolved=unionfs.resolveSymbolicLinks(outFoo);
+  assertSame(unionfs,resolved.getFileSystem());
+  InputStream barInput=resolved.getInputStream();
+  int barChar=barInput.read();
+  barInput.close();
+  assertEquals('i',barChar);
+}

@@ -1,0 +1,29 @@
+{
+  OutputStream out=new ByteArrayOutputStream(){
+    private boolean closed=false;
+    @Override public void write(    byte[] data) throws IOException {
+      Preconditions.checkState(!closed);
+      super.write(data);
+    }
+    @Override public void write(    int dataByte){
+      Preconditions.checkState(!closed);
+      super.write(dataByte);
+    }
+    @Override public void write(    byte[] data,    int offset,    int length){
+      Preconditions.checkState(!closed);
+      super.write(data,offset,length);
+    }
+    @Override public void close(){
+      flush();
+      closed=true;
+    }
+    @Override public void flush(){
+      setContent(toByteArray().clone());
+    }
+  }
+;
+  if (append) {
+    out.write(readContent());
+  }
+  return out;
+}

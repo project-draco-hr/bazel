@@ -1,0 +1,23 @@
+{
+  RuleContext ruleContext=new RuleContext.Builder(env,rule,configuration,ruleClassProvider.getPrerequisiteValidator()).setVisibility(convertVisibility(prerequisiteMap,env.getEventHandler(),rule,null)).setPrerequisites(prerequisiteMap).setConfigConditions(configConditions).build();
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
+  if (!rule.getRuleClassObject().getRequiredConfigurationFragments().isEmpty()) {
+    if (!configuration.hasAllFragments(rule.getRuleClassObject().getRequiredConfigurationFragments())) {
+      if (rule.getRuleClassObject().failIfMissingConfigurationFragment()) {
+        ruleContext.ruleError(missingFragmentError(ruleContext));
+        return null;
+      }
+      return createFailConfiguredTarget(ruleContext);
+    }
+  }
+  if (rule.getRuleClassObject().isSkylarkExecutable()) {
+    return SkylarkRuleConfiguredTargetBuilder.buildRule(ruleContext,rule.getRuleClassObject().getConfiguredTargetFunction());
+  }
+ else {
+    RuleClass.ConfiguredTargetFactory<ConfiguredTarget,RuleContext> factory=rule.getRuleClassObject().<ConfiguredTarget,RuleContext>getConfiguredTargetFactory();
+    Preconditions.checkNotNull(factory,rule.getRuleClassObject());
+    return factory.create(ruleContext);
+  }
+}

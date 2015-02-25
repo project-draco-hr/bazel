@@ -1,0 +1,18 @@
+{
+  return new TestDelegator(){
+    @Override protected boolean exists(    Path path,    boolean followSymlinks){
+      lastPath=path;
+      return booleanState();
+    }
+    @Override protected FileStatus stat(    Path path,    boolean followSymlinks) throws IOException {
+      if (!exists(path,followSymlinks)) {
+        throw new IOException("Expected exception on stat of non-existent file");
+      }
+      return super.stat(path,followSymlinks);
+    }
+    @Override protected long getLastModifiedTime(    Path path,    boolean followSymlinks){
+      return 0;
+    }
+  }
+;
+}

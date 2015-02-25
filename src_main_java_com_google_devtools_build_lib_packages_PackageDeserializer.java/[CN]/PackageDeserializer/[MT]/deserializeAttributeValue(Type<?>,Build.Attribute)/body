@@ -1,0 +1,70 @@
+{
+switch (attrPb.getType()) {
+case INTEGER:
+    return new Integer(attrPb.getIntValue());
+case STRING:
+  if (expectedType == Type.NODEP_LABEL) {
+    return deserializeLabel(attrPb.getStringValue());
+  }
+ else {
+    return attrPb.getStringValue();
+  }
+case LABEL:
+case OUTPUT:
+return deserializeLabel(attrPb.getStringValue());
+case STRING_LIST:
+if (expectedType == Type.NODEP_LABEL_LIST) {
+return deserializeGlobs(deserializeLabels(attrPb.getStringListValueList()),attrPb);
+}
+ else {
+return deserializeGlobs(ImmutableList.copyOf(attrPb.getStringListValueList()),attrPb);
+}
+case LABEL_LIST:
+case OUTPUT_LIST:
+return deserializeGlobs(deserializeLabels(attrPb.getStringListValueList()),attrPb);
+case DISTRIBUTION_SET:
+return deserializeDistribs(attrPb.getStringListValueList());
+case LICENSE:
+return deserializeLicense(attrPb.getLicense());
+case STRING_DICT:
+{
+ImmutableMap.Builder<String,String> builder=ImmutableMap.builder();
+for (Build.StringDictEntry entry : attrPb.getStringDictValueList()) {
+builder.put(entry.getKey(),entry.getValue());
+}
+return builder.build();
+}
+case STRING_DICT_UNARY:
+{
+ImmutableMap.Builder<String,String> builder=ImmutableMap.builder();
+for (StringDictUnaryEntry entry : attrPb.getStringDictUnaryValueList()) {
+builder.put(entry.getKey(),entry.getValue());
+}
+return builder.build();
+}
+case FILESET_ENTRY_LIST:
+return deserializeFilesetEntries(attrPb.getFilesetListValueList());
+case LABEL_LIST_DICT:
+{
+ImmutableMap.Builder<String,List<Label>> builder=ImmutableMap.builder();
+for (Build.LabelListDictEntry entry : attrPb.getLabelListDictValueList()) {
+builder.put(entry.getKey(),deserializeLabels(entry.getValueList()));
+}
+return builder.build();
+}
+case STRING_LIST_DICT:
+{
+ImmutableMap.Builder<String,List<String>> builder=ImmutableMap.builder();
+for (Build.StringListDictEntry entry : attrPb.getStringListDictValueList()) {
+builder.put(entry.getKey(),ImmutableList.copyOf(entry.getValueList()));
+}
+return builder.build();
+}
+case BOOLEAN:
+return attrPb.getBooleanValue();
+case TRISTATE:
+return deserializeTriStateValue(attrPb.getStringValue());
+default :
+throw new PackageDeserializationException("Invalid discriminator: " + attrPb.getType());
+}
+}

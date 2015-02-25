@@ -1,0 +1,52 @@
+{
+  if (attrName.equals("name")) {
+    return singleton(rule.getName());
+  }
+ else   if (attrName.equals("dirname")) {
+    PathFragment dir=new PathFragment(rule.getName()).getParentDirectory();
+    return (dir.segmentCount() == 0) ? singleton("") : singleton(dir.getPathString() + "/");
+  }
+ else   if (attrName.equals("basename")) {
+    return singleton(new PathFragment(rule.getName()).getBaseName());
+  }
+  Type<?> attrType=rule.getAttributeType(attrName);
+  if (attrType == null) {
+    return Collections.emptySet();
+  }
+  if (Type.STRING == attrType) {
+    return singleton(rule.get(attrName,Type.STRING));
+  }
+ else   if (Type.STRING_LIST == attrType) {
+    Iterable<String> values=rule.get(attrName,Type.STRING_LIST);
+    if ("locales".equals(attrName)) {
+      values=Iterables.transform(values,new Function<String,String>(){
+        @Override public String apply(        String s){
+          return s.toLowerCase().replace('-','_');
+        }
+      }
+);
+    }
+    return Sets.newLinkedHashSet(values);
+  }
+ else   if (Type.LABEL_LIST == attrType) {
+    return Sets.newLinkedHashSet(Iterables.transform(rule.get(attrName,Type.LABEL_LIST),new Function<Label,String>(){
+      @Override public String apply(      Label label){
+        return FileSystemUtils.removeExtension(label.getName());
+      }
+    }
+));
+  }
+ else   if (Type.OUTPUT == attrType) {
+    Label out=rule.get(attrName,Type.OUTPUT);
+    return singleton(out.getName());
+  }
+ else   if (Type.OUTPUT_LIST == attrType) {
+    return Sets.newLinkedHashSet(Iterables.transform(rule.get(attrName,Type.OUTPUT_LIST),new Function<Label,String>(){
+      @Override public String apply(      Label label){
+        return label.getName();
+      }
+    }
+));
+  }
+  throw new IllegalArgumentException("Don't know how to handle " + attrName + " : "+ attrType);
+}

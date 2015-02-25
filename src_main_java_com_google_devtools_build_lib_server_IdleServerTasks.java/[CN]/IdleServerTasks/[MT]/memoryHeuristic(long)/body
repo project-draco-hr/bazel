@@ -1,0 +1,29 @@
+{
+  if (idleMillis < FIVE_MIN_MILLIS) {
+    return true;
+  }
+  ProcMeminfoParser memInfo=null;
+  try {
+    memInfo=new ProcMeminfoParser();
+  }
+ catch (  IOException e) {
+    LOG.info("Could not process /proc/meminfo: " + e);
+    return true;
+  }
+  long totalPhysical, totalFree;
+  try {
+    totalPhysical=memInfo.getTotalKb();
+    totalFree=memInfo.getFreeRamKb();
+  }
+ catch (  IllegalArgumentException e) {
+    LoggingUtil.logToRemote(Level.WARNING,"Could not read memInfo during idle query",e);
+    return true;
+  }
+  double fractionFree=(double)totalFree / totalPhysical;
+  if (fractionFree < .1) {
+    LOG.info("Terminating due to memory constraints");
+    LOG.info(String.format("Total physical:%d\nTotal free: %d\n",totalPhysical,totalFree));
+    return false;
+  }
+  return true;
+}

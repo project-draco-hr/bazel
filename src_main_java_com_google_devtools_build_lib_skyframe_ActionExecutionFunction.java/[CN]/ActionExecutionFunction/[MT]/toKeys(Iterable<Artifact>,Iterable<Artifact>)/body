@@ -1,0 +1,21 @@
+{
+  if (mandatoryInputs == null) {
+    return Iterables.transform(inputs,new Function<Artifact,SkyKey>(){
+      @Override public SkyKey apply(      Artifact artifact){
+        return ArtifactValue.key(artifact,true);
+      }
+    }
+);
+  }
+ else {
+    Collection<SkyKey> discoveredArtifacts=new HashSet<>();
+    Set<Artifact> mandatory=Sets.newHashSet(mandatoryInputs);
+    for (    Artifact artifact : inputs) {
+      discoveredArtifacts.add(ArtifactValue.key(artifact,mandatory.contains(artifact)));
+    }
+    for (    Artifact artifact : mandatory) {
+      discoveredArtifacts.add(ArtifactValue.key(artifact,true));
+    }
+    return discoveredArtifacts;
+  }
+}

@@ -1,0 +1,11 @@
+{
+  ImmutableSetMultimap.Builder<Path,SkyKey> multimapBuilder=ImmutableSetMultimap.builder();
+  for (  SkyKey key : filesystemSkyKeys) {
+    Preconditions.checkState(key.functionName() == SkyFunctions.FILE_STATE || key.functionName() == SkyFunctions.DIRECTORY_LISTING_STATE,key);
+    Path root=((RootedPath)key.argument()).getRoot();
+    if (pkgRoots.contains(root)) {
+      multimapBuilder.put(root,key);
+    }
+  }
+  return multimapBuilder.build();
+}

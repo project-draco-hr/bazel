@@ -1,0 +1,23 @@
+{
+  if (isActive() && isProfiling(type)) {
+    long endTime=clock.nanoTime();
+    TaskData data=taskStack.pop();
+    if (data.type != type) {
+      throw new IllegalStateException("Inconsistent Profiler.completeTask() call for the " + type + " task.\n "+ taskStack);
+    }
+    data.duration=endTime - data.startTime;
+    if (data.parentId > 0) {
+      taskStack.peek().aggregateChild(data.type,data.duration);
+    }
+    boolean shouldRecordTask=wasTaskSlowEnoughToRecord(type,data.duration);
+    if (out != null && (shouldRecordTask || data.counts != null)) {
+      taskQueue.add(data);
+    }
+    if (shouldRecordTask) {
+      SlowestTaskAggregator aggregator=slowestTasks[type.ordinal()];
+      if (aggregator != null) {
+        aggregator.add(data);
+      }
+    }
+  }
+}

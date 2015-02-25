@@ -1,0 +1,23 @@
+{
+  List<Object> values=new LinkedList<>();
+  AttributeValueSource source;
+  if (attr.getName().equals("visibility")) {
+    values.add(rule.getVisibility().getDeclaredLabels());
+    if (rule.isVisibilitySpecified()) {
+      source=AttributeValueSource.RULE;
+    }
+ else     if (rule.getPackage().isDefaultVisibilitySet()) {
+      source=AttributeValueSource.PACKAGE;
+    }
+ else {
+      source=AttributeValueSource.DEFAULT;
+    }
+  }
+ else {
+    for (    Object o : AggregatingAttributeMapper.of(rule).visitAttribute(attr.getName(),attr.getType())) {
+      values.add(o);
+    }
+    source=rule.isAttributeValueExplicitlySpecified(attr) ? AttributeValueSource.RULE : AttributeValueSource.DEFAULT;
+  }
+  return Pair.of((Iterable<Object>)values,source);
+}

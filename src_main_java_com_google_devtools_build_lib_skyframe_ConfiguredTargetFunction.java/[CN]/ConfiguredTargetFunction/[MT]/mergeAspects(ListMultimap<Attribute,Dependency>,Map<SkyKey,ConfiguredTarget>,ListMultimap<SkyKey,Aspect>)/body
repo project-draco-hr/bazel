@@ -1,0 +1,10 @@
+{
+  ListMultimap<Attribute,ConfiguredTarget> result=ArrayListMultimap.create();
+  for (  Map.Entry<Attribute,Dependency> entry : depValueNames.entries()) {
+    Dependency dep=entry.getValue();
+    SkyKey depKey=TO_KEYS.apply(dep);
+    ConfiguredTarget depConfiguredTarget=depConfiguredTargetMap.get(depKey);
+    result.put(entry.getKey(),RuleConfiguredTarget.mergeAspects(depConfiguredTarget,depAspectMap.get(depKey)));
+  }
+  return result;
+}

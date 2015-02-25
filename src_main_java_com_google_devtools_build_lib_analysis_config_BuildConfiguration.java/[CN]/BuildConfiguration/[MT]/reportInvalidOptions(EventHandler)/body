@@ -1,0 +1,24 @@
+{
+  for (  Fragment fragment : fragments.values()) {
+    fragment.reportInvalidOptions(reporter,this.buildOptions);
+  }
+  Set<String> plugins=new HashSet<>();
+  for (  Label plugin : options.pluginList) {
+    String name=plugin.getName();
+    if (plugins.contains(name)) {
+      reporter.handle(Event.error("A build cannot have two plugins with the same name"));
+    }
+    plugins.add(name);
+  }
+  for (  Map.Entry<String,String> opt : options.pluginCoptList) {
+    if (!plugins.contains(opt.getKey())) {
+      reporter.handle(Event.error("A plugin_copt must refer to an existing plugin"));
+    }
+  }
+  if (options.shortName != null) {
+    reporter.handle(Event.error("The internal '--configuration short name' option cannot be used on the command line"));
+  }
+  if (options.testShardingStrategy == TestActionBuilder.TestShardingStrategy.EXPERIMENTAL_HEURISTIC) {
+    reporter.handle(Event.warn("Heuristic sharding is intended as a one-off experimentation tool for determing the " + "benefit from sharding certain tests. Please don't keep this option in your " + ".blazerc or continuous build"));
+  }
+}

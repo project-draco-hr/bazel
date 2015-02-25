@@ -1,0 +1,14 @@
+{
+  if (areResourcesAvailable(resources)) {
+    incrementResources(resources);
+    return null;
+  }
+  Pair<ResourceSet,CountDownLatch> request=new Pair<>(resources,new CountDownLatch(1));
+  requestList.add(request);
+  if (isAutoSensingEnabled() && freeReading.getReadingAge() > 30000) {
+    LoggingUtil.logToRemote(Level.WARNING,"Free resource readings were " + "not updated for 30 seconds - auto-sensing is disabled",new IllegalStateException());
+    LOG.warning("Free resource readings were not updated for 30 seconds - " + "auto-sensing is disabled");
+    setAutoSensing(false);
+  }
+  return request.second;
+}

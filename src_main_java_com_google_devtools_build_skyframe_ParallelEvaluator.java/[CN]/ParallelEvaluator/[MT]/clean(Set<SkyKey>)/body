@@ -1,0 +1,22 @@
+{
+  boolean alreadyInterrupted=Thread.interrupted();
+  ExecutorService executor=Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),new ThreadFactoryBuilder().setNameFormat("ParallelEvaluator#clean %d").build());
+  ThrowableRecordingRunnableWrapper wrapper=new ThrowableRecordingRunnableWrapper("ParallelEvaluator#clean");
+  for (  final SkyKey key : inflightNodes) {
+    final NodeEntry entry=graph.get(key);
+    if (entry.isDone()) {
+      continue;
+    }
+    executor.execute(wrapper.wrap(new Runnable(){
+      @Override public void run(){
+        cleanInflightNode(key,entry);
+      }
+    }
+));
+  }
+  boolean newlyInterrupted=ExecutorShutdownUtil.uninterruptibleShutdown(executor);
+  Throwables.propagateIfPossible(wrapper.getFirstThrownError());
+  if (newlyInterrupted || alreadyInterrupted) {
+    throw new InterruptedException();
+  }
+}

@@ -1,0 +1,21 @@
+{
+  if (symlinkTarget.isAbsolute()) {
+    Path path=rootedPath.asPath().getFileSystem().getRootDirectory().getRelative(symlinkTarget);
+    return resolveFromAncestors(RootedPath.toRootedPathMaybeUnderRoot(path,pkgLocator.get().getPathEntries()),env);
+  }
+  Path path=rootedPath.asPath();
+  Path symlinkTargetPath;
+  if (path.getParentDirectory() != null) {
+    RootedPath parentRootedPath=RootedPath.toRootedPathMaybeUnderRoot(path.getParentDirectory(),pkgLocator.get().getPathEntries());
+    FileValue parentFileValue=(FileValue)env.getValue(FileValue.key(parentRootedPath));
+    if (parentFileValue == null) {
+      return null;
+    }
+    symlinkTargetPath=parentFileValue.realRootedPath().asPath().getRelative(symlinkTarget);
+  }
+ else {
+    symlinkTargetPath=path.getRelative(symlinkTarget);
+  }
+  RootedPath symlinkTargetRootedPath=RootedPath.toRootedPathMaybeUnderRoot(symlinkTargetPath,pkgLocator.get().getPathEntries());
+  return resolveFromAncestors(symlinkTargetRootedPath,env);
+}

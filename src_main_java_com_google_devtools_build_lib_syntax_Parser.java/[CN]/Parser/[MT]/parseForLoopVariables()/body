@@ -1,0 +1,23 @@
+{
+  int start=token.left;
+  boolean hasParen=false;
+  if (token.kind == TokenKind.LPAREN) {
+    hasParen=true;
+    nextToken();
+  }
+  Ident firstIdent=parseIdent();
+  boolean multipleVariables=false;
+  while (token.kind == TokenKind.COMMA) {
+    multipleVariables=true;
+    nextToken();
+    parseIdent();
+  }
+  if (hasParen) {
+    expect(TokenKind.RPAREN);
+  }
+  int end=token.right;
+  if (multipleVariables && !parsePython) {
+    reportError(lexer.createLocation(start,end),"For loops with multiple variables are not yet supported. " + PREPROCESSING_NEEDED);
+  }
+  return multipleVariables ? makeErrorExpression(start,end) : firstIdent;
+}

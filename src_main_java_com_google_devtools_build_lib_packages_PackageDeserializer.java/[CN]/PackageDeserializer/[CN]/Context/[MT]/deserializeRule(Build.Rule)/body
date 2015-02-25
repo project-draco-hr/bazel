@@ -1,0 +1,21 @@
+{
+  RuleClass ruleClass=ruleClassProvider.getRuleClassMap().get(rulePb.getRuleClass());
+  if (ruleClass == null) {
+    throw new PackageDeserializationException(String.format("Invalid rule class '%s'",ruleClass));
+  }
+  Map<String,ParsedAttributeValue> attributeValues=new HashMap<>();
+  for (  Build.Attribute attrPb : rulePb.getAttributeList()) {
+    Type<?> type=ruleClass.getAttributeByName(attrPb.getName()).getType();
+    attributeValues.put(attrPb.getName(),deserializeAttribute(type,attrPb));
+  }
+  Label ruleLabel=deserializeLabel(rulePb.getName());
+  Location ruleLocation=deserializeLocation(rulePb.getParseableLocation());
+  try {
+    Rule rule=ruleClass.createRuleWithParsedAttributeValues(ruleLabel,packageBuilder,ruleLocation,attributeValues,NullEventHandler.INSTANCE);
+    packageBuilder.addRule(rule);
+    Preconditions.checkState(!rule.containsErrors());
+  }
+ catch (  NameConflictException|SyntaxException e) {
+    throw new PackageDeserializationException(e);
+  }
+}

@@ -1,0 +1,24 @@
+{
+  boolean tokenization=!ruleContext.getFeatures().contains("no_copts_tokenization");
+  List<String> tokens=new ArrayList<>();
+  for (  String token : input) {
+    try {
+      if (tokenization) {
+        ruleContext.tokenizeAndExpandMakeVars(tokens,attributeName,token);
+      }
+ else {
+        String exp=ruleContext.expandSingleMakeVariable(attributeName,token);
+        if (exp != null) {
+          ShellUtils.tokenize(tokens,exp);
+        }
+ else {
+          tokens.add(ruleContext.expandMakeVariables(attributeName,token));
+        }
+      }
+    }
+ catch (    ShellUtils.TokenizationException e) {
+      ruleContext.attributeError(attributeName,e.getMessage());
+    }
+  }
+  return ImmutableList.copyOf(tokens);
+}

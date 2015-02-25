@@ -1,0 +1,23 @@
+{
+  Object result=null;
+  if (objValue instanceof ClassObject) {
+    result=((ClassObject)objValue).getValue(name);
+    result=SkylarkType.convertToSkylark(result,loc);
+    SkylarkType.checkTypeAllowedInSkylark(result,loc);
+  }
+ else {
+    try {
+      List<MethodDescriptor> methods=FuncallExpression.getMethods(objValue.getClass(),name,0);
+      if (methods != null && methods.size() > 0) {
+        MethodDescriptor method=Iterables.getOnlyElement(methods);
+        if (method.getAnnotation().structField()) {
+          result=FuncallExpression.callMethod(method,name,objValue,new Object[]{},loc);
+        }
+      }
+    }
+ catch (    ExecutionException|IllegalAccessException|InvocationTargetException e) {
+      throw new EvalException(loc,"Method invocation failed: " + e);
+    }
+  }
+  return result;
+}

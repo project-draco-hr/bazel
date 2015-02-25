@@ -1,0 +1,19 @@
+{
+  TargetInfo dependencyInfo=Mapping.of(targetInfoByLabel,dependencyControl.getTargetLabel()).get();
+  if (dependencyControl.getTestHost()) {
+    buildConfig.put("TEST_HOST",dependencyInfo.staticallyLinkedBinary());
+    buildConfig.put("BUNDLE_LOADER",dependencyInfo.staticallyLinkedBinary());
+  }
+ else   if (productType(dependencyInfo.control) == ProductType.BUNDLE) {
+    resourcesPhase.getFiles().add(dependencyInfo.productBuildFile);
+  }
+ else   if (productType(dependencyInfo.control) == ProductType.APP_EXTENSION) {
+    PBXCopyFilesBuildPhase copyFilesPhase=new PBXCopyFilesBuildPhase(PBXCopyFilesBuildPhase.Destination.PLUGINS,"");
+    copyFilesPhase.getFiles().add(dependencyInfo.productBuildFile);
+    nativeTarget.getBuildPhases().add(copyFilesPhase);
+  }
+ else {
+    frameworksPhase.getFiles().add(dependencyInfo.productBuildFile);
+  }
+  nativeTarget.getDependencies().add(dependencyInfo.targetDependency);
+}

@@ -1,0 +1,19 @@
+{
+  Stopwatch timer=Stopwatch.createStarted();
+  if (!request.getBuildOptions().performAnalysisPhase) {
+    getReporter().handle(Event.progress("Loading complete."));
+    LOG.info("No analysis requested, so finished");
+    return AnalysisResult.EMPTY;
+  }
+  getReporter().handle(Event.progress("Loading complete.  Analyzing..."));
+  Profiler.instance().markPhase(ProfilePhase.ANALYZE);
+  AnalysisResult analysisResult=getView().update(loadingResult,configurations,request.getViewOptions(),request.getTopLevelArtifactContext(),getReporter(),getEventBus());
+  getEventBus().post(new AnalysisPhaseCompleteEvent(analysisResult.getTargetsToBuild(),getView().getTargetsVisited(),timer.stop().elapsed(TimeUnit.MILLISECONDS)));
+  getEventBus().post(new TestFilteringCompleteEvent(analysisResult.getTargetsToBuild(),analysisResult.getTargetsToTest()));
+  boolean checkLicenses=configurations.getTargetConfigurations().get(0).checkLicenses();
+  if (checkLicenses) {
+    Profiler.instance().markPhase(ProfilePhase.LICENSE);
+    validateLicensingForTargets(analysisResult.getTargetsToBuild(),request.getViewOptions().keepGoing);
+  }
+  return analysisResult;
+}

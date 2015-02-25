@@ -1,0 +1,16 @@
+{
+  String cwd=execRoot.getPathString();
+  FileSystem fs=runtime.getDirectories().getFileSystem();
+  ActionInputFileCache cache=null;
+  for (  BlazeModule module : runtime.getBlazeModules()) {
+    ActionInputFileCache pluggable=module.createActionInputCache(cwd,fs);
+    if (pluggable != null) {
+      Preconditions.checkState(cache == null);
+      cache=pluggable;
+    }
+  }
+  if (cache == null) {
+    cache=new SingleBuildFileCache(cwd,fs);
+  }
+  return cache;
+}

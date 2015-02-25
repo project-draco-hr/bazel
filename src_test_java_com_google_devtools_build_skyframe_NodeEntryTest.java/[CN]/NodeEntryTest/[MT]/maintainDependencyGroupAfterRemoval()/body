@@ -1,0 +1,25 @@
+{
+  NodeEntry entry=new NodeEntry();
+  entry.addReverseDepAndCheckIfDone(null);
+  SkyKey dep=key("dep");
+  SkyKey dep2=key("dep2");
+  SkyKey dep3=key("dep3");
+  SkyKey dep4=key("dep4");
+  SkyKey dep5=key("dep5");
+  addTemporaryDirectDeps(entry,dep,dep2,dep3);
+  addTemporaryDirectDep(entry,dep4);
+  addTemporaryDirectDep(entry,dep5);
+  entry.signalDep();
+  entry.signalDep();
+  entry.removeUnfinishedDeps(ImmutableSet.of(dep2,dep3,dep5));
+  ReifiedSkyFunctionException exception=new ReifiedSkyFunctionException(new GenericFunctionException(new SomeErrorException("oops"),Transience.PERSISTENT),key("key"));
+  setValue(entry,null,new ErrorInfo(exception),0L);
+  entry.markDirty(false);
+  entry.addReverseDepAndCheckIfDone(null);
+  assertEquals(BuildingState.DirtyState.CHECK_DEPENDENCIES,entry.getDirtyState());
+  assertThat(entry.getNextDirtyDirectDeps()).containsExactly(dep).inOrder();
+  addTemporaryDirectDep(entry,dep);
+  entry.signalDep(new IntVersion(0L));
+  assertEquals(BuildingState.DirtyState.CHECK_DEPENDENCIES,entry.getDirtyState());
+  assertThat(entry.getNextDirtyDirectDeps()).containsExactly(dep4).inOrder();
+}

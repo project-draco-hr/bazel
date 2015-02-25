@@ -1,0 +1,18 @@
+{
+  checkArgument(len >= 0);
+  int offsetStarted=size;
+  while (len > 0) {
+    if (currentBlock == null || currentBlockOffset >= currentBlock.length) {
+      currentBlock=new byte[blockSize];
+      currentBlockOffset=0;
+      blockList.add(currentBlock);
+    }
+    int maxCopy=Math.min(blockSize - currentBlockOffset,len);
+    System.arraycopy(b,off,currentBlock,currentBlockOffset,maxCopy);
+    off+=maxCopy;
+    len-=maxCopy;
+    size+=maxCopy;
+    currentBlockOffset+=maxCopy;
+  }
+  return offsetStarted;
+}

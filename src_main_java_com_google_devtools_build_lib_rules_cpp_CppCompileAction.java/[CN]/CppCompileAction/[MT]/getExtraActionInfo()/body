@@ -1,0 +1,17 @@
+{
+  CppCompileInfo.Builder info=CppCompileInfo.newBuilder();
+  info.setTool(cppConfiguration.getToolPathFragment(Tool.GCC).getPathString());
+  for (  String option : getCompilerOptions()) {
+    info.addCompilerOption(option);
+  }
+  info.setOutputFile(outputFile.getExecPathString());
+  info.setSourceFile(getSourceFile().getExecPathString());
+  if (inputsKnown()) {
+    info.addAllSourcesAndHeaders(Artifact.toExecPaths(getInputs()));
+  }
+ else {
+    info.addSourcesAndHeaders(getSourceFile().getExecPathString());
+    info.addAllSourcesAndHeaders(Artifact.toExecPaths(context.getDeclaredIncludeSrcs()));
+  }
+  return super.getExtraActionInfo().setExtension(CppCompileInfo.cppCompileInfo,info.build());
+}

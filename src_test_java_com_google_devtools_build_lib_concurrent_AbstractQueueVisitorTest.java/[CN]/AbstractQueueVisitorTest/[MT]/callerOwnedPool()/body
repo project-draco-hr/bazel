@@ -1,0 +1,10 @@
+{
+  ThreadPoolExecutor executor=new ThreadPoolExecutor(5,5,0,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>());
+  assertSame(0,executor.getActiveCount());
+  CountingQueueVisitor counter=new CountingQueueVisitor(executor);
+  counter.enqueue();
+  counter.work(false);
+  assertSame(10,counter.getCount());
+  executor.shutdown();
+  assertTrue(executor.awaitTermination(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS));
+}

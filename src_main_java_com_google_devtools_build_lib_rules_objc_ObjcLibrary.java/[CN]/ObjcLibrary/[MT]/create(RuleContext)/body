@@ -1,0 +1,10 @@
+{
+  ObjcCommon common=common(ruleContext,ImmutableList.<SdkFramework>of(),ruleContext.attributes().get("alwayslink",Type.BOOLEAN),new ExtraImportLibraries(),new Defines(ruleContext.getTokenizedStringListAttr("defines")),ImmutableList.<ObjcProvider>of());
+  OptionsProvider optionsProvider=optionsProvider(ruleContext);
+  XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
+  NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().addAll(common.getCompiledArchive().asSet());
+  new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common,optionsProvider).addXcodeSettings(xcodeProviderBuilder,common,optionsProvider).validateAttributes();
+  new ResourceSupport(ruleContext).registerActions(common.getStoryboards()).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
+  new XcodeSupport(ruleContext).addFilesToBuild(filesToBuild).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),LIBRARY_STATIC).addDependencies(xcodeProviderBuilder).registerActions(xcodeProviderBuilder.build());
+  return common.configuredTarget(filesToBuild.build(),Optional.of(xcodeProviderBuilder.build()),Optional.of(common.getObjcProvider()),Optional.<XcTestAppProvider>absent(),Optional.of(ObjcRuleClasses.j2ObjcSrcsProvider(ruleContext)));
+}

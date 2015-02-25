@@ -1,0 +1,18 @@
+{
+  TestDelegator delegator=new TestDelegator(){
+    @Override protected InputStream getInputStream(    Path path){
+      lastPath=path;
+      return (InputStream)objectState;
+    }
+  }
+;
+  scopedFS().setDelegator(delegator);
+  delegator.setState(new ByteArrayInputStream("blah".getBytes()));
+  InputStream is=fileLink.getInputStream();
+  assertEquals(fileLinkTarget,delegator.lastPath());
+  assertSame(delegator.objectState(),is);
+  delegator.setState(new ByteArrayInputStream("blah2".getBytes()));
+  is=dirLink.getInputStream();
+  assertEquals(dirLinkTarget,delegator.lastPath());
+  assertSame(delegator.objectState(),is);
+}

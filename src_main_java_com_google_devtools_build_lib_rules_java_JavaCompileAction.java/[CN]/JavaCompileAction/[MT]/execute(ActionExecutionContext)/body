@@ -1,0 +1,28 @@
+{
+  Executor executor=actionExecutionContext.getExecutor();
+  try {
+    List<ActionInput> outputs=new ArrayList<>();
+    outputs.addAll(getOutputs());
+    PathFragment classDirectory=getClassDirectory();
+    outputs.addAll(semantics.getExtraJavaCompileOutputs(classDirectory));
+    outputs.add(ActionInputHelper.fromPath(classDirectory.getChild("srclist").getPathString()));
+    try {
+      Path classDirectoryPath=executor.getExecRoot().getRelative(getClassDirectory());
+      FileSystemUtils.createDirectoryAndParents(classDirectoryPath);
+    }
+ catch (    IOException e) {
+      throw new EnvironmentalExecException(e.getMessage());
+    }
+    final ImmutableList<ActionInput> finalOutputs=ImmutableList.copyOf(outputs);
+    Spawn spawn=new BaseSpawn(getCommand(),ImmutableMap.<String,String>of(),ImmutableMap.<String,String>of(),this,LOCAL_RESOURCES){
+      @Override public Collection<? extends ActionInput> getOutputFiles(){
+        return finalOutputs;
+      }
+    }
+;
+    executor.getSpawnActionContext(getMnemonic()).exec(spawn,actionExecutionContext);
+  }
+ catch (  ExecException e) {
+    throw e.toActionExecutionException("Java compilation in rule '" + getOwner().getLabel() + "'",executor.getVerboseFailures(),this);
+  }
+}

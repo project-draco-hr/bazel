@@ -1,0 +1,30 @@
+{
+  if (interfaceOutputPath != null && (fake || linkType != LinkTargetType.DYNAMIC_LIBRARY)) {
+    throw new RuntimeException("Interface output can only be used " + "with non-fake DYNAMIC_LIBRARY targets");
+  }
+  final Artifact output=createArtifact(outputPath);
+  final Artifact interfaceOutput=(interfaceOutputPath != null) ? createArtifact(interfaceOutputPath) : null;
+  final ImmutableList<Artifact> buildInfoHeaderArtifacts=!linkstamps.isEmpty() ? ruleContext.getAnalysisEnvironment().getBuildInfo(ruleContext,CppBuildInfo.KEY) : ImmutableList.<Artifact>of();
+  final Artifact symbolCountOutput=enableSymbolsCounts(cppConfiguration,fake,linkType) ? createArtifact(output.getRootRelativePath().replaceName(output.getExecPath().getBaseName() + ".sc")) : null;
+  boolean needWholeArchive=wholeArchive || needWholeArchive(linkStaticness,linkType,linkopts,isNativeDeps,cppConfiguration);
+  NestedSet<LibraryToLink> uniqueLibraries=libraries.build();
+  final Iterable<Artifact> filteredNonLibraryArtifacts=filterLinkerInputArtifacts(LinkerInputs.toLibraryArtifacts(nonLibraries));
+  final Iterable<LinkerInput> linkerInputs=IterablesChain.<LinkerInput>builder().add(ImmutableList.copyOf(filterLinkerInputs(nonLibraries))).add(ImmutableIterable.from(Link.mergeInputsCmdLine(uniqueLibraries,needWholeArchive,cppConfiguration.archiveType()))).build();
+  final ImmutableSet<String> features=(ruleContext == null) ? ImmutableSet.<String>of() : ruleContext.getFeatures();
+  final LibraryToLink outputLibrary=LinkerInputs.newInputLibrary(output,filteredNonLibraryArtifacts);
+  final LibraryToLink interfaceOutputLibrary=interfaceOutput == null ? null : LinkerInputs.newInputLibrary(interfaceOutput,filteredNonLibraryArtifacts);
+  final ImmutableMap<Artifact,Artifact> linkstampMap=mapLinkstampsToOutputs(linkstamps,ruleContext,output);
+  final ImmutableList<Artifact> actionOutputs=constructOutputs(outputLibrary.getArtifact(),linkstampMap.values(),interfaceOutputLibrary == null ? null : interfaceOutputLibrary.getArtifact(),symbolCountOutput);
+  LinkCommandLine linkCommandLine=new LinkCommandLine.Builder(configuration,getOwner()).setOutput(outputLibrary.getArtifact()).setInterfaceOutput(interfaceOutput).setSymbolCountsOutput(symbolCountOutput).setBuildInfoHeaderArtifacts(buildInfoHeaderArtifacts).setLinkerInputs(linkerInputs).setRuntimeInputs(ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs))).setLinkTargetType(linkType).setLinkStaticness(linkStaticness).setLinkopts(ImmutableList.copyOf(linkopts)).setFeatures(features).setLinkstamps(linkstampMap).addLinkstampCompileOptions(linkstampOptions).setRuntimeSolibDir(linkType.isStaticLibraryLink() ? null : runtimeSolibDir).setNativeDeps(isNativeDeps).setUseTestOnlyFlags(useTestOnlyFlags).setNeedWholeArchive(needWholeArchive).setInterfaceSoBuilder(getInterfaceSoBuilder()).setSupportsParamFiles(supportsParamFiles).build();
+  NestedSetBuilder<Artifact> dependencyInputsBuilder=NestedSetBuilder.stableOrder();
+  dependencyInputsBuilder.addAll(buildInfoHeaderArtifacts);
+  dependencyInputsBuilder.addAll(linkstamps);
+  dependencyInputsBuilder.addTransitive(crosstoolInputs);
+  if (runtimeMiddleman != null) {
+    dependencyInputsBuilder.add(runtimeMiddleman);
+  }
+  dependencyInputsBuilder.addTransitive(compilationInputs.build());
+  Iterable<Artifact> expandedInputs=LinkerInputs.toLibraryArtifacts(Link.mergeInputsDependencies(uniqueLibraries,needWholeArchive,cppConfiguration.archiveType()));
+  Iterable<Artifact> inputs=IterablesChain.<Artifact>builder().add(ImmutableList.copyOf(LinkerInputs.toLibraryArtifacts(nonLibraries))).add(dependencyInputsBuilder.build()).add(ImmutableIterable.from(expandedInputs)).deduplicate().build();
+  return new CppLinkAction(getOwner(),inputs,actionOutputs,cppConfiguration,outputLibrary,interfaceOutputLibrary,fake,linkCommandLine);
+}

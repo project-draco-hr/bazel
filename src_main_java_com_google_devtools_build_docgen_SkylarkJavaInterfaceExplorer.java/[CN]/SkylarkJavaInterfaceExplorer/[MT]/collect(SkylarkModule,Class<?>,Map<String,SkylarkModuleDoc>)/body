@@ -1,0 +1,31 @@
+{
+  Set<Class<?>> processedClasses=new HashSet<>();
+  LinkedList<Class<?>> classesToProcess=new LinkedList<>();
+  Map<Class<?>,SkylarkModule> annotations=new HashMap<>();
+  classesToProcess.addLast(firstClass);
+  annotations.put(firstClass,firstModule);
+  while (!classesToProcess.isEmpty()) {
+    Class<?> classObject=classesToProcess.removeFirst();
+    SkylarkModule annotation=annotations.get(classObject);
+    processedClasses.add(classObject);
+    if (!modules.containsKey(annotation.name())) {
+      modules.put(annotation.name(),new SkylarkModuleDoc(annotation,classObject));
+    }
+    SkylarkModuleDoc module=modules.get(annotation.name());
+    if (module.javaMethodsNotCollected()) {
+      ImmutableMap<Method,SkylarkCallable> methods=FuncallExpression.collectSkylarkMethodsWithAnnotation(classObject);
+      ArrayList<SkylarkJavaMethod> methodList=new ArrayList<>();
+      for (      Map.Entry<Method,SkylarkCallable> entry : methods.entrySet()) {
+        methodList.add(new SkylarkJavaMethod(entry.getKey(),entry.getValue()));
+      }
+      module.setJavaMethods(methodList);
+      for (      Map.Entry<Method,SkylarkCallable> method : methods.entrySet()) {
+        Class<?> returnClass=method.getKey().getReturnType();
+        if (returnClass.isAnnotationPresent(SkylarkModule.class) && !processedClasses.contains(returnClass)) {
+          classesToProcess.addLast(returnClass);
+          annotations.put(returnClass,returnClass.getAnnotation(SkylarkModule.class));
+        }
+      }
+    }
+  }
+}

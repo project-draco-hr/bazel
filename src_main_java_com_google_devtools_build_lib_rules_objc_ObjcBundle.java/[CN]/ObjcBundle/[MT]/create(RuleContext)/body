@@ -1,0 +1,9 @@
+{
+  ObjcCommon common=new ObjcCommon.Builder(ruleContext).build();
+  ImmutableList<Artifact> bundleImports=ruleContext.getPrerequisiteArtifacts("bundle_imports",Mode.TARGET).list();
+  Iterable<String> bundleImportErrors=ObjcCommon.notInContainerErrors(bundleImports,ObjcCommon.BUNDLE_CONTAINER_TYPE);
+  for (  String error : bundleImportErrors) {
+    ruleContext.attributeError("bundle_imports",error);
+  }
+  return common.configuredTarget(NestedSetBuilder.<Artifact>emptySet(STABLE_ORDER),Optional.<XcodeProvider>absent(),Optional.of(common.getObjcProvider()),Optional.<XcTestAppProvider>absent(),Optional.<J2ObjcSrcsProvider>absent());
+}

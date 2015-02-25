@@ -1,0 +1,24 @@
+{
+  profiler.startTask(ProfilerTask.ACTION,action);
+  try {
+    if (actionCacheChecker.isActionExecutionProhibited(action)) {
+synchronized (reporter) {
+        TargetOutOfDateException e=new TargetOutOfDateException(action);
+        reporter.handle(Event.error(e.getMessage()));
+        recordExecutionError();
+        throw e;
+      }
+    }
+    String message=action.getProgressMessage();
+    if (message != null) {
+      reporter.startTask(null,prependExecPhaseStats(message));
+    }
+    statusReporterRef.get().setPreparing(action);
+    createOutputDirectories(action);
+    prepareScheduleExecuteAndCompleteAction(action,token,actionExecutionContext,actionStartTime);
+    return new ActionExecutionValue(graphFileCache.getOutputData(),graphFileCache.getAdditionalOutputData());
+  }
+  finally {
+    profiler.completeTask(ProfilerTask.ACTION);
+  }
+}

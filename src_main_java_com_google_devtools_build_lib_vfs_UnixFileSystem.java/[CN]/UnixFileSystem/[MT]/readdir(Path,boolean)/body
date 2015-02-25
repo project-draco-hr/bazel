@@ -1,0 +1,16 @@
+{
+  String name=path.getPathString();
+  long startTime=Profiler.nanoTimeMaybe();
+  try {
+    Dirents unixDirents=FilesystemUtils.readdir(name,followSymlinks ? ReadTypes.FOLLOW : ReadTypes.NOFOLLOW);
+    Preconditions.checkState(unixDirents.hasTypes());
+    List<Dirent> dirents=Lists.newArrayListWithCapacity(unixDirents.size());
+    for (int i=0; i < unixDirents.size(); i++) {
+      dirents.add(new Dirent(unixDirents.getName(i),convertToDirentType(unixDirents.getType(i))));
+    }
+    return dirents;
+  }
+  finally {
+    profiler.logSimpleTask(startTime,ProfilerTask.VFS_DIR,name);
+  }
+}

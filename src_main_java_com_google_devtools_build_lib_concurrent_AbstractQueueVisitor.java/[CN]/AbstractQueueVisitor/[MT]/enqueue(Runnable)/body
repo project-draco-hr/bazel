@@ -1,0 +1,16 @@
+{
+  if (concurrent) {
+    AtomicBoolean ranTask=new AtomicBoolean(false);
+    try {
+      pool.execute(wrapRunnable(runnable,ranTask));
+    }
+ catch (    Throwable e) {
+      if (!ranTask.get()) {
+        recordError(e);
+      }
+    }
+  }
+ else {
+    runnable.run();
+  }
+}

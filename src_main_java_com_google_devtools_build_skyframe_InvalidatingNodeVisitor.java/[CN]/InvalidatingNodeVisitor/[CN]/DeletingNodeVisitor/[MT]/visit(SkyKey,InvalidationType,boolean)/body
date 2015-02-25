@@ -1,0 +1,40 @@
+{
+  Preconditions.checkState(invalidationType == InvalidationType.DELETED,key);
+  if (!visitedValues.add(key)) {
+    return;
+  }
+  final Pair<SkyKey,InvalidationType> invalidationPair=Pair.of(key,invalidationType);
+  pendingVisitations.add(invalidationPair);
+  enqueue(new Runnable(){
+    @Override public void run(){
+      NodeEntry entry=graph.get(key);
+      if (entry == null) {
+        pendingVisitations.remove(invalidationPair);
+        return;
+      }
+      if (traverseGraph) {
+        for (        SkyKey reverseDep : entry.getReverseDeps()) {
+          visit(reverseDep,InvalidationType.DELETED,!MUST_EXIST);
+        }
+      }
+      if (entry.isDone()) {
+        if (traverseGraph) {
+          for (          SkyKey directDep : entry.getDirectDeps()) {
+            NodeEntry dep=graph.get(directDep);
+            if (dep != null) {
+              dep.removeReverseDep(key);
+            }
+          }
+        }
+        informInvalidationReceiver(entry.getValue(),EvaluationProgressReceiver.InvalidationState.DELETED);
+      }
+      if (traverseGraph) {
+        entry.getReverseDeps();
+      }
+      graph.remove(key);
+      dirtyKeyTracker.notDirty(key);
+      pendingVisitations.remove(invalidationPair);
+    }
+  }
+);
+}

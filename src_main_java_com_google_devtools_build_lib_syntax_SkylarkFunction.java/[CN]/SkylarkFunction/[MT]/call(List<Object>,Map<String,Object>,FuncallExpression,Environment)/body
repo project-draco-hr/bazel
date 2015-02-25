@@ -1,0 +1,42 @@
+{
+  Preconditions.checkState(configured,"Function " + getName() + " was not configured");
+  try {
+    ImmutableMap.Builder<String,Object> arguments=new ImmutableMap.Builder<>();
+    if (objectType != null && !FuncallExpression.isNamespace(objectType)) {
+      arguments.put("self",args.remove(0));
+    }
+    int maxParamNum=parameters.size();
+    int paramNum=args.size() + kwargs.size();
+    if (paramNum < mandatoryParamNum) {
+      throw new EvalException(ast.getLocation(),String.format("incorrect number of arguments (got %s, expected at least %s)",paramNum,mandatoryParamNum));
+    }
+ else     if (paramNum > maxParamNum) {
+      throw new EvalException(ast.getLocation(),String.format("incorrect number of arguments (got %s, expected at most %s)",paramNum,maxParamNum));
+    }
+    for (int i=0; i < mandatoryParamNum; i++) {
+      Preconditions.checkState(i < args.size() || kwargs.containsKey(parameters.get(i)),String.format("missing mandatory parameter: %s",parameters.get(i)));
+    }
+    for (int i=0; i < args.size(); i++) {
+      checkTypeAndAddArg(parameters.get(i),args.get(i),arguments,ast.getLocation());
+    }
+    for (    Entry<String,Object> kwarg : kwargs.entrySet()) {
+      int idx=parameters.indexOf(kwarg.getKey());
+      if (idx < 0) {
+        throw new EvalException(ast.getLocation(),String.format("unknown keyword argument: %s",kwarg.getKey()));
+      }
+      if (idx < args.size()) {
+        throw new EvalException(ast.getLocation(),String.format("ambiguous argument: %s",kwarg.getKey()));
+      }
+      checkTypeAndAddArg(kwarg.getKey(),kwarg.getValue(),arguments,ast.getLocation());
+    }
+    return call(arguments.build(),ast,env);
+  }
+ catch (  ConversionException|IllegalArgumentException|IllegalStateException|ClassCastException|ClassNotFoundException|ExecutionException e) {
+    if (e.getMessage() != null) {
+      throw new EvalException(ast.getLocation(),e.getMessage());
+    }
+ else {
+      throw new EvalExceptionWithJavaCause(ast.getLocation(),e);
+    }
+  }
+}

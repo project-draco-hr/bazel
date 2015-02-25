@@ -1,0 +1,39 @@
+{
+  Preconditions.checkState(!rule.hasConfigurableAttributes());
+  List<Label> srcLabels=Lists.newArrayList();
+  AttributeMap attributeMap=RawAttributeMapper.of(rule);
+  for (  String attrName : attributes) {
+    if (rule.isAttrDefined(attrName,Type.LABEL_LIST)) {
+      srcLabels.addAll(attributeMap.get(attrName,Type.LABEL_LIST));
+    }
+ else     if (rule.isAttrDefined(attrName,Type.LABEL)) {
+      Label srcLabel=attributeMap.get(attrName,Type.LABEL);
+      if (srcLabel != null) {
+        srcLabels.add(srcLabel);
+      }
+    }
+  }
+  if (srcLabels.isEmpty()) {
+    return ImmutableList.of();
+  }
+  List<FileTarget> srcTargets=new ArrayList<>();
+  for (  Label label : srcLabels) {
+    Target target=targetProvider.getTarget(eventHandler,label);
+    if (target instanceof FileTarget) {
+      srcTargets.add((FileTarget)target);
+    }
+ else {
+      Rule srcRule=target.getAssociatedRule();
+      if (srcRule != null && !visitedRules.contains(srcRule)) {
+        visitedRules.add(srcRule);
+        if ("filegroup".equals(srcRule.getRuleClass())) {
+          srcTargets.addAll(getTargets(eventHandler,srcRule,FILEGROUP_ATTRIBUTES,visitedRules,targetProvider));
+        }
+ else {
+          srcTargets.addAll(srcRule.getOutputFiles());
+        }
+      }
+    }
+  }
+  return ImmutableList.copyOf(srcTargets);
+}

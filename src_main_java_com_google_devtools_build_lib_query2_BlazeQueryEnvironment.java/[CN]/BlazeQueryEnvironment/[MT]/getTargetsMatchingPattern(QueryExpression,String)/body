@@ -1,0 +1,47 @@
+{
+  Set<Target> targets=new LinkedHashSet<>(resolvedTargetPatterns.get(pattern).getTargets());
+  Iterator<Target> targetIterator=targets.iterator();
+  while (targetIterator.hasNext()) {
+    Target target=targetIterator.next();
+    if (!validateScope(target.getLabel(),strictScope)) {
+      targetIterator.remove();
+    }
+  }
+  Set<PathFragment> packages=new HashSet<>();
+  for (  Target target : targets) {
+    packages.add(target.getLabel().getPackageFragment());
+  }
+  Set<Target> result=new LinkedHashSet<>();
+  for (  Target target : targets) {
+    result.add(getOrCreate(target));
+    if (target instanceof OutputFile) {
+      OutputFile outputFile=(OutputFile)target;
+      if (targets.contains(outputFile.getGeneratingRule())) {
+        makeEdge(outputFile,outputFile.getGeneratingRule());
+      }
+    }
+ else     if (target instanceof Rule) {
+      Rule rule=(Rule)target;
+      for (      Label label : rule.getLabels(dependencyFilter)) {
+        if (!packages.contains(label.getPackageFragment())) {
+          continue;
+        }
+        try {
+          if (!validateScope(label,strictScope)) {
+            continue;
+          }
+          Target to=getTargetOrThrow(label);
+          if (targets.contains(to)) {
+            makeEdge(rule,to);
+          }
+        }
+ catch (        NoSuchThingException e) {
+        }
+catch (        InterruptedException e) {
+          throw new QueryException("interrupted");
+        }
+      }
+    }
+  }
+  return result;
+}

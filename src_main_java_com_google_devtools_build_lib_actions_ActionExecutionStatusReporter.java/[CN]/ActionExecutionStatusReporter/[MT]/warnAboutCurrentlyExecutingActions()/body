@@ -1,0 +1,19 @@
+{
+  Map<ActionMetadata,Pair<String,Long>> statusMap=new HashMap<>(actionStatus);
+  if (statusMap.size() == 0) {
+    eventHandler.handle(Event.warn("There are no active jobs - stopping the build"));
+    return;
+  }
+  Iterator<ActionMetadata> iterator=statusMap.keySet().iterator();
+  while (iterator.hasNext()) {
+    if (statusMap.get(iterator.next()).first.equals(ActionStatusMessage.PREPARING)) {
+      iterator.remove();
+    }
+  }
+  if (statusMap.size() > 0) {
+    eventHandler.handle(Event.warn(getExecutionStatusMessage(statusMap) + "\nBuild will be stopped after these tasks terminate"));
+  }
+ else {
+    eventHandler.handle(Event.warn("Still waiting for unfinished jobs"));
+  }
+}

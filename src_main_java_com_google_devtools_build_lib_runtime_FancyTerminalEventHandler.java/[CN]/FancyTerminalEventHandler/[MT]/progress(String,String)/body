@@ -1,0 +1,36 @@
+{
+  previousLineErasable=true;
+  if (progressInTermTitle) {
+    int newlinePos=rest.indexOf('\n');
+    if (newlinePos == -1) {
+      terminal.setTitle(prefix + rest);
+    }
+ else {
+      terminal.setTitle(prefix + rest.substring(0,newlinePos));
+    }
+  }
+  if (useColor) {
+    terminal.textGreen();
+  }
+  int prefixWidth=prefix.length();
+  terminal.writeString(prefix);
+  terminal.resetTerminal();
+  if (showTimestamp) {
+    String timestamp=timestamp();
+    prefixWidth+=timestamp.length();
+    terminal.writeString(timestamp);
+  }
+  int numLines=0;
+  Iterator<String> lines=LINEBREAK_SPLITTER.split(rest).iterator();
+  String firstLine=lines.next();
+  terminal.writeString(firstLine);
+  numLines+=(prefixWidth + firstLine.length() - 1) / terminalWidth + 1;
+  crlf();
+  while (lines.hasNext()) {
+    String line=lines.next();
+    terminal.writeString(line);
+    crlf();
+    numLines+=(line.length() - 1) / terminalWidth + 1;
+  }
+  numLinesPreviousErasable=numLines;
+}

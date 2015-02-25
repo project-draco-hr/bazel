@@ -1,0 +1,22 @@
+{
+  if (delayList.hasNext()) {
+    return delayList.next();
+  }
+  while (inputs.hasNext()) {
+    LibraryToLink inputLibrary=inputs.next();
+    Artifact input=inputLibrary.getArtifact();
+    String name=input.getFilename();
+    boolean needMembersForLink=archiveType != ArchiveType.FAT && ARCHIVE_LIBRARY_FILETYPES.matches(name) && inputLibrary.containsObjectFiles();
+    boolean passMembersToLinkCmd=needMembersForLink && (globalNeedWholeArchive || LINK_LIBRARY_FILETYPES.matches(name));
+    if (passMembersToLinkCmd || (deps && needMembersForLink)) {
+      delayList=LinkerInputs.simpleLinkerInputs(inputLibrary.getObjectFiles()).iterator();
+    }
+    if (!(passMembersToLinkCmd || (deps && useStartEndLib(inputLibrary,archiveType)))) {
+      return inputLibrary;
+    }
+    if (delayList.hasNext()) {
+      return delayList.next();
+    }
+  }
+  return endOfData();
+}

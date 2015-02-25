@@ -1,0 +1,31 @@
+{
+  int start=token.left;
+  if (token.kind == TokenKind.RETURN) {
+    return parseReturnStatement();
+  }
+  Expression expression=parseExpression();
+  if (token.kind == TokenKind.EQUALS) {
+    nextToken();
+    Expression rvalue=parseExpression();
+    if (expression instanceof FuncallExpression) {
+      FuncallExpression func=(FuncallExpression)expression;
+      if (func.getFunction().getName().equals("$index") && func.getObject() instanceof Ident) {
+        Preconditions.checkArgument(func.getArguments().size() == 1);
+        DictionaryLiteral dictRValue=setLocation(new DictionaryLiteral(ImmutableList.of(setLocation(new DictionaryEntryLiteral(func.getArguments().get(0).getValue(),rvalue),start,token.right))),start,token.right);
+        BinaryOperatorExpression binExp=setLocation(new BinaryOperatorExpression(Operator.PLUS,func.getObject(),dictRValue),start,token.right);
+        return setLocation(new AssignmentStatement(func.getObject(),binExp),start,token.right);
+      }
+    }
+    return setLocation(new AssignmentStatement(expression,rvalue),start,rvalue);
+  }
+ else   if (augmentedAssignmentMethods.containsKey(token.kind)) {
+    Operator operator=augmentedAssignmentMethods.get(token.kind);
+    nextToken();
+    Expression operand=parseExpression();
+    int end=operand.getLocation().getEndOffset();
+    return setLocation(new AssignmentStatement(expression,setLocation(new BinaryOperatorExpression(operator,expression,operand),start,end)),start,end);
+  }
+ else {
+    return setLocation(new ExpressionStatement(expression),start,expression);
+  }
+}

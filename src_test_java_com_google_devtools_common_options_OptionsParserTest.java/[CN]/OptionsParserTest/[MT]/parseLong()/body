@@ -1,0 +1,19 @@
+{
+  OptionsParser parser=newOptionsParser(LongValueExample.class);
+  parser.parse("");
+  LongValueExample result=parser.getOptions(LongValueExample.class);
+  assertEquals(2147483648L,result.longval);
+  assertEquals(2147483647,result.intval);
+  parser.parse("--longval",Long.toString(Long.MIN_VALUE));
+  result=parser.getOptions(LongValueExample.class);
+  assertEquals(Long.MIN_VALUE,result.longval);
+  try {
+    parser.parse("--intval=2147483648");
+    fail();
+  }
+ catch (  OptionsParsingException e) {
+  }
+  parser.parse("--longval","100");
+  result=parser.getOptions(LongValueExample.class);
+  assertEquals(100,result.longval);
+}

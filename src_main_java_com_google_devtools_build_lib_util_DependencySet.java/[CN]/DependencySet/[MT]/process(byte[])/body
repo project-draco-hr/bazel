@@ -1,0 +1,31 @@
+{
+  boolean cr=content.length > 0 && content[0] == '\r';
+  boolean multiline=false;
+  byte prevByte=' ';
+  for (int i=1; i < content.length; i++) {
+    byte b=content[i];
+    if (cr || b == '\r') {
+      cr=true;
+      break;
+    }
+    if (b == '\n') {
+      if (prevByte == '\\') {
+        content[i]=' ';
+        content[i - 1]=' ';
+      }
+ else {
+        multiline=true;
+      }
+    }
+    prevByte=b;
+  }
+  if (!cr && content.length > 0 && content[content.length - 1] == '\n') {
+    content[content.length - 1]=' ';
+  }
+  String s=new String(content,StandardCharsets.UTF_8);
+  if (cr) {
+    s=DOTD_MERGED_LINE_SEPARATOR.matcher(s).replaceAll(" ").trim();
+    multiline=true;
+  }
+  return process(s,multiline);
+}

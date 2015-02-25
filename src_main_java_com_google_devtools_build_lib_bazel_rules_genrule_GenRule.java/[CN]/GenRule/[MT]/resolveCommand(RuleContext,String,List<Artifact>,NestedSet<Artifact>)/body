@@ -1,0 +1,43 @@
+{
+  return ruleContext.expandMakeVariables("cmd",command,new ConfigurationMakeVariableContext(ruleContext.getRule().getPackage(),ruleContext.getConfiguration()){
+    @Override public String lookupMakeVariable(    String name) throws ExpansionException {
+      if (name.equals("SRCS")) {
+        return Artifact.joinExecPaths(" ",resolvedSrcs);
+      }
+ else       if (name.equals("<")) {
+        return expandSingletonArtifact(resolvedSrcs,"$<","input file");
+      }
+ else       if (name.equals("OUTS")) {
+        return Artifact.joinExecPaths(" ",filesToBuild);
+      }
+ else       if (name.equals("@")) {
+        return expandSingletonArtifact(filesToBuild,"$@","output file");
+      }
+ else       if (name.equals("@D")) {
+        if (Iterables.size(filesToBuild) == 1) {
+          Artifact outputFile=Iterables.getOnlyElement(filesToBuild);
+          PathFragment relativeOutputFile=outputFile.getExecPath();
+          if (relativeOutputFile.segmentCount() <= 1) {
+            throw new IllegalStateException("$(@D) for genrule " + ruleContext.getLabel() + " has less than one segment");
+          }
+          return relativeOutputFile.getParentDirectory().getPathString();
+        }
+ else {
+          PathFragment dir;
+          if (ruleContext.getRule().hasBinaryOutput()) {
+            dir=ruleContext.getConfiguration().getBinFragment();
+          }
+ else {
+            dir=ruleContext.getConfiguration().getGenfilesFragment();
+          }
+          PathFragment relPath=ruleContext.getRule().getLabel().getPackageFragment();
+          return dir.getRelative(relPath).getPathString();
+        }
+      }
+ else {
+        return super.lookupMakeVariable(name);
+      }
+    }
+  }
+);
+}

@@ -1,0 +1,16 @@
+{
+  return new MixedModeFunction("licenses",ImmutableList.of("object"),1,false){
+    @Override public Object call(    Object[] args,    FuncallExpression ast){
+      try {
+        License license=Type.LICENSE.convert(args[0],"'licenses' operand");
+        context.pkgBuilder.setDefaultLicense(license);
+      }
+ catch (      ConversionException e) {
+        context.eventHandler.handle(Event.error(ast.getLocation(),e.getMessage()));
+        context.pkgBuilder.setContainsErrors();
+      }
+      return Environment.NONE;
+    }
+  }
+;
+}

@@ -1,0 +1,19 @@
+{
+  Preconditions.checkArgument(token != null);
+  String key=token.cacheKey;
+  ActionCache.Entry entry=actionCache.createEntry(action.getKey());
+  for (  Artifact output : action.getOutputs()) {
+    String execPath=output.getExecPathString();
+    if (!key.equals(execPath)) {
+      actionCache.remove(key);
+    }
+    Metadata metadata=metadataHandler.getMetadata(output);
+    Preconditions.checkState(metadata != null);
+    entry.addFile(output.getExecPath(),metadata);
+  }
+  for (  Artifact input : action.getInputs()) {
+    entry.addFile(input.getExecPath(),metadataHandler.getMetadataMaybe(input));
+  }
+  entry.getFileDigest();
+  actionCache.put(key,entry);
+}

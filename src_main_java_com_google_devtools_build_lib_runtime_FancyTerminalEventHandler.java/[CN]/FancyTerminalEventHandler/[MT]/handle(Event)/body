@@ -1,0 +1,76 @@
+{
+  if (terminalClosed) {
+    return;
+  }
+  if (!eventMask.contains(event.getKind())) {
+    return;
+  }
+  try {
+    boolean previousLineErased=false;
+    if (previousLineErasable) {
+      previousLineErased=maybeOverwritePreviousMessage();
+    }
+switch (event.getKind()) {
+case PROGRESS:
+case START:
+{
+        String message=event.getMessage();
+        Pair<String,String> progressPair=matchProgress(message);
+        if (progressPair != null) {
+          progress(progressPair.getFirst(),progressPair.getSecond());
+        }
+ else {
+          progress("INFO: ",message);
+        }
+        break;
+      }
+case FINISH:
+{
+      String message=event.getMessage();
+      Pair<String,String> progressPair=matchProgress(message);
+      if (progressPair != null) {
+        String percentage=progressPair.getFirst();
+        String rest=progressPair.getSecond();
+        progress(percentage,rest + " DONE");
+      }
+ else {
+        progress("INFO: ",message + " DONE");
+      }
+      break;
+    }
+case PASS:
+  progress("PASS: ",event.getMessage());
+break;
+case INFO:
+info(event);
+break;
+case ERROR:
+case FAIL:
+case TIMEOUT:
+errorOrFail(event);
+break;
+case WARNING:
+warning(event);
+break;
+case SUBCOMMAND:
+subcmd(event);
+break;
+case STDOUT:
+if (previousLineErased) {
+terminal.flush();
+}
+previousLineErasable=false;
+super.handle(event);
+break;
+case STDERR:
+putOutput(event);
+break;
+default :
+break;
+}
+}
+ catch (IOException e) {
+LOG.warning("Terminal was closed during build: " + e);
+terminalClosed=true;
+}
+}

@@ -1,0 +1,21 @@
+{
+  final Dirent[] direntArray=dirents.toArray(new Dirent[dirents.size()]);
+  Integer[] indices=new Integer[dirents.size()];
+  for (int i=0; i < dirents.size(); i++) {
+    indices[i]=i;
+  }
+  Arrays.sort(indices,new Comparator<Integer>(){
+    @Override public int compare(    Integer o1,    Integer o2){
+      return direntArray[o1].getName().compareTo(direntArray[o2].getName());
+    }
+  }
+);
+  String[] names=new String[dirents.size()];
+  BitSet packedTypes=new BitSet(dirents.size() * 2);
+  for (int i=0; i < dirents.size(); i++) {
+    Dirent dirent=direntArray[indices[i]];
+    names[i]=dirent.getName();
+    packType(packedTypes,dirent.getType(),i);
+  }
+  return new CompactSortedDirents(names,packedTypes);
+}

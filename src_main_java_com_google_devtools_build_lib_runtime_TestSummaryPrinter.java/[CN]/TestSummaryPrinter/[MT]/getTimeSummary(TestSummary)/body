@@ -1,0 +1,23 @@
+{
+  if (summary.getTestTimes().isEmpty()) {
+    return "";
+  }
+ else   if (summary.getTestTimes().size() == 1) {
+    return " in " + timeInSec(summary.getTestTimes().get(0),TimeUnit.MILLISECONDS);
+  }
+ else {
+    long min=summary.getTestTimes().get(0).longValue(), max=min, sum=0;
+    double sumOfSquares=0.0;
+    for (    Long l : summary.getTestTimes()) {
+      long value=l.longValue();
+      min=value < min ? value : min;
+      max=value > max ? value : max;
+      sum+=value;
+      sumOfSquares+=((double)value) * (double)value;
+    }
+    double mean=((double)sum) / summary.getTestTimes().size();
+    double stddev=Math.sqrt((sumOfSquares - sum * mean) / summary.getTestTimes().size());
+    String maxTime=timeInSec(max,TimeUnit.MILLISECONDS);
+    return String.format(" in %s\n  Stats over %d runs: max = %s, min = %s, avg = %s, dev = %s",maxTime,summary.getTestTimes().size(),maxTime,timeInSec(min,TimeUnit.MILLISECONDS),timeInSec((long)mean,TimeUnit.MILLISECONDS),timeInSec((long)stddev,TimeUnit.MILLISECONDS));
+  }
+}

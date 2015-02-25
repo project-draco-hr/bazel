@@ -1,0 +1,17 @@
+{
+  Preprocessor preprocessor=preprocessorFactory.getPreprocessor();
+  if (preprocessor == null) {
+    return Preprocessor.Result.noPreprocessing(inputSource);
+  }
+  try {
+    return preprocessor.preprocess(inputSource,packageId.toString(),globber,eventHandler,globalEnv,ruleFactory.getRuleClassNames());
+  }
+ catch (  IOException e) {
+    eventHandler.handle(Event.error(Location.fromFile(buildFile),"preprocessing failed: " + e.getMessage()));
+    return Preprocessor.Result.transientError(buildFile);
+  }
+catch (  InterruptedException e) {
+    globber.onInterrupt();
+    throw e;
+  }
+}

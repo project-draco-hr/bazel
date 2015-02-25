@@ -1,0 +1,16 @@
+{
+  if (!reachableLabels.add(from)) {
+    return;
+  }
+  Target fromTarget=loadedPackageProvider.getLoadedTarget(from);
+  if (fromTarget instanceof Rule) {
+    Rule rule=(Rule)fromTarget;
+    if (rule.getRuleClassObject().hasAttr("srcs",Type.LABEL_LIST)) {
+      for (      List<Label> labelsForConfiguration : AggregatingAttributeMapper.of(rule).visitAttribute("srcs",Type.LABEL_LIST)) {
+        for (        Label label : labelsForConfiguration) {
+          collectTransitiveClosure(loadedPackageProvider,reachableLabels,label);
+        }
+      }
+    }
+  }
+}

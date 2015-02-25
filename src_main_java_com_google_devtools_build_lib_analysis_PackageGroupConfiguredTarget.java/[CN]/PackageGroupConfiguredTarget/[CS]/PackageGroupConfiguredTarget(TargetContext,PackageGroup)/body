@@ -1,0 +1,16 @@
+{
+  super(targetContext);
+  Preconditions.checkArgument(targetContext.getConfiguration() == null);
+  NestedSetBuilder<PackageSpecification> builder=NestedSetBuilder.stableOrder();
+  for (  Label label : packageGroup.getIncludes()) {
+    TransitiveInfoCollection include=targetContext.findDirectPrerequisite(label,targetContext.getConfiguration());
+    PackageSpecificationProvider provider=include == null ? null : include.getProvider(PackageSpecificationProvider.class);
+    if (provider == null) {
+      targetContext.getAnalysisEnvironment().getEventHandler().handle(Event.error(getTarget().getLocation(),String.format("label '%s' does not refer to a package group",label)));
+      continue;
+    }
+    builder.addTransitive(provider.getPackageSpecifications());
+  }
+  builder.addAll(packageGroup.getPackageSpecifications());
+  packageSpecifications=builder.build();
+}

@@ -1,0 +1,41 @@
+{
+  initializeTester();
+  SkyKey[] leftValues=new SkyKey[TEST_NODE_COUNT];
+  SkyKey[] rightValues=new SkyKey[TEST_NODE_COUNT];
+  for (int i=0; i < TEST_NODE_COUNT; i++) {
+    leftValues[i]=GraphTester.toSkyKey("left-" + i);
+    rightValues[i]=GraphTester.toSkyKey("right-" + i);
+    if (i == 0) {
+      tester.getOrCreate(leftValues[i]).addDependency("leaf").setComputedValue(COPY);
+      tester.getOrCreate(rightValues[i]).addDependency("leaf").setComputedValue(COPY);
+    }
+ else {
+      tester.getOrCreate(leftValues[i]).addDependency(leftValues[i - 1]).addDependency(rightValues[i - 1]).setComputedValue(new PassThroughSelected(leftValues[i - 1]));
+      tester.getOrCreate(rightValues[i]).addDependency(leftValues[i - 1]).addDependency(rightValues[i - 1]).setComputedValue(new PassThroughSelected(rightValues[i - 1]));
+    }
+  }
+  tester.set("leaf",new StringValue("leaf"));
+  String lastLeft="left-" + (TEST_NODE_COUNT - 1);
+  String lastRight="right-" + (TEST_NODE_COUNT - 1);
+  for (int i=0; i < TESTED_NODES; i++) {
+    try {
+      tester.getOrCreate(leftValues[i],true).setHasError(true);
+      tester.invalidate();
+      EvaluationResult<StringValue> result=tester.eval(false,lastLeft,lastRight);
+      assertTrue(result.hasError());
+      tester.differencer.invalidate(ImmutableList.of(leftValues[i]));
+      tester.invalidate();
+      result=tester.eval(false,lastLeft,lastRight);
+      assertTrue(result.hasError());
+      tester.getOrCreate(leftValues[i],true).setHasError(false);
+      tester.invalidate();
+      result=tester.eval(false,lastLeft,lastRight);
+      assertEquals(new StringValue("leaf"),result.get(toSkyKey(lastLeft)));
+      assertEquals(new StringValue("leaf"),result.get(toSkyKey(lastRight)));
+    }
+ catch (    Exception e) {
+      System.err.println("twoRailLeftRightDependenciesWithFailure exception on run " + i);
+      throw e;
+    }
+  }
+}

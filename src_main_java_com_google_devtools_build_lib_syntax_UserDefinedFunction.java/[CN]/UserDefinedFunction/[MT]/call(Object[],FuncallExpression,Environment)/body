@@ -1,0 +1,16 @@
+{
+  SkylarkEnvironment functionEnv=SkylarkEnvironment.createEnvironmentForFunctionCalling(env,definitionEnv,this);
+  int i=0;
+  for (  Object arg : namedArguments) {
+    functionEnv.update(args.get(i++).getArgName(),arg);
+  }
+  try {
+    for (    Statement stmt : statements) {
+      stmt.exec(functionEnv);
+    }
+  }
+ catch (  ReturnStatement.ReturnException e) {
+    return e.getValue();
+  }
+  return Environment.NONE;
+}

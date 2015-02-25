@@ -1,0 +1,48 @@
+{
+  List<String> jcopts=new ArrayList<>(javacOpts);
+  JavaConfiguration javaConfiguration=configuration.getFragment(JavaConfiguration.class);
+  if (javaConfiguration.getJavaWarns().size() > 0) {
+    jcopts.add("-Xlint:" + Joiner.on(',').join(javaConfiguration.getJavaWarns()));
+  }
+  if (!bootclasspathEntries.isEmpty()) {
+    jcopts.add("-bootclasspath");
+    jcopts.add(Artifact.joinExecPaths(configuration.getHostPathSeparator(),bootclasspathEntries));
+  }
+  List<String> internedJcopts=new ArrayList<>();
+  for (  String jcopt : jcopts) {
+    internedJcopts.add(StringCanonicalizer.intern(jcopt));
+  }
+  if (strictJavaDeps == BuildConfiguration.StrictDepsMode.OFF) {
+    directJars.clear();
+    compileTimeDependencyArtifacts.clear();
+  }
+  if (javaConfiguration.getReduceJavaClasspath() != JavaClasspathMode.JAVABUILDER) {
+    compileTimeDependencyArtifacts.clear();
+  }
+  if (paramFile == null) {
+    paramFile=analysisEnvironment.getDerivedArtifact(ParameterFile.derivePath(outputJar.getRootRelativePath()),configuration.getBinDirectory());
+  }
+  Iterable<Artifact> baseInputs=ImmutableIterable.from(Iterables.concat(javabaseInputs,bootclasspathEntries,ImmutableList.of(paramFile)));
+  Preconditions.checkState(javaExecutable != null,owner);
+  Preconditions.checkState(javaExecutable.isAbsolute() ^ !javabaseInputs.isEmpty(),javaExecutable);
+  Collection<Artifact> outputs;
+  ImmutableList.Builder<Artifact> outputsBuilder=ImmutableList.builder();
+  outputsBuilder.add(outputJar);
+  if (metadata != null) {
+    outputsBuilder.add(metadata);
+  }
+  if (gensrcOutputJar != null) {
+    outputsBuilder.add(gensrcOutputJar);
+  }
+  if (outputDepsProto != null) {
+    outputsBuilder.add(outputDepsProto);
+  }
+  outputs=outputsBuilder.build();
+  CustomCommandLine.Builder paramFileContentsBuilder=javaCompileCommandLine(semantics,configuration,classDirectory,sourceGenDirectory,tempDirectory,outputJar,gensrcOutputJar,compressJar,outputDepsProto,classpathEntries,processorPath,langtoolsJar,javaBuilderJar,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,internedJcopts,directJars,strictJavaDeps,compileTimeDependencyArtifacts,ruleKind,targetLabel);
+  semantics.buildJavaCommandLine(outputs,configuration,paramFileContentsBuilder);
+  CommandLine paramFileContents=paramFileContentsBuilder.build();
+  Action parameterFileWriteAction=new ParameterFileWriteAction(owner,paramFile,paramFileContents,ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1);
+  analysisEnvironment.registerAction(parameterFileWriteAction);
+  CommandLine javaBuilderCommandLine=spawnCommandLine(javaExecutable,javaBuilderJar,langtoolsJar,paramFile,javaConfiguration.getDefaultJavaBuilderJvmFlags());
+  return new JavaCompileAction(owner,baseInputs,outputs,paramFileContents,javaBuilderCommandLine,classDirectory,outputJar,classpathEntries,processorPath,langtoolsJar,javaBuilderJar,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,internedJcopts,directJars,strictJavaDeps,compileTimeDependencyArtifacts,semantics);
+}

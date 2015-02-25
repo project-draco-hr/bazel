@@ -1,0 +1,15 @@
+{
+  Object o=collection.eval(env);
+  Iterable<?> col=EvalUtils.toIterable(o,getLocation());
+  int i=0;
+  for (  Object it : ImmutableList.copyOf(col)) {
+    env.update(variable.getName(),it);
+    for (    Statement stmt : block) {
+      stmt.exec(env);
+    }
+    i++;
+  }
+  if (i != EvalUtils.size(col)) {
+    throw new EvalException(getLocation(),String.format("Cannot modify '%s' during during iteration.",collection.toString()));
+  }
+}

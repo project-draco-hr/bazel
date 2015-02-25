@@ -1,0 +1,16 @@
+{
+  graph=new DeterministicInMemoryGraph();
+  tester=new GraphTester();
+  SkyKey errorKey=GraphTester.toSkyKey("error");
+  SkyKey parent1Key=GraphTester.toSkyKey("parent1");
+  SkyKey parent2Key=GraphTester.toSkyKey("parent2");
+  tester.getOrCreate(parent1Key).addDependency(errorKey).setConstantValue(new StringValue("parent1"));
+  tester.getOrCreate(parent2Key).addDependency(errorKey).setConstantValue(new StringValue("parent2"));
+  tester.getOrCreate(errorKey).setHasError(true);
+  EvaluationResult<StringValue> result=eval(true,ImmutableList.of(parent1Key));
+  assertTrue(result.hasError());
+  assertEquals(errorKey,result.getError().getRootCauseOfException());
+  result=eval(false,ImmutableList.of(parent2Key));
+  assertTrue(result.hasError());
+  assertEquals(errorKey,result.getError(parent2Key).getRootCauseOfException());
+}

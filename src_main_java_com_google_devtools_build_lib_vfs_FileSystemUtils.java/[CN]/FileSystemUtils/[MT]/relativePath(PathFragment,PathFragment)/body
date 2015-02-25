@@ -1,0 +1,18 @@
+{
+  if (to.equals(fromDir)) {
+    return new PathFragment(".");
+  }
+  if (to.startsWith(fromDir)) {
+    return to.relativeTo(fromDir);
+  }
+  PathFragment ancestor=commonAncestor(fromDir,to);
+  if (ancestor == null) {
+    return to;
+  }
+  int levels=fromDir.relativeTo(ancestor).segmentCount();
+  StringBuilder dotdots=new StringBuilder();
+  for (int i=0; i < levels; i++) {
+    dotdots.append("../");
+  }
+  return new PathFragment(dotdots.toString()).getRelative(to.relativeTo(ancestor));
+}

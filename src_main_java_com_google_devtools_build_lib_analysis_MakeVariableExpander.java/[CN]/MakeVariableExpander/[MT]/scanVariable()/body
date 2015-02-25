@@ -1,0 +1,43 @@
+{
+  char c=buffer[offset];
+switch (c) {
+case '(':
+{
+      offset++;
+      int start=offset;
+      while (offset < length && buffer[offset] != ')') {
+        offset++;
+      }
+      if (offset >= length) {
+        throw new ExpansionException("unterminated variable reference");
+      }
+      return new String(buffer,start,offset - start);
+    }
+case '{':
+{
+    offset++;
+    int start=offset;
+    while (offset < length && buffer[offset] != '}') {
+      offset++;
+    }
+    if (offset >= length) {
+      throw new ExpansionException("unterminated variable reference");
+    }
+    String expr=new String(buffer,start,offset - start);
+    throw new ExpansionException("'${" + expr + "}' syntax is not supported; use '$("+ expr+ ")' instead for \"Make\" variables, or escape the '$' as "+ "'$$' if you intended this for the shell");
+  }
+case '@':
+case '<':
+case '^':
+return String.valueOf(c);
+default :
+{
+int start=offset;
+while (offset + 1 < length && Character.isJavaIdentifierPart(buffer[offset + 1])) {
+  offset++;
+}
+String expr=new String(buffer,start,offset + 1 - start);
+throw new ExpansionException("'$" + expr + "' syntax is not supported; use '$("+ expr+ ")' instead for \"Make\" variables, or escape the '$' as "+ "'$$' if you intended this for the shell");
+}
+}
+}

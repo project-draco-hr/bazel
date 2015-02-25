@@ -1,0 +1,17 @@
+{
+  if (path.equals(rootPath)) {
+    throw Error.EACCES.exception(path);
+  }
+  InMemoryDirectoryInfo parent;
+synchronized (this) {
+    parent=getDirectory(path.getParentDirectory());
+    if (!parent.outOfScope()) {
+      if (parent.getChild(path.getBaseName()) != null) {
+        throw Error.EEXIST.exception(path);
+      }
+      insert(parent,path.getBaseName(),new InMemoryLinkInfo(clock,targetFragment),path);
+      return;
+    }
+  }
+  getDelegatedPath(parent.getEscapingPath(),path).createSymbolicLink(targetFragment);
+}

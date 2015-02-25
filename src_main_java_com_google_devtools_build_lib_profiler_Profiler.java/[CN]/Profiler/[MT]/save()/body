@@ -1,0 +1,44 @@
+{
+  if (out == null) {
+    return;
+  }
+  try {
+    ByteBuffer sink=ByteBuffer.allocate(1024);
+    while (!taskQueue.isEmpty()) {
+      sink.clear();
+      TaskData data=taskQueue.poll();
+      VarInt.putVarLong(data.threadId,sink);
+      VarInt.putVarInt(data.id,sink);
+      VarInt.putVarInt(data.parentId,sink);
+      VarInt.putVarLong(data.startTime - profileStartTime,sink);
+      VarInt.putVarLong(data.duration,sink);
+      int descIndex=describer.getDescriptionIndex(data.object);
+      VarInt.putVarInt(descIndex + 1,sink);
+      sink.put((byte)data.type.ordinal());
+      if (data.counts != null) {
+        for (int i=0; i < TASK_COUNT; i++) {
+          if (data.counts[i] > 0) {
+            sink.put((byte)i);
+            VarInt.putVarInt(data.counts[i],sink);
+            VarInt.putVarLong(data.durations[i],sink);
+          }
+        }
+      }
+      this.out.writeInt(sink.position());
+      this.out.write(sink.array(),0,sink.position());
+      if (describer.isUnassigned(descIndex)) {
+        this.out.writeUTF(describer.getDescription(data.object));
+      }
+    }
+    this.out.flush();
+  }
+ catch (  IOException e) {
+    saveException=e;
+    clear();
+    try {
+      out.close();
+    }
+ catch (    IOException e2) {
+    }
+  }
+}

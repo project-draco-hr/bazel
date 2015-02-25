@@ -1,0 +1,18 @@
+{
+  checkActive();
+  Preconditions.checkState(actionLogBufferPathGenerator != null);
+  skyframeActionExecutor.prepareForExecution(executor,keepGoing,explain,actionCacheChecker);
+  resourceManager.resetResourceUsage();
+  try {
+    progressReceiver.executionProgressReceiver=executionProgressReceiver;
+    Iterable<SkyKey> artifactKeys=ArtifactValue.mandatoryKeys(artifactsToBuild);
+    Iterable<SkyKey> targetKeys=TargetCompletionValue.keys(targetsToBuild);
+    Iterable<SkyKey> testKeys=TestCompletionValue.keys(targetsToTest,exclusiveTesting);
+    return buildDriver.evaluate(Iterables.concat(artifactKeys,targetKeys,testKeys),keepGoing,numJobs,errorEventListener);
+  }
+  finally {
+    progressReceiver.executionProgressReceiver=null;
+    resourceManager.resetResourceUsage();
+    skyframeActionExecutor.executionOver();
+  }
+}

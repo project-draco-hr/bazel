@@ -1,0 +1,13 @@
+{
+  Artifact inputManifest=getRunfilesInputManifest();
+  context.getAnalysisEnvironment().registerAction(SourceManifestAction.forRunfiles(ManifestType.SOURCE_SYMLINKS,context.getActionOwner(),inputManifest,runfiles));
+  if (!createSymlinks) {
+    return inputManifest;
+  }
+  PathFragment runfilesDir=FileSystemUtils.replaceExtension(inputManifest.getRootRelativePath(),RUNFILES_DIR_EXT);
+  PathFragment outputManifestPath=runfilesDir.getRelative("MANIFEST");
+  BuildConfiguration config=context.getConfiguration();
+  Artifact outputManifest=context.getAnalysisEnvironment().getDerivedArtifact(outputManifestPath,config.getBinDirectory());
+  context.getAnalysisEnvironment().registerAction(new SymlinkTreeAction(context.getActionOwner(),inputManifest,outputManifest,false));
+  return outputManifest;
+}

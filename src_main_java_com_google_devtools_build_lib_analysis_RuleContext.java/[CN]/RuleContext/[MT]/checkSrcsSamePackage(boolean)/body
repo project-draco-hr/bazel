@@ -1,0 +1,19 @@
+{
+  PathFragment packageName=getLabel().getPackageFragment();
+  for (  Artifact srcItem : PrerequisiteArtifacts.get(this,"srcs",Mode.TARGET).list()) {
+    if (!srcItem.isSourceArtifact()) {
+      continue;
+    }
+    Label associatedLabel=srcItem.getOwner();
+    PathFragment itemPackageName=associatedLabel.getPackageFragment();
+    if (!itemPackageName.equals(packageName)) {
+      String message="please do not import '" + associatedLabel + "' directly. "+ "You should either move the file to this package or depend on "+ "an appropriate rule there";
+      if (onlyWarn) {
+        attributeWarning("srcs",message);
+      }
+ else {
+        attributeError("srcs",message);
+      }
+    }
+  }
+}

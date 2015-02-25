@@ -1,0 +1,19 @@
+{
+  String gcdaExt=Iterables.getOnlyElement(CppFileTypes.COVERAGE_DATA.getExtensions());
+  PathFragment baseName=FileSystemUtils.replaceExtension(objectFileName,gcdaExt);
+  PathFragment gcdaFile=getNonLipoObjDir(ruleContext,lipoLabel).getRelative(baseName);
+  if (!gcdaFiles.contains(gcdaFile)) {
+    String picoExt=Iterables.getOnlyElement(CppFileTypes.PIC_OBJECT_FILE.getExtensions());
+    baseName=FileSystemUtils.replaceExtension(objectFileName,gcdaExt,picoExt);
+    if (baseName == null) {
+      return ImmutableList.of();
+    }
+    gcdaFile=getNonLipoObjDir(ruleContext,lipoLabel).getRelative(baseName);
+    if (!gcdaFiles.contains(gcdaFile)) {
+      return ImmutableList.of();
+    }
+  }
+  final Artifact artifact=env.getDerivedArtifact(fdoPath.getRelative(gcdaFile),fdoRoot);
+  env.registerAction(new FdoStubAction(ruleContext.getActionOwner(),artifact));
+  return ImmutableList.of(artifact);
+}

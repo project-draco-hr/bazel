@@ -1,0 +1,19 @@
+{
+  Command commandAnnotation=clazz.getAnnotation(Command.class);
+  if (commandAnnotation == null) {
+    throw new IllegalStateException("@Command missing for " + clazz.getName());
+  }
+  Set<Class<? extends OptionsBase>> options=new HashSet<>();
+  options.addAll(COMMON_COMMAND_OPTIONS);
+  Collections.addAll(options,commandAnnotation.options());
+  if (commandAnnotation.usesConfigurationOptions()) {
+    options.addAll(ruleClassProvider.getConfigurationOptions());
+  }
+  for (  BlazeModule blazeModule : modules) {
+    Iterables.addAll(options,blazeModule.getCommandOptions(commandAnnotation));
+  }
+  for (  Class<? extends BlazeCommand> base : commandAnnotation.inherits()) {
+    options.addAll(getOptions(base,modules,ruleClassProvider));
+  }
+  return ImmutableList.copyOf(options);
+}

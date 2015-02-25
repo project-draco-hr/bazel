@@ -1,0 +1,23 @@
+{
+  CharBuffer charBuf=CharBuffer.wrap(content);
+  int kind;
+  ByteBuffer byteBuf;
+synchronized (NSString.class) {
+    if (asciiEncoder == null)     asciiEncoder=Charset.forName("ASCII").newEncoder();
+ else     asciiEncoder.reset();
+    if (asciiEncoder.canEncode(charBuf)) {
+      kind=0x5;
+      byteBuf=asciiEncoder.encode(charBuf);
+    }
+ else {
+      if (utf16beEncoder == null)       utf16beEncoder=Charset.forName("UTF-16BE").newEncoder();
+ else       utf16beEncoder.reset();
+      kind=0x6;
+      byteBuf=utf16beEncoder.encode(charBuf);
+    }
+  }
+  byte[] bytes=new byte[byteBuf.remaining()];
+  byteBuf.get(bytes);
+  out.writeIntHeader(kind,content.length());
+  out.write(bytes);
+}

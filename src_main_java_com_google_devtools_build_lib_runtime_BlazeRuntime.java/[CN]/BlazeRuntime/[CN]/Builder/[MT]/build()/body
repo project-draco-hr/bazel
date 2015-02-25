@@ -1,0 +1,109 @@
+{
+  Preconditions.checkNotNull(directories);
+  Preconditions.checkNotNull(startupOptionsProvider);
+  Reporter reporter=(this.reporter == null) ? new Reporter() : this.reporter;
+  Clock clock=(this.clock == null) ? BlazeClock.instance() : this.clock;
+  UUID instanceId=(this.instanceId == null) ? UUID.randomUUID() : this.instanceId;
+  Preconditions.checkNotNull(clock);
+  Map<String,String> clientEnv=new HashMap<>();
+  TimestampGranularityMonitor timestampMonitor=new TimestampGranularityMonitor(clock);
+  Preprocessor.Factory.Supplier preprocessorFactorySupplier=null;
+  SkyframeExecutorFactory skyframeExecutorFactory=null;
+  for (  BlazeModule module : blazeModules) {
+    module.blazeStartup(startupOptionsProvider,BlazeVersionInfo.instance(),instanceId,directories,clock);
+    Preprocessor.Factory.Supplier modulePreprocessorFactorySupplier=module.getPreprocessorFactorySupplier();
+    if (modulePreprocessorFactorySupplier != null) {
+      Preconditions.checkState(preprocessorFactorySupplier == null,"more than one module defines a preprocessor factory supplier");
+      preprocessorFactorySupplier=modulePreprocessorFactorySupplier;
+    }
+    SkyframeExecutorFactory skyFactory=module.getSkyframeExecutorFactory();
+    if (skyFactory != null) {
+      Preconditions.checkState(skyframeExecutorFactory == null,"At most one skyframe factory supported. But found two: %s and %s",skyFactory,skyframeExecutorFactory);
+      skyframeExecutorFactory=skyFactory;
+    }
+  }
+  if (skyframeExecutorFactory == null) {
+    skyframeExecutorFactory=new SequencedSkyframeExecutorFactory();
+  }
+  if (preprocessorFactorySupplier == null) {
+    preprocessorFactorySupplier=Preprocessor.Factory.Supplier.NullSupplier.INSTANCE;
+  }
+  ConfiguredRuleClassProvider.Builder ruleClassBuilder=new ConfiguredRuleClassProvider.Builder();
+  for (  BlazeModule module : blazeModules) {
+    module.initializeRuleClasses(ruleClassBuilder);
+  }
+  Map<String,String> platformRegexps=null;
+{
+    ImmutableMap.Builder<String,String> builder=new ImmutableMap.Builder<>();
+    for (    BlazeModule module : blazeModules) {
+      builder.putAll(module.getPlatformSetRegexps());
+    }
+    platformRegexps=builder.build();
+    if (platformRegexps.isEmpty()) {
+      platformRegexps=null;
+    }
+  }
+  Set<Path> immutableDirectories=null;
+{
+    ImmutableSet.Builder<Path> builder=new ImmutableSet.Builder<>();
+    for (    BlazeModule module : blazeModules) {
+      builder.addAll(module.getImmutableDirectories());
+    }
+    immutableDirectories=builder.build();
+  }
+  Iterable<DiffAwareness.Factory> diffAwarenessFactories=null;
+{
+    ImmutableList.Builder<DiffAwareness.Factory> builder=new ImmutableList.Builder<>();
+    boolean watchFS=startupOptionsProvider != null && startupOptionsProvider.getOptions(BlazeServerStartupOptions.class).watchFS;
+    for (    BlazeModule module : blazeModules) {
+      builder.addAll(module.getDiffAwarenessFactories(watchFS));
+    }
+    diffAwarenessFactories=builder.build();
+  }
+  Predicate<PathFragment> allowedMissingInputs=null;
+  for (  BlazeModule module : blazeModules) {
+    Predicate<PathFragment> modulePredicate=module.getAllowedMissingInputs();
+    if (modulePredicate != null) {
+      Preconditions.checkArgument(allowedMissingInputs == null,"More than one Blaze module allows missing inputs.");
+      allowedMissingInputs=modulePredicate;
+    }
+  }
+  if (allowedMissingInputs == null) {
+    allowedMissingInputs=Predicates.alwaysFalse();
+  }
+  ConfiguredRuleClassProvider ruleClassProvider=ruleClassBuilder.build();
+  WorkspaceStatusAction.Factory workspaceStatusActionFactory=null;
+  for (  BlazeModule module : blazeModules) {
+    WorkspaceStatusAction.Factory candidate=module.getWorkspaceStatusActionFactory();
+    if (candidate != null) {
+      Preconditions.checkState(workspaceStatusActionFactory == null,"more than one module defines a workspace status action factory");
+      workspaceStatusActionFactory=candidate;
+    }
+  }
+  List<PackageFactory.EnvironmentExtension> extensions=new ArrayList<>();
+  for (  BlazeModule module : blazeModules) {
+    extensions.add(module.getPackageEnvironmentExtension());
+  }
+  ImmutableMap.Builder<SkyFunctionName,SkyFunction> skyFunctions=ImmutableMap.builder();
+  for (  BlazeModule module : blazeModules) {
+    skyFunctions.putAll(module.getSkyFunctions(directories));
+  }
+  ImmutableList.Builder<PrecomputedValue.Injected> precomputedValues=ImmutableList.builder();
+  for (  BlazeModule module : blazeModules) {
+    precomputedValues.addAll(module.getPrecomputedSkyframeValues());
+  }
+  final PackageFactory pkgFactory=new PackageFactory(ruleClassProvider,platformRegexps,extensions);
+  SkyframeExecutor skyframeExecutor=skyframeExecutorFactory.create(reporter,pkgFactory,timestampMonitor,directories,workspaceStatusActionFactory,ruleClassProvider.getBuildInfoFactories(),immutableDirectories,diffAwarenessFactories,allowedMissingInputs,preprocessorFactorySupplier,skyFunctions.build(),precomputedValues.build());
+  if (configurationFactory == null) {
+    configurationFactory=new ConfigurationFactory(ruleClassProvider.getConfigurationCollectionFactory(),ruleClassProvider.getConfigurationFragments());
+  }
+  ProjectFile.Provider projectFileProvider=null;
+  for (  BlazeModule module : blazeModules) {
+    ProjectFile.Provider candidate=module.createProjectFileProvider();
+    if (candidate != null) {
+      Preconditions.checkState(projectFileProvider == null,"more than one module defines a project file provider");
+      projectFileProvider=candidate;
+    }
+  }
+  return new BlazeRuntime(directories,reporter,workspaceStatusActionFactory,skyframeExecutor,pkgFactory,ruleClassProvider,configurationFactory,runfilesPrefix == null ? PathFragment.EMPTY_FRAGMENT : runfilesPrefix,clock,startupOptionsProvider,ImmutableList.copyOf(blazeModules),clientEnv,timestampMonitor,eventBusExceptionHandler,binTools,projectFileProvider);
+}

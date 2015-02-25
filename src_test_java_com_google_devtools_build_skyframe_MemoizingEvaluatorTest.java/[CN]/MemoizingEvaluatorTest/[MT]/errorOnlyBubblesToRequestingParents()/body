@@ -1,0 +1,25 @@
+{
+  setGraphForTesting(new DeterministicInMemoryGraph());
+  SkyKey errorKey=GraphTester.toSkyKey("error");
+  tester.set(errorKey,new StringValue("biding time"));
+  SkyKey slowKey=GraphTester.toSkyKey("slow");
+  tester.set(slowKey,new StringValue("slow"));
+  SkyKey midKey=GraphTester.toSkyKey("mid");
+  tester.getOrCreate(midKey).addDependency(slowKey).setComputedValue(COPY);
+  SkyKey topErrorFirstKey=GraphTester.toSkyKey("2nd top alphabetically");
+  tester.getOrCreate(topErrorFirstKey).addDependency(errorKey).setComputedValue(CONCATENATE);
+  SkyKey topBubbleKey=GraphTester.toSkyKey("1st top alphabetically");
+  tester.getOrCreate(topBubbleKey).addDependency(midKey).addDependency(errorKey).setComputedValue(CONCATENATE);
+  EvaluationResult<StringValue> result=tester.eval(false,topErrorFirstKey,topBubbleKey);
+  assertEquals("biding time",result.get(topErrorFirstKey).getValue());
+  assertEquals("slowbiding time",result.get(topBubbleKey).getValue());
+  tester.set(slowKey,null);
+  CountDownLatch errorFinish=new CountDownLatch(1);
+  tester.set(errorKey,null);
+  tester.getOrCreate(errorKey).setBuilder(new ChainedFunction(null,null,errorFinish,false,null,ImmutableList.<SkyKey>of()));
+  tester.getOrCreate(slowKey).setBuilder(new ChainedFunction(null,errorFinish,null,true,new StringValue("leaf2"),ImmutableList.<SkyKey>of()));
+  tester.invalidate();
+  result=tester.eval(false,topErrorFirstKey,topBubbleKey);
+  assertTrue(result.hasError());
+  assertNotNull(result.getError(topErrorFirstKey));
+}

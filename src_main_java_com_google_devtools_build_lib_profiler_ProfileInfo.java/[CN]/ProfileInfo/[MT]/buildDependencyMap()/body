@@ -1,0 +1,37 @@
+{
+  Task analysisPhaseTask=getPhaseTask(ProfilePhase.ANALYZE);
+  Task executionPhaseTask=getPhaseTask(ProfilePhase.EXECUTE);
+  if ((executionPhaseTask == null) || (analysisPhaseTask == null)) {
+    return;
+  }
+  List<Task> actionTasksByDescription=Lists.newArrayList(new Task[descriptionList.size()]);
+  for (  Task task : getTasksForPhase(executionPhaseTask)) {
+    if (task.type == ProfilerTask.ACTION) {
+      actionTasksByDescription.set(task.descIndex,task);
+    }
+  }
+  List<Task> list=new ArrayList<>();
+  for (  Task task : getTasksForPhase(analysisPhaseTask)) {
+    if (task.type == ProfilerTask.ACTION_GRAPH) {
+      list.add(buildActionTaskTree(task,actionTasksByDescription));
+    }
+  }
+  Task[] actionPrerequisites=list.toArray(new Task[list.size()]);
+  Arrays.sort(actionPrerequisites);
+  actionDependencyMap.put(executionPhaseTask,actionPrerequisites);
+  for (  Task task : allTasksById.subList(executionPhaseTask.id,allTasksById.size())) {
+    if (task.type == ProfilerTask.ACTION_SUBMIT) {
+      Task actionTask=actionTasksByDescription.get(task.descIndex);
+      if (actionTask != null) {
+        task.relatedTask=actionTask;
+        actionTask.relatedTask=task;
+      }
+    }
+ else     if (task.type == ProfilerTask.ACTION_BUILDER) {
+      Task actionTask=actionTasksByDescription.get(task.descIndex);
+      if (actionTask != null) {
+        parallelBuilderCompletionQueueTasks.put(actionTask,task);
+      }
+    }
+  }
+}

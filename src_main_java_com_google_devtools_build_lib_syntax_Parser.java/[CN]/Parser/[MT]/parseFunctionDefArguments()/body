@@ -1,0 +1,23 @@
+{
+  List<Argument> args=new ArrayList<>();
+  Set<String> argNames=new HashSet<>();
+  boolean onlyOptional=false;
+  while (token.kind != TokenKind.RPAREN) {
+    Argument arg=parseFunctionDefArgument(onlyOptional);
+    if (arg.hasValue()) {
+      onlyOptional=true;
+    }
+    args.add(arg);
+    if (argNames.contains(arg.getArgName())) {
+      reportError(lexer.createLocation(token.left,token.right),"duplicate argument name in function definition");
+    }
+    argNames.add(arg.getArgName());
+    if (token.kind == TokenKind.COMMA) {
+      nextToken();
+    }
+ else {
+      break;
+    }
+  }
+  return args;
+}

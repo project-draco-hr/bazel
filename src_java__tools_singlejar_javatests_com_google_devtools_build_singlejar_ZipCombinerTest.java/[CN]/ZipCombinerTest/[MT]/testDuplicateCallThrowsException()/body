@@ -1,0 +1,16 @@
+{
+  ZipEntryFilter badFilter=new ZipEntryFilter(){
+    @Override public void accept(    String filename,    StrategyCallback callback) throws IOException {
+      callback.skip();
+      callback.copy(null);
+    }
+  }
+;
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  try (ZipCombiner singleJar=new ZipCombiner(badFilter,out)){
+    singleJar.addZip(sampleZip());
+    fail();
+  }
+ catch (  IllegalStateException e) {
+  }
+}

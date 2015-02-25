@@ -1,0 +1,24 @@
+{
+  Preconditions.checkNotNull(labelMap);
+  for (  Map.Entry<Attribute,Collection<LabelAndConfiguration>> entry : labelMap.asMap().entrySet()) {
+    Attribute attribute=entry.getKey();
+    for (    LabelAndConfiguration dep : entry.getValue()) {
+      Label label=dep.getLabel();
+      BuildConfiguration config=dep.getConfiguration();
+      Target toTarget;
+      try {
+        toTarget=getTarget(label);
+      }
+ catch (      NoSuchThingException e) {
+        throw new IllegalStateException("not found: " + label + " from "+ rule+ " in "+ attribute.getName());
+      }
+      if (toTarget == null) {
+        continue;
+      }
+      Iterable<BuildConfiguration> toConfigurations=config.evaluateTransition(rule,attribute,toTarget);
+      for (      BuildConfiguration toConfiguration : toConfigurations) {
+        outgoingEdges.get(entry.getKey()).add(new Dependency(label,toConfiguration,requiredAspects(aspect,attribute,toTarget)));
+      }
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  DependencyModule.Builder builder=new DependencyModule.Builder();
+  for (String arg=argQueue.pollFirst(); arg != null; arg=argQueue.pollFirst()) {
+switch (arg) {
+case "--javacopts":
+      collectFlagArguments(javacOpts,argQueue,"--");
+    break;
+case "--direct_dependency":
+{
+    String jar=getArgument(argQueue,arg);
+    String target=getArgument(argQueue,arg);
+    builder.addDirectMapping(jar,target);
+    break;
+  }
+case "--indirect_dependency":
+{
+  String jar=getArgument(argQueue,arg);
+  String target=getArgument(argQueue,arg);
+  builder.addIndirectMapping(jar,target);
+  break;
+}
+case "--strict_java_deps":
+builder.setStrictJavaDeps(getArgument(argQueue,arg));
+break;
+case "--output_deps":
+builder.setOutputDepsFile(getArgument(argQueue,arg));
+break;
+case "--output_deps_proto":
+builder.setOutputDepsProtoFile(getArgument(argQueue,arg));
+break;
+case "--deps_artifacts":
+ImmutableList.Builder<String> depsArtifacts=ImmutableList.builder();
+collectFlagArguments(depsArtifacts,argQueue,"--");
+builder.addDepsArtifacts(depsArtifacts.build());
+break;
+case "--reduce_classpath":
+builder.setReduceClasspath();
+break;
+case "--sourcegendir":
+sourceGenDir=getArgument(argQueue,arg);
+break;
+case "--generated_sources_output":
+generatedSourcesOutputJar=getArgument(argQueue,arg);
+break;
+default :
+processArg(arg,argQueue);
+}
+}
+builder.setRuleKind(ruleKind);
+builder.setTargetLabel(targetLabel);
+return builder.build();
+}

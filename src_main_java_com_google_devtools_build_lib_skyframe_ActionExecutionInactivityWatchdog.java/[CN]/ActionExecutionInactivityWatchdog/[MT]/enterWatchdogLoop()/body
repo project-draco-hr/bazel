@@ -1,0 +1,22 @@
+{
+  while (isRunning.get()) {
+    try {
+      int completedActions=monitor.waitForNextCompletion(waitTime.next() * 1000);
+      if (!isRunning.get()) {
+        break;
+      }
+      int pending=monitor.getPending();
+      if (!monitor.hasStarted() || completedActions > 0 || pending == 0) {
+        waitTime.reset();
+        sleeper.sleep(1000);
+      }
+ else {
+        reporter.maybeReportInactivity();
+      }
+    }
+ catch (    InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      return;
+    }
+  }
+}

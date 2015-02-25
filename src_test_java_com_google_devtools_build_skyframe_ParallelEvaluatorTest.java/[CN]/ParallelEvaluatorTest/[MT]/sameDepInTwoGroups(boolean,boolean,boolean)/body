@@ -1,0 +1,44 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  final List<SkyKey> leaves=new ArrayList<>();
+  for (int i=1; i <= 3; i++) {
+    SkyKey leaf=GraphTester.toSkyKey("leaf" + i);
+    leaves.add(leaf);
+    tester.set(leaf,new StringValue("leaf" + i));
+  }
+  final SkyKey leaf4=GraphTester.toSkyKey("leaf4");
+  tester.set(leaf4,new StringValue("leaf" + 4));
+  tester.getOrCreate(topKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException, InterruptedException {
+      if (valuesOrThrow) {
+        env.getValuesOrThrow(leaves,SomeErrorException.class);
+      }
+ else {
+        env.getValues(leaves);
+      }
+      if (twoCalls && env.valuesMissing()) {
+        return null;
+      }
+      SkyKey first=sameFirst ? leaves.get(0) : leaf4;
+      SkyKey second=sameFirst ? leaf4 : leaves.get(2);
+      List<SkyKey> secondRequest=ImmutableList.of(first,second);
+      if (valuesOrThrow) {
+        env.getValuesOrThrow(secondRequest,SomeErrorException.class);
+      }
+ else {
+        env.getValues(secondRequest);
+      }
+      if (env.valuesMissing()) {
+        return null;
+      }
+      return new StringValue("top");
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  eval(false,topKey);
+  assertEquals(new StringValue("top"),eval(false,topKey));
+}

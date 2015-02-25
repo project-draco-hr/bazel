@@ -1,0 +1,21 @@
+{
+  TestDelegator delegator=new TestDelegator(){
+    @Override protected OutputStream getOutputStream(    Path path,    boolean append){
+      lastPath=path;
+      return (OutputStream)objectState;
+    }
+    @Override protected boolean isDirectory(    Path path,    boolean followSymlinks){
+      return true;
+    }
+  }
+;
+  scopedFS().setDelegator(delegator);
+  delegator.setState(new ByteArrayOutputStream());
+  OutputStream os=fileLink.getOutputStream();
+  assertEquals(fileLinkTarget,delegator.lastPath());
+  assertSame(delegator.objectState(),os);
+  delegator.setState(new ByteArrayOutputStream());
+  os=dirLink.getOutputStream();
+  assertEquals(dirLinkTarget,delegator.lastPath());
+  assertSame(delegator.objectState(),os);
+}

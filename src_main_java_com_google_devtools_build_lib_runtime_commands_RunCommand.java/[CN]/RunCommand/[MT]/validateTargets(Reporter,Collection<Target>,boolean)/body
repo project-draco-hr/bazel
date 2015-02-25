@@ -1,0 +1,35 @@
+{
+  Target targetToRun=null;
+  Target runUnderTarget=null;
+  boolean singleTargetWarningWasOutput=false;
+  int maxTargets=currentRunUnder != null && currentRunUnder.getLabel() != null ? 2 : 1;
+  if (targets.size() > maxTargets) {
+    warningOrException(reporter,SINGLE_TARGET_MESSAGE,keepGoing);
+    singleTargetWarningWasOutput=true;
+  }
+  for (  Target target : targets) {
+    String targetError=validateTarget(target);
+    if (targetError != null) {
+      warningOrException(reporter,targetError,keepGoing);
+    }
+    if (currentRunUnder != null && target.getLabel().equals(currentRunUnder.getLabel())) {
+      Preconditions.checkState(runUnderTarget == null);
+      runUnderTarget=target;
+    }
+ else     if (targetToRun == null) {
+      targetToRun=target;
+    }
+ else {
+      if (!singleTargetWarningWasOutput) {
+        warningOrException(reporter,SINGLE_TARGET_MESSAGE,keepGoing);
+      }
+      return;
+    }
+  }
+  if ((targetToRun == null) && (runUnderTarget != null)) {
+    targetToRun=runUnderTarget;
+  }
+  if (targetToRun == null) {
+    warningOrException(reporter,NO_TARGET_MESSAGE,keepGoing);
+  }
+}

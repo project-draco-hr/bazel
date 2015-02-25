@@ -1,0 +1,36 @@
+{
+  Action action=(Action)skyKey.argument();
+  Map<Artifact,FileArtifactValue> inputArtifactData=null;
+  Map<Artifact,Collection<Artifact>> expandedMiddlemen=null;
+  boolean alreadyRan=skyframeActionExecutor.probeActionExecution(action);
+  try {
+    Pair<Map<Artifact,FileArtifactValue>,Map<Artifact,Collection<Artifact>>> checkedInputs=checkInputs(env,action,alreadyRan);
+    if (checkedInputs != null) {
+      inputArtifactData=checkedInputs.first;
+      expandedMiddlemen=checkedInputs.second;
+    }
+  }
+ catch (  ActionExecutionException e) {
+    throw new ActionExecutionFunctionException(e);
+  }
+  if (action.isVolatile() || action instanceof NotifyOnActionCacheHit) {
+    PrecomputedValue.BUILD_ID.get(env);
+  }
+  if (env.valuesMissing()) {
+    return null;
+  }
+  ActionExecutionValue result;
+  try {
+    result=checkCacheAndExecuteIfNeeded(action,inputArtifactData,expandedMiddlemen,env);
+  }
+ catch (  ActionExecutionException e) {
+    throw new ActionExecutionFunctionException(new AlreadyReportedActionExecutionException(e));
+  }
+ finally {
+    declareAdditionalDependencies(env,action);
+  }
+  if (env.valuesMissing()) {
+    return null;
+  }
+  return result;
+}

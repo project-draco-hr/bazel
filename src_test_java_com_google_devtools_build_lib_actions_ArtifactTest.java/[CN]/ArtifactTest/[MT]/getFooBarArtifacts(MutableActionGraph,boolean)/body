@@ -1,0 +1,9 @@
+{
+  Root root=Root.asSourceRoot(scratch.dir("/foo"));
+  Artifact aHeader1=new Artifact(scratch.file("/foo/bar1.h"),root);
+  Artifact aHeader2=new Artifact(scratch.file("/foo/bar2.h"),root);
+  Artifact aHeader3=new Artifact(scratch.file("/foo/bar3.h"),root);
+  Artifact middleman=new Artifact(new PathFragment("middleman"),Root.middlemanRoot(scratch.dir("/foo"),scratch.dir("/foo/out")));
+  actionGraph.registerAction(new MiddlemanAction(ActionsTestUtil.NULL_ACTION_OWNER,ImmutableList.of(aHeader1,aHeader2,aHeader3),middleman,"desc",MiddlemanType.AGGREGATING_MIDDLEMAN));
+  return collapsedList ? Lists.newArrayList(aHeader1,middleman) : Lists.newArrayList(aHeader1,aHeader2,middleman);
+}

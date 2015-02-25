@@ -1,0 +1,29 @@
+{
+  Set<Class<?>> result=new LinkedHashSet<>();
+  String pathPrefix=(packageName + '.').replace('.','/');
+  for (  String entryName : getClassPath()) {
+    File classPathEntry=new File(entryName);
+    if (classPathEntry.exists()) {
+      try {
+        Set<String> classNames;
+        if (classPathEntry.isDirectory()) {
+          classNames=findClassesInDirectory(classPathEntry,pathPrefix);
+        }
+ else {
+          classNames=findClassesInJar(classPathEntry,pathPrefix);
+        }
+        for (        String className : classNames) {
+          Class<?> clazz=Class.forName(className);
+          result.add(clazz);
+        }
+      }
+ catch (      IOException e) {
+        throw new AssertionError("Can't read classpath entry " + entryName + ": "+ e.getMessage());
+      }
+catch (      ClassNotFoundException e) {
+        throw new AssertionError("Class not found even though it is on the classpath " + entryName + ": "+ e.getMessage());
+      }
+    }
+  }
+  return result;
+}

@@ -1,0 +1,31 @@
+{
+  Map<Pair<String,Boolean>,Future<List<Path>>> newGlobs=new HashMap<>();
+  try {
+    for (    Map.Entry<Pair<String,Boolean>,Future<List<Path>>> entry : globCache.entrySet()) {
+      Pair<String,Boolean> key=entry.getKey();
+      try {
+        newGlobs.put(key,safeGlob(key.first,key.second));
+      }
+ catch (      BadGlobException e) {
+        return false;
+      }
+    }
+    for (    Map.Entry<Pair<String,Boolean>,Future<List<Path>>> entry : globCache.entrySet()) {
+      try {
+        Pair<String,Boolean> key=entry.getKey();
+        List<Path> newGlob=fromFuture(newGlobs.get(key));
+        List<Path> oldGlob=fromFuture(entry.getValue());
+        if (!oldGlob.equals(newGlob)) {
+          return false;
+        }
+      }
+ catch (      IOException e) {
+        return false;
+      }
+    }
+    return true;
+  }
+  finally {
+    finishBackgroundTasks(newGlobs.values());
+  }
+}

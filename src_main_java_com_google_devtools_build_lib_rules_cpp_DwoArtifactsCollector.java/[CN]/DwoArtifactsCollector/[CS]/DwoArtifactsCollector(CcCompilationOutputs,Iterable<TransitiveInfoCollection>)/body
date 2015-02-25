@@ -1,0 +1,17 @@
+{
+  Preconditions.checkNotNull(compilationOutputs);
+  Preconditions.checkNotNull(deps);
+  NestedSetBuilder<Artifact> dwoBuilder=NestedSetBuilder.compileOrder();
+  NestedSetBuilder<Artifact> picDwoBuilder=NestedSetBuilder.compileOrder();
+  dwoBuilder.addAll(compilationOutputs.getDwoFiles());
+  picDwoBuilder.addAll(compilationOutputs.getPicDwoFiles());
+  for (  TransitiveInfoCollection info : deps) {
+    CppDebugFileProvider provider=info.getProvider(CppDebugFileProvider.class);
+    if (provider != null) {
+      dwoBuilder.addTransitive(provider.getTransitiveDwoFiles());
+      picDwoBuilder.addTransitive(provider.getTransitivePicDwoFiles());
+    }
+  }
+  dwoArtifacts=dwoBuilder.build();
+  picDwoArtifacts=picDwoBuilder.build();
+}

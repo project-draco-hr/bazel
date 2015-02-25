@@ -1,0 +1,24 @@
+{
+  FileAndMetadataCache fileAndMetadataCache=null;
+  MetadataHandler metadataHandler=null;
+  Token token=null;
+  long actionStartTime=System.nanoTime();
+  if (inputArtifactData != null) {
+    fileAndMetadataCache=new FileAndMetadataCache(inputArtifactData,expandedMiddlemen,skyframeActionExecutor.getExecRoot(),action.getOutputs(),action.discoversInputs() ? env : null,tsgm);
+    metadataHandler=skyframeActionExecutor.constructMetadataHandler(fileAndMetadataCache);
+    token=skyframeActionExecutor.checkActionCache(action,metadataHandler,actionStartTime);
+  }
+  if (token == null && inputArtifactData != null) {
+    return new ActionExecutionValue(fileAndMetadataCache.getOutputData(),fileAndMetadataCache.getAdditionalOutputData());
+  }
+ else {
+    ActionExecutionContext actionExecutionContext=null;
+    if (inputArtifactData != null) {
+      actionExecutionContext=skyframeActionExecutor.constructActionExecutionContext(fileAndMetadataCache,metadataHandler);
+      if (action.discoversInputs()) {
+        skyframeActionExecutor.discoverInputs(action,actionExecutionContext);
+      }
+    }
+    return skyframeActionExecutor.executeAction(action,fileAndMetadataCache,token,actionStartTime,actionExecutionContext);
+  }
+}

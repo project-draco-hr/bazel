@@ -1,0 +1,15 @@
+{
+  TestSummary finalSummary;
+synchronized (summaryLock) {
+    if (!remainingRuns.containsKey(label)) {
+      return;
+    }
+    TestSummary.Builder summary=summaries.get(label);
+    if (summary == null) {
+      return;
+    }
+    finalSummary=analyzer.markUnbuilt(summary,blazeHalted).build();
+    remainingRuns.removeAll(label);
+  }
+  eventBus.post(finalSummary);
+}

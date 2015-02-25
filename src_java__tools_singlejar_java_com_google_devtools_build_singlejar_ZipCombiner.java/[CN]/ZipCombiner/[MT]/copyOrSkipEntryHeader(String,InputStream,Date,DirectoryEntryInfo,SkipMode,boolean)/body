@@ -1,0 +1,30 @@
+{
+  final int fileNameLength=getUnsignedShort(headerBuffer,FILENAME_LENGTH_OFFSET);
+  final int extraFieldLength=getUnsignedShort(headerBuffer,EXTRA_LENGTH_OFFSET);
+  byte[] fileNameAsBytes=null;
+  if (rename) {
+    fileNameAsBytes=filename.getBytes(UTF_8);
+    checkArgument(fileNameAsBytes.length <= 65535,"File name too long: %s bytes (max. 65535)",fileNameAsBytes.length);
+    setUnsignedShort(headerBuffer,FILENAME_LENGTH_OFFSET,(short)fileNameAsBytes.length);
+  }
+  int directoryOffset=0;
+  if (skip == SkipMode.COPY) {
+    if (date != null) {
+      int dosTime=dateToDosTime(date);
+      setUnsignedShort(headerBuffer,MTIME_OFFSET,(short)dosTime);
+      setUnsignedShort(headerBuffer,MDATE_OFFSET,(short)(dosTime >> 16));
+    }
+    directoryOffset=fillDirectoryEntryBuffer(directoryEntryInfo);
+    write(headerBuffer,0,FILE_HEADER_BUFFER_SIZE);
+  }
+  if (!rename) {
+    forkOrSkipData(in,fileNameLength,skip);
+  }
+ else {
+    forkOrSkipData(in,fileNameLength,SkipMode.SKIP);
+    write(fileNameAsBytes);
+    centralDirectory.writeToCentralDirectory(fileNameAsBytes);
+  }
+  forkOrSkipData(in,extraFieldLength,skip);
+  return directoryOffset;
+}

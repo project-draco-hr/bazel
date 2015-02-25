@@ -1,0 +1,21 @@
+{
+  Preconditions.checkNotNull(testTargets);
+  Preconditions.checkNotNull(listener);
+  Preconditions.checkNotNull(notifier);
+  Set<TestSummary> summaries=Sets.newTreeSet();
+  int totalRun=0;
+  int passCount=0;
+  for (  ConfiguredTarget testTarget : testTargets) {
+    TestSummary summary=aggregateAndReportSummary(testTarget,listener).build();
+    summaries.add(summary);
+    if (summary.actionRan()) {
+      totalRun++;
+    }
+    if (TestResult.isBlazeTestStatusPassed(summary.getStatus())) {
+      passCount++;
+    }
+  }
+  Preconditions.checkState(summaries.size() == testTargets.size());
+  notifier.notify(summaries,totalRun);
+  return passCount == testTargets.size();
+}

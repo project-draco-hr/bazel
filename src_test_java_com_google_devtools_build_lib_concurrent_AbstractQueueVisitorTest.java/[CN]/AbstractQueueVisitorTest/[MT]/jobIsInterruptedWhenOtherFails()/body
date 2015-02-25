@@ -1,0 +1,30 @@
+{
+  ThreadPoolExecutor executor=new ThreadPoolExecutor(3,3,0,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>());
+  final QueueVisitorWithCriticalError visitor=new QueueVisitorWithCriticalError(executor);
+  final CountDownLatch latch1=new CountDownLatch(1);
+  final AtomicBoolean wasInterrupted=new AtomicBoolean(false);
+  Runnable r1=new Runnable(){
+    @Override public void run(){
+      latch1.countDown();
+      try {
+        Thread.sleep(1000);
+      }
+ catch (      InterruptedException e) {
+        wasInterrupted.set(true);
+      }
+    }
+  }
+;
+  visitor.enqueue(r1);
+  latch1.await();
+  visitor.enqueue(throwingRunnable());
+  try {
+    visitor.work(true);
+    fail();
+  }
+ catch (  Exception e) {
+    assertSame(THROWABLE,e);
+  }
+  assertTrue(wasInterrupted.get());
+  assertTrue(executor.isShutdown());
+}

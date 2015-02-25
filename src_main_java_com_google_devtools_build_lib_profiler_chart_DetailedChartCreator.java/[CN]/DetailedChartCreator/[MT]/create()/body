@@ -1,0 +1,28 @@
+{
+  Chart chart=new Chart(info.comment,statistics);
+  CommonChartCreator.createCommonChartItems(chart,info);
+  createTypes(chart);
+  EnumSet<ProfilerTask> typeFilter=EnumSet.noneOf(ProfilerTask.class);
+  CriticalPathEntry criticalPath=info.getCriticalPath(typeFilter);
+  info.analyzeCriticalPath(typeFilter,criticalPath);
+  for (  Task task : info.allTasksById) {
+    String label=task.type.description + ": " + task.getDescription();
+    ChartBarType type=chart.lookUpType(task.type.description);
+    long stop=task.startTime + task.duration;
+    CriticalPathEntry entry=null;
+    if (task.parentId == 0 && criticalPath != null) {
+      entry=info.getNextCriticalPathEntryForTask(criticalPath,task);
+      if (entry != null) {
+        CriticalPathEntry nextEntry=entry.next;
+        while (nextEntry != null && nextEntry.task.parentId != 0) {
+          nextEntry=nextEntry.next;
+        }
+        if (nextEntry != null) {
+          chart.addVerticalLine(task.threadId,nextEntry.task.threadId,task.startTime);
+        }
+      }
+    }
+    chart.addBar(task.threadId,task.startTime,stop,type,(entry != null),label);
+  }
+  return chart;
+}

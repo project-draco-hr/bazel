@@ -1,0 +1,23 @@
+{
+  logCommand();
+  final Process process=startProcess();
+  outErrConsumers.logConsumptionStrategy();
+  outErrConsumers.registerInputs(process.getInputStream(),process.getErrorStream(),closeOutputStreams);
+  processInput(stdinInput,process);
+  final Killable processKillable=observeProcess(process,observer);
+  return new FutureCommandResult(){
+    @Override public CommandResult get() throws AbnormalTerminationException {
+      return waitForProcessToComplete(process,observer,processKillable,outErrConsumers,killSubprocessOnInterrupt);
+    }
+    @Override public boolean isDone(){
+      try {
+        process.exitValue();
+        return true;
+      }
+ catch (      IllegalThreadStateException e) {
+        return false;
+      }
+    }
+  }
+;
+}

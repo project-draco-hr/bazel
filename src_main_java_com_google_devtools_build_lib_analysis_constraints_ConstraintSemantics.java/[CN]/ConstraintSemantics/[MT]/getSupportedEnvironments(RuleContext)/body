@@ -1,0 +1,25 @@
+{
+  if (!validateAttributes(ruleContext)) {
+    return null;
+  }
+  EnvironmentCollector ruleClassCollector=maybeGetRuleClassDefaults(ruleContext);
+  DefaultsProvider ruleDefaults;
+  if (ruleClassCollector != null) {
+    if (!ruleClassCollector.validateEnvironmentSpecifications()) {
+      return null;
+    }
+    ruleDefaults=new RuleClassDefaultsProvider(ruleClassCollector.getEnvironments());
+  }
+ else {
+    ruleDefaults=new GroupDefaultsProvider();
+  }
+  EnvironmentCollector ruleCollector=new EnvironmentCollector(ruleContext,RuleClass.RESTRICTED_ENVIRONMENT_ATTR,RuleClass.COMPATIBLE_ENVIRONMENT_ATTR,ruleDefaults);
+  if (!ruleCollector.validateEnvironmentSpecifications()) {
+    return null;
+  }
+  EnvironmentCollection supportedEnvironments=ruleCollector.getEnvironments();
+  if (ruleClassCollector != null) {
+    supportedEnvironments=addUnknownGroupsToCollection(supportedEnvironments,ruleClassCollector.getEnvironments());
+  }
+  return supportedEnvironments;
+}

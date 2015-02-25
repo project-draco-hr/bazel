@@ -1,0 +1,27 @@
+{
+  Type returnType=method.getGenericReturnType();
+  if (returnType instanceof Class<?>) {
+    return returnType;
+  }
+ else   if (returnType instanceof ParameterizedType) {
+    return returnType;
+  }
+ else   if (returnType instanceof TypeVariable<?>) {
+    TypeVariable<?> variable=(TypeVariable<?>)returnType;
+    while (type != null) {
+      Type candidate=matchTypeVariable(type,variable);
+      if (candidate != null) {
+        return candidate;
+      }
+      Class<?> rawType=getRawType(type);
+      for (      Type interfaceType : rawType.getGenericInterfaces()) {
+        candidate=matchTypeVariable(interfaceType,variable);
+        if (candidate != null) {
+          return candidate;
+        }
+      }
+      type=rawType.getGenericSuperclass();
+    }
+  }
+  throw new AssertionError("The type " + returnType + " is not a Class, ParameterizedType, or TypeVariable");
+}

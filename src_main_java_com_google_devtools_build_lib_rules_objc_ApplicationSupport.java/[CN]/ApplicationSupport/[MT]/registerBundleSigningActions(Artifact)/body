@@ -1,0 +1,15 @@
+{
+  PathFragment entitlementsDirectory=ruleContext.getUniqueDirectory("entitlements");
+  Artifact teamPrefixFile=ruleContext.getRelatedArtifact(entitlementsDirectory,".team_prefix_file");
+  registerExtractTeamPrefixAction(teamPrefixFile);
+  Artifact entitlementsNeedingSubstitution=attributes.entitlements();
+  if (entitlementsNeedingSubstitution == null) {
+    entitlementsNeedingSubstitution=ruleContext.getRelatedArtifact(entitlementsDirectory,".entitlements_with_variables");
+    registerExtractEntitlementsAction(entitlementsNeedingSubstitution);
+  }
+  Artifact entitlements=ruleContext.getRelatedArtifact(entitlementsDirectory,".entitlements");
+  registerEntitlementsVariableSubstitutionAction(entitlementsNeedingSubstitution,entitlements,teamPrefixFile);
+  Artifact ipaUnsigned=ObjcRuleClasses.artifactByAppendingToRootRelativePath(ruleContext,ipaOutput.getExecPath(),".unsigned");
+  registerSignBundleAction(entitlements,ipaOutput,ipaUnsigned);
+  return ipaUnsigned;
+}

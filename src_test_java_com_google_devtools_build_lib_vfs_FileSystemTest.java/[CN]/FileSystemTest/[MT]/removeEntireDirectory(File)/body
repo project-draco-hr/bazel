@@ -1,0 +1,28 @@
+{
+  Path testDirPath=testFS.getPath(getTestTmpDir());
+  if (!testFS.getPath(directoryToRemove.getAbsolutePath()).startsWith(testDirPath)) {
+    throw new IOException("trying to remove files outside of the testdata directory");
+  }
+  setWritable(directoryToRemove);
+  setExecutable(directoryToRemove);
+  File[] files=directoryToRemove.listFiles();
+  if (files != null) {
+    for (    File currentFile : files) {
+      boolean isSymbolicLink=isSymbolicLink(currentFile);
+      if (!isSymbolicLink && currentFile.isDirectory()) {
+        removeEntireDirectory(currentFile);
+      }
+ else {
+        if (!isSymbolicLink) {
+          setWritable(currentFile);
+        }
+        if (!currentFile.delete()) {
+          throw new IOException("Failed to delete '" + currentFile + "'");
+        }
+      }
+    }
+  }
+  if (!directoryToRemove.delete()) {
+    throw new IOException("Failed to delete '" + directoryToRemove + "'");
+  }
+}

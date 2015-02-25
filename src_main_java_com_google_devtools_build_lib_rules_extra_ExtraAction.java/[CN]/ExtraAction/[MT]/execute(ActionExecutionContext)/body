@@ -1,0 +1,34 @@
+{
+  ExtraActionInfo info=shadowedAction.getExtraActionInfo().build();
+  try (OutputStream out=extraActionInfoFile.getPath().getOutputStream()){
+    info.writeTo(out);
+  }
+ catch (  IOException e) {
+    throw new ActionExecutionException(e.getMessage(),e,this,false);
+  }
+  Executor executor=actionExecutionContext.getExecutor();
+  if (getContext(executor).isRemotable(getMnemonic(),isRemotable())) {
+    try {
+      getContext(executor).exec(getExtraActionSpawn(),actionExecutionContext);
+    }
+ catch (    ExecException e) {
+      throw e.toActionExecutionException(this);
+    }
+  }
+ else {
+    super.execute(actionExecutionContext);
+  }
+  if (createDummyOutput) {
+    for (    Artifact output : getOutputs()) {
+      try {
+        FileSystemUtils.touchFile(output.getPath());
+      }
+ catch (      IOException e) {
+        throw new ActionExecutionException(e.getMessage(),e,this,false);
+      }
+    }
+  }
+synchronized (this) {
+    inputsKnown=true;
+  }
+}

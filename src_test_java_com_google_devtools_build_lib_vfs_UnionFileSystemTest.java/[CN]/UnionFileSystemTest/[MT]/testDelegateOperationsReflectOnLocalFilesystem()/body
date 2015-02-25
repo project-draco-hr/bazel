@@ -1,0 +1,15 @@
+{
+  unionfs=new UnionFileSystem(ImmutableMap.<PathFragment,FileSystem>of(workingDir.getParentDirectory().asFragment(),new UnixFileSystem()),defaultDelegate,false);
+  unionfs.createDirectory(workingDir);
+  Path testFile=unionfs.getPath(workingDir.getRelative("test_file").asFragment());
+  assertTrue(testFile.asFragment().startsWith(workingDir.asFragment()));
+  String testString="This is a test file";
+  FileSystemUtils.writeContentAsLatin1(testFile,testString);
+  try {
+    assertEquals(testString,new String(FileSystemUtils.readContentAsLatin1(testFile)));
+  }
+  finally {
+    testFile.delete();
+    assertTrue(unionfs.delete(workingDir));
+  }
+}

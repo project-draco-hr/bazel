@@ -1,0 +1,17 @@
+{
+  int start=token.left;
+  Expression expr=parseExpression(prec + 1);
+  for (; ; ) {
+    if (!binaryOperators.containsKey(token.kind)) {
+      return expr;
+    }
+    Operator operator=binaryOperators.get(token.kind);
+    if (!operatorPrecedence.get(prec).contains(operator)) {
+      return expr;
+    }
+    nextToken();
+    Expression secondary=parseExpression(prec + 1);
+    expr=optimizeBinOpExpression(operator,expr,secondary);
+    setLocation(expr,start,secondary);
+  }
+}

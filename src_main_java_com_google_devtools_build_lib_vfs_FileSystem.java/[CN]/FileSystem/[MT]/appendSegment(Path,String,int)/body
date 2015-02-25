@@ -1,0 +1,27 @@
+{
+  Path naive=dir.getChild(child);
+  PathFragment linkTarget=resolveOneLink(naive);
+  if (linkTarget == null) {
+    return naive;
+  }
+  if (maxLinks-- == 0) {
+    throw new IOException(naive + " (Too many levels of symbolic links)");
+  }
+  if (linkTarget.isAbsolute()) {
+    dir=rootPath;
+  }
+  for (  String name : linkTarget.segments()) {
+    if (name.equals(".") || name.equals("")) {
+    }
+ else     if (name.equals("..")) {
+      Path parent=dir.getParentDirectory();
+      if (parent != null) {
+        dir=parent;
+      }
+    }
+ else {
+      dir=appendSegment(dir,name,maxLinks);
+    }
+  }
+  return dir;
+}

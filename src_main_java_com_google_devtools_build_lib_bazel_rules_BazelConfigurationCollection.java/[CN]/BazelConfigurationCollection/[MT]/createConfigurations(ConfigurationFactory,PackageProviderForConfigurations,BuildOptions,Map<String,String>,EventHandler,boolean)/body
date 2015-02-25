@@ -1,0 +1,28 @@
+{
+  Cache<String,BuildConfiguration> cache=CacheBuilder.newBuilder().<String,BuildConfiguration>build();
+  BuildConfiguration targetConfiguration=configurationFactory.getConfiguration(loadedPackageProvider,buildOptions,clientEnv,false,cache);
+  if (targetConfiguration == null) {
+    return null;
+  }
+  BuildConfiguration dataConfiguration=targetConfiguration;
+  BuildConfiguration hostConfiguration=getHostConfigurationFromRequest(configurationFactory,loadedPackageProvider,clientEnv,dataConfiguration,buildOptions);
+  if (hostConfiguration == null) {
+    return null;
+  }
+  Set<Label> reachableLabels=new HashSet<>();
+  if (performSanityCheck) {
+    for (    Label label : buildOptions.getAllLabels().values()) {
+      try {
+        collectTransitiveClosure(loadedPackageProvider,reachableLabels,label);
+      }
+ catch (      NoSuchThingException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+    sanityCheckImplicitLabels(reachableLabels,targetConfiguration);
+    sanityCheckImplicitLabels(reachableLabels,hostConfiguration);
+  }
+  BuildConfiguration result=setupTransitions(targetConfiguration,dataConfiguration,hostConfiguration);
+  result.reportInvalidOptions(errorEventListener);
+  return result;
+}

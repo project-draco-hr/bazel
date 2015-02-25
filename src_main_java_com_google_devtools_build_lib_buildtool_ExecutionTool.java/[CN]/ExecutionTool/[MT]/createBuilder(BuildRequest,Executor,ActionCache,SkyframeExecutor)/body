@@ -1,0 +1,12 @@
+{
+  BuildRequest.BuildRequestOptions options=request.getBuildOptions();
+  boolean verboseExplanations=options.verboseExplanations;
+  boolean keepGoing=request.getViewOptions().keepGoing;
+  Path actionOutputRoot=runtime.getDirectories().getActionConsoleOutputDirectory();
+  Predicate<Action> executionFilter=CheckUpToDateFilter.fromOptions(request.getOptions(ExecutionOptions.class));
+  Preconditions.checkState(options.jobs >= -1);
+  int actualJobs=options.jobs == 0 ? 1 : options.jobs;
+  fileCache=createBuildSingleFileCache(executor.getExecRoot());
+  skyframeExecutor.setActionOutputRoot(actionOutputRoot);
+  return new SkyframeBuilder(skyframeExecutor,new ActionCacheChecker(actionCache,getView().getArtifactFactory(),executionFilter,verboseExplanations),keepGoing,actualJobs,options.checkOutputFiles,fileCache,request.getBuildOptions().progressReportInterval);
+}

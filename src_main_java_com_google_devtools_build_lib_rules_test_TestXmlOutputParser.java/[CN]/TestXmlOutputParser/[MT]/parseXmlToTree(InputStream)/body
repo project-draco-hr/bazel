@@ -1,0 +1,46 @@
+{
+  XMLStreamReader parser=null;
+  try {
+    parser=XMLInputFactory.newInstance().createXMLStreamReader(xmlStream);
+    while (true) {
+      int event=parser.next();
+      if (event == XMLStreamConstants.END_DOCUMENT) {
+        return null;
+      }
+      if (event == XMLStreamConstants.START_ELEMENT) {
+        String elementName=parser.getLocalName();
+        if (TOPLEVEL_ELEMENT_NAMES.contains(elementName)) {
+          TestCase result=parseTestSuite(parser,elementName);
+          return result;
+        }
+      }
+    }
+  }
+ catch (  XMLStreamException e) {
+    throw new TestXmlOutputParserException(e);
+  }
+catch (  NumberFormatException e) {
+    throw new TestXmlOutputParserException("Number could not be parsed at " + parser.getLocation().getLineNumber() + ":"+ parser.getLocation().getColumnNumber(),e);
+  }
+catch (  UninitializedMessageException e) {
+    throw new TestXmlOutputParserException(e);
+  }
+catch (  RuntimeException e) {
+    String name=e.getClass().getCanonicalName();
+    if (name != null && name.contains("org.apache.xerces")) {
+      throw new TestXmlOutputParserException(e);
+    }
+ else {
+      throw e;
+    }
+  }
+ finally {
+    if (parser != null) {
+      try {
+        parser.close();
+      }
+ catch (      XMLStreamException e) {
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  Preconditions.checkArgument(stats.length == TASK_COUNT);
+  ByteBuffer sink=ByteBuffer.allocate(TASK_COUNT * (1 + 5 + 10));
+  for (int i=0; i < TASK_COUNT; i++) {
+    if (stats[i] != null && stats[i].count > 0) {
+      sink.put((byte)i);
+      VarInt.putVarInt(stats[i].count,sink);
+      VarInt.putVarLong(stats[i].totalTime,sink);
+    }
+  }
+  content=sink.position() > 0 ? Arrays.copyOfRange(sink.array(),0,sink.position()) : null;
+}

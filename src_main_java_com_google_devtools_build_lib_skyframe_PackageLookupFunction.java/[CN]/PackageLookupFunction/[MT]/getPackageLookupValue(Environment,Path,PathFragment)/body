@@ -1,0 +1,34 @@
+{
+  PathFragment buildFileFragment;
+  if (pkgFragment.getPathString().equals(PackageFunction.EXTERNAL_PACKAGE_NAME)) {
+    buildFileFragment=new PathFragment("WORKSPACE");
+  }
+ else {
+    buildFileFragment=pkgFragment.getChild("BUILD");
+  }
+  RootedPath buildFileRootedPath=RootedPath.toRootedPath(packagePathEntry,buildFileFragment);
+  String basename=buildFileRootedPath.asPath().getBaseName();
+  SkyKey fileSkyKey=FileValue.key(buildFileRootedPath);
+  FileValue fileValue=null;
+  try {
+    fileValue=(FileValue)env.getValueOrThrow(fileSkyKey,IOException.class,FileSymlinkCycleException.class,InconsistentFilesystemException.class);
+  }
+ catch (  IOException e) {
+    String pkgName=pkgFragment.getPathString();
+    throw new PackageLookupFunctionException(new BuildFileNotFoundException(pkgName,"IO errors while looking for " + basename + " file reading "+ buildFileRootedPath.asPath()+ ": "+ e.getMessage(),e),Transience.PERSISTENT);
+  }
+catch (  FileSymlinkCycleException e) {
+    String pkgName=buildFileRootedPath.asPath().getPathString();
+    throw new PackageLookupFunctionException(new BuildFileNotFoundException(pkgName,"Symlink cycle detected while trying to find " + basename + " file "+ buildFileRootedPath.asPath()),Transience.PERSISTENT);
+  }
+catch (  InconsistentFilesystemException e) {
+    throw new PackageLookupFunctionException(e,Transience.PERSISTENT);
+  }
+  if (fileValue == null) {
+    return null;
+  }
+  if (fileValue.isFile()) {
+    return PackageLookupValue.success(buildFileRootedPath.getRoot());
+  }
+  return PackageLookupValue.noBuildFile();
+}

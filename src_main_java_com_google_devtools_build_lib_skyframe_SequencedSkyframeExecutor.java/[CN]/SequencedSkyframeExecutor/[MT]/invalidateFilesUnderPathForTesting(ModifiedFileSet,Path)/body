@@ -1,0 +1,18 @@
+{
+  if (lastAnalysisDiscarded) {
+    dropConfiguredTargetsNow();
+    lastAnalysisDiscarded=false;
+  }
+  Iterable<SkyKey> keys;
+  if (modifiedFileSet.treatEverythingAsModified()) {
+    Differencer.Diff diff=new FilesystemValueChecker(memoizingEvaluator,tsgm).getDirtyFilesystemSkyKeys();
+    keys=diff.changedKeysWithoutNewValues();
+    recordingDiffer.inject(diff.changedKeysWithNewValues());
+  }
+ else {
+    keys=getSkyKeysPotentiallyAffected(modifiedFileSet.modifiedSourceFiles(),pathEntry);
+  }
+  syscalls.set(new PerBuildSyscallCache());
+  recordingDiffer.invalidate(keys);
+  invalidateTransientErrors();
+}

@@ -1,0 +1,20 @@
+{
+  IntVersion intVersion=(IntVersion)version;
+  Preconditions.checkState((lastGraphVersion == null && intVersion.getVal() == 0) || version.equals(lastGraphVersion.next()),"InMemoryGraph supports only monotonically increasing Integer versions: %s %s",lastGraphVersion,version);
+  setAndCheckEvaluateState(true,roots);
+  try {
+    Diff diff=differencer.getDiff(lastGraphVersion,version);
+    valuesToInject.putAll(diff.changedKeysWithNewValues());
+    invalidate(diff.changedKeysWithoutNewValues());
+    pruneInjectedValues(valuesToInject);
+    invalidate(valuesToInject.keySet());
+    performInvalidation();
+    injectValues(intVersion);
+    ParallelEvaluator evaluator=new ParallelEvaluator(graph,intVersion,skyFunctions,eventHandler,emittedEventState,keepGoing,numThreads,progressReceiver,dirtyKeyTracker);
+    return evaluator.eval(roots);
+  }
+  finally {
+    lastGraphVersion=intVersion;
+    setAndCheckEvaluateState(false,roots);
+  }
+}

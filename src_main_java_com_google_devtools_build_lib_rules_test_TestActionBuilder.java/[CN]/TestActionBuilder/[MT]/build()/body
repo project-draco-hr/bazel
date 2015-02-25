@@ -1,0 +1,8 @@
+{
+  Preconditions.checkState(runfilesSupport != null);
+  boolean local=TargetUtils.isTestRuleAndRunsLocally(ruleContext.getRule());
+  TestShardingStrategy strategy=ruleContext.getConfiguration().testShardingStrategy();
+  int shards=strategy.getNumberOfShards(local,explicitShardCount,isTestShardingCompliant(),TestSize.getTestSize(ruleContext.getRule()));
+  Preconditions.checkState(shards >= 0);
+  return createTestAction(Util.getWorkspaceRelativePath(ruleContext.getLabel()),shards);
+}

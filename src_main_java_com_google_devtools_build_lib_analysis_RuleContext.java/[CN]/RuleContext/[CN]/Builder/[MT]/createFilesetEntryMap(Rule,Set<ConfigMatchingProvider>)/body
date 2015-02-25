@@ -1,0 +1,32 @@
+{
+  final ImmutableSortedKeyListMultimap.Builder<String,ConfiguredFilesetEntry> mapBuilder=ImmutableSortedKeyListMultimap.builder();
+  for (  Attribute attr : rule.getAttributes()) {
+    if (attr.getType() != Type.FILESET_ENTRY_LIST) {
+      continue;
+    }
+    String attributeName=attr.getName();
+    Map<Label,ConfiguredTarget> ctMap=new HashMap<>();
+    for (    ConfiguredTarget prerequisite : prerequisiteMap.get(attr)) {
+      ctMap.put(prerequisite.getLabel(),prerequisite);
+    }
+    List<FilesetEntry> entries=ConfiguredAttributeMapper.of(rule,configConditions).get(attributeName,Type.FILESET_ENTRY_LIST);
+    for (    FilesetEntry entry : entries) {
+      if (entry.getFiles() == null) {
+        Label label=entry.getSrcLabel();
+        ConfiguredTarget src=ctMap.get(label);
+        if (!validateFilesetEntry(entry,src)) {
+          continue;
+        }
+        mapBuilder.put(attributeName,new ConfiguredFilesetEntry(entry,src));
+      }
+ else {
+        ImmutableList.Builder<TransitiveInfoCollection> files=ImmutableList.builder();
+        for (        Label file : entry.getFiles()) {
+          files.add(ctMap.get(file));
+        }
+        mapBuilder.put(attributeName,new ConfiguredFilesetEntry(entry,files.build()));
+      }
+    }
+  }
+  return mapBuilder.build();
+}

@@ -1,0 +1,19 @@
+{
+  return new MixedModeFunction("mocksubinclude",ImmutableList.of("label","path"),2,false){
+    @Override public Object call(    Object[] args,    FuncallExpression ast) throws ConversionException {
+      Label label=Type.LABEL.convert(args[0],"'mocksubinclude' argument",context.pkgBuilder.getBuildFileLabel());
+      String pathString=Type.STRING.convert(args[1],"'mocksubinclude' argument");
+      Path path=pathString.isEmpty() ? null : context.pkgBuilder.getFilename().getRelative(pathString);
+      if (label.getPackageIdentifier().equals(context.pkgBuilder.getPackageIdentifier())) {
+        Location location=ast.getLocation();
+        if (location == null) {
+          location=Location.fromFile(context.pkgBuilder.getFilename());
+        }
+        context.pkgBuilder.createInputFileMaybe(label,location);
+      }
+      context.pkgBuilder.addSubinclude(label,path);
+      return Environment.NONE;
+    }
+  }
+;
+}

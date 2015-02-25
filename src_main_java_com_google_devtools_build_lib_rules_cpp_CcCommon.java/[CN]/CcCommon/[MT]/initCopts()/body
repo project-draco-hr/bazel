@@ -1,0 +1,22 @@
+{
+  if (!hasAttribute("copts",Type.STRING_LIST)) {
+    return ImmutableList.<String>of();
+  }
+  List<String> tokens=new ArrayList<>();
+  for (  String str : ruleContext.attributes().get("copts",Type.STRING_LIST)) {
+    tokens.clear();
+    try {
+      ShellUtils.tokenize(tokens,str);
+      if (tokens.size() > 1) {
+        ruleContext.attributeWarning("copts","each item in the list should contain only one option");
+      }
+    }
+ catch (    ShellUtils.TokenizationException e) {
+    }
+  }
+  Pattern nocopts=getNoCopts(ruleContext);
+  if (nocopts != null && nocopts.matcher("-Wno-future-warnings").matches()) {
+    ruleContext.attributeWarning("nocopts","Regular expression '" + nocopts.pattern() + "' is too general; for example, it matches "+ "'-Wno-future-warnings'.  Thus it might *re-enable* compiler warnings we wish to "+ "disable globally.  To disable all compiler warnings, add '-w' to copts instead");
+  }
+  return ImmutableList.<String>builder().addAll(getPackageCopts(ruleContext)).addAll(CppHelper.getAttributeCopts(ruleContext,"copts")).build();
+}

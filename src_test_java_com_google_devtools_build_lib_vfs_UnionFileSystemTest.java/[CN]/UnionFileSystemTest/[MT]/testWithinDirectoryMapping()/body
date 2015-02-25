@@ -1,0 +1,21 @@
+{
+  unionfs=new UnionFileSystem(ImmutableMap.<PathFragment,FileSystem>of(new PathFragment("/fruit/a"),inDelegate,new PathFragment("/fruit/b"),outDelegate),defaultDelegate);
+  assertTrue(unionfs.createDirectory(unionfs.getPath("/fruit")));
+  assertTrue(defaultDelegate.getPath("/fruit").isDirectory());
+  assertTrue(inDelegate.getPath("/fruit").createDirectory());
+  assertTrue(outDelegate.getPath("/fruit").createDirectory());
+  Path apple=unionfs.getPath("/fruit/apple");
+  Path banana=unionfs.getPath("/fruit/banana");
+  Path cherry=unionfs.getPath("/fruit/cherry");
+  unionfs.createDirectory(apple);
+  unionfs.createDirectory(banana);
+  assertSame(inDelegate,unionfs.getDelegate(apple));
+  assertSame(outDelegate,unionfs.getDelegate(banana));
+  assertSame(defaultDelegate,unionfs.getDelegate(cherry));
+  FileSystemUtils.writeContentAsLatin1(apple.getRelative("table"),"penny");
+  FileSystemUtils.writeContentAsLatin1(banana.getRelative("nana"),"nanana");
+  FileSystemUtils.writeContentAsLatin1(cherry,"garcia");
+  assertEquals("penny",new String(FileSystemUtils.readContentAsLatin1(inDelegate.getPath("/fruit/apple/table"))));
+  assertEquals("nanana",new String(FileSystemUtils.readContentAsLatin1(outDelegate.getPath("/fruit/banana/nana"))));
+  assertEquals("garcia",new String(FileSystemUtils.readContentAsLatin1(defaultDelegate.getPath("/fruit/cherry"))));
+}

@@ -1,0 +1,31 @@
+{
+  List<String> prefixes=new ArrayList<>();
+  List<Field> startupFields=Lists.newArrayList();
+  for (  Class<? extends OptionsBase> defaultOptions : BlazeCommandUtils.getStartupOptions(modules)) {
+    startupFields.addAll(ImmutableList.copyOf(defaultOptions.getFields()));
+  }
+  for (  Field field : startupFields) {
+    if (field.isAnnotationPresent(Option.class)) {
+      prefixes.add("--" + field.getAnnotation(Option.class).name());
+      if (field.getType() == boolean.class || field.getType() == TriState.class) {
+        prefixes.add("--no" + field.getAnnotation(Option.class).name());
+      }
+    }
+  }
+  List<String> startupArgs=new ArrayList<>();
+  List<String> otherArgs=Lists.newArrayList(args);
+  for (Iterator<String> argi=otherArgs.iterator(); argi.hasNext(); ) {
+    String arg=argi.next();
+    if (!arg.startsWith("--")) {
+      break;
+    }
+    for (    String prefix : prefixes) {
+      if (arg.startsWith(prefix)) {
+        startupArgs.add(arg);
+        argi.remove();
+        break;
+      }
+    }
+  }
+  return new CommandLineOptions(startupArgs,otherArgs);
+}

@@ -1,0 +1,16 @@
+{
+  if (explanationPath == null) {
+    return null;
+  }
+  ExplanationHandler handler;
+  try {
+    handler=new ExplanationHandler(getWorkspace().getRelative(explanationPath).getOutputStream(),allOptions);
+  }
+ catch (  IOException e) {
+    getReporter().handle(Event.warn(String.format("Cannot write explanation of rebuilds to file '%s': %s",explanationPath,e.getMessage())));
+    return null;
+  }
+  getReporter().handle(Event.info("Writing explanation of rebuilds to '" + explanationPath + "'"));
+  getReporter().addHandler(handler);
+  return handler;
+}

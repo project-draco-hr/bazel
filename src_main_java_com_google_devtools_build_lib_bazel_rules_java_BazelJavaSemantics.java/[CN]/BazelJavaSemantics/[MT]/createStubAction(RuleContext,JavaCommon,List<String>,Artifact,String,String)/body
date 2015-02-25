@@ -1,0 +1,22 @@
+{
+  Preconditions.checkNotNull(jvmFlags);
+  Preconditions.checkNotNull(executable);
+  Preconditions.checkNotNull(javaStartClass);
+  Preconditions.checkNotNull(javaExecutable);
+  BuildConfiguration config=ruleContext.getConfiguration();
+  List<Substitution> arguments=new ArrayList<>();
+  arguments.add(Substitution.of("%javabin%",javaExecutable));
+  arguments.add(Substitution.of("%needs_runfiles%",config.getFragment(Jvm.class).getJavaExecutable().isAbsolute() ? "0" : "1"));
+  arguments.add(new ComputedSubstitution("%classpath%"){
+    @Override public String getValue(){
+      StringBuilder buffer=new StringBuilder();
+      Iterable<Artifact> jars=javaCommon.getRuntimeClasspath();
+      appendRunfilesRelativeEntries(buffer,jars,':');
+      return buffer.toString();
+    }
+  }
+);
+  arguments.add(Substitution.of("%java_start_class%",ShellEscaper.escapeString(javaStartClass)));
+  arguments.add(Substitution.ofSpaceSeparatedList("%jvm_flags%",jvmFlags));
+  ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),executable,STUB_SCRIPT,arguments,true));
+}

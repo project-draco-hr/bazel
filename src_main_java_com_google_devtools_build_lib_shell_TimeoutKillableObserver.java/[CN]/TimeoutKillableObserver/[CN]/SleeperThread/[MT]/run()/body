@@ -1,0 +1,18 @@
+{
+  try {
+    if (log.isLoggable(Level.FINE)) {
+      log.fine("Waiting for " + timeoutMS + "ms to kill process");
+    }
+    Thread.sleep(timeoutMS);
+synchronized (TimeoutKillableObserver.this) {
+      if (killable != null) {
+        log.fine("Killing process");
+        killable.kill();
+        timedOut=true;
+      }
+    }
+  }
+ catch (  InterruptedException ie) {
+    log.fine("Wait interrupted since process finished; continuing...");
+  }
+}

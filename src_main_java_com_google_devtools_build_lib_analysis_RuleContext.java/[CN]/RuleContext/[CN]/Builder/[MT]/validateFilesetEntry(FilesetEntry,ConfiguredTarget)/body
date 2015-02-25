@@ -1,0 +1,17 @@
+{
+  if (src.getProvider(FilesetProvider.class) != null) {
+    return true;
+  }
+  if (filesetEntry.isSourceFileset()) {
+    return true;
+  }
+  Target srcTarget=src.getTarget();
+  if (!(srcTarget instanceof FileTarget)) {
+    attributeError("entries",String.format("Invalid 'srcdir' target '%s'. Must be another Fileset or package",srcTarget.getLabel()));
+    return false;
+  }
+  if (srcTarget instanceof OutputFile) {
+    attributeWarning("entries",String.format("'srcdir' target '%s' is not an input file. " + "This forces the Fileset to be executed unconditionally",srcTarget.getLabel()));
+  }
+  return true;
+}

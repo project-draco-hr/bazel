@@ -1,0 +1,22 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey errorKey=GraphTester.toSkyKey("my_error_value");
+  final SomeOtherErrorException exception=new SomeOtherErrorException("error exception");
+  tester.getOrCreate(errorKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+      throw new SkyFunctionException(exception,Transience.PERSISTENT){
+      }
+;
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      throw new UnsupportedOperationException();
+    }
+  }
+);
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  tester.getOrCreate(topKey).addErrorDependency(errorKey,new StringValue("recovered")).setComputedValue(CONCATENATE);
+  EvaluationResult<StringValue> result=eval(keepGoing,ImmutableList.of(topKey));
+  assertThat(result.keyNames()).isEmpty();
+  assertSame(exception,result.getError(topKey).getException());
+  assertThat(result.getError(topKey).getRootCauses()).containsExactly(errorKey);
+}

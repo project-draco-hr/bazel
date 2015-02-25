@@ -1,0 +1,52 @@
+{
+  final AggregatingAttributeMapper owner=AggregatingAttributeMapper.this;
+  return new AttributeMap(){
+    @Override public <T>T get(    String attributeName,    Type<T> type){
+      owner.checkType(attributeName,type);
+      if (nonconfigurableAttributes.contains(attributeName)) {
+        return owner.get(attributeName,type);
+      }
+      if (!directMap.containsKey(attributeName)) {
+        throw new IllegalArgumentException("attribute \"" + attributeName + "\" isn't available in this computed default context");
+      }
+      return type.cast(directMap.get(attributeName));
+    }
+    @Override public String getName(){
+      return owner.getName();
+    }
+    @Override public Label getLabel(){
+      return owner.getLabel();
+    }
+    @Override public Iterable<String> getAttributeNames(){
+      return ImmutableList.<String>builder().addAll(directMap.keySet()).addAll(nonconfigurableAttributes).build();
+    }
+    @Override public void visitLabels(    AcceptsLabelAttribute observer){
+      owner.visitLabels(observer);
+    }
+    @Override public String getPackageDefaultHdrsCheck(){
+      return owner.getPackageDefaultHdrsCheck();
+    }
+    @Override public Boolean getPackageDefaultObsolete(){
+      return owner.getPackageDefaultObsolete();
+    }
+    @Override public Boolean getPackageDefaultTestOnly(){
+      return owner.getPackageDefaultTestOnly();
+    }
+    @Override public String getPackageDefaultDeprecation(){
+      return owner.getPackageDefaultDeprecation();
+    }
+    @Override public ImmutableList<String> getPackageDefaultCopts(){
+      return owner.getPackageDefaultCopts();
+    }
+    @Nullable @Override public Type<?> getAttributeType(    String attrName){
+      return owner.getAttributeType(attrName);
+    }
+    @Nullable @Override public Attribute getAttributeDefinition(    String attrName){
+      return owner.getAttributeDefinition(attrName);
+    }
+    @Override public boolean isAttributeValueExplicitlySpecified(    String attributeName){
+      return owner.isAttributeValueExplicitlySpecified(attributeName);
+    }
+  }
+;
+}

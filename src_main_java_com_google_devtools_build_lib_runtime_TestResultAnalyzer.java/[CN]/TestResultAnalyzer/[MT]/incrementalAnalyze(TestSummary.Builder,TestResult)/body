@@ -1,0 +1,72 @@
+{
+  Preconditions.checkNotNull(result);
+  Preconditions.checkNotNull(summaryBuilder);
+  TestSummary existingSummary=Preconditions.checkNotNull(summaryBuilder.peek());
+  TransitiveInfoCollection target=existingSummary.getTarget();
+  Preconditions.checkNotNull(target,"The existing TestSummary must be associated with a target");
+  BlazeTestStatus status=existingSummary.getStatus();
+  int numCached=existingSummary.numCached();
+  int numLocalActionCached=existingSummary.numLocalActionCached();
+  if (!existingSummary.actionRan() && !result.isCached()) {
+    summaryBuilder.setActionRan(true);
+    PathFragment coverageData=result.getCoverageData();
+    if (coverageData != null) {
+      summaryBuilder.addCoverageFiles(Collections.singletonList(execRoot.getRelative(coverageData)));
+    }
+  }
+  if (result.isCached() || result.getData().getRemotelyCached()) {
+    numCached++;
+  }
+  if (result.isCached()) {
+    numLocalActionCached++;
+  }
+  if (!executionOptions.runsPerTestDetectsFlakes) {
+    status=aggregateStatus(status,result.getData().getStatus());
+  }
+ else {
+    int shardNumber=result.getShardNum();
+    int runsPerTestForLabel=target.getProvider(TestProvider.class).getTestParams().getRuns();
+    List<BlazeTestStatus> singleShardStatuses=summaryBuilder.addShardStatus(shardNumber,result.getData().getStatus());
+    if (singleShardStatuses.size() == runsPerTestForLabel) {
+      BlazeTestStatus shardStatus=BlazeTestStatus.NO_STATUS;
+      int passes=0;
+      for (      BlazeTestStatus runStatusForShard : singleShardStatuses) {
+        shardStatus=aggregateStatus(shardStatus,runStatusForShard);
+        if (TestResult.isBlazeTestStatusPassed(shardStatus)) {
+          passes++;
+        }
+      }
+      if (passes == 0 || passes == runsPerTestForLabel) {
+        status=aggregateStatus(status,shardStatus);
+      }
+ else {
+        status=aggregateStatus(status,BlazeTestStatus.FLAKY);
+      }
+    }
+  }
+  List<String> filtered=new ArrayList<>();
+  warningLoop:   for (  String warning : result.getData().getWarningList()) {
+    for (    String ignoredPrefix : Constants.IGNORED_TEST_WARNING_PREFIXES) {
+      if (warning.startsWith(ignoredPrefix)) {
+        continue warningLoop;
+      }
+    }
+    filtered.add(warning);
+  }
+  List<Path> passed=new ArrayList<>();
+  if (result.getData().hasPassedLog()) {
+    passed.add(result.getTestAction().getTestLog().getPath().getRelative(result.getData().getPassedLog()));
+  }
+  List<Path> failed=new ArrayList<>();
+  for (  String path : result.getData().getFailedLogsList()) {
+    failed.add(result.getTestAction().getTestLog().getPath().getRelative(path));
+  }
+  summaryBuilder.addTestTimes(result.getData().getTestTimesList()).addPassedLogs(passed).addFailedLogs(failed).addWarnings(filtered).collectFailedTests(result.getData().getTestCase()).setRanRemotely(result.getData().getIsRemoteStrategy());
+  List<String> warnings=new ArrayList<>();
+  if (status == BlazeTestStatus.PASSED) {
+    if (shouldEmitTestSizeWarningInSummary(summaryOptions.testVerboseTimeoutWarnings,warnings,result.getData().getTestProcessTimesList(),target)) {
+      summaryBuilder.setWasUnreportedWrongSize(true);
+    }
+  }
+  return summaryBuilder.setStatus(status).setNumCached(numCached).setNumLocalActionCached(numLocalActionCached).addWarnings(warnings);
+}

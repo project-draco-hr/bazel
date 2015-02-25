@@ -1,0 +1,24 @@
+{
+  ConfigurationCollectionKey collectionKey=(ConfigurationCollectionKey)skyKey.argument();
+  try {
+    PrecomputedValue.TEST_ENVIRONMENT_VARIABLES.get(env);
+    BlazeDirectories directories=PrecomputedValue.BLAZE_DIRECTORIES.get(env);
+    if (env.valuesMissing()) {
+      return null;
+    }
+    BuildConfigurationCollection result=getConfigurations(env.getListener(),new SkyframePackageLoaderWithValueEnvironment(env,configurationPackages.get()),new BuildConfigurationKey(collectionKey.getBuildOptions(),directories,clientEnv.get(),collectionKey.getMultiCpu()));
+    if (env.valuesMissing()) {
+      return null;
+    }
+    for (    BuildConfiguration config : result.getTargetConfigurations()) {
+      config.declareSkyframeDependencies(env);
+    }
+    if (env.valuesMissing()) {
+      return null;
+    }
+    return new ConfigurationCollectionValue(result,configurationPackages.get());
+  }
+ catch (  InvalidConfigurationException e) {
+    throw new ConfigurationCollectionFunctionException(e);
+  }
+}

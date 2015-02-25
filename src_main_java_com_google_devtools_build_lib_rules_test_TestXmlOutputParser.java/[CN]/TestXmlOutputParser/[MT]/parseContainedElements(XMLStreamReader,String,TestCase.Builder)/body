@@ -1,0 +1,54 @@
+{
+  int failures=0;
+  int errors=0;
+  while (true) {
+    int event=parser.next();
+switch (event) {
+case XMLStreamConstants.START_ELEMENT:
+      String childElementName=parser.getLocalName().intern();
+    if (childElementName.equals("testsuite")) {
+      builder.addChild(parseTestSuite(parser,childElementName));
+    }
+ else     if (childElementName.equals("testcase")) {
+      builder.addChild(parseTestCase(parser));
+    }
+ else     if (childElementName.equals("failure")) {
+      failures+=1;
+      skipCompleteElement(parser);
+    }
+ else     if (childElementName.equals("error")) {
+      errors+=1;
+      skipCompleteElement(parser);
+    }
+ else     if (childElementName.equals("testdecorator")) {
+      builder.addChild(parseTestDecorator(parser));
+    }
+ else {
+      skipCompleteElement(parser);
+    }
+  break;
+case XMLStreamConstants.END_ELEMENT:
+for (int i=0; i < builder.getChildCount(); i+=1) {
+  if (builder.getChild(i).getStatus() == TestCase.Status.ERROR) {
+    errors+=1;
+  }
+  if (builder.getChild(i).getStatus() == TestCase.Status.FAILED) {
+    failures+=1;
+  }
+}
+if (errors > 0) {
+builder.setStatus(TestCase.Status.ERROR);
+}
+ else if (failures > 0) {
+builder.setStatus(TestCase.Status.FAILED);
+}
+ else {
+builder.setStatus(TestCase.Status.PASSED);
+}
+if (!parser.getLocalName().equals(elementName)) {
+throw createBadElementException(elementName,parser);
+}
+return;
+}
+}
+}

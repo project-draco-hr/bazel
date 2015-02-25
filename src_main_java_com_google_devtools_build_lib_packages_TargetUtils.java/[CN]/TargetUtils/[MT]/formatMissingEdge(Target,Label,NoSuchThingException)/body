@@ -1,0 +1,15 @@
+{
+  if (target instanceof Rule) {
+    Rule rule=(Rule)target;
+    return !isExplicitDependency(rule,label) ? ("every rule of type " + rule.getRuleClass() + " implicitly depends upon the target '"+ label+ "',  but this target could not be found. "+ "If this is an integration test, maybe you forgot to add a mock for your new tool?") : e.getMessage() + " and referenced by '" + target.getLabel()+ "'";
+  }
+ else   if (target instanceof InputFile) {
+    return e.getMessage() + " (this is usually caused by a missing package group in the" + " package-level visibility declaration)";
+  }
+ else {
+    if (target != null) {
+      return "in target '" + target.getLabel() + "', no such label '"+ label+ "': "+ e.getMessage();
+    }
+    return e.getMessage();
+  }
+}

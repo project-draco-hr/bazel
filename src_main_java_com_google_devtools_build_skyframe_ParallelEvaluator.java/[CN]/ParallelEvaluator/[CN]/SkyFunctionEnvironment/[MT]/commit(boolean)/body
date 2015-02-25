@@ -1,0 +1,24 @@
+{
+  NodeEntry primaryEntry=Preconditions.checkNotNull(graph.get(skyKey),skyKey);
+  finalizeErrorInfo();
+  NestedSet<TaggedEvents> events=buildEvents(false);
+  if (value == null) {
+    Preconditions.checkNotNull(errorInfo,"%s %s",skyKey,primaryEntry);
+    Set<SkyKey> reverseDeps=primaryEntry.setValue(ValueWithMetadata.error(errorInfo,events),graphVersion);
+    signalValuesAndEnqueueIfReady(enqueueParents ? visitor : null,reverseDeps,graphVersion);
+  }
+ else {
+    Preconditions.checkState(enqueueParents,"%s %s",skyKey,primaryEntry);
+    Set<SkyKey> reverseDeps;
+    Version valueVersion;
+    reverseDeps=primaryEntry.setValue(ValueWithMetadata.normal(value,errorInfo,events),graphVersion);
+    valueVersion=primaryEntry.getVersion();
+    Preconditions.checkState(valueVersion.atMost(graphVersion),"%s should be at most %s in the version partial ordering",valueVersion,graphVersion);
+    if (progressReceiver != null) {
+      progressReceiver.evaluated(skyKey,value,valueVersion.equals(graphVersion) ? EvaluationState.BUILT : EvaluationState.CLEAN);
+    }
+    signalValuesAndEnqueueIfReady(visitor,reverseDeps,valueVersion);
+  }
+  visitor.notifyDone(skyKey);
+  replayingNestedSetEventVisitor.visit(events);
+}

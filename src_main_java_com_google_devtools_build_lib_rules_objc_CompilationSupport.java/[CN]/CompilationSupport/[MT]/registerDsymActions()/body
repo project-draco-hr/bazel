@@ -1,0 +1,10 @@
+{
+  IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
+  Artifact dsymBundle=intermediateArtifacts.dsymBundle();
+  Artifact debugSymbolFile=intermediateArtifacts.dsymSymbol();
+  ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("UnzipDsym").setProgressMessage("Unzipping dSYM file: " + ruleContext.getLabel()).setExecutable(new PathFragment("/usr/bin/unzip")).addInput(dsymBundle).setCommandLine(CustomCommandLine.builder().add(dsymBundle.getExecPathString()).add("-d").add(stripSuffix(dsymBundle.getExecPathString(),IntermediateArtifacts.TMP_DSYM_BUNDLE_SUFFIX) + ".app.dSYM").build()).addOutput(intermediateArtifacts.dsymPlist()).addOutput(debugSymbolFile).build(ruleContext));
+  Artifact dumpsyms=ruleContext.getPrerequisiteArtifact("$dumpsyms",Mode.HOST);
+  Artifact breakpadFile=intermediateArtifacts.breakpadSym();
+  ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("GenBreakpad").setProgressMessage("Generating breakpad file: " + ruleContext.getLabel()).setShellCommand(ImmutableList.of("/bin/bash","-c")).setExecutionInfo(ImmutableMap.of(ExecutionRequirements.REQUIRES_DARWIN,"")).addInput(dumpsyms).addInput(debugSymbolFile).addArgument(String.format("%s %s > %s",ShellUtils.shellEscape(dumpsyms.getExecPathString()),ShellUtils.shellEscape(debugSymbolFile.getExecPathString()),ShellUtils.shellEscape(breakpadFile.getExecPathString()))).addOutput(breakpadFile).build(ruleContext));
+  return this;
+}

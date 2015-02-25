@@ -1,0 +1,17 @@
+{
+  tester.getOrCreate("top").setComputedValue(CONCATENATE).addDependency("d1").addDependency("d2").addDependency("d3");
+  tester.set("d1",new StringValue("1"));
+  StringValue d2=new StringValue("2");
+  tester.set("d2",d2);
+  StringValue d3=new StringValue("3");
+  tester.set("d3",d3);
+  tester.eval(true,"top");
+  tester.delete("d1");
+  tester.eval(true,"d3");
+  assertThat(tester.getDirtyValues()).isEmpty();
+  assertEquals(ImmutableSet.of(new StringValue("1"),new StringValue("123")),tester.getDeletedValues());
+  assertEquals(null,tester.getExistingValue("top"));
+  assertEquals(null,tester.getExistingValue("d1"));
+  assertEquals(d2,tester.getExistingValue("d2"));
+  assertEquals(d3,tester.getExistingValue("d3"));
+}

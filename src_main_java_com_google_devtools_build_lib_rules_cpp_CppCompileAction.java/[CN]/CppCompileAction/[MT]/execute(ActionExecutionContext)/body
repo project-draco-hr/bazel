@@ -1,0 +1,15 @@
+{
+  Executor executor=actionExecutionContext.getExecutor();
+  CppCompileActionContext.Reply reply;
+  try {
+    reply=executor.getContext(actionContext).execWithReply(this,actionExecutionContext);
+  }
+ catch (  ExecException e) {
+    throw e.toActionExecutionException("C++ compilation of rule '" + getOwner().getLabel() + "'",executor.getVerboseFailures(),this);
+  }
+  ensureCoverageNotesFilesExist();
+  IncludeScanningContext scanningContext=executor.getContext(IncludeScanningContext.class);
+  updateActionInputs(executor.getExecRoot(),scanningContext.getArtifactResolver(),reply);
+  reply=null;
+  validateInclusions(actionExecutionContext.getMiddlemanExpander(),executor.getEventHandler());
+}

@@ -1,0 +1,22 @@
+{
+  try {
+    super.work(failFastOnInterrupt);
+  }
+ catch (  InterruptedException e) {
+    if (failFastOnInterrupt) {
+      throw e;
+    }
+ else {
+      Thread.currentThread().interrupt();
+    }
+  }
+catch (  IORuntimeException e) {
+    if (Thread.interrupted()) {
+      if (failFastOnInterrupt) {
+        throw new InterruptedException();
+      }
+      Thread.currentThread().interrupt();
+    }
+    throw e.getCauseIOException();
+  }
+}

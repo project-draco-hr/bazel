@@ -1,0 +1,26 @@
+{
+  if (path.equals(rootPath)) {
+    throw Error.EACCES.exception(path);
+  }
+  InMemoryDirectoryInfo parent;
+synchronized (this) {
+    parent=getDirectory(path.getParentDirectory());
+    if (!parent.outOfScope()) {
+      InMemoryContentInfo child=parent.getChild(path.getBaseName());
+      if (child != null) {
+        if (child.isDirectory()) {
+          return false;
+        }
+ else {
+          throw Error.EEXIST.exception(path);
+        }
+      }
+      InMemoryDirectoryInfo newDir=new InMemoryDirectoryInfo(clock);
+      newDir.addChild(".",newDir);
+      newDir.addChild("..",parent);
+      insert(parent,path.getBaseName(),newDir,path);
+      return true;
+    }
+  }
+  return getDelegatedPath(parent.getEscapingPath(),path).createDirectory();
+}

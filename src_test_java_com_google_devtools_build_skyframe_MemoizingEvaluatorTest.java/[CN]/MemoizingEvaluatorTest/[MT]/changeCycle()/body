@@ -1,0 +1,23 @@
+{
+  initializeTester();
+  SkyKey aKey=GraphTester.toSkyKey("a");
+  SkyKey bKey=GraphTester.toSkyKey("b");
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  SkyKey midKey=GraphTester.toSkyKey("mid");
+  tester.getOrCreate(topKey).addDependency(midKey).setComputedValue(COPY);
+  tester.getOrCreate(midKey).addDependency(aKey).setComputedValue(COPY);
+  tester.getOrCreate(aKey).addDependency(bKey).setComputedValue(COPY);
+  tester.getOrCreate(bKey).addDependency(aKey);
+  EvaluationResult<StringValue> result=tester.eval(false,topKey);
+  assertEquals(null,result.get(topKey));
+  ErrorInfo errorInfo=result.getError(topKey);
+  CycleInfo cycleInfo=Iterables.getOnlyElement(errorInfo.getCycleInfo());
+  assertThat(cycleInfo.getCycle()).containsExactly(aKey,bKey).inOrder();
+  assertThat(cycleInfo.getPathToCycle()).containsExactly(topKey,midKey).inOrder();
+  tester.getOrCreate(bKey).removeDependency(aKey);
+  tester.set(bKey,new StringValue("bValue"));
+  tester.invalidate();
+  result=tester.eval(false,topKey);
+  assertEquals(new StringValue("bValue"),result.get(topKey));
+  assertEquals(null,result.getError(topKey));
+}

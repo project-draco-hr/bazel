@@ -1,0 +1,23 @@
+{
+  Properties properties=new Properties();
+  for (  String fileName : buildInformationFiles) {
+    InputStream file=fileSystem.getInputStream(fileName);
+    if (file != null) {
+      properties.load(file);
+    }
+  }
+  for (  String info : buildInformations) {
+    String[] split=info.split("=",2);
+    String key=split[0];
+    String value="";
+    if (split.length > 1) {
+      value=split[1];
+    }
+    properties.put(key,value);
+  }
+  properties.put("build.target",outputJar);
+  if (mainClass != null) {
+    properties.put("main.class",mainClass);
+  }
+  return properties;
+}

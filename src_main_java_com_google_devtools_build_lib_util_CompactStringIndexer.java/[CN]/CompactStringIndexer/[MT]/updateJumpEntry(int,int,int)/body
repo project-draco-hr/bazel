@@ -1,0 +1,24 @@
+{
+  byte[] content=nodes.get(node);
+  int[] intHolder=new int[1];
+  int offset=VarInt.getVarInt(content,0,intHolder);
+  offset=VarInt.getVarInt(content,offset,intHolder);
+  offset+=intHolder[0];
+  while (offset < content.length) {
+    int next=VarInt.getVarInt(content,offset + 1,intHolder);
+    if (intHolder[0] == oldIndex) {
+      byte[] newContent=new byte[content.length + VarInt.varIntSize(newIndex) - VarInt.varIntSize(oldIndex)];
+      System.arraycopy(content,0,newContent,0,offset + 1);
+      offset=VarInt.putVarInt(newIndex,newContent,offset + 1);
+      System.arraycopy(content,next,newContent,offset,content.length - next);
+      updateNode(node,newContent);
+      return;
+    }
+ else {
+      offset=next;
+    }
+  }
+  StringBuilder builder=new StringBuilder().append("Index ").append(oldIndex).append(" is not present in the node ").append(node).append(", ");
+  dumpNodeContent(builder,content);
+  throw new IllegalArgumentException(builder.toString());
+}

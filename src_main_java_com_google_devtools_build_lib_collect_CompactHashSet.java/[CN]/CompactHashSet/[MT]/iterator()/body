@@ -1,0 +1,32 @@
+{
+  return new Iterator<E>(){
+    int expectedModCount=modCount;
+    boolean nextCalled=false;
+    int index=0;
+    @Override public boolean hasNext(){
+      return index < size;
+    }
+    @Override @SuppressWarnings("unchecked") public E next(){
+      checkForConcurrentModification();
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
+      nextCalled=true;
+      return (E)elements[index++];
+    }
+    @Override public void remove(){
+      checkForConcurrentModification();
+      Preconditions.checkState(nextCalled,"no calls to next() since the last call to remove()");
+      expectedModCount++;
+      index--;
+      CompactHashSet.this.remove(elements[index],getHash(entries[index]));
+      nextCalled=false;
+    }
+    private void checkForConcurrentModification(){
+      if (modCount != expectedModCount) {
+        throw new ConcurrentModificationException();
+      }
+    }
+  }
+;
+}

@@ -1,0 +1,33 @@
+{
+  initializeTester();
+  final SkyKey error=GraphTester.toSkyKey("error");
+  tester.getOrCreate(error).setHasTransientError(true);
+  SkyKey topKey=GraphTester.toSkyKey("top");
+  SkyFunction errorFunction=new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws GenericFunctionException, InterruptedException {
+      try {
+        return env.getValueOrThrow(error,SomeErrorException.class);
+      }
+ catch (      SomeErrorException e) {
+        throw new GenericFunctionException(e,Transience.PERSISTENT);
+      }
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      throw new UnsupportedOperationException();
+    }
+  }
+;
+  tester.getOrCreate(topKey).setBuilder(errorFunction);
+  EvaluationResult<StringValue> result=tester.eval(false,topKey);
+  tester.invalidateTransientErrors();
+  assertThat(result.getError(topKey).getRootCauses()).containsExactly(topKey);
+  tester.getOrCreate(error).setHasTransientError(false);
+  StringValue reformed=new StringValue("reformed");
+  tester.set(error,reformed);
+  tester.getOrCreate(topKey).setBuilder(null).addDependency(error).setComputedValue(COPY);
+  tester.invalidate();
+  tester.invalidateTransientErrors();
+  result=tester.eval(false,topKey);
+  assertEquals(reformed,result.get(topKey));
+  assertFalse(result.hasError());
+}

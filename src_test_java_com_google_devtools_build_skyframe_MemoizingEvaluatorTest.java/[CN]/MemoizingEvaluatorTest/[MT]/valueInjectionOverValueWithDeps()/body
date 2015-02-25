@@ -1,0 +1,16 @@
+{
+  SkyKey key=GraphTester.toSkyKey("value");
+  SkyValue val=new StringValue("val");
+  StringValue prevVal=new StringValue("foo");
+  tester.getOrCreate("other").setConstantValue(prevVal);
+  tester.getOrCreate(key).addDependency("other").setComputedValue(COPY);
+  assertEquals(prevVal,tester.evalAndGet("value"));
+  tester.differencer.inject(ImmutableMap.of(key,val));
+  try {
+    tester.evalAndGet("value");
+    Assert.fail("injection over value with deps should have failed");
+  }
+ catch (  IllegalStateException e) {
+    assertEquals("existing entry for Type:value has deps: [Type:other]",e.getMessage());
+  }
+}

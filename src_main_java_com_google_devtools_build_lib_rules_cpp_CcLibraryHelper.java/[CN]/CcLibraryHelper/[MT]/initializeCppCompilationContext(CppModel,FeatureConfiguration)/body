@@ -1,0 +1,46 @@
+{
+  CppCompilationContext.Builder contextBuilder=new CppCompilationContext.Builder(ruleContext);
+  contextBuilder.addQuoteIncludeDir(PathFragment.EMPTY_FRAGMENT);
+  contextBuilder.addQuoteIncludeDir(ruleContext.getConfiguration().getGenfilesFragment());
+  for (  PathFragment systemIncludeDir : systemIncludeDirs) {
+    contextBuilder.addSystemIncludeDir(systemIncludeDir);
+  }
+  for (  PathFragment includeDir : includeDirs) {
+    contextBuilder.addIncludeDir(includeDir);
+  }
+  contextBuilder.mergeDependentContexts(AnalysisUtils.getProviders(deps,CppCompilationContext.class));
+  CppHelper.mergeToolchainDependentContext(ruleContext,contextBuilder);
+  contextBuilder.addDefines(defines);
+  contextBuilder.addDeclaredIncludeSrcs(publicHeaders);
+  contextBuilder.addDeclaredIncludeSrcs(privateHeaders);
+  contextBuilder.addPregreppedHeaderMap(CppHelper.createExtractInclusions(ruleContext,publicHeaders));
+  contextBuilder.addPregreppedHeaderMap(CppHelper.createExtractInclusions(ruleContext,privateHeaders));
+  contextBuilder.addCompilationPrerequisites(prerequisites);
+  if (headersCheckingMode == HeadersCheckingMode.WARN) {
+    contextBuilder.addDeclaredIncludeWarnDir(ruleContext.getLabel().getPackageFragment());
+    for (    PathFragment looseIncludeDir : looseIncludeDirs) {
+      contextBuilder.addDeclaredIncludeWarnDir(looseIncludeDir);
+    }
+  }
+ else   if (headersCheckingMode == HeadersCheckingMode.LOOSE) {
+    contextBuilder.addDeclaredIncludeDir(ruleContext.getLabel().getPackageFragment());
+    for (    PathFragment looseIncludeDir : looseIncludeDirs) {
+      contextBuilder.addDeclaredIncludeDir(looseIncludeDir);
+    }
+  }
+  if (emitCppModuleMaps) {
+    CppModuleMap cppModuleMap=CppHelper.addCppModuleMapToContext(ruleContext,contextBuilder);
+    if (cppModuleMap != null) {
+      CppModuleMapAction action=new CppModuleMapAction(ruleContext.getActionOwner(),cppModuleMap,privateHeaders,publicHeaders,collectModuleMaps(),additionalExportedHeaders,compileHeaderModules,featureConfiguration.isEnabled(CppRuleClasses.MODULE_MAP_HOME_CWD));
+      ruleContext.registerAction(action);
+    }
+    if (model.getGeneratesPicHeaderModule()) {
+      contextBuilder.setPicHeaderModule(model.getPicHeaderModule(cppModuleMap.getArtifact()));
+    }
+    if (model.getGeratesNoPicHeaderModule()) {
+      contextBuilder.setHeaderModule(model.getHeaderModule(cppModuleMap.getArtifact()));
+    }
+  }
+  semantics.setupCompilationContext(ruleContext,contextBuilder);
+  return contextBuilder.build();
+}

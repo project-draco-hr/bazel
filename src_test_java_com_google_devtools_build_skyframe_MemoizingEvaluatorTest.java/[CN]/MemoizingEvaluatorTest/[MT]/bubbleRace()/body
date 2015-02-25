@@ -1,0 +1,31 @@
+{
+  tester.getOrCreate("top").setBuilder(new NoExtractorFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws InterruptedException {
+      env.getValue(toSkyKey("sleepyValue"));
+      try {
+        env.getValueOrThrow(toSkyKey("badValue"),SomeErrorException.class);
+      }
+ catch (      SomeErrorException e) {
+        env.getValue(toSkyKey("otherValue1"));
+      }
+      if (!env.valuesMissing()) {
+        throw new AssertionError("SleepyValue should always be unavailable");
+      }
+      return null;
+    }
+  }
+);
+  tester.getOrCreate("sleepyValue").setBuilder(new NoExtractorFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws InterruptedException {
+      Thread.sleep(99999);
+      throw new AssertionError("I should have been interrupted");
+    }
+  }
+);
+  tester.getOrCreate("badValue").addDependency("otherValue1").setHasError(true);
+  tester.getOrCreate("otherValue1").setConstantValue(new StringValue("otherVal1"));
+  EvaluationResult<SkyValue> result=tester.eval(false,"top");
+  assertTrue(result.hasError());
+  assertEquals(toSkyKey("badValue"),Iterables.getOnlyElement(result.getError().getRootCauses()));
+  assertThat(result.keyNames()).isEmpty();
+}

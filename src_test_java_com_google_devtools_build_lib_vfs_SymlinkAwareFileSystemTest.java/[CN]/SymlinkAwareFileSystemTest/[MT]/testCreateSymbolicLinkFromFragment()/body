@@ -1,0 +1,13 @@
+{
+  String[] linkTargets={"foo","foo/bar",".","..","../foo","../../foo","../../../../../../../../../../../../../../../../../../../../../foo","/foo","/foo/bar","/..","/foo/../bar"};
+  Path linkPath=absolutize("link");
+  for (  String linkTarget : linkTargets) {
+    PathFragment relative=new PathFragment(linkTarget);
+    linkPath.delete();
+    createSymbolicLink(linkPath,relative);
+    if (supportsSymlinks) {
+      assertEquals(linkTarget.length(),linkPath.getFileSize(Symlinks.NOFOLLOW));
+      assertEquals(relative,linkPath.readSymbolicLink());
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  List<Argument> args=new ArrayList<>();
+  Expression startExpr;
+  Expression endExpr;
+  expect(TokenKind.LBRACKET);
+  int loc1=token.left;
+  if (token.kind == TokenKind.COLON) {
+    startExpr=setLocation(new IntegerLiteral(0),token.left,token.right);
+  }
+ else {
+    startExpr=parseExpression();
+  }
+  args.add(setLocation(new Argument(startExpr),loc1,startExpr));
+  if (token.kind == TokenKind.RBRACKET) {
+    expect(TokenKind.RBRACKET);
+    return makeFuncallExpression(receiver,new Ident("$index"),args,start,token.right);
+  }
+  expect(TokenKind.COLON);
+  int loc2=token.left;
+  if (token.kind == TokenKind.RBRACKET) {
+    endExpr=setLocation(new IntegerLiteral(Integer.MAX_VALUE),token.left,token.right);
+  }
+ else {
+    endExpr=parseExpression();
+  }
+  expect(TokenKind.RBRACKET);
+  args.add(setLocation(new Argument(endExpr),loc2,endExpr));
+  return makeFuncallExpression(receiver,new Ident("$substring"),args,start,token.right);
+}

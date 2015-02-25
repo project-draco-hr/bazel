@@ -1,0 +1,25 @@
+{
+  if (fdoProfile != null && execRoot != null) {
+    Path fdoDirPath=execRoot.getRelative(fdoRootExecPath);
+    FileSystemUtils.deleteTreesBelow(fdoDirPath);
+    FileSystemUtils.createDirectoryAndParents(fdoDirPath);
+    if (useAutoFdo) {
+      Path fdoImports=fdoProfile.getParentDirectory().getRelative(fdoProfile.getBaseName() + ".imports");
+      if (isLipoEnabled()) {
+        imports=readAutoFdoImports(artifactDeserializer,fdoImports,genfilesPath,resolver);
+      }
+      FileSystemUtils.ensureSymbolicLink(execRoot.getRelative(getAutoProfilePath()),fdoProfile);
+    }
+ else {
+      Path zipFilePath=new ZipFileSystem(fdoProfile).getRootDirectory();
+      if (!zipFilePath.getRelative("blaze-out").isDirectory()) {
+        throw new ZipException("FDO zip files must be zipped directly above 'blaze-out' " + "for the compiler to find the profile");
+      }
+      ImmutableSet.Builder<PathFragment> gcdaFilesBuilder=ImmutableSet.builder();
+      ImmutableMultimap.Builder<PathFragment,Artifact> importsBuilder=ImmutableMultimap.builder();
+      extractFdoZip(artifactDeserializer,zipFilePath,fdoDirPath,gcdaFilesBuilder,importsBuilder,resolver);
+      gcdaFiles=gcdaFilesBuilder.build();
+      imports=importsBuilder.build();
+    }
+  }
+}

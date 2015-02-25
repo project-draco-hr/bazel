@@ -1,0 +1,18 @@
+{
+  final byte[] malformed={0,0,0};
+  FileSystem myFS=new InMemoryFileSystem(BlazeClock.instance()){
+    @Override protected String getFastDigestFunctionType(    Path path){
+      return "MD5";
+    }
+    @Override protected byte[] getFastDigest(    Path path) throws IOException {
+      return malformed;
+    }
+  }
+;
+  Path path=myFS.getPath("/file");
+  FileSystemUtils.writeContentAsLatin1(path,"a");
+  byte[] result=DigestUtils.getDigestOrFail(path,1);
+  assertArrayEquals(path.getMD5Digest(),result);
+  assertNotSame(malformed,result);
+  assertEquals(16,result.length);
+}

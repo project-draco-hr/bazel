@@ -1,0 +1,29 @@
+{
+  if (!(ctg.getTarget() instanceof Rule)) {
+    return ImmutableSet.of();
+  }
+  Rule rule=(Rule)ctg.getTarget();
+  ImmutableSet.Builder<ConfigMatchingProvider> keys=ImmutableSet.builder();
+  RawAttributeMapper mapper=RawAttributeMapper.of(rule);
+  for (  Attribute attribute : rule.getAttributes()) {
+    for (    Label label : mapper.getConfigurabilityKeys(attribute.getName(),attribute.getType())) {
+      if (Type.Selector.isReservedLabel(label)) {
+        continue;
+      }
+      try {
+        ConfiguredTarget ct=getConfiguredTarget(label,ctg.getConfiguration());
+        keys.add(Preconditions.checkNotNull(ct.getProvider(ConfigMatchingProvider.class)));
+      }
+ catch (      NoSuchPackageException e) {
+        throw new IllegalStateException(e);
+      }
+catch (      NoSuchTargetException e) {
+        throw new IllegalStateException(e);
+      }
+catch (      NoSuchConfiguredTargetException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+  }
+  return keys.build();
+}

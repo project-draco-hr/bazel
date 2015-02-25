@@ -1,0 +1,13 @@
+{
+  tester.getOrCreate("a").addDependency("b").setComputedValue(COPY);
+  tester.set("b",new StringValue("y"));
+  StringValue original=(StringValue)tester.evalAndGet("a");
+  assertEquals("y",original.getValue());
+  tester.set("b",new StringValue("z"));
+  tester.invalidate();
+  StringValue old=(StringValue)tester.evalAndGet("a");
+  assertEquals("z",old.getValue());
+  tester.invalidate();
+  StringValue current=(StringValue)tester.evalAndGet("a");
+  assertSame(old,current);
+}

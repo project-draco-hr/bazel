@@ -1,0 +1,16 @@
+{
+  Path newPath=absolutize("non-existing-dir/new-file");
+  Path someLink=absolutize("dangling-link");
+  createSymbolicLink(someLink,newPath);
+  assertTrue(someLink.isSymbolicLink());
+  assertTrue(someLink.exists(Symlinks.NOFOLLOW));
+  assertFalse(someLink.exists());
+  if (supportsSymlinks) {
+    try {
+      someLink.resolveSymbolicLinks();
+    }
+ catch (    FileNotFoundException e) {
+      assertEquals(newPath.getParentDirectory() + " (No such file or directory)",e.getMessage());
+    }
+  }
+}

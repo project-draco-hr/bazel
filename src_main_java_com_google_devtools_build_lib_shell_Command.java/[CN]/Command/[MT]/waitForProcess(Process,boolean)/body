@@ -1,0 +1,21 @@
+{
+  boolean wasInterrupted=false;
+  try {
+    while (true) {
+      try {
+        return new TerminationStatus(process.waitFor());
+      }
+ catch (      InterruptedException ie) {
+        wasInterrupted=true;
+        if (killSubprocessOnInterrupt) {
+          process.destroy();
+        }
+      }
+    }
+  }
+  finally {
+    if (wasInterrupted) {
+      Thread.currentThread().interrupt();
+    }
+  }
+}

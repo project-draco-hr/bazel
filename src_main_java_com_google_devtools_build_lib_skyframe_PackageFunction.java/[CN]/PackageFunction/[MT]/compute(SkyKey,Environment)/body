@@ -1,0 +1,123 @@
+{
+  PackageIdentifier packageId=(PackageIdentifier)key.argument();
+  PathFragment packageNameFragment=packageId.getPackageFragment();
+  String packageName=packageNameFragment.getPathString();
+  SkyKey packageLookupKey=PackageLookupValue.key(packageId);
+  PackageLookupValue packageLookupValue;
+  try {
+    packageLookupValue=(PackageLookupValue)env.getValueOrThrow(packageLookupKey,BuildFileNotFoundException.class,InconsistentFilesystemException.class);
+  }
+ catch (  BuildFileNotFoundException e) {
+    throw new PackageFunctionException(e,Transience.PERSISTENT);
+  }
+catch (  InconsistentFilesystemException e) {
+    throw new PackageFunctionException(new InternalInconsistentFilesystemException(packageName,e),Transience.PERSISTENT);
+  }
+  if (packageLookupValue == null) {
+    return null;
+  }
+  if (!packageLookupValue.packageExists()) {
+switch (packageLookupValue.getErrorReason()) {
+case NO_BUILD_FILE:
+case DELETED_PACKAGE:
+case NO_EXTERNAL_PACKAGE:
+      throw new PackageFunctionException(new BuildFileNotFoundException(packageName,packageLookupValue.getErrorMsg()),Transience.PERSISTENT);
+case INVALID_PACKAGE_NAME:
+    throw new PackageFunctionException(new InvalidPackageNameException(packageName,packageLookupValue.getErrorMsg()),Transience.PERSISTENT);
+default :
+  Preconditions.checkState(false);
+}
+}
+if (packageName.equals(EXTERNAL_PACKAGE_NAME)) {
+return getExternalPackage(env,packageLookupValue.getRoot());
+}
+RootedPath buildFileRootedPath=RootedPath.toRootedPath(packageLookupValue.getRoot(),packageNameFragment.getChild("BUILD"));
+FileValue buildFileValue;
+try {
+buildFileValue=(FileValue)env.getValueOrThrow(FileValue.key(buildFileRootedPath),IOException.class,FileSymlinkCycleException.class,InconsistentFilesystemException.class);
+}
+ catch (IOException|FileSymlinkCycleException|InconsistentFilesystemException e) {
+throw new IllegalStateException("Package lookup succeeded but encountered error when " + "getting FileValue for BUILD file directly.",e);
+}
+if (buildFileValue == null) {
+return null;
+}
+Preconditions.checkState(buildFileValue.exists(),"Package lookup succeeded but BUILD file doesn't exist");
+Path buildFilePath=buildFileRootedPath.asPath();
+String replacementContents=null;
+if (packageName.equals(DEFAULTS_PACKAGE_NAME)) {
+replacementContents=PrecomputedValue.DEFAULTS_PACKAGE_CONTENTS.get(env);
+if (replacementContents == null) {
+return null;
+}
+}
+RuleVisibility defaultVisibility=PrecomputedValue.DEFAULT_VISIBILITY.get(env);
+if (defaultVisibility == null) {
+return null;
+}
+ASTFileLookupValue astLookupValue=null;
+SkyKey astLookupKey=null;
+try {
+astLookupKey=ASTFileLookupValue.key(PRELUDE_FILE_FRAGMENT);
+}
+ catch (ASTLookupInputException e) {
+throw new IllegalStateException(e);
+}
+try {
+astLookupValue=(ASTFileLookupValue)env.getValueOrThrow(astLookupKey,ErrorReadingSkylarkExtensionException.class,InconsistentFilesystemException.class);
+}
+ catch (ErrorReadingSkylarkExtensionException|InconsistentFilesystemException e) {
+throw new PackageFunctionException(new BadPreludeFileException(packageName,e.getMessage()),Transience.PERSISTENT);
+}
+if (astLookupValue == null) {
+return null;
+}
+List<Statement> preludeStatements=astLookupValue == ASTFileLookupValue.NO_FILE ? ImmutableList.<Statement>of() : astLookupValue.getAST().getStatements();
+ParserInputSource inputSource;
+try {
+if (showLoadingProgress.get() && !packageFunctionCache.containsKey(packageId)) {
+reporter.handle(Event.progress("Loading package: " + packageName));
+}
+inputSource=ParserInputSource.create(buildFilePath);
+}
+ catch (IOException e) {
+env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
+throw new PackageFunctionException(new BuildFileContainsErrorsException(packageName,e.getMessage()),Transience.TRANSIENT);
+}
+SkylarkImportResult importResult=fetchImportsFromBuildFile(buildFilePath,packageId.getRepository(),preludeStatements,inputSource,packageName,env);
+if (importResult == null) {
+return null;
+}
+Package.LegacyBuilder legacyPkgBuilder=loadPackage(inputSource,replacementContents,packageId,buildFilePath,defaultVisibility,preludeStatements,importResult);
+legacyPkgBuilder.buildPartial();
+try {
+handleLabelsCrossingSubpackagesAndPropagateInconsistentFilesystemExceptions(packageLookupValue.getRoot(),packageId,legacyPkgBuilder,env);
+}
+ catch (InternalInconsistentFilesystemException e) {
+packageFunctionCache.remove(packageId);
+throw new PackageFunctionException(e,e.isTransient() ? Transience.TRANSIENT : Transience.PERSISTENT);
+}
+if (env.valuesMissing()) {
+return null;
+}
+Collection<Pair<String,Boolean>> globPatterns=legacyPkgBuilder.getGlobPatterns();
+Map<Label,Path> subincludes=legacyPkgBuilder.getSubincludes();
+Package pkg=legacyPkgBuilder.finishBuild();
+Event.replayEventsOn(env.getListener(),pkg.getEvents());
+boolean packageShouldBeConsideredInError=pkg.containsErrors();
+try {
+packageShouldBeConsideredInError=markDependenciesAndPropagateInconsistentFilesystemExceptions(pkg,env,globPatterns,subincludes);
+}
+ catch (InternalInconsistentFilesystemException e) {
+packageFunctionCache.remove(packageId);
+throw new PackageFunctionException(e,e.isTransient() ? Transience.TRANSIENT : Transience.PERSISTENT);
+}
+if (env.valuesMissing()) {
+return null;
+}
+packageFunctionCache.remove(packageId);
+if (packageShouldBeConsideredInError) {
+throw new PackageFunctionException(new BuildFileContainsErrorsException(pkg,"Package '" + packageName + "' contains errors"),pkg.containsTemporaryErrors() ? Transience.TRANSIENT : Transience.PERSISTENT);
+}
+return new PackageValue(pkg);
+}

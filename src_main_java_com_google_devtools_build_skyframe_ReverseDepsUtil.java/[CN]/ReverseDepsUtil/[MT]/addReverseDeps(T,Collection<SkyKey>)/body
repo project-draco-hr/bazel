@@ -1,0 +1,23 @@
+{
+  if (newReverseDeps.isEmpty()) {
+    return;
+  }
+  Object reverseDeps=getReverseDepsObject(container);
+  int reverseDepsSize=isSingleReverseDep(container) ? 1 : ((List<SkyKey>)reverseDeps).size();
+  int newSize=reverseDepsSize + newReverseDeps.size();
+  if (newSize == 1) {
+    overwriteReverseDepsWithObject(container,Iterables.getOnlyElement(newReverseDeps));
+  }
+ else   if (reverseDepsSize == 0) {
+    overwriteReverseDepsList(container,Lists.newArrayList(newReverseDeps));
+  }
+ else   if (reverseDepsSize == 1) {
+    List<SkyKey> newList=Lists.newArrayListWithExpectedSize(newSize);
+    newList.add((SkyKey)reverseDeps);
+    newList.addAll(newReverseDeps);
+    overwriteReverseDepsList(container,newList);
+  }
+ else {
+    ((List<SkyKey>)reverseDeps).addAll(newReverseDeps);
+  }
+}

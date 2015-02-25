@@ -1,0 +1,15 @@
+{
+  NodeEntry entry=new NodeEntry();
+  SkyKey mother=key("mother");
+  SkyKey father=key("father");
+  assertEquals(DependencyState.NEEDS_SCHEDULING,entry.addReverseDepAndCheckIfDone(mother));
+  assertEquals(DependencyState.ADDED_DEP,entry.addReverseDepAndCheckIfDone(null));
+  assertEquals(DependencyState.ADDED_DEP,entry.addReverseDepAndCheckIfDone(father));
+  assertThat(setValue(entry,new SkyValue(){
+  }
+,null,0L)).containsExactly(mother,father);
+  assertThat(entry.getReverseDeps()).containsExactly(mother,father);
+  assertTrue(entry.isDone());
+  entry.removeReverseDep(mother);
+  assertFalse(Iterables.contains(entry.getReverseDeps(),mother));
+}

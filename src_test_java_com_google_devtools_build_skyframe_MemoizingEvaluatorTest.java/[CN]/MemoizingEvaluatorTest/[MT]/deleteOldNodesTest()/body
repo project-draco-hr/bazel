@@ -1,0 +1,17 @@
+{
+  tester.getOrCreate("top").setComputedValue(CONCATENATE).addDependency("d1").addDependency("d2");
+  tester.set("d1",new StringValue("one"));
+  tester.set("d2",new StringValue("two"));
+  tester.eval(true,"top");
+  tester.set("d2",new StringValue("three"));
+  tester.invalidate();
+  tester.eval(true,"d2");
+  assertThat(tester.graph.getValues().keySet()).containsExactly(skyKey("top"),skyKey("d1"),skyKey("d2"),ErrorTransienceValue.key());
+  String[] noKeys={};
+  tester.graph.deleteDirty(2);
+  tester.eval(true,noKeys);
+  assertThat(tester.graph.getValues().keySet()).containsExactly(skyKey("top"),skyKey("d1"),skyKey("d2"),ErrorTransienceValue.key());
+  tester.graph.deleteDirty(2);
+  tester.eval(true,noKeys);
+  assertThat(tester.graph.getValues().keySet()).containsExactly(skyKey("d1"),skyKey("d2"),ErrorTransienceValue.key());
+}

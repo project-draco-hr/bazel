@@ -1,0 +1,26 @@
+{
+  Task actionTask=actionGraphTask.relatedTask;
+  if (actionTask == null) {
+    actionTask=actionTasksByDescription.get(actionGraphTask.descIndex);
+    if (actionTask == null) {
+      actionTask=new Task(-1,--fakeActionId,0,0,0,ProfilerTask.ACTION,actionGraphTask.descIndex,new CompactStatistics((byte[])null));
+      actionTask.calculateRootStats();
+      actionTasksByDescription.set(actionGraphTask.descIndex,actionTask);
+    }
+    actionGraphTask.relatedTask=actionTask;
+  }
+  if (actionGraphTask.subtasks.length != 0) {
+    List<Task> list=Lists.newArrayListWithCapacity(actionGraphTask.subtasks.length);
+    for (    Task task : actionGraphTask.subtasks) {
+      if (task.type == ProfilerTask.ACTION_GRAPH) {
+        list.add(buildActionTaskTree(task,actionTasksByDescription));
+      }
+    }
+    if (!list.isEmpty()) {
+      Task[] actionPrerequisites=list.toArray(new Task[list.size()]);
+      Arrays.sort(actionPrerequisites);
+      actionDependencyMap.put(actionTask,actionPrerequisites);
+    }
+  }
+  return actionTask;
+}

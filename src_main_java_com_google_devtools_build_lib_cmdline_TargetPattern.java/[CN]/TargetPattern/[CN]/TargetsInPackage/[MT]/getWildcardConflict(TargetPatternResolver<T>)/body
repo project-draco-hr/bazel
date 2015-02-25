@@ -1,0 +1,17 @@
+{
+  if (!isAbsolute) {
+    return null;
+  }
+  T target=resolver.getTargetOrNull("//" + pattern);
+  if (target != null) {
+    String name=pattern.lastIndexOf(':') != -1 ? pattern.substring(pattern.lastIndexOf(':') + 1) : pattern.substring(pattern.lastIndexOf('/') + 1);
+    resolver.warn(String.format("The Blaze target pattern '%s' is ambiguous: '%s' is " + "both a wildcard, and the name of an existing %s; " + "using the latter interpretation","//" + pattern,":" + name,resolver.getTargetKind(target)));
+    try {
+      return resolver.getExplicitTarget("//" + pattern);
+    }
+ catch (    TargetParsingException e) {
+      throw new IllegalStateException("getTargetOrNull() returned non-null, so target should exist",e);
+    }
+  }
+  return null;
+}

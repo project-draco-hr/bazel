@@ -1,0 +1,33 @@
+{
+  assertTrue(executor == null || !executor.isShutdown());
+  AbstractQueueVisitor visitor=(executor == null) ? new ConcreteQueueVisitor(failFastOnException,failFastOnInterrupt) : new ConcreteQueueVisitor(executor,failFastOnException,failFastOnInterrupt);
+  List<String> visitedList=Collections.synchronizedList(Lists.<String>newArrayList());
+  CountDownLatch latchA=new CountDownLatch(1);
+  CountDownLatch latchB=new CountDownLatch(1);
+  Runnable r1=awaitAddAndEnqueueRunnable(interrupt,visitor,null,visitedList,"1",null);
+  Runnable r2=awaitAddAndEnqueueRunnable(interrupt,visitor,null,visitedList,"2",null);
+  Runnable ra=awaitAddAndEnqueueRunnable(interrupt,visitor,latchA,visitedList,"a",r1);
+  Runnable rb=awaitAddAndEnqueueRunnable(interrupt,visitor,latchB,visitedList,"b",r2);
+  visitor.enqueue(ra);
+  visitor.enqueue(rb);
+  latchA.await();
+  latchB.await();
+  visitor.enqueue(interrupt ? interruptingRunnable(Thread.currentThread()) : throwingRunnable());
+  try {
+    visitor.work(false);
+    fail();
+  }
+ catch (  Exception e) {
+    if (interrupt) {
+      assertTrue(e instanceof InterruptedException);
+    }
+ else {
+      assertSame(THROWABLE,e);
+    }
+  }
+  assertTrue("got: " + visitedList + "\nwant: "+ Arrays.toString(expectedVisited),Sets.newHashSet(visitedList).equals(Sets.newHashSet(expectedVisited)));
+  if (executor != null) {
+    assertFalse(executor.isShutdown());
+    assertEquals(0,visitor.getTaskCount());
+  }
+}

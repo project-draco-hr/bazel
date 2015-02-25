@@ -1,0 +1,25 @@
+{
+  TestDelegator delegator=new TestDelegator(){
+    @Override protected long getFileSize(    Path path,    boolean followSymlinks){
+      lastPath=path;
+      return longState();
+    }
+    @Override protected long getLastModifiedTime(    Path path,    boolean followSymlinks){
+      return 0;
+    }
+  }
+;
+  scopedFS().setDelegator(delegator);
+  final int state1=10;
+  delegator.setState(state1);
+  assertEquals(state1,fileLink.getFileSize());
+  checkPath(delegator,fileLinkTarget);
+  assertEquals(state1,dirLink.getRelative("a").getFileSize());
+  checkPath(delegator,dirLinkTarget.getRelative("a"));
+  final int state2=10;
+  delegator.setState(state2);
+  assertEquals(state2,fileLink.getFileSize());
+  checkPath(delegator,fileLinkTarget);
+  assertEquals(state2,dirLink.getRelative("a").getFileSize());
+  checkPath(delegator,dirLinkTarget.getRelative("a"));
+}

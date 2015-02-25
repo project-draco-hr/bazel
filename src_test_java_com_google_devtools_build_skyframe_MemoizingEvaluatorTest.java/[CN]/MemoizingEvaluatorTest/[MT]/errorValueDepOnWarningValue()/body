@@ -1,0 +1,14 @@
+{
+  tester.getOrCreate("error-value").setHasError(true).addDependency("warning-value");
+  tester.set("warning-value",new StringValue("warning-value")).setWarning("don't chew with your mouth open");
+  for (int i=0; i < 2; i++) {
+    initializeReporter();
+    tester.evalAndGetError("error-value");
+    JunitTestUtils.assertContainsEvent(eventCollector,"don't chew with your mouth open");
+    JunitTestUtils.assertEventCount(1,eventCollector);
+  }
+  initializeReporter();
+  tester.evalAndGet("warning-value");
+  JunitTestUtils.assertContainsEvent(eventCollector,"don't chew with your mouth open");
+  JunitTestUtils.assertEventCount(1,eventCollector);
+}

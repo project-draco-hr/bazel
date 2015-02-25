@@ -1,0 +1,8 @@
+{
+  MockSimpleFileSystem mockFs=new MockSimpleFileSystem("output.jar");
+  mockFs.addFile("input.jar",sampleZip());
+  SingleJar singleJar=new SingleJar(mockFs);
+  singleJar.run(ImmutableList.of("--output","output.jar","--sources","input.jar","--normalize","--compression"));
+  FakeZipFile expectedResult=new FakeZipFile().addEntry("META-INF/",EXTRA_FOR_META_INF,false).addEntry(JarFile.MANIFEST_NAME,ZipCombiner.DOS_EPOCH,new ManifestValidator("Manifest-Version: 1.0","Created-By: blaze-singlejar"),true).addEntry("build-data.properties",ZipCombiner.DOS_EPOCH,redactedBuildData("output.jar"),true).addEntry("hello.txt",ZipCombiner.DOS_EPOCH,"Hello World!",true);
+  expectedResult.assertSame(mockFs.toByteArray());
+}

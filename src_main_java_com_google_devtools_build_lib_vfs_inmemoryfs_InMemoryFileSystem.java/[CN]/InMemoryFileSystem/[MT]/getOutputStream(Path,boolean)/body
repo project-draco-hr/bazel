@@ -1,0 +1,10 @@
+{
+  InMemoryContentInfo status;
+synchronized (this) {
+    status=getOrCreateWritableInode(path);
+    if (!status.outOfScope()) {
+      return ((FileInfo)getOrCreateWritableInode(path)).getOutputStream(append);
+    }
+  }
+  return getDelegatedPath(status.getEscapingPath()).getOutputStream(append);
+}

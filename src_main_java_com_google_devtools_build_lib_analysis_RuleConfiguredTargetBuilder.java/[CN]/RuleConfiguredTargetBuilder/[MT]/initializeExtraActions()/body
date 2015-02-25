@@ -1,0 +1,34 @@
+{
+  BuildConfiguration configuration=ruleContext.getConfiguration();
+  if (configuration.isHostConfiguration()) {
+    return ExtraActionArtifactsProvider.EMPTY;
+  }
+  ImmutableList<Artifact> extraActionArtifacts=ImmutableList.of();
+  NestedSetBuilder<ExtraArtifactSet> builder=NestedSetBuilder.stableOrder();
+  List<Label> actionListenerLabels=configuration.getActionListeners();
+  if (!actionListenerLabels.isEmpty() && ruleContext.getRule().getAttributeDefinition(":action_listener") != null) {
+    ExtraActionsVisitor visitor=new ExtraActionsVisitor(ruleContext,computeMnemonicsToExtraActionMap());
+    for (    Action action : ImmutableList.copyOf(ruleContext.getAnalysisEnvironment().getRegisteredActions())) {
+      if (!actionsWithoutExtraAction.contains(action)) {
+        visitor.addExtraAction(action);
+      }
+    }
+    extraActionArtifacts=visitor.getAndResetExtraArtifacts();
+    if (!extraActionArtifacts.isEmpty()) {
+      builder.add(ExtraArtifactSet.of(ruleContext.getLabel(),extraActionArtifacts));
+    }
+  }
+  for (  TransitiveInfoCollection dep : ruleContext.getConfiguredTargetMap().values()) {
+    ExtraActionArtifactsProvider provider=dep.getProvider(ExtraActionArtifactsProvider.class);
+    if (provider != null) {
+      builder.addTransitive(provider.getTransitiveExtraActionArtifacts());
+    }
+  }
+  if (mandatoryStampFiles != null && !mandatoryStampFiles.isEmpty()) {
+    builder.add(ExtraArtifactSet.of(ruleContext.getLabel(),mandatoryStampFiles));
+  }
+  if (extraActionArtifacts.isEmpty() && builder.isEmpty()) {
+    return ExtraActionArtifactsProvider.EMPTY;
+  }
+  return new ExtraActionArtifactsProvider(extraActionArtifacts,builder.build());
+}

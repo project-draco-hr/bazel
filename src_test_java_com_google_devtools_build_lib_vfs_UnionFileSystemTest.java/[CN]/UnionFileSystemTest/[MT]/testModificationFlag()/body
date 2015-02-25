@@ -1,0 +1,22 @@
+{
+  assertTrue(unionfs.supportsModifications());
+  Path outPath=unionfs.getPath("/out/foo.txt");
+  assertTrue(unionfs.createDirectory(outPath.getParentDirectory()));
+  OutputStream outFile=unionfs.getOutputStream(outPath);
+  outFile.write('b');
+  outFile.close();
+  unionfs.setExecutable(outPath,true);
+  unionfs=createDefaultUnionFileSystem(true);
+  assertFalse(unionfs.supportsModifications());
+  InputStream outFileInput=unionfs.getInputStream(outPath);
+  int outFileByte=outFileInput.read();
+  outFileInput.close();
+  assertEquals('b',outFileByte);
+  assertTrue(unionfs.isExecutable(outPath));
+  try {
+    unionfs.setExecutable(outPath,false);
+    fail("Modification to a read-only UnionFileSystem succeeded.");
+  }
+ catch (  UnsupportedOperationException expected) {
+  }
+}

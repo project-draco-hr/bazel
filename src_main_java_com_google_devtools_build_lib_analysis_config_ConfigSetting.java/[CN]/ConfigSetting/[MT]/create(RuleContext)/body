@@ -1,0 +1,16 @@
+{
+  Map<String,String> settings=NonconfigurableAttributeMapper.of(ruleContext.getRule()).get(ConfigRuleClasses.ConfigSettingRule.SETTINGS_ATTRIBUTE,Type.STRING_DICT);
+  if (settings.isEmpty()) {
+    ruleContext.attributeError(ConfigRuleClasses.ConfigSettingRule.SETTINGS_ATTRIBUTE,"no settings specified");
+    return null;
+  }
+  ConfigMatchingProvider configMatcher;
+  try {
+    configMatcher=new ConfigMatchingProvider(ruleContext.getLabel(),matchesConfig(settings,ruleContext.getConfiguration()));
+  }
+ catch (  OptionsParsingException e) {
+    ruleContext.attributeError(ConfigRuleClasses.ConfigSettingRule.SETTINGS_ATTRIBUTE,"error while parsing configuration settings: " + e.getMessage());
+    return null;
+  }
+  return new RuleConfiguredTargetBuilder(ruleContext).add(RunfilesProvider.class,RunfilesProvider.EMPTY).add(FileProvider.class,new FileProvider(ruleContext.getLabel(),NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER))).add(FilesToRunProvider.class,new FilesToRunProvider(ruleContext.getLabel(),ImmutableList.<Artifact>of(),null,null)).add(ConfigMatchingProvider.class,configMatcher).build();
+}

@@ -1,0 +1,31 @@
+{
+  Integer minTargetDepth=visitedTargets.putIfAbsent(target.getLabel(),depth);
+  if (minTargetDepth != null) {
+    if (maxDepth == Integer.MAX_VALUE || minTargetDepth <= depth) {
+      return;
+    }
+synchronized (visitedTargets) {
+      if (visitedTargets.get(target.getLabel()) <= depth) {
+        return;
+      }
+      visitedTargets.put(target.getLabel(),depth);
+    }
+  }
+  observeNode(target);
+  if (target instanceof OutputFile) {
+    Rule rule=((OutputFile)target).getGeneratingRule();
+    observeEdge(target,null,rule);
+    visit(null,null,rule,depth + 1,count + 1);
+    visitTargetVisibility(target,depth,count);
+  }
+ else   if (target instanceof InputFile) {
+    visitTargetVisibility(target,depth,count);
+  }
+ else   if (target instanceof Rule) {
+    visitTargetVisibility(target,depth,count);
+    visitRule((Rule)target,depth,count);
+  }
+ else   if (target instanceof PackageGroup) {
+    visitPackageGroup((PackageGroup)target,depth,count);
+  }
+}

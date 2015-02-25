@@ -1,0 +1,26 @@
+{
+  ImmutableSet.Builder<Artifact> result=ImmutableSet.builder();
+  if (request.getBuildOptions().compileOnly) {
+    FilesToCompileProvider provider=target.getProvider(FilesToCompileProvider.class);
+    if (provider != null) {
+      result.addAll(provider.getFilesToCompile());
+    }
+  }
+ else   if (request.getBuildOptions().compilationPrerequisitesOnly) {
+    CompilationPrerequisitesProvider provider=target.getProvider(CompilationPrerequisitesProvider.class);
+    if (provider != null) {
+      result.addAll(provider.getCompilationPrerequisites());
+    }
+  }
+ else {
+    FileProvider provider=target.getProvider(FileProvider.class);
+    if (provider != null) {
+      result.addAll(provider.getFilesToBuild());
+    }
+  }
+  TempsProvider tempsProvider=target.getProvider(TempsProvider.class);
+  if (tempsProvider != null) {
+    result.addAll(tempsProvider.getTemps());
+  }
+  return result.build();
+}

@@ -1,0 +1,126 @@
+{
+  long execStartTimeNanos=runtime.getClock().nanoTime();
+  runtime.recordCommandStartTime(firstContactTime);
+  runtime.getTimestampGranularityMonitor().setCommandStartTime();
+  runtime.initEventBus();
+  OutErrEventHandler originalOutErrEventHandler=new OutErrEventHandler(originalOutErr);
+  runtime.getReporter().addHandler(originalOutErrEventHandler);
+  OutErr outErr=originalOutErr;
+  runtime.getReporter().removeHandler(originalOutErrEventHandler);
+  if (args.isEmpty()) {
+    args=HELP_COMMAND;
+  }
+  String commandName=args.get(0);
+  if (ALL_HELP_OPTIONS.contains(commandName)) {
+    commandName="help";
+  }
+  BlazeCommand command=commandsByName.get(commandName);
+  if (command == null) {
+    outErr.printErrLn("Command '" + commandName + "' not found. "+ "Try 'blaze help'.");
+    return ExitCode.COMMAND_LINE_ERROR.getNumericExitCode();
+  }
+  Command commandAnnotation=command.getClass().getAnnotation(Command.class);
+  AbruptExitException exitCausingException=null;
+  for (  BlazeModule module : runtime.getBlazeModules()) {
+    try {
+      module.beforeCommand(runtime,commandAnnotation);
+    }
+ catch (    AbruptExitException e) {
+      outErr.printErrLn(e.getMessage());
+      exitCausingException=e;
+    }
+  }
+  if (exitCausingException != null) {
+    return exitCausingException.getExitCode().getNumericExitCode();
+  }
+  try {
+    Path commandLog=getCommandLogPath(runtime.getOutputBase());
+    commandLog.delete();
+    logOutputStream=commandLog.getOutputStream();
+    outErr=tee(originalOutErr,OutErr.create(logOutputStream,logOutputStream));
+  }
+ catch (  IOException ioException) {
+    LoggingUtil.logToRemote(Level.WARNING,"Unable to delete or open command.log",ioException);
+  }
+  runtime.setCommandId(UUID.randomUUID());
+  ExitCode result=checkCwdInWorkspace(commandAnnotation,commandName,outErr);
+  if (result != ExitCode.SUCCESS) {
+    return result.getNumericExitCode();
+  }
+  OptionsParser optionsParser;
+  CommonCommandOptions commonOptions;
+  List<String> rcfileNotes=new ArrayList<>();
+  try {
+    optionsParser=createOptionsParser(command);
+    commonOptions=checkOptions(optionsParser,commandAnnotation,args,rcfileNotes,outErr);
+  }
+ catch (  OptionsParsingException e) {
+    for (    String note : rcfileNotes) {
+      outErr.printErrLn("INFO: " + note);
+    }
+    outErr.printErrLn(e.getMessage());
+    return ExitCode.COMMAND_LINE_ERROR.getNumericExitCode();
+  }
+  BlazeCommandEventHandler.Options eventHandlerOptions=optionsParser.getOptions(BlazeCommandEventHandler.Options.class);
+  if (!eventHandlerOptions.useColor()) {
+    if (!commandAnnotation.binaryStdOut()) {
+      outErr=ansiStripOut(outErr);
+    }
+    if (!commandAnnotation.binaryStdErr()) {
+      outErr=ansiStripErr(outErr);
+    }
+  }
+  BlazeRuntime.setupLogging(commonOptions.verbosity);
+  String[] crashData=runtime.getCrashData();
+  int numericExitCode=ExitCode.BLAZE_INTERNAL_ERROR.getNumericExitCode();
+  PrintStream savedOut=System.out;
+  PrintStream savedErr=System.err;
+  EventHandler handler=createEventHandler(outErr,eventHandlerOptions);
+  Reporter reporter=runtime.getReporter();
+  reporter.addHandler(handler);
+  try {
+    OutErr reporterOutErr=reporter.getOutErr();
+    System.setOut(new PrintStream(reporterOutErr.getOutputStream(),true));
+    System.setErr(new PrintStream(reporterOutErr.getErrorStream(),true));
+    if (commonOptions.announceRcOptions) {
+      for (      String note : rcfileNotes) {
+        reporter.handle(Event.info(note));
+      }
+    }
+    try {
+      runtime.beforeCommand(commandName,optionsParser,commonOptions,execStartTimeNanos);
+      command.editOptions(runtime,optionsParser);
+    }
+ catch (    AbruptExitException e) {
+      reporter.handle(Event.error(e.getMessage()));
+      return e.getExitCode().getNumericExitCode();
+    }
+    for (    String warning : optionsParser.getWarnings()) {
+      reporter.handle(Event.warn(warning));
+    }
+    ExitCode outcome=command.exec(runtime,optionsParser);
+    outcome=runtime.precompleteCommand(outcome);
+    numericExitCode=outcome.getNumericExitCode();
+    return numericExitCode;
+  }
+ catch (  ShutdownBlazeServerException e) {
+    numericExitCode=e.getExitStatus();
+    throw e;
+  }
+catch (  Throwable e) {
+    BugReport.printBug(outErr,e);
+    BugReport.sendBugReport(e,args,crashData);
+    numericExitCode=e instanceof OutOfMemoryError ? ExitCode.OOM_ERROR.getNumericExitCode() : ExitCode.BLAZE_INTERNAL_ERROR.getNumericExitCode();
+    throw new ShutdownBlazeServerException(numericExitCode,e);
+  }
+ finally {
+    runtime.afterCommand(numericExitCode);
+    Flushables.flushQuietly(outErr.getOutputStream());
+    Flushables.flushQuietly(outErr.getErrorStream());
+    System.setOut(savedOut);
+    System.setErr(savedErr);
+    reporter.removeHandler(handler);
+    releaseHandler(handler);
+    runtime.getTimestampGranularityMonitor().waitForTimestampGranularity(outErr);
+  }
+}

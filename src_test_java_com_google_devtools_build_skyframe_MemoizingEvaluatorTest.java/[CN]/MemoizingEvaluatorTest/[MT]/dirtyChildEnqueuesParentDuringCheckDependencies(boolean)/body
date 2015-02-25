@@ -1,0 +1,74 @@
+{
+  final SkyKey top=GraphTester.toSkyKey("top");
+  final SkyKey slowAddingDep=GraphTester.toSkyKey("dep");
+  final AtomicBoolean delayTopSignaling=new AtomicBoolean(false);
+  final CountDownLatch topSignaled=new CountDownLatch(1);
+  final CountDownLatch topRestartedBuild=new CountDownLatch(1);
+  final TrackingAwaiter trackingAwaiter=new TrackingAwaiter();
+  setGraphForTesting(new NotifyingInMemoryGraph(new Listener(){
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+      if (!delayTopSignaling.get()) {
+        return;
+      }
+      if (key.equals(top) && type == EventType.SIGNAL && order == Order.AFTER) {
+        topSignaled.countDown();
+        return;
+      }
+      if (key.equals(slowAddingDep) && type == EventType.ADD_REVERSE_DEP && context.equals(top) && order == Order.BEFORE) {
+        trackingAwaiter.awaitLatchAndTrackExceptions(topSignaled,"first key didn't signal top in time");
+      }
+    }
+  }
+));
+  final SkyKey firstKey=GraphTester.skyKey("first");
+  tester.set(firstKey,new StringValue("biding"));
+  tester.set(slowAddingDep,new StringValue("dep"));
+  final AtomicInteger numTopInvocations=new AtomicInteger(0);
+  tester.getOrCreate(top).setBuilder(new NoExtractorFunction(){
+    @Override public SkyValue compute(    SkyKey key,    SkyFunction.Environment env){
+      numTopInvocations.incrementAndGet();
+      if (delayTopSignaling.get()) {
+        topRestartedBuild.countDown();
+      }
+      env.getValuesOrThrow(ImmutableList.of(firstKey,slowAddingDep),SomeErrorException.class);
+      return env.valuesMissing() ? null : new StringValue("top");
+    }
+  }
+);
+  reporter=new DelegatingEventHandler(reporter){
+    @Override public void handle(    Event e){
+      super.handle(e);
+      if (e.getKind() == EventKind.WARNING) {
+        if (!throwError) {
+          trackingAwaiter.awaitLatchAndTrackExceptions(topRestartedBuild,"top's builder did not start in time");
+        }
+      }
+    }
+  }
+;
+  EvaluationResult<StringValue> result=tester.eval(false,top);
+  assertFalse(result.hasError());
+  assertEquals(new StringValue("top"),result.get(top));
+  assertEquals(2,numTopInvocations.get());
+  String warningText="warning text";
+  tester.getOrCreate(firstKey,true).setHasError(throwError).setWarning(warningText);
+  tester.invalidate();
+  delayTopSignaling.set(true);
+  result=tester.eval(false,top);
+  trackingAwaiter.assertNoErrors();
+  if (throwError) {
+    assertTrue(result.hasError());
+    assertThat(result.keyNames()).isEmpty();
+    ErrorInfo errorInfo=result.getError(top);
+    assertThat(errorInfo.getRootCauses()).containsExactly(firstKey);
+    assertEquals("on the incremental build, top's builder should have only been used in error " + "bubbling",3,numTopInvocations.get());
+  }
+ else {
+    assertEquals(new StringValue("top"),result.get(top));
+    assertFalse(result.hasError());
+    assertEquals("on the incremental build, top's builder should have only been executed once in " + "normal evaluation",3,numTopInvocations.get());
+  }
+  JunitTestUtils.assertContainsEvent(eventCollector,warningText);
+  assertEquals(0,topSignaled.getCount());
+  assertEquals(0,topRestartedBuild.getCount());
+}

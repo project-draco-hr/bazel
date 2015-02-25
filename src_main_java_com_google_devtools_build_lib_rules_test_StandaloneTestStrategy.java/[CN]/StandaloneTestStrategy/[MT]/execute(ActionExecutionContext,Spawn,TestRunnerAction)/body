@@ -1,0 +1,31 @@
+{
+  Executor executor=actionExecutionContext.getExecutor();
+  Closeable streamed=null;
+  Path testLogPath=action.getTestLog().getPath();
+  TestResultData.Builder builder=TestResultData.newBuilder();
+  try {
+    try {
+      if (executionOptions.testOutput.equals(TestOutputFormat.STREAMED)) {
+        streamed=new StreamedTestOutput(Reporter.outErrForReporter(actionExecutionContext.getExecutor().getEventHandler()),testLogPath);
+      }
+      executor.getSpawnActionContext(action.getMnemonic()).exec(spawn,actionExecutionContext);
+      builder.setTestPassed(true).setStatus(BlazeTestStatus.PASSED).setCachable(true);
+    }
+ catch (    ExecException e) {
+      builder.setTestPassed(false).setStatus(BlazeTestStatus.FAILED);
+    }
+ finally {
+      if (streamed != null) {
+        streamed.close();
+      }
+    }
+    TestCase details=parseTestResult(action.resolve(actionExecutionContext.getExecutor().getExecRoot()).getXmlOutputPath());
+    if (details != null) {
+      builder.setTestCase(details);
+    }
+    return builder.build();
+  }
+ catch (  IOException e) {
+    throw new TestExecException(e.getMessage());
+  }
+}

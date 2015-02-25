@@ -1,0 +1,17 @@
+{
+  Preconditions.checkNotNull(eventHandler);
+  for (  CycleInfo cycleInfo : cycles) {
+    boolean alreadyReported=false;
+    if (!cycleDeduper.seen(cycleInfo.getCycle())) {
+      alreadyReported=true;
+    }
+    boolean successfullyReported=false;
+    for (    SingleCycleReporter cycleReporter : cycleReporters) {
+      if (cycleReporter.maybeReportCycle(topLevelKey,cycleInfo,alreadyReported,eventHandler)) {
+        successfullyReported=true;
+        break;
+      }
+    }
+    Preconditions.checkState(successfullyReported,printArbitraryCycle(topLevelKey,cycleInfo,alreadyReported));
+  }
+}

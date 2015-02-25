@@ -1,0 +1,26 @@
+{
+  final Semaphore threadStarted=new Semaphore(0);
+  final Semaphore threadInterrupted=new Semaphore(0);
+  final String[] wasError=new String[]{null};
+  final ParallelEvaluator evaluator=makeEvaluator(new InMemoryGraph(),ImmutableMap.of(GraphTester.NODE_TYPE,valueBuilderFactory.create(threadStarted,wasError)),false);
+  Thread t=new Thread(new Runnable(){
+    @Override public void run(){
+      try {
+        evaluator.eval(ImmutableList.of(GraphTester.toSkyKey("a")));
+        wasError[0]="evaluation should have been interrupted";
+      }
+ catch (      InterruptedException e) {
+        threadInterrupted.release();
+      }
+    }
+  }
+);
+  t.start();
+  assertTrue(threadStarted.tryAcquire(TestUtils.WAIT_TIMEOUT_MILLISECONDS,TimeUnit.MILLISECONDS));
+  t.interrupt();
+  assertTrue(threadInterrupted.tryAcquire(TestUtils.WAIT_TIMEOUT_MILLISECONDS,TimeUnit.MILLISECONDS));
+  if (wasError[0] != null) {
+    fail(wasError[0]);
+  }
+  t.join(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+}

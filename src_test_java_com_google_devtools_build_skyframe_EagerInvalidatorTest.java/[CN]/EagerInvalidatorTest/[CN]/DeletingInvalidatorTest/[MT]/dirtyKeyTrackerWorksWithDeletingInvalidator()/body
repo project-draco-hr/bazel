@@ -1,0 +1,10 @@
+{
+  setupInvalidatableGraph();
+  TrackingInvalidationReceiver receiver=new TrackingInvalidationReceiver();
+  InvalidatingNodeVisitor dirtyingVisitor=EagerInvalidator.createVisitor(false,graph,ImmutableList.of(skyKey("a")),receiver,new DirtyingInvalidationState(),true,dirtyKeyTracker);
+  dirtyingVisitor.run();
+  assertThat(dirtyKeyTracker.getDirtyKeys()).containsExactly(skyKey("a"),skyKey("ab"));
+  InvalidatingNodeVisitor deletingVisitor=EagerInvalidator.createVisitor(true,graph,ImmutableList.of(skyKey("a")),receiver,state,true,dirtyKeyTracker);
+  deletingVisitor.run();
+  assertThat(dirtyKeyTracker.getDirtyKeys()).containsExactly(skyKey("ab"));
+}

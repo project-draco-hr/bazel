@@ -1,0 +1,51 @@
+{
+  BuildResult result=new BuildResult(request.getStartTime());
+  runtime.getEventBus().register(result);
+  Throwable catastrophe=null;
+  ExitCode exitCode=ExitCode.BLAZE_INTERNAL_ERROR;
+  try {
+    buildTargets(request,result,validator);
+    exitCode=ExitCode.SUCCESS;
+  }
+ catch (  BuildFailedException e) {
+    if (e.isErrorAlreadyShown()) {
+    }
+ else {
+      reportExceptionError(e);
+    }
+    if (e.isCatastrophic()) {
+      result.setCatastrophe();
+    }
+    exitCode=ExitCode.BUILD_FAILURE;
+  }
+catch (  InterruptedException e) {
+    exitCode=ExitCode.INTERRUPTED;
+    getReporter().handle(Event.error("build interrupted"));
+    getEventBus().post(new BuildInterruptedEvent());
+  }
+catch (  TargetParsingException|LoadingFailedException|ViewCreationFailedException e) {
+    exitCode=ExitCode.PARSING_FAILURE;
+    reportExceptionError(e);
+  }
+catch (  TestExecException e) {
+    exitCode=ExitCode.SUCCESS;
+    reportExceptionError(e);
+  }
+catch (  InvalidConfigurationException e) {
+    exitCode=ExitCode.COMMAND_LINE_ERROR;
+    reportExceptionError(e);
+  }
+catch (  AbruptExitException e) {
+    exitCode=e.getExitCode();
+    reportExceptionError(e);
+    result.setCatastrophe();
+  }
+catch (  Throwable throwable) {
+    catastrophe=throwable;
+    Throwables.propagate(throwable);
+  }
+ finally {
+    stopRequest(request,result,catastrophe,exitCode);
+  }
+  return result;
+}
