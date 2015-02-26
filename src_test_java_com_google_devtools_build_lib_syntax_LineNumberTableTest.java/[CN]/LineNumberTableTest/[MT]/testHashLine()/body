@@ -1,0 +1,15 @@
+{
+  String data="#\n" + "#line 67 \"/foo\"\n" + "cc_binary(name='a',\n"+ "          srcs=[])\n"+ "#line 23 \"/ba.r\"\n"+ "vardef(x,y)\n";
+  LineNumberTable table=create(data);
+  assertEquals(new LineAndColumn(67,1),table.getLineAndColumn(data.indexOf("cc_binary")));
+  assertEquals(new LineAndColumn(67,1),table.getLineAndColumn(data.indexOf("name='a'")));
+  assertEquals("/fake/file",table.getPath(0).toString());
+  assertEquals(new LineAndColumn(67,1),table.getLineAndColumn(data.indexOf("srcs")));
+  assertEquals("/foo",table.getPath(data.indexOf("srcs")).toString());
+  assertEquals(Pair.of(2,57),table.getOffsetsForLine(67));
+  assertEquals(new LineAndColumn(23,1),table.getLineAndColumn(data.indexOf("vardef")));
+  assertEquals(new LineAndColumn(23,1),table.getLineAndColumn(data.indexOf("x,y")));
+  assertEquals("/ba.r",table.getPath(data.indexOf("x,y")).toString());
+  assertEquals(Pair.of(57,86),table.getOffsetsForLine(23));
+  assertEquals(Pair.of(0,0),table.getOffsetsForLine(42));
+}

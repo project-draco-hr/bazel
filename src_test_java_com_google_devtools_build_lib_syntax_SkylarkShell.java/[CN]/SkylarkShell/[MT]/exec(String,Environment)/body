@@ -1,0 +1,23 @@
+{
+  try {
+    ParserInputSource input=ParserInputSource.create(inputSource,path);
+    Lexer lexer=new Lexer(input,syntaxEvents.reporter());
+    Parser.ParseResult result=Parser.parseFileForSkylark(lexer,syntaxEvents.reporter(),locator,SkylarkModules.getValidationEnvironment(ImmutableMap.<String,SkylarkType>of()));
+    Object last=null;
+    for (    Statement st : result.statements) {
+      if (st instanceof ExpressionStatement) {
+        last=((ExpressionStatement)st).getExpression().eval(env);
+      }
+ else {
+        st.exec(env);
+        last=null;
+      }
+    }
+    if (last != null) {
+      System.out.println(last);
+    }
+  }
+ catch (  Throwable e) {
+    e.printStackTrace();
+  }
+}

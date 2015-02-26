@@ -1,0 +1,23 @@
+{
+  Function keyval=new AbstractFunction("keyval"){
+    @Override public Object call(    List<Object> args,    final Map<String,Object> kwargs,    FuncallExpression ast,    Environment env){
+      ArrayList<String> keys=new ArrayList<>(kwargs.keySet());
+      Collections.sort(keys);
+      if ((Integer)args.get(0) == 0) {
+        return keys;
+      }
+ else {
+        return Lists.transform(keys,new com.google.common.base.Function<String,Object>(){
+          @Override public Object apply(          String s){
+            return kwargs.get(s);
+          }
+        }
+);
+      }
+    }
+  }
+;
+  Environment env=singletonEnv(keyval.getName(),keyval);
+  assertEquals(eval("['bar', 'foo', 'wiz']"),eval("keyval(0, foo=1, bar='bar', wiz=[1,2,3])",env));
+  assertEquals(eval("['bar', 1, [1,2,3]]"),eval("keyval(1, foo=1, bar='bar', wiz=[1,2,3])",env));
+}

@@ -1,0 +1,9 @@
+{
+  events.setFailFast(false);
+  BuildFileAST buildFileAST=parseBuildFile("foo() bar() something = baz() bar()");
+  Event event=events.collector().iterator().next();
+  assertEquals("syntax error at \'bar\'",event.getMessage());
+  assertEquals("/a/build/file/BUILD",event.getLocation().getPath().toString());
+  assertEquals(1,event.getLocation().getStartLineAndColumn().getLine());
+  assertTrue(buildFileAST.containsErrors());
+}

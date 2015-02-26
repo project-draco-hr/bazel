@@ -1,0 +1,11 @@
+{
+  scratch.file("/foo/bar/defs","a = 1\n");
+  Path buildFile=scratch.file("/BUILD","include(\"//foo/bar:defs\")\n" + "b = a + 1\n");
+  BuildFileAST buildFileAST=BuildFileAST.parseBuildFile(buildFile,events.reporter(),locator,false);
+  assertFalse(buildFileAST.containsErrors());
+  assertEquals(3,buildFileAST.getStatements().size());
+  Environment env=new Environment();
+  Reporter reporter=new Reporter();
+  assertFalse(buildFileAST.exec(env,reporter));
+  assertEquals(2,env.lookup("b"));
+}

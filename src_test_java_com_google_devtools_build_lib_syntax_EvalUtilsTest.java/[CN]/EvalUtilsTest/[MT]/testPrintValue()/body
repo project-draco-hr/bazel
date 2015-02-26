@@ -1,0 +1,26 @@
+{
+  assertEquals("foo\nbar",EvalUtils.printValue("foo\nbar"));
+  assertEquals("\"foo\\nbar\"",EvalUtils.prettyPrintValue("foo\nbar"));
+  assertEquals("'",EvalUtils.printValue("'"));
+  assertEquals("\"'\"",EvalUtils.prettyPrintValue("'"));
+  assertEquals("\"",EvalUtils.printValue("\""));
+  assertEquals("\"\\\"\"",EvalUtils.prettyPrintValue("\""));
+  assertEquals("3",EvalUtils.printValue(3));
+  assertEquals("3",EvalUtils.prettyPrintValue(3));
+  assertEquals("None",EvalUtils.prettyPrintValue(Environment.NONE));
+  assertEquals("//x:x",EvalUtils.printValue(Label.parseAbsolute("//x")));
+  assertEquals("\"//x:x\"",EvalUtils.prettyPrintValue(Label.parseAbsolute("//x")));
+  List<?> list=makeList("foo","bar");
+  List<?> tuple=makeTuple("foo","bar");
+  assertEquals("(1, [\"foo\", \"bar\"], 3)",EvalUtils.printValue(makeTuple(1,list,3)));
+  assertEquals("(1, [\"foo\", \"bar\"], 3)",EvalUtils.prettyPrintValue(makeTuple(1,list,3)));
+  assertEquals("[1, (\"foo\", \"bar\"), 3]",EvalUtils.printValue(makeList(1,tuple,3)));
+  assertEquals("[1, (\"foo\", \"bar\"), 3]",EvalUtils.prettyPrintValue(makeList(1,tuple,3)));
+  Map<Object,Object> dict=makeDict();
+  dict.put(1,tuple);
+  dict.put(2,list);
+  dict.put("foo",makeList());
+  assertEquals("{1: (\"foo\", \"bar\"), 2: [\"foo\", \"bar\"], \"foo\": []}",EvalUtils.printValue(dict));
+  assertEquals("{1: (\"foo\", \"bar\"), 2: [\"foo\", \"bar\"], \"foo\": []}",EvalUtils.prettyPrintValue(dict));
+  assertEquals("FilesetEntry(srcdir = \"//foo:bar\", files = [], " + "excludes = [\"xyz\"], destdir = \"\", " + "strip_prefix = \".\", symlinks = \"copy\")",EvalUtils.prettyPrintValue(makeFilesetEntry()));
+}

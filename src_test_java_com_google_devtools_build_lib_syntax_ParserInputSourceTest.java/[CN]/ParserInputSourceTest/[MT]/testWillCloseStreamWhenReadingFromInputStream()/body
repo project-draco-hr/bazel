@@ -1,0 +1,21 @@
+{
+  final StringBuilder log=new StringBuilder();
+  InputStream in=new InputStream(){
+    @Override public int read() throws IOException {
+      throw new IOException("Fault injected.");
+    }
+    @Override public void close(){
+      log.append("Stream closed.");
+    }
+  }
+;
+  try {
+    Path path=scratch.path("/will/not/try/to/read");
+    ParserInputSource.create(in,path);
+    fail();
+  }
+ catch (  IOException e) {
+    assertEquals("Fault injected.",e.getMessage());
+  }
+  assertEquals("Stream closed.",log.toString());
+}

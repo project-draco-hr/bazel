@@ -1,0 +1,10 @@
+{
+  events.setFailFast(false);
+  BuildFileAST buildFileAST=parseBuildFile("a = 'foo'\n  'bar'");
+  Event event=events.collector().iterator().next();
+  assertEquals("indentation error",event.getMessage());
+  assertEquals("/a/build/file/BUILD",event.getLocation().getPath().toString());
+  assertEquals(2,event.getLocation().getStartLineAndColumn().getLine());
+  assertEquals(2,event.getLocation().getStartLineAndColumn().getColumn());
+  assertTrue(buildFileAST.containsErrors());
+}

@@ -1,0 +1,11 @@
+{
+  env.update("mock",new Mock());
+  ValidationEnvironment validEnv=SkylarkModules.getValidationEnvironment();
+  validEnv.update("mock",SkylarkType.of(Mock.class),null);
+  exec(Parser.parseFileForSkylark(createLexer("a = hasattr(mock, 'struct_field')\n" + "b = hasattr(mock, 'function')\n" + "c = hasattr(mock, 'is_empty')\n"+ "d = hasattr('str', 'replace')\n"+ "e = hasattr(mock, 'other')\n"),syntaxEvents.reporter(),null,validEnv).statements,env);
+  assertTrue((Boolean)env.lookup("a"));
+  assertTrue((Boolean)env.lookup("b"));
+  assertTrue((Boolean)env.lookup("c"));
+  assertTrue((Boolean)env.lookup("d"));
+  assertFalse((Boolean)env.lookup("e"));
+}

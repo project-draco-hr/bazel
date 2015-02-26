@@ -1,0 +1,12 @@
+{
+  events.setFailFast(false);
+  BuildFileAST buildFile=parseBuildFile("abi = cxx_abi + '-glibc-' + glibc_version + '-' + " + "generic_cpu + '-' + sysname","libs = [abi + opt_level + '/lib/libcc.a']","shlibs = [abi + opt_level + '/lib/libcc.so']","+* shlibs","cc_library(name = 'cc',","           srcs = libs,","           includes = [ abi + opt_level + '/include' ])");
+  assertTrue(buildFile.containsErrors());
+  Event event=events.collector().iterator().next();
+  assertEquals("syntax error at '+'",event.getMessage());
+  Environment env=new Environment();
+  assertFalse(buildFile.exec(env,events.reporter()));
+  assertNull(findEvent(events.collector(),"$error$"));
+  Event event2=findEvent(events.collector(),"contains syntax error(s)");
+  assertNull(event2);
+}

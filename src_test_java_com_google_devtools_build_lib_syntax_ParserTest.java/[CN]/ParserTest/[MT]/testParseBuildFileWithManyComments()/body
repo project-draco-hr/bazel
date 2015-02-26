@@ -1,0 +1,14 @@
+{
+  Parser.ParseResult result=parseFileWithComments("# 1" + '\n' + "# 2"+ '\n'+ ""+ '\n'+ "# 4 "+ '\n'+ "# 5"+ '\n'+ "#"+ '\n'+ "# 7 "+ '\n'+ "# 8"+ '\n'+ "genrule(name = 'foo',"+ '\n'+ "   srcs = ['input.csv'],"+ '\n'+ "   # 11"+ '\n'+ "   outs = [ 'result.txt',"+ '\n'+ "           'result.log'], # 13"+ '\n'+ "   cmd = 'touch result.txt result.log')"+ '\n'+ "# 15"+ '\n');
+  assertThat(result.statements).hasSize(1);
+  StringBuilder commentLines=new StringBuilder();
+  for (  Comment comment : result.comments) {
+    assertEquals(comment.getLocation().getStartLineAndColumn().getLine() + " ends on " + comment.getLocation().getEndLineAndColumn().getLine(),comment.getLocation().getStartLineAndColumn().getLine(),comment.getLocation().getEndLineAndColumn().getLine());
+    commentLines.append('(');
+    commentLines.append(comment.getLocation().getStartLineAndColumn().getLine());
+    commentLines.append(',');
+    commentLines.append(comment.getLocation().getStartLineAndColumn().getColumn());
+    commentLines.append(") ");
+  }
+  assertWithMessage("Found: " + commentLines).that(result.comments.size()).isEqualTo(10);
+}

@@ -1,0 +1,12 @@
+{
+  Iterable<Object> eval=(Iterable<Object>)eval("['foo/%s.java' % x for x in []]");
+  assertThat(eval).isEmpty();
+  eval=(Iterable<Object>)eval("['foo/%s.java' % x for x in ['bar', 'wiz', 'quux']]");
+  assertThat(eval).containsExactly("foo/bar.java","foo/wiz.java","foo/quux.java").inOrder();
+  eval=(Iterable<Object>)eval("['%s/%s.java' % (x, y) " + "for x in ['foo', 'bar'] " + "for y in ['baz', 'wiz', 'quux']]");
+  assertThat(eval).containsExactly("foo/baz.java","foo/wiz.java","foo/quux.java","bar/baz.java","bar/wiz.java","bar/quux.java").inOrder();
+  eval=(Iterable<Object>)eval("['%s/%s.java' % (x, x) " + "for x in ['foo', 'bar'] " + "for x in ['baz', 'wiz', 'quux']]");
+  assertThat(eval).containsExactly("baz/baz.java","wiz/wiz.java","quux/quux.java","baz/baz.java","wiz/wiz.java","quux/quux.java").inOrder();
+  eval=(Iterable<Object>)eval("['%s/%s.%s' % (x, y, z) " + "for x in ['foo', 'bar'] " + "for y in ['baz', 'wiz', 'quux'] "+ "for z in ['java', 'cc']]");
+  assertThat(eval).containsExactly("foo/baz.java","foo/baz.cc","foo/wiz.java","foo/wiz.cc","foo/quux.java","foo/quux.cc","bar/baz.java","bar/baz.cc","bar/wiz.java","bar/wiz.cc","bar/quux.java","bar/quux.cc").inOrder();
+}

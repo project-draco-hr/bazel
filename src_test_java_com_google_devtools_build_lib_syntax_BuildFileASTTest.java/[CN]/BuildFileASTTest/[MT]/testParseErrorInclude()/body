@@ -1,0 +1,8 @@
+{
+  events.setFailFast(false);
+  scratch.file("/foo/bar/file","a = 2 + % 3\n");
+  parseBuildFile("include(\"//foo/bar:file\")");
+  Event event=events.collector().iterator().next();
+  assertEquals("/foo/bar/file:1:9",event.getLocation().print());
+  assertEquals("syntax error at '%'",event.getMessage());
+}
