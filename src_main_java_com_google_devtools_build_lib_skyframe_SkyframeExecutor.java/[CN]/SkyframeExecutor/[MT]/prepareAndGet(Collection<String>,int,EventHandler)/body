@@ -1,0 +1,19 @@
+{
+  SkyframeTargetPatternEvaluator patternEvaluator=(SkyframeTargetPatternEvaluator)packageManager.getTargetPatternEvaluator();
+  String offset=patternEvaluator.getOffset();
+  FilteringPolicy policy=TargetPatternEvaluator.DEFAULT_FILTERING_POLICY;
+  Iterable<SkyKey> patternSkyKeys=TargetPatternValue.keys(patterns,policy,offset);
+  ResolvedTargets<Target> result;
+  try {
+    result=patternEvaluator.parseTargetPatternKeys(patternSkyKeys,true,eventHandler);
+  }
+ catch (  TargetParsingException e) {
+    throw new IllegalStateException(e);
+  }
+  List<SkyKey> targetKeys=new ArrayList<>();
+  for (  Target target : result.getTargets()) {
+    targetKeys.add(TransitiveTargetValue.key(target.getLabel()));
+  }
+  Iterable<SkyKey> allKeys=ImmutableList.copyOf(Iterables.concat(patternSkyKeys,targetKeys));
+  return Preconditions.checkNotNull(buildDriver.evaluate(allKeys,true,numThreads,eventHandler).getWalkableGraph(),patterns);
+}

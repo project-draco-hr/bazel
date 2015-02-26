@@ -1,0 +1,19 @@
+{
+  Map<Target,Target> nodeToParent=new HashMap<>();
+  Deque<Target> toVisit=new ArrayDeque<>();
+  toVisit.add(from);
+  nodeToParent.put(from,null);
+  while (!toVisit.isEmpty()) {
+    Target current=toVisit.removeFirst();
+    if (to.equals(current)) {
+      return ImmutableSet.copyOf(Digraph.getPathToTreeNode(nodeToParent,to));
+    }
+    for (    Target dep : getFwdDeps(current)) {
+      if (!nodeToParent.containsKey(dep)) {
+        nodeToParent.put(dep,current);
+        toVisit.addFirst(dep);
+      }
+    }
+  }
+  return null;
+}

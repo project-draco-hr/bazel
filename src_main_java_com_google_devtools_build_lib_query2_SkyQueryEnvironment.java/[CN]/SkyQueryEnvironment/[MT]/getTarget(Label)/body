@@ -1,0 +1,17 @@
+{
+  validateScope(label,true);
+  SkyKey packageKey=PackageValue.key(label.getPackageIdentifier());
+  checkExistence(packageKey);
+  try {
+    PackageValue packageValue=(PackageValue)graph.getValue(packageKey);
+    if (packageValue != null) {
+      return packageValue.getPackage().getTarget(label.getName());
+    }
+ else {
+      throw (NoSuchThingException)Preconditions.checkNotNull(graph.getException(packageKey),label);
+    }
+  }
+ catch (  NoSuchThingException e) {
+    throw new TargetNotFoundException(e);
+  }
+}

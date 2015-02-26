@@ -1,0 +1,18 @@
+{
+  Map<String,ResolvedTargets<Target>> result=Maps.newHashMapWithExpectedSize(patterns.size());
+  for (  String pattern : patterns) {
+    SkyKey patternKey=TargetPatternValue.key(pattern,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,parserPrefix);
+    checkExistence(patternKey);
+    TargetPatternValue value=(TargetPatternValue)graph.getValue(patternKey);
+    if (value != null) {
+      result.put(pattern,value.getTargets());
+    }
+ else     if (!keepGoing) {
+      throw (TargetParsingException)Preconditions.checkNotNull(graph.getException(patternKey),pattern);
+    }
+ else {
+      result.put(pattern,ResolvedTargets.<Target>builder().setError().build());
+    }
+  }
+  return result;
+}

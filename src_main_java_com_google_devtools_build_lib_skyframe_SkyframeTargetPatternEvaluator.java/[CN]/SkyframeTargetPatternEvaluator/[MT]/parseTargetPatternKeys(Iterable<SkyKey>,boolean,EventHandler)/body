@@ -1,0 +1,49 @@
+{
+  EvaluationResult<TargetPatternValue> result=skyframeExecutor.targetPatterns(patternSkyKeys,keepGoing,eventHandler);
+  String errorMessage=null;
+  ResolvedTargets.Builder<Target> builder=ResolvedTargets.builder();
+  for (  SkyKey key : patternSkyKeys) {
+    TargetPatternValue resultValue=result.get(key);
+    if (resultValue != null) {
+      ResolvedTargets<Target> results=resultValue.getTargets();
+      if (((TargetPatternValue.TargetPattern)key.argument()).isNegative()) {
+        builder.filter(Predicates.not(Predicates.in(results.getTargets())));
+      }
+ else {
+        builder.merge(results);
+      }
+    }
+ else {
+      TargetPatternValue.TargetPattern pattern=(TargetPatternValue.TargetPattern)key.argument();
+      String rawPattern=pattern.getPattern();
+      ErrorInfo error=result.errorMap().get(key);
+      if (error == null) {
+        Preconditions.checkState(!keepGoing);
+        continue;
+      }
+      if (error.getException() != null) {
+        errorMessage=error.getException().getMessage();
+      }
+ else       if (!Iterables.isEmpty(error.getCycleInfo())) {
+        errorMessage="cycles detected during target parsing";
+        skyframeExecutor.getCyclesReporter().reportCycles(error.getCycleInfo(),key,eventHandler);
+      }
+ else {
+        throw new IllegalStateException(error.toString());
+      }
+      if (keepGoing) {
+        eventHandler.handle(Event.error("Skipping '" + rawPattern + "': "+ errorMessage));
+      }
+      builder.setError();
+      if (eventHandler instanceof ParseFailureListener) {
+        ParseFailureListener parseListener=(ParseFailureListener)eventHandler;
+        parseListener.parsingError(rawPattern,errorMessage);
+      }
+    }
+  }
+  if (!keepGoing && result.hasError()) {
+    Preconditions.checkState(errorMessage != null,"unexpected errors: %s",result.errorMap());
+    throw new TargetParsingException(errorMessage);
+  }
+  return builder.build();
+}
