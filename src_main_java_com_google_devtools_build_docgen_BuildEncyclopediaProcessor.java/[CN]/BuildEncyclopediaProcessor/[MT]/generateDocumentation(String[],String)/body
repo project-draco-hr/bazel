@@ -1,16 +1,11 @@
 {
-  BufferedWriter bw=null;
   File buildEncyclopediaPath=setupDirectories(outputRootDir);
-  try {
-    bw=new BufferedWriter(new FileWriter(buildEncyclopediaPath));
+  try (BufferedWriter bw=new BufferedWriter(new FileWriter(buildEncyclopediaPath))){
     bw.write(DocgenConsts.HEADER_COMMENT);
+    bw.write("\n");
     Set<RuleDocumentation> ruleDocEntries=collectAndProcessRuleDocs(inputDirs,false);
     writeRuleClassDocs(ruleDocEntries,bw);
+    bw.write("\n");
     bw.write(SourceFileReader.readTemplateContents(DocgenConsts.FOOTER_TEMPLATE));
   }
-  finally {
-    if (bw != null) {
-      bw.close();
-    }
-  }
-}
+ }
