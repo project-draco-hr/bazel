@@ -1,9 +1,9 @@
 {
-  ObjcCommon common=new ObjcCommon.Builder(ruleContext).setCompilationAttributes(new CompilationAttributes(ruleContext)).setResourceAttributes(new ResourceAttributes(ruleContext)).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).setAlwayslink(ruleContext.attributes().get("alwayslink",Type.BOOLEAN)).addExtraImportLibraries(ruleContext.getPrerequisiteArtifacts("archives",Mode.TARGET).list()).build();
+  ObjcCommon common=new ObjcCommon.Builder(ruleContext).setCompilationAttributes(new CompilationAttributes(ruleContext)).setResourceAttributes(new ResourceAttributes(ruleContext)).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).setAlwayslink(ruleContext.attributes().get("alwayslink",Type.BOOLEAN)).addExtraImportLibraries(ruleContext.getPrerequisiteArtifacts("archives",Mode.TARGET).list()).addDepObjcProviders(ruleContext.getPrerequisites("bundles",Mode.TARGET,ObjcProvider.class)).build();
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
   new CompilationSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,common,OptionsProvider.DEFAULT).validateAttributes();
   new ResourceSupport(ruleContext).registerActions(common.getStoryboards()).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
-  new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),LIBRARY_STATIC).registerActions(xcodeProviderBuilder.build()).addFilesToBuild(filesToBuild);
+  new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),LIBRARY_STATIC).addDependencies(xcodeProviderBuilder,"bundles").registerActions(xcodeProviderBuilder.build()).addFilesToBuild(filesToBuild);
   return common.configuredTarget(filesToBuild.build(),Optional.of(xcodeProviderBuilder.build()),Optional.of(common.getObjcProvider()),Optional.<XcTestAppProvider>absent(),Optional.<J2ObjcSrcsProvider>absent());
 }
