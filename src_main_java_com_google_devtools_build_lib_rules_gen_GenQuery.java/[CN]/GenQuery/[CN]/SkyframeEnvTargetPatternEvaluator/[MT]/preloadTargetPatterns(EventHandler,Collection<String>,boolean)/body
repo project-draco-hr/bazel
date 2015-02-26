@@ -1,0 +1,25 @@
+{
+  Preconditions.checkArgument(!keepGoing);
+  boolean ok=true;
+  Map<String,ResolvedTargets<Target>> preloadedPatterns=Maps.newHashMapWithExpectedSize(patterns.size());
+  Map<SkyKey,String> keys=Maps.newHashMapWithExpectedSize(patterns.size());
+  for (  String pattern : patterns) {
+    checkValidPatternType(pattern);
+    keys.put(TargetPatternValue.key(pattern,FilteringPolicies.NO_FILTER,""),pattern);
+  }
+synchronized (this) {
+    for (    Map.Entry<SkyKey,ValueOrException<TargetParsingException>> entry : env.getValuesOrThrow(keys.keySet(),TargetParsingException.class).entrySet()) {
+      TargetPatternValue patternValue=(TargetPatternValue)entry.getValue().get();
+      if (patternValue == null) {
+        ok=false;
+      }
+ else {
+        preloadedPatterns.put(keys.get(entry.getKey()),patternValue.getTargets());
+      }
+    }
+  }
+  if (!ok) {
+    throw new SkyframeRestartQueryException();
+  }
+  return preloadedPatterns;
+}

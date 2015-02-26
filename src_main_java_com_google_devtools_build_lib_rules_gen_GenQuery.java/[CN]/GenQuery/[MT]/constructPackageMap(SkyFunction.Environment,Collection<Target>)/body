@@ -1,0 +1,18 @@
+{
+  NestedSetBuilder<Label> validTargets=NestedSetBuilder.stableOrder();
+  NestedSetBuilder<PackageIdentifier> packageNames=NestedSetBuilder.stableOrder();
+  for (  Target target : scope) {
+    SkyKey key=TransitiveTargetValue.key(target.getLabel());
+    TransitiveTargetValue transNode=(TransitiveTargetValue)env.getValue(key);
+    Preconditions.checkState(transNode != null,"%s not preloaded",key);
+    validTargets.addTransitive(transNode.getTransitiveTargets());
+    packageNames.addTransitive(transNode.getTransitiveSuccessfulPackages());
+  }
+  ImmutableMap.Builder<PackageIdentifier,Package> packageMapBuilder=ImmutableMap.builder();
+  for (  PackageIdentifier pkgId : packageNames.build()) {
+    PackageValue pkg=(PackageValue)env.getValue(PackageValue.key(pkgId));
+    Preconditions.checkState(pkg != null,"package %s not preloaded",pkgId);
+    packageMapBuilder.put(pkg.getPackage().getPackageIdentifier(),pkg.getPackage());
+  }
+  return Pair.of(packageMapBuilder.build(),validTargets.build().toSet());
+}

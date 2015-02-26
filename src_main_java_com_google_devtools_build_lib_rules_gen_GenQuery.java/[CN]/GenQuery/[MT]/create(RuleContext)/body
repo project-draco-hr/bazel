@@ -1,0 +1,40 @@
+{
+  Artifact outputArtifact=ruleContext.createOutputArtifact();
+  final String query=ruleContext.attributes().get("expression",Type.STRING);
+  OptionsParser optionsParser=OptionsParser.newOptionsParser(QueryOptions.class);
+  optionsParser.setAllowResidue(false);
+  try {
+    optionsParser.parse(ruleContext.attributes().get("opts",Type.STRING_LIST));
+  }
+ catch (  OptionsParsingException e) {
+    ruleContext.attributeError("opts","error while parsing query options: " + e.getMessage());
+    return null;
+  }
+  QueryOptions queryOptions=optionsParser.getOptions(QueryOptions.class);
+  if (queryOptions.keepGoing) {
+    ruleContext.attributeError("opts","option --keep_going is not allowed");
+    return null;
+  }
+  final byte[] result=executeQuery(ruleContext,queryOptions,getScope(ruleContext),query);
+  if (result == null || ruleContext.hasErrors()) {
+    return null;
+  }
+  ruleContext.registerAction(new AbstractFileWriteAction(ruleContext.getActionOwner(),Collections.<Artifact>emptySet(),outputArtifact,false){
+    @Override public DeterministicWriter newDeterministicWriter(    EventHandler eventHandler,    Executor executor){
+      return new DeterministicWriter(){
+        @Override public void writeOutputFile(        OutputStream out) throws IOException {
+          out.write(result);
+        }
+      }
+;
+    }
+    @Override protected String computeKey(){
+      Fingerprint f=new Fingerprint();
+      f.addBytes(result);
+      return f.hexDigestAndReset();
+    }
+  }
+);
+  NestedSet<Artifact> filesToBuild=NestedSetBuilder.create(Order.STABLE_ORDER,outputArtifact);
+  return new RuleConfiguredTargetBuilder(ruleContext).setFilesToBuild(filesToBuild).add(RunfilesProvider.class,RunfilesProvider.simple(new Runfiles.Builder().addTransitiveArtifacts(filesToBuild).build())).build();
+}

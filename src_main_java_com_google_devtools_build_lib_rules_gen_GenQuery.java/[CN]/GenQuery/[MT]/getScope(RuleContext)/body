@@ -1,0 +1,15 @@
+{
+  List<Label> scopeLabels=context.attributes().get("scope",Type.LABEL_LIST);
+  Set<Target> scope=Sets.newHashSetWithExpectedSize(scopeLabels.size());
+  for (  Label scopePart : scopeLabels) {
+    try {
+      SkyFunction.Environment env=context.getAnalysisEnvironment().getSkyframeEnv();
+      PackageValue packageNode=Preconditions.checkNotNull((PackageValue)env.getValue(PackageValue.key(scopePart.getPackageFragment())));
+      scope.add(packageNode.getPackage().getTarget(scopePart.getName()));
+    }
+ catch (    NoSuchTargetException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+  return scope;
+}
