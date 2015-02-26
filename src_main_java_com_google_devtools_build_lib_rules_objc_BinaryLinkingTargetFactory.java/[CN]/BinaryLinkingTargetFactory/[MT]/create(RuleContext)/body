@@ -6,15 +6,23 @@
     ruleContext.ruleError(REQUIRES_AT_LEAST_ONE_LIBRARY_OR_SOURCE_FILE);
     return null;
   }
+  IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
-  NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(ObjcRuleClasses.intermediateArtifacts(ruleContext).singleArchitectureBinary());
+  NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(intermediateArtifacts.singleArchitectureBinary());
   new CompilationSupport(ruleContext).registerJ2ObjcCompileAndArchiveActions(optionsProvider,objcProvider).registerCompileAndArchiveActions(common,optionsProvider).addXcodeSettings(xcodeProviderBuilder,common,optionsProvider).registerLinkActions(objcProvider,extraLinkArgs,new ExtraLinkInputs()).validateAttributes();
   Optional<XcTestAppProvider> xcTestAppProvider;
+  Optional<RunfilesSupport> maybeRunfilesSupport=Optional.<RunfilesSupport>absent();
 switch (hasReleaseBundlingSupport) {
 case YES:
     ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,objcProvider,optionsProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES,ReleaseBundlingSupport.APP_BUNDLE_DIR_FORMAT);
   releaseBundlingSupport.registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateAttributes();
 xcTestAppProvider=Optional.of(releaseBundlingSupport.xcTestAppProvider());
+if (ObjcRuleClasses.objcConfiguration(ruleContext).getPlatform() == Platform.SIMULATOR) {
+Artifact runnerScript=intermediateArtifacts.runnerScript();
+Artifact ipaFile=ruleContext.getImplicitOutputArtifact(ReleaseBundlingSupport.IPA);
+releaseBundlingSupport.registerGenerateRunnerScriptAction(runnerScript,ipaFile);
+maybeRunfilesSupport=Optional.of(releaseBundlingSupport.runfilesSupport(runnerScript));
+}
 break;
 case NO:
 xcTestAppProvider=Optional.absent();
@@ -26,5 +34,9 @@ new ResourceSupport(ruleContext).registerActions(common.getStoryboards()).valida
 XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,objcProvider,productType).addDependencies(xcodeProviderBuilder,"bundles").addDependencies(xcodeProviderBuilder,"deps").addDependencies(xcodeProviderBuilder,"non_propagated_deps").addFilesToBuild(filesToBuild);
 XcodeProvider xcodeProvider=xcodeProviderBuilder.build();
 xcodeSupport.registerActions(xcodeProvider);
-return common.configuredTarget(filesToBuild.build(),Optional.of(xcodeProvider),Optional.of(objcProvider),xcTestAppProvider,Optional.<J2ObjcSrcsProvider>absent());
+RuleConfiguredTargetBuilder target=common.configuredTargetBuilder(filesToBuild.build(),Optional.of(xcodeProvider),Optional.of(objcProvider),xcTestAppProvider,Optional.<J2ObjcSrcsProvider>absent());
+for (RunfilesSupport runfilesSupport : maybeRunfilesSupport.asSet()) {
+target.setRunfilesSupport(runfilesSupport,runfilesSupport.getExecutable());
+}
+return target.build();
 }

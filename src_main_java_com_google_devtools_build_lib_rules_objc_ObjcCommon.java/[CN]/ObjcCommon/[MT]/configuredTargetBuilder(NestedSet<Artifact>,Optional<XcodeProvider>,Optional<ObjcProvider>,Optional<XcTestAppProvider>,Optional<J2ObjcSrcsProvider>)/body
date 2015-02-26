@@ -1,0 +1,18 @@
+{
+  NestedSet<Artifact> allFilesToBuild=NestedSetBuilder.<Artifact>stableOrder().addTransitive(filesToBuild).addTransitive(storyboards.getOutputZips()).addAll(Xcdatamodel.outputZips(datamodels)).build();
+  RunfilesProvider runfilesProvider=RunfilesProvider.withData(new Runfiles.Builder().addRunfiles(context,RunfilesProvider.DEFAULT_RUNFILES).build(),new Runfiles.Builder().addTransitiveArtifacts(allFilesToBuild).build());
+  RuleConfiguredTargetBuilder target=new RuleConfiguredTargetBuilder(context).setFilesToBuild(allFilesToBuild).add(RunfilesProvider.class,runfilesProvider);
+  for (  ObjcProvider exportedProvider : maybeExportedProvider.asSet()) {
+    target.addProvider(ObjcProvider.class,exportedProvider);
+  }
+  for (  XcTestAppProvider xcTestAppProvider : maybeXcTestAppProvider.asSet()) {
+    target.addProvider(XcTestAppProvider.class,xcTestAppProvider);
+  }
+  for (  XcodeProvider targetProvider : maybeTargetProvider.asSet()) {
+    target.addProvider(XcodeProvider.class,targetProvider);
+  }
+  for (  J2ObjcSrcsProvider j2ObjcSrcsProvider : maybeJ2ObjcSrcsProvider.asSet()) {
+    target.addProvider(J2ObjcSrcsProvider.class,j2ObjcSrcsProvider);
+  }
+  return target;
+}
