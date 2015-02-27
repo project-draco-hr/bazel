@@ -8,8 +8,9 @@
   if (right == EMPTY_LIST) {
     return left;
   }
-  if (!left.genericType.equals(right.genericType)) {
-    throw new EvalException(loc,String.format("cannot concatenate list of %s with list of %s",EvalUtils.getDataTypeNameFromClass(left.genericType),EvalUtils.getDataTypeNameFromClass(right.genericType)));
+  SkylarkType type=SkylarkType.intersection(left.contentType,right.contentType);
+  if (type == SkylarkType.BOTTOM) {
+    throw new EvalException(loc,String.format("cannot concatenate list of %s with list of %s",left.contentType,right.contentType));
   }
-  return new ConcatenatedSkylarkList(left,right,left.isTuple(),left.genericType);
+  return new ConcatenatedSkylarkList(left,right,left.isTuple(),type);
 }

@@ -1,0 +1,13 @@
+{
+  if (SkylarkType.intersection(SkylarkType.Union.of(SkylarkType.MAP,SkylarkType.LIST,SkylarkType.STRUCT),itemType) != SkylarkType.BOTTOM) {
+    throw new EvalException(loc,String.format("nested set item is composite (type of %s)",itemType));
+  }
+  if (!EvalUtils.isSkylarkImmutable(itemType.getType())) {
+    throw new EvalException(loc,String.format("nested set item is not immutable (type of %s)",itemType));
+  }
+  SkylarkType newType=SkylarkType.intersection(builderType,itemType);
+  if (newType == SkylarkType.BOTTOM) {
+    throw new EvalException(loc,String.format("cannot add an item of type %s to a nested %s",itemType,builderType));
+  }
+  return newType;
+}

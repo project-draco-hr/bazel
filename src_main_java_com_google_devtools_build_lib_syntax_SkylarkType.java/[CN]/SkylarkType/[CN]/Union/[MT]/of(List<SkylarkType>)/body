@@ -1,0 +1,35 @@
+{
+  ArrayList<SkylarkType> elements=new ArrayList<>();
+  for (  SkylarkType type : types) {
+    addElements(elements,type);
+  }
+  ArrayList<SkylarkType> canonical=new ArrayList<>();
+  for (  SkylarkType newType : elements) {
+    boolean done=false;
+    int i=0;
+    for (    SkylarkType existingType : canonical) {
+      SkylarkType both=intersection(newType,existingType);
+      if (newType.equals(both)) {
+        done=true;
+        break;
+      }
+ else       if (existingType.equals(both)) {
+        canonical.set(i,newType);
+        done=true;
+        break;
+      }
+    }
+    if (!done) {
+      canonical.add(newType);
+    }
+  }
+  if (canonical.isEmpty()) {
+    return BOTTOM;
+  }
+ else   if (canonical.size() == 1) {
+    return canonical.get(0);
+  }
+ else {
+    return new Union(ImmutableList.<SkylarkType>copyOf(canonical));
+  }
+}
