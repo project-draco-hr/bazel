@@ -31,6 +31,11 @@ default :
 if (packageName.equals(EXTERNAL_PACKAGE_NAME)) {
 return getExternalPackage(env,packageLookupValue.getRoot());
 }
+PackageValue externalPackage=(PackageValue)env.getValue(PackageValue.key(PackageIdentifier.createInDefaultRepo(EXTERNAL_PACKAGE_NAME)));
+if (externalPackage == null) {
+return null;
+}
+Package externalPkg=externalPackage.getPackage();
 PathFragment buildFileFragment=packageNameFragment.getChild("BUILD");
 RootedPath buildFileRootedPath=RootedPath.toRootedPath(packageLookupValue.getRoot(),buildFileFragment);
 FileValue buildFileValue;
@@ -89,7 +94,7 @@ SkylarkImportResult importResult=fetchImportsFromBuildFile(buildFilePath,buildFi
 if (importResult == null) {
 return null;
 }
-Package.LegacyBuilder legacyPkgBuilder=loadPackage(inputSource,replacementContents,packageId,buildFilePath,defaultVisibility,preludeStatements,importResult);
+Package.LegacyBuilder legacyPkgBuilder=loadPackage(externalPkg,inputSource,replacementContents,packageId,buildFilePath,defaultVisibility,preludeStatements,importResult);
 legacyPkgBuilder.buildPartial();
 try {
 handleLabelsCrossingSubpackagesAndPropagateInconsistentFilesystemExceptions(packageLookupValue.getRoot(),packageId,legacyPkgBuilder,env);
