@@ -3,26 +3,13 @@
   current.add(TopLevelArtifactProvider.TEMP_FILES);
   current.add(TopLevelArtifactProvider.HIDDEN_TOP_LEVEL);
   current.add(TopLevelArtifactProvider.DEFAULT);
-  current.addAll(getBuildOptions().outputGroups);
-  if (getOptions(Options.class).collectCodeCoverage && runTests) {
-    current.add(TopLevelArtifactProvider.BASELINE_COVERAGE);
-  }
-  BuildRequestOptions options=getOptions(BuildRequestOptions.class);
-  if (!options.buildDefaultArtifacts) {
-    current.remove(TopLevelArtifactProvider.DEFAULT);
-    current.remove(TopLevelArtifactProvider.HIDDEN_TOP_LEVEL);
-  }
-  if (options.compileOnly) {
-    current.add(TopLevelArtifactProvider.FILES_TO_COMPILE);
-    current.remove(TopLevelArtifactProvider.BASELINE_COVERAGE);
-    current.remove(TopLevelArtifactProvider.DEFAULT);
-    current.remove(TopLevelArtifactProvider.HIDDEN_TOP_LEVEL);
-  }
-  if (options.compilationPrerequisitesOnly) {
-    current.add(TopLevelArtifactProvider.COMPILATION_PREREQUISITES);
-    current.remove(TopLevelArtifactProvider.BASELINE_COVERAGE);
-    current.remove(TopLevelArtifactProvider.DEFAULT);
-    current.remove(TopLevelArtifactProvider.HIDDEN_TOP_LEVEL);
+  for (  String outputGroup : getBuildOptions().outputGroups) {
+    if (outputGroup.startsWith("-")) {
+      current.remove(outputGroup.substring(1));
+    }
+ else {
+      current.add(outputGroup);
+    }
   }
   return ImmutableSortedSet.copyOf(current);
 }

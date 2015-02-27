@@ -11,11 +11,6 @@
   OutErr outErr=runtime.getReporter().getOutErr();
   List<String> targets=(runUnder != null) && (runUnder.getLabel() != null) ? ImmutableList.of(targetString,runUnder.getLabel().toString()) : ImmutableList.of(targetString);
   BuildRequest request=BuildRequest.create(this.getClass().getAnnotation(Command.class).name(),options,runtime.getStartupOptionsProvider(),targets,outErr,runtime.getCommandId(),runtime.getCommandStartTime());
-  if (request.getBuildOptions().compileOnly) {
-    String message="The '" + getClass().getAnnotation(Command.class).name() + "' command is incompatible with the --compile_only option";
-    runtime.getReporter().handle(Event.error(message));
-    return ExitCode.COMMAND_LINE_ERROR;
-  }
   currentRunUnder=runUnder;
   BuildResult result;
   try {

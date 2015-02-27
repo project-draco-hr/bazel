@@ -1,11 +1,6 @@
 {
   List<String> targets=ProjectFileSupport.getTargets(runtime,options);
   BuildRequest request=BuildRequest.create(getClass().getAnnotation(Command.class).name(),options,runtime.getStartupOptionsProvider(),targets,runtime.getReporter().getOutErr(),runtime.getCommandId(),runtime.getCommandStartTime());
-  if (request.getBuildOptions().compileOnly) {
-    String message="The '" + getClass().getAnnotation(Command.class).name() + "' command is incompatible with the --compile_only option";
-    runtime.getReporter().handle(Event.error(message));
-    return ExitCode.COMMAND_LINE_ERROR;
-  }
   request.setRunTests();
   BuildResult buildResult=runtime.getBuildTool().processRequest(request,null);
   Collection<ConfiguredTarget> testTargets=buildResult.getTestTargets();
