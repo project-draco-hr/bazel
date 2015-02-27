@@ -1,0 +1,37 @@
+{
+  if (option.equals("-nowarn")) {
+    resetBasisTo(BasisXlintSelection.None);
+    return true;
+  }
+ else   if (option.equals("-Xlint")) {
+    resetBasisTo(BasisXlintSelection.Recommended);
+    return true;
+  }
+ else   if (option.startsWith("-Xlint")) {
+    for (    String arg : option.substring("-Xlint:".length()).split(",",-1)) {
+      if (arg.equals("all") || arg.isEmpty()) {
+        resetBasisTo(BasisXlintSelection.All);
+      }
+ else       if (arg.equals("none")) {
+        resetBasisTo(BasisXlintSelection.None);
+      }
+ else       if (arg.startsWith("-")) {
+        arg=arg.substring("-".length());
+        if (!enforcedXlints.contains(arg)) {
+          xlintPlus.remove(arg);
+          if (xlintBasis != BasisXlintSelection.None) {
+            xlintMinus.add(arg);
+          }
+        }
+      }
+ else {
+        xlintMinus.remove(arg);
+        if (xlintBasis != BasisXlintSelection.All) {
+          xlintPlus.add(arg);
+        }
+      }
+    }
+    return true;
+  }
+  return false;
+}

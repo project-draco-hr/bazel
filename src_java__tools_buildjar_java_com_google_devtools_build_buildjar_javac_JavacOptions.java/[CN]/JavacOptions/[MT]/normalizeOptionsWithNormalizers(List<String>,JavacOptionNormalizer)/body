@@ -1,0 +1,22 @@
+{
+  List<String> normalized=new ArrayList<>();
+  for (  JavacOptionNormalizer normalizer : normalizers) {
+    normalizer.start();
+  }
+  for (  String opt : javacopts) {
+    boolean found=false;
+    for (    JavacOptionNormalizer normalizer : normalizers) {
+      if (normalizer.processOption(opt)) {
+        found=true;
+        break;
+      }
+    }
+    if (!found) {
+      normalized.add(opt);
+    }
+  }
+  for (  JavacOptionNormalizer normalizer : normalizers) {
+    normalizer.normalize(normalized);
+  }
+  return normalized;
+}
