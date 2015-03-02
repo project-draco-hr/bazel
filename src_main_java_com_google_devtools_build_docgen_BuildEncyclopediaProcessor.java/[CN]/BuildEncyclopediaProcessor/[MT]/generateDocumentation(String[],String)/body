@@ -3,8 +3,9 @@
   try (BufferedWriter bw=new BufferedWriter(new FileWriter(buildEncyclopediaPath))){
     bw.write(DocgenConsts.HEADER_COMMENT);
     bw.write("\n");
-    Set<RuleDocumentation> ruleDocEntries=collectAndProcessRuleDocs(inputDirs,false);
-    writeRuleClassDocs(ruleDocEntries,bw);
+    Map<String,RuleDocumentation> ruleDocEntries=collectAndProcessRuleDocs(inputDirs,false);
+    warnAboutUndocumentedRules(Sets.difference(ruleClassProvider.getRuleClassMap().keySet(),ruleDocEntries.keySet()));
+    writeRuleClassDocs(ruleDocEntries.values(),bw);
     bw.write("\n");
     bw.write(SourceFileReader.readTemplateContents(DocgenConsts.FOOTER_TEMPLATE));
   }

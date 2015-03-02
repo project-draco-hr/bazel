@@ -1,0 +1,30 @@
+{
+  if (processedFiles.contains(inputPath)) {
+    return;
+  }
+  if (inputPath.isFile()) {
+    if (DocgenConsts.JAVA_SOURCE_FILE_SUFFIX.apply(inputPath.getName())) {
+      SourceFileReader sfr=new SourceFileReader(ruleClassProvider,inputPath.getAbsolutePath());
+      sfr.readDocsFromComments();
+      for (      RuleDocumentation d : sfr.getRuleDocEntries()) {
+        String ruleName=d.getRuleName();
+        if (ruleDocEntries.containsKey(ruleName) && !ruleClassFiles.get(ruleName).equals(inputPath)) {
+          System.err.printf("WARNING: '%s' from '%s' already in map from '%s', skipping\n",d.getRuleName(),inputPath,ruleClassFiles.get(ruleName));
+        }
+ else {
+          ruleClassFiles.put(ruleName,inputPath);
+          ruleDocEntries.put(ruleName,d);
+        }
+      }
+      if (attributeDocEntries != null) {
+        attributeDocEntries.putAll(sfr.getAttributeDocEntries());
+      }
+    }
+  }
+ else   if (inputPath.isDirectory()) {
+    for (    File childPath : inputPath.listFiles()) {
+      collectDocs(processedFiles,ruleClassFiles,ruleDocEntries,attributeDocEntries,childPath);
+    }
+  }
+  processedFiles.add(inputPath);
+}

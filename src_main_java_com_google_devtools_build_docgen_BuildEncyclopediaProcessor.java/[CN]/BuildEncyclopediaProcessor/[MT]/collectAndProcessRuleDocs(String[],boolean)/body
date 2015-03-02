@@ -1,16 +1,18 @@
 {
-  Set<RuleDocumentation> ruleDocEntries=new TreeSet<>();
+  Map<String,RuleDocumentation> ruleDocEntries=new TreeMap<>();
   ListMultimap<String,RuleDocumentationAttribute> attributeDocEntries=LinkedListMultimap.create();
+  Map<String,File> ruleClassFiles=new HashMap<>();
+  Set<File> processedFiles=new HashSet<>();
   for (  String inputDir : inputDirs) {
     if (printMessages) {
       System.out.println(" Processing input directory: " + inputDir);
     }
     int ruleNum=ruleDocEntries.size();
-    collectDocs(ruleDocEntries,attributeDocEntries,new File(inputDir));
+    collectDocs(processedFiles,ruleClassFiles,ruleDocEntries,attributeDocEntries,new File(inputDir));
     if (printMessages) {
       System.out.println(" " + (ruleDocEntries.size() - ruleNum) + " rule documentations found.");
     }
   }
-  processAttributeDocs(ruleDocEntries,attributeDocEntries);
+  processAttributeDocs(ruleDocEntries.values(),attributeDocEntries);
   return ruleDocEntries;
 }
