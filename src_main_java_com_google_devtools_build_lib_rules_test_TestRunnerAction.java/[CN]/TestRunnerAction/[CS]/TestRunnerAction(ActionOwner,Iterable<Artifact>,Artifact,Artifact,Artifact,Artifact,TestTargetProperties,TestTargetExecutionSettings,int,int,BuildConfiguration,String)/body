@@ -1,0 +1,30 @@
+{
+  super(owner,inputs,list(testLog,cacheStatus,coverageArtifact,microCoverageArtifact));
+  this.configuration=Preconditions.checkNotNull(configuration);
+  this.testLog=testLog;
+  this.cacheStatus=cacheStatus;
+  this.coverageData=coverageArtifact;
+  this.microCoverageData=microCoverageArtifact;
+  this.shardNum=shardNum;
+  this.runNumber=runNumber;
+  this.testProperties=Preconditions.checkNotNull(testProperties);
+  this.executionSettings=Preconditions.checkNotNull(executionSettings);
+  this.baseDir=cacheStatus.getExecPath().getParentDirectory();
+  this.namePrefix=FileSystemUtils.removeExtension(cacheStatus.getExecPath().getBaseName());
+  int totalShards=executionSettings.getTotalShards();
+  Preconditions.checkState((totalShards == 0 && shardNum == 0) || (totalShards > 0 && 0 <= shardNum && shardNum < totalShards));
+  this.testExitSafe=baseDir.getChild(namePrefix + ".exited_prematurely");
+  this.testShard=totalShards > 1 ? baseDir.getChild(namePrefix + ".shard") : null;
+  this.xmlOutputPath=baseDir.getChild(namePrefix + ".xml");
+  this.testWarningsPath=baseDir.getChild(namePrefix + ".warnings");
+  this.testStderr=baseDir.getChild(namePrefix + ".err");
+  this.splitLogsDir=baseDir.getChild(namePrefix + ".raw_splitlogs");
+  this.splitLogsPath=splitLogsDir.getChild("test.splitlogs");
+  this.undeclaredOutputsDir=baseDir.getChild(namePrefix + ".outputs");
+  this.undeclaredOutputsZipPath=undeclaredOutputsDir.getChild("outputs.zip");
+  this.undeclaredOutputsAnnotationsDir=baseDir.getChild(namePrefix + ".outputs_manifest");
+  this.undeclaredOutputsManifestPath=undeclaredOutputsAnnotationsDir.getChild("MANIFEST");
+  this.undeclaredOutputsAnnotationsPath=undeclaredOutputsAnnotationsDir.getChild("ANNOTATIONS");
+  this.testInfrastructureFailure=baseDir.getChild(namePrefix + ".infrastructure_failure");
+  this.workspaceName=workspaceName;
+}

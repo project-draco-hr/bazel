@@ -1,0 +1,28 @@
+{
+  Map<PathFragment,Artifact> manifest=getSymlinksAsMap();
+  for (  Artifact artifact : getUnconditionalArtifactsWithoutMiddlemen()) {
+    addToManifest(manifest,artifact,root);
+  }
+  for (  Runfiles.PruningManifest pruningManifest : getPruningManifests()) {
+    Map<String,Artifact> allowedRunfiles=new HashMap<>();
+    for (    Artifact artifact : pruningManifest.getCandidateRunfiles()) {
+      allowedRunfiles.put(artifact.getRootRelativePath().getPathString(),artifact);
+    }
+    BufferedReader reader=new BufferedReader(new InputStreamReader(pruningManifest.getManifestFile().getPath().getInputStream()));
+    String line;
+    while ((line=reader.readLine()) != null) {
+      Artifact artifact=allowedRunfiles.get(line);
+      if (artifact != null) {
+        addToManifest(manifest,artifact,root);
+      }
+    }
+  }
+  manifest=filterListForObscuringSymlinks(eventHandler,location,manifest);
+  manifest.putAll(manifestExpander.apply(manifest));
+  PathFragment path=new PathFragment(suffix);
+  Map<PathFragment,Artifact> result=new HashMap<>();
+  for (  Map.Entry<PathFragment,Artifact> entry : manifest.entrySet()) {
+    result.put(path.getRelative(entry.getKey()),entry.getValue());
+  }
+  return Pair.of(result,(Map<PathFragment,Artifact>)new HashMap<>(getRootSymlinksAsMap()));
+}
