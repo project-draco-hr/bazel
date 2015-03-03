@@ -1,36 +1,43 @@
 {
-  if (System.getProperty("os.name").toLowerCase().indexOf("mac") >= 0) {
-    return;
-  }
-  final CountDownLatch errorCommitted=new CountDownLatch(1);
-  final TrackingAwaiter trackingAwaiterForError=new TrackingAwaiter();
-  final CountDownLatch otherDone=new CountDownLatch(1);
-  final TrackingAwaiter trackingAwaiterForOther=new TrackingAwaiter();
   final SkyKey errorKey=GraphTester.toSkyKey("errorKey");
-  final SkyKey otherKey=GraphTester.toSkyKey("otherKey");
-  tester.getOrCreate(errorKey).setHasError(true);
+  final SkyKey otherErrorKey=GraphTester.toSkyKey("otherErrorKey");
+  final CountDownLatch errorCommitted=new CountDownLatch(1);
+  final TrackingAwaiter trackingAwaiterForErrorCommitted=new TrackingAwaiter();
+  final CountDownLatch otherStarted=new CountDownLatch(1);
+  final TrackingAwaiter trackingAwaiterForOtherStarted=new TrackingAwaiter();
+  final CountDownLatch otherDone=new CountDownLatch(1);
+  final TrackingAwaiter trackingAwaiterForOtherDone=new TrackingAwaiter();
   final AtomicInteger numOtherInvocations=new AtomicInteger(0);
-  final AtomicReference<String> bogusInvocationCount=new AtomicReference<>(null);
-  final AtomicReference<String> nonNullValue=new AtomicReference<>(null);
-  tester.getOrCreate(otherKey).setBuilder(new SkyFunction(){
+  final AtomicReference<String> bogusInvocationMessage=new AtomicReference<>(null);
+  final AtomicReference<String> nonNullValueMessage=new AtomicReference<>(null);
+  tester.getOrCreate(errorKey).setBuilder(new SkyFunction(){
     @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+      trackingAwaiterForOtherStarted.awaitLatchAndTrackExceptions(otherStarted,"otherErrorKey's SkyFunction didn't start in time.");
+      throw new GenericFunctionException(new SomeErrorException("error"),Transience.PERSISTENT);
+    }
+    @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  tester.getOrCreate(otherErrorKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+      otherStarted.countDown();
       int invocations=numOtherInvocations.incrementAndGet();
-      if (invocations == 1) {
-        trackingAwaiterForError.awaitLatchAndTrackExceptions(errorCommitted,"error didn't get committed to the graph in time");
-      }
+      trackingAwaiterForErrorCommitted.awaitLatchAndTrackExceptions(errorCommitted,"errorKey's error didn't get committed to the graph in time");
       try {
         SkyValue value=env.getValueOrThrow(errorKey,SomeErrorException.class);
         if (value != null) {
-          nonNullValue.set("bogus non-null value " + value);
+          nonNullValueMessage.set("bogus non-null value " + value);
         }
         if (invocations != 1) {
-          bogusInvocationCount.set("bogus invocation count: " + invocations);
+          bogusInvocationMessage.set("bogus invocation count: " + invocations);
         }
         otherDone.countDown();
         throw new GenericFunctionException(new SomeErrorException("other"),Transience.PERSISTENT);
       }
  catch (      SomeErrorException e) {
-        assertEquals(2,invocations);
+        fail();
         return null;
       }
     }
@@ -43,15 +50,16 @@
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (key.equals(errorKey) && type == EventType.SET_VALUE && order == Order.AFTER) {
         errorCommitted.countDown();
-        trackingAwaiterForOther.awaitLatchAndTrackExceptions(otherDone,"otherKey's SkyFunction didn't finish in time");
+        trackingAwaiterForOtherDone.awaitLatchAndTrackExceptions(otherDone,"otherErrorKey's SkyFunction didn't finish in time.");
       }
     }
   }
 );
-  EvaluationResult<StringValue> result=eval(false,ImmutableList.of(errorKey,otherKey));
-  assertTrue(nonNullValue.get(),nonNullValue.get() == null);
-  assertTrue(bogusInvocationCount.get(),bogusInvocationCount.get() == null);
-  assertEquals(null,graph.get(otherKey));
+  EvaluationResult<StringValue> result=eval(false,ImmutableList.of(errorKey,otherErrorKey));
   assertTrue(result.hasError());
   assertEquals(errorKey,result.getError().getRootCauseOfException());
+  assertNull(graph.get(otherErrorKey));
+  assertNull(nonNullValueMessage.get(),nonNullValueMessage.get());
+  assertEquals(numOtherInvocations.get(),1);
+  assertNull(bogusInvocationMessage.get(),bogusInvocationMessage.get());
 }
