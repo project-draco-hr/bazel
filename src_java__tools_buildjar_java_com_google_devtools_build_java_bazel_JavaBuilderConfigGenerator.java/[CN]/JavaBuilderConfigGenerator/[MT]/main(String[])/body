@@ -1,0 +1,21 @@
+{
+  try {
+    InputStream stream=System.in;
+    if (args.length > 0) {
+      stream=new FileInputStream(args[0]);
+    }
+    ImmutableMap<String,JavaToolchainData> data=JavaToolchainDataParser.parse(stream);
+    if (data.size() != 1) {
+      die(data.isEmpty() ? "No java_toolchain found!" : "Multiple java_toolchain found!");
+    }
+    JavaToolchainData first=data.values().asList().get(0);
+    String optsString=Joiner.on("\", \"").join(first.getJavacOptions());
+    System.out.println("package com.google.devtools.build.java.bazel;");
+    System.out.println("public class JavaBuilderJavacOpts {");
+    System.out.println("public static final String[] DEFAULT_JAVACOPTS = {\"" + optsString + "\"};");
+    System.out.println("}");
+  }
+ catch (  IOException e) {
+    die("Cannot load input file: " + e.getMessage());
+  }
+}

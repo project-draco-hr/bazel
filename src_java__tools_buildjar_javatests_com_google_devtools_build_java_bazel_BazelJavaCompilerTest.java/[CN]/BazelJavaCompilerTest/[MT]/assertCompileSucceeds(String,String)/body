@@ -1,0 +1,15 @@
+{
+  JavaCompiler javac=BazelJavaCompiler.newInstance();
+  JavaFileObject source=new SimpleJavaFileObject(URI.create(uri),JavaFileObject.Kind.SOURCE){
+    @Override public CharSequence getCharContent(    boolean ignoreEncodingErrors){
+      return content;
+    }
+  }
+;
+  StandardJavaFileManager fileManager=javac.getStandardFileManager(null,null,null);
+  fileManager.setLocation(StandardLocation.CLASS_OUTPUT,Arrays.asList(getTmpDir()));
+  DiagnosticCollector<JavaFileObject> messages=new DiagnosticCollector<>();
+  JavaCompiler.CompilationTask task=javac.getTask(null,fileManager,messages,null,null,Collections.singletonList(source));
+  assertTrue(task.call());
+  assertTrue(messages.getDiagnostics().isEmpty());
+}
