@@ -1,0 +1,16 @@
+{
+  Builder<String,RuleDocumentationAttribute> builder=ImmutableMap.<String,RuleDocumentationAttribute>builder();
+  for (  String name : names) {
+    String filename="templates/attributes/" + commonType + "/"+ name+ ".html";
+    try {
+      InputStream stream=PredefinedAttributes.class.getResourceAsStream(filename);
+      String content=new String(ByteStreams.toByteArray(stream),StandardCharsets.UTF_8);
+      builder.put(name,RuleDocumentationAttribute.create(name,commonType,content));
+    }
+ catch (    IOException e) {
+      System.err.println("Exception while reading " + filename + ", skipping!");
+      e.printStackTrace();
+    }
+  }
+  return builder.build();
+}
