@@ -4,5 +4,9 @@
   if (isXcTest(ruleContext)) {
     extraDepObjcProviders.add(xcTestAppProvider(ruleContext).getObjcProvider());
   }
+  ObjcConfiguration config=ruleContext.getFragment(ObjcConfiguration.class);
+  if (config.runMemleaks()) {
+    extraDepObjcProviders.add(ruleContext.getPrerequisite(MEMLEAKS_DEP,Mode.TARGET,ObjcProvider.class));
+  }
   return ObjcLibrary.common(ruleContext,extraSdkFrameworks,false,new ObjcLibrary.ExtraImportLibraries(ObjcRuleClasses.j2ObjcLibraries(ruleContext)),extraDepObjcProviders);
 }
