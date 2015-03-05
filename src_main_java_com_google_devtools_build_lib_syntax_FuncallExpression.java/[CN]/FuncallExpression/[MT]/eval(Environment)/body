@@ -1,15 +1,17 @@
 {
   ImmutableList.Builder<Object> posargs=new ImmutableList.Builder<Object>();
   Map<String,Object> kwargs=new HashMap<>();
+  final Object returnValue;
+  final Function function;
   if (obj != null) {
     Object objValue=obj.eval(env);
-    Function function=env.getFunction(EvalUtils.getSkylarkType(objValue.getClass()),func.getName());
+    function=env.getFunction(EvalUtils.getSkylarkType(objValue.getClass()),func.getName());
     if (function != null) {
       if (!isNamespace(objValue.getClass())) {
         posargs.add(objValue);
       }
       evalArguments(posargs,kwargs,env,function);
-      return EvalUtils.checkNotNull(this,function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env));
+      returnValue=function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env);
     }
  else     if (env.isSkylarkEnabled()) {
       evalArguments(posargs,kwargs,env,null);
@@ -30,12 +32,17 @@
  else {
     Object funcValue=func.eval(env);
     if ((funcValue instanceof Function)) {
-      Function function=(Function)funcValue;
+      function=(Function)funcValue;
       evalArguments(posargs,kwargs,env,function);
-      return EvalUtils.checkNotNull(this,function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env));
+      returnValue=function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env);
     }
  else {
       throw new EvalException(getLocation(),"'" + EvalUtils.getDataTypeName(funcValue) + "' object is not callable");
     }
   }
+  EvalUtils.checkNotNull(this,returnValue);
+  if (!env.isSkylarkEnabled()) {
+    return SkylarkType.convertFromSkylark(returnValue);
+  }
+  return returnValue;
 }
