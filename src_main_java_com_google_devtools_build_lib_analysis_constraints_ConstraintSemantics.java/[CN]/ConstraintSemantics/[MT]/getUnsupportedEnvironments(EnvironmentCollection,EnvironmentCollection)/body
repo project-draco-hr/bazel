@@ -1,0 +1,20 @@
+{
+  Set<Label> missingEnvironments=new LinkedHashSet<>();
+  for (  EnvironmentWithGroup expectedEnv : expectedEnvironments.getGroupedEnvironments()) {
+    EnvironmentGroup group=expectedEnv.group();
+    Label environment=expectedEnv.environment();
+    if (!actualEnvironments.getEnvironments().contains(environment) && (actualEnvironments.getGroups().contains(group) || !group.isDefault(environment))) {
+      missingEnvironments.add(environment);
+    }
+  }
+  for (  EnvironmentGroup group : actualEnvironments.getGroups()) {
+    if (!expectedEnvironments.getGroups().contains(group)) {
+      for (      Label defaultEnv : group.getDefaults()) {
+        if (!actualEnvironments.getEnvironments().contains(defaultEnv)) {
+          missingEnvironments.add(defaultEnv);
+        }
+      }
+    }
+  }
+  return missingEnvironments;
+}
