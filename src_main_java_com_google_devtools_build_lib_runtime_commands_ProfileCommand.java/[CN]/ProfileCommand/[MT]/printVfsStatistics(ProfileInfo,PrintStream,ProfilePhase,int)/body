@@ -16,9 +16,7 @@
   for (  ProfilerTask type : stats.keySet()) {
     Map<String,Stat> statsForType=stats.get(type);
     TreeMultimap<Stat,String> sortedStats=TreeMultimap.create(Ordering.natural().reverse(),Ordering.natural());
-    for (    Map.Entry<String,Stat> stat : statsForType.entrySet()) {
-      sortedStats.put(stat.getValue(),stat.getKey());
-    }
+    Multimaps.invertFrom(Multimaps.forMap(statsForType),sortedStats);
     int numPrinted=0;
     for (    Map.Entry<Stat,String> stat : sortedStats.entries()) {
       if (limit != -1 && numPrinted++ == limit) {

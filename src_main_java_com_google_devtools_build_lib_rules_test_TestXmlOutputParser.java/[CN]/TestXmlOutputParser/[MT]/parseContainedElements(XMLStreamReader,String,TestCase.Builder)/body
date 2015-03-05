@@ -6,35 +6,36 @@
 switch (event) {
 case XMLStreamConstants.START_ELEMENT:
       String childElementName=parser.getLocalName().intern();
-    if (childElementName.equals("testsuite")) {
+switch (childElementName) {
+case "testsuite":
       builder.addChild(parseTestSuite(parser,childElementName));
-    }
- else     if (childElementName.equals("testcase")) {
-      builder.addChild(parseTestCase(parser));
-    }
- else     if (childElementName.equals("failure")) {
-      failures+=1;
-      skipCompleteElement(parser);
-    }
- else     if (childElementName.equals("error")) {
-      errors+=1;
-      skipCompleteElement(parser);
-    }
- else     if (childElementName.equals("testdecorator")) {
-      builder.addChild(parseTestDecorator(parser));
-    }
- else {
-      skipCompleteElement(parser);
-    }
-  break;
+    break;
+case "testcase":
+  builder.addChild(parseTestCase(parser));
+break;
+case "failure":
+failures+=1;
+skipCompleteElement(parser);
+break;
+case "error":
+errors+=1;
+skipCompleteElement(parser);
+break;
+case "testdecorator":
+builder.addChild(parseTestDecorator(parser));
+break;
+default :
+skipCompleteElement(parser);
+}
+break;
 case XMLStreamConstants.END_ELEMENT:
 for (int i=0; i < builder.getChildCount(); i+=1) {
-  if (builder.getChild(i).getStatus() == TestCase.Status.ERROR) {
-    errors+=1;
-  }
-  if (builder.getChild(i).getStatus() == TestCase.Status.FAILED) {
-    failures+=1;
-  }
+if (builder.getChild(i).getStatus() == TestCase.Status.ERROR) {
+errors+=1;
+}
+if (builder.getChild(i).getStatus() == TestCase.Status.FAILED) {
+failures+=1;
+}
 }
 if (errors > 0) {
 builder.setStatus(TestCase.Status.ERROR);

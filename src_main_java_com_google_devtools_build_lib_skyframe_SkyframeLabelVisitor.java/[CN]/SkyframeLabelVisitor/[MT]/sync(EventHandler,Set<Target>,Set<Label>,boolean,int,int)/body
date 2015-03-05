@@ -30,9 +30,7 @@
     Label topLevelLabel=(Label)key.argument();
     if (!Iterables.isEmpty(errorInfo.getCycleInfo())) {
       skyframeCyclesReporter.get().reportCycles(errorInfo.getCycleInfo(),key,eventHandler);
-      for (      Label rootCause : getRootCausesOfCycles(topLevelLabel,errorInfo.getCycleInfo())) {
-        rootCauses.put(topLevelLabel,rootCause);
-      }
+      rootCauses.putAll(topLevelLabel,getRootCausesOfCycles(topLevelLabel,errorInfo.getCycleInfo()));
     }
     if (isDirectErrorFromTopLevelLabel(topLevelLabel,labelsToVisit,errorInfo)) {
       eventHandler.handle(Event.error(errorInfo.getException().getMessage()));
@@ -47,9 +45,7 @@
     SkyKey topLevelTransitiveTargetKey=TransitiveTargetValue.key(topLevelLabel);
     TransitiveTargetValue topLevelTransitiveTargetValue=result.get(topLevelTransitiveTargetKey);
     if (topLevelTransitiveTargetValue.getTransitiveRootCauses() != null) {
-      for (      Label rootCause : topLevelTransitiveTargetValue.getTransitiveRootCauses()) {
-        rootCauses.put(topLevelLabel,rootCause);
-      }
+      rootCauses.putAll(topLevelLabel,topLevelTransitiveTargetValue.getTransitiveRootCauses());
       warnAboutLoadingFailure(topLevelLabel,eventHandler);
     }
   }

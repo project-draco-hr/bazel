@@ -12,7 +12,7 @@
   }
  else {
     if (!linkstaticAttribute && appearsToHaveNoObjectFiles(ruleContext.attributes())) {
-      Artifact element=ccCompilationOutputs.getObjectFiles(false).isEmpty() ? ccCompilationOutputs.getObjectFiles(true).get(0) : ccCompilationOutputs.getObjectFiles(false).get(0);
+      Artifact element=Iterables.getFirst(ccCompilationOutputs.getObjectFiles(false),ccCompilationOutputs.getObjectFiles(true).get(0));
       ruleContext.attributeWarning("srcs","this library appears at first glance to have no object files, " + "but on closer inspection it does have something to link, e.g. " + element.prettyPrint() + ". "+ "(You may have used some very confusing rule names in srcs? "+ "Or the library consists entirely of a linker script?) "+ "Bazel assumed linkstatic=1, but this may be inappropriate. "+ "You may need to add an explicit '.cc' file to 'srcs'. "+ "Alternatively, add 'linkstatic=1' to suppress this warning");
     }
   }
