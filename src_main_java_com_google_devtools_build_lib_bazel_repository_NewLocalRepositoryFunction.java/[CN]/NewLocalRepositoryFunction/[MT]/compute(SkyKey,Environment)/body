@@ -5,14 +5,13 @@
     return null;
   }
   Path repositoryDirectory=getExternalRepositoryDirectory().getRelative(rule.getName());
-  Path outputDirectory=repositoryDirectory.getRelative(rule.getName());
   try {
-    FileSystemUtils.createDirectoryAndParents(outputDirectory);
+    FileSystemUtils.createDirectoryAndParents(repositoryDirectory);
   }
  catch (  IOException e) {
     throw new RepositoryFunctionException(e,Transience.TRANSIENT);
   }
-  FileValue directoryValue=getRepositoryDirectory(outputDirectory,env);
+  FileValue directoryValue=getRepositoryDirectory(repositoryDirectory,env);
   if (directoryValue == null) {
     return null;
   }
@@ -30,7 +29,7 @@
     throw new RepositoryFunctionException(new EvalException(rule.getLocation(),"In " + rule + " the 'path' attribute must specify an absolute path"),Transience.PERSISTENT);
   }
   Path pathTarget=getOutputBase().getFileSystem().getPath(pathFragment);
-  Path symlinkPath=outputDirectory.getRelative(pathTarget.getBaseName());
+  Path symlinkPath=repositoryDirectory.getRelative(pathTarget.getBaseName());
   if (createSymbolicLink(symlinkPath,pathTarget,env) == null) {
     return null;
   }
@@ -39,7 +38,7 @@
   if (buildFile.equals(PathFragment.EMPTY_FRAGMENT) || buildFile.isAbsolute() || !buildFileTarget.exists()) {
     throw new RepositoryFunctionException(new EvalException(rule.getLocation(),"In " + rule + " the 'build_file' attribute must specify a relative path to an existing file"),Transience.PERSISTENT);
   }
-  Path buildFilePath=outputDirectory.getRelative("BUILD");
+  Path buildFilePath=repositoryDirectory.getRelative("BUILD");
   if (createSymbolicLink(buildFilePath,buildFileTarget,env) == null) {
     return null;
   }
