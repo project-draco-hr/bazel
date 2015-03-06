@@ -1,0 +1,18 @@
+{
+  Set<TransitiveInfoCollection> depsToCheck=new LinkedHashSet<>();
+  AttributeMap attributes=ruleContext.attributes();
+  for (  String attr : attributes.getAttributeNames()) {
+    Type<?> attrType=attributes.getAttributeType(attr);
+    if ((attrType == Type.LABEL || attrType == Type.LABEL_LIST) && !RuleClass.isConstraintAttribute(attr) && !attr.equals("visibility")) {
+      for (      TransitiveInfoCollection dep : ruleContext.getPrerequisites(attr,RuleConfiguredTarget.Mode.DONT_CHECK)) {
+        if (dep instanceof OutputFileConfiguredTarget) {
+          dep=((OutputFileConfiguredTarget)dep).getGeneratingRule();
+        }
+        if (dep.getProvider(SupportedEnvironmentsProvider.class) != null && !Verify.verifyNotNull(dep.getConfiguration()).isHostConfiguration()) {
+          depsToCheck.add(dep);
+        }
+      }
+    }
+  }
+  return depsToCheck;
+}
