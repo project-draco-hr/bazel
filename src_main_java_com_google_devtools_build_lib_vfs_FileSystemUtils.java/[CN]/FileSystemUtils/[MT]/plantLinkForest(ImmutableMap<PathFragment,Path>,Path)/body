@@ -1,8 +1,12 @@
 {
+  Path emptyPackagePath=null;
   Map<PathFragment,Set<Path>> dirRootsMap=Maps.newTreeMap();
   for (  Map.Entry<PathFragment,Path> entry : packageRootMap.entrySet()) {
     PathFragment pkgDir=entry.getKey();
     Path pkgRoot=entry.getValue();
+    if (pkgDir.segmentCount() == 0) {
+      emptyPackagePath=entry.getValue();
+    }
     for (int i=1; i <= pkgDir.segmentCount(); i++) {
       PathFragment dir=pkgDir.subFragment(0,i);
       Set<Path> roots=dirRootsMap.get(dir);
@@ -71,6 +75,14 @@
  catch (        IOException e) {
           e.printStackTrace();
         }
+      }
+    }
+  }
+  if (emptyPackagePath != null) {
+    for (    Path target : emptyPackagePath.getDirectoryEntries()) {
+      String baseName=target.getBaseName();
+      if (!baseName.startsWith(Constants.PRODUCT_NAME + "-") && !linkRoot.getRelative(baseName).exists()) {
+        linkRoot.getRelative(baseName).createSymbolicLink(target);
       }
     }
   }
