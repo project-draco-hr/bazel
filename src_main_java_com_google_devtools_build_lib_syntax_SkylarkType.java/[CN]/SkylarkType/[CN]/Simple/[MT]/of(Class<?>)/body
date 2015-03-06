@@ -13,11 +13,14 @@
  else   if (type == Environment.NoneType.class) {
     simple=TOP;
   }
- else   if (ClassObject.class != type && ClassObject.class.isAssignableFrom(type)) {
-    simple=of(ClassObject.class);
-  }
  else {
-    simple=new Simple(type);
+    Class<?> skylarkType=EvalUtils.getSkylarkType(type);
+    if (skylarkType != type) {
+      simple=Simple.of(skylarkType);
+    }
+ else {
+      simple=new Simple(type);
+    }
   }
   simpleCache.put(type,simple);
   return simple;

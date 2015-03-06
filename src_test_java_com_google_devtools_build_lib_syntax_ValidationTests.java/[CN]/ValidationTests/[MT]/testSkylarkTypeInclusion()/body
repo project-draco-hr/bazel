@@ -1,0 +1,19 @@
+{
+  assertTrue(SkylarkType.INT.includes(SkylarkType.BOTTOM));
+  assertFalse(SkylarkType.BOTTOM.includes(SkylarkType.INT));
+  assertTrue(SkylarkType.TOP.includes(SkylarkType.INT));
+  SkylarkType combo1=SkylarkType.Combination.of(SkylarkType.LIST,SkylarkType.INT);
+  assertTrue(SkylarkType.LIST.includes(combo1));
+  SkylarkType union1=SkylarkType.Union.of(SkylarkType.MAP,SkylarkType.LIST,SkylarkType.STRUCT);
+  assertTrue(union1.includes(SkylarkType.MAP));
+  assertTrue(union1.includes(SkylarkType.LIST));
+  assertTrue(union1.includes(SkylarkType.STRUCT));
+  assertTrue(union1.includes(combo1));
+  assertFalse(union1.includes(SkylarkType.STRING));
+  SkylarkType union2=SkylarkType.Union.of(SkylarkType.LIST,SkylarkType.MAP,SkylarkType.STRING,SkylarkType.INT);
+  SkylarkType inter1=SkylarkType.intersection(union1,union2);
+  assertTrue(inter1.includes(SkylarkType.MAP));
+  assertTrue(inter1.includes(SkylarkType.LIST));
+  assertTrue(inter1.includes(combo1));
+  assertFalse(inter1.includes(SkylarkType.INT));
+}
