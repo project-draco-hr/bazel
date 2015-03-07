@@ -1,0 +1,21 @@
+{
+  RefCountedLockImpl newLock=new RefCountedLockImpl(key);
+  newLock.lock();
+  Lock waitersLock=waitersLocks.get(key);
+  try {
+    waitersLock.lock();
+    waiters.add(key);
+  }
+  finally {
+    waitersLock.unlock();
+  }
+  RefCountedLockImpl lock;
+  lock=locks.putIfAbsent(key,newLock);
+  if (lock != null) {
+    Preconditions.checkState(lock != newLock);
+    newLock.unlock();
+    lock.lock();
+    return lock;
+  }
+  return newLock;
+}

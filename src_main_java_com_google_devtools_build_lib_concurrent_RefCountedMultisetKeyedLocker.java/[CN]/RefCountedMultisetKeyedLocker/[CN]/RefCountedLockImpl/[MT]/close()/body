@@ -1,0 +1,19 @@
+{
+  Preconditions.checkState(isHeldByCurrentThread(),"For key %s, 'close' can be called at most " + "once and the calling thread must be the one that acquired the AutoUnlocker",key);
+  try {
+    Lock waitersLock=waitersLocks.get(key);
+    try {
+      waitersLock.lock();
+      waiters.remove(key);
+      if (waiters.count(key) == 0) {
+        Preconditions.checkState(locks.remove(key,this),key);
+      }
+    }
+  finally {
+      waitersLock.unlock();
+    }
+  }
+  finally {
+    unlock();
+  }
+}
