@@ -33,8 +33,14 @@
     prettyPrintValue(entry.getValue(),buffer);
   }
  else   if (o instanceof SkylarkNestedSet) {
-    Iterable<?> seq=(Iterable<?>)o;
-    printList(seq,"set([",", ","])",buffer);
+    SkylarkNestedSet set=(SkylarkNestedSet)o;
+    buffer.append("set(");
+    printList(set,"[",", ","]",buffer);
+    Order order=set.getOrder();
+    if (order != Order.STABLE_ORDER) {
+      buffer.append(", order = \"" + SkylarkNestedSet.orderString(order) + "\"");
+    }
+    buffer.append(")");
   }
  else   if (o instanceof Function) {
     Function func=(Function)o;
