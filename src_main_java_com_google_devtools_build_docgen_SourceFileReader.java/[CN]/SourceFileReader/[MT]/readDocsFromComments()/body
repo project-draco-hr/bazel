@@ -57,10 +57,30 @@
     }
     private void startBlazeRuleDoc(    String line,    Matcher matcher) throws BuildEncyclopediaDocException {
       checkDocValidity();
-      String[] metaData=matcher.group(1).split(",");
-      ruleName=readMetaData(metaData,DocgenConsts.META_KEY_NAME);
-      ruleType=readMetaData(metaData,DocgenConsts.META_KEY_TYPE);
-      ruleFamily=readMetaData(metaData,DocgenConsts.META_KEY_FAMILY);
+      for (      String group : Splitter.on(",").split(matcher.group(1))) {
+        List<String> parts=Splitter.on("=").limit(2).splitToList(group);
+        boolean good=false;
+        if (parts.size() == 2) {
+          String key=parts.get(0).trim();
+          String value=parts.get(1).trim();
+          good=true;
+          if (DocgenConsts.META_KEY_NAME.equals(key)) {
+            ruleName=value;
+          }
+ else           if (DocgenConsts.META_KEY_TYPE.equals(key)) {
+            ruleType=value;
+          }
+ else           if (DocgenConsts.META_KEY_FAMILY.equals(key)) {
+            ruleFamily=value;
+          }
+ else {
+            good=false;
+          }
+        }
+        if (!good) {
+          System.err.printf("WARNING: bad rule definition in line %d: '%s'",getLineCnt(),line);
+        }
+      }
       startLineCnt=getLineCnt();
       addFlags(line);
       inBlazeRuleDocs=true;
@@ -116,7 +136,7 @@
       docMap.get(docVariable.getRuleName()).addDocVariable(docVariable.getVariableName(),docVariable.getValue());
     }
  else {
-      throw new BuildEncyclopediaDocException(javaSourceFilePath,docVariable.getStartLineCnt(),String.format("Malformed rule variable #BLAZE_RULE(%s).%s, " + "rule %s not found in file.",docVariable.getRuleName(),docVariable.getVariableName(),docVariable.getRuleName()));
+      throw new BuildEncyclopediaDocException(javaSourceFilePath,docVariable.getStartLineCnt(),String.format("Malformed rule variable #BLAZE_RULE(%s).%s, rule %s not found in file.",docVariable.getRuleName(),docVariable.getVariableName(),docVariable.getRuleName()));
     }
   }
   ruleDocEntries=docMap.values();
