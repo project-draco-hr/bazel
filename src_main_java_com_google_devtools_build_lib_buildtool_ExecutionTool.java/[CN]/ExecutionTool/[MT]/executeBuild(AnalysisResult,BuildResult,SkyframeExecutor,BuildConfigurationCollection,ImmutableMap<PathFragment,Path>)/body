@@ -43,20 +43,21 @@
     }
     configureResourceManager(request);
     Profiler.instance().markPhase(ProfilePhase.EXECUTE);
-    builder.buildArtifacts(additionalArtifacts,analysisResult.getParallelTests(),analysisResult.getExclusiveTests(),analysisResult.getTargetsToBuild(),executor,builtTargets,request.getBuildOptions().explanationPath != null);
+    builder.buildArtifacts(additionalArtifacts,analysisResult.getParallelTests(),analysisResult.getExclusiveTests(),analysisResult.getTargetsToBuild(),executor,builtTargets,request.getBuildOptions().explanationPath != null,runtime.getLastExecutionTimeRange());
   }
  catch (  InterruptedException e) {
     interrupted=true;
     throw e;
   }
  finally {
+    runtime.recordLastExecutionTime();
     if (request.isRunningInEmacs()) {
       request.getOutErr().printErrLn("blaze: Leaving directory `" + getExecRoot() + "/'");
     }
     if (!interrupted) {
       getReporter().handle(Event.progress("Building complete."));
     }
-    runtime.getEventBus().post(new ExecutionFinishedEvent(ImmutableMap.<String,Long>of(),0));
+    runtime.getEventBus().post(new ExecutionFinishedEvent(ImmutableMap.<String,Long>of(),0L,skyframeExecutor.getOutputDirtyFiles(),skyframeExecutor.getModifiedFilesDuringPreviousBuild()));
     ResourceManager.instance().setAutoSensing(false);
     executor.executionPhaseEnding();
     for (    ActionContextProvider actionContextProvider : actionContextProviders) {
