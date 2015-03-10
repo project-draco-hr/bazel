@@ -1,10 +1,13 @@
 {
-  assertEquals(SkylarkType.LIST,SkylarkType.of(SkylarkList.class));
-  assertEquals(SkylarkType.LIST,SkylarkType.of(SkylarkList.EMPTY_LIST.getClass()));
-  assertEquals(SkylarkType.LIST,SkylarkType.of(SkylarkList.list(Arrays.<Object>asList(1,2,3),SkylarkType.INT).getClass()));
-  assertEquals(SkylarkType.LIST,SkylarkType.of(SkylarkList.tuple(Arrays.<Object>asList(1,"a","b")).getClass()));
-  assertEquals(SkylarkType.of(ClassObject.SkylarkClassObject.class),SkylarkType.of(ClassObject.SkylarkClassObject.class));
-  assertFalse(SkylarkType.of(ClassObject.class).equals(SkylarkType.of(ClassObject.SkylarkClassObject.class)));
-  assertEquals(SkylarkType.of(Artifact.class),SkylarkType.of(Artifact.SpecialArtifact.class));
-  assertFalse(SkylarkType.of(RuleConfiguredTarget.class).equals(SkylarkType.STRUCT));
+  Class<?> emptyListClass=SkylarkList.EMPTY_LIST.getClass();
+  Class<?> simpleListClass=SkylarkList.list(Arrays.<Integer>asList(1,2,3),SkylarkType.INT).getClass();
+  Class<?> tupleClass=SkylarkList.tuple(Arrays.<Object>asList(1,"a","b")).getClass();
+  assertThat(SkylarkType.of(SkylarkList.class)).isEqualTo(SkylarkType.LIST);
+  assertThat(SkylarkType.of(emptyListClass)).isEqualTo(SkylarkType.LIST);
+  assertThat(SkylarkType.of(simpleListClass)).isEqualTo(SkylarkType.LIST);
+  assertThat(SkylarkType.of(tupleClass)).isEqualTo(SkylarkType.LIST);
+  assertThat(SkylarkType.of(ClassObject.SkylarkClassObject.class)).isEqualTo(SkylarkType.STRUCT);
+  assertThat(SkylarkType.of(ClassObject.class)).isNotEqualTo(SkylarkType.STRUCT);
+  assertThat(SkylarkType.of(Artifact.SpecialArtifact.class)).isEqualTo(SkylarkType.of(Artifact.class));
+  assertThat(SkylarkType.of(RuleConfiguredTarget.class)).isNotEqualTo(SkylarkType.STRUCT);
 }
