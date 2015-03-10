@@ -1,0 +1,21 @@
+{
+  ZipFile zip=new ZipFile("third_party/ijar/test/interface_ijar_testlib.jar");
+  Enumeration<? extends ZipEntry> entries=zip.entries();
+  while (entries.hasMoreElements()) {
+    ZipEntry entry=entries.nextElement();
+    ClassReader reader=new ClassReader(zip.getInputStream(entry));
+    StripVerifyingVisitor verifier=new StripVerifyingVisitor();
+    reader.accept(verifier,0);
+    if (verifier.errors.size() > 0) {
+      StringBuilder builder=new StringBuilder();
+      builder.append("Verification of ");
+      builder.append(entry.getName());
+      builder.append(" failed: ");
+      for (      String msg : verifier.errors) {
+        builder.append(msg);
+        builder.append("\t");
+      }
+      fail(builder.toString());
+    }
+  }
+}

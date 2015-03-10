@@ -1,0 +1,12 @@
+{
+  if (!makeCompilationTask("third_party/ijar/test/UseDeprecatedParts.java").call()) {
+    fail(getFailedCompilationMessage());
+  }
+  int deprecatedWarningCount=0;
+  for (  Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
+    if ((diagnostic.getKind() == Diagnostic.Kind.MANDATORY_WARNING) && (diagnostic.getMessage(Locale.ENGLISH).startsWith("[deprecation]") || diagnostic.getMessage(Locale.ENGLISH).contains("has been deprecated"))) {
+      deprecatedWarningCount++;
+    }
+  }
+  assertEquals(16,deprecatedWarningCount);
+}
