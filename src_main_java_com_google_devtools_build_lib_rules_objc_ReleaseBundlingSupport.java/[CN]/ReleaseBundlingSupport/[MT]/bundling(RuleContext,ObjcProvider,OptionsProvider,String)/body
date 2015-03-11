@@ -7,5 +7,13 @@
  else {
     extraBundleFiles=ImmutableList.of();
   }
-  return new Bundling.Builder().setName(ruleContext.getLabel().getName()).setBundleDirFormat(bundleDirFormat).setExtraBundleFiles(extraBundleFiles).setObjcProvider(objcProvider).setInfoplistMerging(BundleSupport.infoPlistMerging(ruleContext,objcProvider,optionsProvider)).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).build();
+  String primaryBundleId=null;
+  String fallbackBundleId=null;
+  if (ruleContext.attributes().isAttributeValueExplicitlySpecified("bundle_id")) {
+    primaryBundleId=ruleContext.attributes().get("bundle_id",Type.STRING);
+  }
+ else {
+    fallbackBundleId=ruleContext.attributes().get("bundle_id",Type.STRING);
+  }
+  return new Bundling.Builder().setName(ruleContext.getLabel().getName()).setBundleDirFormat(bundleDirFormat).setExtraBundleFiles(extraBundleFiles).setObjcProvider(objcProvider).setInfoplistMerging(BundleSupport.infoPlistMerging(ruleContext,objcProvider,optionsProvider)).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).setPrimaryBundleId(primaryBundleId).setFallbackBundleId(fallbackBundleId).build();
 }
