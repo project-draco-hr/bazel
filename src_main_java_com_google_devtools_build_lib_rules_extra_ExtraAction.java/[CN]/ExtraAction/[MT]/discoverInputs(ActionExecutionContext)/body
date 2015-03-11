@@ -2,7 +2,10 @@
   Preconditions.checkState(discoversInputs(),this);
   if (getContext(actionExecutionContext.getExecutor()).isRemotable(getMnemonic(),isRemotable())) {
     if (shadowedAction.discoversInputs() && shadowedAction instanceof AbstractAction) {
-      updateInputs(((AbstractAction)shadowedAction).getInputFilesForExtraAction(actionExecutionContext));
+      Iterable<Artifact> additionalInputs=((AbstractAction)shadowedAction).getInputFilesForExtraAction(actionExecutionContext);
+      updateInputs(additionalInputs);
+      return ImmutableSet.copyOf(additionalInputs);
     }
   }
+  return null;
 }
