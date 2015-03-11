@@ -28,10 +28,18 @@
   if (!pathFragment.isAbsolute()) {
     throw new RepositoryFunctionException(new EvalException(rule.getLocation(),"In " + rule + " the 'path' attribute must specify an absolute path"),Transience.PERSISTENT);
   }
-  Path pathTarget=getOutputBase().getFileSystem().getPath(pathFragment);
-  Path symlinkPath=repositoryDirectory.getRelative(pathTarget.getBaseName());
-  if (createSymbolicLink(symlinkPath,pathTarget,env) == null) {
-    return null;
+  FileSystem fs=getOutputBase().getFileSystem();
+  Path targetDirectory=fs.getPath(pathFragment);
+  try {
+    for (    Path target : targetDirectory.getDirectoryEntries()) {
+      Path symlinkPath=repositoryDirectory.getRelative(target.getBaseName());
+      if (createSymbolicLink(symlinkPath,target,env) == null) {
+        return null;
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(e,Transience.TRANSIENT);
   }
   PathFragment buildFile=new PathFragment(mapper.get("build_file",Type.STRING));
   Path buildFileTarget=getWorkspace().getRelative(buildFile);
