@@ -8,7 +8,7 @@
   tagsAttribute.remove("manual");
   Pair<Collection<String>,Collection<String>> requiredExcluded=TestTargetUtils.sortTagsBySense(tagsAttribute);
   List<TransitiveInfoCollection> directTestsAndSuitesBuilder=new ArrayList<>();
-  for (  TransitiveInfoCollection dep : Iterables.concat(ruleContext.getPrerequisites("tests",Mode.TARGET),ruleContext.getPrerequisites("suites",Mode.TARGET),ruleContext.getPrerequisites("$implicit_tests",Mode.TARGET))) {
+  for (  TransitiveInfoCollection dep : Iterables.concat(getPrerequisites(ruleContext,"tests"),getPrerequisites(ruleContext,"suites"),getPrerequisites(ruleContext,"$implicit_tests"))) {
     if (dep.getProvider(TestProvider.class) != null) {
       List<String> tags=dep.getProvider(TestProvider.class).getTestTags();
       if (!TestTargetUtils.testMatchesFilters(tags,requiredExcluded.first,requiredExcluded.second,true)) {
