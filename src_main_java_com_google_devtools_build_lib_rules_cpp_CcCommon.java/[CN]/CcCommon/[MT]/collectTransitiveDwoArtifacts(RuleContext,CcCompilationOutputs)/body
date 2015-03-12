@@ -1,10 +1,10 @@
 {
   ImmutableList.Builder<TransitiveInfoCollection> deps=ImmutableList.<TransitiveInfoCollection>builder();
   deps.addAll(ruleContext.getPrerequisites("deps",Mode.TARGET));
-  if (ruleContext.getRule().getRuleClassObject().hasAttr("malloc",Type.LABEL)) {
+  if (ruleContext.attributes().has("malloc",Type.LABEL)) {
     deps.add(CppHelper.mallocForTarget(ruleContext));
   }
-  if (ruleContext.getRule().getRuleClassObject().hasAttr("implementation",Type.LABEL_LIST)) {
+  if (ruleContext.attributes().has("implementation",Type.LABEL_LIST)) {
     deps.addAll(ruleContext.getPrerequisites("implementation",Mode.TARGET));
   }
   return compilationOutputs == null ? DwoArtifactsCollector.emptyCollector() : DwoArtifactsCollector.transitiveCollector(compilationOutputs,deps.build());
