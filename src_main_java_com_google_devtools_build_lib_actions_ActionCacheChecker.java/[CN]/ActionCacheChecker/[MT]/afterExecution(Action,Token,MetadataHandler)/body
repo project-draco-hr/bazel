@@ -7,9 +7,11 @@
     if (!key.equals(execPath)) {
       actionCache.remove(key);
     }
-    Metadata metadata=metadataHandler.getMetadata(output);
-    Preconditions.checkState(metadata != null);
-    entry.addFile(output.getExecPath(),metadata);
+    if (!metadataHandler.artifactOmitted(output)) {
+      Metadata metadata=metadataHandler.getMetadata(output);
+      Preconditions.checkState(metadata != null);
+      entry.addFile(output.getExecPath(),metadata);
+    }
   }
   for (  Artifact input : action.getInputs()) {
     entry.addFile(input.getExecPath(),metadataHandler.getMetadataMaybe(input));
