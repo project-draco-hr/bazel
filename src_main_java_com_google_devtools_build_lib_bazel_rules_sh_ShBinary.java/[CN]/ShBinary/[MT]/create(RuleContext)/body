@@ -6,9 +6,8 @@
   }
   Artifact symlink=ruleContext.createOutputArtifact();
   Artifact src=srcs.get(0);
-  Artifact executableScript=getExecutableScript(ruleContext,src);
-  ruleContext.registerAction(new ExecutableSymlinkAction(ruleContext.getActionOwner(),executableScript,symlink));
-  NestedSet<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(src).add(executableScript).add(symlink).build();
+  ruleContext.registerAction(new ExecutableSymlinkAction(ruleContext.getActionOwner(),src,symlink));
+  NestedSet<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(src).add(symlink).build();
   Runfiles runfiles=new Runfiles.Builder().addTransitiveArtifacts(filesToBuild).addRunfiles(ruleContext,RunfilesProvider.DEFAULT_RUNFILES).build();
   RunfilesSupport runfilesSupport=RunfilesSupport.withExecutable(ruleContext,runfiles,symlink);
   return new RuleConfiguredTargetBuilder(ruleContext).setFilesToBuild(filesToBuild).setRunfilesSupport(runfilesSupport,symlink).addProvider(RunfilesProvider.class,RunfilesProvider.simple(runfiles)).build();
