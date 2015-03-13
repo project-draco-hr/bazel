@@ -2,5 +2,9 @@
   if (ruleContext.attributes().getAttributeDefinition("binary") == null) {
     return NestedSetBuilder.emptySet(Order.STABLE_ORDER);
   }
-  return ruleContext.getPrerequisite("binary",Mode.TARGET,ObjcProvider.class).get(ObjcProvider.LINKED_BINARY);
+  NestedSetBuilder<Artifact> linkedBinaries=NestedSetBuilder.stableOrder();
+  for (  ObjcProvider provider : ruleContext.getPrerequisites("binary",Mode.DONT_CHECK,ObjcProvider.class)) {
+    linkedBinaries.addTransitive(provider.get(ObjcProvider.LINKED_BINARY));
+  }
+  return linkedBinaries.build();
 }

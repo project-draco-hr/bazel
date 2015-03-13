@@ -1,3 +1,7 @@
 {
-  return new ObjcCommon.Builder(ruleContext).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).addDepObjcProviders(ruleContext.getPrerequisites("binary",Mode.TARGET,ObjcProvider.class)).build();
+  ObjcCommon.Builder builder=new ObjcCommon.Builder(ruleContext).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext));
+  for (  Attribute attribute : dependencyAttributes) {
+    builder.addDepObjcProviders(ruleContext.getPrerequisites(attribute.getName(),attribute.getAccessMode(),ObjcProvider.class));
+  }
+  return builder.build();
 }
