@@ -1,30 +1,12 @@
 {
   Executor executor=actionExecutionContext.getExecutor();
-  Collection<Artifact> initialResult;
+  Collection<Artifact> returnValue=null;
   try {
-    initialResult=executor.getContext(CppCompileActionContext.class).findAdditionalInputs(this,actionExecutionContext);
+    returnValue=executor.getContext(CppCompileActionContext.class).findAdditionalInputs(this,actionExecutionContext);
   }
  catch (  ExecException e) {
     throw e.toActionExecutionException("Include scanning of rule '" + getOwner().getLabel() + "'",executor.getVerboseFailures(),this);
   }
-  if (initialResult == null) {
-    this.additionalInputs=ImmutableList.of();
-    return null;
-  }
-  this.additionalInputs=initialResult;
-  Collection<Artifact> result=new HashSet<>();
-  ArtifactResolver artifactResolver=executor.getContext(IncludeScanningContext.class).getArtifactResolver();
-  for (  Artifact artifact : initialResult) {
-    result.addAll(includeResolver.getInputsForIncludedFile(artifact,artifactResolver));
-  }
-  for (  Artifact artifact : getInputs()) {
-    result.addAll(includeResolver.getInputsForIncludedFile(artifact,artifactResolver));
-  }
-  if (result.isEmpty()) {
-    result=initialResult;
-  }
- else {
-    result.addAll(initialResult);
-  }
-  return result;
+  this.additionalInputs=returnValue == null ? ImmutableList.<Artifact>of() : returnValue;
+  return returnValue;
 }
