@@ -1,0 +1,54 @@
+{
+  ImmutableMap.Builder<String,Integer> attributes=new ImmutableMap.Builder<>();
+  try (SeekableByteChannel input=Files.newByteChannel(zipFile)){
+    long offset=input.size() - 4;
+    while (offset >= 0) {
+      input.position(offset);
+      int signature=readBytes(4,input);
+      if (signature == 0x06054b50) {
+        break;
+      }
+ else       if (signature == 0x06064b50) {
+        throw new IOException("Zip64 format not supported: " + zipFile);
+      }
+      offset--;
+    }
+    if (offset < 0) {
+      throw new IOException();
+    }
+    input.position(input.position() + 2 + 2);
+    int entryCount=readBytes(2,input);
+    input.position(input.position() + 2);
+    input.position(input.position() + 4);
+    int centralDirectoryStartOffset=readBytes(4,input);
+    if (0xffffffff == centralDirectoryStartOffset) {
+      throw new IOException("Zip64 format not supported.");
+    }
+    input.position(centralDirectoryStartOffset);
+    int entriesFound=0;
+    while ((entriesFound < entryCount) && (readBytes(4,input) == 0x02014b50)) {
+      int versionMadeBy=readBytes(2,input);
+      input.position(input.position() + 2 + 2+ 2+ 2+ 2+ 4+ 4+ 4);
+      int filenameLength=readBytes(2,input);
+      int extraFieldLength=readBytes(2,input);
+      int fileCommentLength=readBytes(2,input);
+      input.position(input.position() + 2 + 2);
+      int externalFileAttributes=readBytes(4,input);
+      input.position(input.position() + 4);
+      ByteBuffer filenameBuffer=ByteBuffer.allocate(filenameLength);
+      if (filenameLength != input.read(filenameBuffer)) {
+        throw new IOException(String.format("Could not read file name (length %d) in central directory record",filenameLength));
+      }
+      input.position(input.position() + extraFieldLength + fileCommentLength);
+      entriesFound++;
+      if ((versionMadeBy >> 8) == 3) {
+        String filename=new String(filenameBuffer.array(),StandardCharsets.UTF_8);
+        attributes.put(filename,externalFileAttributes);
+      }
+    }
+    if (entriesFound != entryCount) {
+      System.err.printf("WARNING: Expected %d entries in central directory record in '%s', but found %d\n",entryCount,zipFile,entriesFound);
+    }
+  }
+   return attributes.build();
+}

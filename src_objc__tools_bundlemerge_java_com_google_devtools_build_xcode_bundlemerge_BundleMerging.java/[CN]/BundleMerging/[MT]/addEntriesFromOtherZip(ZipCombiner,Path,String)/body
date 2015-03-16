@@ -1,11 +1,16 @@
 {
+  Map<String,Integer> externalFileAttributes=ZipFiles.unixExternalFileAttributes(sourceZip);
   try (ZipInputStream zipIn=new ZipInputStream(Files.newInputStream(sourceZip))){
     while (true) {
       ZipEntry zipInEntry=zipIn.getNextEntry();
       if (zipInEntry == null) {
         break;
       }
-      combiner.addFile(entryNamesPrefix + zipInEntry.getName(),DOS_EPOCH,zipIn,ZipInputEntry.DEFAULT_DIRECTORY_ENTRY_INFO);
+      Integer externalFileAttr=externalFileAttributes.get(zipInEntry.getName());
+      if (externalFileAttr == null) {
+        externalFileAttr=ZipInputEntry.DEFAULT_EXTERNAL_FILE_ATTRIBUTE;
+      }
+      combiner.addFile(entryNamesPrefix + zipInEntry.getName(),DOS_EPOCH,zipIn,ZipInputEntry.DEFAULT_DIRECTORY_ENTRY_INFO.withExternalFileAttribute(externalFileAttr));
     }
   }
  }
