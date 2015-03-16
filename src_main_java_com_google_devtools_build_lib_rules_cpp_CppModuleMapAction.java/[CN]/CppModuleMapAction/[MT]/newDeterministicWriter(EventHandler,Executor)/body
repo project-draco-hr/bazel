@@ -7,14 +7,15 @@
       String leadingPeriods=moduleMapHomeIsCwd ? "" : Strings.repeat("../",segmentsToExecPath);
       content.append("module \"").append(cppModuleMap.getName()).append("\" {\n");
       content.append("  export *\n");
-      for (      Artifact artifact : privateHeaders) {
-        appendHeader(content,"private",artifact.getExecPath(),leadingPeriods,true);
-      }
+      HashSet<PathFragment> deduper=new HashSet<>();
       for (      Artifact artifact : publicHeaders) {
-        appendHeader(content,"",artifact.getExecPath(),leadingPeriods,true);
+        appendHeader(content,"",artifact.getExecPath(),leadingPeriods,true,deduper);
+      }
+      for (      Artifact artifact : privateHeaders) {
+        appendHeader(content,"private",artifact.getExecPath(),leadingPeriods,true,deduper);
       }
       for (      PathFragment additionalExportedHeader : additionalExportedHeaders) {
-        appendHeader(content,"",additionalExportedHeader,leadingPeriods,false);
+        appendHeader(content,"",additionalExportedHeader,leadingPeriods,false,deduper);
       }
       for (      CppModuleMap dep : dependencies) {
         content.append("  use \"").append(dep.getName()).append("\"\n");
