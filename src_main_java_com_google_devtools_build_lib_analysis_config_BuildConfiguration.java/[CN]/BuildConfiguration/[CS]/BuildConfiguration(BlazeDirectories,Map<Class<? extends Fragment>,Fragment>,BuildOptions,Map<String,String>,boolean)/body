@@ -7,18 +7,9 @@
   this.mnemonic=buildMnemonic();
   String outputDirName=(options.shortName != null) ? options.shortName : mnemonic;
   this.shortName=buildShortName(outputDirName);
-  this.executables=collectExecutables();
-  Path execRoot=directories.getExecRoot();
-  Path outputDir=directories.getOutputPath().getRelative(outputDirName);
-  this.outputDirectory=Root.asDerivedRoot(execRoot,outputDir);
-  this.binDirectory=Root.asDerivedRoot(execRoot,outputDir.getRelative("bin"));
-  this.genfilesDirectory=Root.asDerivedRoot(execRoot,outputDir.getRelative("genfiles"));
-  this.coverageMetadataDirectory=Root.asDerivedRoot(execRoot,outputDir.getRelative("coverage-metadata"));
-  this.testLogsDirectory=Root.asDerivedRoot(execRoot,outputDir.getRelative("testlogs"));
-  this.includeDirectory=Root.asDerivedRoot(execRoot,outputDir.getRelative(BlazeDirectories.RELATIVE_INCLUDE_DIR));
-  this.middlemanDirectory=Root.middlemanRoot(execRoot,outputDir);
-  this.binFragment=getBinDirectory().getExecPath();
-  this.genfilesFragment=getGenfilesDirectory().getExecPath();
+  this.platformName=buildPlatformName();
+  this.shExecutable=collectExecutables().get("sh");
+  this.outputRoots=new OutputRoots(directories,outputDirName);
   ImmutableSet.Builder<Label> coverageLabelsBuilder=ImmutableSet.builder();
   ImmutableSet.Builder<Label> coverageReportGeneratorLabelsBuilder=ImmutableSet.builder();
   for (  Fragment fragment : fragments.values()) {
@@ -27,11 +18,6 @@
   }
   this.coverageLabels=coverageLabelsBuilder.build();
   this.coverageReportGeneratorLabels=coverageReportGeneratorLabelsBuilder.build();
-  StringBuilder platformNameBuilder=new StringBuilder();
-  for (  Fragment fragment : fragments.values()) {
-    platformNameBuilder.append(fragment.getPlatformName());
-  }
-  this.platformName=platformNameBuilder.toString();
   this.defaultShellEnvironment=setupShellEnvironment();
   this.transitiveOptionsMap=computeOptionsMap(buildOptions,fragments.values());
   ImmutableMap.Builder<String,String> globalMakeEnvBuilder=ImmutableMap.builder();
@@ -40,9 +26,9 @@
   }
   globalMakeEnvBuilder.put("COMPILATION_MODE",options.compilationMode.toString());
   globalMakeEnvBuilder.put("BINMODE","-" + ((options.compilationMode == CompilationMode.FASTBUILD) ? "dbg" : options.compilationMode.toString()));
-  globalMakeEnvBuilder.put("BINDIR",binFragment.getPathString());
+  globalMakeEnvBuilder.put("BINDIR",getBinDirectory().getExecPath().getPathString());
   globalMakeEnvBuilder.put("INCDIR",getIncludeDirectory().getExecPath().getPathString());
-  globalMakeEnvBuilder.put("GENDIR",genfilesFragment.getPathString());
+  globalMakeEnvBuilder.put("GENDIR",getGenfilesDirectory().getExecPath().getPathString());
   globalMakeEnv=globalMakeEnvBuilder.build();
   cacheKey=computeCacheKey(directories,fragmentsMap,this.buildOptions,this.clientEnvironment);
   shortCacheKey=shortName + "-" + Fingerprint.md5Digest(cacheKey);
