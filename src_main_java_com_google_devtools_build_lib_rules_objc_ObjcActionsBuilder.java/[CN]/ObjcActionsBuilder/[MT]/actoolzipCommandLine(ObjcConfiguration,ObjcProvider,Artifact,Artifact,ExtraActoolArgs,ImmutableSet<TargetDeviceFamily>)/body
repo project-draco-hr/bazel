@@ -1,0 +1,12 @@
+{
+  return new CommandLine(){
+    @Override public Iterable<String> arguments(){
+      ImmutableList.Builder<String> args=new ImmutableList.Builder<String>().add(zipOutput.getExecPathString()).add("").add(IosSdkCommands.ACTOOL_PATH).add("--platform").add(objcConfiguration.getPlatform().getLowerCaseNameInPlist()).add("--output-partial-info-plist").add(partialInfoPlist.getExecPathString()).add("--minimum-deployment-target").add(objcConfiguration.getMinimumOs());
+      for (      TargetDeviceFamily targetDeviceFamily : families) {
+        args.add("--target-device").add(targetDeviceFamily.name().toLowerCase(Locale.US));
+      }
+      return args.addAll(PathFragment.safePathStrings(provider.get(XCASSETS_DIR))).addAll(extraActoolArgs).build();
+    }
+  }
+;
+}
