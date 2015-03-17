@@ -1,13 +1,10 @@
 {
-  RecursivePackageProvider packageProvider;
-  Predicate<Label> labelFilter;
-  TargetPatternEvaluator evaluator;
   SkyFunction.Environment env=ruleContext.getAnalysisEnvironment().getSkyframeEnv();
   Pair<ImmutableMap<PackageIdentifier,Package>,Set<Label>> closureInfo=constructPackageMap(env,scope);
   ImmutableMap<PackageIdentifier,Package> packageMap=closureInfo.first;
   Set<Label> validTargets=closureInfo.second;
-  packageProvider=new PreloadedMapPackageProvider(packageMap,validTargets);
-  evaluator=new SkyframeEnvTargetPatternEvaluator(env);
-  labelFilter=Predicates.in(validTargets);
+  PackageProvider packageProvider=new PreloadedMapPackageProvider(packageMap,validTargets);
+  TargetPatternEvaluator evaluator=new SkyframeEnvTargetPatternEvaluator(env);
+  Predicate<Label> labelFilter=Predicates.in(validTargets);
   return doQuery(queryOptions,packageProvider,labelFilter,evaluator,query,ruleContext);
 }

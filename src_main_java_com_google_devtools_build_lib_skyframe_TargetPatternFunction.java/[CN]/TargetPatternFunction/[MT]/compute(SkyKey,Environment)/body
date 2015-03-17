@@ -2,14 +2,15 @@
   TargetPatternValue.TargetPattern patternKey=((TargetPatternValue.TargetPattern)key.argument());
   TargetPattern.Parser parser=new TargetPattern.Parser(patternKey.getOffset());
   try {
-    Resolver resolver=new Resolver(env,patternKey.getPolicy(),pkgPath);
+    EnvironmentBackedRecursivePackageProvider provider=new EnvironmentBackedRecursivePackageProvider(env);
+    RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,env.getListener(),patternKey.getPolicy(),pkgPath.get());
     TargetPattern resolvedPattern=parser.parse(patternKey.getPattern());
     return new TargetPatternValue(resolvedPattern.eval(resolver));
   }
  catch (  TargetParsingException e) {
     throw new TargetPatternFunctionException(e);
   }
-catch (  TargetPatternResolver.MissingDepException e) {
+catch (  MissingDepException e) {
     return null;
   }
 }

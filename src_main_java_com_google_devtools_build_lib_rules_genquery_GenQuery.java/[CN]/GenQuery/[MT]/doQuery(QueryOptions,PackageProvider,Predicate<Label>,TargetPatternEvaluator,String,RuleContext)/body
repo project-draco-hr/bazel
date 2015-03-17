@@ -1,0 +1,31 @@
+{
+  BlazeQueryEvalResult<Target> queryResult;
+  OutputFormatter formatter;
+  try {
+    Set<Setting> settings=queryOptions.toSettings();
+    settings.add(Setting.NO_NODEP_DEPS);
+    ImmutableList<OutputFormatter> outputFormatters=QUERY_OUTPUT_FORMATTERS.get(ruleContext.getAnalysisEnvironment().getSkyframeEnv());
+    formatter=OutputFormatter.getFormatter(Preconditions.checkNotNull(outputFormatters),queryOptions.outputFormat);
+    queryResult=(BlazeQueryEvalResult<Target>)AbstractBlazeQueryEnvironment.newQueryEnvironment(null,null,packageProvider,evaluator,false,ruleContext.attributes().get("strict",Type.BOOLEAN),QueryOutputUtils.orderResults(queryOptions,formatter),ImmutableList.<String>of(),4,labelFilter,getEventHandler(ruleContext),settings,ImmutableList.<QueryFunction>of(),null).evaluateQuery(query);
+  }
+ catch (  SkyframeRestartQueryException e) {
+    return null;
+  }
+catch (  QueryException e) {
+    ruleContext.ruleError("query failed: " + e.getMessage());
+    return null;
+  }
+  ByteArrayOutputStream outputStream=new ByteArrayOutputStream();
+  PrintStream printStream=new PrintStream(outputStream);
+  try {
+    QueryOutputUtils.output(queryOptions,queryResult,formatter,printStream);
+  }
+ catch (  ClosedByInterruptException e) {
+    throw new InterruptedException(e.getMessage());
+  }
+catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  printStream.flush();
+  return outputStream.toByteArray();
+}
