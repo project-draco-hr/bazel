@@ -1,17 +1,29 @@
 {
   Set<Label> missingEnvironments=new LinkedHashSet<>();
+  Collection<Label> actualEnvironmentLabels=actualEnvironments.getEnvironments();
   for (  EnvironmentWithGroup expectedEnv : expectedEnvironments.getGroupedEnvironments()) {
     EnvironmentGroup group=expectedEnv.group();
     Label environment=expectedEnv.environment();
-    if (!actualEnvironments.getEnvironments().contains(environment) && (actualEnvironments.getGroups().contains(group) || !group.isDefault(environment))) {
+    boolean isSatisfied=false;
+    if (actualEnvironments.getGroups().contains(group)) {
+      if (actualEnvironmentLabels.contains(environment) || intersect(actualEnvironmentLabels,group.getFulfillers(environment))) {
+        isSatisfied=true;
+      }
+    }
+ else {
+      if (group.isDefault(environment) || intersect(group.getFulfillers(environment),group.getDefaults())) {
+        isSatisfied=true;
+      }
+    }
+    if (!isSatisfied) {
       missingEnvironments.add(environment);
     }
   }
   for (  EnvironmentGroup group : actualEnvironments.getGroups()) {
     if (!expectedEnvironments.getGroups().contains(group)) {
-      for (      Label defaultEnv : group.getDefaults()) {
-        if (!actualEnvironments.getEnvironments().contains(defaultEnv)) {
-          missingEnvironments.add(defaultEnv);
+      for (      Label expectedDefault : group.getDefaults()) {
+        if (!actualEnvironmentLabels.contains(expectedDefault) && !intersect(actualEnvironmentLabels,group.getFulfillers(expectedDefault))) {
+          missingEnvironments.add(expectedDefault);
         }
       }
     }

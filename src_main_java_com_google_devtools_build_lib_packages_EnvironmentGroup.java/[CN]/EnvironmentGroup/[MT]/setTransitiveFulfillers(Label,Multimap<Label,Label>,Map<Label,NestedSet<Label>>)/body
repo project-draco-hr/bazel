@@ -1,0 +1,20 @@
+{
+  if (transitiveFulfillers.containsKey(env)) {
+    return transitiveFulfillers.get(env);
+  }
+ else   if (!directFulfillers.containsKey(env)) {
+    NestedSet<Label> emptySet=NestedSetBuilder.emptySet(Order.STABLE_ORDER);
+    transitiveFulfillers.put(env,emptySet);
+    return emptySet;
+  }
+ else {
+    NestedSetBuilder<Label> set=NestedSetBuilder.stableOrder();
+    for (    Label fulfillingEnv : directFulfillers.get(env)) {
+      set.add(fulfillingEnv);
+      set.addTransitive(setTransitiveFulfillers(fulfillingEnv,directFulfillers,transitiveFulfillers));
+    }
+    NestedSet<Label> builtSet=set.build();
+    transitiveFulfillers.put(env,builtSet);
+    return builtSet;
+  }
+}
