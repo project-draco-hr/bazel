@@ -6,18 +6,21 @@
     }
     return null;
   }
-  ActionCache.Entry entry=null;
+  Iterable<Artifact> actionInputs=action.getInputs();
+  ActionCache.Entry entry=getCacheEntry(action);
   boolean inputsKnown=action.inputsKnown();
-  if (!inputsKnown) {
-    Preconditions.checkState(action.discoversInputs());
-    entry=getCacheEntry(action);
-    boolean ranSuccessfully=updateActionInputs(action,entry,resolver);
-    if (!ranSuccessfully) {
+  if (entry != null && !entry.isCorrupted() && !inputsKnown) {
+    Preconditions.checkState(action.discoversInputs(),action);
+    actionInputs=resolveCachedActionInputs(action,entry,resolver);
+    if (actionInputs == null) {
       return Token.NEED_TO_RERUN;
     }
   }
-  if (mustExecute(action,entry,handler,metadataHandler)) {
+  if (mustExecute(action,entry,handler,metadataHandler,actionInputs)) {
     return new Token(getKeyString(action));
+  }
+  if (!inputsKnown) {
+    action.updateInputs(actionInputs);
   }
   return null;
 }

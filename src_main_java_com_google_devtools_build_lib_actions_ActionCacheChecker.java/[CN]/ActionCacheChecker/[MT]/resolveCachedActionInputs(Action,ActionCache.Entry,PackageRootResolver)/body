@@ -1,7 +1,6 @@
 {
-  if (entry == null || entry.isCorrupted()) {
-    return true;
-  }
+  Preconditions.checkNotNull(entry,action);
+  Preconditions.checkState(!entry.isCorrupted(),action);
   List<PathFragment> outputs=new ArrayList<>();
   for (  Artifact output : action.getOutputs()) {
     outputs.add(output.getExecPath());
@@ -13,5 +12,5 @@
       inputs.add(execPath);
     }
   }
-  return action.updateInputsFromCache(artifactResolver,resolver,inputs);
+  return action.resolveInputsFromCache(artifactResolver,resolver,inputs);
 }
