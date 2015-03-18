@@ -1,0 +1,22 @@
+{
+  HttpDescriptor descriptor=(HttpDescriptor)skyKey.argument();
+  try {
+    FileSystemUtils.createDirectoryAndParents(descriptor.outputDirectory);
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(e,SkyFunctionException.Transience.TRANSIENT);
+  }
+  FileValue repositoryValue=RepositoryFunction.getRepositoryDirectory(descriptor.outputDirectory,env);
+  if (repositoryValue == null) {
+    System.out.println("Returning null");
+    return null;
+  }
+  Path archive;
+  try {
+    archive=new HttpDownloader(descriptor.url,descriptor.sha256,descriptor.outputDirectory).download();
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(new IOException("Error downloading from " + descriptor.url + " to "+ descriptor.outputDirectory+ ": "+ e.getMessage()),SkyFunctionException.Transience.TRANSIENT);
+  }
+  return new RepositoryValue(archive,repositoryValue);
+}

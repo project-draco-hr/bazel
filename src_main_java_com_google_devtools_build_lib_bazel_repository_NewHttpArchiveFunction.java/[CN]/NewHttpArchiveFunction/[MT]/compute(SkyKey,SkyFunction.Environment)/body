@@ -1,0 +1,30 @@
+{
+  RepositoryName repositoryName=(RepositoryName)skyKey.argument();
+  Rule rule=RepositoryFunction.getRule(repositoryName,NewHttpArchiveRule.NAME,env);
+  if (rule == null) {
+    return null;
+  }
+  Path outputDirectory=getOutputBase().getRelative(ExternalPackage.NAME).getRelative(rule.getName());
+  RepositoryValue downloadedFileValue;
+  try {
+    downloadedFileValue=(RepositoryValue)env.getValueOrThrow(HttpDownloadFunction.key(rule,outputDirectory),IOException.class);
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(e,SkyFunctionException.Transience.PERSISTENT);
+  }
+  if (downloadedFileValue == null) {
+    return null;
+  }
+  Path decompressedDirectory;
+  try {
+    decompressedDirectory=DecompressorFactory.create(rule.getTargetKind(),rule.getName(),downloadedFileValue.getPath()).decompress();
+  }
+ catch (  DecompressorFactory.DecompressorException e) {
+    throw new RepositoryFunctionException(new IOException(e.getMessage()),SkyFunctionException.Transience.TRANSIENT);
+  }
+  NewLocalRepositoryFunction.createWorkspaceFile(decompressedDirectory,rule);
+  if (NewLocalRepositoryFunction.createBuildFile(rule,getWorkspace(),decompressedDirectory,env) == null) {
+    return null;
+  }
+  return new RepositoryValue(decompressedDirectory,downloadedFileValue.getRepositoryDirectory());
+}
