@@ -10,7 +10,17 @@
   if (!pathFragment.isAbsolute()) {
     throw new RepositoryFunctionException(new EvalException(rule.getLocation(),"In " + rule + " the 'path' attribute must specify an absolute path"),Transience.PERSISTENT);
   }
-  Path repositoryPath=getOutputBase().getFileSystem().getPath(pathFragment);
+  Path repositoryPath=getExternalRepositoryDirectory().getRelative(rule.getName());
+  try {
+    FileSystemUtils.createDirectoryAndParents(repositoryPath.getParentDirectory());
+    if (repositoryPath.exists()) {
+      repositoryPath.delete();
+    }
+    repositoryPath.createSymbolicLink(pathFragment);
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(new IOException("Could not create symlink to repository " + pathFragment + ": "+ e.getMessage()),Transience.TRANSIENT);
+  }
   FileValue repositoryValue=getRepositoryDirectory(repositoryPath,env);
   if (repositoryValue == null) {
     return null;

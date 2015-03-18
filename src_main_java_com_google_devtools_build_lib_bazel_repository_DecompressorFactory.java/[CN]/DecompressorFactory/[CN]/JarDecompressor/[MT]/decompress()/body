@@ -1,11 +1,10 @@
 {
-  Path destinationDirectory=archiveFile.getParentDirectory().getRelative("repository");
   String baseName=archiveFile.getBaseName();
   try {
-    FileSystemUtils.createDirectoryAndParents(destinationDirectory);
-    Path workspaceFile=destinationDirectory.getRelative("WORKSPACE");
+    FileSystemUtils.createDirectoryAndParents(repositoryDir);
+    Path workspaceFile=repositoryDir.getRelative("WORKSPACE");
     FileSystemUtils.writeContent(workspaceFile,Charset.forName("UTF-8"),"# DO NOT EDIT: automatically generated WORKSPACE file for " + targetKind + " rule "+ targetName);
-    Path jarDirectory=destinationDirectory.getRelative("jar");
+    Path jarDirectory=repositoryDir.getRelative("jar");
     FileSystemUtils.createDirectoryAndParents(jarDirectory);
     Path jarSymlink=jarDirectory.getRelative(baseName);
     if (!jarSymlink.exists()) {
@@ -15,7 +14,7 @@
     FileSystemUtils.writeLinesAs(buildFile,Charset.forName("UTF-8"),"# DO NOT EDIT: automatically generated BUILD file for " + targetKind + " rule "+ targetName,"java_import(","    name = 'jar',","    jars = ['" + baseName + "'],","    visibility = ['//visibility:public']",")");
   }
  catch (  IOException e) {
-    throw new DecompressorException(e.getMessage());
+    throw new DecompressorException("Error auto-creating jar repo structure: " + e.getMessage());
   }
-  return destinationDirectory;
+  return repositoryDir;
 }
