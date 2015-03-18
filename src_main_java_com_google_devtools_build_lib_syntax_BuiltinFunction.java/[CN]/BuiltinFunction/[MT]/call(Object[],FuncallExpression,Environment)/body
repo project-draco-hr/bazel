@@ -1,0 +1,55 @@
+{
+  final Location loc=(ast == null) ? location : ast.getLocation();
+  if (extraArgs != null) {
+    int i=args.length - extraArgs.length;
+    for (    BuiltinFunction.ExtraArgKind extraArg : extraArgs) {
+switch (extraArg) {
+case LOCATION:
+        args[i]=loc;
+      break;
+case SYNTAX_TREE:
+    args[i]=ast;
+  break;
+case ENVIRONMENT:
+args[i]=env;
+break;
+}
+i++;
+}
+}
+try {
+return invokeMethod.invoke(this,args);
+}
+ catch (InvocationTargetException x) {
+Throwable e=x.getCause();
+if (e instanceof EvalException) {
+throw (EvalException)e;
+}
+ else if (e instanceof InterruptedException) {
+throw (InterruptedException)e;
+}
+ else if (e instanceof ConversionException || e instanceof ClassCastException || e instanceof ExecutionException|| e instanceof IllegalStateException) {
+throw new EvalException(loc,e.getMessage(),e);
+}
+ else if (e instanceof IllegalArgumentException) {
+throw new EvalException(loc,String.format("%s\nin call to %s",e.getMessage(),this),e);
+}
+ else {
+throw badCallException(loc,e,args);
+}
+}
+catch (IllegalArgumentException e) {
+final int len=args.length - ((extraArgs == null) ? 0 : extraArgs.length);
+final Class<?>[] types=invokeMethod.getParameterTypes();
+for (int i=0; i < args.length; i++) {
+if (args[i] != null && !types[i].isAssignableFrom(args[i].getClass())) {
+final String paramName=i < len ? signature.getSignature().getNames().get(i) : extraArgs[i - len].name();
+throw new EvalException(loc,String.format("expected %s for '%s' while calling %s but got %s instead",EvalUtils.getDataTypeNameFromClass(types[i]),paramName,getName(),EvalUtils.getDataTypeName(args[i])),e);
+}
+}
+throw badCallException(loc,e,args);
+}
+catch (IllegalAccessException e) {
+throw badCallException(loc,e,args);
+}
+}

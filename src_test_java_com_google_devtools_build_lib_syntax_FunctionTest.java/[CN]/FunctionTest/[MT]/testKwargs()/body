@@ -1,7 +1,9 @@
 {
-  List<Statement> input=parseFileForSkylark("def foo(a, b = 'b', c = 'c'):\n" + "  return a + b + c\n" + "args = {'a': 'x', 'c': 'z'}\n"+ "v1 = foo(**args)\n"+ "v2 = foo('x', **{'b': 'y'})\n"+ "v3 = foo(c = 'z', a = 'x', **{'b': 'y'})");
+  List<Statement> input=parseFileForSkylark("def foo(a, b = 'b', *, c, d = 'd'):\n" + "  return a + b + c + d\n" + "args = {'a': 'x', 'c': 'z'}\n"+ "v1 = foo(**args)\n"+ "v2 = foo('x', c = 'c', d = 'e', **{'b': 'y'})\n"+ "v3 = foo(c = 'z', a = 'x', **{'b': 'y', 'd': 'f'})");
   exec(input,env);
-  assertEquals("xbz",env.lookup("v1"));
-  assertEquals("xyc",env.lookup("v2"));
-  assertEquals("xyz",env.lookup("v3"));
+  assertEquals("xbzd",env.lookup("v1"));
+  assertEquals("xyce",env.lookup("v2"));
+  assertEquals("xyzf",env.lookup("v3"));
+  UserDefinedFunction foo=(UserDefinedFunction)env.lookup("foo");
+  assertEquals("foo(a, b = \"b\", *, d = \"d\", c)",foo.toString());
 }

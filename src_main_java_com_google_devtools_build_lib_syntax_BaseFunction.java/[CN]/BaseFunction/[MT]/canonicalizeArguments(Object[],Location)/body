@@ -1,0 +1,15 @@
+{
+  List<SkylarkType> types=getEnforcedArgumentTypes();
+  if (types == null) {
+    return;
+  }
+  List<String> names=signature.getSignature().getNames();
+  int length=types.size();
+  for (int i=0; i < length; i++) {
+    Object value=arguments[i];
+    SkylarkType type=types.get(i);
+    if (value != null && type != null && !type.contains(value)) {
+      throw new EvalException(loc,String.format("expected %s for '%s' while calling %s but got %s instead: %s",type,names.get(i),getName(),EvalUtils.getDataTypeName(value,true),value));
+    }
+  }
+}

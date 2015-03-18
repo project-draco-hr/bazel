@@ -1,0 +1,21 @@
+{
+  for (  Field field : type.getDeclaredFields()) {
+    if (field.isAnnotationPresent(SkylarkSignature.class)) {
+      field.setAccessible(true);
+      SkylarkSignature annotation=field.getAnnotation(SkylarkSignature.class);
+      Object value=null;
+      try {
+        value=Preconditions.checkNotNull(field.get(null),String.format("Error while trying to configure %s.%s: its value is null",type,field));
+        if (BaseFunction.class.isAssignableFrom(field.getType())) {
+          BaseFunction function=(BaseFunction)value;
+          if (!function.isConfigured()) {
+            function.configure(annotation);
+          }
+        }
+      }
+ catch (      IllegalAccessException e) {
+        throw new RuntimeException(String.format("Error while trying to configure %s.%s (value %s)",type,field,value),e);
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  invokeMethod=findMethod("invoke");
+  int arguments=signature.getSignature().getShape().getArguments();
+  innerArgumentCount=arguments + (extraArgs == null ? 0 : extraArgs.length);
+  Class<?>[] parameterTypes=invokeMethod.getParameterTypes();
+  Preconditions.checkArgument(innerArgumentCount == parameterTypes.length,getName());
+  if (enforcedArgumentTypes != null) {
+    for (int i=0; i < arguments; i++) {
+      SkylarkType enforcedType=enforcedArgumentTypes.get(i);
+      if (enforcedType != null) {
+        Class<?> parameterType=parameterTypes[i];
+        String msg=String.format("fun %s, param %s, enforcedType: %s (%s); parameterType: %s",getName(),signature.getSignature().getNames().get(i),enforcedType,enforcedType.getClass(),parameterType);
+        if (enforcedType instanceof SkylarkType.Simple) {
+          Preconditions.checkArgument(enforcedType == SkylarkType.of(parameterType),msg);
+          enforcedArgumentTypes.set(i,null);
+        }
+ else         if (enforcedType instanceof SkylarkType.Combination) {
+          Preconditions.checkArgument(enforcedType.getType() == parameterType,msg);
+        }
+ else {
+          Preconditions.checkArgument(parameterType == Object.class || parameterType == null,msg);
+        }
+      }
+    }
+  }
+  enforcedArgumentTypes=FunctionSignature.<SkylarkType>valueListOrNull(enforcedArgumentTypes);
+}

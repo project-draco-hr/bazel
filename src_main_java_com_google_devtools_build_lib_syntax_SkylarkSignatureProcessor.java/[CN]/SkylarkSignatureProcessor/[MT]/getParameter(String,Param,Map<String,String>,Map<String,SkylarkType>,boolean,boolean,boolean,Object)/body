@@ -1,0 +1,48 @@
+{
+  @Nullable SkylarkType officialType=null;
+  @Nullable SkylarkType enforcedType=null;
+  if (star && param == null) {
+    return new Parameter.Star<>(null);
+  }
+  if (param.type() != Object.class) {
+    if (param.type() == List.class) {
+      officialType=SkylarkType.of(SkylarkList.class,param.generic1());
+      enforcedType=SkylarkType.Union.of(SkylarkType.of(List.class),SkylarkType.of(SkylarkList.class,param.generic1()));
+      Preconditions.checkArgument(enforcedType instanceof SkylarkType.Union);
+    }
+ else     if (param.generic1() != Object.class) {
+      officialType=SkylarkType.of(param.type(),param.generic1());
+      enforcedType=officialType;
+    }
+ else {
+      officialType=SkylarkType.of(param.type());
+      enforcedType=officialType;
+    }
+    if (param.callbackEnabled()) {
+      officialType=SkylarkType.Union.of(officialType,SkylarkType.SkylarkFunctionType.of(name,officialType));
+      enforcedType=SkylarkType.Union.of(enforcedType,SkylarkType.SkylarkFunctionType.of(name,enforcedType));
+    }
+    if (param.noneable()) {
+      officialType=SkylarkType.Union.of(officialType,SkylarkType.NONE);
+      enforcedType=SkylarkType.Union.of(enforcedType,SkylarkType.NONE);
+    }
+  }
+  if (enforcedTypes != null) {
+    enforcedTypes.put(param.name(),enforcedType);
+  }
+  if (paramDoc != null) {
+    paramDoc.put(param.name(),param.doc());
+  }
+  if (starStar) {
+    return new Parameter.StarStar<>(param.name(),officialType);
+  }
+ else   if (star) {
+    return new Parameter.Star<>(param.name(),officialType);
+  }
+ else   if (mandatory) {
+    return new Parameter.Mandatory<>(param.name(),officialType);
+  }
+ else {
+    return new Parameter.Optional<>(param.name(),officialType,defaultValue);
+  }
+}
