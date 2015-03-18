@@ -1,0 +1,17 @@
+{
+  super.setUp();
+  workspace=rootDirectory;
+  clientEnv=Maps.newHashMap();
+  ConfiguredRuleClassProvider ruleClassProvider=TestRuleClassProvider.getRuleClassProvider();
+  PathPackageLocator pkgLocator=new PathPackageLocator(rootDirectory);
+  final PackageFactory pkgFactory;
+  BlazeDirectories directories=new BlazeDirectories(outputBase,outputBase,rootDirectory);
+  pkgFactory=new PackageFactory(ruleClassProvider);
+  AnalysisTestUtil.DummyWorkspaceStatusActionFactory workspaceStatusActionFactory=new AnalysisTestUtil.DummyWorkspaceStatusActionFactory(directories);
+  skyframeExecutor=SequencedSkyframeExecutor.create(reporter,pkgFactory,new TimestampGranularityMonitor(BlazeClock.instance()),directories,workspaceStatusActionFactory,ruleClassProvider.getBuildInfoFactories(),ImmutableSet.<Path>of(),ImmutableList.<DiffAwareness.Factory>of(),Predicates.<PathFragment>alwaysFalse(),Preprocessor.Factory.Supplier.NullSupplier.INSTANCE,ImmutableMap.<SkyFunctionName,SkyFunction>of(),ImmutableList.<PrecomputedValue.Injected>of());
+  skyframeExecutor.preparePackageLoading(pkgLocator,Options.getDefaults(PackageCacheOptions.class).defaultVisibility,true,ruleClassProvider.getDefaultsPackageContent(),UUID.randomUUID());
+  AnalysisMock analysisMock=getAnalysisMock();
+  analysisMock.setupMockClient(new MockToolsConfig(rootDirectory));
+  configurationFactory=analysisMock.createConfigurationFactory();
+  buildOptionClasses=analysisMock.getBuildOptions();
+}
