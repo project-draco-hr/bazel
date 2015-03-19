@@ -1,5 +1,12 @@
 {
   for (  Entry<String,RepositoryFunction> handler : repositoryHandlers.entrySet()) {
-    builder.addRuleDefinition(handler.getValue().getRuleDefinition());
+    RuleDefinition ruleDefinition;
+    try {
+      ruleDefinition=handler.getValue().getRuleDefinition().newInstance();
+    }
+ catch (    IllegalAccessException|InstantiationException e) {
+      throw new IllegalStateException(e);
+    }
+    builder.addRuleDefinition(ruleDefinition);
   }
 }
