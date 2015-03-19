@@ -2,9 +2,9 @@
   if (lists.isEmpty()) {
     return convert(new ArrayList<>(),env);
   }
-  List<Map.Entry<Ident,Iterable<?>>> listValues=Lists.newArrayListWithCapacity(lists.size());
+  List<Map.Entry<LValue,Iterable<?>>> listValues=Lists.newArrayListWithCapacity(lists.size());
   int size=1;
-  for (  Map.Entry<Ident,Expression> list : lists) {
+  for (  Map.Entry<LValue,Expression> list : lists) {
     Object listValueObject=list.getValue().eval(env);
     final Iterable<?> listValue=EvalUtils.toIterable(listValueObject,getLocation());
     int listSize=EvalUtils.size(listValue);
@@ -12,7 +12,7 @@
       return convert(new ArrayList<>(),env);
     }
     size*=listSize;
-    listValues.add(Maps.<Ident,Iterable<?>>immutableEntry(list.getKey(),listValue));
+    listValues.add(Maps.<LValue,Iterable<?>>immutableEntry(list.getKey(),listValue));
   }
   List<Object> resultList=Lists.newArrayListWithCapacity(size);
   evalLists(env,listValues,resultList);
