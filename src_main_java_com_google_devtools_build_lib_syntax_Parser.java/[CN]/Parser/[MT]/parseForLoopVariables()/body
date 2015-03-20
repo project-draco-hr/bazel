@@ -1,23 +1,17 @@
 {
   int start=token.left;
-  boolean hasParen=false;
-  if (token.kind == TokenKind.LPAREN) {
-    hasParen=true;
-    nextToken();
+  Expression e1=parsePrimaryWithSuffix();
+  if (token.kind != TokenKind.COMMA) {
+    return e1;
   }
-  Ident firstIdent=parseIdent();
-  boolean multipleVariables=false;
+  List<Expression> tuple=new ArrayList<>();
+  tuple.add(e1);
   while (token.kind == TokenKind.COMMA) {
-    multipleVariables=true;
-    nextToken();
-    parseIdent();
+    expect(TokenKind.COMMA);
+    if (EXPR_LIST_TERMINATOR_SET.contains(token.kind)) {
+      break;
+    }
+    tuple.add(parsePrimaryWithSuffix());
   }
-  if (hasParen) {
-    expect(TokenKind.RPAREN);
-  }
-  int end=token.right;
-  if (multipleVariables && !parsePython) {
-    reportError(lexer.createLocation(start,end),"For loops with multiple variables are not yet supported");
-  }
-  return multipleVariables ? makeErrorExpression(start,end) : firstIdent;
+  return setLocation(ListLiteral.makeTuple(tuple),start,token.right);
 }
