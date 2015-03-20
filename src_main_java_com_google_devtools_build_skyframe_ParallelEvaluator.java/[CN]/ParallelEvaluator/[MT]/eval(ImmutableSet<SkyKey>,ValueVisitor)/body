@@ -22,10 +22,19 @@ default :
 throw new IllegalStateException(entry + " for " + skyKey+ " in unknown state");
 }
 }
+boolean shouldClean=false;
 try {
-return waitForCompletionAndConstructResult(visitor,skyKeys);
+EvaluationResult<T> result=waitForCompletionAndConstructResult(visitor,skyKeys);
+shouldClean=true;
+return result;
 }
-  finally {
+ catch (InterruptedException e) {
+shouldClean=true;
+throw e;
+}
+ finally {
+if (shouldClean) {
 clean(visitor.inflightNodes);
+}
 }
 }

@@ -4,9 +4,7 @@
   ThrowableRecordingRunnableWrapper wrapper=new ThrowableRecordingRunnableWrapper("ParallelEvaluator#clean");
   for (  final SkyKey key : inflightNodes) {
     final NodeEntry entry=graph.get(key);
-    if (entry.isDone()) {
-      continue;
-    }
+    Preconditions.checkState(!entry.isDone(),key);
     executor.execute(wrapper.wrap(new Runnable(){
       @Override public void run(){
         cleanInflightNode(key,entry);
