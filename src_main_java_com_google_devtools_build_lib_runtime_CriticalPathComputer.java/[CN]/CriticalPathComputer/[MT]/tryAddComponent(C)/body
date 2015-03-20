@@ -1,0 +1,21 @@
+{
+  Action newAction=newComponent.getAction();
+  Artifact primaryOutput=newAction.getPrimaryOutput();
+  C storedComponent=outputArtifactToComponent.putIfAbsent(primaryOutput,newComponent);
+  if (storedComponent != null) {
+    if (!Actions.canBeShared(newAction,storedComponent.getAction())) {
+      throw new IllegalStateException("Duplicate output artifact found for unsharable actions." + "This could happen  if a previous event registered the action.\n" + "Old action: " + storedComponent.getAction() + "\n\n"+ "New action: "+ newAction+ "\n\n"+ "Artifact: "+ primaryOutput+ "\n");
+    }
+  }
+ else {
+    storedComponent=newComponent;
+  }
+  for (  Artifact output : newAction.getOutputs()) {
+    if (output == primaryOutput) {
+      continue;
+    }
+    C old=outputArtifactToComponent.putIfAbsent(output,storedComponent);
+    Preconditions.checkState(old == null || old == storedComponent,"Inconsistent state for %s",newAction);
+  }
+  return storedComponent;
+}
