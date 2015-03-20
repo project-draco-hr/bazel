@@ -20,7 +20,9 @@
     control.addBundleFile(BundleMergeProtos.BundleFile.newBuilder().setSourceFile(linkedBinary.getExecPathString()).setBundlePath(bundling.getName()).setExternalFileAttribute(BundleableFile.EXECUTABLE_EXTERNAL_FILE_ATTRIBUTE).build()).setExecutableName(bundling.getName());
   }
   for (  Bundling nestedBundling : bundling.getObjcProvider().get(NESTED_BUNDLE)) {
-    control.addNestedBundle(control(mergeZipPrefix,nestedBundling));
+    if (nestedBundling.getArchitecture().equals(bundling.getArchitecture())) {
+      control.addNestedBundle(control(mergeZipPrefix,nestedBundling));
+    }
   }
   if (bundling.getPrimaryBundleId() != null) {
     control.setPrimaryBundleIdentifier(bundling.getPrimaryBundleId());
