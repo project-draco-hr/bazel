@@ -1,0 +1,21 @@
+{
+  if (lvalue instanceof Ident) {
+    assign(env,loc,(Ident)lvalue,result);
+    return;
+  }
+  if (lvalue instanceof ListLiteral) {
+    ListLiteral variables=(ListLiteral)lvalue;
+    Collection<?> rvalue=EvalUtils.toCollection(result,loc);
+    int len=variables.getElements().size();
+    if (len != rvalue.size()) {
+      throw new EvalException(loc,String.format("lvalue has length %d, but rvalue has has length %d",len,rvalue.size()));
+    }
+    int i=0;
+    for (    Object o : rvalue) {
+      assign(env,loc,variables.getElements().get(i),o);
+      i++;
+    }
+    return;
+  }
+  throw new EvalException(loc,"can only assign to variables and tuples, not to '" + lvalue + "'");
+}
