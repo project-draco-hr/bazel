@@ -1,0 +1,18 @@
+{
+  int start=token.left;
+  Expression expr=parseNonTupleExpression(0);
+  if (token.kind == TokenKind.IF) {
+    nextToken();
+    Expression condition=parseNonTupleExpression(0);
+    if (token.kind == TokenKind.ELSE) {
+      nextToken();
+      Expression elseClause=parseNonTupleExpression();
+      return setLocation(new ConditionalExpression(expr,condition,elseClause),start,elseClause);
+    }
+ else {
+      reportError(lexer.createLocation(start,token.left),"missing else clause in conditional expression or semicolon before if");
+      return expr;
+    }
+  }
+  return expr;
+}

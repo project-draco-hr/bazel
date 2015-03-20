@@ -1,13 +1,11 @@
 {
   List<Expression> list=new ArrayList<>();
-  while (token.kind != TokenKind.RPAREN && token.kind != TokenKind.RBRACKET) {
-    list.add(parseExpression());
-    if (token.kind == TokenKind.COMMA) {
-      nextToken();
-    }
- else {
+  while (token.kind == TokenKind.COMMA) {
+    expect(TokenKind.COMMA);
+    if (EXPR_LIST_TERMINATOR_SET.contains(token.kind)) {
       break;
     }
+    list.add(parseNonTupleExpression());
   }
   return list;
 }
