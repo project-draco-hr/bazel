@@ -1,6 +1,8 @@
 {
   StringBuilder builder=new StringBuilder();
-  builder.append("Action cache (" + map.size() + " records):\n");
+  builder.append("Action cache (" + (map.size() - 1) + " records):\n");
+  int size=map.size() > 1000 ? 10 : map.size();
+  int ct=0;
   for (  Map.Entry<Integer,byte[]> entry : map.entrySet()) {
     if (entry.getKey() == VALIDATION_KEY) {
       continue;
@@ -13,6 +15,10 @@
       content=e + "\n";
     }
     builder.append("-> ").append(indexer.getStringForIndex(entry.getKey())).append("\n").append(content).append("  packed_len = ").append(entry.getValue().length).append("\n");
+    if (++ct > size) {
+      builder.append("...");
+      break;
+    }
   }
   return builder.toString();
 }
