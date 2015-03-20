@@ -1,0 +1,11 @@
+{
+  if (ruleContext.getConfiguration().getActionListeners().isEmpty()) {
+    return;
+  }
+  Collection<Artifact> sources=ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list();
+  NestedSetBuilder<Artifact> depBuilder=NestedSetBuilder.compileOrder();
+  collectTransitivePythonSourcesFromDeps(depBuilder);
+  NestedSet<Artifact> dependencies=depBuilder.build();
+  PythonInfo info=PythonInfo.newBuilder().addAllSourceFile(Artifact.toExecPaths(sources)).addAllDepFile(Artifact.toExecPaths(dependencies)).build();
+  ruleContext.getAnalysisEnvironment().registerAction(new PyPseudoAction(ruleContext.getActionOwner(),ImmutableList.copyOf(Iterables.concat(sources,dependencies)),ImmutableList.of(PseudoAction.getDummyOutput(ruleContext)),"Python",PythonInfo.pythonInfo,info));
+}

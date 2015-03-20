@@ -1,0 +1,12 @@
+{
+  for (  TransitiveInfoCollection dep : ruleContext.getPrerequisites("deps",Mode.TARGET)) {
+    if (dep.getProvider(PythonSourcesProvider.class) != null) {
+      PythonSourcesProvider provider=dep.getProvider(PythonSourcesProvider.class);
+      builder.addTransitive(provider.getTransitivePythonSources());
+    }
+ else {
+      FileProvider provider=dep.getProvider(FileProvider.class);
+      builder.addAll(FileType.filter(provider.getFilesToBuild(),PyRuleClasses.PYTHON_SOURCE));
+    }
+  }
+}

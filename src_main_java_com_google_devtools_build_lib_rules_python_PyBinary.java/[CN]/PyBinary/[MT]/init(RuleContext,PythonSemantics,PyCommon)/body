@@ -1,0 +1,24 @@
+{
+  List<Artifact> srcs=common.validateSrcs();
+  CcLinkParamsStore ccLinkParamsStore=initializeCcLinkParamStore(ruleContext);
+  common.initBinary(srcs);
+  semantics.validate(ruleContext,common);
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
+  semantics.createExecutable(ruleContext,common,ccLinkParamsStore);
+  Runfiles.Builder runfilesBuilder=collectCommonRunfiles(ruleContext,common);
+  semantics.collectRunfilesForBinary(ruleContext,runfilesBuilder,common);
+  Runfiles dataRunfiles=runfilesBuilder.build();
+  semantics.collectDefaultRunfilesForBinary(ruleContext,runfilesBuilder);
+  Runfiles defaultRunfiles=runfilesBuilder.build();
+  RunfilesSupport runfilesSupport=RunfilesSupport.withExecutable(ruleContext,defaultRunfiles,common.getExecutable(),ruleContext.shouldCreateRunfilesSymlinks());
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
+  RunfilesProvider runfilesProvider=RunfilesProvider.withData(defaultRunfiles,dataRunfiles);
+  RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
+  common.addCommonTransitiveInfoProviders(builder,semantics,common.getFilesToBuild());
+  semantics.postInitBinary(ruleContext,runfilesSupport,common);
+  return builder.setFilesToBuild(common.getFilesToBuild()).add(RunfilesProvider.class,runfilesProvider).setRunfilesSupport(runfilesSupport,common.getExecutable()).add(CcLinkParamsProvider.class,new CcLinkParamsProvider(ccLinkParamsStore));
+}

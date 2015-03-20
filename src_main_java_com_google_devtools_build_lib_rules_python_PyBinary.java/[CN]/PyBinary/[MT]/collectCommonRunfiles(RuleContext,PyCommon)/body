@@ -1,0 +1,14 @@
+{
+  Runfiles.Builder builder=new Runfiles.Builder();
+  builder.addArtifact(common.getExecutable());
+  if (common.getConvertedFiles() != null) {
+    builder.addSymlinks(common.getConvertedFiles());
+  }
+ else {
+    builder.addTransitiveArtifacts(common.getFilesToBuild());
+  }
+  builder.addRunfiles(ruleContext,RunfilesProvider.DEFAULT_RUNFILES);
+  builder.add(ruleContext,PythonRunfilesProvider.TO_RUNFILES);
+  builder.setManifestExpander(PythonUtils.GET_INIT_PY_FILES);
+  return builder;
+}

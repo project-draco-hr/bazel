@@ -1,0 +1,28 @@
+{
+  PythonSemantics semantics=createSemantics();
+  PyCommon common=new PyCommon(ruleContext);
+  common.initCommon(common.getDefaultPythonVersion());
+  common.validatePackageName();
+  NestedSet<Artifact> filesToBuild=NestedSetBuilder.wrap(Order.STABLE_ORDER,common.validateSrcs());
+  common.addPyExtraActionPseudoAction();
+  CcLinkParamsStore ccLinkParamsStore=new CcLinkParamsStore(){
+    @Override protected void collect(    CcLinkParams.Builder builder,    boolean linkingStatically,    boolean linkShared){
+      builder.addTransitiveTargets(ruleContext.getPrerequisites("deps",Mode.TARGET));
+      builder.addTransitiveLangTargets(ruleContext.getPrerequisites("deps",Mode.TARGET),PyCcLinkParamsProvider.TO_LINK_PARAMS);
+    }
+  }
+;
+  Runfiles.Builder runfilesBuilder=new Runfiles.Builder();
+  if (common.getConvertedFiles() != null) {
+    runfilesBuilder.addSymlinks(common.getConvertedFiles());
+  }
+ else {
+    runfilesBuilder.addTransitiveArtifacts(filesToBuild);
+  }
+  runfilesBuilder.setManifestExpander(PythonUtils.GET_INIT_PY_FILES);
+  runfilesBuilder.add(ruleContext,PythonRunfilesProvider.TO_RUNFILES);
+  runfilesBuilder.addRunfiles(ruleContext,RunfilesProvider.DEFAULT_RUNFILES);
+  RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
+  common.addCommonTransitiveInfoProviders(builder,semantics,filesToBuild);
+  return builder.setFilesToBuild(filesToBuild).add(RunfilesProvider.class,RunfilesProvider.simple(runfilesBuilder.build())).add(CcLinkParamsProvider.class,new CcLinkParamsProvider(ccLinkParamsStore)).build();
+}

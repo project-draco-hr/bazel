@@ -1,0 +1,16 @@
+{
+  Set<PathFragment> result=new HashSet<>();
+  for (  PathFragment source : manifestFiles) {
+    if (!REQUIRES_INIT_PY.matches(source)) {
+      continue;
+    }
+    while (source.segmentCount() > 1) {
+      source=source.getParentDirectory();
+      PathFragment initpy=source.getRelative(INIT_PY);
+      if (!manifestFiles.contains(initpy)) {
+        result.add(initpy);
+      }
+    }
+  }
+  return ImmutableSet.copyOf(result);
+}
