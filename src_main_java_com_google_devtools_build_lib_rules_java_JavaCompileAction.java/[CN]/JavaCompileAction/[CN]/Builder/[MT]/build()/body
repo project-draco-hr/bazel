@@ -38,11 +38,11 @@
     outputsBuilder.add(outputDepsProto);
   }
   outputs=outputsBuilder.build();
-  CustomCommandLine.Builder paramFileContentsBuilder=javaCompileCommandLine(semantics,configuration,classDirectory,sourceGenDirectory,tempDirectory,outputJar,gensrcOutputJar,compressJar,outputDepsProto,classpathEntries,processorPath,langtoolsJar,javaBuilderJar,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,internedJcopts,directJars,strictJavaDeps,compileTimeDependencyArtifacts,ruleKind,targetLabel);
+  CustomCommandLine.Builder paramFileContentsBuilder=javaCompileCommandLine(semantics,configuration,classDirectory,sourceGenDirectory,tempDirectory,outputJar,gensrcOutputJar,compressJar,outputDepsProto,classpathEntries,processorPath,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,internedJcopts,directJars,strictJavaDeps,compileTimeDependencyArtifacts,ruleKind,targetLabel);
   semantics.buildJavaCommandLine(outputs,configuration,paramFileContentsBuilder);
   CommandLine paramFileContents=paramFileContentsBuilder.build();
   Action parameterFileWriteAction=new ParameterFileWriteAction(owner,paramFile,paramFileContents,ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1);
   analysisEnvironment.registerAction(parameterFileWriteAction);
-  CommandLine javaBuilderCommandLine=spawnCommandLine(javaExecutable,javaBuilderJar,langtoolsJar,paramFile,javaConfiguration.getDefaultJavaBuilderJvmFlags());
-  return new JavaCompileAction(owner,baseInputs,outputs,paramFileContents,javaBuilderCommandLine,classDirectory,outputJar,classpathEntries,processorPath,langtoolsJar,javaBuilderJar,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,internedJcopts,directJars,strictJavaDeps,compileTimeDependencyArtifacts,semantics);
+  CommandLine javaBuilderCommandLine=spawnCommandLine(javaExecutable,javaBuilderJar,langtoolsJar,instrumentationJars,paramFile,javaConfiguration.getDefaultJavaBuilderJvmFlags(),semantics.getJavaBuilderMainClass(),configuration.getHostPathSeparator());
+  return new JavaCompileAction(owner,baseInputs,outputs,paramFileContents,javaBuilderCommandLine,classDirectory,outputJar,classpathEntries,processorPath,langtoolsJar,javaBuilderJar,instrumentationJars,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,internedJcopts,directJars,strictJavaDeps,compileTimeDependencyArtifacts,semantics);
 }
