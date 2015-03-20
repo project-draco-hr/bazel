@@ -5,6 +5,9 @@
   if (!eventMask.contains(event.getKind())) {
     return;
   }
+  if (trySpecial && !EventKind.ERRORS_AND_WARNINGS_AND_OUTPUT.contains(event.getKind()) && skipUntil.isAfterNow()) {
+    return;
+  }
   try {
     boolean previousLineErased=false;
     if (previousLineErasable) {
@@ -18,6 +21,14 @@ case START:
         Pair<String,String> progressPair=matchProgress(message);
         if (progressPair != null) {
           progress(progressPair.getFirst(),progressPair.getSecond());
+          if (trySpecial && ThreadLocalRandom.current().nextInt(0,20) == 0) {
+            message=getExtraMessage();
+            if (message != null) {
+              previousLineErased=maybeOverwritePreviousMessage();
+              progress(progressPair.getFirst(),message);
+              skipUntil=Instant.now().plus(Duration.millis(ThreadLocalRandom.current().nextInt(3000,8000)));
+            }
+          }
         }
  else {
           progress("INFO: ",message);
