@@ -21,9 +21,11 @@
     productType=XcodeProductType.UNIT_TEST;
     XcodeProvider appIpaXcodeProvider=ruleContext.getPrerequisite(XCTEST_APP,Mode.TARGET,XcodeProvider.class);
     xcodeProviderBuilder.setTestHost(appIpaXcodeProvider).setProductType(productType);
-    Artifact bundleLoader=xcTestAppProvider(ruleContext).getBundleLoader();
+    XcTestAppProvider testApp=xcTestAppProvider(ruleContext);
+    Artifact bundleLoader=testApp.getBundleLoader();
     extraLinkArgs=new ExtraLinkArgs("-bundle","-bundle_loader",bundleLoader.getExecPathString());
     extraLinkInputs=new ExtraLinkInputs(bundleLoader);
+    filesToBuild.add(testApp.getIpa());
   }
   if (ruleContext.getConfiguration().isCodeCoverageEnabled()) {
     extraLinkArgs=extraLinkArgs.appendedWith(CompilationSupport.LINKER_COVERAGE_FLAGS);
