@@ -1,0 +1,10 @@
+{
+  if (ruleContext == null) {
+    return;
+  }
+  for (  PathFragment include : Iterables.concat(getIncludeDirs(),getSystemIncludeDirs())) {
+    if (include.isAbsolute() || !PathFragment.EMPTY_FRAGMENT.getRelative(include).normalize().isNormalized()) {
+      ruleContext.ruleError("The include path '" + include + "' references a path outside of the execution root.");
+    }
+  }
+}
