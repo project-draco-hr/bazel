@@ -1,14 +1,13 @@
 {
   Options options=buildOptions.get(BuildConfiguration.Options.class);
+  ObjcCommandLineOptions objcOptions=buildOptions.get(ObjcCommandLineOptions.class);
   Label gcovLabel=null;
   if (options.collectCodeCoverage) {
-    try {
-      gcovLabel=Label.parseAbsolute("//third_party/gcov:gcov_for_xcode");
-      env.getTarget(gcovLabel);
-    }
- catch (    Label.SyntaxException|NoSuchPackageException|NoSuchTargetException e) {
-      throw new InvalidConfigurationException("Error parsing or loading objc coverage label: " + e.getMessage(),e);
-    }
+    gcovLabel=forceLoad(env,"//third_party/gcov:gcov_for_xcode");
   }
-  return new ObjcConfiguration(buildOptions.get(ObjcCommandLineOptions.class),options,gcovLabel);
+  Label dumpSymsLabel=null;
+  if (objcOptions.generateDebugSymbols) {
+    forceLoad(env,"//tools/objc:dump_syms");
+  }
+  return new ObjcConfiguration(objcOptions,options,gcovLabel,dumpSymsLabel);
 }

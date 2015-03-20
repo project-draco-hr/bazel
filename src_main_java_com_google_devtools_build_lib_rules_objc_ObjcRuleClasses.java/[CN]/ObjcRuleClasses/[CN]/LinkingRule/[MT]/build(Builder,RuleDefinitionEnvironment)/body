@@ -1,3 +1,11 @@
 {
-  return builder.add(attr("$dumpsyms",LABEL).cfg(HOST).exec().value(env.getLabel("//tools/objc:dump_syms"))).build();
+  return builder.add(attr(":dumpsyms",LABEL).cfg(HOST).singleArtifact().value(new LateBoundLabel<BuildConfiguration>(){
+    @Override public Label getDefault(    Rule rule,    BuildConfiguration configuration){
+      if (!configuration.getFragment(ObjcConfiguration.class).generateDebugSymbols()) {
+        return null;
+      }
+      return configuration.getFragment(ObjcConfiguration.class).getDumpSymsLabel();
+    }
+  }
+)).build();
 }
