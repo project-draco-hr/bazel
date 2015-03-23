@@ -3,16 +3,14 @@
   for (  String pattern : patterns) {
     SkyKey patternKey=TargetPatternValue.key(pattern,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,parserPrefix);
     TargetPatternValue.TargetPattern targetPattern=((TargetPatternValue.TargetPattern)patternKey.argument());
+    TargetParsingException targetParsingException=null;
     if (graph.exists(patternKey)) {
       TargetPatternValue value=(TargetPatternValue)graph.getValue(patternKey);
       if (value != null) {
         result.put(pattern,value.getTargets());
       }
- else       if (!keepGoing) {
-        throw (TargetParsingException)Preconditions.checkNotNull(graph.getException(patternKey),pattern);
-      }
  else {
-        result.put(pattern,ResolvedTargets.<Target>builder().setError().build());
+        targetParsingException=(TargetParsingException)Preconditions.checkNotNull(graph.getException(patternKey),pattern);
       }
     }
  else {
@@ -23,8 +21,20 @@
       try {
         result.put(pattern,parsedPattern.eval(resolver));
       }
- catch (      InterruptedException e) {
+ catch (      TargetParsingException e) {
+        targetParsingException=e;
+      }
+catch (      InterruptedException e) {
         throw new QueryException(e.getMessage());
+      }
+    }
+    if (targetParsingException != null) {
+      if (!keepGoing) {
+        throw targetParsingException;
+      }
+ else {
+        eventHandler.handle(Event.error("Evaluation of query \"" + caller + "\" failed: "+ targetParsingException.getMessage()));
+        result.put(pattern,ResolvedTargets.<Target>builder().setError().build());
       }
     }
   }
