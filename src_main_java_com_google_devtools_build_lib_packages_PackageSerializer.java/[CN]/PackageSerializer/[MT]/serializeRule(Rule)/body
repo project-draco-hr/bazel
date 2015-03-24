@@ -4,9 +4,8 @@
   result.setRuleClass(rule.getRuleClass());
   result.setParseableLocation(serializeLocation(rule.getLocation()));
   for (  Attribute attribute : rule.getAttributes()) {
-    Object value=attribute.getName().equals("visibility") ? rule.getVisibility().getDeclaredLabels() : RawAttributeMapper.of(rule).get(attribute.getName(),attribute.getType());
-    if (value != null) {
-      PackageSerializer.addAttributeToProto(result,attribute,value,rule.getAttributeLocation(attribute.getName()),rule.isAttributeValueExplicitlySpecified(attribute),true);
+    if (!RawAttributeMapper.of(rule).isNull(attribute.getName(),attribute.getType())) {
+      PackageSerializer.addAttributeToProto(result,attribute,getAttributeValues(rule,attribute),rule.getAttributeLocation(attribute.getName()),rule.isAttributeValueExplicitlySpecified(attribute),true);
     }
   }
   return result.build();
