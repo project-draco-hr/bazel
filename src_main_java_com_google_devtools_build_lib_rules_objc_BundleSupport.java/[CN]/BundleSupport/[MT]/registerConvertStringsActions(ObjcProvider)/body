@@ -1,0 +1,7 @@
+{
+  IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
+  for (  Artifact strings : objcProvider.get(ObjcProvider.STRINGS)) {
+    Artifact bundled=intermediateArtifacts.convertedStringsFile(strings);
+    ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("ConvertStringsPlist").setExecutable(attributes.plmerge()).setCommandLine(CustomCommandLine.builder().addExecPath("--source_file",strings).addExecPath("--out_file",bundled).build()).addInput(strings).addOutput(bundled).build(ruleContext));
+  }
+}

@@ -15,7 +15,7 @@
 switch (hasReleaseBundlingSupport) {
 case YES:
     ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,objcProvider,optionsProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES,ReleaseBundlingSupport.APP_BUNDLE_DIR_FORMAT);
-  releaseBundlingSupport.registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateAttributes();
+  releaseBundlingSupport.registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateResources().validateAttributes();
 xcTestAppProvider=Optional.of(releaseBundlingSupport.xcTestAppProvider());
 if (ObjcRuleClasses.objcConfiguration(ruleContext).getPlatform() == Platform.SIMULATOR) {
 Artifact runnerScript=intermediateArtifacts.runnerScript();
@@ -30,7 +30,7 @@ break;
 default :
 throw new AssertionError();
 }
-new ResourceSupport(ruleContext).registerActions(common.getStoryboards()).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
+new ResourceSupport(ruleContext).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
 XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,objcProvider,productType).addDependencies(xcodeProviderBuilder,new Attribute("bundles",Mode.TARGET)).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET)).addDependencies(xcodeProviderBuilder,new Attribute("non_propagated_deps",Mode.TARGET)).addFilesToBuild(filesToBuild);
 XcodeProvider xcodeProvider=xcodeProviderBuilder.build();
 xcodeSupport.registerActions(xcodeProvider);

@@ -1,8 +1,6 @@
 {
   Iterable<BundleableFile> bundleImports=BundleableFile.bundleImportsFromRule(context);
   ObjcProvider.Builder objcProvider=new ObjcProvider.Builder().addAll(IMPORTED_LIBRARY,extraImportLibraries).addAll(BUNDLE_FILE,bundleImports).addAll(BUNDLE_IMPORT_DIR,uniqueContainers(BundleableFile.toArtifacts(bundleImports),BUNDLE_CONTAINER_TYPE)).addAll(SDK_FRAMEWORK,extraSdkFrameworks).addAll(WEAK_SDK_FRAMEWORK,extraWeakSdkFrameworks).addAll(SDK_DYLIB,extraSdkDylibs).addAll(FRAMEWORK_FILE,frameworkImports).addAll(FRAMEWORK_DIR,uniqueContainers(frameworkImports,FRAMEWORK_CONTAINER_TYPE)).addAll(INCLUDE,userHeaderSearchPaths).addAll(DEFINE,defines).addAll(HEADER,headers).addTransitiveAndPropagate(depObjcProviders).addTransitiveWithoutPropagating(directDepObjcProviders);
-  Storyboards storyboards;
-  Iterable<Xcdatamodel> datamodels;
   if (compilationAttributes.isPresent()) {
     CompilationAttributes attributes=compilationAttributes.get();
     ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(context);
@@ -11,15 +9,7 @@
   }
   if (resourceAttributes.isPresent()) {
     ResourceAttributes attributes=resourceAttributes.get();
-    storyboards=Storyboards.fromInputs(attributes.storyboards(),intermediateArtifacts);
-    datamodels=Xcdatamodels.xcdatamodels(intermediateArtifacts,attributes.datamodels());
-    Iterable<CompiledResourceFile> compiledResources=CompiledResourceFile.fromStringsFiles(intermediateArtifacts,attributes.strings());
-    XibFiles xibFiles=new XibFiles(attributes.xibs());
-    objcProvider.addTransitiveAndPropagate(MERGE_ZIP,storyboards.getOutputZips()).addAll(MERGE_ZIP,xibFiles.compiledZips(intermediateArtifacts)).addAll(GENERAL_RESOURCE_FILE,storyboards.getInputs()).addAll(GENERAL_RESOURCE_FILE,attributes.resources()).addAll(GENERAL_RESOURCE_FILE,attributes.strings()).addAll(GENERAL_RESOURCE_FILE,attributes.xibs()).addAll(BUNDLE_FILE,BundleableFile.flattenedRawResourceFiles(attributes.resources())).addAll(BUNDLE_FILE,BundleableFile.structuredRawResourceFiles(attributes.structuredResources())).addAll(BUNDLE_FILE,Iterables.transform(compiledResources,CompiledResourceFile.TO_BUNDLED)).addAll(XCASSETS_DIR,uniqueContainers(attributes.assetCatalogs(),ASSET_CATALOG_CONTAINER_TYPE)).addAll(ASSET_CATALOG,attributes.assetCatalogs()).addAll(XCDATAMODEL,datamodels);
-  }
- else {
-    storyboards=Storyboards.empty();
-    datamodels=ImmutableList.of();
+    objcProvider.addAll(GENERAL_RESOURCE_FILE,attributes.storyboards()).addAll(GENERAL_RESOURCE_FILE,attributes.resources()).addAll(GENERAL_RESOURCE_FILE,attributes.strings()).addAll(GENERAL_RESOURCE_FILE,attributes.xibs()).addAll(BUNDLE_FILE,BundleableFile.flattenedRawResourceFiles(attributes.resources())).addAll(BUNDLE_FILE,BundleableFile.structuredRawResourceFiles(attributes.structuredResources())).addAll(XCASSETS_DIR,uniqueContainers(attributes.assetCatalogs(),ASSET_CATALOG_CONTAINER_TYPE)).addAll(ASSET_CATALOG,attributes.assetCatalogs()).addAll(XCDATAMODEL,attributes.datamodels()).addAll(XIB,attributes.xibs()).addAll(STRINGS,attributes.strings()).addAll(STORYBOARD,attributes.storyboards());
   }
   for (  CompilationArtifacts artifacts : compilationArtifacts.asSet()) {
     Iterable<Artifact> allSources=Iterables.concat(artifacts.getSrcs(),artifacts.getNonArcSrcs());
@@ -51,5 +41,5 @@
     }
   }
   objcProvider.addAll(LINKED_BINARY,linkedBinary.asSet());
-  return new ObjcCommon(context,objcProvider.build(),storyboards,datamodels,compilationArtifacts);
+  return new ObjcCommon(context,objcProvider.build(),compilationArtifacts);
 }

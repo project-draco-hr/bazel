@@ -4,8 +4,8 @@
   Bundling bundling=bundling(ruleContext,common,optionsProvider);
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
-  new BundleSupport(ruleContext,ImmutableSet.of(TargetDeviceFamily.IPHONE),bundling).registerActions(common.getObjcProvider()).addXcodeSettings(xcodeProviderBuilder);
-  new ResourceSupport(ruleContext).validateAttributes().registerActions(common.getStoryboards()).addXcodeSettings(xcodeProviderBuilder);
+  new BundleSupport(ruleContext,ImmutableSet.of(TargetDeviceFamily.IPHONE),bundling).registerActions(common.getObjcProvider()).validateResources(common.getObjcProvider()).addXcodeSettings(xcodeProviderBuilder);
+  new ResourceSupport(ruleContext).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
   new XcodeSupport(ruleContext).addFilesToBuild(filesToBuild).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),BUNDLE).addDependencies(xcodeProviderBuilder,new Attribute("bundles",Mode.TARGET)).registerActions(xcodeProviderBuilder.build());
   ObjcProvider nestedBundleProvider=new ObjcProvider.Builder().add(NESTED_BUNDLE,bundling).build();
   return common.configuredTarget(filesToBuild.build(),Optional.of(xcodeProviderBuilder.build()),Optional.of(nestedBundleProvider),Optional.<XcTestAppProvider>absent(),Optional.<J2ObjcSrcsProvider>absent());

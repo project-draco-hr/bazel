@@ -1,0 +1,9 @@
+{
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
+  Iterable<Xcdatamodel> xcdatamodels=Xcdatamodels.xcdatamodels(intermediateArtifacts,objcProvider.get(ObjcProvider.XCDATAMODEL));
+  for (  Xcdatamodel datamodel : xcdatamodels) {
+    Artifact outputZip=datamodel.getOutputZip();
+    ruleContext.registerAction(ObjcActionsBuilder.spawnJavaOnDarwinActionBuilder(attributes.momczipDeployJar()).setMnemonic("MomCompile").addOutput(outputZip).addInputs(datamodel.getInputs()).setCommandLine(CustomCommandLine.builder().addPath(outputZip.getExecPath()).add(datamodel.archiveRootForMomczip()).add(IosSdkCommands.MOMC_PATH).add(commonMomczipArguments(objcConfiguration)).add(datamodel.getContainer().getSafePathString()).build()).build(ruleContext));
+  }
+}

@@ -1,9 +1,0 @@
-{
-  ImmutableList.Builder<Action> result=new ImmutableList.Builder<>();
-  for (  Artifact original : xibFiles) {
-    Artifact zipOutput=intermediateArtifacts.compiledXibFileZip(original);
-    String archiveRoot=BundleableFile.flatBundlePath(FileSystemUtils.replaceExtension(original.getExecPath(),".nib"));
-    result.add(spawnJavaOnDarwinActionBuilder(baseTools.ibtoolzipDeployJar()).setMnemonic("XibCompile").setCommandLine(new CustomCommandLine.Builder().addPath(zipOutput.getExecPath()).add(archiveRoot).addPath(IBTOOL).add("--minimum-deployment-target").add(objcConfiguration.getMinimumOs()).addPath(original.getExecPath()).build()).addOutput(zipOutput).addInput(original).build(context));
-  }
-  return result.build();
-}
