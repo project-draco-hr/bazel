@@ -1,30 +1,6 @@
 {
-  if (!(from instanceof Rule) || !(to instanceof Rule)) {
-    return;
-  }
-  ImmutableMultimap.Builder<Attribute,Label> labelBuilder=ImmutableMultimap.builder();
-  RuleClass ruleClass=((Rule)to).getRuleClassObject();
-  for (  Class<? extends AspectFactory<?,?,?>> candidateClass : attribute.getAspects()) {
-    ConfiguredAspectFactory candidate=(ConfiguredAspectFactory)AspectFactory.Util.create(candidateClass);
-    if (!Sets.difference(candidate.getDefinition().getRequiredProviders(),ruleClass.getAdvertisedProviders()).isEmpty()) {
-      continue;
-    }
-    ImmutableMap<String,Attribute> attributes=candidate.getDefinition().getAttributes();
-    for (    Attribute aspectAttribute : attributes.values()) {
-      if (aspectAttribute.getType() == Type.LABEL) {
-        Label label=Type.LABEL.cast(aspectAttribute.getDefaultValue((Rule)from));
-        if (label != null) {
-          labelBuilder.put(aspectAttribute,label);
-        }
-      }
- else       if (attribute.getType() == Type.LABEL_LIST) {
-        List<Label> labelList=Type.LABEL_LIST.cast(attribute.getDefaultValue((Rule)from));
-        labelBuilder.putAll(aspectAttribute,labelList);
-      }
-    }
-  }
-  ImmutableMultimap<Attribute,Label> labelsFromAspects=labelBuilder.build();
+  ImmutableMultimap<Attribute,Label> labelsFromAspects=AspectDefinition.visitAspectsIfRequired(from,attribute,to);
   for (  Entry<Attribute,Label> entry : labelsFromAspects.entries()) {
-    enqueueTarget(to,entry.getKey(),entry.getValue(),depth,count);
+    enqueueTarget(from,entry.getKey(),entry.getValue(),depth,count);
   }
 }

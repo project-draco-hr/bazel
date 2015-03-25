@@ -46,36 +46,13 @@ catch (  NoSuchThingException e) {
     transitiveUnsuccessfulPkgs.add(packageId);
   }
   transitiveTargets.add(target.getLabel());
-  for (  Map.Entry<SkyKey,ValueOrException<NoSuchThingException>> entry : env.getValuesOrThrow(getLabelDepKeys(target),NoSuchThingException.class).entrySet()) {
-    Label depLabel=(Label)entry.getKey().argument();
-    TransitiveTargetValue transitiveTargetValue;
-    try {
-      transitiveTargetValue=(TransitiveTargetValue)entry.getValue().get();
-      if (transitiveTargetValue == null) {
-        continue;
-      }
-    }
- catch (    NoSuchPackageException|NoSuchTargetException e) {
-      successfulTransitiveLoading=false;
-      transitiveRootCauses.add(depLabel);
-      maybeReportErrorAboutMissingEdge(target,depLabel,e,env.getListener());
-      continue;
-    }
-catch (    NoSuchThingException e) {
-      throw new IllegalStateException("Unexpected Exception type from TransitiveTargetValue.",e);
-    }
-    transitiveSuccessfulPkgs.addTransitive(transitiveTargetValue.getTransitiveSuccessfulPackages());
-    transitiveUnsuccessfulPkgs.addTransitive(transitiveTargetValue.getTransitiveUnsuccessfulPackages());
-    transitiveTargets.addTransitive(transitiveTargetValue.getTransitiveTargets());
-    NestedSet<Label> rootCauses=transitiveTargetValue.getTransitiveRootCauses();
-    if (rootCauses != null) {
-      successfulTransitiveLoading=false;
-      transitiveRootCauses.addTransitive(rootCauses);
-      if (transitiveTargetValue.getErrorLoadingTarget() != null) {
-        maybeReportErrorAboutMissingEdge(target,depLabel,transitiveTargetValue.getErrorLoadingTarget(),env.getListener());
-      }
-    }
+  Iterable<SkyKey> depKeys=getLabelDepKeys(target);
+  successfulTransitiveLoading&=processDeps(env,target,transitiveRootCauses,transitiveSuccessfulPkgs,transitiveUnsuccessfulPkgs,transitiveTargets,depKeys);
+  if (env.valuesMissing()) {
+    return null;
   }
+  depKeys=getLabelAspectKeys(target,env);
+  successfulTransitiveLoading&=processDeps(env,target,transitiveRootCauses,transitiveSuccessfulPkgs,transitiveUnsuccessfulPkgs,transitiveTargets,depKeys);
   if (env.valuesMissing()) {
     return null;
   }

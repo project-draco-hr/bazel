@@ -1,0 +1,15 @@
+{
+  ImmutableMultimap.Builder<Attribute,Label> labelBuilder=ImmutableMultimap.builder();
+  if (!(from instanceof Rule) || !(to instanceof Rule)) {
+    return labelBuilder.build();
+  }
+  RuleClass ruleClass=((Rule)to).getRuleClassObject();
+  for (  Class<? extends AspectFactory<?,?,?>> candidateClass : attribute.getAspects()) {
+    AspectFactory<?,?,?> candidate=AspectFactory.Util.create(candidateClass);
+    if (!ruleClass.getAdvertisedProviders().containsAll(candidate.getDefinition().getRequiredProviders())) {
+      continue;
+    }
+    addAllAttributesOfAspect((Rule)from,labelBuilder,candidate.getDefinition(),Rule.ALL_DEPS);
+  }
+  return labelBuilder.build();
+}
