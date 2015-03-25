@@ -3,7 +3,7 @@
   RootedPath realRootedPath=rootedPath;
   FileStateValue realFileStateValue=null;
   PathFragment relativePath=rootedPath.getRelativePath();
-  if (!relativePath.equals(PathFragment.EMPTY_FRAGMENT) && !externalFilesHelper.shouldAssumeImmutable(rootedPath)) {
+  if (!relativePath.equals(PathFragment.EMPTY_FRAGMENT)) {
     Pair<RootedPath,FileStateValue> resolvedState=resolveFromAncestors(rootedPath,env);
     if (resolvedState == null) {
       return null;
@@ -27,12 +27,27 @@
       }
       throw new FileFunctionException(fileSymlinkCycleException);
     }
-    Pair<RootedPath,FileStateValue> resolvedState=getSymlinkTargetRootedPath(realRootedPath,realFileStateValue.getSymlinkTarget(),env);
-    if (resolvedState == null) {
-      return null;
+    if (externalFilesHelper.shouldAssumeImmutable(realRootedPath)) {
+      try {
+        Path realPath=rootedPath.asPath().resolveSymbolicLinks();
+        realRootedPath=RootedPath.toRootedPathMaybeUnderRoot(realPath,pkgLocator.get().getPathEntries());
+        realFileStateValue=FileStateValue.create(realRootedPath,tsgm);
+      }
+ catch (      IOException e) {
+        throw new FileFunctionException(e,Transience.TRANSIENT);
+      }
+catch (      InconsistentFilesystemException e) {
+        throw new FileFunctionException(e,Transience.TRANSIENT);
+      }
     }
-    realRootedPath=resolvedState.getFirst();
-    realFileStateValue=resolvedState.getSecond();
+ else {
+      Pair<RootedPath,FileStateValue> resolvedState=getSymlinkTargetRootedPath(realRootedPath,realFileStateValue.getSymlinkTarget(),env);
+      if (resolvedState == null) {
+        return null;
+      }
+      realRootedPath=resolvedState.getFirst();
+      realFileStateValue=resolvedState.getSecond();
+    }
   }
   return FileValue.value(rootedPath,fileStateValue,realRootedPath,realFileStateValue);
 }
