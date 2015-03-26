@@ -1,9 +1,12 @@
 {
 switch (attrPb.getType()) {
 case INTEGER:
-    return new Integer(attrPb.getIntValue());
+    return attrPb.hasIntValue() ? new Integer(attrPb.getIntValue()) : null;
 case STRING:
-  if (expectedType == Type.NODEP_LABEL) {
+  if (!attrPb.hasStringValue()) {
+    return null;
+  }
+ else   if (expectedType == Type.NODEP_LABEL) {
     return deserializeLabel(attrPb.getStringValue());
   }
  else {
@@ -11,7 +14,7 @@ case STRING:
   }
 case LABEL:
 case OUTPUT:
-return deserializeLabel(attrPb.getStringValue());
+return attrPb.hasStringValue() ? deserializeLabel(attrPb.getStringValue()) : null;
 case STRING_LIST:
 if (expectedType == Type.NODEP_LABEL_LIST) {
 return deserializeGlobs(deserializeLabels(attrPb.getStringListValueList()),attrPb);
@@ -25,7 +28,7 @@ return deserializeGlobs(deserializeLabels(attrPb.getStringListValueList()),attrP
 case DISTRIBUTION_SET:
 return deserializeDistribs(attrPb.getStringListValueList());
 case LICENSE:
-return deserializeLicense(attrPb.getLicense());
+return attrPb.hasLicense() ? deserializeLicense(attrPb.getLicense()) : null;
 case STRING_DICT:
 {
 ImmutableMap.Builder<String,String> builder=ImmutableMap.builder();
@@ -61,9 +64,9 @@ builder.put(entry.getKey(),ImmutableList.copyOf(entry.getValueList()));
 return builder.build();
 }
 case BOOLEAN:
-return attrPb.getBooleanValue();
+return attrPb.hasBooleanValue() ? attrPb.getBooleanValue() : null;
 case TRISTATE:
-return deserializeTriStateValue(attrPb.getStringValue());
+return attrPb.hasStringValue() ? deserializeTriStateValue(attrPb.getStringValue()) : null;
 default :
 throw new PackageDeserializationException("Invalid discriminator: " + attrPb.getType());
 }
