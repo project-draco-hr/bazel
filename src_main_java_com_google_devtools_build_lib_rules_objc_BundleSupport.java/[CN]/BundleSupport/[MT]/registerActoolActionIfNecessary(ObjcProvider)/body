@@ -3,7 +3,7 @@
   if (!actoolzipOutput.isPresent()) {
     return;
   }
-  ObjcActionsBuilder actionsBuilder=ObjcRuleClasses.actionsBuilder(ruleContext);
   Artifact actoolPartialInfoplist=actoolPartialInfoplist(ruleContext,objcProvider).get();
-  actionsBuilder.registerActoolzipAction(new ObjcRuleClasses.Tools(ruleContext),objcProvider,actoolzipOutput.get(),actoolPartialInfoplist,extraActoolArgs,targetDeviceFamilies);
+  Artifact zipOutput=actoolzipOutput.get();
+  ruleContext.registerAction(ObjcActionsBuilder.spawnJavaOnDarwinActionBuilder(attributes.actoolzipDeployJar()).setMnemonic("AssetCatalogCompile").addTransitiveInputs(objcProvider.get(ASSET_CATALOG)).addOutput(zipOutput).addOutput(actoolPartialInfoplist).setCommandLine(actoolzipCommandLine(objcProvider,zipOutput,actoolPartialInfoplist)).build(ruleContext));
 }

@@ -2,4 +2,13 @@
   if (generateDebugSymbols && !iosMultiCpus.isEmpty()) {
     reporter.handle(Event.error("--objc_generate_debug_symbols is not supported when --ios_multi_cpus is set"));
   }
+  Platform platform=null;
+  for (  String architecture : iosMultiCpus) {
+    if (platform == null) {
+      platform=Platform.forArch(architecture);
+    }
+ else     if (platform != Platform.forArch(architecture)) {
+      reporter.handle(Event.error(String.format("--ios_multi_cpus does not currently allow values for both simulator and " + "device builds but was %s",iosMultiCpus)));
+    }
+  }
 }
