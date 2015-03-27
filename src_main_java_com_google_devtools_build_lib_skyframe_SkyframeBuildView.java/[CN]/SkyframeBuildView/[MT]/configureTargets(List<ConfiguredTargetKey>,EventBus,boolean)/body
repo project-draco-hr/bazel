@@ -44,6 +44,9 @@ catch (      ArtifactPrefixConflictException apce) {
     Throwable cause=errorInfo.getException();
     Preconditions.checkState(cause != null || !Iterables.isEmpty(errorInfo.getCycleInfo()),errorInfo);
     String errorMsg="Analysis of target '" + ConfiguredTargetValue.extractLabel(topLevel) + "' failed; build aborted";
+    if (cause instanceof ActionConflictException) {
+      ((ActionConflictException)cause).reportTo(skyframeExecutor.getReporter());
+    }
     throw new ViewCreationFailedException(errorMsg);
   }
   for (  Map.Entry<SkyKey,ErrorInfo> errorEntry : result.errorMap().entrySet()) {
@@ -62,6 +65,10 @@ catch (      ArtifactPrefixConflictException apce) {
         root=maybeGetConfiguredTargetCycleCulprit(errorInfo.getCycleInfo());
       }
       if (warningListener != null) {
+        Exception cause=errorInfo.getException();
+        if (cause instanceof ActionConflictException) {
+          ((ActionConflictException)cause).reportTo(warningListener);
+        }
         warningListener.handle(Event.warn("errors encountered while analyzing target '" + label + "': it will not be built"));
       }
       eventBus.post(new AnalysisFailureEvent(LabelAndConfiguration.of(label.getLabel(),label.getConfiguration()),root));

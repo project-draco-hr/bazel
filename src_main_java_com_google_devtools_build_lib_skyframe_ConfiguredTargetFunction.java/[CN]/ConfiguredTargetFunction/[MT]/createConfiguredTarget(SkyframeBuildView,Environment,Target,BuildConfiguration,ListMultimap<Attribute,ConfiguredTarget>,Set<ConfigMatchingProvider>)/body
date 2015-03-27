@@ -19,5 +19,10 @@
   }
   analysisEnvironment.disable(target);
   Preconditions.checkNotNull(configuredTarget,target);
-  return new ConfiguredTargetValue(configuredTarget,ImmutableList.copyOf(analysisEnvironment.getRegisteredActions()));
+  try {
+    return new ConfiguredTargetValue(configuredTarget,filterSharedActionsAndThrowIfConflict(analysisEnvironment.getRegisteredActions()));
+  }
+ catch (  ActionConflictException e) {
+    throw new ConfiguredTargetFunctionException(e);
+  }
 }
