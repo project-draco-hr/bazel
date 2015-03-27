@@ -1,0 +1,38 @@
+{
+  SkyFunctionException.validateExceptionType(exceptionClass1);
+  SkyFunctionException.validateExceptionType(exceptionClass2);
+  SkyFunctionException.validateExceptionType(exceptionClass3);
+  SkyFunctionException.validateExceptionType(exceptionClass4);
+  Map<SkyKey,ValueOrUntypedException> valueOrExceptions=getValueOrUntypedExceptions(depKeys);
+  ImmutableMap.Builder<SkyKey,ValueOrException4<E1,E2,E3,E4>> builder=ImmutableMap.builder();
+  for (  SkyKey depKey : depKeys) {
+    ValueOrUntypedException voe=valueOrExceptions.get(depKey);
+    SkyValue value=voe.getValue();
+    if (value != null) {
+      builder.put(depKey,ValueOrExceptionUtils.<E1,E2,E3,E4>ofValue(value));
+      continue;
+    }
+    Exception e=voe.getException();
+    if (e != null) {
+      if (exceptionClass1.isInstance(e)) {
+        builder.put(depKey,ValueOrExceptionUtils.<E1,E2,E3,E4>ofExn1(exceptionClass1.cast(e)));
+        continue;
+      }
+      if (exceptionClass2.isInstance(e)) {
+        builder.put(depKey,ValueOrExceptionUtils.<E1,E2,E3,E4>ofExn2(exceptionClass2.cast(e)));
+        continue;
+      }
+      if (exceptionClass3.isInstance(e)) {
+        builder.put(depKey,ValueOrExceptionUtils.<E1,E2,E3,E4>ofExn3(exceptionClass3.cast(e)));
+        continue;
+      }
+      if (exceptionClass4.isInstance(e)) {
+        builder.put(depKey,ValueOrExceptionUtils.<E1,E2,E3,E4>ofExn4(exceptionClass4.cast(e)));
+        continue;
+      }
+    }
+    valuesMissing=true;
+    builder.put(depKey,ValueOrExceptionUtils.<E1,E2,E3,E4>ofNullValue());
+  }
+  return builder.build();
+}
