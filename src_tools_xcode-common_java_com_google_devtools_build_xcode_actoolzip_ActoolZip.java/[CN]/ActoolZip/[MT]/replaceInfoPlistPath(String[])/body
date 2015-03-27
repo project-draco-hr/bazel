@@ -1,16 +1,20 @@
 {
   String flag="output-partial-info-plist";
   Set<String> flagOptions=ImmutableSet.of("-" + flag,"--" + flag);
+  Optional<File> newPath=Optional.absent();
   for (int i=0; i < args.length; ++i) {
     for (    String flagOption : flagOptions) {
       String arg=args[i];
       String flagEquals=flagOption + "=";
       if (arg.startsWith(flagEquals)) {
-        args[i]=flagEquals + new File(arg.substring(flagEquals.length())).getAbsolutePath();
+        newPath=Optional.of(new File(arg.substring(flagEquals.length())));
+        args[i]=flagEquals + newPath.get().getAbsolutePath();
       }
       if (arg.equals(flagOption) && i + 1 < args.length) {
-        args[i + 1]=new File(args[i + 1]).getAbsolutePath();
+        newPath=Optional.of(new File(args[i + 1]));
+        args[i + 1]=newPath.get().getAbsolutePath();
       }
     }
   }
+  return newPath;
 }

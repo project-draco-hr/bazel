@@ -1,4 +1,13 @@
 {
-  replaceInfoPlistPath(args);
-  Wrappers.execute(args,new ActoolZip());
+  Optional<File> infoPlistPath=replaceInfoPlistPath(args);
+  try {
+    OutErr outErr=Wrappers.executeCapturingOutput(args,new ActoolZip());
+    if (infoPlistPath.isPresent() && !infoPlistPath.get().exists()) {
+      outErr.print();
+      System.exit(1);
+    }
+  }
+ catch (  CommandFailedException e) {
+    Wrappers.handleException(e);
+  }
 }
