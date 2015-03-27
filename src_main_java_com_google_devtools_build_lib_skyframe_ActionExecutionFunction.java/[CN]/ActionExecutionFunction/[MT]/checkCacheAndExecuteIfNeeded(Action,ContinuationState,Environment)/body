@@ -1,0 +1,61 @@
+{
+  if (!state.hasArtifactData()) {
+    return skyframeActionExecutor.executeAction(action,null,-1,null);
+  }
+  FileAndMetadataCache fileAndMetadataCache=new FileAndMetadataCache(state.inputArtifactData,state.expandedMiddlemen,skyframeActionExecutor.getExecRoot(),action.getOutputs(),tsgm);
+  long actionStartTime=System.nanoTime();
+  if (!state.hasCheckedActionCache()) {
+    state.token=skyframeActionExecutor.checkActionCache(action,fileAndMetadataCache,actionStartTime,state.allInputs.actionCacheInputs);
+  }
+  if (state.token == null) {
+    return new ActionExecutionValue(fileAndMetadataCache.getOutputData(),fileAndMetadataCache.getAdditionalOutputData());
+  }
+  ActionExecutionContext actionExecutionContext=skyframeActionExecutor.constructActionExecutionContext(fileAndMetadataCache);
+  boolean inputsDiscoveredDuringActionExecution=false;
+  Map<Artifact,FileArtifactValue> metadataFoundDuringActionExecution=null;
+  try {
+    if (action.discoversInputs()) {
+      if (!state.hasDiscoveredInputs()) {
+        state.discoveredInputs=skyframeActionExecutor.discoverInputs(action,actionExecutionContext);
+        if (state.discoveredInputs == null) {
+          inputsDiscoveredDuringActionExecution=true;
+        }
+      }
+      if (state.discoveredInputs != null && !state.inputArtifactData.keySet().containsAll(state.discoveredInputs)) {
+        Map<Artifact,FileArtifactValue> inputArtifactData=addDiscoveredInputs(state.inputArtifactData,state.discoveredInputs,env);
+        if (env.valuesMissing()) {
+          return null;
+        }
+        state.inputArtifactData=inputArtifactData;
+        fileAndMetadataCache=new FileAndMetadataCache(state.inputArtifactData,state.expandedMiddlemen,skyframeActionExecutor.getExecRoot(),action.getOutputs(),tsgm);
+        actionExecutionContext=skyframeActionExecutor.constructActionExecutionContext(fileAndMetadataCache);
+      }
+    }
+    if (!state.hasExecutedAction()) {
+      state.value=skyframeActionExecutor.executeAction(action,fileAndMetadataCache,actionStartTime,actionExecutionContext);
+    }
+  }
+  finally {
+    try {
+      actionExecutionContext.getFileOutErr().close();
+    }
+ catch (    IOException e) {
+    }
+    if (inputsDiscoveredDuringActionExecution) {
+      metadataFoundDuringActionExecution=declareAdditionalDependencies(env,action,state.inputArtifactData.keySet());
+      state.discoveredInputs=metadataFoundDuringActionExecution.keySet();
+    }
+  }
+  if (env.valuesMissing()) {
+    return null;
+  }
+  if (inputsDiscoveredDuringActionExecution && !metadataFoundDuringActionExecution.isEmpty()) {
+    Map<Artifact,FileArtifactValue> inputArtifactData=new HashMap<>();
+    inputArtifactData.putAll(state.inputArtifactData);
+    inputArtifactData.putAll(metadataFoundDuringActionExecution);
+    state.inputArtifactData=inputArtifactData;
+    fileAndMetadataCache=new FileAndMetadataCache(state.inputArtifactData,state.expandedMiddlemen,skyframeActionExecutor.getExecRoot(),action.getOutputs(),tsgm);
+  }
+  skyframeActionExecutor.afterExecution(action,fileAndMetadataCache,state.token);
+  return state.value;
+}

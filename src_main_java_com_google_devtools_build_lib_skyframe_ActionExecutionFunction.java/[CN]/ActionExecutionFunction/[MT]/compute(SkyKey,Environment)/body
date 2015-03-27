@@ -1,33 +1,57 @@
 {
   Action action=(Action)skyKey.argument();
-  Map<Artifact,FileArtifactValue> inputArtifactData=null;
-  Map<Artifact,Collection<Artifact>> expandedMiddlemen=null;
-  boolean alreadyRan=skyframeActionExecutor.probeActionExecution(action);
-  try {
-    Pair<Map<Artifact,FileArtifactValue>,Map<Artifact,Collection<Artifact>>> checkedInputs=checkInputs(env,action,alreadyRan);
-    if (checkedInputs != null) {
-      inputArtifactData=checkedInputs.first;
-      expandedMiddlemen=checkedInputs.second;
-    }
-  }
- catch (  ActionExecutionException e) {
-    throw new ActionExecutionFunctionException(e);
-  }
   if (action.isVolatile() || action instanceof NotifyOnActionCacheHit) {
     PrecomputedValue.BUILD_ID.get(env);
   }
+  boolean sharedActionAlreadyRan=skyframeActionExecutor.probeActionExecution(action);
+  ContinuationState state;
+  if (action.discoversInputs()) {
+    state=getState(action);
+  }
+ else {
+    state=new ContinuationState();
+  }
+  if (!state.hasCollectedInputs()) {
+    state.allInputs=collectInputs(action,env);
+    if (state.allInputs == null) {
+      return null;
+    }
+  }
+ else   if (state.allInputs.keysRequested != null) {
+    env.getValues(state.allInputs.keysRequested);
+    Preconditions.checkState(!env.valuesMissing(),"%s %s",action,state);
+  }
+  Pair<Map<Artifact,FileArtifactValue>,Map<Artifact,Collection<Artifact>>> checkedInputs=null;
+  try {
+    Map<SkyKey,ValueOrException2<MissingInputFileException,ActionExecutionException>> inputDeps=env.getValuesOrThrow(toKeys(state.allInputs.getAllInputs(),action.discoversInputs() ? action.getMandatoryInputs() : null),MissingInputFileException.class,ActionExecutionException.class);
+    if (!sharedActionAlreadyRan && !state.hasArtifactData()) {
+      checkedInputs=checkInputs(env,action,inputDeps);
+    }
+  }
+ catch (  ActionExecutionException e) {
+    stateMap.remove(action);
+    throw new ActionExecutionFunctionException(e);
+  }
   if (env.valuesMissing()) {
     return null;
+  }
+  if (checkedInputs != null) {
+    Preconditions.checkState(!state.hasArtifactData(),"%s %s",state,action);
+    state.inputArtifactData=checkedInputs.first;
+    state.expandedMiddlemen=checkedInputs.second;
   }
   ActionExecutionValue result;
   try {
-    result=checkCacheAndExecuteIfNeeded(action,inputArtifactData,expandedMiddlemen,env);
+    result=checkCacheAndExecuteIfNeeded(action,state,env);
   }
  catch (  ActionExecutionException e) {
+    stateMap.remove(action);
     throw new ActionExecutionFunctionException(new AlreadyReportedActionExecutionException(e));
   }
   if (env.valuesMissing()) {
+    Preconditions.checkState(stateMap.containsKey(action),action);
     return null;
   }
+  stateMap.remove(action);
   return result;
 }

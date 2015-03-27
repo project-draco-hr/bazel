@@ -1,0 +1,18 @@
+{
+  ActionCache.Entry entry=getCacheEntry(action);
+  if (entry == null || entry.isCorrupted()) {
+    return ImmutableList.of();
+  }
+  List<PathFragment> outputs=new ArrayList<>();
+  for (  Artifact output : action.getOutputs()) {
+    outputs.add(output.getExecPath());
+  }
+  List<PathFragment> inputs=new ArrayList<>();
+  for (  String path : entry.getPaths()) {
+    PathFragment execPath=new PathFragment(path);
+    if (!outputs.contains(execPath)) {
+      inputs.add(execPath);
+    }
+  }
+  return action.resolveInputsFromCache(artifactResolver,resolver,inputs);
+}
