@@ -1,0 +1,36 @@
+{
+  TargetPatternSequence targetPatternSequence=(TargetPatternSequence)skyKey.argument();
+  Iterable<SkyKey> patternSkyKeys=TargetPatternValue.keys(targetPatternSequence.getPatterns(),targetPatternSequence.getPolicy(),targetPatternSequence.getOffset());
+  Map<SkyKey,ValueOrException<TargetParsingException>> targetPatternValuesByKey=env.getValuesOrThrow(patternSkyKeys,TargetParsingException.class);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  EventHandler eventHandler=env.getListener();
+  boolean handlerIsParseFailureListener=eventHandler instanceof ParseFailureListener;
+  ResolvedTargets.Builder<Target> builder=ResolvedTargets.builder();
+  for (  SkyKey key : patternSkyKeys) {
+    try {
+      TargetPatternValue resultValue=Preconditions.checkNotNull((TargetPatternValue)targetPatternValuesByKey.get(key).get());
+      ResolvedTargets<Target> results=resultValue.getTargets();
+      if (((TargetPatternValue.TargetPattern)key.argument()).isNegative()) {
+        builder.filter(Predicates.not(Predicates.in(results.getTargets())));
+      }
+ else {
+        builder.merge(results);
+      }
+    }
+ catch (    TargetParsingException e) {
+      handleTargetParsingException(eventHandler,handlerIsParseFailureListener,key,e);
+    }
+  }
+  ResolvedTargets<Target> resolvedTargets=builder.build();
+  List<SkyKey> targetKeys=new ArrayList<>();
+  for (  Target target : resolvedTargets.getTargets()) {
+    targetKeys.add(TransitiveTargetValue.key(target.getLabel()));
+  }
+  env.getValuesOrThrow(targetKeys,NoSuchPackageException.class,NoSuchTargetException.class);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  return PrepareDepsOfPatternsValue.INSTANCE;
+}
