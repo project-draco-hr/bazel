@@ -149,6 +149,9 @@ return ((Collection<?>)rval).contains(lval);
  else if (rval instanceof Map<?,?>) {
 return ((Map<?,?>)rval).containsKey(lval);
 }
+ else if (rval instanceof SkylarkNestedSet) {
+return ((SkylarkNestedSet)rval).expandedSet().contains(lval);
+}
  else if (rval instanceof String) {
 if (lval instanceof String) {
 return ((String)rval).contains((String)lval);
@@ -158,7 +161,7 @@ throw new EvalException(getLocation(),"in operator only works on strings if the 
 }
 }
  else {
-throw new EvalException(getLocation(),"in operator only works on lists, tuples, dictionaries and strings");
+throw new EvalException(getLocation(),"in operator only works on lists, tuples, sets, dicts and strings");
 }
 }
 default :
