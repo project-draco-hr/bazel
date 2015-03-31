@@ -12,8 +12,9 @@
   ArrayList<String> params=new ArrayList<>();
   ArrayList<V> defaults=new ArrayList<>();
   ArrayList<T> types=new ArrayList<>();
-  ArrayList<String> mandatoryNamedOnlyParams=new ArrayList<>();
-  ArrayList<T> mandatoryNamedOnlyTypes=new ArrayList<>();
+  ArrayList<String> optionalNamedOnlyParams=new ArrayList<>();
+  ArrayList<T> optionalNamedOnlyTypes=new ArrayList<>();
+  ArrayList<V> optionalNamedOnlyDefaultValues=new ArrayList<>();
   boolean defaultRequired=false;
   Set<String> paramNameSet=new HashSet<>();
   for (  Parameter<V,T> param : parameters) {
@@ -44,34 +45,34 @@
         starType=type;
       }
     }
- else     if (hasStar && param.isMandatory()) {
-      mandatoryNamedOnlyParams.add(name);
-      mandatoryNamedOnlyTypes.add(type);
-      mandatoryNamedOnly++;
+ else     if (hasStar && param.isOptional()) {
+      optionalNamedOnly++;
+      optionalNamedOnlyParams.add(name);
+      optionalNamedOnlyTypes.add(type);
+      optionalNamedOnlyDefaultValues.add(param.getDefaultValue());
     }
  else {
       params.add(name);
       types.add(type);
-      if (param.isMandatory()) {
-        if (defaultRequired) {
-          throw new SignatureException("a mandatory positional parameter must not follow an optional parameter",param);
-        }
-        mandatoryPositionals++;
+      if (param.isOptional()) {
+        optionalPositionals++;
+        defaults.add(param.getDefaultValue());
+        defaultRequired=true;
+      }
+ else       if (hasStar) {
+        mandatoryNamedOnly++;
+      }
+ else       if (defaultRequired) {
+        throw new SignatureException("a mandatory positional parameter must not follow an optional parameter",param);
       }
  else {
-        defaults.add(param.getDefaultValue());
-        if (hasStar) {
-          optionalNamedOnly++;
-        }
- else {
-          optionalPositionals++;
-          defaultRequired=true;
-        }
+        mandatoryPositionals++;
       }
     }
   }
-  params.addAll(mandatoryNamedOnlyParams);
-  types.addAll(mandatoryNamedOnlyTypes);
+  params.addAll(optionalNamedOnlyParams);
+  types.addAll(optionalNamedOnlyTypes);
+  defaults.addAll(optionalNamedOnlyDefaultValues);
   if (star != null) {
     params.add(star);
     types.add(starType);

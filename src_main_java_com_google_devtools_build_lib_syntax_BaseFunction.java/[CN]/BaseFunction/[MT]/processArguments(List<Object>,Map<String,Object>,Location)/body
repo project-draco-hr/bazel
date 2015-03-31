@@ -14,8 +14,6 @@
   int numPositionalParams=numMandatoryPositionalParams + numOptionalPositionalParams;
   int numNamedOnlyParams=numMandatoryNamedOnlyParams + numOptionalNamedOnlyParams;
   int numNamedParams=numPositionalParams + numNamedOnlyParams;
-  int numOptionalParams=numOptionalPositionalParams + numOptionalNamedOnlyParams;
-  int endOptionalParams=numMandatoryPositionalParams + numOptionalParams;
   int kwParamIndex=names.size() - 1;
   if (hasStarParam) {
     int starParamIndex=numNamedParams;
@@ -42,6 +40,7 @@
     }
     if (defaultValues != null) {
       int j=numPositionalArgs - numMandatoryPositionalParams;
+      int endOptionalParams=numPositionalParams + numOptionalNamedOnlyParams;
       for (int i=numPositionalArgs; i < endOptionalParams; i++) {
         arguments[i]=defaultValues.get(j++);
       }
@@ -88,19 +87,25 @@
     }
     for (int i=numPositionalArgs; i < numMandatoryPositionalParams; i++) {
       if (arguments[i] == null) {
-        throw new EvalException(loc,String.format("missing mandatory positional argument '%s' while calling %s",names.get(i),toString()));
+        throw new EvalException(loc,String.format("missing mandatory positional argument '%s' while calling %s",names.get(i),this));
       }
     }
-    for (int i=numNamedParams - numMandatoryNamedOnlyParams; i < numNamedParams; i++) {
+    int endMandatoryNamedOnlyParams=numPositionalParams + numMandatoryNamedOnlyParams;
+    for (int i=numPositionalParams; i < endMandatoryNamedOnlyParams; i++) {
       if (arguments[i] == null) {
-        throw new EvalException(loc,String.format("missing mandatory named-only argument '%s' while calling %s",names.get(i),toString()));
+        throw new EvalException(loc,String.format("missing mandatory named-only argument '%s' while calling %s",names.get(i),this));
       }
     }
     if (defaultValues != null) {
-      for (int j=numPositionalArgs > numMandatoryPositionalParams ? numPositionalArgs - numMandatoryPositionalParams : 0; j < numOptionalParams; j++) {
-        int i=j + numMandatoryPositionalParams;
+      for (int i=Math.max(numPositionalArgs,numMandatoryPositionalParams); i < numPositionalParams; i++) {
         if (arguments[i] == null) {
-          arguments[i]=defaultValues.get(j);
+          arguments[i]=defaultValues.get(i - numMandatoryPositionalParams);
+        }
+      }
+      int numMandatoryParams=numMandatoryPositionalParams + numMandatoryNamedOnlyParams;
+      for (int i=numMandatoryParams + numOptionalPositionalParams; i < numNamedParams; i++) {
+        if (arguments[i] == null) {
+          arguments[i]=defaultValues.get(i - numMandatoryParams);
         }
       }
     }
