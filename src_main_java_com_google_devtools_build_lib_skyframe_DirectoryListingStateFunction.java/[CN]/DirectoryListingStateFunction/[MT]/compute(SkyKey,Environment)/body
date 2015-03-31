@@ -1,13 +1,16 @@
 {
   RootedPath dirRootedPath=(RootedPath)skyKey.argument();
-  externalFilesHelper.maybeAddDepOnBuildId(dirRootedPath,env);
-  if (env.valuesMissing()) {
-    return null;
-  }
   try {
+    externalFilesHelper.maybeHandleExternalFile(dirRootedPath,env);
+    if (env.valuesMissing()) {
+      return null;
+    }
     return DirectoryListingStateValue.create(dirRootedPath);
   }
- catch (  IOException e) {
+ catch (  FileOutsidePackageRootsException e) {
+    throw new DirectoryListingStateFunctionException(e);
+  }
+catch (  IOException e) {
     throw new DirectoryListingStateFunctionException(e);
   }
 }
