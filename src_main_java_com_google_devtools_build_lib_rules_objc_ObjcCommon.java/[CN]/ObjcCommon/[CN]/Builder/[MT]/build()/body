@@ -15,8 +15,11 @@
     Iterable<Artifact> allSources=Iterables.concat(artifacts.getSrcs(),artifacts.getNonArcSrcs());
     objcProvider.addAll(LIBRARY,artifacts.getArchive().asSet());
     objcProvider.addAll(SOURCE,allSources);
-    if (context.getConfiguration().isCodeCoverageEnabled()) {
+    BuildConfiguration configuration=context.getConfiguration();
+    RegexFilter filter=configuration.getInstrumentationFilter();
+    if (configuration.isCodeCoverageEnabled() && filter.isIncluded(context.getLabel().toString())) {
       for (      Artifact source : allSources) {
+        objcProvider.add(INSTRUMENTED_SOURCE,source);
         objcProvider.add(GCNO,intermediateArtifacts.gcnoFile(source));
       }
     }
