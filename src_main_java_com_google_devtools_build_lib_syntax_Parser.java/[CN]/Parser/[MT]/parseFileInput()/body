@@ -2,7 +2,11 @@
   List<Statement> list=new ArrayList<>();
   while (token.kind != TokenKind.EOF) {
     if (token.kind == TokenKind.NEWLINE) {
-      expect(TokenKind.NEWLINE);
+      expectAndRecover(TokenKind.NEWLINE);
+    }
+ else     if (recoveryMode) {
+      syncTo(STATEMENT_TERMINATOR_SET);
+      recoveryMode=false;
     }
  else {
       parseTopLevelStatement(list);
