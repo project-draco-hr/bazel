@@ -1,0 +1,15 @@
+{
+  int extraDataLength=0;
+  for (  ExtraData e : extra) {
+    extraDataLength+=4 + e.getData().length;
+  }
+  byte[] rawExtra=new byte[extraDataLength];
+  int index=0;
+  for (  ExtraData e : extra) {
+    ZipUtil.shortToLittleEndian(rawExtra,index,e.getId());
+    ZipUtil.shortToLittleEndian(rawExtra,index + 2,(short)(e.getData().length & 0xffff));
+    System.arraycopy(e.getData(),0,rawExtra,index + 4,e.getData().length);
+    index+=4 + e.getData().length;
+  }
+  setExtra(rawExtra);
+}

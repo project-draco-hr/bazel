@@ -1,0 +1,58 @@
+{
+  File test=tmp.newFile("test.zip");
+  CRC32 crc=new CRC32();
+  Deflater deflater=new Deflater(Deflater.DEFAULT_COMPRESSION,true);
+  long date=791784306000L;
+  byte[] extra=new byte[]{(byte)0xaa,(byte)0xbb,(byte)0xcd};
+  byte[] tmp=new byte[128];
+  try (ZipOutputStream zout=new ZipOutputStream(new FileOutputStream(test))){
+    ZipEntry foo=new ZipEntry("foo");
+    foo.setComment("foo comment.");
+    foo.setMethod(ZipEntry.DEFLATED);
+    foo.setTime(date);
+    foo.setExtra(extra);
+    zout.putNextEntry(foo);
+    zout.write("foo".getBytes(UTF_8));
+    zout.closeEntry();
+    ZipEntry bar=new ZipEntry("bar");
+    bar.setComment("bar comment.");
+    bar.setMethod(ZipEntry.STORED);
+    bar.setSize("bar".length());
+    bar.setCompressedSize("bar".length());
+    crc.reset();
+    crc.update("bar".getBytes(UTF_8));
+    bar.setCrc(crc.getValue());
+    zout.putNextEntry(bar);
+    zout.write("bar".getBytes(UTF_8));
+    zout.closeEntry();
+  }
+   try (ZipReader reader=new ZipReader(test,UTF_8)){
+    ZipFileEntry fooEntry=reader.getEntry("foo");
+    assertThat(fooEntry.getName()).isEqualTo("foo");
+    assertThat(fooEntry.getComment()).isEqualTo("foo comment.");
+    assertThat(fooEntry.getMethod()).isEqualTo(Compression.DEFLATED);
+    assertThat(fooEntry.getVersion()).isEqualTo(Compression.DEFLATED.getMinVersion());
+    assertThat(fooEntry.getTime()).isEqualTo(date);
+    assertThat(fooEntry.getSize()).isEqualTo("foo".length());
+    deflater.reset();
+    deflater.setInput("foo".getBytes(UTF_8));
+    deflater.finish();
+    assertThat(fooEntry.getCompressedSize()).isEqualTo(deflater.deflate(tmp));
+    crc.reset();
+    crc.update("foo".getBytes(UTF_8));
+    assertThat(fooEntry.getCrc()).isEqualTo(crc.getValue());
+    assertThat(fooEntry.getExtra()).isEqualTo(extra);
+    ZipFileEntry barEntry=reader.getEntry("bar");
+    assertThat(barEntry.getName()).isEqualTo("bar");
+    assertThat(barEntry.getComment()).isEqualTo("bar comment.");
+    assertThat(barEntry.getMethod()).isEqualTo(Compression.STORED);
+    assertThat(barEntry.getVersion()).isEqualTo(Compression.STORED.getMinVersion());
+    assertDateAboutNow(new Date(barEntry.getTime()));
+    assertThat(barEntry.getSize()).isEqualTo("bar".length());
+    assertThat(barEntry.getCompressedSize()).isEqualTo("bar".length());
+    crc.reset();
+    crc.update("bar".getBytes(UTF_8));
+    assertThat(barEntry.getCrc()).isEqualTo(crc.getValue());
+    assertThat(barEntry.getExtra()).isEqualTo(new byte[]{});
+  }
+ }

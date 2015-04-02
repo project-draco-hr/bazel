@@ -1,0 +1,14 @@
+{
+  byte[] comment=fileComment.getBytes(charset);
+  byte[] buf=new byte[FIXED_DATA_SIZE + comment.length];
+  intToLittleEndian(buf,SIGNATURE_OFFSET,SIGNATURE);
+  shortToLittleEndian(buf,DISK_NUMBER_OFFSET,(short)0);
+  shortToLittleEndian(buf,CD_DISK_OFFSET,(short)0);
+  shortToLittleEndian(buf,DISK_ENTRIES_OFFSET,(short)(numEntries & 0xffff));
+  shortToLittleEndian(buf,TOTAL_ENTRIES_OFFSET,(short)(numEntries & 0xffff));
+  intToLittleEndian(buf,CD_SIZE_OFFSET,(int)(size & 0xffffffff));
+  intToLittleEndian(buf,CD_OFFSET_OFFSET,(int)(fileOffset & 0xffffffff));
+  shortToLittleEndian(buf,COMMENT_LENGTH_OFFSET,(short)(comment.length & 0xffff));
+  System.arraycopy(comment,0,buf,FIXED_DATA_SIZE,comment.length);
+  return buf;
+}

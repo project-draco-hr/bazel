@@ -4,12 +4,12 @@
   mockFilter.behavior.put("hello2.txt",SKIP_PLACEHOLDER);
   mockFilter.renameMap.putAll("hello.txt",Arrays.asList("hello1.txt","hello2.txt","hello3.txt"));
   ByteArrayOutputStream out=new ByteArrayOutputStream();
-  ZipCombiner singleJar=new ZipCombiner(mockFilter,out);
-  singleJar.addZip(sampleZipWithTwoEntries());
-  singleJar.addZip(sampleZipWithTwoEntries());
-  singleJar.addZip(sampleZipWithTwoEntries());
-  singleJar.close();
-  assertThat(mockFilter.calls).containsExactly("hello.txt","hello2.txt","hello.txt","hello.txt").inOrder();
+  try (ZipCombiner zipCombiner=new ZipCombiner(mockFilter,out)){
+    zipCombiner.addZip(sampleZipWithTwoEntries());
+    zipCombiner.addZip(sampleZipWithTwoEntries());
+    zipCombiner.addZip(sampleZipWithTwoEntries());
+  }
+   assertThat(mockFilter.calls).containsExactly("hello.txt","hello2.txt","hello.txt","hello.txt").inOrder();
   ZipInputStream zipInput=new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
   assertEntry(zipInput,"hello1.txt","Hello World!");
   assertEntry(zipInput,"hello3.txt","Hello World!");

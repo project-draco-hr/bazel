@@ -1,0 +1,37 @@
+{
+  byte[] fixedSizeData=new byte[FIXED_DATA_SIZE];
+  if (in.read(fixedSizeData) != FIXED_DATA_SIZE) {
+    throw new ZipException("Unexpected end of file while reading Central Directory File Header.");
+  }
+  if (!arrayStartsWith(fixedSizeData,intToLittleEndian(SIGNATURE))) {
+    throw new ZipException(String.format("Malformed Central Directory File Header; does not start with %08x",SIGNATURE));
+  }
+  byte[] name=new byte[getUnsignedShort(fixedSizeData,FILENAME_LENGTH_OFFSET)];
+  byte[] extraField=new byte[getUnsignedShort(fixedSizeData,EXTRA_FIELD_LENGTH_OFFSET)];
+  byte[] comment=new byte[getUnsignedShort(fixedSizeData,COMMENT_LENGTH_OFFSET)];
+  if (name.length > 0 && in.read(name) != name.length) {
+    throw new ZipException("Unexpected end of file while reading Central Directory File Header.");
+  }
+  if (extraField.length > 0 && in.read(extraField) != extraField.length) {
+    throw new ZipException("Unexpected end of file while reading Central Directory File Header.");
+  }
+  if (comment.length > 0 && in.read(comment) != comment.length) {
+    throw new ZipException("Unexpected end of file while reading Central Directory File Header.");
+  }
+  ZipFileEntry entry=new ZipFileEntry(new String(name,charset));
+  entry.setVersion(get16(fixedSizeData,VERSION_OFFSET));
+  entry.setVersionNeeded(get16(fixedSizeData,VERSION_NEEDED_OFFSET));
+  entry.setFlags(get16(fixedSizeData,FLAGS_OFFSET));
+  entry.setMethod(Compression.fromValue(get16(fixedSizeData,METHOD_OFFSET)));
+  long time=dosToUnixTime(get32(fixedSizeData,MOD_TIME_OFFSET));
+  entry.setTime(isValidInDos(time) ? time : DOS_EPOCH);
+  entry.setCrc(getUnsignedInt(fixedSizeData,CRC_OFFSET));
+  entry.setCompressedSize(getUnsignedInt(fixedSizeData,COMPRESSED_SIZE_OFFSET));
+  entry.setSize(getUnsignedInt(fixedSizeData,UNCOMPRESSED_SIZE_OFFSET));
+  entry.setInternalAttributes(get16(fixedSizeData,INTERNAL_ATTRIBUTES_OFFSET));
+  entry.setExternalAttributes(get32(fixedSizeData,EXTERNAL_ATTRIBUTES_OFFSET));
+  entry.setLocalHeaderOffset(getUnsignedInt(fixedSizeData,LOCAL_HEADER_OFFSET_OFFSET));
+  entry.setExtra(extraField);
+  entry.setComment(new String(comment,charset));
+  return entry;
+}

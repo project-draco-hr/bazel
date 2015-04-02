@@ -1,0 +1,18 @@
+{
+  try (ZipWriter writer=new ZipWriter(new FileOutputStream(test),UTF_8)){
+    byte[] content="content".getBytes(UTF_8);
+    crc.update(content);
+    ZipFileEntry entry=new ZipFileEntry("foo");
+    entry.setMethod(Compression.STORED);
+    entry.setSize(content.length);
+    entry.setCompressedSize(content.length);
+    entry.setCrc(crc.getValue());
+    entry.setTime(cal.getTimeInMillis());
+    writer.putNextEntry(entry);
+    thrown.expect(ZipException.class);
+    thrown.expectMessage("Cannot add a prefix file after the zip contents have been started.");
+    writer.startPrefixFile();
+    writer.write("#!/bin/bash\necho 'hello world'\n".getBytes(UTF_8));
+    writer.endPrefixFile();
+  }
+ }

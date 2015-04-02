@@ -1,0 +1,40 @@
+{
+  ZipWriter writer=new ZipWriter(new FileOutputStream(test),UTF_8);
+  byte[] content="content".getBytes(UTF_8);
+  crc.update(content);
+  ZipFileEntry entry=new ZipFileEntry("foo");
+  entry.setVersion((short)1);
+  entry.setVersionNeeded((short)2);
+  entry.setMethod(Compression.STORED);
+  entry.setSize(content.length);
+  entry.setCompressedSize(content.length);
+  entry.setCrc(crc.getValue());
+  entry.setTime(cal.getTimeInMillis());
+  entry.setFlags(ZipUtil.get16(new byte[]{0x08,0x00},0));
+  entry.setInternalAttributes(ZipUtil.get16(new byte[]{0x34,0x12},0));
+  entry.setExternalAttributes(ZipUtil.get32(new byte[]{0x0a,0x09,0x78,0x56},0));
+  entry.setLocalHeaderOffset(rand.nextInt(Integer.MAX_VALUE));
+  writer.putNextEntry(entry);
+  writer.write(content);
+  writer.closeEntry();
+  writer.close();
+  byte[] buf=new byte[128];
+  try (ZipFile zipFile=new ZipFile(test)){
+    ZipEntry foo=zipFile.getEntry("foo");
+    assertThat(foo.getMethod()).isEqualTo(ZipEntry.STORED);
+    assertThat(foo.getSize()).isEqualTo(content.length);
+    assertThat(foo.getCompressedSize()).isEqualTo(content.length);
+    assertThat(foo.getCrc()).isEqualTo(crc.getValue());
+    assertThat(foo.getTime()).isEqualTo(cal.getTimeInMillis());
+    zipFile.getInputStream(foo).read(buf);
+    assertThat(Bytes.indexOf(buf,content)).isEqualTo(0);
+  }
+   try (ZipReader zipFile=new ZipReader(test)){
+    ZipFileEntry foo=zipFile.getEntry("foo");
+    assertThat(foo.getVersion()).isEqualTo((short)0xa);
+    assertThat(foo.getVersionNeeded()).isEqualTo((short)0xa);
+    assertThat(foo.getFlags()).isEqualTo((short)0);
+    assertThat(foo.getInternalAttributes()).isEqualTo((short)4660);
+    assertThat(foo.getExternalAttributes()).isEqualTo(1450707210);
+  }
+ }

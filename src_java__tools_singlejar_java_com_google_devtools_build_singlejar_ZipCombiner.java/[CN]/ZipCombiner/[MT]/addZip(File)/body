@@ -1,0 +1,24 @@
+{
+  try (ZipReader zip=new ZipReader(zipFile)){
+    for (    ZipFileEntry entry : zip.entries()) {
+      String filename=entry.getName();
+      EntryAction action=getAction(filename);
+switch (action.getType()) {
+case SKIP:
+        break;
+case COPY:
+case RENAME:
+      writeEntry(zip,entry,action);
+    break;
+case MERGE:
+  entries.put(filename,null);
+InputStream in=zip.getRawInputStream(entry);
+if (entry.getMethod() == Compression.DEFLATED) {
+in=new InflaterInputStream(in,getInflater());
+}
+action.getStrategy().merge(in,action.getMergeBuffer());
+break;
+}
+}
+}
+ }

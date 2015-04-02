@@ -1,0 +1,48 @@
+{
+  File test=tmp.newFile("test.zip");
+  CRC32 crc=new CRC32();
+  Deflater deflator=new Deflater(Deflater.DEFAULT_COMPRESSION,true);
+  try (ZipOutputStream zout=new ZipOutputStream(new FileOutputStream(test))){
+    ZipEntry foo=new ZipEntry("foo");
+    foo.setComment("foo comment.");
+    foo.setMethod(ZipEntry.DEFLATED);
+    zout.putNextEntry(foo);
+    zout.write("foo".getBytes(UTF_8));
+    zout.closeEntry();
+    ZipEntry bar=new ZipEntry("bar");
+    bar.setComment("bar comment.");
+    bar.setMethod(ZipEntry.STORED);
+    bar.setSize("bar".length());
+    bar.setCompressedSize("bar".length());
+    crc.reset();
+    crc.update("bar".getBytes(UTF_8));
+    bar.setCrc(crc.getValue());
+    zout.putNextEntry(bar);
+    zout.write("bar".getBytes(UTF_8));
+    zout.closeEntry();
+  }
+   try (ZipReader reader=new ZipReader(test,UTF_8)){
+    ZipFileEntry fooEntry=reader.getEntry("foo");
+    InputStream fooIn=reader.getRawInputStream(fooEntry);
+    byte[] fooData=new byte[10];
+    fooIn.read(fooData);
+    byte[] expectedFooData=new byte[10];
+    deflator.reset();
+    deflator.setInput("foo".getBytes(UTF_8));
+    deflator.finish();
+    deflator.deflate(expectedFooData);
+    assertThat(fooData).isEqualTo(expectedFooData);
+    ZipFileEntry barEntry=reader.getEntry("bar");
+    InputStream barIn=reader.getRawInputStream(barEntry);
+    byte[] barData=new byte[3];
+    barIn.read(barData);
+    byte[] expectedBarData="bar".getBytes(UTF_8);
+    assertThat(barData).isEqualTo(expectedBarData);
+    assertThat(barIn.read()).isEqualTo(-1);
+    assertThat(barIn.read(barData)).isEqualTo(-1);
+    assertThat(barIn.read(barData,0,3)).isEqualTo(-1);
+    thrown.expect(IOException.class);
+    thrown.expectMessage("Reset is not supported on this type of stream.");
+    barIn.reset();
+  }
+ }
