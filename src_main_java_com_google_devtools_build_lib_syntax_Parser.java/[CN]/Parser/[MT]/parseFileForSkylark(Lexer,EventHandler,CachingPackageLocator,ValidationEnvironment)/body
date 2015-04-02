@@ -8,7 +8,9 @@
     }
   }
  catch (  EvalException e) {
-    eventHandler.handle(Event.error(e.getLocation(),e.getMessage()));
+    if (!e.isDueToIncompleteAST()) {
+      eventHandler.handle(Event.error(e.getLocation(),e.getMessage()));
+    }
     hasSemanticalErrors=true;
   }
   return new ParseResult(statements,parser.comments,parser.errorsCount > 0 || lexer.containsErrors() || hasSemanticalErrors);
