@@ -1,5 +1,5 @@
 {
-  RefCountedLockImpl newLock=new RefCountedLockImpl(key);
+  ReentrantLock newLock=new ReentrantLock();
   newLock.lock();
   Lock waitersLock=waitersLocks.get(key);
   try {
@@ -9,13 +9,13 @@
   finally {
     waitersLock.unlock();
   }
-  RefCountedLockImpl lock;
+  ReentrantLock lock;
   lock=locks.putIfAbsent(key,newLock);
   if (lock != null) {
     Preconditions.checkState(lock != newLock);
     newLock.unlock();
     lock.lock();
-    return lock;
+    return new RefCountedAutoUnlocker(key,lock);
   }
-  return newLock;
+  return new RefCountedAutoUnlocker(key,newLock);
 }

@@ -1,0 +1,35 @@
+{
+  final AtomicReference<Long> currentThreadIdRef=new AtomicReference<>(new Long(-1L));
+  final AtomicInteger count=new AtomicInteger(0);
+  Runnable runnable=new Runnable(){
+    @Override public void run(){
+      try (AutoUnlocker unlocker1=locker.lock("cat")){
+        Long currentThreadId=Thread.currentThread().getId();
+        currentThreadIdRef.set(currentThreadId);
+        try (AutoUnlocker unlocker2=locker.lock("cat")){
+          assertEquals(currentThreadId,currentThreadIdRef.get());
+          try (AutoUnlocker unlocker3=locker.lock("cat")){
+            assertEquals(currentThreadId,currentThreadIdRef.get());
+            try (AutoUnlocker unlocker4=locker.lock("cat")){
+              assertEquals(currentThreadId,currentThreadIdRef.get());
+              try (AutoUnlocker unlocker5=locker.lock("cat")){
+                assertEquals(currentThreadId,currentThreadIdRef.get());
+                count.incrementAndGet();
+              }
+             }
+           }
+         }
+       }
+     }
+  }
+;
+  for (int i=0; i < NUM_EXECUTOR_THREADS; i++) {
+    executorService.submit(runnable);
+  }
+  boolean interrupted=ExecutorShutdownUtil.interruptibleShutdown(executorService);
+  if (interrupted) {
+    Thread.currentThread().interrupt();
+    throw new InterruptedException();
+  }
+  assertEquals(NUM_EXECUTOR_THREADS,count.get());
+}
