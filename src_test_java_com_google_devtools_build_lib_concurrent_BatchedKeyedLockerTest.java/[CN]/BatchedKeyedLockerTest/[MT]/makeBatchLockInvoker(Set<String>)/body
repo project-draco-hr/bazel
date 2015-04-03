@@ -1,0 +1,10 @@
+{
+  ImmutableList<List<String>> perms=ImmutableList.copyOf(Collections2.permutations(keys));
+  final Iterator<List<String>> permutationsIter=Iterables.cycle(perms).iterator();
+  return new Supplier<KeyedLocker.AutoUnlocker>(){
+    @Override public AutoUnlocker get(){
+      return batchLocker.lockBatch(ImmutableSet.copyOf(permutationsIter.next()));
+    }
+  }
+;
+}

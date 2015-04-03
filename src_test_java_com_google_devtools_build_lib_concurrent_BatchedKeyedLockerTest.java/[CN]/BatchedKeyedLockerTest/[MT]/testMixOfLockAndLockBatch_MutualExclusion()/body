@@ -1,0 +1,36 @@
+{
+  final AtomicInteger count=new AtomicInteger(0);
+  final AtomicLongMap<String> mutexCounters=AtomicLongMap.create();
+  Set<Set<String>> powerSet=Sets.powerSet(ImmutableSet.of("k1","k2","k3","k4","k5","k6","k8","k9","k10"));
+  for (  final Set<String> keys : powerSet) {
+    executorService.submit(new Runnable(){
+      @Override public void run(){
+        if (keys.size() == 1) {
+          String key=Iterables.getOnlyElement(keys);
+          try (AutoUnlocker unlocker=batchLocker.lock(key)){
+            long newCount=mutexCounters.addAndGet(key,1);
+            assertEquals(1,newCount);
+            mutexCounters.decrementAndGet(key);
+          }
+         }
+ else         if (keys.size() > 1) {
+          try (AutoUnlocker unlocker=batchLocker.lockBatch(keys)){
+            for (            String key : keys) {
+              long newCount=mutexCounters.addAndGet(key,1);
+              assertEquals(1,newCount);
+              mutexCounters.decrementAndGet(key);
+            }
+          }
+         }
+        count.incrementAndGet();
+      }
+    }
+);
+  }
+  boolean interrupted=ExecutorShutdownUtil.interruptibleShutdown(executorService);
+  if (interrupted) {
+    Thread.currentThread().interrupt();
+    throw new InterruptedException();
+  }
+  assertEquals(powerSet.size(),count.get());
+}

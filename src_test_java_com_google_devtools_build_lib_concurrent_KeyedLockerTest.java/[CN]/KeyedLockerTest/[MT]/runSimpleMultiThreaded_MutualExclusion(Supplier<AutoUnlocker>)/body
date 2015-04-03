@@ -1,0 +1,32 @@
+{
+  final CountDownLatch runnableLatch=new CountDownLatch(NUM_EXECUTOR_THREADS);
+  final AtomicInteger mutexCounter=new AtomicInteger(0);
+  final AtomicInteger runnableCounter=new AtomicInteger(0);
+  final AtomicBoolean runnableInterrupted=new AtomicBoolean(false);
+  Runnable runnable=new Runnable(){
+    @Override public void run(){
+      runnableLatch.countDown();
+      try {
+        runnableLatch.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS);
+      }
+ catch (      InterruptedException e) {
+        runnableInterrupted.set(true);
+      }
+      try (AutoUnlocker unlocker=lockFn.get()){
+        runnableCounter.incrementAndGet();
+        assertEquals(1,mutexCounter.incrementAndGet());
+        assertEquals(0,mutexCounter.decrementAndGet());
+      }
+     }
+  }
+;
+  for (int i=0; i < NUM_EXECUTOR_THREADS; i++) {
+    executorService.submit(runnable);
+  }
+  boolean interrupted=ExecutorShutdownUtil.interruptibleShutdown(executorService);
+  if (interrupted || runnableInterrupted.get()) {
+    Thread.currentThread().interrupt();
+    throw new InterruptedException();
+  }
+  assertEquals(NUM_EXECUTOR_THREADS,runnableCounter.get());
+}
