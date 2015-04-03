@@ -1,8 +1,9 @@
 {
   ByteArrayOutputStream out=new ByteArrayOutputStream();
-  try (ZipCombiner zipCombiner=new ZipCombiner(out)){
-    thrown.expect(ZipException.class);
-    thrown.expectMessage("It does not contain an end of central directory record.");
-    zipCombiner.addZip(writeInputStreamToFile(zipWithPartialEntry()));
+  try (ZipCombiner singleJar=new ZipCombiner(out)){
+    singleJar.addZip(zipWithPartialEntry());
+    fail();
   }
- }
+ catch (  EOFException e) {
+  }
+}

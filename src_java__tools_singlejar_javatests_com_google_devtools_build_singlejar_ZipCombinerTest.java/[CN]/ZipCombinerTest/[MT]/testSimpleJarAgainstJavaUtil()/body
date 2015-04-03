@@ -1,0 +1,27 @@
+{
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  JarOutputStream jarOut=new JarOutputStream(out);
+  ZipEntry entry;
+  entry=new ZipEntry("META-INF/");
+  entry.setTime(DOS_EPOCH.getTime());
+  entry.setMethod(JarOutputStream.STORED);
+  entry.setSize(0);
+  entry.setCompressedSize(0);
+  entry.setCrc(0);
+  jarOut.putNextEntry(entry);
+  entry=new ZipEntry("META-INF/MANIFEST.MF");
+  entry.setTime(DOS_EPOCH.getTime());
+  entry.setMethod(JarOutputStream.DEFLATED);
+  jarOut.putNextEntry(entry);
+  jarOut.write(new byte[]{1,2,3,4});
+  jarOut.close();
+  byte[] javaFile=out.toByteArray();
+  out.reset();
+  ZipCombiner singleJar=new ZipCombiner(out);
+  singleJar.addDirectory("META-INF/",DOS_EPOCH,new ExtraData[]{new ExtraData((short)0xCAFE,new byte[0])});
+  singleJar.addFile("META-INF/MANIFEST.MF",DOS_EPOCH,new ByteArrayInputStream(new byte[]{1,2,3,4}));
+  singleJar.close();
+  byte[] singlejarFile=out.toByteArray();
+  new ZipTester(singlejarFile).validate();
+  assertZipFilesEquivalent(singlejarFile,javaFile);
+}

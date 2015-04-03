@@ -1,0 +1,16 @@
+{
+  final int method=getUnsignedShort(headerBuffer,COMPRESSION_METHOD_OFFSET);
+  int dosTime=date == null ? (int)getUnsignedInt(headerBuffer,MTIME_OFFSET) : dateToDosTime(date);
+  if (skip == SkipMode.COPY) {
+    if ((mode == OutputMode.FORCE_DEFLATE) && (method == STORED_METHOD) && !filename.endsWith("/")) {
+      modifyAndCopyEntry(filename,in,dosTime);
+      return;
+    }
+ else     if ((mode == OutputMode.FORCE_STORED) && (method == DEFLATE_METHOD)) {
+      modifyAndCopyEntry(filename,in,dosTime);
+      return;
+    }
+  }
+  int directoryOffset=copyOrSkipEntryHeader(filename,in,date,directoryEntryInfo,skip,rename);
+  copyOrSkipEntryData(filename,in,skip,directoryOffset);
+}
