@@ -1,0 +1,4 @@
+{
+  Artifact buildInfo=Iterables.getOnlyElement(ruleContext.getAnalysisEnvironment().getBuildInfo(ruleContext,ObjcBuildInfoFactory.KEY));
+  ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("ObjcVersionPlist").setExecutable(new PathFragment("/bin/bash")).setCommandLine(new CustomCommandLine.Builder().add("-c").add("VERSION=\"$(" + "grep \"^" + BuildInfo.BUILD_EMBED_LABEL + "\" "+ buildInfo.getExecPathString()+ " | cut -d' ' -f2- | sed -e 's#\"#\\\"#g')\" && "+ " for KEY in CFBundleVersion CFBundleShortVersionString; do"+ "   echo \"${KEY}=\\\"${VERSION}\\\";\" >> "+ getGeneratedVersionPlist().getExecPathString()+ " ; done").build()).addInput(buildInfo).addOutput(getGeneratedVersionPlist()).build(ruleContext));
+}
