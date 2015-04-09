@@ -1,0 +1,14 @@
+{
+  StringBuilder desc=new StringBuilder();
+  List<Field> allFields=Lists.newArrayList();
+  for (  Class<? extends OptionsBase> optionsClass : impl.getOptionsClasses()) {
+    allFields.addAll(impl.getAnnotatedFieldsFor(optionsClass));
+  }
+  for (  Field optionField : allFields) {
+    String category=optionField.getAnnotation(Option.class).category();
+    if (documentationLevel(category) == DocumentationLevel.DOCUMENTED) {
+      OptionsUsage.getCompletion(optionField,desc);
+    }
+  }
+  return desc.toString();
+}

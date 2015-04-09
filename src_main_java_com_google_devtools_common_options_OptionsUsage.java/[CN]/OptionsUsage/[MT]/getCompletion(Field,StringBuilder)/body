@@ -1,0 +1,28 @@
+{
+  String flagName=field.getAnnotation(Option.class).name();
+  Class<?> fieldType=field.getType();
+  builder.append("--").append(flagName);
+  if (fieldType.equals(boolean.class)) {
+    builder.append("\n");
+    builder.append("--no").append(flagName).append("\n");
+  }
+ else   if (fieldType.equals(TriState.class)) {
+    builder.append("={auto,yes,no}\n");
+    builder.append("--no").append(flagName).append("\n");
+  }
+ else   if (fieldType.isEnum()) {
+    builder.append("={").append(COMMA_JOINER.join(fieldType.getEnumConstants()).toLowerCase()).append("}\n");
+  }
+ else   if (fieldType.getSimpleName().equals("Label")) {
+    builder.append("=label\n");
+  }
+ else   if (fieldType.getSimpleName().equals("PathFragment")) {
+    builder.append("=path\n");
+  }
+ else   if (Void.class.isAssignableFrom(fieldType)) {
+    builder.append("\n");
+  }
+ else {
+    builder.append("=\n");
+  }
+}
