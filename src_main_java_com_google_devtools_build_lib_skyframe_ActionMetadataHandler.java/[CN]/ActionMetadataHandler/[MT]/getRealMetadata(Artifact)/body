@@ -30,5 +30,8 @@
   fileValue=fileValueFromArtifact(artifact,null,tsgm);
   FileValue oldFileValue=outputArtifactData.putIfAbsent(artifact,fileValue);
   checkInconsistentData(artifact,oldFileValue,value);
+  if (metadataDiscarded && !fileValue.exists()) {
+    missingArtifacts.put(artifact,new Throwable().getStackTrace());
+  }
   return maybeStoreAdditionalData(artifact,fileValue,null);
 }

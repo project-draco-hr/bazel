@@ -7,6 +7,9 @@
       fileValue=fileValueFromArtifact(artifact,FileStatusWithDigestAdapter.adapt(statNoFollow),tsgm);
       byte[] fileDigest=fileValue.getDigest();
       Preconditions.checkState(fileDigest == null || Arrays.equals(digest,fileDigest),"%s %s %s",artifact,digest,fileDigest);
+      if (!fileValue.exists()) {
+        missingArtifacts.put(artifact,new Throwable().getStackTrace());
+      }
       outputArtifactData.put(artifact,fileValue);
     }
  catch (    IOException e) {
