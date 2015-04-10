@@ -1,5 +1,10 @@
 {
-  Environment env=singletonEnv("x",42);
-  assertThat((Iterable<Object>)eval(parseExpr("[x + 1 for x in [1,2,3]]"),env)).containsExactly(2,3,4).inOrder();
-  assertEquals(3,env.lookup("x"));
+  update("x",42);
+  if (isSkylark()) {
+    checkEvalError("ERROR 1:1: Variable x is read only","[x + 1 for x in [1,2,3]]");
+  }
+ else {
+    assertThat((Iterable<Object>)eval("[x + 1 for x in [1,2,3]]")).containsExactly(2,3,4).inOrder();
+    assertEquals(3,lookup("x"));
+  }
 }

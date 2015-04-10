@@ -1,17 +1,10 @@
 {
-  Function keyval=new AbstractFunction("keyval"){
+  Function kwargs=new AbstractFunction("kwargs"){
     @Override public Object call(    List<Object> args,    final Map<String,Object> kwargs,    FuncallExpression ast,    Environment env){
-      List<String> keys=Ordering.natural().sortedCopy(new ArrayList<String>(kwargs.keySet()));
-      if ((Integer)args.get(0) == 0) {
-        return keys;
-      }
- else {
-        return Lists.transform(keys,Functions.forMap(kwargs,null));
-      }
+      return kwargs;
     }
   }
 ;
-  Environment env=singletonEnv(keyval.getName(),keyval);
-  assertEquals(eval("['bar', 'foo', 'wiz']"),eval("keyval(0, foo=1, bar='bar', wiz=[1,2,3])",env));
-  assertEquals(eval("['bar', 1, [1,2,3]]"),eval("keyval(1, foo=1, bar='bar', wiz=[1,2,3])",env));
+  update(kwargs.getName(),kwargs);
+  assertEquals(eval("[('bar', 'bar'), ('foo', 1), ('wiz', [1, 2, 3])]"),eval("kwargs(foo=1, bar='bar', wiz=[1,2,3]).items()"));
 }
