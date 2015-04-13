@@ -5,8 +5,6 @@
   String stat1Content=StringUtilities.joinLines("cpu 29793342 260290 3479274 636259369 6683218 656426 714057 0","cpu0 29793342 260290 3479274 636259369 6683218 656426 714057 0","intr 2870488853 2486517107 3 0 0 2 0 5 0 0 0 0 0 3 0 74363716 " + "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 " + "0 0 52483586 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 973315 0 0 0 0 0 0 0 46 "+ "0 0 0 0 0 0 0 98792358 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "+ "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "+ "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 114339590 "+ "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "+ "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 43019122 0 0 0 0 0","ctxt 15053799843","btime 1199289688","processes 25799993","procs_running 1","procs_blocked 0");
   String stat2Content=StringUtilities.joinLines("cpu 29794509 260290 3479474 636287862 6683283 656450 714087 0 0","cpu0 29794509 260290 3479474 636287862 6683283 656450 714087 0 0","intr 2870488853 2486517107 3 0 0 2 0 5 0 0 0 0 0 3 0 74363716 " + "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 " + "0 0 52483586 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 973315 0 0 0 0 0 0 0 46 "+ "0 0 0 0 0 0 0 98792358 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "+ "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "+ "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 114339590 "+ "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "+ "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 43019122 0 0 0 0 0","ctxt 15053799843","btime 1199289688","processes 25799993","procs_running 1","procs_blocked 0");
   String meminfoFile=scratch.file("test_meminfo_nonht",meminfoContent).getPathString();
-  String stat1File=scratch.file("proc_stat_1",stat1Content).getPathString();
-  String stat2File=scratch.file("proc_stat_2",stat2Content).getPathString();
   assertEquals(1,LocalHostCapacity.getLogicalCpuCount(cpuinfoContent));
   assertEquals(1,LocalHostCapacity.getPhysicalCpuCount(cpuinfoContent,1));
   assertEquals(1,LocalHostCapacity.getCoresPerCpu(cpuinfoContent));
@@ -15,36 +13,4 @@
   assertEquals(3091.732,capacity.getMemoryMb(),0.1);
   LocalHostCapacity.setLocalHostCapacity(capacity);
   assertSame(capacity,LocalHostCapacity.getLocalHostCapacity());
-  Clock mockedClock=new Clock(){
-    private int callCount=0;
-    @Override public long currentTimeMillis(){
-      throw new AssertionError("unexpected method call");
-    }
-    @Override public long nanoTime(){
-      callCount++;
-      if (callCount == 1) {
-        return 0;
-      }
- else       if (callCount == 2) {
-        return 100 * 1000000;
-      }
- else       if (callCount == 3) {
-        return 200 * 1000000;
-      }
- else {
-        throw new AssertionError("unexpected method call");
-      }
-    }
-  }
-;
-  LocalHostCapacity.FreeResources freeStats=LocalHostCapacity.getFreeResources(mockedClock,meminfoFile,stat1File,null);
-  assertNotNull(freeStats);
-  assertEquals(2356.756,freeStats.getFreeMb(),0.001);
-  assertEquals(0.0,freeStats.getAvgFreeCpu(),0);
-  assertTrue(freeStats.getReadingAge() > 50);
-  freeStats=LocalHostCapacity.getFreeResources(mockedClock,meminfoFile,stat2File,freeStats);
-  assertNotNull(freeStats);
-  assertEquals(2356.756,freeStats.getFreeMb(),0.001);
-  assertTrue(freeStats.getInterval() > 100);
-  assertEquals(0.95,freeStats.getAvgFreeCpu(),0.001);
 }
