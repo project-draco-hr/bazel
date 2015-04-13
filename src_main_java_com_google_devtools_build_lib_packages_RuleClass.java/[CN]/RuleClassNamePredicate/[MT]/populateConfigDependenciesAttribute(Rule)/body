@@ -6,13 +6,9 @@
   }
   Set<Label> configLabels=new LinkedHashSet<>();
   for (  Attribute attr : rule.getAttributes()) {
-    Type.Selector<?> selector=attributes.getSelector(attr.getName(),attr.getType());
-    if (selector != null) {
-      for (      Label label : selector.getEntries().keySet()) {
-        if (!Type.Selector.isReservedLabel(label)) {
-          configLabels.add(label);
-        }
-      }
+    Type.SelectorList<?> selectors=attributes.getSelectorList(attr.getName(),attr.getType());
+    if (selectors != null) {
+      configLabels.addAll(selectors.getKeyLabels());
     }
   }
   rule.setAttributeValue(configDepsAttribute,ImmutableList.copyOf(configLabels),false);
