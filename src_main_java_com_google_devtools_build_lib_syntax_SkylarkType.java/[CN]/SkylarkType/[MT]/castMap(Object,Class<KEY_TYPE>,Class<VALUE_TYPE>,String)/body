@@ -1,17 +1,14 @@
 {
   if (obj == null) {
-    return ImmutableList.of();
+    return ImmutableMap.of();
   }
   if (!(obj instanceof Map<?,?>)) {
     throw new IllegalArgumentException(String.format("expected a dictionary for %s but got %s instead",what,EvalUtils.getDataTypeName(obj)));
   }
-  return Iterables.transform(((Map<?,?>)obj).entrySet(),new com.google.common.base.Function<Map.Entry<?,?>,Map.Entry<KEY_TYPE,VALUE_TYPE>>(){
-    @SuppressWarnings("unchecked") @Override public Map.Entry<KEY_TYPE,VALUE_TYPE> apply(    Map.Entry<?,?> input){
-      if (keyType.isAssignableFrom(input.getKey().getClass()) && valueType.isAssignableFrom(input.getValue().getClass())) {
-        return (Map.Entry<KEY_TYPE,VALUE_TYPE>)input;
-      }
+  for (  Map.Entry<?,?> input : ((Map<?,?>)obj).entrySet()) {
+    if (!keyType.isAssignableFrom(input.getKey().getClass()) || !valueType.isAssignableFrom(input.getValue().getClass())) {
       throw new IllegalArgumentException(String.format("expected <%s, %s> type for '%s' but got <%s, %s> instead",keyType.getSimpleName(),valueType.getSimpleName(),what,EvalUtils.getDataTypeName(input.getKey()),EvalUtils.getDataTypeName(input.getValue())));
     }
   }
-);
+  return (Map<KEY_TYPE,VALUE_TYPE>)obj;
 }
