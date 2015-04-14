@@ -11,13 +11,18 @@
     controlPb=Control.parseFrom(in);
   }
    Path pbxprojPath=fileSystem.getPath(controlPb.getPbxproj());
-  Path symlinkToInsideWorkspace=fileSystem.getPath("tools/objc/precomp_xcodegen_deploy.jar");
+  Iterator<String> srcList=allSourceFilePaths(controlPb).iterator();
   Path workspaceRoot;
-  if (!Files.exists(symlinkToInsideWorkspace)) {
+  if (!srcList.hasNext()) {
     workspaceRoot=XcodeprojGeneration.relativeWorkspaceRoot(pbxprojPath);
   }
  else {
-    workspaceRoot=symlinkToInsideWorkspace.toRealPath().resolve("../../..").normalize();
+    Path relSourceFilePath=fileSystem.getPath(srcList.next());
+    Path absSourceFilePath=relSourceFilePath.toAbsolutePath();
+    workspaceRoot=absSourceFilePath;
+    for (int i=0; i < relSourceFilePath.getNameCount(); i++) {
+      workspaceRoot=workspaceRoot.getParent();
+    }
   }
   try (OutputStream out=Files.newOutputStream(pbxprojPath)){
     Path relativeWorkspaceRoot=fileSystem.getPath(".");
