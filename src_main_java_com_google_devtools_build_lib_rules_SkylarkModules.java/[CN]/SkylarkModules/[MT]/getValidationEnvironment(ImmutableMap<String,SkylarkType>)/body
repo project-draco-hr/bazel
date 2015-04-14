@@ -1,17 +1,15 @@
 {
-  Map<SkylarkType,Map<String,SkylarkType>> builtIn=new HashMap<>();
-  Map<String,SkylarkType> global=new HashMap<>();
-  builtIn.put(SkylarkType.GLOBAL,global);
+  Map<String,SkylarkType> builtIn=new HashMap<>();
   collectSkylarkTypesFromFields(Environment.class,builtIn);
   for (  Class<?> moduleClass : MODULES) {
     if (moduleClass.isAnnotationPresent(SkylarkModule.class)) {
-      global.put(moduleClass.getAnnotation(SkylarkModule.class).name(),SkylarkType.of(moduleClass));
+      builtIn.put(moduleClass.getAnnotation(SkylarkModule.class).name(),SkylarkType.of(moduleClass));
     }
   }
   MethodLibrary.setupValidationEnvironment(builtIn);
   for (  Class<?> module : MODULES) {
     collectSkylarkTypesFromFields(module,builtIn);
   }
-  global.putAll(extraObjects);
-  return new ValidationEnvironment(CollectionUtils.toImmutable(builtIn));
+  builtIn.putAll(extraObjects);
+  return new ValidationEnvironment(builtIn);
 }

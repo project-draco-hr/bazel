@@ -1,0 +1,18 @@
+{
+  for (  Field field : classObject.getDeclaredFields()) {
+    if (field.isAnnotationPresent(SkylarkBuiltin.class)) {
+      SkylarkBuiltin annotation=field.getAnnotation(SkylarkBuiltin.class);
+      if (SkylarkFunction.class.isAssignableFrom(field.getType())) {
+        if (annotation.objectType().equals(Object.class)) {
+          builtIn.put(annotation.name(),SkylarkType.UNKNOWN);
+        }
+      }
+ else       if (Function.class.isAssignableFrom(field.getType())) {
+        builtIn.put(annotation.name(),SkylarkFunctionType.of(annotation.name(),SkylarkType.UNKNOWN));
+      }
+ else {
+        builtIn.put(annotation.name(),SkylarkType.of(field.getType()));
+      }
+    }
+  }
+}
