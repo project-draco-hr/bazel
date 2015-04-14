@@ -1,13 +1,7 @@
 {
   Map<String,SkylarkType> global=builtIn.get(SkylarkType.GLOBAL);
-  setupValidationEnvironment(skylarkGlobalFunctions,global);
-  Map<String,SkylarkType> dict=new HashMap<>();
-  setupValidationEnvironment(dictFunctions,dict);
-  builtIn.put(SkylarkType.of(Map.class),dict);
-  Map<String,SkylarkType> string=new HashMap<>();
-  setupValidationEnvironment(stringFunctions,string);
-  builtIn.put(SkylarkType.STRING,string);
-  Map<String,SkylarkType> list=new HashMap<>();
-  setupValidationEnvironment(listPureFunctions,list);
-  builtIn.put(SkylarkType.LIST,list);
+  for (  Map.Entry<Function,SkylarkType> function : skylarkGlobalFunctions.entrySet()) {
+    String name=function.getKey().getName();
+    global.put(name,SkylarkFunctionType.of(name,function.getValue()));
+  }
 }
