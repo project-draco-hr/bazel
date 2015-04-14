@@ -1,0 +1,33 @@
+{
+  if (externalResourceFile == null) {
+    return;
+  }
+  try {
+    AssetManager newAssetManager=AssetManager.class.getConstructor().newInstance();
+    Method mAddAssetPath=AssetManager.class.getDeclaredMethod("addAssetPath",String.class);
+    mAddAssetPath.setAccessible(true);
+    if (((int)mAddAssetPath.invoke(newAssetManager,externalResourceFile)) == 0) {
+      throw new IllegalStateException("Could not create new AssetManager");
+    }
+    Method mEnsureStringBlocks=AssetManager.class.getDeclaredMethod("ensureStringBlocks");
+    mEnsureStringBlocks.setAccessible(true);
+    mEnsureStringBlocks.invoke(newAssetManager);
+    Class<?> clazz=Class.forName("android.app.ResourcesManager");
+    Method mGetInstance=clazz.getDeclaredMethod("getInstance");
+    mGetInstance.setAccessible(true);
+    Object resourcesManager=mGetInstance.invoke(null);
+    Field mAssets=Resources.class.getDeclaredField("mAssets");
+    mAssets.setAccessible(true);
+    Field fMActiveResources=clazz.getDeclaredField("mActiveResources");
+    fMActiveResources.setAccessible(true);
+    @SuppressWarnings("unchecked") ArrayMap<?,WeakReference<Resources>> arrayMap=(ArrayMap<?,WeakReference<Resources>>)fMActiveResources.get(resourcesManager);
+    for (    WeakReference<Resources> wr : arrayMap.values()) {
+      Resources resources=wr.get();
+      mAssets.set(resources,newAssetManager);
+      resources.updateConfiguration(resources.getConfiguration(),resources.getDisplayMetrics());
+    }
+  }
+ catch (  IllegalAccessException|NoSuchFieldException|NoSuchMethodException|ClassNotFoundException|InvocationTargetException|InstantiationException e) {
+    throw new IllegalStateException(e);
+  }
+}

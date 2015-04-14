@@ -1,0 +1,62 @@
+{
+  try {
+    Class<?> activityThread=Class.forName("android.app.ActivityThread");
+    Method m=activityThread.getMethod("currentActivityThread");
+    m.setAccessible(true);
+    Object currentActivityThread=m.invoke(null);
+    Field mInitialApplication=activityThread.getDeclaredField("mInitialApplication");
+    mInitialApplication.setAccessible(true);
+    Application initialApplication=(Application)mInitialApplication.get(currentActivityThread);
+    if (initialApplication == StubApplication.this) {
+      mInitialApplication.set(currentActivityThread,realApplication);
+    }
+    Field mAllApplications=activityThread.getDeclaredField("mAllApplications");
+    mAllApplications.setAccessible(true);
+    List<Application> allApplications=(List<Application>)mAllApplications.get(currentActivityThread);
+    for (int i=0; i < allApplications.size(); i++) {
+      if (allApplications.get(i) == StubApplication.this) {
+        allApplications.set(i,realApplication);
+      }
+    }
+    Class<?> loadedApkClass;
+    try {
+      loadedApkClass=Class.forName("android.app.LoadedApk");
+    }
+ catch (    ClassNotFoundException e) {
+      loadedApkClass=Class.forName("android.app.ActivityThread$PackageInfo");
+    }
+    Field mApplication=loadedApkClass.getDeclaredField("mApplication");
+    mApplication.setAccessible(true);
+    Field mResDir=loadedApkClass.getDeclaredField("mResDir");
+    mResDir.setAccessible(true);
+    Field mLoadedApk=null;
+    try {
+      mLoadedApk=Application.class.getDeclaredField("mLoadedApk");
+    }
+ catch (    NoSuchFieldException e) {
+    }
+    for (    String fieldName : new String[]{"mPackages","mResourcePackages"}) {
+      Field field=activityThread.getDeclaredField(fieldName);
+      field.setAccessible(true);
+      Object value=field.get(currentActivityThread);
+      for (      Map.Entry<String,WeakReference<?>> entry : ((Map<String,WeakReference<?>>)value).entrySet()) {
+        Object loadedApk=entry.getValue().get();
+        if (loadedApk == null) {
+          continue;
+        }
+        if (mApplication.get(loadedApk) == StubApplication.this) {
+          mApplication.set(loadedApk,realApplication);
+          if (externalResourceFile != null) {
+            mResDir.set(loadedApk,externalResourceFile);
+          }
+          if (mLoadedApk != null) {
+            mLoadedApk.set(realApplication,loadedApk);
+          }
+        }
+      }
+    }
+  }
+ catch (  IllegalAccessException|NoSuchFieldException|NoSuchMethodException|ClassNotFoundException|InvocationTargetException e) {
+    throw new IllegalStateException(e);
+  }
+}
