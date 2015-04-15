@@ -18,7 +18,9 @@
     }
   }
   manifest=filterListForObscuringSymlinks(eventHandler,location,manifest);
-  manifest.putAll(manifestExpander.apply(manifest));
+  for (  PathFragment extraPath : emptyFilesSupplier.getExtraPaths(manifest.keySet())) {
+    manifest.put(extraPath,null);
+  }
   PathFragment path=new PathFragment(suffix);
   Map<PathFragment,Artifact> result=new HashMap<>();
   for (  Map.Entry<PathFragment,Artifact> entry : manifest.entrySet()) {
