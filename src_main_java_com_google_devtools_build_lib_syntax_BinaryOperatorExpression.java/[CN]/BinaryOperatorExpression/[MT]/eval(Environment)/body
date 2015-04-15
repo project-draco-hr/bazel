@@ -84,34 +84,51 @@ case MULT:
   }
   break;
 }
-case PERCENT:
+case DIVIDE:
 {
 if (lval instanceof Integer && rval instanceof Integer) {
   if (rval.equals(0)) {
-    throw new EvalException(getLocation(),"integer modulo by zero");
+    throw new EvalException(getLocation(),"integer division by zero");
   }
-  return ((Integer)lval).intValue() % ((Integer)rval).intValue();
+  return (int)Math.floor(new Double((Integer)lval) / (Integer)rval);
+}
+}
+case PERCENT:
+{
+if (lval instanceof Integer && rval instanceof Integer) {
+if (rval.equals(0)) {
+  throw new EvalException(getLocation(),"integer modulo by zero");
+}
+int div=(Integer)rval;
+int result=((Integer)lval).intValue() % Math.abs(div);
+if (result > 0 && div < 0) {
+  result+=div;
+}
+ else if (result < 0 && div > 0) {
+  result+=div;
+}
+return result;
 }
 if (lval instanceof String) {
-  try {
-    String pattern=(String)lval;
-    if (rval instanceof List<?>) {
-      List<?> rlist=(List<?>)rval;
-      if (EvalUtils.isTuple(rlist)) {
-        return EvalUtils.formatString(pattern,rlist);
-      }
+try {
+  String pattern=(String)lval;
+  if (rval instanceof List<?>) {
+    List<?> rlist=(List<?>)rval;
+    if (EvalUtils.isTuple(rlist)) {
+      return EvalUtils.formatString(pattern,rlist);
     }
-    if (rval instanceof SkylarkList) {
-      SkylarkList rlist=(SkylarkList)rval;
-      if (rlist.isTuple()) {
-        return EvalUtils.formatString(pattern,rlist.toList());
-      }
+  }
+  if (rval instanceof SkylarkList) {
+    SkylarkList rlist=(SkylarkList)rval;
+    if (rlist.isTuple()) {
+      return EvalUtils.formatString(pattern,rlist.toList());
     }
-    return EvalUtils.formatString(pattern,Collections.singletonList(rval));
   }
- catch (  IllegalFormatException e) {
-    throw new EvalException(getLocation(),e.getMessage());
-  }
+  return EvalUtils.formatString(pattern,Collections.singletonList(rval));
+}
+ catch (IllegalFormatException e) {
+  throw new EvalException(getLocation(),e.getMessage());
+}
 }
 break;
 }
