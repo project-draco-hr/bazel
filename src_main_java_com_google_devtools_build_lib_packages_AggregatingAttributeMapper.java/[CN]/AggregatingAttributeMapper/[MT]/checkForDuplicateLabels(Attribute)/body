@@ -1,0 +1,17 @@
+{
+  String attrName=attribute.getName();
+  Type<?> attrType=attribute.getType();
+  Type.SelectorList<?> selectorList=getSelectorList(attribute.getName(),attrType);
+  if (selectorList == null || selectorList.getSelectors().size() == 1) {
+    ImmutableSet.Builder<Label> duplicates=ImmutableSet.builder();
+    for (    Object value : visitAttribute(attrName,attrType)) {
+      if (value != null) {
+        duplicates.addAll(CollectionUtils.duplicatedElementsOf(ImmutableList.copyOf(attrType.getLabels(value))));
+      }
+    }
+    return duplicates.build();
+  }
+ else {
+    return CollectionUtils.duplicatedElementsOf(getReachableLabels(attrName,false));
+  }
+}

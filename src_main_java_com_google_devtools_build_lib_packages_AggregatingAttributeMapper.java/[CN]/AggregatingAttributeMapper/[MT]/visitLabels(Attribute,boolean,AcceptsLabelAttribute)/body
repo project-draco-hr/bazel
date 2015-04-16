@@ -1,0 +1,30 @@
+{
+  Type<?> type=attribute.getType();
+  Type.SelectorList<?> selectorList=getSelectorList(attribute.getName(),type);
+  if (selectorList == null) {
+    if (getComputedDefault(attribute.getName(),attribute.getType()) != null) {
+      for (      Object value : visitAttribute(attribute.getName(),attribute.getType())) {
+        if (value != null) {
+          for (          Label label : type.getLabels(value)) {
+            observer.acceptLabelAttribute(label,attribute);
+          }
+        }
+      }
+    }
+ else {
+      super.visitLabels(attribute,observer);
+    }
+  }
+ else {
+    for (    Type.Selector<?> selector : selectorList.getSelectors()) {
+      for (      Map.Entry<Label,?> selectorEntry : selector.getEntries().entrySet()) {
+        if (includeSelectKeys && !Type.Selector.isReservedLabel(selectorEntry.getKey())) {
+          observer.acceptLabelAttribute(selectorEntry.getKey(),attribute);
+        }
+        for (        Label value : type.getLabels(selectorEntry.getValue())) {
+          observer.acceptLabelAttribute(value,attribute);
+        }
+      }
+    }
+  }
+}

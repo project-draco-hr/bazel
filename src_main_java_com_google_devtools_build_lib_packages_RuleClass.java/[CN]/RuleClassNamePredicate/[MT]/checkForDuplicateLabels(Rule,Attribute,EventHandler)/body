@@ -1,12 +1,6 @@
 {
-  final String attrName=attribute.getName();
-  AggregatingAttributeMapper attributeMap=AggregatingAttributeMapper.of(rule);
-  for (  List<Label> labels : attributeMap.visitAttribute(attrName,Type.LABEL_LIST)) {
-    if (!labels.isEmpty()) {
-      Set<Label> duplicates=CollectionUtils.duplicatedElementsOf(labels);
-      for (      Label label : duplicates) {
-        rule.reportError(String.format("Label '%s' is duplicated in the '%s' attribute of rule '%s'",label,attrName,rule.getName()),eventHandler);
-      }
-    }
+  Set<Label> duplicates=AggregatingAttributeMapper.of(rule).checkForDuplicateLabels(attribute);
+  for (  Label label : duplicates) {
+    rule.reportError(String.format("Label '%s' is duplicated in the '%s' attribute of rule '%s'",label,attribute.getName(),rule.getName()),eventHandler);
   }
 }

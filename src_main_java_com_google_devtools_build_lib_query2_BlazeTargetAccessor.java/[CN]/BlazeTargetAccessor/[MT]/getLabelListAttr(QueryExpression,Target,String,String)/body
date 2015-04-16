@@ -7,16 +7,12 @@
   if (attrType == null) {
     return ImmutableList.of();
   }
-  for (  Object value : attrMap.visitAttribute(attrName,attrType)) {
-    if (value != null) {
-      for (      Label label : attrType.getLabels(value)) {
-        try {
-          result.add(queryEnvironment.getTarget(label));
-        }
- catch (        TargetNotFoundException e) {
-          queryEnvironment.reportBuildFileError(caller,errorMsgPrefix + e.getMessage());
-        }
-      }
+  for (  Label label : attrMap.getReachableLabels(attrName,false)) {
+    try {
+      result.add(queryEnvironment.getTarget(label));
+    }
+ catch (    TargetNotFoundException e) {
+      queryEnvironment.reportBuildFileError(caller,errorMsgPrefix + e.getMessage());
     }
   }
   return result;
