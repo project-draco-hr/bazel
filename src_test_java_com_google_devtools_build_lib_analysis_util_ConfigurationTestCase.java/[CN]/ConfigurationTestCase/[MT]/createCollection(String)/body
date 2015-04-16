@@ -1,3 +1,9 @@
 {
-  return createCollection(configurationFactory,args);
+  OptionsParser parser=OptionsParser.newOptionsParser(ImmutableList.<Class<? extends OptionsBase>>builder().addAll(buildOptionClasses).add(TestOptions.class).build());
+  parser.parse(args);
+  ImmutableSortedSet<String> multiCpu=ImmutableSortedSet.copyOf(parser.getOptions(TestOptions.class).multiCpus);
+  configurationFactory.forbidSanityCheck();
+  BuildOptions buildOptions=BuildOptions.of(buildOptionClasses,parser);
+  BuildConfigurationCollection collection=skyframeExecutor.createConfigurations(configurationFactory,new BuildConfigurationKey(buildOptions,new BlazeDirectories(outputBase,outputBase,workspace),clientEnv,multiCpu));
+  return collection;
 }
