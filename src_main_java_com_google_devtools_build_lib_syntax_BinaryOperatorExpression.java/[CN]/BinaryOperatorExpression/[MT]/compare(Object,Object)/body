@@ -1,16 +1,8 @@
 {
-  lval=SkylarkType.convertToSkylark(lval,getLocation());
-  rval=SkylarkType.convertToSkylark(rval,getLocation());
-  if (lval instanceof SkylarkList && rval instanceof SkylarkList) {
-    return compareLists((SkylarkList)lval,(SkylarkList)rval);
-  }
-  if (!(lval instanceof Comparable)) {
-    throw new EvalException(getLocation(),lval + " is not comparable");
-  }
   try {
-    return ((Comparable<Object>)lval).compareTo(rval);
+    return EvalUtils.SKYLARK_COMPARATOR.compare(lval,rval);
   }
- catch (  ClassCastException e) {
-    throw new EvalException(getLocation(),"Cannot compare " + EvalUtils.getDataTypeName(lval) + " with "+ EvalUtils.getDataTypeName(rval));
+ catch (  EvalUtils.ComparisonException e) {
+    throw new EvalException(getLocation(),e);
   }
 }

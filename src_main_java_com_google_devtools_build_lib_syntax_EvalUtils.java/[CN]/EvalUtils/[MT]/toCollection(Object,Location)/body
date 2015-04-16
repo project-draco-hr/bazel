@@ -7,7 +7,12 @@
   }
  else   if (o instanceof Map<?,?>) {
     Map<Comparable<?>,Object> dict=(Map<Comparable<?>,Object>)o;
-    return Ordering.natural().sortedCopy(dict.keySet());
+    try {
+      return Ordering.from(SKYLARK_COMPARATOR).sortedCopy(dict.keySet());
+    }
+ catch (    ComparisonException e) {
+      throw new EvalException(loc,e);
+    }
   }
  else   if (o instanceof SkylarkNestedSet) {
     return ((SkylarkNestedSet)o).toCollection();
