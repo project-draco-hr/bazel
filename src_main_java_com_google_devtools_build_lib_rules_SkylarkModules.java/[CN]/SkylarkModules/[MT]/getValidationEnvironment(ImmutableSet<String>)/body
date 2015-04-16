@@ -1,15 +1,15 @@
 {
-  Map<String,SkylarkType> builtIn=new HashMap<>();
+  Set<String> builtIn=new HashSet<>();
   collectSkylarkTypesFromFields(Environment.class,builtIn);
   for (  Class<?> moduleClass : MODULES) {
     if (moduleClass.isAnnotationPresent(SkylarkModule.class)) {
-      builtIn.put(moduleClass.getAnnotation(SkylarkModule.class).name(),SkylarkType.of(moduleClass));
+      builtIn.add(moduleClass.getAnnotation(SkylarkModule.class).name());
     }
   }
   MethodLibrary.setupValidationEnvironment(builtIn);
   for (  Class<?> module : MODULES) {
     collectSkylarkTypesFromFields(module,builtIn);
   }
-  builtIn.putAll(extraObjects);
+  builtIn.addAll(extraObjects);
   return new ValidationEnvironment(builtIn);
 }
