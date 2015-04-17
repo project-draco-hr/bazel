@@ -1,0 +1,13 @@
+{
+  scratchFile("test/BUILD","config_setting(","    name = 'match',","    values = {","        'copt': '-Dfoo',","    })");
+  useConfiguration("");
+  assertFalse(getConfigMatchingProvider("//test:match").matches());
+  useConfiguration("--copt","-Dfoo");
+  assertTrue(getConfigMatchingProvider("//test:match").matches());
+  useConfiguration("--copt","-Dbar");
+  assertFalse(getConfigMatchingProvider("//test:match").matches());
+  useConfiguration("--copt","-Dfoo","--copt","-Dbar");
+  assertTrue(getConfigMatchingProvider("//test:match").matches());
+  useConfiguration("--copt","-Dbar","--copt","-Dfoo");
+  assertTrue(getConfigMatchingProvider("//test:match").matches());
+}
