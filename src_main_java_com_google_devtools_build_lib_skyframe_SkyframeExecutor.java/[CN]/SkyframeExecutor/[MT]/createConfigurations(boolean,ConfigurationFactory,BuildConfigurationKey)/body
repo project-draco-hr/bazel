@@ -1,11 +1,9 @@
 {
   this.configurationPackages.set(Sets.<Package>newConcurrentHashSet());
-  this.clientEnv.set(configurationKey.getClientEnv());
+  this.testEnv.set(configurationKey.getTestEnv());
   this.configurationFactory.set(configurationFactory);
   this.configurationFragments.set(ImmutableList.copyOf(configurationFactory.getFactories()));
-  BuildOptions buildOptions=configurationKey.getBuildOptions();
-  Map<String,String> testEnv=BuildConfiguration.getTestEnv(buildOptions.get(BuildConfiguration.Options.class).testEnvironment,configurationKey.getClientEnv());
-  PrecomputedValue.TEST_ENVIRONMENT_VARIABLES.set(injectable(),testEnv);
+  PrecomputedValue.TEST_ENVIRONMENT_VARIABLES.set(injectable(),configurationKey.getTestEnv());
   PrecomputedValue.BLAZE_DIRECTORIES.set(injectable(),configurationKey.getDirectories());
   SkyKey skyKey=ConfigurationCollectionValue.key(configurationKey.getBuildOptions(),configurationKey.getMultiCpu());
   setConfigurationSkyKey(skyKey);
