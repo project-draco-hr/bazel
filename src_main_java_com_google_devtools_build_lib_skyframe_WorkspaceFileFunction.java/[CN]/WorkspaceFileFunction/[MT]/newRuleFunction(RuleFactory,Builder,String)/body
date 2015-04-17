@@ -1,9 +1,6 @@
 {
-  return new AbstractFunction(ruleClassName){
-    @Override public Object call(    List<Object> args,    Map<String,Object> kwargs,    FuncallExpression ast,    com.google.devtools.build.lib.syntax.Environment env) throws EvalException {
-      if (!args.isEmpty()) {
-        throw new EvalException(ast.getLocation(),"build rules do not accept positional parameters");
-      }
+  return new BuiltinFunction(ruleClassName,FunctionSignature.KWARGS,BuiltinFunction.USE_AST){
+    public Object invoke(    Map<String,Object> kwargs,    FuncallExpression ast) throws EvalException {
       try {
         RuleClass ruleClass=ruleFactory.getRuleClass(ruleClassName);
         builder.createAndAddRepositoryRule(ruleClass,kwargs,ast);

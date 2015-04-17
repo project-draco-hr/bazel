@@ -1,11 +1,9 @@
 {
-  List<String> params=ImmutableList.of("name");
-  return new MixedModeFunction("workspace",params,1,true){
-    @Override public Object call(    Object[] namedArgs,    FuncallExpression ast) throws EvalException, ConversionException, InterruptedException {
-      String name=Type.STRING.convert(namedArgs[0],"'name' argument");
+  return new BuiltinFunction("workspace",FunctionSignature.namedOnly("name"),BuiltinFunction.USE_LOC){
+    public Object invoke(    String name,    Location loc) throws EvalException {
       String errorMessage=LabelValidator.validateTargetName(name);
       if (errorMessage != null) {
-        throw new EvalException(ast.getLocation(),errorMessage);
+        throw new EvalException(loc,errorMessage);
       }
       builder.setWorkspaceName(name);
       return NONE;

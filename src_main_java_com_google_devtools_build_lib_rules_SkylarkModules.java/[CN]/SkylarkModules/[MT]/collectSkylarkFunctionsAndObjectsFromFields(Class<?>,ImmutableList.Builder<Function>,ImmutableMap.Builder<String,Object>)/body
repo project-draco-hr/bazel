@@ -4,15 +4,16 @@
       if (field.isAnnotationPresent(SkylarkBuiltin.class)) {
         field.setAccessible(true);
         SkylarkBuiltin annotation=field.getAnnotation(SkylarkBuiltin.class);
+        Object value=field.get(null);
         if (SkylarkFunction.class.isAssignableFrom(field.getType())) {
-          SkylarkFunction function=(SkylarkFunction)field.get(null);
+          SkylarkFunction function=(SkylarkFunction)value;
           if (!function.isConfigured()) {
             function.configure(annotation);
           }
           functions.add(function);
         }
  else {
-          objects.put(annotation.name(),field.get(null));
+          objects.put(annotation.name(),value);
         }
       }
     }
