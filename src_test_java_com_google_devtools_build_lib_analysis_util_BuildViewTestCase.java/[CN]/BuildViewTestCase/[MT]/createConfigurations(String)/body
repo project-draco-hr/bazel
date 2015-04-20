@@ -6,14 +6,10 @@
     configurationArgs.addAll(getAnalysisMock().getOptionOverrides());
     optionsParser.parse(configurationArgs);
     optionsParser.parse(args);
-    Map<String,String> testEnv=new LinkedHashMap<>();
-    for (    Map.Entry<String,String> entry : optionsParser.getOptions(BuildConfiguration.Options.class).testEnvironment) {
-      testEnv.put(entry.getKey(),entry.getValue());
-    }
     configurationFactory.forbidSanityCheck();
     BuildOptions buildOptions=ruleClassProvider.createBuildOptions(optionsParser);
     ensureTargetsVisited(buildOptions.getAllLabels().values());
-    BuildConfigurationKey key=new BuildConfigurationKey(buildOptions,directories,testEnv);
+    BuildConfigurationKey key=new BuildConfigurationKey(buildOptions,directories);
     skyframeExecutor.invalidateConfigurationCollection();
     return skyframeExecutor.createConfigurations(configurationFactory,key);
   }
