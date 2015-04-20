@@ -1,13 +1,13 @@
 {
   for (  Field field : fields) {
-    if (field.isAnnotationPresent(SkylarkBuiltin.class)) {
-      SkylarkBuiltin skylarkBuiltin=field.getAnnotation(SkylarkBuiltin.class);
-      Class<?> moduleClass=skylarkBuiltin.objectType();
+    if (field.isAnnotationPresent(SkylarkSignature.class)) {
+      SkylarkSignature skylarkSignature=field.getAnnotation(SkylarkSignature.class);
+      Class<?> moduleClass=skylarkSignature.objectType();
       SkylarkModule skylarkModule=moduleClass.equals(Object.class) ? getTopLevelModule() : moduleClass.getAnnotation(SkylarkModule.class);
       if (!modules.containsKey(skylarkModule.name())) {
         modules.put(skylarkModule.name(),new SkylarkModuleDoc(skylarkModule,moduleClass));
       }
-      modules.get(skylarkModule.name()).getBuiltinMethods().put(skylarkBuiltin.name(),new SkylarkBuiltinMethod(skylarkBuiltin,field.getType()));
+      modules.get(skylarkModule.name()).getBuiltinMethods().put(skylarkSignature.name(),new SkylarkBuiltinMethod(skylarkSignature,field.getType()));
     }
   }
 }

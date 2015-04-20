@@ -1,0 +1,34 @@
+{
+  Preconditions.checkState(!configured);
+  Preconditions.checkArgument(getName().equals(annotation.name()),"%s != %s",getName(),annotation.name());
+  Preconditions.checkArgument(annotation.optionalPositionals().length == 0 || annotation.mandatoryNamedOnly().length == 0,"SkylarkFunction %s: forbidden simultaneous optionalPositionals and mandatoryNamedOnly",getName());
+  Preconditions.checkArgument(annotation.extraPositionals().length == 0 && annotation.extraKeywords().length == 0,"SkylarkFunction %s: forbidden extra arguments",getName());
+  mandatoryParamNum=0;
+  ImmutableList.Builder<String> paramListBuilder=ImmutableList.builder();
+  ImmutableMap.Builder<String,SkylarkSignature.Param> paramTypeBuilder=ImmutableMap.builder();
+  for (  SkylarkSignature.Param param : annotation.mandatoryPositionals()) {
+    if (!param.name().equals("self")) {
+      paramListBuilder.add(param.name());
+      paramTypeBuilder.put(param.name(),param);
+      mandatoryParamNum++;
+    }
+  }
+  for (  SkylarkSignature.Param param : annotation.optionalPositionals()) {
+    paramListBuilder.add(param.name());
+    paramTypeBuilder.put(param.name(),param);
+  }
+  for (  SkylarkSignature.Param param : annotation.mandatoryNamedOnly()) {
+    paramListBuilder.add(param.name());
+    paramTypeBuilder.put(param.name(),param);
+    mandatoryParamNum++;
+  }
+  for (  SkylarkSignature.Param param : annotation.optionalNamedOnly()) {
+    paramListBuilder.add(param.name());
+    paramTypeBuilder.put(param.name(),param);
+  }
+  parameters=paramListBuilder.build();
+  parameterTypes=paramTypeBuilder.build();
+  this.objectType=annotation.objectType().equals(Object.class) ? null : annotation.objectType();
+  this.onlyLoadingPhase=annotation.onlyLoadingPhase();
+  configured=true;
+}
