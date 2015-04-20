@@ -12,11 +12,11 @@
   addResourceFilesToBuild(ruleContext,common.getObjcProvider(),filesToBuild);
   XcodeProductType productType;
   ExtraLinkArgs extraLinkArgs;
-  ExtraLinkInputs extraLinkInputs;
+  Iterable<Artifact> extraLinkInputs;
   if (!isXcTest(ruleContext)) {
     productType=XcodeProductType.APPLICATION;
     extraLinkArgs=new ExtraLinkArgs();
-    extraLinkInputs=new ExtraLinkInputs();
+    extraLinkInputs=ImmutableList.of();
   }
  else {
     productType=XcodeProductType.UNIT_TEST;
@@ -25,11 +25,8 @@
     XcTestAppProvider testApp=xcTestAppProvider(ruleContext);
     Artifact bundleLoader=testApp.getBundleLoader();
     extraLinkArgs=new ExtraLinkArgs("-bundle","-bundle_loader",bundleLoader.getExecPathString());
-    extraLinkInputs=new ExtraLinkInputs(bundleLoader);
+    extraLinkInputs=ImmutableList.of(bundleLoader);
     filesToBuild.add(testApp.getIpa());
-  }
-  if (ruleContext.getConfiguration().isCodeCoverageEnabled()) {
-    extraLinkArgs=extraLinkArgs.appendedWith(CompilationSupport.LINKER_COVERAGE_FLAGS);
   }
   new CompilationSupport(ruleContext).registerLinkActions(common.getObjcProvider(),extraLinkArgs,extraLinkInputs).registerJ2ObjcCompileAndArchiveActions(optionsProvider,common.getObjcProvider()).registerCompileAndArchiveActions(common,optionsProvider).addXcodeSettings(xcodeProviderBuilder,common,optionsProvider).validateAttributes();
   ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,common.getObjcProvider(),optionsProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES,ReleaseBundlingSupport.APP_BUNDLE_DIR_FORMAT);
