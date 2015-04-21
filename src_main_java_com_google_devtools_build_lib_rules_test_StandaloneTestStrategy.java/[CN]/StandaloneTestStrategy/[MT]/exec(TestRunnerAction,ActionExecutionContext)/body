@@ -6,10 +6,18 @@
  catch (  ExecException e) {
     throw new TestExecException(e.getMessage());
   }
+  Path testTmpDir=TestStrategy.getTmpRoot(workspace,actionExecutionContext.getExecutor().getExecRoot(),executionOptions).getChild(getTmpDirName(action.getExecutionSettings().getExecutable().getExecPath()));
   Path workingDirectory=runfilesDir.getRelative(action.getRunfilesPrefix());
-  Map<String,String> env=getEnv(action,runfilesDir);
+  Map<String,String> env=getEnv(action,runfilesDir,testTmpDir);
   Spawn spawn=new BaseSpawn(getArgs(action),env,action.getTestProperties().getExecutionInfo(),action,action.getTestProperties().getLocalResourceUsage(executionOptions.usingLocalTestJobs()));
   Executor executor=actionExecutionContext.getExecutor();
+  try {
+    FileSystemUtils.createDirectoryAndParents(testTmpDir);
+  }
+ catch (  IOException e) {
+    executor.getEventHandler().handle(Event.error("Could not create TEST_TMPDIR: " + e));
+    throw new EnvironmentalExecException("Could not create TEST_TMPDIR " + testTmpDir,e);
+  }
   ResourceSet resources=null;
   FileOutErr fileOutErr=null;
   try {
