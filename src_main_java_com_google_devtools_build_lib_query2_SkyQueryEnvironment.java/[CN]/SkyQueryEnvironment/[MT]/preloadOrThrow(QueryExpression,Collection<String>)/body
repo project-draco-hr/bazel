@@ -1,4 +1,5 @@
 {
+  GraphBackedRecursivePackageProvider provider=new GraphBackedRecursivePackageProvider(graph);
   Map<String,ResolvedTargets<Target>> result=Maps.newHashMapWithExpectedSize(patterns.size());
   for (  String pattern : patterns) {
     SkyKey patternKey=TargetPatternValue.key(pattern,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,parserPrefix);
@@ -7,7 +8,14 @@
     if (graph.exists(patternKey)) {
       TargetPatternValue value=(TargetPatternValue)graph.getValue(patternKey);
       if (value != null) {
-        result.put(pattern,value.getTargets());
+        ResolvedTargets.Builder<Target> targetsBuilder=ResolvedTargets.builder();
+        for (        Label label : value.getTargets().getTargets()) {
+          targetsBuilder.add(getExistingTarget(label,provider));
+        }
+        for (        Label label : value.getTargets().getFilteredTargets()) {
+          targetsBuilder.remove(getExistingTarget(label,provider));
+        }
+        result.put(pattern,targetsBuilder.build());
       }
  else {
         targetParsingException=(TargetParsingException)Preconditions.checkNotNull(graph.getException(patternKey),pattern);
@@ -15,7 +23,6 @@
     }
  else {
       TargetPattern.Parser parser=new TargetPattern.Parser(targetPattern.getOffset());
-      GraphBackedRecursivePackageProvider provider=new GraphBackedRecursivePackageProvider(graph);
       RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,eventHandler,targetPattern.getPolicy(),pkgPath);
       TargetPattern parsedPattern=parser.parse(targetPattern.getPattern());
       try {

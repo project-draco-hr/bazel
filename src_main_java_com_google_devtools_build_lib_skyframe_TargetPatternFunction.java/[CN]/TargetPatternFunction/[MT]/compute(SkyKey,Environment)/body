@@ -1,11 +1,12 @@
 {
   TargetPatternValue.TargetPattern patternKey=((TargetPatternValue.TargetPattern)key.argument());
   TargetPattern.Parser parser=new TargetPattern.Parser(patternKey.getOffset());
+  ResolvedTargets<Target> resolvedTargets=null;
   try {
     EnvironmentBackedRecursivePackageProvider provider=new EnvironmentBackedRecursivePackageProvider(env);
     RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,env.getListener(),patternKey.getPolicy(),pkgPath.get());
     TargetPattern resolvedPattern=parser.parse(patternKey.getPattern());
-    return new TargetPatternValue(resolvedPattern.eval(resolver));
+    resolvedTargets=resolvedPattern.eval(resolver);
   }
  catch (  TargetParsingException e) {
     throw new TargetPatternFunctionException(e);
@@ -13,4 +14,13 @@
 catch (  MissingDepException e) {
     return null;
   }
+  Preconditions.checkNotNull(resolvedTargets,key);
+  ResolvedTargets.Builder<Label> resolvedLabelsBuilder=ResolvedTargets.builder();
+  for (  Target target : resolvedTargets.getTargets()) {
+    resolvedLabelsBuilder.add(target.getLabel());
+  }
+  for (  Target target : resolvedTargets.getFilteredTargets()) {
+    resolvedLabelsBuilder.remove(target.getLabel());
+  }
+  return new TargetPatternValue(resolvedLabelsBuilder.build());
 }

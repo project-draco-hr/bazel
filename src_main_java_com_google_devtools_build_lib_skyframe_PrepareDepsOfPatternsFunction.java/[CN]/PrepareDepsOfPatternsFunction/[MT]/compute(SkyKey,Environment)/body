@@ -7,11 +7,11 @@
   }
   EventHandler eventHandler=env.getListener();
   boolean handlerIsParseFailureListener=eventHandler instanceof ParseFailureListener;
-  ResolvedTargets.Builder<Target> builder=ResolvedTargets.builder();
+  ResolvedTargets.Builder<Label> builder=ResolvedTargets.builder();
   for (  SkyKey key : patternSkyKeys) {
     try {
       TargetPatternValue resultValue=Preconditions.checkNotNull((TargetPatternValue)targetPatternValuesByKey.get(key).get());
-      ResolvedTargets<Target> results=resultValue.getTargets();
+      ResolvedTargets<Label> results=resultValue.getTargets();
       if (((TargetPatternValue.TargetPattern)key.argument()).isNegative()) {
         builder.filter(Predicates.not(Predicates.in(results.getTargets())));
       }
@@ -23,10 +23,10 @@
       handleTargetParsingException(eventHandler,handlerIsParseFailureListener,key,e);
     }
   }
-  ResolvedTargets<Target> resolvedTargets=builder.build();
+  ResolvedTargets<Label> resolvedTargets=builder.build();
   List<SkyKey> targetKeys=new ArrayList<>();
-  for (  Target target : resolvedTargets.getTargets()) {
-    targetKeys.add(TransitiveTargetValue.key(target.getLabel()));
+  for (  Label target : resolvedTargets.getTargets()) {
+    targetKeys.add(TransitiveTargetValue.key(target));
   }
   env.getValuesOrThrow(targetKeys,NoSuchPackageException.class,NoSuchTargetException.class);
   if (env.valuesMissing()) {

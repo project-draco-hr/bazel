@@ -1,17 +1,12 @@
 {
-  Set<Package> packages=(Set<Package>)in.readObject();
   List<String> ts=(List<String>)in.readObject();
   List<String> filteredTs=(List<String>)in.readObject();
-  Map<String,Package> packageMap=new HashMap<>();
-  for (  Package p : packages) {
-    packageMap.put(p.getName(),p);
-  }
-  Builder<Target> builder=ResolvedTargets.<Target>builder();
+  Builder<Label> builder=ResolvedTargets.<Label>builder();
   for (  String labelString : ts) {
-    builder.add(lookupTarget(packageMap,labelString));
+    builder.add(labelFromString(labelString));
   }
   for (  String labelString : filteredTs) {
-    builder.remove(lookupTarget(packageMap,labelString));
+    builder.remove(labelFromString(labelString));
   }
   this.targets=builder.build();
 }

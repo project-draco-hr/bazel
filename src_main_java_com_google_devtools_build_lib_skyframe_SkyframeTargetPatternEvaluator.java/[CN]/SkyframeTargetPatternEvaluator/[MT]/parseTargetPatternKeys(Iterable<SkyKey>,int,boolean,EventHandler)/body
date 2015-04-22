@@ -1,16 +1,16 @@
 {
   EvaluationResult<TargetPatternValue> result=skyframeExecutor.targetPatterns(patternSkyKeys,numThreads,keepGoing,eventHandler);
   String errorMessage=null;
-  ResolvedTargets.Builder<Target> builder=ResolvedTargets.builder();
+  ResolvedTargets.Builder<Label> resolvedLabelsBuilder=ResolvedTargets.builder();
   for (  SkyKey key : patternSkyKeys) {
     TargetPatternValue resultValue=result.get(key);
     if (resultValue != null) {
-      ResolvedTargets<Target> results=resultValue.getTargets();
+      ResolvedTargets<Label> results=resultValue.getTargets();
       if (((TargetPatternValue.TargetPattern)key.argument()).isNegative()) {
-        builder.filter(Predicates.not(Predicates.in(results.getTargets())));
+        resolvedLabelsBuilder.filter(Predicates.not(Predicates.in(results.getTargets())));
       }
  else {
-        builder.merge(results);
+        resolvedLabelsBuilder.merge(results);
       }
     }
  else {
@@ -34,7 +34,7 @@
       if (keepGoing) {
         eventHandler.handle(Event.error("Skipping '" + rawPattern + "': "+ errorMessage));
       }
-      builder.setError();
+      resolvedLabelsBuilder.setError();
       if (eventHandler instanceof ParseFailureListener) {
         ParseFailureListener parseListener=(ParseFailureListener)eventHandler;
         parseListener.parsingError(rawPattern,errorMessage);
@@ -45,5 +45,22 @@
     Preconditions.checkState(errorMessage != null,"unexpected errors: %s",result.errorMap());
     throw new TargetParsingException(errorMessage);
   }
-  return builder.build();
+  ResolvedTargets<Label> resolvedLabels=resolvedLabelsBuilder.build();
+  Set<PackageIdentifier> packagesToRequest=new HashSet<>();
+  for (  Label label : Iterables.concat(resolvedLabels.getTargets(),resolvedLabels.getFilteredTargets())) {
+    packagesToRequest.add(label.getPackageIdentifier());
+  }
+  WalkableGraph walkableGraph=Preconditions.checkNotNull(result.getWalkableGraph(),result);
+  Map<PackageIdentifier,Package> packages=getPackages(packagesToRequest,walkableGraph);
+  ResolvedTargets.Builder<Target> resolvedTargetsBuilder=ResolvedTargets.builder();
+  if (resolvedLabels.hasError()) {
+    resolvedTargetsBuilder.setError();
+  }
+  for (  Label label : resolvedLabels.getTargets()) {
+    resolvedTargetsBuilder.add(getExistingTarget(label,packages));
+  }
+  for (  Label label : resolvedLabels.getFilteredTargets()) {
+    resolvedTargetsBuilder.remove(getExistingTarget(label,packages));
+  }
+  return resolvedTargetsBuilder.build();
 }
