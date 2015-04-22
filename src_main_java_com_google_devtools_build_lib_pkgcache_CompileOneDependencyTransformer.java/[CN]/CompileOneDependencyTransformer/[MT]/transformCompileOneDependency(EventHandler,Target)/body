@@ -29,8 +29,14 @@ catch (    InterruptedException e) {
     }
   }
   Rule result=null;
+  final BinaryPredicate<Rule,Attribute> directCompileTimeInput=new BinaryPredicate<Rule,Attribute>(){
+    @Override public boolean apply(    Rule rule,    Attribute attribute){
+      return Rule.DIRECT_COMPILE_TIME_INPUT.apply(rule,attribute) && !rule.isConfigurableAttribute(attribute.getName());
+    }
+  }
+;
   for (  Rule rule : orderedRuleList) {
-    if (rule.getLabels(Rule.DIRECT_COMPILE_TIME_INPUT).contains(target.getLabel())) {
+    if (rule.getLabels(directCompileTimeInput).contains(target.getLabel())) {
       if (rule.getRuleClassObject().isPreferredDependency(target.getName())) {
         result=rule;
       }
