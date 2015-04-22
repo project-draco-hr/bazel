@@ -4,7 +4,15 @@
     target.collectProviders(providerSet);
   }
   ImmutableList.Builder<TargetControl> controls=new ImmutableList.Builder<>();
+  Map<Label,XcodeProvider> labelToProvider=new HashMap<>();
   for (  XcodeProvider provider : providerSet) {
+    XcodeProvider oldProvider=labelToProvider.put(provider.label,provider);
+    if (oldProvider != null) {
+      if (!oldProvider.architecture.equals(provider.architecture)) {
+        continue;
+      }
+      throw new IllegalStateException("Depending on multiple versions of the same xcode target " + "is not allowed but occurred for: " + provider.label);
+    }
     controls.addAll(provider.targetControls());
   }
   return controls.build();
