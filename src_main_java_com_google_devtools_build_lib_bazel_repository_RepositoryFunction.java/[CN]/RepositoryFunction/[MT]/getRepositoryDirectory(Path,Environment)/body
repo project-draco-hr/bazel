@@ -7,17 +7,5 @@
  catch (  IOException|FileSymlinkCycleException|InconsistentFilesystemException e) {
     throw new RepositoryFunctionException(new IOException("Could not access " + repositoryDirectory + ": "+ e.getMessage()),Transience.PERSISTENT);
   }
-  String targetName=repositoryDirectory.getBaseName();
-  try {
-    Path backlink=repositoryDirectory.getRelative("external").getRelative(targetName);
-    FileSystemUtils.createDirectoryAndParents(backlink.getParentDirectory());
-    if (backlink.exists()) {
-      backlink.delete();
-    }
-    backlink.createSymbolicLink(repositoryDirectory);
-  }
- catch (  IOException e) {
-    throw new RepositoryFunctionException(new IOException("Error creating execution root symlink for " + targetName + ": "+ e.getMessage()),Transience.TRANSIENT);
-  }
   return value;
 }

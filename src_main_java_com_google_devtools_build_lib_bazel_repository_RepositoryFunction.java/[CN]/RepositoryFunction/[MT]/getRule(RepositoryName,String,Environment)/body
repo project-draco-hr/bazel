@@ -1,11 +1,11 @@
 {
-  SkyKey packageKey=PackageValue.key(PackageIdentifier.createInDefaultRepo(PackageFunction.EXTERNAL_PACKAGE_NAME));
+  SkyKey packageKey=PackageValue.key(PackageIdentifier.createInDefaultRepo(ExternalPackage.NAME));
   PackageValue packageValue;
   try {
     packageValue=(PackageValue)env.getValueOrThrow(packageKey,NoSuchPackageException.class);
   }
  catch (  NoSuchPackageException e) {
-    throw new RepositoryFunctionException(new BuildFileNotFoundException(PackageFunction.EXTERNAL_PACKAGE_NAME,"Could not load //external package"),Transience.PERSISTENT);
+    throw new RepositoryFunctionException(new BuildFileNotFoundException(ExternalPackage.NAME,"Could not load //external package"),Transience.PERSISTENT);
   }
   if (packageValue == null) {
     return null;
@@ -13,7 +13,7 @@
   ExternalPackage externalPackage=(ExternalPackage)packageValue.getPackage();
   Rule rule=externalPackage.getRepositoryInfo(repositoryName);
   if (rule == null) {
-    throw new RepositoryFunctionException(new BuildFileContainsErrorsException(PackageFunction.EXTERNAL_PACKAGE_NAME,"The repository named '" + repositoryName + "' could not be resolved"),Transience.PERSISTENT);
+    throw new RepositoryFunctionException(new BuildFileContainsErrorsException(ExternalPackage.NAME,"The repository named '" + repositoryName + "' could not be resolved"),Transience.PERSISTENT);
   }
   Preconditions.checkState(ruleClassName == null || rule.getRuleClass().equals(ruleClassName),"Got %s, was expecting a %s",rule,ruleClassName);
   return rule;
