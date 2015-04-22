@@ -1,0 +1,20 @@
+{
+  try {
+    for (    Field field : type.getDeclaredFields()) {
+      if (field.isAnnotationPresent(SkylarkSignature.class)) {
+        field.setAccessible(true);
+        SkylarkSignature annotation=field.getAnnotation(SkylarkSignature.class);
+        Object value=field.get(null);
+        if (BaseFunction.class.isAssignableFrom(field.getType())) {
+          functions.add((BaseFunction)value);
+        }
+ else {
+          objects.put(annotation.name(),value);
+        }
+      }
+    }
+  }
+ catch (  IllegalArgumentException|IllegalAccessException e) {
+    throw new RuntimeException(e);
+  }
+}

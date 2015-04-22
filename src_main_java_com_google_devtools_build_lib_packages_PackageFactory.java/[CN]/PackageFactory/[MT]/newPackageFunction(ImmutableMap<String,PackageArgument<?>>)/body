@@ -1,0 +1,32 @@
+{
+  final int numArgs=packageArguments.size();
+  final String[] argumentNames=new String[numArgs];
+  final PackageArgument<?>[] argumentSpecifiers=new PackageArgument<?>[numArgs];
+  int i=0;
+  for (  Map.Entry<String,PackageArgument<?>> entry : packageArguments.entrySet()) {
+    argumentNames[i]=entry.getKey();
+    argumentSpecifiers[i++]=entry.getValue();
+  }
+  return new BaseFunction("package",FunctionSignature.namedOnly(0,argumentNames)){
+    @Override public Object call(    Object[] arguments,    FuncallExpression ast,    Environment env) throws EvalException, ConversionException {
+      Package.LegacyBuilder pkgBuilder=getContext(env,ast).pkgBuilder;
+      if (pkgBuilder.isPackageFunctionUsed()) {
+        throw new EvalException(ast.getLocation(),"'package' can only be used once per BUILD file");
+      }
+      pkgBuilder.setPackageFunctionUsed();
+      boolean foundParameter=false;
+      for (int i=0; i < numArgs; i++) {
+        Object value=arguments[i];
+        if (value != null) {
+          foundParameter=true;
+          argumentSpecifiers[i].convertAndProcess(pkgBuilder,ast.getLocation(),value);
+        }
+      }
+      if (!foundParameter) {
+        throw new EvalException(ast.getLocation(),"at least one argument must be given to the 'package' function");
+      }
+      return Environment.NONE;
+    }
+  }
+;
+}

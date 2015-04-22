@@ -1,0 +1,15 @@
+{
+  PackageContext context=getContext(env,ast);
+  List<String> packages=Type.STRING_LIST.convert(packagesO,"'package_group.packages argument'");
+  List<Label> includes=Type.LABEL_LIST.convert(includesO,"'package_group.includes argument'",context.pkgBuilder.getBuildFileLabel());
+  try {
+    context.pkgBuilder.addPackageGroup(name,packages,includes,context.eventHandler,ast.getLocation());
+    return Environment.NONE;
+  }
+ catch (  Label.SyntaxException e) {
+    throw new EvalException(ast.getLocation(),"package group has invalid name: " + name + ": "+ e.getMessage());
+  }
+catch (  Package.NameConflictException e) {
+    throw new EvalException(ast.getLocation(),e.getMessage());
+  }
+}

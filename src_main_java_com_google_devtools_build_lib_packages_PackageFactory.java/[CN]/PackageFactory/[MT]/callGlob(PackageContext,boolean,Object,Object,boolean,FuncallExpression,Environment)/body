@@ -1,0 +1,23 @@
+{
+  PackageContext context;
+  if (originalContext == null) {
+    Preconditions.checkArgument(!async);
+    context=getContext(env,ast);
+  }
+ else {
+    context=originalContext;
+  }
+  List<String> includes=Type.STRING_LIST.convert(include,"'glob' argument");
+  List<String> excludes=Type.STRING_LIST.convert(exclude,"'glob' argument");
+  if (async) {
+    try {
+      context.globber.runAsync(includes,excludes,excludeDirs);
+    }
+ catch (    GlobCache.BadGlobException e) {
+    }
+    return GlobList.captureResults(includes,excludes,ImmutableList.<String>of());
+  }
+ else {
+    return handleGlob(includes,excludes,excludeDirs,context,ast);
+  }
+}
