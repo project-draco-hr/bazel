@@ -1,7 +1,11 @@
 {
   Attribute attribute=null;
   if (target instanceof Rule) {
-    attribute=((Rule)target).getRuleClassObject().getAttributeByName("visibility");
+    RuleClass ruleClass=((Rule)target).getRuleClassObject();
+    if (!ruleClass.hasAttr("visibility",Type.NODEP_LABEL_LIST)) {
+      return;
+    }
+    attribute=ruleClass.getAttributeByName("visibility");
   }
   for (  Label label : target.getVisibility().getDependencyLabels()) {
     enqueueTarget(target,attribute,label,depth,count);
