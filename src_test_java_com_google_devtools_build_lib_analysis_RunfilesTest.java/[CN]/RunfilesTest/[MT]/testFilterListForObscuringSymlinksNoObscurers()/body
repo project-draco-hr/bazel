@@ -1,0 +1,12 @@
+{
+  Map<PathFragment,Artifact> obscuringMap=new HashMap<>();
+  PathFragment pathA=new PathFragment("a");
+  Root root=Root.asSourceRoot(scratchFS().getPath("/workspace"));
+  Artifact artifactA=new Artifact(new PathFragment("a"),root);
+  obscuringMap.put(pathA,artifactA);
+  PathFragment pathBC=new PathFragment("b/c");
+  Artifact artifactBC=new Artifact(new PathFragment("a/b"),root);
+  obscuringMap.put(pathBC,artifactBC);
+  assertThat(Runfiles.filterListForObscuringSymlinks(reporter,null,obscuringMap).entrySet()).containsExactly(Maps.immutableEntry(pathA,artifactA),Maps.immutableEntry(pathBC,artifactBC));
+  assertNoEvents();
+}

@@ -1,0 +1,20 @@
+{
+  vars.put("<","src1");
+  vars.put("OUTS","out1 out2");
+  vars.put("@","out1");
+  vars.put("^","src1 src2 dep1 dep2");
+  vars.put("@D","outdir");
+  vars.put("BINDIR","bindir");
+  assertExpansionEquals("src1 src2","$(SRCS)");
+  assertExpansionEquals("src1","$<");
+  assertExpansionEquals("out1 out2","$(OUTS)");
+  assertExpansionEquals("out1","$(@)");
+  assertExpansionEquals("out1","$@");
+  assertExpansionEquals("out1,","$@,");
+  assertExpansionEquals("src1 src2 out1 out2","$(SRCS) $(OUTS)");
+  assertExpansionEquals("cmd","cmd");
+  assertExpansionEquals("cmd src1 src2,","cmd $(SRCS),");
+  assertExpansionEquals("label1 src1 src2,","label1 $(SRCS),");
+  assertExpansionEquals(":label1 src1 src2,",":label1 $(SRCS),");
+  assertExpansionFails("$(location label1) not defined","$(location label1), $(SRCS),");
+}
