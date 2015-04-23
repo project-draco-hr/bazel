@@ -1,9 +1,9 @@
 {
-  BuildConfigurationKey configurationKey=getBuildConfigurationKey(createBuildOptions(optionsProvider),ImmutableSortedSet.<String>of());
+  BuildOptions buildOptions=createBuildOptions(optionsProvider);
   boolean keepGoing=optionsProvider.getOptions(BuildView.Options.class).keepGoing;
-  LoadedPackageProvider loadedPackageProvider=loadingPhaseRunner.loadForConfigurations(reporter,ImmutableSet.copyOf(configurationKey.getLabelsToLoadUnconditionally().values()),keepGoing);
+  LoadedPackageProvider loadedPackageProvider=loadingPhaseRunner.loadForConfigurations(reporter,ImmutableSet.copyOf(buildOptions.getAllLabels().values()),keepGoing);
   if (loadedPackageProvider == null) {
     throw new InvalidConfigurationException("Configuration creation failed");
   }
-  return skyframeExecutor.createConfigurations(keepGoing,configurationFactory,configurationKey);
+  return skyframeExecutor.createConfigurations(configurationFactory,buildOptions,directories,ImmutableSet.<String>of(),keepGoing);
 }
