@@ -1,0 +1,7 @@
+{
+  new EnvironmentGroupMaker("foo_env").setEnvironments("a","b","c").setDefaults("a").make();
+  scratchFile("hello/BUILD",getDependencyRule(compatibleWith("//foo_env:c")),getDependingRule(compatibleWith("//foo_env:b","//foo_env:c")));
+  reporter.removeHandler(failFastHandler);
+  assertNull(getConfiguredTarget("//hello:main"));
+  assertContainsEvent("dependency //hello:dep doesn't support expected environment: //foo_env:b");
+}

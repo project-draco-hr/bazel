@@ -1,0 +1,7 @@
+{
+  new EnvironmentGroupMaker("foo_env").setEnvironments("a","b").setDefaults().make();
+  scratchFile("hello/BUILD","package(default_restricted_to = ['//foo_env:b'])",getDependencyRule(compatibleWith("//foo_env:a")));
+  reporter.removeHandler(failFastHandler);
+  assertNull(getConfiguredTarget("//hello:dep"));
+  assertContainsEvent("//foo_env:a and //foo_env:b belong to the same environment group. They " + "should be declared together either here or in restricted_to");
+}

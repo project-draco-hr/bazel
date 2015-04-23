@@ -1,0 +1,7 @@
+{
+  new EnvironmentGroupMaker("foo_env").setEnvironments("a","b").setDefaults().make();
+  scratchFile("hello/BUILD","genrule(name = 'gen', srcs = [], outs = ['shlib.sh'], cmd = '')","sh_library(","    name = 'shlib',","    srcs = ['shlib.sh'],","    data = ['whatever.txt'],","    compatible_with = ['//foo_env:a'])");
+  reporter.removeHandler(failFastHandler);
+  assertNull(getConfiguredTarget("//hello:shlib"));
+  assertContainsEvent("dependency //hello:gen doesn't support expected environment: //foo_env:a");
+}

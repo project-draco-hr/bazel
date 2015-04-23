@@ -1,0 +1,7 @@
+{
+  new EnvironmentGroupMaker("foo_env").setEnvironments("a","b").setDefaults("a").make();
+  scratchFile("hello/BUILD","rule_with_implicit_and_latebound_deps(name = 'hi', compatible_with = ['//foo_env:b'])");
+  assertNotNull(getConfiguredTarget("//hello:hi"));
+  assertDoesNotContainEvent(":implicit doesn't support expected environment");
+  assertDoesNotContainEvent(":latebound doesn't support expected environment");
+}

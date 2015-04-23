@@ -1,0 +1,8 @@
+{
+  new EnvironmentGroupMaker("foo_env").setEnvironments("a","b").setDefaults("a").make();
+  scratchFile("hello/BUILD",getRuleDef("sh_library","bad_dep",constrainedTo("//foo_env:b")),getRuleDef("sh_library","good_dep",compatibleWith("//foo_env:b")),getRuleDef("sh_library","depender",constrainedTo("//foo_env:a","//foo_env:b"),getAttrDef("deps","good_dep","bad_dep")));
+  reporter.removeHandler(failFastHandler);
+  assertNull(getConfiguredTarget("//hello:depender"));
+  assertContainsEvent("//hello:bad_dep doesn't support expected environment: //foo_env:a");
+  assertDoesNotContainEvent("//hello:good_dep");
+}
