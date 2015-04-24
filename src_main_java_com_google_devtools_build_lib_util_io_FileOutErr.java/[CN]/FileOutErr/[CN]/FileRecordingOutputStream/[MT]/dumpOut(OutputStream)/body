@@ -1,22 +1,13 @@
 {
-  InputStream in=null;
   try {
     if (getFile().exists()) {
-      in=new FileInputStream(getFile().getPathString());
-      ByteStreams.copy(in,out);
-    }
+      try (InputStream in=getFile().getInputStream()){
+        ByteStreams.copy(in,out);
+      }
+     }
   }
  catch (  IOException ex) {
     recordError(ex);
-  }
- finally {
-    if (in != null) {
-      try {
-        in.close();
-      }
- catch (      IOException e) {
-      }
-    }
   }
   if (hadError()) {
     PrintStream ps=new PrintStream(out);
