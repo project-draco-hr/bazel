@@ -1,0 +1,15 @@
+{
+  HashCodeSpy hashCodeSpy=new HashCodeSpy();
+  assertThat(hashCodeSpy.getNumberOfTimesHashCodeCalled()).isEqualTo(0);
+  SkyKey originalKey=new SkyKey(new SkyFunctionName("TEMP",true),hashCodeSpy);
+  assertThat(hashCodeSpy.getNumberOfTimesHashCodeCalled()).isEqualTo(1);
+  originalKey.hashCode();
+  assertThat(hashCodeSpy.getNumberOfTimesHashCodeCalled()).isEqualTo(1);
+  SkyKey newKey=(SkyKey)TestUtils.deserializeObject(TestUtils.serializeObject(originalKey));
+  HashCodeSpy spyInNewKey=(HashCodeSpy)newKey.argument();
+  assertThat(spyInNewKey.getNumberOfTimesHashCodeCalled()).isEqualTo(0);
+  newKey.hashCode();
+  assertThat(spyInNewKey.getNumberOfTimesHashCodeCalled()).isEqualTo(1);
+  newKey.hashCode();
+  assertThat(spyInNewKey.getNumberOfTimesHashCodeCalled()).isEqualTo(1);
+}
