@@ -5,13 +5,13 @@
     }
   }
  catch (  IOException e) {
-    throw new RepositoryFunctionException(new IOException("Error creating symbolic link from " + from + " to "+ to+ ": "+ e.getMessage()),Transience.TRANSIENT);
+    throw new RepositoryFunctionException(new IOException(String.format("Error creating symbolic link from %s to %s: %s",from,to,e.getMessage())),Transience.TRANSIENT);
   }
   SkyKey outputDirectoryKey=FileValue.key(RootedPath.toRootedPath(from,PathFragment.EMPTY_FRAGMENT));
   try {
     return (FileValue)env.getValueOrThrow(outputDirectoryKey,IOException.class,FileSymlinkCycleException.class,InconsistentFilesystemException.class);
   }
  catch (  IOException|FileSymlinkCycleException|InconsistentFilesystemException e) {
-    throw new RepositoryFunctionException(new IOException("Could not access " + from + ": "+ e.getMessage()),Transience.PERSISTENT);
+    throw new RepositoryFunctionException(new IOException(String.format("Could not access %s: %s",from,e.getMessage())),Transience.PERSISTENT);
   }
 }
