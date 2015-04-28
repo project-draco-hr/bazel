@@ -64,13 +64,11 @@ catch (      ArtifactPrefixConflictException apce) {
  else {
         root=maybeGetConfiguredTargetCycleCulprit(errorInfo.getCycleInfo());
       }
-      if (warningListener != null) {
-        Exception cause=errorInfo.getException();
-        if (cause instanceof ActionConflictException) {
-          ((ActionConflictException)cause).reportTo(warningListener);
-        }
-        warningListener.handle(Event.warn("errors encountered while analyzing target '" + label + "': it will not be built"));
+      Exception cause=errorInfo.getException();
+      if (cause instanceof ActionConflictException) {
+        ((ActionConflictException)cause).reportTo(skyframeExecutor.getReporter());
       }
+      skyframeExecutor.getReporter().handle(Event.warn("errors encountered while analyzing target '" + label + "': it will not be built"));
       eventBus.post(new AnalysisFailureEvent(LabelAndConfiguration.of(label.getLabel(),label.getConfiguration()),root));
     }
   }
@@ -82,9 +80,7 @@ catch (      ArtifactPrefixConflictException apce) {
     }
  catch (    MutableActionGraph.ActionConflictException ace) {
       ace.reportTo(skyframeExecutor.getReporter());
-      if (warningListener != null) {
-        warningListener.handle(Event.warn("errors encountered while analyzing target '" + bad.getKey().getOwner().getLabel() + "': it will not be built"));
-      }
+      skyframeExecutor.getReporter().handle(Event.warn("errors encountered while analyzing target '" + bad.getKey().getOwner().getLabel() + "': it will not be built"));
     }
 catch (    ArtifactPrefixConflictException apce) {
       if (reportedExceptions.add(apce)) {

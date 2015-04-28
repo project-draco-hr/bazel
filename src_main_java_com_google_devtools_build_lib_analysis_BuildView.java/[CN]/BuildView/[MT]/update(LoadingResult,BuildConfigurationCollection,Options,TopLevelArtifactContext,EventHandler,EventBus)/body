@@ -1,14 +1,4 @@
 {
-  ErrorCollector errorCollector=null;
-  if (!viewOptions.keepGoing) {
-    eventHandler=errorCollector=new ErrorCollector(eventHandler);
-  }
-  WarningsAsErrorsEventHandler warningsHandler=null;
-  if (viewOptions.analysisWarningsAsErrors) {
-    eventHandler=warningsHandler=new WarningsAsErrorsEventHandler(eventHandler);
-  }
-  skyframeBuildView.setWarningListener(eventHandler);
-  skyframeExecutor.setErrorEventListener(eventHandler);
   LOG.info("Starting analysis");
   pollInterruptedStatus();
   skyframeBuildView.resetEvaluatedConfiguredTargetKeysSet();
@@ -39,7 +29,6 @@
   }
 );
   prepareToBuild(new SkyframePackageRootResolver(skyframeExecutor));
-  skyframeBuildView.setWarningListener(warningsHandler);
   skyframeExecutor.injectWorkspaceStatusData();
   Collection<ConfiguredTarget> configuredTargets;
   try {
@@ -56,7 +45,6 @@
     eventHandler.handle(Event.info(msg));
     LOG.info(msg);
   }
-  postUpdateValidation(errorCollector,warningsHandler);
   AnalysisResult result=createResult(loadingResult,topLevelOptions,viewOptions,configuredTargets,analysisSuccessful);
   LOG.info("Finished analysis");
   return result;
