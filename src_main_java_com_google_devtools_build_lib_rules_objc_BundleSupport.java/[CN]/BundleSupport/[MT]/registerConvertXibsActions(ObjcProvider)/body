@@ -1,9 +1,8 @@
 {
   IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
   for (  Artifact original : objcProvider.get(ObjcProvider.XIB)) {
     Artifact zipOutput=intermediateArtifacts.compiledXibFileZip(original);
     String archiveRoot=BundleableFile.flatBundlePath(FileSystemUtils.replaceExtension(original.getExecPath(),".nib"));
-    ruleContext.registerAction(ObjcActionsBuilder.spawnJavaOnDarwinActionBuilder(attributes.ibtoolzipDeployJar()).setMnemonic("XibCompile").setCommandLine(CustomCommandLine.builder().addPath(zipOutput.getExecPath()).add(archiveRoot).addPath(ObjcActionsBuilder.IBTOOL).add("--minimum-deployment-target").add(objcConfiguration.getMinimumOs()).addPath(original.getExecPath()).build()).addOutput(zipOutput).addInput(original).build(ruleContext));
+    ruleContext.registerAction(ObjcActionsBuilder.spawnJavaOnDarwinActionBuilder(attributes.ibtoolzipDeployJar()).setMnemonic("XibCompile").setCommandLine(CustomCommandLine.builder().addPath(zipOutput.getExecPath()).add(archiveRoot).addPath(ObjcActionsBuilder.IBTOOL).add("--minimum-deployment-target").add(bundling.getMinimumOsVersion()).addPath(original.getExecPath()).build()).addOutput(zipOutput).addInput(original).build(ruleContext));
   }
 }
