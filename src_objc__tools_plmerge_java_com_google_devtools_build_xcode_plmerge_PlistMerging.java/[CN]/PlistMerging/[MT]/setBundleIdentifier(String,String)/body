@@ -1,15 +1,10 @@
 {
   NSString bundleIdentifier=(NSString)merged.get(BUNDLE_IDENTIFIER_PLIST_KEY);
-  if (bundleIdentifier == null) {
-    if (primaryIdentifier != null) {
-      merged.put(BUNDLE_IDENTIFIER_PLIST_KEY,primaryIdentifier);
-    }
- else     if (fallbackIdentifier != null) {
-      merged.put(BUNDLE_IDENTIFIER_PLIST_KEY,fallbackIdentifier);
-    }
+  if (primaryIdentifier != null) {
+    merged.put(BUNDLE_IDENTIFIER_PLIST_KEY,primaryIdentifier);
   }
- else   if (primaryIdentifier != null && !primaryIdentifier.equals(bundleIdentifier.getContent())) {
-    throw new ValidationException(String.format("Blaze generated bundle_id is %s but the Plist %s is %s",primaryIdentifier,BUNDLE_IDENTIFIER_PLIST_KEY,bundleIdentifier));
+ else   if (bundleIdentifier == null && fallbackIdentifier != null) {
+    merged.put(BUNDLE_IDENTIFIER_PLIST_KEY,fallbackIdentifier);
   }
   return this;
 }
