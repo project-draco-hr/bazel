@@ -2,7 +2,7 @@
   Artifact testIpa=testIpa();
   Artifact xctestIpa=xctestIpa();
   IosDeviceProvider targetDevice=targetDevice();
-  List<Substitution> substitutions=ImmutableList.of(Substitution.of("%(test_app_ipa)s",testIpa.getRootRelativePathString()),Substitution.of("%(test_app_name)s",baseNameWithoutIpa(testIpa)),Substitution.of("%(xctest_app_ipa)s",xctestIpa.getRootRelativePathString()),Substitution.of("%(xctest_app_name)s",baseNameWithoutIpa(xctestIpa)),Substitution.of("%(iossim_path)s",iossim().getRootRelativePath().getPathString()),Substitution.of("%(device_type)s",targetDevice.getType()),Substitution.of("%(simulator_sdk)s",targetDevice.getIosVersion()));
+  List<Substitution> substitutions=new ImmutableList.Builder<Substitution>().add(Substitution.of("%(test_app_ipa)s",testIpa.getRootRelativePathString())).add(Substitution.of("%(test_app_name)s",baseNameWithoutIpa(testIpa))).add(Substitution.of("%(xctest_app_ipa)s",xctestIpa.getRootRelativePathString())).add(Substitution.of("%(xctest_app_name)s",baseNameWithoutIpa(xctestIpa))).add(Substitution.of("%(iossim_path)s",iossim().getRootRelativePath().getPathString())).addAll(targetDevice.getSubstitutionsForTestRunnerScript()).build();
   Artifact template=ruleContext.getPrerequisiteArtifact("$test_template",Mode.TARGET);
   ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),template,generatedTestScript(),substitutions,true));
 }
