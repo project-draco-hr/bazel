@@ -1,0 +1,17 @@
+{
+  Set<String> globallyEnabled=new HashSet<>();
+  Set<String> globallyDisabled=new HashSet<>();
+  parseFeatures(getConfiguration().getDefaultFeatures(),globallyEnabled,globallyDisabled);
+  Set<String> packageEnabled=new HashSet<>();
+  Set<String> packageDisabled=new HashSet<>();
+  parseFeatures(getRule().getPackage().getFeatures(),packageEnabled,packageDisabled);
+  Set<String> packageFeatures=Sets.difference(Sets.union(globallyEnabled,packageEnabled),packageDisabled);
+  Set<String> ruleFeatures=packageFeatures;
+  if (attributes().has("features",Type.STRING_LIST)) {
+    Set<String> ruleEnabled=new HashSet<>();
+    Set<String> ruleDisabled=new HashSet<>();
+    parseFeatures(attributes().get("features",Type.STRING_LIST),ruleEnabled,ruleDisabled);
+    ruleFeatures=Sets.difference(Sets.union(packageFeatures,ruleEnabled),ruleDisabled);
+  }
+  return ImmutableSortedSet.copyOf(Sets.difference(ruleFeatures,globallyDisabled));
+}
