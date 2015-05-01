@@ -10,12 +10,25 @@ case CHECK_DEPENDENCIES:
       state.forceRebuild();
       break;
     }
- else {
-      state.addTemporaryDirectDeps(GroupedListHelper.create(directDepsToCheck));
+  if (!keepGoing) {
+    for (    Map.Entry<SkyKey,NodeEntry> entry : graph.getBatch(directDepsToCheck).entrySet()) {
+      if (entry.getValue().isDone() && entry.getValue().getErrorInfo() != null) {
+        if (!visitor.preventNewEvaluations()) {
+          return;
+        }
+        SkyKey errorKey=entry.getKey();
+        NodeEntry errorEntry=entry.getValue();
+        state.addTemporaryDirectDeps(GroupedListHelper.create(ImmutableList.of(errorKey)));
+        DependencyState errorState=entry.getValue().addReverseDepAndCheckIfDone(skyKey);
+        Preconditions.checkState(errorState == DependencyState.DONE,"%s %s %s %s",skyKey,state,errorKey,errorEntry);
+        throw SchedulerException.ofError(errorEntry.getErrorInfo(),entry.getKey());
+      }
     }
-  for (  SkyKey directDep : directDepsToCheck) {
-    enqueueChild(skyKey,state,directDep);
   }
+state.addTemporaryDirectDeps(GroupedListHelper.create(directDepsToCheck));
+for (SkyKey directDep : directDepsToCheck) {
+enqueueChild(skyKey,state,directDep);
+}
 return;
 case VERIFIED_CLEAN:
 visitor.notifyDone(skyKey);
@@ -23,6 +36,12 @@ Set<SkyKey> reverseDeps=state.markClean();
 SkyValue value=state.getValue();
 if (progressReceiver != null) {
 progressReceiver.evaluated(skyKey,value,EvaluationState.CLEAN);
+}
+if (!keepGoing && state.getErrorInfo() != null) {
+if (!visitor.preventNewEvaluations()) {
+return;
+}
+throw SchedulerException.ofError(state.getErrorInfo(),skyKey);
 }
 signalValuesAndEnqueueIfReady(visitor,reverseDeps,state.getVersion());
 return;
@@ -45,10 +64,7 @@ ReifiedSkyFunctionException reifiedBuilderException=new ReifiedSkyFunctionExcept
 if (reifiedBuilderException.getRootCauseSkyKey().equals(skyKey)) {
 boolean shouldFailFast=!keepGoing || builderException.isCatastrophic();
 if (shouldFailFast) {
-if (errorEncountered.compareAndSet(false,true)) {
-visitor.preventNewEvaluations();
-}
- else {
+if (!visitor.preventNewEvaluations()) {
 return;
 }
 }
@@ -81,8 +97,8 @@ registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,env);
 env.commit(true);
 return;
 }
-if (!newDirectDeps.isEmpty() && env.getDepErrorKey() != null) {
-Preconditions.checkState(!keepGoing);
+if (env.getDepErrorKey() != null) {
+Preconditions.checkState(!keepGoing,"%s %s %s",skyKey,state,env.getDepErrorKey());
 SkyKey childErrorKey=env.getDepErrorKey();
 NodeEntry childErrorEntry=Preconditions.checkNotNull(graph.get(childErrorKey),"skyKey: %s, state: %s childErrorKey: %s",skyKey,state,childErrorKey);
 if (!state.getTemporaryDirectDeps().contains(childErrorKey)) {

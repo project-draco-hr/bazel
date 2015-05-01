@@ -1,0 +1,48 @@
+{
+  final SkyKey errorKey=GraphTester.toSkyKey("error");
+  SkyKey invalidatedKey=GraphTester.toSkyKey("invalidated-leaf");
+  tester.set(invalidatedKey,new StringValue("invalidated-leaf-value"));
+  tester.getOrCreate(errorKey).addDependency(invalidatedKey).setHasError(true);
+  final SkyKey fastToRequestSlowToSetValueKey=GraphTester.toSkyKey("A-slow-set-value-parent");
+  final SkyKey failingKey=GraphTester.toSkyKey("B-fast-fail-parent");
+  tester.getOrCreate(fastToRequestSlowToSetValueKey).addDependency(errorKey).setComputedValue(CONCATENATE);
+  tester.getOrCreate(failingKey).addDependency(errorKey).setComputedValue(CONCATENATE);
+  final AtomicBoolean synchronizeThreads=new AtomicBoolean(false);
+  final CountDownLatch slowBuilt=new CountDownLatch(1);
+  final AtomicReference<Pair<SkyKey,? extends Exception>> unexpectedException=new AtomicReference<>();
+  setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+      if (!synchronizeThreads.get()) {
+        return;
+      }
+      if (type == EventType.IS_DIRTY && key.equals(failingKey)) {
+        try {
+          assertTrue(slowBuilt.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS));
+        }
+ catch (        InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
+ else       if (type == EventType.SET_VALUE && key.equals(fastToRequestSlowToSetValueKey) && order == Order.AFTER) {
+        slowBuilt.countDown();
+        try {
+          Thread.sleep(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+          unexpectedException.set(Pair.of(key,new IllegalStateException("uninterrupted")));
+        }
+ catch (        InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+  }
+));
+  tester.eval(true,errorKey);
+  tester.getOrCreate(invalidatedKey,true);
+  tester.invalidate();
+  synchronizeThreads.set(true);
+  tester.eval(false,fastToRequestSlowToSetValueKey,failingKey);
+  Pair<SkyKey,? extends Exception> unexpected=unexpectedException.get();
+  if (unexpected != null) {
+    throw new AssertionError(unexpected.first + ", " + unexpected.second+ ", "+ Arrays.toString(unexpected.second.getStackTrace()));
+  }
+}

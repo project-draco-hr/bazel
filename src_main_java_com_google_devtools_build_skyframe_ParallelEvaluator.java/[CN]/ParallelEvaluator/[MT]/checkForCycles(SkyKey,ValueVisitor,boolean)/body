@@ -9,7 +9,7 @@
     NodeEntry entry=graph.get(key);
     if (key == CHILDREN_FINISHED) {
       key=graphPath.remove(graphPath.size() - 1);
-      entry=graph.get(key);
+      entry=Preconditions.checkNotNull(graph.get(key),key);
       pathSet.remove(key);
       if (entry.isDone()) {
         continue;
@@ -30,6 +30,7 @@
       env.setError(new ErrorInfo(key,errorDeps));
       env.commit(false);
     }
+    Preconditions.checkNotNull(entry,key);
     if (entry.isDone()) {
       continue;
     }

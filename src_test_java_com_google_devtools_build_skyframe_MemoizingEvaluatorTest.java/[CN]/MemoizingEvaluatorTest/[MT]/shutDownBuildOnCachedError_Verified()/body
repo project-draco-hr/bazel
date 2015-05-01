@@ -1,0 +1,68 @@
+{
+  SkyKey errorKey=GraphTester.toSkyKey("error");
+  SkyKey invalidatedKey=GraphTester.toSkyKey("invalidated-leaf");
+  SkyKey changedKey=GraphTester.toSkyKey("changed-leaf");
+  tester.set(invalidatedKey,new StringValue("invalidated-leaf-value"));
+  tester.set(changedKey,new StringValue("changed-leaf-value"));
+  final SkyKey cachedParentKey=GraphTester.toSkyKey("A-cached-parent");
+  final SkyKey uncachedParentKey=GraphTester.toSkyKey("B-uncached-parent");
+  tester.getOrCreate(errorKey).addDependency(invalidatedKey).setHasError(true);
+  tester.getOrCreate(cachedParentKey).addDependency(errorKey).setComputedValue(CONCATENATE);
+  tester.getOrCreate(uncachedParentKey).addDependency(changedKey).addDependency(errorKey).setComputedValue(CONCATENATE);
+  final AtomicBoolean synchronizeThreads=new AtomicBoolean(false);
+  final AtomicReference<Pair<SkyKey,? extends Exception>> unexpectedException=new AtomicReference<>();
+  setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
+    private final CountDownLatch cachedSignaled=new CountDownLatch(1);
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+      if (!synchronizeThreads.get() || order != Order.BEFORE || type != EventType.SIGNAL) {
+        return;
+      }
+      if (key.equals(uncachedParentKey)) {
+        try {
+          assertTrue(cachedSignaled.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS));
+        }
+ catch (        InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
+ else       if (key.equals(cachedParentKey)) {
+        cachedSignaled.countDown();
+        try {
+          Thread.sleep(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+          unexpectedException.set(Pair.of(key,new IllegalStateException("uninterrupted")));
+        }
+ catch (        InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+  }
+));
+  tester.eval(true,cachedParentKey,uncachedParentKey);
+  tester.getOrCreate(invalidatedKey,true);
+  tester.set(changedKey,new StringValue("new value"));
+  tester.invalidate();
+  synchronizeThreads.set(true);
+  SkyKey waitForShutdownKey=GraphTester.skyKey("wait-for-shutdown");
+  tester.getOrCreate(waitForShutdownKey).setBuilder(new SkyFunction(){
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws InterruptedException {
+      try {
+        TrackingAwaiter.waitAndMaybeThrowInterrupt(((ParallelEvaluator.SkyFunctionEnvironment)env).getExceptionLatchForTesting(),"");
+      }
+ catch (      InterruptedException e) {
+        unexpectedException.set(Pair.of(skyKey,e));
+      }
+      synchronizeThreads.set(false);
+      throw new InterruptedException();
+    }
+    @Nullable @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  tester.eval(false,cachedParentKey,uncachedParentKey,waitForShutdownKey);
+  Pair<SkyKey,? extends Exception> unexpected=unexpectedException.get();
+  if (unexpected != null) {
+    throw new AssertionError(unexpected.first + ", " + unexpected.second+ ", "+ Arrays.toString(unexpected.second.getStackTrace()));
+  }
+}
