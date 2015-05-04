@@ -1,7 +1,11 @@
 {
   Artifact testIpa=testIpa();
   Artifact xctestIpa=xctestIpa();
-  List<Substitution> substitutions=new ImmutableList.Builder<Substitution>().add(Substitution.of("%(test_app_ipa)s",testIpa.getRootRelativePathString())).add(Substitution.of("%(test_app_name)s",baseNameWithoutIpa(testIpa))).add(Substitution.of("%(xctest_app_ipa)s",xctestIpa.getRootRelativePathString())).add(Substitution.of("%(xctest_app_name)s",baseNameWithoutIpa(xctestIpa))).add(Substitution.of("%(iossim_path)s",iossim().getRootRelativePath().getPathString())).addAll(deviceSubstitutions().getSubstitutionsForTestRunnerScript()).build();
+  ImmutableList.Builder<Substitution> substitutions=new ImmutableList.Builder<Substitution>().add(Substitution.of("%(test_app_ipa)s",testIpa.getRootRelativePathString())).add(Substitution.of("%(test_app_name)s",baseNameWithoutIpa(testIpa))).add(Substitution.of("%(xctest_app_ipa)s",xctestIpa.getRootRelativePathString())).add(Substitution.of("%(xctest_app_name)s",baseNameWithoutIpa(xctestIpa))).add(Substitution.of("%(iossim_path)s",iossim().getRootRelativePath().getPathString())).addAll(deviceSubstitutions().getSubstitutionsForTestRunnerScript());
+  Optional<Artifact> testRunner=testRunner();
+  if (testRunner.isPresent()) {
+    substitutions.add(Substitution.of("%(testrunner_binary)s",testRunner.get().getRootRelativePathString()));
+  }
   Artifact template=ruleContext.getPrerequisiteArtifact("$test_template",Mode.TARGET);
-  ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),template,generatedTestScript(),substitutions,true));
+  ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),template,generatedTestScript(),substitutions.build(),true));
 }
