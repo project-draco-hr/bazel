@@ -1,0 +1,25 @@
+{
+  RuleClass depClass=new RuleClass.Builder("dep",RuleClassType.NORMAL,false).factory(DUMMY_CONFIGURED_TARGET_FACTORY).add(attr("tags",STRING_LIST)).build();
+  final Rule dep1=createRule(depClass,"dep1",Collections.<String,Object>emptyMap(),testRuleLocation);
+  final Rule dep2=createRule(depClass,"dep2",Collections.<String,Object>emptyMap(),testRuleLocation);
+  ValidityPredicate checker=new ValidityPredicate(){
+    @Override public String checkValid(    Rule from,    Rule to){
+      assertEquals("top",from.getName());
+      if (to.getName().equals("dep1")) {
+        return "pear";
+      }
+ else       if (to.getName().equals("dep2")) {
+        return null;
+      }
+ else {
+        fail("invalid dependency");
+        return null;
+      }
+    }
+  }
+;
+  RuleClass topClass=new RuleClass.Builder("top",RuleClassType.NORMAL,false).factory(DUMMY_CONFIGURED_TARGET_FACTORY).add(attr("tags",STRING_LIST)).add(attr("deps",LABEL_LIST).legacyAllowAnyFileType().validityPredicate(checker)).build();
+  Rule topRule=createRule(topClass,"top",Collections.<String,Object>emptyMap(),testRuleLocation);
+  assertEquals("pear",topClass.getAttributeByName("deps").getValidityPredicate().checkValid(topRule,dep1));
+  assertEquals(null,topClass.getAttributeByName("deps").getValidityPredicate().checkValid(topRule,dep2));
+}

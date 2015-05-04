@@ -1,0 +1,13 @@
+{
+  RuleClass depsRuleClass=new RuleClass("ruleDeps",false,false,false,false,false,false,ImplicitOutputsFunction.NONE,RuleClass.NO_CHANGE,DUMMY_CONFIGURED_TARGET_FACTORY,PredicatesWithMessage.<Rule>alwaysTrue(),PREFERRED_DEPENDENCY_PREDICATE,ImmutableSet.<Class<?>>of(),null,null,ImmutableSet.<Class<?>>of(),false,true,attr("list1",LABEL_LIST).mandatory().legacyAllowAnyFileType().build(),attr("list2",LABEL_LIST).mandatory().legacyAllowAnyFileType().build(),attr("list3",LABEL_LIST).mandatory().legacyAllowAnyFileType().build());
+  Map<String,Object> attributeValues=new LinkedHashMap<>();
+  attributeValues.put("list1",Lists.newArrayList("//testpackage:dup1",":dup1",":nodup"));
+  attributeValues.put("list2",Lists.newArrayList(":nodup1",":nodup2"));
+  attributeValues.put("list3",Lists.newArrayList(":dup1",":dup1",":dup2",":dup2"));
+  reporter.removeHandler(failFastHandler);
+  createRule(depsRuleClass,"depsRule",attributeValues,testRuleLocation);
+  assertSame(3,eventCollector.count());
+  assertDupError("//testpackage:dup1","list1","depsRule");
+  assertDupError("//testpackage:dup1","list3","depsRule");
+  assertDupError("//testpackage:dup2","list3","depsRule");
+}

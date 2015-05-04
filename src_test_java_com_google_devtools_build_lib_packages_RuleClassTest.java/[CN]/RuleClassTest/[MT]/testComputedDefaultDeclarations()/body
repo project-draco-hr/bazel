@@ -1,0 +1,38 @@
+{
+  checkValidComputedDefault(Boolean.FALSE,attr("$good_default_no_declares",BOOLEAN).value(new Attribute.ComputedDefault(){
+    @Override public Object getDefault(    AttributeMap rule){
+      return rule.isAttributeValueExplicitlySpecified("undeclared");
+    }
+  }
+).build(),ImmutableMap.<String,Object>of());
+  checkValidComputedDefault(Boolean.FALSE,attr("$good_default_one_declare",BOOLEAN).value(new Attribute.ComputedDefault("declared1"){
+    @Override public Object getDefault(    AttributeMap rule){
+      return rule.get("declared1",Type.BOOLEAN);
+    }
+  }
+).build(),ImmutableMap.<String,Object>of());
+  checkValidComputedDefault(Boolean.FALSE,attr("$good_default_two_declares",BOOLEAN).value(new Attribute.ComputedDefault("declared1","declared2"){
+    @Override public Object getDefault(    AttributeMap rule){
+      return rule.get("declared1",Type.BOOLEAN) && rule.get("declared2",Type.BOOLEAN);
+    }
+  }
+).build(),ImmutableMap.<String,Object>of());
+  checkInvalidComputedDefault(attr("$bad_default_no_declares",BOOLEAN).value(new Attribute.ComputedDefault(){
+    @Override public Object getDefault(    AttributeMap rule){
+      return rule.get("declared1",Type.BOOLEAN);
+    }
+  }
+).build(),"attribute \"declared1\" isn't available in this computed default context");
+  checkInvalidComputedDefault(attr("$bad_default_one_declare",BOOLEAN).value(new Attribute.ComputedDefault("declared1"){
+    @Override public Object getDefault(    AttributeMap rule){
+      return rule.get("declared1",Type.BOOLEAN) || rule.get("declared2",Type.BOOLEAN);
+    }
+  }
+).build(),"attribute \"declared2\" isn't available in this computed default context");
+  checkInvalidComputedDefault(attr("$bad_default_two_declares",BOOLEAN).value(new Attribute.ComputedDefault("declared1","declared2"){
+    @Override public Object getDefault(    AttributeMap rule){
+      return rule.get("condition",Type.BOOLEAN);
+    }
+  }
+).build(),"attribute \"condition\" isn't available in this computed default context");
+}

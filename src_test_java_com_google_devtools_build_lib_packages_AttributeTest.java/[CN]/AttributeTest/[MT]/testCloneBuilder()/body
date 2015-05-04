@@ -1,0 +1,19 @@
+{
+  FileTypeSet txtFiles=FileTypeSet.of(FileType.of("txt"));
+  RuleClass.Builder.RuleClassNamePredicate ruleClasses=new RuleClass.Builder.RuleClassNamePredicate("mock_rule");
+  Attribute parentAttr=attr("x",LABEL_LIST).allowedFileTypes(txtFiles).mandatory().build();
+  Attribute childAttr1=parentAttr.cloneBuilder().build();
+  assertEquals("x",childAttr1.getName());
+  assertEquals(txtFiles,childAttr1.getAllowedFileTypesPredicate());
+  assertEquals(Predicates.alwaysTrue(),childAttr1.getAllowedRuleClassesPredicate());
+  assertTrue(childAttr1.isMandatory());
+  assertFalse(childAttr1.isNonEmpty());
+  Attribute childAttr2=parentAttr.cloneBuilder().nonEmpty().allowedRuleClasses(ruleClasses).build();
+  assertEquals("x",childAttr2.getName());
+  assertEquals(txtFiles,childAttr2.getAllowedFileTypesPredicate());
+  assertEquals(ruleClasses,childAttr2.getAllowedRuleClassesPredicate());
+  assertTrue(childAttr2.isMandatory());
+  assertTrue(childAttr2.isNonEmpty());
+  assertFalse(parentAttr.isNonEmpty());
+  assertEquals(Predicates.alwaysTrue(),parentAttr.getAllowedRuleClassesPredicate());
+}

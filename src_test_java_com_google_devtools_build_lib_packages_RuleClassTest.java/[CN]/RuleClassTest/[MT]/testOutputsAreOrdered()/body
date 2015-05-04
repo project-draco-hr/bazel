@@ -1,0 +1,13 @@
+{
+  RuleClass ruleClassC=new RuleClass("ruleC",false,false,false,false,false,false,ImplicitOutputsFunction.fromTemplates("first-%{name}","second-%{name}","out-%{outs}"),RuleClass.NO_CHANGE,DUMMY_CONFIGURED_TARGET_FACTORY,PredicatesWithMessage.<Rule>alwaysTrue(),PREFERRED_DEPENDENCY_PREDICATE,ImmutableSet.<Class<?>>of(),null,null,ImmutableSet.<Class<?>>of(),false,true,attr("outs",OUTPUT_LIST).build());
+  Map<String,Object> attributeValues=new HashMap<>();
+  attributeValues.put("outs",ImmutableList.of("third","fourth"));
+  Rule rule=createRule(ruleClassC,"myrule",attributeValues,testRuleLocation);
+  List<String> actual=new ArrayList<>();
+  for (  OutputFile outputFile : rule.getOutputFiles()) {
+    actual.add(outputFile.getName());
+    assertSame(rule,outputFile.getGeneratingRule());
+  }
+  assertWithMessage("unexpected output set").that(actual).containsExactly("first-myrule","second-myrule","out-third","out-fourth","third","fourth");
+  assertWithMessage("invalid output ordering").that(actual).containsExactly("first-myrule","second-myrule","out-third","out-fourth","third","fourth").inOrder();
+}

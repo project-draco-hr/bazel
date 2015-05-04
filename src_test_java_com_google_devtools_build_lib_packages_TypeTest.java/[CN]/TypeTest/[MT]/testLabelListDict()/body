@@ -1,0 +1,10 @@
+{
+  Object input=ImmutableMap.of("foo",Arrays.asList("//foo:bar"),"wiz",Arrays.asList(":bang"));
+  Map<String,List<Label>> converted=Type.LABEL_LIST_DICT.convert(input,null,currentRule);
+  Label fooLabel=Label.parseAbsolute("//foo:bar");
+  Label bangLabel=Label.parseAbsolute("//quux:bang");
+  Map<?,?> expected=ImmutableMap.<String,List<Label>>of("foo",Arrays.<Label>asList(fooLabel),"wiz",Arrays.<Label>asList(bangLabel));
+  assertEquals(expected,converted);
+  assertNotSame(expected,converted);
+  assertThat(Type.LABEL_LIST_DICT.getLabels(converted)).containsExactly(fooLabel,bangLabel);
+}

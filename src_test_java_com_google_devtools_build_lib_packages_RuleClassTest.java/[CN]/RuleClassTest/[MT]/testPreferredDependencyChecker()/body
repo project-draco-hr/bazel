@@ -1,0 +1,17 @@
+{
+  final String cppFile="file.cc";
+  final String textFile="file.txt";
+  RuleClass defaultClass=new RuleClass.Builder("defaultClass",RuleClassType.NORMAL,false).factory(DUMMY_CONFIGURED_TARGET_FACTORY).add(attr("tags",STRING_LIST)).build();
+  final Rule defaultRule=createRule(defaultClass,"defaultRule",Collections.<String,Object>emptyMap(),testRuleLocation);
+  assertFalse(defaultRule.getRuleClassObject().isPreferredDependency(cppFile));
+  assertFalse(defaultRule.getRuleClassObject().isPreferredDependency(textFile));
+  RuleClass cppClass=new RuleClass.Builder("cppClass",RuleClassType.NORMAL,false).factory(DUMMY_CONFIGURED_TARGET_FACTORY).add(attr("tags",STRING_LIST)).setPreferredDependencyPredicate(new Predicate<String>(){
+    @Override public boolean apply(    String filename){
+      return filename.endsWith(".cc");
+    }
+  }
+).build();
+  final Rule cppRule=createRule(cppClass,"cppRule",Collections.<String,Object>emptyMap(),testRuleLocation);
+  assertTrue(cppRule.getRuleClassObject().isPreferredDependency(cppFile));
+  assertFalse(cppRule.getRuleClassObject().isPreferredDependency(textFile));
+}

@@ -1,0 +1,33 @@
+{
+  RuleClass ruleClassA=createRuleClassA();
+  Map<String,Object> attributeValues=new LinkedHashMap<>();
+  attributeValues.put("my-labellist-attr","foobar");
+  attributeValues.put("bogus-attr","foobar");
+  attributeValues.put("my-stringlist-attr",Arrays.asList("foo","bar"));
+  reporter.removeHandler(failFastHandler);
+  EventCollector collector=new EventCollector(EventKind.ERRORS);
+  reporter.addHandler(collector);
+  Rule rule=createRule(ruleClassA,TEST_RULE_NAME,attributeValues,testRuleLocation);
+  Iterator<String> expectedMessages=Arrays.asList("expected value of type 'list(label)' for attribute 'my-labellist-attr' " + "in 'ruleA' rule, but got 'foobar' (string)","no such attribute 'bogus-attr' in 'ruleA' rule","missing value for mandatory " + "attribute 'my-string-attr' in 'ruleA' rule","missing value for mandatory attribute 'my-label-attr' in 'ruleA' rule","missing value for mandatory " + "attribute 'my-labellist-attr' in 'ruleA' rule","missing value for mandatory " + "attribute 'my-string-attr2' in 'ruleA' rule").iterator();
+  for (  Event event : collector) {
+    assertEquals(TEST_RULE_DEFINED_AT_LINE,event.getLocation().getStartLineAndColumn().getLine());
+    assertEquals(testBuildfilePath.asFragment(),event.getLocation().getPath());
+    assertEquals(TEST_RULE_LABEL + ": " + expectedMessages.next(),event.getMessage());
+  }
+  assertEquals("ruleA",rule.getRuleClass());
+  assertEquals(TEST_RULE_NAME,rule.getName());
+  assertEquals(TEST_RULE_LABEL,rule.getLabel().toString());
+  AttributeMap attributes=RawAttributeMapper.of(rule);
+  assertEquals("//default:label",attributes.get("my-label-attr",Type.LABEL).toString());
+  assertEquals(42,attributes.get("my-integer-attr",Type.INTEGER).intValue());
+  assertEquals("",attributes.get("my-string-attr",Type.STRING));
+  assertThat(attributes.get("my-labellist-attr",Type.LABEL_LIST)).isEmpty();
+  assertEquals(Arrays.asList("foo","bar"),attributes.get("my-stringlist-attr",Type.STRING_LIST));
+  try {
+    attributes.get("my-labellist-attr",Type.STRING);
+    fail();
+  }
+ catch (  IllegalArgumentException e) {
+    assertThat(e).hasMessage("Attribute my-labellist-attr is not of type string " + "in rule //testpackage:my-rule-A");
+  }
+}
