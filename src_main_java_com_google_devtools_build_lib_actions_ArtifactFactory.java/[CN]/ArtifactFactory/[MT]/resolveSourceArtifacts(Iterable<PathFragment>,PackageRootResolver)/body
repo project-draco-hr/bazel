@@ -3,6 +3,10 @@
   ArrayList<PathFragment> unresolvedPaths=new ArrayList<>();
   for (  PathFragment execPath : execPaths) {
     PathFragment execPathNormalized=execPath.normalize();
+    if (execPathNormalized.containsUplevelReferences()) {
+      result.put(execPath,null);
+      continue;
+    }
     Artifact a=pathToSourceArtifact.get(execPathNormalized);
     if (a != null) {
       result.put(execPath,a);
