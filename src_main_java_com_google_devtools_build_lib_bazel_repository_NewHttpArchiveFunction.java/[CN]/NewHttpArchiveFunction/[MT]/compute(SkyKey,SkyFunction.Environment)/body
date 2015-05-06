@@ -4,13 +4,23 @@
   if (rule == null) {
     return null;
   }
-  Path outputDirectory=getOutputBase().getRelative(ExternalPackage.NAME).getRelative(rule.getName());
-  RepositoryValue downloadedFileValue;
+  Path outputDirectory=getExternalRepositoryDirectory().getRelative(rule.getName());
   try {
-    downloadedFileValue=(RepositoryValue)env.getValueOrThrow(HttpDownloadFunction.key(rule,outputDirectory),IOException.class);
+    FileSystemUtils.createDirectoryAndParents(outputDirectory);
   }
  catch (  IOException e) {
-    throw new RepositoryFunctionException(e,SkyFunctionException.Transience.PERSISTENT);
+    throw new RepositoryFunctionException(new IOException("Could not create directory for " + rule.getName() + ": "+ e.getMessage()),Transience.TRANSIENT);
+  }
+  FileValue repositoryDirectory=getRepositoryDirectory(outputDirectory,env);
+  if (repositoryDirectory == null) {
+    return null;
+  }
+  HttpDownloadValue downloadedFileValue;
+  try {
+    downloadedFileValue=(HttpDownloadValue)env.getValueOrThrow(HttpDownloadFunction.key(rule,outputDirectory),IOException.class);
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(e,Transience.PERSISTENT);
   }
   if (downloadedFileValue == null) {
     return null;
@@ -20,11 +30,12 @@
     decompressedDirectory=DecompressorFactory.create(rule.getTargetKind(),rule.getName(),downloadedFileValue.getPath(),outputDirectory).decompress();
   }
  catch (  DecompressorFactory.DecompressorException e) {
-    throw new RepositoryFunctionException(new IOException(e.getMessage()),SkyFunctionException.Transience.TRANSIENT);
+    throw new RepositoryFunctionException(new IOException(e.getMessage()),Transience.TRANSIENT);
   }
   NewLocalRepositoryFunction.createWorkspaceFile(decompressedDirectory,rule);
-  if (NewLocalRepositoryFunction.createBuildFile(rule,getWorkspace(),decompressedDirectory,env) == null) {
+  FileValue buildFile=NewLocalRepositoryFunction.createBuildFile(rule,getWorkspace(),outputDirectory,env);
+  if (buildFile == null) {
     return null;
   }
-  return new RepositoryValue(decompressedDirectory,downloadedFileValue.getRepositoryDirectory());
+  return RepositoryValue.createNew(repositoryDirectory,buildFile);
 }
