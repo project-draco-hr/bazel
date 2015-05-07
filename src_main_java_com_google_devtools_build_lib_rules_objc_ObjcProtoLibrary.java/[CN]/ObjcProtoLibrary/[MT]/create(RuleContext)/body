@@ -11,8 +11,9 @@
   PathFragment workspaceRelativeOutputDir=new PathFragment(ruleContext.getBinOrGenfilesDirectory().getExecPath(),rootRelativeOutputDir);
   PathFragment generatedProtoDir=new PathFragment(workspaceRelativeOutputDir,ruleContext.getLabel().getPackageFragment());
   boolean outputCpp=ruleContext.attributes().get(ObjcProtoLibraryRule.OUTPUT_CPP_ATTR,Type.BOOLEAN);
+  boolean useObjcHeaderNames=ruleContext.attributes().get(ObjcProtoLibraryRule.USE_OBJC_HEADER_NAMES_ATTR,Type.BOOLEAN);
   ImmutableList<Artifact> protoGeneratedSources=outputArtifacts(ruleContext,rootRelativeOutputDir,protos,FileType.of(".pb." + (outputCpp ? "cc" : "m")),outputCpp);
-  ImmutableList<Artifact> protoGeneratedHeaders=outputArtifacts(ruleContext,rootRelativeOutputDir,protos,FileType.of(".pb.h"),outputCpp);
+  ImmutableList<Artifact> protoGeneratedHeaders=outputArtifacts(ruleContext,rootRelativeOutputDir,protos,FileType.of(".pb" + (useObjcHeaderNames ? "objc.h" : ".h")),outputCpp);
   Artifact inputFileList=ruleContext.getAnalysisEnvironment().getDerivedArtifact(AnalysisUtils.getUniqueDirectory(ruleContext.getLabel(),new PathFragment("_protos")).getRelative("_proto_input_files"),ruleContext.getConfiguration().getGenfilesDirectory());
   ruleContext.registerAction(new FileWriteAction(ruleContext.getActionOwner(),inputFileList,Artifact.joinExecPaths("\n",protos),false));
   CustomCommandLine.Builder commandLineBuilder=new CustomCommandLine.Builder().add(compileProtos.getExecPathString()).add("--input-file-list").add(inputFileList.getExecPathString()).add("--output-dir").add(workspaceRelativeOutputDir.getSafePathString());
@@ -21,6 +22,9 @@
   }
   if (outputCpp) {
     commandLineBuilder.add("--generate-cpp");
+  }
+  if (useObjcHeaderNames) {
+    commandLineBuilder.add("--use-objc-header-names");
   }
   if (!Iterables.isEmpty(protos)) {
     ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("GenObjcProtos").addInput(compileProtos).addInputs(optionsFile.asSet()).addInputs(protos).addInput(inputFileList).addInputs(libProtobuf).addInputs(protoSupport).addOutputs(Iterables.concat(protoGeneratedSources,protoGeneratedHeaders)).setExecutable(new PathFragment("/usr/bin/python")).setCommandLine(commandLineBuilder.build()).setExecutionInfo(ImmutableMap.of(ExecutionRequirements.REQUIRES_DARWIN,"")).build(ruleContext));
