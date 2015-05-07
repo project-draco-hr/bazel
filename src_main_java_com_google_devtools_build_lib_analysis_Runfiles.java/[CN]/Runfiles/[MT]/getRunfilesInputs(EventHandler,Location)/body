@@ -26,5 +26,14 @@
   for (  Map.Entry<PathFragment,Artifact> entry : manifest.entrySet()) {
     result.put(path.getRelative(entry.getKey()),entry.getValue());
   }
-  return Pair.of(result,(Map<PathFragment,Artifact>)new HashMap<>(getRootSymlinksAsMap()));
+  for (  Map.Entry<PathFragment,Artifact> entry : getRootSymlinksAsMap().entrySet()) {
+    PathFragment mappedPath=entry.getKey();
+    Artifact mappedArtifact=entry.getValue();
+    if (result.put(mappedPath,mappedArtifact) != null) {
+      if (eventHandler != null) {
+        eventHandler.handle(Event.warn(location,"overwrote " + mappedPath + " symlink mapping "+ "with root symlink to "+ mappedArtifact));
+      }
+    }
+  }
+  return result;
 }
