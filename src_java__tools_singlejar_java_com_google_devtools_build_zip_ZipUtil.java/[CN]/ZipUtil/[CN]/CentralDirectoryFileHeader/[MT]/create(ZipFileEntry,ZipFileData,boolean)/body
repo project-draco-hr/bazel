@@ -1,0 +1,17 @@
+{
+  if (allowZip64) {
+    addZip64Extra(entry);
+  }
+ else {
+    entry.getExtra().remove((short)0x0001);
+  }
+  byte[] name=file.getBytes(entry.getName());
+  byte[] extra=entry.getExtra().getBytes();
+  byte[] comment=entry.getComment() != null ? file.getBytes(entry.getComment()) : new byte[]{};
+  byte[] buf=new byte[FIXED_DATA_SIZE + name.length + extra.length+ comment.length];
+  fillFixedSizeData(buf,entry,name.length,extra.length,comment.length,allowZip64);
+  System.arraycopy(name,0,buf,FIXED_DATA_SIZE,name.length);
+  System.arraycopy(extra,0,buf,FIXED_DATA_SIZE + name.length,extra.length);
+  System.arraycopy(comment,0,buf,FIXED_DATA_SIZE + name.length + extra.length,comment.length);
+  return buf;
+}

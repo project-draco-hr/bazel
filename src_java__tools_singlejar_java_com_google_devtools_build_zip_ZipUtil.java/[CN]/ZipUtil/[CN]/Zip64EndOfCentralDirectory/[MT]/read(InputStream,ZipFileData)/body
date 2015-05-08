@@ -1,0 +1,16 @@
+{
+  if (file == null) {
+    throw new NullPointerException();
+  }
+  byte[] fixedSizeData=new byte[FIXED_DATA_SIZE];
+  if (in.read(fixedSizeData) != FIXED_DATA_SIZE) {
+    throw new ZipException("Unexpected end of file while reading Zip64 End of Central Directory Record.");
+  }
+  if (!arrayStartsWith(fixedSizeData,intToLittleEndian(SIGNATURE))) {
+    throw new ZipException(String.format("Malformed Zip64 End of Central Directory; does not start with %08x",SIGNATURE));
+  }
+  file.setZip64(true);
+  file.setCentralDirectoryOffset(getUnsignedLong(fixedSizeData,CD_OFFSET_OFFSET));
+  file.setExpectedEntries(getUnsignedLong(fixedSizeData,TOTAL_ENTRIES_OFFSET));
+  return file;
+}

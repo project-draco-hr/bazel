@@ -1,0 +1,21 @@
+{
+  File bigFile=tmp.newFile("big");
+  try (RandomAccessFile bigOut=new RandomAccessFile(bigFile,"rw")){
+    bigOut.setLength(0xffffffffL);
+  }
+   try (ZipWriter writer=new ZipWriter(new FileOutputStream(test),UTF_8,true)){
+    ZipFileEntry bigEntry=new ZipFileEntry(bigFile.getName());
+    bigEntry.setSize(0xffffffffL);
+    bigEntry.setCompressedSize(0xffffffffL);
+    bigEntry.setCrc(0);
+    bigEntry.setTime(ZipUtil.DOS_EPOCH);
+    writer.putNextEntry(bigEntry);
+    ByteStreams.copy(new BufferedInputStream(new FileInputStream(bigFile)),writer);
+  }
+   try (ZipReader reader=new ZipReader(test,UTF_8)){
+    Collection<ZipFileEntry> entries=reader.entries();
+    assertThat(entries).hasSize(1);
+    ZipFileEntry bigEntry=reader.getEntry(bigFile.getName());
+    assertThat(bigEntry.getSize()).isEqualTo(0xffffffffL);
+  }
+ }

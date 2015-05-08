@@ -1,0 +1,18 @@
+{
+  long date=312796800000L;
+  byte[] extra=new ExtraData((short)0xaa,new byte[]{(byte)0xbb,(byte)0xcd}).getBytes();
+  try (ZipOutputStream zout=new ZipOutputStream(new FileOutputStream(test))){
+    ZipEntry foo=new ZipEntry("foo");
+    foo.setComment("foo comment.");
+    foo.setMethod(ZipEntry.DEFLATED);
+    foo.setTime(date);
+    foo.setExtra(extra);
+    zout.putNextEntry(foo);
+    zout.write("foo".getBytes(UTF_8));
+    zout.closeEntry();
+  }
+   try (ZipReader reader=new ZipReader(test,UTF_8)){
+    ZipFileEntry fooEntry=reader.getEntry("foo");
+    assertThat(fooEntry.getTime()).isEqualTo(ZipUtil.DOS_EPOCH);
+  }
+ }

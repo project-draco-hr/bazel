@@ -1,0 +1,31 @@
+{
+  byte[] signature=ZipUtil.intToLittleEndian(EndOfCentralDirectoryRecord.SIGNATURE);
+  byte[] buffer=new byte[(int)Math.min(64,in.length())];
+  int readLength=buffer.length;
+  if (readLength < EndOfCentralDirectoryRecord.FIXED_DATA_SIZE) {
+    throw new ZipException(String.format("Zip file '%s' is malformed. It does not contain an end" + " of central directory record.",file.getName()));
+  }
+  long offset=in.length() - buffer.length;
+  while (offset >= 0) {
+    in.seek(offset);
+    in.readFully(buffer,0,readLength);
+    int signatureLocation=scanBackwards(signature,buffer,buffer.length);
+    while (signatureLocation != -1) {
+      long eocdSize=in.length() - offset - signatureLocation;
+      if (eocdSize >= EndOfCentralDirectoryRecord.FIXED_DATA_SIZE) {
+        int commentLength=ZipUtil.getUnsignedShort(buffer,signatureLocation + EndOfCentralDirectoryRecord.COMMENT_LENGTH_OFFSET);
+        long readCommentLength=eocdSize - EndOfCentralDirectoryRecord.FIXED_DATA_SIZE;
+        if (commentLength == readCommentLength) {
+          return offset + signatureLocation;
+        }
+      }
+      signatureLocation=scanBackwards(signature,buffer,signatureLocation - 1);
+    }
+    readLength=buffer.length - 3;
+    buffer[buffer.length - 3]=buffer[0];
+    buffer[buffer.length - 2]=buffer[1];
+    buffer[buffer.length - 1]=buffer[2];
+    offset-=readLength;
+  }
+  throw new ZipException(String.format("Zip file '%s' is malformed. It does not contain an end" + " of central directory record.",file.getName()));
+}

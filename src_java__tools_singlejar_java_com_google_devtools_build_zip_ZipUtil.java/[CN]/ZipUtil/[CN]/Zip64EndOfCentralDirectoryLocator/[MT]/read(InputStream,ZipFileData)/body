@@ -1,0 +1,15 @@
+{
+  if (file == null) {
+    throw new NullPointerException();
+  }
+  byte[] fixedSizeData=new byte[FIXED_DATA_SIZE];
+  if (in.read(fixedSizeData) != FIXED_DATA_SIZE) {
+    throw new ZipException("Unexpected end of file while reading Zip64 End of Central Directory Locator.");
+  }
+  if (!arrayStartsWith(fixedSizeData,intToLittleEndian(SIGNATURE))) {
+    throw new ZipException(String.format("Malformed Zip64 Central Directory Locator; does not start with %08x",SIGNATURE));
+  }
+  file.setZip64(true);
+  file.setZip64EndOfCentralDirectoryOffset(getUnsignedLong(fixedSizeData,ZIP64_EOCD_OFFSET_OFFSET));
+  return file;
+}

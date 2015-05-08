@@ -1,0 +1,17 @@
+{
+  ExtraData[] extras=new ExtraData[]{new ExtraData((short)0xcafe,new byte[]{0x00,0x11,0x22}),new ExtraData((short)0xbeef,new byte[]{0x33,0x44,0x55})};
+  ExtraDataList extra=new ExtraDataList(extras);
+  assertThat(extra.getBytes()).isEqualTo(new byte[]{(byte)0xfe,(byte)0xca,0x03,0x00,0x00,0x11,0x22,(byte)0xef,(byte)0xbe,0x03,0x00,0x33,0x44,0x55});
+  assertThat(extra.contains((short)0xcafe)).isTrue();
+  assertThat(extra.contains((short)0xbeef)).isTrue();
+  ExtraData cafe=extra.remove((short)0xcafe);
+  assertThat(extra.getBytes()).isEqualTo(new byte[]{(byte)0xef,(byte)0xbe,0x03,0x00,0x33,0x44,0x55});
+  assertThat(extra.contains((short)0xcafe)).isFalse();
+  assertThat(extra.contains((short)0xbeef)).isTrue();
+  extra.add(cafe);
+  assertThat(extra.getBytes()).isEqualTo(new byte[]{(byte)0xef,(byte)0xbe,0x03,0x00,0x33,0x44,0x55,(byte)0xfe,(byte)0xca,0x03,0x00,0x00,0x11,0x22});
+  assertThat(extra.contains((short)0xcafe)).isTrue();
+  assertThat(extra.contains((short)0xbeef)).isTrue();
+  ExtraData beef=extra.get((short)0xbeef);
+  assertThat(beef.getId()).isEqualTo((short)0xbeef);
+}

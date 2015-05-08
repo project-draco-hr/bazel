@@ -1,0 +1,34 @@
+{
+  assertThat(data.isZip64()).isFalse();
+  data.setCentralDirectorySize(0xffffffffL);
+  assertThat(data.isZip64()).isFalse();
+  data.setCentralDirectorySize(0x100000000L);
+  assertThat(data.isZip64()).isTrue();
+  data.setZip64(false);
+  assertThat(data.isZip64()).isFalse();
+  data.setCentralDirectoryOffset(0xffffffffL);
+  assertThat(data.isZip64()).isFalse();
+  data.setCentralDirectoryOffset(0x100000000L);
+  assertThat(data.isZip64()).isTrue();
+  data.setZip64(false);
+  assertThat(data.isZip64()).isFalse();
+  data.setExpectedEntries(0xffff);
+  assertThat(data.isZip64()).isFalse();
+  data.setExpectedEntries(0x10000L);
+  assertThat(data.isZip64()).isTrue();
+  data.setZip64(false);
+  assertThat(data.isZip64()).isFalse();
+  data.setZip64EndOfCentralDirectoryOffset(0);
+  assertThat(data.isZip64()).isTrue();
+  data.setZip64(false);
+  assertThat(data.isZip64()).isFalse();
+  ZipFileEntry template=new ZipFileEntry("template");
+  for (int i=0; i < 0xffff; i++) {
+    ZipFileEntry entry=new ZipFileEntry(template);
+    entry.setName("entry" + i);
+    data.addEntry(entry);
+  }
+  assertThat(data.isZip64()).isFalse();
+  data.addEntry(template);
+  assertThat(data.isZip64()).isTrue();
+}

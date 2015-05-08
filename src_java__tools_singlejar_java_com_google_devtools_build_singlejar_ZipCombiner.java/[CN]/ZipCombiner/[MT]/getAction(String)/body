@@ -1,0 +1,21 @@
+{
+  if (!actions.containsKey(filename) || actions.get(filename).getType() == ActionType.RENAME) {
+    callback.resetForFile(filename);
+    entryFilter.accept(filename,callback);
+  }
+  checkState(actions.containsKey(filename),"Action for file '%s' should have been set by ZipEntryFilter.",filename);
+  EntryAction action=actions.get(filename);
+  if (action.getType() == ActionType.COPY && entries.containsKey(filename)) {
+    action=new EntryAction(ActionType.SKIP,action);
+    actions.put(filename,action);
+  }
+  if (action.getType() == ActionType.RENAME) {
+    if (actions.containsKey(action.getNewName()) && actions.get(action.getNewName()).getType() == ActionType.SKIP) {
+      action=new EntryAction(ActionType.SKIP,action);
+    }
+    if (entries.containsKey(action.getNewName())) {
+      action=new EntryAction(ActionType.SKIP,action);
+    }
+  }
+  return action;
+}

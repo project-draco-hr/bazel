@@ -1,17 +1,15 @@
 {
   int fileCount=100;
-  for (  int blockSize : new int[]{1,2,3,4,10,1000}) {
-    ByteArrayOutputStream out=new ByteArrayOutputStream();
-    ZipCombiner zipCombiner=new ZipCombiner(OutputMode.DONT_CARE,new CopyEntryFilter(),out,blockSize);
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  try (ZipCombiner zipCombiner=new ZipCombiner(OutputMode.DONT_CARE,new CopyEntryFilter(),out)){
     for (int i=0; i < fileCount; i++) {
-      zipCombiner.addFile("hello" + i,DOS_EPOCH,asStream("Hello " + i + "!"));
+      zipCombiner.addFile("hello" + i,ZipCombiner.DOS_EPOCH,asStream("Hello " + i + "!"));
     }
-    zipCombiner.close();
-    ZipInputStream zipInput=new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
-    for (int i=0; i < fileCount; i++) {
-      assertEntry(zipInput,"hello" + i,"Hello " + i + "!");
-    }
-    assertNull(zipInput.getNextEntry());
-    new ZipTester(out.toByteArray()).validate();
   }
+   ZipInputStream zipInput=new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
+  for (int i=0; i < fileCount; i++) {
+    assertEntry(zipInput,"hello" + i,"Hello " + i + "!");
+  }
+  assertNull(zipInput.getNextEntry());
+  new ZipTester(out.toByteArray()).validate();
 }

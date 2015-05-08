@@ -1,31 +1,14 @@
 {
-  checkNotFinished();
-  finished=true;
-  for (  Map.Entry<String,FileEntry> entry : fileNames.entrySet()) {
+  for (  Entry<String,EntryAction> entry : actions.entrySet()) {
     String filename=entry.getKey();
-    CustomMergeStrategy mergeStrategy=entry.getValue().mergeStrategy;
-    ByteArrayOutputStream outputBuffer=entry.getValue().outputBuffer;
-    int dosTime=entry.getValue().dosTime;
-    if (mergeStrategy == null) {
-    }
- else {
-      mergeStrategy.finish(outputBuffer);
-      copyStreamToEntry(filename,new ByteArrayInputStream(outputBuffer.toByteArray()),dosTime,NO_EXTRA_ENTRIES,true,DEFAULT_DIRECTORY_ENTRY_INFO);
+    EntryAction action=entry.getValue();
+    if (action.getType() == ActionType.MERGE) {
+      ByteArrayOutputStream uncompressed=action.getMergeBuffer();
+      action.getStrategy().finish(uncompressed);
+      ZipFileEntry e=new ZipFileEntry(filename);
+      e.setTime(action.getDate() != null ? action.getDate().getTime() : new Date().getTime());
+      writeEntryFromBuffer(e,uncompressed.toByteArray());
     }
   }
-  if (out.bytesWritten >= MAXIMUM_DATA_SIZE) {
-    throw new IOException("Unable to handle files bigger than 2^32 bytes.");
-  }
-  int startOfCentralDirectory=(int)out.bytesWritten;
-  int centralDirectorySize=centralDirectory.writeTo(out);
-  setUnsignedInt(directoryEntryBuffer,0,END_OF_CENTRAL_DIRECTORY_MARKER);
-  setUnsignedShort(directoryEntryBuffer,4,(short)0);
-  setUnsignedShort(directoryEntryBuffer,6,(short)0);
-  setUnsignedShort(directoryEntryBuffer,8,(short)fileCount);
-  setUnsignedShort(directoryEntryBuffer,10,(short)fileCount);
-  setUnsignedInt(directoryEntryBuffer,12,centralDirectorySize);
-  setUnsignedInt(directoryEntryBuffer,16,startOfCentralDirectory);
-  setUnsignedShort(directoryEntryBuffer,20,(short)0);
-  write(directoryEntryBuffer,0,22);
-  out.flush();
+  out.finish();
 }

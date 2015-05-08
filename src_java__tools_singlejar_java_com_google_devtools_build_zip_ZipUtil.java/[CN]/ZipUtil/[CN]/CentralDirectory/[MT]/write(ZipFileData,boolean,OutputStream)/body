@@ -1,0 +1,14 @@
+{
+  long directorySize=0;
+  byte[] buf=new byte[CentralDirectoryFileHeader.FIXED_DATA_SIZE];
+  for (  ZipFileEntry entry : file.getEntries()) {
+    directorySize+=CentralDirectoryFileHeader.write(entry,file,allowZip64,buf,stream);
+  }
+  file.setCentralDirectorySize(directorySize);
+  if (file.isZip64() && allowZip64) {
+    file.setZip64EndOfCentralDirectoryOffset(file.getCentralDirectoryOffset() + file.getCentralDirectorySize());
+    stream.write(Zip64EndOfCentralDirectory.create(file));
+    stream.write(Zip64EndOfCentralDirectoryLocator.create(file));
+  }
+  stream.write(EndOfCentralDirectoryRecord.create(file,allowZip64));
+}

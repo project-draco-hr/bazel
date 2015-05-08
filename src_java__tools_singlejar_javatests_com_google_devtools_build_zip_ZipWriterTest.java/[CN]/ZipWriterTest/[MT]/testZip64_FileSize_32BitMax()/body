@@ -1,0 +1,22 @@
+{
+  long size=0xffffffffL;
+  try (ZipWriter writer=new ZipWriter(new FileOutputStream(test),UTF_8,true)){
+    ZipFileEntry entry=new ZipFileEntry("big");
+    entry.setCompressedSize(size);
+    entry.setSize(size);
+    entry.setCrc(0);
+    entry.setTime(cal.getTimeInMillis());
+    writer.putNextEntry(entry);
+    byte[] chunk=new byte[1024];
+    for (int i=0; i < size / chunk.length; i++) {
+      writer.write(chunk);
+    }
+    writer.write(chunk,0,(int)(size % chunk.length));
+    writer.closeEntry();
+  }
+   try (ZipFile file=new ZipFile(test)){
+    ZipEntry entry=file.getEntry("big");
+    assertThat(entry.getSize()).isEqualTo(size);
+    assertThat(entry.getCompressedSize()).isEqualTo(size);
+  }
+ }

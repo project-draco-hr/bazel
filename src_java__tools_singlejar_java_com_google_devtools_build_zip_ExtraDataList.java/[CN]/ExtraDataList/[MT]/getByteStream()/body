@@ -1,0 +1,24 @@
+{
+  return new InputStream(){
+    private final Iterator<ExtraData> itr=entries.values().iterator();
+    private ExtraData entry;
+    private int index;
+    @Override public int read(){
+      if (entry == null) {
+        if (itr.hasNext()) {
+          entry=itr.next();
+          index=0;
+        }
+ else {
+          return -1;
+        }
+      }
+      byte val=entry.getByte(index++);
+      if (index >= entry.getLength()) {
+        entry=null;
+      }
+      return val & 0xff;
+    }
+  }
+;
+}

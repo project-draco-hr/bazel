@@ -1,0 +1,17 @@
+{
+  byte[] comment=file.getBytes(file.getComment());
+  byte[] buf=new byte[FIXED_DATA_SIZE + comment.length];
+  short numEntries=(short)(file.getNumEntries() > 0xffff && allowZip64 ? -1 : file.getNumEntries());
+  int cdSize=(int)(file.getCentralDirectorySize() > 0xffffffffL && allowZip64 ? -1 : file.getCentralDirectorySize());
+  int cdOffset=(int)(file.getCentralDirectoryOffset() > 0xffffffffL && allowZip64 ? -1 : file.getCentralDirectoryOffset());
+  intToLittleEndian(buf,SIGNATURE_OFFSET,SIGNATURE);
+  shortToLittleEndian(buf,DISK_NUMBER_OFFSET,(short)0);
+  shortToLittleEndian(buf,CD_DISK_OFFSET,(short)0);
+  shortToLittleEndian(buf,DISK_ENTRIES_OFFSET,numEntries);
+  shortToLittleEndian(buf,TOTAL_ENTRIES_OFFSET,numEntries);
+  intToLittleEndian(buf,CD_SIZE_OFFSET,cdSize);
+  intToLittleEndian(buf,CD_OFFSET_OFFSET,cdOffset);
+  shortToLittleEndian(buf,COMMENT_LENGTH_OFFSET,(short)comment.length);
+  System.arraycopy(comment,0,buf,FIXED_DATA_SIZE,comment.length);
+  return buf;
+}

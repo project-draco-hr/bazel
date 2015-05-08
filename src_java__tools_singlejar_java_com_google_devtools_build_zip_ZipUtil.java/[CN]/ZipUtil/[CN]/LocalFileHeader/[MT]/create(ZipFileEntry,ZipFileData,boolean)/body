@@ -1,0 +1,52 @@
+{
+  byte[] name=entry.getName().getBytes(file.getCharset());
+  ExtraDataList extra=entry.getExtra();
+  EnumSet<Feature> features=entry.getFeatureSet();
+  int size=(int)entry.getSize();
+  int csize=(int)entry.getCompressedSize();
+  if (features.contains(Feature.ZIP64_SIZE) || features.contains(Feature.ZIP64_CSIZE)) {
+    if (!allowZip64) {
+      throw new ZipException(String.format("Writing an entry of size %d(%d) without Zip64" + " extensions is not supported.",entry.getSize(),entry.getCompressedSize()));
+    }
+    extra.remove((short)0x0001);
+    int extraSize=0;
+    if (features.contains(Feature.ZIP64_SIZE)) {
+      size=-1;
+      extraSize+=8;
+    }
+    if (features.contains(Feature.ZIP64_CSIZE)) {
+      csize=-1;
+      extraSize+=8;
+    }
+    byte[] zip64Extra=new byte[ExtraData.FIXED_DATA_SIZE + extraSize];
+    shortToLittleEndian(zip64Extra,ExtraData.ID_OFFSET,(short)0x0001);
+    shortToLittleEndian(zip64Extra,ExtraData.LENGTH_OFFSET,(short)extraSize);
+    int offset=ExtraData.FIXED_DATA_SIZE;
+    if (features.contains(Feature.ZIP64_SIZE)) {
+      longToLittleEndian(zip64Extra,offset,entry.getSize());
+      offset+=8;
+    }
+    if (features.contains(Feature.ZIP64_CSIZE)) {
+      longToLittleEndian(zip64Extra,offset,entry.getCompressedSize());
+      offset+=8;
+    }
+    extra.add(new ExtraData(zip64Extra,0));
+  }
+ else {
+    extra.remove((short)0x0001);
+  }
+  byte[] buf=new byte[FIXED_DATA_SIZE + name.length + extra.getLength()];
+  intToLittleEndian(buf,SIGNATURE_OFFSET,SIGNATURE);
+  shortToLittleEndian(buf,VERSION_OFFSET,entry.getVersionNeeded());
+  shortToLittleEndian(buf,FLAGS_OFFSET,entry.getFlags());
+  shortToLittleEndian(buf,METHOD_OFFSET,entry.getMethod().getValue());
+  intToLittleEndian(buf,MOD_TIME_OFFSET,unixToDosTime(entry.getTime()));
+  intToLittleEndian(buf,CRC_OFFSET,(int)(entry.getCrc() & 0xffffffff));
+  intToLittleEndian(buf,COMPRESSED_SIZE_OFFSET,csize);
+  intToLittleEndian(buf,UNCOMPRESSED_SIZE_OFFSET,size);
+  shortToLittleEndian(buf,FILENAME_LENGTH_OFFSET,(short)name.length);
+  shortToLittleEndian(buf,EXTRA_FIELD_LENGTH_OFFSET,(short)extra.getLength());
+  System.arraycopy(name,0,buf,FIXED_DATA_SIZE,name.length);
+  extra.getByteStream().read(buf,FIXED_DATA_SIZE + name.length,extra.getLength());
+  return buf;
+}

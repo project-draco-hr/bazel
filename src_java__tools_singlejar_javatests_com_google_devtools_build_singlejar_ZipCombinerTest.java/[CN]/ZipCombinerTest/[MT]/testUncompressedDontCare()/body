@@ -1,8 +1,8 @@
 {
   ByteArrayOutputStream out=new ByteArrayOutputStream();
-  ZipCombiner singleJar=new ZipCombiner(out);
-  singleJar.addZip(sampleZipWithOneUncompressedEntry());
-  singleJar.close();
-  FakeZipFile expectedResult=new FakeZipFile().addEntry("hello.txt","Hello World!",false);
+  try (ZipCombiner zipCombiner=new ZipCombiner(out)){
+    zipCombiner.addZip(sampleZipWithOneUncompressedEntry());
+  }
+   FakeZipFile expectedResult=new FakeZipFile().addEntry("hello.txt","Hello World!",false);
   expectedResult.assertSame(out.toByteArray());
 }

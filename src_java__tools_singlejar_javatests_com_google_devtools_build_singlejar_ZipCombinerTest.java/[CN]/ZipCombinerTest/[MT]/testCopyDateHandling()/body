@@ -8,10 +8,10 @@
   }
 ;
   ByteArrayOutputStream out=new ByteArrayOutputStream();
-  ZipCombiner singleJar=new ZipCombiner(mockFilter,out);
-  singleJar.addZip(sampleZip());
-  singleJar.close();
-  ZipInputStream zipInput=new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
+  try (ZipCombiner zipCombiner=new ZipCombiner(mockFilter,out)){
+    zipCombiner.addZip(sampleZip());
+  }
+   ZipInputStream zipInput=new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
   assertEntry(zipInput,"hello.txt",date,"Hello World!");
   assertNull(zipInput.getNextEntry());
 }

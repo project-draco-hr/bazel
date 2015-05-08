@@ -1,0 +1,30 @@
+{
+  if (file == null) {
+    throw new NullPointerException();
+  }
+  byte[] fixedSizeData=new byte[FIXED_DATA_SIZE];
+  if (in.read(fixedSizeData) != FIXED_DATA_SIZE) {
+    throw new ZipException("Unexpected end of file while reading End of Central Directory Record.");
+  }
+  if (!arrayStartsWith(fixedSizeData,intToLittleEndian(SIGNATURE))) {
+    throw new ZipException(String.format("Malformed End of Central Directory Record; does not start with %08x",SIGNATURE));
+  }
+  byte[] comment=new byte[getUnsignedShort(fixedSizeData,COMMENT_LENGTH_OFFSET)];
+  if (comment.length > 0 && in.read(comment) != comment.length) {
+    throw new ZipException("Unexpected end of file while reading End of Central Directory Record.");
+  }
+  short diskNumber=get16(fixedSizeData,DISK_NUMBER_OFFSET);
+  short centralDirectoryDisk=get16(fixedSizeData,CD_DISK_OFFSET);
+  short entriesOnDisk=get16(fixedSizeData,DISK_ENTRIES_OFFSET);
+  short totalEntries=get16(fixedSizeData,TOTAL_ENTRIES_OFFSET);
+  int centralDirectorySize=get32(fixedSizeData,CD_SIZE_OFFSET);
+  int centralDirectoryOffset=get32(fixedSizeData,CD_OFFSET_OFFSET);
+  if (diskNumber == -1 || centralDirectoryDisk == -1 || entriesOnDisk == -1 || totalEntries == -1 || centralDirectorySize == -1 || centralDirectoryOffset == -1) {
+    file.setMaybeZip64(true);
+  }
+  file.setComment(comment);
+  file.setCentralDirectorySize(getUnsignedInt(fixedSizeData,CD_SIZE_OFFSET));
+  file.setCentralDirectoryOffset(getUnsignedInt(fixedSizeData,CD_OFFSET_OFFSET));
+  file.setExpectedEntries(getUnsignedShort(fixedSizeData,TOTAL_ENTRIES_OFFSET));
+  return file;
+}

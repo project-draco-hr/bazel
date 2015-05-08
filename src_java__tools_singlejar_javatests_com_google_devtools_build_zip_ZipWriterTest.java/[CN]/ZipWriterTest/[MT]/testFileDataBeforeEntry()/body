@@ -1,0 +1,12 @@
+{
+  try (ZipWriter writer=new ZipWriter(new FileOutputStream(test),UTF_8)){
+    writer.write(new byte[]{0xf,0xa,0xb});
+    fail("Expected ZipException");
+  }
+ catch (  ZipException e) {
+    assertThat(e.getMessage()).contains("Cannot write zip contents without first setting a" + " ZipEntry or starting a prefix file.");
+  }
+  try (ZipFile zipFile=new ZipFile(test)){
+    assertThat(zipFile.entries().hasMoreElements()).isFalse();
+  }
+ }

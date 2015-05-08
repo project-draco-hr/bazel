@@ -1,0 +1,18 @@
+{
+  String[] names=new String[]{"test","foo","bar","baz"};
+  try (ZipOutputStream zout=new ZipOutputStream(new FileOutputStream(test))){
+    for (    String name : names) {
+      zout.putNextEntry(new ZipEntry(name));
+      zout.write(name.getBytes(UTF_8));
+      zout.closeEntry();
+    }
+  }
+   try (ZipReader reader=new ZipReader(test,UTF_8)){
+    assertThat(reader.entries()).hasSize(names.length);
+    int i=0;
+    for (    ZipFileEntry entry : reader.entries()) {
+      assertThat(entry.getName()).isEqualTo(names[i++]);
+    }
+    assertThat(i).isEqualTo(names.length);
+  }
+ }

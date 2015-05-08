@@ -1,12 +1,7 @@
 {
-  checkNotFinished();
-  if (in == null) {
-    throw new NullPointerException();
-  }
-  if (filename == null) {
-    throw new NullPointerException();
-  }
-  checkState(!fileNames.containsKey(filename),"jar already contains a file named %s",filename);
-  int dosTime=dateToDosTime(date != null ? date : new Date());
-  copyStreamToEntry(filename,in,dosTime,NO_EXTRA_ENTRIES,mode != OutputMode.FORCE_STORED,directoryEntryInfo);
+  ZipFileEntry entry=new ZipFileEntry(filename);
+  entry.setTime(date != null ? date.getTime() : new Date().getTime());
+  entry.setVersion(directoryEntryInfo.madeByVersion);
+  entry.setExternalAttributes(directoryEntryInfo.externalFileAttribute);
+  addFile(entry,in);
 }

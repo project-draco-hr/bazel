@@ -1,0 +1,25 @@
+{
+  ZipWriter writer=new ZipWriter(new FileOutputStream(test),UTF_8);
+  byte[] content="content".getBytes(UTF_8);
+  crc.update(content);
+  ZipFileEntry entry=new ZipFileEntry("foo");
+  entry.setSize(content.length);
+  entry.setCompressedSize(content.length);
+  entry.setCrc(crc.getValue());
+  entry.setTime(cal.getTimeInMillis());
+  writer.putNextEntry(entry);
+  writer.write(content);
+  writer.closeEntry();
+  writer.close();
+  byte[] buf=new byte[128];
+  try (ZipFile zipFile=new ZipFile(test)){
+    ZipEntry foo=zipFile.getEntry("foo");
+    assertThat(foo.getMethod()).isEqualTo(ZipEntry.STORED);
+    assertThat(foo.getSize()).isEqualTo(content.length);
+    assertThat(foo.getCompressedSize()).isEqualTo(content.length);
+    assertThat(foo.getCrc()).isEqualTo(crc.getValue());
+    assertThat(foo.getTime()).isEqualTo(cal.getTimeInMillis());
+    zipFile.getInputStream(foo).read(buf);
+    assertThat(Bytes.indexOf(buf,content)).isEqualTo(0);
+  }
+ }

@@ -1,0 +1,14 @@
+{
+  long size=0x1000000ffL;
+  try (ZipWriter writer=new ZipWriter(new FileOutputStream(test),UTF_8,false)){
+    ZipFileEntry entry=new ZipFileEntry("big");
+    entry.setCompressedSize(size);
+    entry.setSize(size);
+    entry.setCrc(0);
+    entry.setTime(cal.getTimeInMillis());
+    thrown.expect(ZipException.class);
+    thrown.expectMessage("Writing an entry of size");
+    thrown.expectMessage("without Zip64 extensions is not supported.");
+    writer.putNextEntry(entry);
+  }
+ }

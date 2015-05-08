@@ -1,0 +1,20 @@
+{
+  try (ZipWriter writer=new ZipWriter(new FileOutputStream(test),UTF_8,false)){
+    ZipFileEntry template=new ZipFileEntry("template");
+    template.setSize(0);
+    template.setCompressedSize(0);
+    template.setCrc(0);
+    template.setTime(cal.getTimeInMillis());
+    for (int i=0; i < 0x100ff; i++) {
+      ZipFileEntry entry=new ZipFileEntry(template);
+      entry.setName("entry" + i);
+      writer.putNextEntry(entry);
+    }
+  }
+   try (ZipReader reader=new ZipReader(test,UTF_8,true)){
+    assertThat(reader.size()).isEqualTo(0x00ff);
+  }
+   try (ZipReader reader=new ZipReader(test,UTF_8)){
+    assertThat(reader.size()).isEqualTo(0x100ff);
+  }
+ }

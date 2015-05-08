@@ -1,0 +1,18 @@
+{
+  try (ZipWriter writer=new ZipWriter(new FileOutputStream(test),UTF_8,true)){
+    ZipFileEntry template=new ZipFileEntry("template");
+    template.setSize(0);
+    template.setCompressedSize(0);
+    template.setCrc(0);
+    template.setTime(ZipUtil.DOS_EPOCH);
+    for (int i=0; i < 0xffff; i++) {
+      ZipFileEntry entry=new ZipFileEntry(template);
+      entry.setName("entry" + i);
+      writer.putNextEntry(entry);
+    }
+  }
+   try (ZipReader reader=new ZipReader(test,UTF_8,true)){
+    Collection<ZipFileEntry> entries=reader.entries();
+    assertThat(entries).hasSize(0xffff);
+  }
+ }

@@ -1,0 +1,27 @@
+{
+  long eocdLocation=findEndOfCentralDirectoryRecord();
+  InputStream stream=new BufferedInputStream(Channels.newInputStream(in.getChannel().position(eocdLocation)));
+  EndOfCentralDirectoryRecord.read(stream,zipData);
+  if (zipData.isMaybeZip64()) {
+    try {
+      stream=new BufferedInputStream(Channels.newInputStream(in.getChannel().position(eocdLocation - Zip64EndOfCentralDirectoryLocator.FIXED_DATA_SIZE)));
+      Zip64EndOfCentralDirectoryLocator.read(stream,zipData);
+      stream=new BufferedInputStream(Channels.newInputStream(in.getChannel().position(zipData.getZip64EndOfCentralDirectoryOffset())));
+      Zip64EndOfCentralDirectory.read(stream,zipData);
+    }
+ catch (    ZipException e) {
+    }
+  }
+  if (zipData.isZip64() || strictEntries) {
+    readCentralDirectoryFileHeaders(zipData.getExpectedEntries(),zipData.getCentralDirectoryOffset());
+  }
+ else {
+    long centralDirectoryOffset=eocdLocation - zipData.getCentralDirectorySize();
+    if ((int)centralDirectoryOffset == (int)zipData.getCentralDirectoryOffset()) {
+      readCentralDirectoryFileHeaders(centralDirectoryOffset);
+    }
+ else {
+      readCentralDirectoryFileHeaders(zipData.getExpectedEntries(),zipData.getCentralDirectoryOffset());
+    }
+  }
+}
