@@ -10,10 +10,6 @@
       if (!secondBuild.get()) {
         return;
       }
-      if (key.equals(errorKey) && type == EventType.SET_VALUE) {
-        trackingAwaiter.awaitLatchAndTrackExceptions(valuesReady,"waiting values not ready");
-        return;
-      }
       if (key.equals(otherTop) && type == EventType.SIGNAL) {
         valuesReady.countDown();
         trackingAwaiter.awaitLatchAndTrackExceptions(errorThrown,"error not thrown");
@@ -44,7 +40,7 @@
   final SkyKey cycle2Key=GraphTester.toSkyKey("cycle2");
   tester.getOrCreate(topKey).addDependency(cycle1Key).setComputedValue(CONCATENATE);
   tester.getOrCreate(cycle1Key).addDependency(errorKey).addDependency(cycle2Key).setComputedValue(CONCATENATE);
-  tester.getOrCreate(errorKey).setHasError(true);
+  tester.getOrCreate(errorKey).setBuilder(new ChainedFunction(null,valuesReady,null,false,null,ImmutableList.<SkyKey>of()));
   tester.getOrCreate(cycle2Key).setBuilder(new ChainedFunction(valuesReady,null,null,false,new StringValue("never returned"),ImmutableList.<SkyKey>of(cycle1Key)));
   final SkyKey exceptionMarker=GraphTester.toSkyKey("exceptionMarker");
   tester.getOrCreate(exceptionMarker).setBuilder(new ChainedFunction(valuesReady,new CountDownLatch(0),errorThrown,true,new StringValue("exception marker"),ImmutableList.<SkyKey>of()));
