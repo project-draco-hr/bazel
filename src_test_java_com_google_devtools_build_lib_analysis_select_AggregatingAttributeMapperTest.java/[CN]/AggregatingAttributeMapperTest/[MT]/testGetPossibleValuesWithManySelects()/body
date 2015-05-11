@@ -1,0 +1,11 @@
+{
+  String pattern=" + select({'//conditions:a1': '%c', '//conditions:a2': '%s'})";
+  StringBuilder ruleDef=new StringBuilder();
+  ruleDef.append("genrule(name = 'gen', srcs = [], outs = ['gen.out'], cmd = ''");
+  for (  char c : "abcdefghijklmnopqrstuvwxyz".toCharArray()) {
+    ruleDef.append(String.format(pattern,c,Character.toUpperCase(c)));
+  }
+  ruleDef.append(")");
+  Rule rule=createRule("a","gen",ruleDef.toString());
+  assertSameContents(ImmutableList.of("abcdefghijklmnopqrstuvwxyz","ABCDEFGHIJKLMNOPQRSTUVWXYZ"),AggregatingAttributeMapper.of(rule).visitAttribute("cmd",Type.STRING));
+}
