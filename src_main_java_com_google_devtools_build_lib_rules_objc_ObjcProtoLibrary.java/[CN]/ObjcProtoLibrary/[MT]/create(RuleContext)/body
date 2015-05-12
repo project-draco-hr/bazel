@@ -27,7 +27,7 @@
     commandLineBuilder.add("--use-objc-header-names");
   }
   if (!Iterables.isEmpty(protos)) {
-    ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("GenObjcProtos").addInput(compileProtos).addInputs(optionsFile.asSet()).addInputs(protos).addInput(inputFileList).addInputs(libProtobuf).addInputs(protoSupport).addOutputs(Iterables.concat(protoGeneratedSources,protoGeneratedHeaders)).setExecutable(new PathFragment("/usr/bin/python")).setCommandLine(commandLineBuilder.build()).setExecutionInfo(ImmutableMap.of(ExecutionRequirements.REQUIRES_DARWIN,"")).build(ruleContext));
+    ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setMnemonic("GenObjcProtos").addInput(compileProtos).addInputs(optionsFile.asSet()).addInputs(protos).addInput(inputFileList).addInputs(libProtobuf).addInputs(protoSupport).addOutputs(Iterables.concat(protoGeneratedSources,protoGeneratedHeaders)).setExecutable(new PathFragment("/usr/bin/python")).setCommandLine(commandLineBuilder.build()).build(ruleContext));
   }
   IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   CompilationArtifacts compilationArtifacts=new CompilationArtifacts.Builder().addNonArcSrcs(protoGeneratedSources).setIntermediateArtifacts(intermediateArtifacts).setPchFile(Optional.<Artifact>absent()).build();
@@ -37,11 +37,10 @@
   }
   ImmutableSet<PathFragment> searchPathEntries=searchPathEntriesBuilder.build();
   ObjcCommon common=new ObjcCommon.Builder(ruleContext).setCompilationArtifacts(compilationArtifacts).addUserHeaderSearchPaths(searchPathEntries).addDepObjcProviders(ruleContext.getPrerequisites(ObjcProtoLibraryRule.LIBPROTOBUF_ATTR,Mode.TARGET,ObjcProvider.class)).setIntermediateArtifacts(intermediateArtifacts).addHeaders(protoGeneratedHeaders).addHeaders(protoGeneratedSources).build();
+  NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().addAll(common.getCompiledArchive().asSet()).addAll(protoGeneratedSources).addAll(protoGeneratedHeaders);
   ObjcConfiguration configuration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  Iterable<XcodeProvider> protoDeps=ruleContext.getPrerequisites(ObjcProtoLibraryRule.LIBPROTOBUF_ATTR,Mode.TARGET,XcodeProvider.class);
-  XcodeProvider xcodeProvider=new XcodeProvider.Builder().setLabel(ruleContext.getLabel()).setArchitecture(configuration.getIosCpu()).addUserHeaderSearchPaths(searchPathEntries).addPropagatedDependencies(protoDeps).setConfigurationDistinguisher(configuration.getConfigurationDistinguisher()).addCopts(configuration.getCopts()).setProductType(LIBRARY_STATIC).addHeaders(protoGeneratedHeaders).setCompilationArtifacts(common.getCompilationArtifacts().get()).setObjcProvider(common.getObjcProvider()).build();
-  ObjcActionsBuilder actionsBuilder=ObjcRuleClasses.actionsBuilder(ruleContext);
+  XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder().addUserHeaderSearchPaths(searchPathEntries).addCopts(configuration.getCopts()).addHeaders(protoGeneratedHeaders).setCompilationArtifacts(common.getCompilationArtifacts().get());
   new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common,OptionsProvider.DEFAULT);
-  actionsBuilder.registerXcodegenActions(new ObjcRuleClasses.Tools(ruleContext),ruleContext.getImplicitOutputArtifact(XcodeSupport.PBXPROJ),XcodeProvider.Project.fromTopLevelTarget(xcodeProvider));
-  return common.configuredTarget(NestedSetBuilder.<Artifact>stableOrder().addAll(common.getCompiledArchive().asSet()).addAll(protoGeneratedSources).addAll(protoGeneratedHeaders).add(ruleContext.getImplicitOutputArtifact(XcodeSupport.PBXPROJ)).build(),Optional.of(xcodeProvider),Optional.of(common.getObjcProvider()),Optional.<XcTestAppProvider>absent(),Optional.<J2ObjcSrcsProvider>absent(),Optional.<J2ObjcMappingFileProvider>absent());
+  new XcodeSupport(ruleContext).addFilesToBuild(filesToBuild).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),LIBRARY_STATIC).addDependencies(xcodeProviderBuilder,new Attribute(ObjcProtoLibraryRule.LIBPROTOBUF_ATTR,Mode.TARGET)).registerActions(xcodeProviderBuilder.build());
+  return common.configuredTarget(filesToBuild.build(),Optional.of(xcodeProviderBuilder.build()),Optional.of(common.getObjcProvider()),Optional.<XcTestAppProvider>absent(),Optional.<J2ObjcSrcsProvider>absent(),Optional.<J2ObjcMappingFileProvider>absent());
 }
