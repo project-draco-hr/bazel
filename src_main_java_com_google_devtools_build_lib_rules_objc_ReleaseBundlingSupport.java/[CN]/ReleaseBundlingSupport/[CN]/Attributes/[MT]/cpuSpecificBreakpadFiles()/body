@@ -1,0 +1,16 @@
+{
+  ImmutableMap.Builder<String,Artifact> results=ImmutableMap.builder();
+  if (ruleContext.attributes().has("binary",Type.LABEL)) {
+    for (    TransitiveInfoCollection prerequisite : ruleContext.getPrerequisites("binary",Mode.DONT_CHECK)) {
+      ObjcProvider prerequisiteProvider=prerequisite.getProvider(ObjcProvider.class);
+      if (prerequisiteProvider != null) {
+        Artifact sourceBreakpad=Iterables.getOnlyElement(prerequisiteProvider.get(ObjcProvider.BREAKPAD_FILE),null);
+        if (sourceBreakpad != null) {
+          String cpu=prerequisite.getConfiguration().getFragment(ObjcConfiguration.class).getIosCpu();
+          results.put(cpu,sourceBreakpad);
+        }
+      }
+    }
+  }
+  return results.build();
+}
