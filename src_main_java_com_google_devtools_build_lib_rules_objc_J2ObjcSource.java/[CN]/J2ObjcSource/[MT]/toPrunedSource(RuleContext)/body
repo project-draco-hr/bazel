@@ -1,0 +1,10 @@
+{
+  ImmutableList.Builder<Artifact> prunedSourceArtifacts=ImmutableList.builder();
+  for (  Artifact sourceArtifact : getObjcSrcs()) {
+    PathFragment scopedPath=AnalysisUtils.getUniqueDirectory(ruleContext.getRule().getLabel(),new PathFragment("_j2objc_pruned"));
+    PathFragment prunedSourceArtifactPath=FileSystemUtils.appendWithoutExtension(scopedPath.getRelative(sourceArtifact.getRootRelativePath()),"_pruned");
+    Artifact prunedArtifact=ruleContext.getAnalysisEnvironment().getDerivedArtifact(prunedSourceArtifactPath,ruleContext.getBinOrGenfilesDirectory());
+    prunedSourceArtifacts.add(prunedArtifact);
+  }
+  return new J2ObjcSource(getTargetLabel(),prunedSourceArtifacts.build(),getObjcHdrs(),getObjcFilePath(),getSourceType());
+}

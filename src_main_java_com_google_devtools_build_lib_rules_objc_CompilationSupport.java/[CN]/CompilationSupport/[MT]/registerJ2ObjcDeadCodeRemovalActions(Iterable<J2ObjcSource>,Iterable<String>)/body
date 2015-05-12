@@ -1,0 +1,14 @@
+{
+  Artifact pruner=ruleContext.getPrerequisiteArtifact("$j2objc_dead_code_pruner",Mode.HOST);
+  J2ObjcMappingFileProvider provider=ObjcRuleClasses.j2ObjcMappingFileProvider(ruleContext);
+  NestedSet<Artifact> j2ObjcDependencyMappingFiles=provider.getDependencyMappingFiles();
+  NestedSet<Artifact> j2ObjcHeaderMappingFiles=provider.getHeaderMappingFiles();
+  for (  J2ObjcSource j2ObjcSource : j2ObjcSources) {
+    if (j2ObjcSource.getSourceType() == SourceType.JAVA) {
+      Iterable<Artifact> sourceArtifacts=j2ObjcSource.getObjcSrcs();
+      Iterable<Artifact> prunedSourceArtifacts=j2ObjcSource.toPrunedSource(ruleContext).getObjcSrcs();
+      PathFragment objcFilePath=j2ObjcSource.getObjcFilePath();
+      ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("DummyPruner").setExecutable(pruner).addInput(pruner).addInputs(sourceArtifacts).addTransitiveInputs(j2ObjcDependencyMappingFiles).addTransitiveInputs(j2ObjcHeaderMappingFiles).setCommandLine(CustomCommandLine.builder().addJoinExecPaths("--input_files",",",sourceArtifacts).addJoinExecPaths("--output_files",",",prunedSourceArtifacts).addJoinExecPaths("--dependency_mapping_files",",",j2ObjcDependencyMappingFiles).addJoinExecPaths("--header_mapping_files",",",j2ObjcHeaderMappingFiles).add("--entry_classes").add(Joiner.on(",").join(entryClasses)).add("--objc_file_path").add(objcFilePath.getPathString()).build()).addOutputs(prunedSourceArtifacts).build(ruleContext));
+    }
+  }
+}

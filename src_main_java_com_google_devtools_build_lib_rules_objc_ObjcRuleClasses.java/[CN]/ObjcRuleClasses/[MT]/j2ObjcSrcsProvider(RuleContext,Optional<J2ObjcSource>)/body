@@ -2,17 +2,23 @@
   NestedSetBuilder<J2ObjcSource> builder=NestedSetBuilder.stableOrder();
   builder.addAll(currentSource.asSet());
   boolean hasProtos=currentSource.isPresent() && currentSource.get().getSourceType() == J2ObjcSource.SourceType.PROTO;
+  ImmutableSet.Builder<String> entryClasses=ImmutableSet.builder();
   if (ruleContext.attributes().has("deps",Type.LABEL_LIST)) {
     for (    J2ObjcSrcsProvider provider : ruleContext.getPrerequisites("deps",Mode.TARGET,J2ObjcSrcsProvider.class)) {
       builder.addTransitive(provider.getSrcs());
       hasProtos|=provider.hasProtos();
+      entryClasses.addAll(provider.getEntryClasses());
     }
   }
   if (ruleContext.attributes().has("exports",Type.LABEL_LIST)) {
     for (    J2ObjcSrcsProvider provider : ruleContext.getPrerequisites("exports",Mode.TARGET,J2ObjcSrcsProvider.class)) {
       builder.addTransitive(provider.getSrcs());
       hasProtos|=provider.hasProtos();
+      entryClasses.addAll(provider.getEntryClasses());
     }
   }
-  return new J2ObjcSrcsProvider(builder.build(),hasProtos);
+  if (ruleContext.attributes().has("entry_classes",Type.STRING_LIST)) {
+    entryClasses.addAll(ruleContext.attributes().get("entry_classes",Type.STRING_LIST));
+  }
+  return new J2ObjcSrcsProvider(builder.build(),entryClasses.build(),hasProtos);
 }
