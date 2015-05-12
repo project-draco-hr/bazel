@@ -1,12 +1,12 @@
 {
   TestTargetExecutionSettings execSettings=testAction.getExecutionSettings();
-  if (!execSettings.getManifest().equals(execSettings.getInputManifest())) {
-    return execSettings.getManifest().getPath().getParentDirectory();
+  if (execSettings.getRunfilesSymlinksCreated()) {
+    return execSettings.getRunfilesDir();
   }
   Path program=execSettings.getExecutable().getPath();
   Path runfilesDir=program.getParentDirectory().getChild(program.getBaseName() + ".runfiles");
   long startTime=Profiler.nanoTimeMaybe();
-synchronized (execSettings.getManifest()) {
+synchronized (execSettings.getInputManifest()) {
     Profiler.instance().logSimpleTask(startTime,ProfilerTask.WAIT,testAction);
     updateLocalRunfilesDirectory(testAction,runfilesDir,actionExecutionContext,binTools);
   }
