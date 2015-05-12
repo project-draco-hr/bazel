@@ -9,6 +9,9 @@
   Map<SkyKey,ValueOrException3<AspectCreationException,NoSuchThingException,ConfiguredValueCreationException>> depAspects=env.getValuesOrThrow(aspectKeys,AspectCreationException.class,NoSuchThingException.class,ConfiguredValueCreationException.class);
   for (  Dependency dep : deps) {
     SkyKey depKey=TO_KEYS.apply(dep);
+    if (result.containsKey(depKey)) {
+      continue;
+    }
     ConfiguredTarget depConfiguredTarget=configuredTargetMap.get(depKey);
     for (    Class<? extends ConfiguredAspectFactory> depAspect : dep.getAspects()) {
       if (!aspectMatchesConfiguredTarget(depConfiguredTarget,depAspect)) {
