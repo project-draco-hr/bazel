@@ -1,0 +1,15 @@
+{
+  Map<PathFragment,Map<PathFragment,Artifact>> rootsAndMappings=spawn.getRunfilesSupplier().getMappings();
+  for (  Entry<PathFragment,Map<PathFragment,Artifact>> rootAndMappings : rootsAndMappings.entrySet()) {
+    PathFragment root=rootAndMappings.getKey();
+    for (    Entry<PathFragment,Artifact> mapping : rootAndMappings.getValue().entrySet()) {
+      Artifact sourceArtifact=mapping.getValue();
+      String sourcePath=(sourceArtifact != null) ? sourceArtifact.getPath().getPathString() : "/dev/null";
+      File source=new File(sourcePath);
+      String targetPath=root.getRelative(mapping.getKey()).getPathString();
+      File target=new File(targetPath);
+      Files.createParentDirs(target);
+      Files.copy(source,target);
+    }
+  }
+}
