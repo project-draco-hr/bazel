@@ -14,9 +14,17 @@ catch (  AbruptExitException e) {
     runtime.getReporter().handle(Event.error(null,"Unknown error: " + e.getMessage()));
     return e.getExitCode();
   }
-  String query=Joiner.on(" union ").join(options.getResidue());
+  JavaOptions javaOptions=options.getOptions(JavaOptions.class);
+  ImmutableList.Builder<String> labelsToLoad=new ImmutableList.Builder<String>().addAll(options.getResidue());
+  if (String.valueOf(javaOptions.javaLangtoolsJar).equals(JavaOptions.DEFAULT_LANGTOOLS)) {
+    labelsToLoad.add(javaOptions.javaBase);
+  }
+ else {
+    labelsToLoad.add(String.valueOf(javaOptions.javaToolchain));
+  }
+  String query=Joiner.on(" union ").join(labelsToLoad.build());
   query="deps(" + query + ")";
-  AbstractBlazeQueryEnvironment<Target> env=QueryCommand.newQueryEnvironment(runtime,true,false,Lists.<String>newArrayList(),4,Sets.<Setting>newHashSet());
+  AbstractBlazeQueryEnvironment<Target> env=QueryCommand.newQueryEnvironment(runtime,options.getOptions(FetchOptions.class).keepGoing,false,Lists.<String>newArrayList(),200,Sets.<Setting>newHashSet());
   QueryExpression expr;
   try {
     expr=QueryExpression.parse(query,env);
@@ -32,5 +40,6 @@ catch (  AbruptExitException e) {
     runtime.getReporter().handle(Event.error(e.getMessage()));
     return ExitCode.COMMAND_LINE_ERROR;
   }
+  runtime.getReporter().handle(Event.progress("All external dependencies fetched successfully."));
   return ExitCode.SUCCESS;
 }

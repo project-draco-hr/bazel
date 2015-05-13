@@ -4,6 +4,17 @@
   if (rule == null) {
     return null;
   }
+  if (!isFetch.get()) {
+    FileValue repoRoot=RepositoryFunction.getRepositoryDirectory(RepositoryFunction.getExternalRepositoryDirectory(directories).getRelative(rule.getName()),env);
+    if (repoRoot == null) {
+      return null;
+    }
+    Path repoPath=repoRoot.realRootedPath().asPath();
+    if (!repoPath.exists()) {
+      throw new RepositoryFunctionException(new IOException("to fix, run\n\tbazel fetch //...\nExternal repository " + repositoryName + " not found"),Transience.TRANSIENT);
+    }
+    return RepositoryValue.create(repoRoot);
+  }
   RepositoryFunction handler=handlers.get(rule.getRuleClass());
   if (handler == null) {
     throw new IllegalStateException("Could not find handler for " + rule);
@@ -13,12 +24,12 @@
     return env.getValueOrThrow(key,NoSuchPackageException.class,IOException.class,EvalException.class);
   }
  catch (  NoSuchPackageException e) {
-    throw new RepositoryFunction.RepositoryFunctionException(e,Transience.PERSISTENT);
+    throw new RepositoryFunctionException(e,Transience.PERSISTENT);
   }
 catch (  IOException e) {
-    throw new RepositoryFunction.RepositoryFunctionException(e,Transience.PERSISTENT);
+    throw new RepositoryFunctionException(e,Transience.PERSISTENT);
   }
 catch (  EvalException e) {
-    throw new RepositoryFunction.RepositoryFunctionException(e,Transience.PERSISTENT);
+    throw new RepositoryFunctionException(e,Transience.PERSISTENT);
   }
 }
