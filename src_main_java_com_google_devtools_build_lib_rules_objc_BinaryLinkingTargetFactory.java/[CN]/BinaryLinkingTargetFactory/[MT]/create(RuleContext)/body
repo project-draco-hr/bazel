@@ -1,6 +1,5 @@
 {
   ObjcCommon common=common(ruleContext);
-  OptionsProvider optionsProvider=optionsProvider(ruleContext);
   ObjcProvider objcProvider=common.getObjcProvider();
   if (!hasLibraryOrSources(objcProvider)) {
     ruleContext.ruleError(REQUIRES_AT_LEAST_ONE_LIBRARY_OR_SOURCE_FILE);
@@ -9,13 +8,13 @@
   IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(intermediateArtifacts.singleArchitectureBinary());
-  new CompilationSupport(ruleContext).registerJ2ObjcCompileAndArchiveActions(optionsProvider,objcProvider).registerCompileAndArchiveActions(common,optionsProvider).addXcodeSettings(xcodeProviderBuilder,common,optionsProvider).registerLinkActions(objcProvider,extraLinkArgs,ImmutableList.<Artifact>of()).validateAttributes();
+  new CompilationSupport(ruleContext).registerJ2ObjcCompileAndArchiveActions(objcProvider).registerCompileAndArchiveActions(common).addXcodeSettings(xcodeProviderBuilder,common).registerLinkActions(objcProvider,extraLinkArgs,ImmutableList.<Artifact>of()).validateAttributes();
   Optional<XcTestAppProvider> xcTestAppProvider;
   Optional<RunfilesSupport> maybeRunfilesSupport=Optional.absent();
 switch (hasReleaseBundlingSupport) {
 case YES:
     ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,objcProvider,optionsProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES,ReleaseBundlingSupport.APP_BUNDLE_DIR_FORMAT,objcConfiguration.getMinimumOs());
+  ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,objcProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES,ReleaseBundlingSupport.APP_BUNDLE_DIR_FORMAT,objcConfiguration.getMinimumOs());
 releaseBundlingSupport.registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateResources().validateAttributes();
 xcTestAppProvider=Optional.of(releaseBundlingSupport.xcTestAppProvider());
 if (objcConfiguration.getBundlingPlatform() == Platform.SIMULATOR) {

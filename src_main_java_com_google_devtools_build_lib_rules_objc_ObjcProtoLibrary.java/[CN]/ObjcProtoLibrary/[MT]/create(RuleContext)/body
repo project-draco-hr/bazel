@@ -40,7 +40,7 @@
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().addAll(common.getCompiledArchive().asSet()).addAll(protoGeneratedSources).addAll(protoGeneratedHeaders);
   ObjcConfiguration configuration=ObjcRuleClasses.objcConfiguration(ruleContext);
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder().addUserHeaderSearchPaths(searchPathEntries).addCopts(configuration.getCopts()).addHeaders(protoGeneratedHeaders).setCompilationArtifacts(common.getCompilationArtifacts().get());
-  new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common,OptionsProvider.DEFAULT);
+  new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common);
   new XcodeSupport(ruleContext).addFilesToBuild(filesToBuild).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),LIBRARY_STATIC).addDependencies(xcodeProviderBuilder,new Attribute(ObjcProtoLibraryRule.LIBPROTOBUF_ATTR,Mode.TARGET)).registerActions(xcodeProviderBuilder.build());
   return ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build()).addProvider(XcodeProvider.class,xcodeProviderBuilder.build()).addProvider(ObjcProvider.class,common.getObjcProvider()).build();
 }

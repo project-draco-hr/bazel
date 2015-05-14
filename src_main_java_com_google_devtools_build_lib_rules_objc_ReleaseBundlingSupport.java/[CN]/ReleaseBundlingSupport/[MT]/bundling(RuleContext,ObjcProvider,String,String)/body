@@ -1,0 +1,19 @@
+{
+  ImmutableList<BundleableFile> extraBundleFiles;
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  if (objcConfiguration.getBundlingPlatform() == Platform.DEVICE) {
+    extraBundleFiles=ImmutableList.of(new BundleableFile(new Attributes(ruleContext).provisioningProfile(),PROVISIONING_PROFILE_BUNDLE_FILE));
+  }
+ else {
+    extraBundleFiles=ImmutableList.of();
+  }
+  String primaryBundleId=null;
+  String fallbackBundleId=null;
+  if (ruleContext.attributes().isAttributeValueExplicitlySpecified("bundle_id")) {
+    primaryBundleId=ruleContext.attributes().get("bundle_id",Type.STRING);
+  }
+ else {
+    fallbackBundleId=ruleContext.attributes().get("bundle_id",Type.STRING);
+  }
+  return new Bundling.Builder().setName(ruleContext.getLabel().getName()).setArchitecture(objcConfiguration.getDependencySingleArchitecture()).setBundleDirFormat(bundleDirFormat).addExtraBundleFiles(extraBundleFiles).setObjcProvider(objcProvider).setInfoplistMerging(BundleSupport.infoPlistMerging(ruleContext,objcProvider,primaryBundleId,fallbackBundleId,new BundleSupport.ExtraMergePlists(getGeneratedVersionPlist()))).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).setPrimaryBundleId(primaryBundleId).setFallbackBundleId(fallbackBundleId).setMinimumOsVersion(minimumOsVersion).build();
+}
