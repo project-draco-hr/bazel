@@ -1,0 +1,28 @@
+{
+  EvaluationResult<SkyValue> evaluationResult;
+  Map<SkyKey,ValueOrUntypedException> result=new HashMap<>();
+  try {
+    evaluationResult=driver.evaluate(depKeys,false,ResourceUsage.getAvailableProcessors(),eventHandler);
+  }
+ catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+    for (    SkyKey key : depKeys) {
+      result.put(key,ValueOrExceptionUtils.ofNull());
+    }
+    return result;
+  }
+  for (  SkyKey key : depKeys) {
+    SkyValue value=evaluationResult.get(key);
+    if (value != null) {
+      result.put(key,ValueOrExceptionUtils.ofValue(value));
+      continue;
+    }
+    ErrorInfo errorInfo=evaluationResult.getError(key);
+    if (errorInfo == null || errorInfo.getException() == null) {
+      result.put(key,ValueOrExceptionUtils.ofNull());
+      continue;
+    }
+    result.put(key,ValueOrExceptionUtils.ofExn(errorInfo.getException()));
+  }
+  return result;
+}
