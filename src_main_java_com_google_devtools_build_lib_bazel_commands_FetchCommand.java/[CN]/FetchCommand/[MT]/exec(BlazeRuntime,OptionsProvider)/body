@@ -14,6 +14,11 @@ catch (  AbruptExitException e) {
     runtime.getReporter().handle(Event.error(null,"Unknown error: " + e.getMessage()));
     return e.getExitCode();
   }
+  PackageCacheOptions pkgOptions=options.getOptions(PackageCacheOptions.class);
+  if (pkgOptions.fetch == false) {
+    runtime.getReporter().handle(Event.error(null,"You cannot run fetch with --fetch=false"));
+    return ExitCode.COMMAND_LINE_ERROR;
+  }
   JavaOptions javaOptions=options.getOptions(JavaOptions.class);
   ImmutableList.Builder<String> labelsToLoad=new ImmutableList.Builder<String>().addAll(options.getResidue());
   if (String.valueOf(javaOptions.javaLangtoolsJar).equals(JavaOptions.DEFAULT_LANGTOOLS)) {
