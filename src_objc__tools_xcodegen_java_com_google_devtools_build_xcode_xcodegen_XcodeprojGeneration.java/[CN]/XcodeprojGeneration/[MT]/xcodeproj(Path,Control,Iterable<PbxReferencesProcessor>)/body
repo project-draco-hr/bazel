@@ -61,7 +61,8 @@
       targetBuildConfigMap.put("INFOPLIST_FILE","$(WORKSPACE_ROOT)/" + targetControl.getInfoplist());
     }
     if (targetControl.getCoptCount() > 0) {
-      targetBuildConfigMap.put("OTHER_CFLAGS",NSObject.wrap(targetControl.getCoptList()));
+      List<String> escapedCopts=Lists.transform(targetControl.getCoptList(),QUOTE_ESCAPER.asFunction());
+      targetBuildConfigMap.put("OTHER_CFLAGS",NSObject.wrap(escapedCopts));
     }
     targetBuildConfigMap.put("OTHER_LDFLAGS",NSObject.wrap(otherLdflags(targetControl)));
     for (    XcodeprojBuildSetting setting : targetControl.getBuildSettingList()) {
