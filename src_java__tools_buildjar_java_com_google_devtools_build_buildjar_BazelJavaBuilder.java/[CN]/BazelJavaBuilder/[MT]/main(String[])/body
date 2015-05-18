@@ -1,6 +1,7 @@
 {
   try {
-    JavaLibraryBuildRequest build=new JavaLibraryBuildRequest(Arrays.asList(args));
+    ImmutableList<BlazeJavaCompilerPlugin> plugins=ImmutableList.<BlazeJavaCompilerPlugin>of(new FileManagerInitializationPlugin());
+    JavaLibraryBuildRequest build=new JavaLibraryBuildRequest(Arrays.asList(args),plugins,new DependencyModule.Builder());
     build.setJavacOpts(JavacOptions.normalizeOptions(build.getJavacOpts()));
     AbstractJavaBuilder builder=build.getDependencyModule().reduceClasspath() ? new ReducedClasspathJavaLibraryBuilder() : new SimpleJavaLibraryBuilder();
     builder.run(build,System.err);
