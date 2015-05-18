@@ -1,3 +1,6 @@
 {
-  ruleContext.registerAction(bundling.getInfoplistMerging().getMergeAction());
+  if (!bundling.needsToMergeInfoplist()) {
+    return;
+  }
+  ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("MergeInfoPlistFiles").setExecutable(attributes.plmerge()).setCommandLine(mergeCommandLine()).addInputs(bundling.getBundleInfoplistInputs()).addOutput(ObjcRuleClasses.intermediateArtifacts(ruleContext).mergedInfoplist()).build(ruleContext));
 }

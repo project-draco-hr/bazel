@@ -1,15 +1,11 @@
 {
   Preconditions.checkNotNull(intermediateArtifacts,"intermediateArtifacts");
-  Optional<Artifact> actoolzipOutput=Optional.absent();
-  if (!Iterables.isEmpty(objcProvider.get(ASSET_CATALOG))) {
-    actoolzipOutput=Optional.of(intermediateArtifacts.actoolzipOutput());
-  }
-  Optional<Artifact> combinedArchitectureBinary=Optional.absent();
-  if (!Iterables.isEmpty(objcProvider.get(LIBRARY)) || !Iterables.isEmpty(objcProvider.get(IMPORTED_LIBRARY))) {
-    combinedArchitectureBinary=Optional.of(intermediateArtifacts.combinedArchitectureBinary());
-  }
+  NestedSet<Artifact> bundleInfoplistInputs=bundleInfoplistInputs();
+  Optional<Artifact> bundleInfoplist=bundleInfoplist(bundleInfoplistInputs);
+  Optional<Artifact> actoolzipOutput=actoolzipOutput();
+  Optional<Artifact> combinedArchitectureBinary=combinedArchitectureBinary();
   NestedSet<Artifact> mergeZips=getMergeZips(actoolzipOutput);
-  NestedSetBuilder<Artifact> bundleContentArtifactsBuilder=NestedSetBuilder.<Artifact>stableOrder().addTransitive(nestedBundleContentArtifacts(objcProvider.get(NESTED_BUNDLE))).addAll(combinedArchitectureBinary.asSet()).addAll(infoplistMerging.getPlistWithEverything().asSet()).addTransitive(mergeZips).addAll(BundleableFile.toArtifacts(objcProvider.get(BUNDLE_FILE)));
+  NestedSetBuilder<Artifact> bundleContentArtifactsBuilder=NestedSetBuilder.<Artifact>stableOrder().addTransitive(nestedBundleContentArtifacts(objcProvider.get(NESTED_BUNDLE))).addAll(combinedArchitectureBinary.asSet()).addAll(bundleInfoplist.asSet()).addTransitive(mergeZips).addAll(BundleableFile.toArtifacts(objcProvider.get(BUNDLE_FILE)));
   Set<String> bundlePaths=new HashSet<>();
   for (  Artifact stringsFile : objcProvider.get(STRINGS)) {
     Artifact binaryStrings=intermediateArtifacts.convertedStringsFile(stringsFile);
@@ -21,5 +17,5 @@
   }
   ImmutableList<BundleableFile> extraBundleFiles=extraBundleFilesBuilder.build();
   bundleContentArtifactsBuilder.addAll(BundleableFile.toArtifacts(extraBundleFiles));
-  return new Bundling(name,bundleDirFormat,combinedArchitectureBinary,extraBundleFiles,objcProvider,infoplistMerging,actoolzipOutput,bundleContentArtifactsBuilder.build(),mergeZips,primaryBundleId,fallbackBundleId,architecture,minimumOsVersion);
+  return new Bundling(name,bundleDirFormat,combinedArchitectureBinary,extraBundleFiles,objcProvider,bundleInfoplist,actoolzipOutput,bundleContentArtifactsBuilder.build(),mergeZips,primaryBundleId,fallbackBundleId,architecture,minimumOsVersion,bundleInfoplistInputs);
 }

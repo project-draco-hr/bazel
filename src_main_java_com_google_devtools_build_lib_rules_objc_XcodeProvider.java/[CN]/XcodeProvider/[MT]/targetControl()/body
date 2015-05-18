@@ -17,10 +17,8 @@
   for (  XcodeProvider extension : extensions) {
     targetControl.addDependency(DependencyControl.newBuilder().setTargetLabel(xcodeTargetName(extension.label)).build());
   }
-  for (  InfoplistMerging merging : infoplistMerging.asSet()) {
-    for (    Artifact infoplist : merging.getPlistWithEverything().asSet()) {
-      targetControl.setInfoplist(infoplist.getExecPathString());
-    }
+  if (bundleInfoplist.isPresent()) {
+    targetControl.setInfoplist(bundleInfoplist.get().getExecPathString());
   }
   for (  CompilationArtifacts artifacts : compilationArtifacts.asSet()) {
     targetControl.addAllSourceFile(Artifact.toExecPaths(artifacts.getSrcs())).addAllNonArcSourceFile(Artifact.toExecPaths(artifacts.getNonArcSrcs()));
