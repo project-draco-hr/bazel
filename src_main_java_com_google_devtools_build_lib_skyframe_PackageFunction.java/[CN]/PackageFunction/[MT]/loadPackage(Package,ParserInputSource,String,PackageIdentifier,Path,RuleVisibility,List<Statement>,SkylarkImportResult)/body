@@ -2,17 +2,12 @@
   ParserInputSource replacementSource=replacementContents == null ? null : ParserInputSource.create(replacementContents,buildFilePath);
   Package.LegacyBuilder pkgBuilder=packageFunctionCache.get(packageId);
   if (pkgBuilder == null) {
-    Clock clock=new JavaClock();
-    long startTime=clock.nanoTime();
     profiler.startTask(ProfilerTask.CREATE_PACKAGE,packageId.toString());
     try {
       Globber globber=packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
       StoredEventHandler localReporter=new StoredEventHandler();
       Preprocessor.Result preprocessingResult=replacementSource == null ? packageFactory.preprocess(packageId,buildFilePath,inputSource,globber,localReporter) : Preprocessor.Result.noPreprocessing(replacementSource);
       pkgBuilder=packageFactory.createPackageFromPreprocessingResult(externalPkg,packageId,buildFilePath,preprocessingResult,localReporter.getEvents(),preludeStatements,importResult.importMap,importResult.fileDependencies,packageLocator,defaultVisibility,globber);
-      if (eventBus.get() != null) {
-        eventBus.get().post(new PackageLoadedEvent(packageId.toString(),(clock.nanoTime() - startTime) / (1000 * 1000),false,!pkgBuilder.containsErrors()));
-      }
       numPackagesLoaded.incrementAndGet();
       packageFunctionCache.put(packageId,pkgBuilder);
     }
