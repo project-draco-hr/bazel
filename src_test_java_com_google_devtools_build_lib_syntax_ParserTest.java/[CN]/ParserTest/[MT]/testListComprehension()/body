@@ -1,8 +1,6 @@
 {
-  ListComprehension list=(ListComprehension)parseExpression("['foo/%s.java' % x " + "for x in []]");
-  assertThat(list.getLists()).hasSize(1);
-  list=(ListComprehension)parseExpression("['foo/%s.java' % x " + "for x in ['bar', 'wiz', 'quux']]");
-  assertThat(list.getLists()).hasSize(1);
-  list=(ListComprehension)parseExpression("['%s/%s.java' % (x, y) " + "for x in ['foo', 'bar'] for y in ['baz', 'wiz', 'quux']]");
-  assertThat(list.getLists()).hasSize(2);
+  List<ListComprehension.Clause> clauses=((ListComprehension)parseExpression("['foo/%s.java' % x for x in ['bar', 'wiz', 'quux']]")).getClauses();
+  assertThat(clauses).hasSize(1);
+  assertThat(clauses.get(0).getLValue().getExpression().toString()).isEqualTo("x");
+  assertThat(clauses.get(0).getExpression()).isInstanceOf(ListLiteral.class);
 }

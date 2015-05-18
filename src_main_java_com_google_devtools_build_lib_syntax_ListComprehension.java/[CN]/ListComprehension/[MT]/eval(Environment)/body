@@ -1,20 +1,5 @@
 {
-  if (lists.isEmpty()) {
-    return convert(new ArrayList<>(),env);
-  }
-  List<Map.Entry<LValue,Iterable<?>>> listValues=Lists.newArrayListWithCapacity(lists.size());
-  int size=1;
-  for (  Map.Entry<LValue,Expression> list : lists) {
-    Object listValueObject=list.getValue().eval(env);
-    final Iterable<?> listValue=EvalUtils.toIterable(listValueObject,getLocation());
-    int listSize=EvalUtils.size(listValue);
-    if (listSize == 0) {
-      return convert(new ArrayList<>(),env);
-    }
-    size*=listSize;
-    listValues.add(Maps.<LValue,Iterable<?>>immutableEntry(list.getKey(),listValue));
-  }
-  List<Object> resultList=Lists.newArrayListWithCapacity(size);
-  evalLists(env,listValues,resultList);
-  return convert(resultList,env);
+  List<Object> result=new ArrayList<>();
+  evalStep(env,result,0);
+  return env.isSkylarkEnabled() ? SkylarkList.list(result,getLocation()) : result;
 }
