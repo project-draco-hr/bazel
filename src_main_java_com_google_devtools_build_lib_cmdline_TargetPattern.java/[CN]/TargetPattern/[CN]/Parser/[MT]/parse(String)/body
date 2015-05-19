@@ -23,10 +23,10 @@
   if (packagePart.endsWith("/...")) {
     String realPackagePart=removeSuffix(packagePart,"/...");
     if (targetPart.isEmpty() || ALL_RULES_IN_SUFFIXES.contains(targetPart)) {
-      return new TargetsBelowPackage(originalPattern,realPackagePart,true);
+      return new TargetsBelowDirectory(originalPattern,realPackagePart,true);
     }
  else     if (ALL_TARGETS_IN_SUFFIXES.contains(targetPart)) {
-      return new TargetsBelowPackage(originalPattern,realPackagePart,false);
+      return new TargetsBelowDirectory(originalPattern,realPackagePart,false);
     }
   }
   if (ALL_RULES_IN_SUFFIXES.contains(targetPart)) {
@@ -36,15 +36,16 @@
     return new TargetsInPackage(originalPattern,pattern,":" + targetPart,isAbsolute,false,true);
   }
   if (isAbsolute || pattern.contains(":")) {
+    PackageAndTarget packageAndTarget;
     String fullLabel="//" + pattern;
     try {
-      LabelValidator.validateAbsoluteLabel(fullLabel);
+      packageAndTarget=LabelValidator.validateAbsoluteLabel(fullLabel);
     }
  catch (    BadLabelException e) {
       String error="invalid target format '" + originalPattern + "': "+ e.getMessage();
       throw new TargetParsingException(error);
     }
-    return new SingleTarget(fullLabel);
+    return new SingleTarget(fullLabel,packageAndTarget.getPackageName());
   }
   int slashIndex=pattern.indexOf('/');
   String packageName=pattern;
