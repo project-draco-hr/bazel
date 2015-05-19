@@ -1,12 +1,12 @@
 {
   TargetPatternValue.TargetPatternKey patternKey=((TargetPatternValue.TargetPatternKey)key.argument());
-  TargetPattern.Parser parser=new TargetPattern.Parser(patternKey.getOffset());
-  ResolvedTargets<Target> resolvedTargets=null;
+  ResolvedTargets<Target> resolvedTargets;
   try {
     EnvironmentBackedRecursivePackageProvider provider=new EnvironmentBackedRecursivePackageProvider(env);
     RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,env.getListener(),patternKey.getPolicy(),pkgPath.get());
-    TargetPattern resolvedPattern=parser.parse(patternKey.getPattern());
-    resolvedTargets=resolvedPattern.eval(resolver);
+    TargetPattern parsedPattern=patternKey.getParsedPattern();
+    ImmutableSet<String> excludedSubdirectories=patternKey.getExcludedSubdirectories();
+    resolvedTargets=parsedPattern.eval(resolver,excludedSubdirectories);
   }
  catch (  TargetParsingException e) {
     throw new TargetPatternFunctionException(e);

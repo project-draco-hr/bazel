@@ -1,14 +1,24 @@
 {
+  EventHandler eventHandler=env.getListener();
+  boolean handlerIsParseFailureListener=eventHandler instanceof ParseFailureListener;
   TargetPatternSequence targetPatternSequence=(TargetPatternSequence)skyKey.argument();
-  Iterable<SkyKey> patternSkyKeys=TargetPatternValue.keys(targetPatternSequence.getPatterns(),targetPatternSequence.getPolicy(),targetPatternSequence.getOffset());
-  Map<SkyKey,ValueOrException<TargetParsingException>> targetPatternValuesByKey=env.getValuesOrThrow(patternSkyKeys,TargetParsingException.class);
+  Iterable<TargetPatternSkyKeyOrException> keysMaybe=TargetPatternValue.keys(targetPatternSequence.getPatterns(),targetPatternSequence.getPolicy(),targetPatternSequence.getOffset());
+  ImmutableList.Builder<SkyKey> skyKeyBuilder=ImmutableList.builder();
+  for (  TargetPatternSkyKeyOrException skyKeyOrException : keysMaybe) {
+    try {
+      skyKeyBuilder.add(skyKeyOrException.getSkyKey());
+    }
+ catch (    TargetParsingException e) {
+      handleTargetParsingException(eventHandler,handlerIsParseFailureListener,skyKeyOrException.getOriginalPattern(),e);
+    }
+  }
+  ImmutableList<SkyKey> skyKeys=skyKeyBuilder.build();
+  Map<SkyKey,ValueOrException<TargetParsingException>> targetPatternValuesByKey=env.getValuesOrThrow(skyKeys,TargetParsingException.class);
   if (env.valuesMissing()) {
     return null;
   }
-  EventHandler eventHandler=env.getListener();
-  boolean handlerIsParseFailureListener=eventHandler instanceof ParseFailureListener;
   ResolvedTargets.Builder<Label> builder=ResolvedTargets.builder();
-  for (  SkyKey key : patternSkyKeys) {
+  for (  SkyKey key : skyKeys) {
     try {
       TargetPatternValue resultValue=Preconditions.checkNotNull((TargetPatternValue)targetPatternValuesByKey.get(key).get());
       ResolvedTargets<Label> results=resultValue.getTargets();
