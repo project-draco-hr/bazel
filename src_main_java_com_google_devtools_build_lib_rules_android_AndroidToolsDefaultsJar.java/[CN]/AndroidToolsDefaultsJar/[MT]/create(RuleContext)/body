@@ -1,0 +1,11 @@
+{
+  if (!ruleContext.getLabel().getPackageName().equals("tools/defaults")) {
+    ruleContext.ruleError("The android_tools_defaults_jar rule should not be used in BUILD files." + " It is a rule internal to the build tool.");
+    return null;
+  }
+  TransitiveInfoCollection androidSdk=ruleContext.getPrerequisite(":android_sdk",Mode.TARGET);
+  AndroidSdkProvider sdkProvider=androidSdk.getProvider(AndroidSdkProvider.class);
+  Artifact androidJar=sdkProvider != null ? sdkProvider.getAndroidJar() : findAndroidJar(androidSdk.getProvider(FileProvider.class).getFilesToBuild());
+  NestedSet<Artifact> filesToBuild=androidJar == null ? NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER) : NestedSetBuilder.create(Order.STABLE_ORDER,androidJar);
+  return new RuleConfiguredTargetBuilder(ruleContext).add(RunfilesProvider.class,RunfilesProvider.EMPTY).setFilesToBuild(filesToBuild).build();
+}

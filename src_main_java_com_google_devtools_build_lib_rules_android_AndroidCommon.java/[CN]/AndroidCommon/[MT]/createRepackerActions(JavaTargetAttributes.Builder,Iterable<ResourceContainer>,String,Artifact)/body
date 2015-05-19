@@ -1,0 +1,13 @@
+{
+  for (  ResourceContainer otherContainer : resourceContainers) {
+    if (otherContainer.getLabel().equals(ruleContext.getLabel())) {
+      continue;
+    }
+    String jarName=otherContainer.getLabel().getName() + ".jar";
+    PathFragment jarRelativePath=otherContainer.getLabel().getPackageFragment().getRelative(jarName);
+    Artifact resourcesJar=ruleContext.getAnalysisEnvironment().getDerivedArtifact(ruleContext.getUniqueDirectory("resource_jars").getRelative(jarRelativePath),ruleContext.getBinOrGenfilesDirectory());
+    attributes.addRuntimeClassPathEntry(resourcesJar);
+    FilesToRunProvider repackager=ruleContext.getExecutablePrerequisite("$android_jar_repackager",Mode.HOST);
+    createRepackagerAction(ruleContext,binaryResourcesJar,resourcesJar,originalPackage,otherContainer.getJavaPackage(),repackager);
+  }
+}

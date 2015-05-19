@@ -1,0 +1,16 @@
+{
+  List<String> args;
+  if (renameManifestPackage == null) {
+    args=createAaptCommand("apk",apk,null,true,"-F",apk.getExecPathString());
+  }
+ else {
+    args=createAaptCommand("apk",apk,null,true,"-F",apk.getExecPathString(),"--rename-manifest-package",renameManifestPackage);
+  }
+  if (!densities.isEmpty()) {
+    args.add(0,"start_densities");
+    args.add(1,"end_densities");
+    args.addAll(1,densities);
+  }
+  args.addAll(aaptOpts);
+  ruleContext.registerAction(new SpawnAction.Builder().addInputs(getInputs()).addTool(tools.getAapt()).addOutput(apk).setExecutable(tools.getApkGenerator()).setCommandLine(CommandLine.of(args,false)).useParameterFile(ParameterFileType.UNQUOTED).setProgressMessage("Generating apk resources").setMnemonic("AndroidAapt").build(ruleContext));
+}

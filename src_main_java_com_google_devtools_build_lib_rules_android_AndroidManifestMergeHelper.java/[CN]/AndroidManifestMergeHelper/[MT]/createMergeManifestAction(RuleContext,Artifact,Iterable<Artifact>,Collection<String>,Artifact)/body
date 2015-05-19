@@ -1,0 +1,12 @@
+{
+  List<String> args=new ArrayList<>();
+  args.add("--merger=" + merger.getExecPathString());
+  for (  Artifact mergee : mergees) {
+    args.add("--mergee=" + mergee.getExecPathString());
+  }
+  for (  String excludePermission : excludePermissions) {
+    args.add("--exclude_permission=" + excludePermission);
+  }
+  args.add("--output=" + mergedManifest.getExecPathString());
+  ruleContext.registerAction(new SpawnAction.Builder().addInput(merger).addInputs(mergees).addOutput(mergedManifest).setExecutable(ruleContext.getPrerequisite("$android_manifest_merge_tool",Mode.HOST)).addArguments(args).setProgressMessage("Merging Android Manifests").setMnemonic("AndroidManifestMerger").build(ruleContext));
+}

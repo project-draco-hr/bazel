@@ -1,0 +1,23 @@
+{
+  Iterable<Artifact> libraryJars=NestedSetBuilder.<Artifact>naiveLinkOrder().add(androidJar).addTransitive(common.getTransitiveNeverLinkLibraries()).build();
+  Builder builder=new SpawnAction.Builder().addInput(jar).addInputs(libraryJars).addInputs(proguardSpecs).addOutput(proguardOutputJar).setExecutable(proguard).setProgressMessage("Trimming binary with proguard").setMnemonic("Proguard").addArgument("-injars").addArgument(jar.getExecPathString());
+  for (  Artifact libraryJar : libraryJars) {
+    builder.addArgument("-libraryjars").addArgument(libraryJar.getExecPathString());
+  }
+  filesBuilder.add(proguardOutputJar);
+  if (proguardMapping != null) {
+    builder.addInput(proguardMapping).addArgument("-applymapping").addArgument(proguardMapping.getExecPathString());
+  }
+  Artifact proguardOutputMap=null;
+  if (ruleContext.attributes().get("proguard_generate_mapping",Type.BOOLEAN)) {
+    proguardOutputMap=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_PROGUARD_MAP);
+    builder.addOutput(proguardOutputMap).addArgument("-printmapping").addArgument(proguardOutputMap.getExecPathString());
+    filesBuilder.add(proguardOutputMap);
+  }
+  builder.addArgument("-outjars").addArgument(proguardOutputJar.getExecPathString());
+  for (  Artifact proguardSpec : proguardSpecs) {
+    builder.addArgument("@" + proguardSpec.getExecPathString());
+  }
+  ruleContext.registerAction(builder.build(ruleContext));
+  return new ProguardOutput(proguardOutputJar,proguardOutputMap);
+}

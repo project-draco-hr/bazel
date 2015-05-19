@@ -1,0 +1,17 @@
+{
+  NestedSetBuilder<Artifact> builder=NestedSetBuilder.naiveLinkOrder();
+  for (  AndroidNeverLinkLibrariesProvider dep : javaCommon.getDependencies(AndroidNeverLinkLibrariesProvider.class)) {
+    builder.addTransitive(dep.getTransitiveNeverLinkLibraries());
+  }
+  if (javaCommon.isNeverLink()) {
+    builder.addAll(javaCommon.getJavaCompilationArtifacts().getRuntimeJars());
+    for (    TransitiveInfoCollection dep : javaCommon.getDependencies()) {
+      if (dep.getProvider(AndroidNeverLinkLibrariesProvider.class) != null) {
+        JavaCompilationArgsProvider javaArgs=dep.getProvider(JavaCompilationArgsProvider.class);
+        Preconditions.checkState(javaArgs != null,ruleContext.getLabel());
+        builder.addTransitive(javaArgs.getRecursiveJavaCompilationArgs().getRuntimeJars());
+      }
+    }
+  }
+  return builder.build();
+}

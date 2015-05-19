@@ -1,0 +1,11 @@
+{
+  ImmutableMap.Builder<Artifact,Artifact> outputJavaSources=ImmutableMap.builder();
+  PathFragment rulePackage=ruleContext.getRule().getLabel().getPackageFragment();
+  String ruleName=ruleContext.getRule().getName();
+  for (  Artifact idl : idls) {
+    PathFragment javaOutputPath=FileSystemUtils.replaceExtension(rulePackage.getRelative(ruleName + "_aidl").getRelative(idl.getRootRelativePath()),".java");
+    Artifact output=ruleContext.getAnalysisEnvironment().getDerivedArtifact(javaOutputPath,ruleContext.getConfiguration().getGenfilesDirectory());
+    outputJavaSources.put(idl,output);
+  }
+  return outputJavaSources.build();
+}

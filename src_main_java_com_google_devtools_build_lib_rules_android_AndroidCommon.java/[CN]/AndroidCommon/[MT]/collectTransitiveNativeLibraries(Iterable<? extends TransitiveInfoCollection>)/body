@@ -1,0 +1,27 @@
+{
+  NestedSetBuilder<LinkerInput> builder=NestedSetBuilder.stableOrder();
+  for (  TransitiveInfoCollection dep : deps) {
+    AndroidNativeLibraryProvider android=dep.getProvider(AndroidNativeLibraryProvider.class);
+    if (android != null) {
+      builder.addTransitive(android.getTransitiveAndroidNativeLibraries());
+      continue;
+    }
+    JavaNativeLibraryProvider java=dep.getProvider(JavaNativeLibraryProvider.class);
+    if (java != null) {
+      builder.addTransitive(java.getTransitiveJavaNativeLibraries());
+      continue;
+    }
+    CcNativeLibraryProvider cc=dep.getProvider(CcNativeLibraryProvider.class);
+    if (cc != null) {
+      for (      LinkerInput input : cc.getTransitiveCcNativeLibraries()) {
+        Artifact library=input.getOriginalLibraryArtifact();
+        String name=library.getFilename();
+        if (CppFileTypes.SHARED_LIBRARY.matches(name) || CppFileTypes.VERSIONED_SHARED_LIBRARY.matches(name)) {
+          builder.add(input);
+        }
+      }
+      continue;
+    }
+  }
+  return builder.build();
+}

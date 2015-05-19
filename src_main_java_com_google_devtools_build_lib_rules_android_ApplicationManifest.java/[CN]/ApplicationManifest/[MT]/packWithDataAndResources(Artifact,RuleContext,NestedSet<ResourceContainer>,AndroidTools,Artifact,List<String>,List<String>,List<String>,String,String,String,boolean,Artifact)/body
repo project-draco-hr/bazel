@@ -1,0 +1,14 @@
+{
+  try {
+    LocalResourceContainer data=new LocalResourceContainer.Builder().withAssets(AndroidCommon.getAssetDir(ruleContext),ruleContext.getPrerequisites(ResourceType.ASSETS.getAttribute(),Mode.TARGET,FileProvider.class)).withResources(ruleContext.getPrerequisites("resource_files",Mode.TARGET,FileProvider.class)).build();
+    return createApk(resourceApk,ruleContext,resourceContainers,tools,rTxt,configurationFilters,uncompressedExtensions,densities,applicationId,versionCode,versionName,incremental,data,proguardCfg);
+  }
+ catch (  InvalidAssetPath e) {
+    ruleContext.attributeError(ResourceType.ASSETS.getAttribute(),e.getMessage());
+    throw new RuleConfigurationException();
+  }
+catch (  InvalidResourcePath e) {
+    ruleContext.attributeError("resource_files",e.getMessage());
+    throw new RuleConfigurationException();
+  }
+}

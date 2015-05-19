@@ -1,0 +1,19 @@
+{
+  Map<String,Iterable<Artifact>> result=new LinkedHashMap<>();
+  for (  Map.Entry<String,Collection<TransitiveInfoCollection>> entry : depsByArchitecture.asMap().entrySet()) {
+    CcLinkParams linkParams=AndroidCommon.getCcLinkParamsStore(entry.getValue()).get(true,true);
+    Artifact nativeDepsLibrary=NativeDepsHelper.maybeCreateAndroidNativeDepsAction(ruleContext,linkParams,configurationMap.get(entry.getKey()),toolchainMap.get(entry.getKey()));
+    if (nativeDepsLibrary != null) {
+      result.put(entry.getKey(),ImmutableList.of(nativeDepsLibrary));
+    }
+  }
+  if (result.isEmpty()) {
+    return NativeLibs.EMPTY;
+  }
+ else {
+    Artifact anyNativeLibrary=result.entrySet().iterator().next().getValue().iterator().next();
+    Artifact nativeDepsName=ruleContext.getAnalysisEnvironment().getDerivedArtifact(ruleContext.getUniqueDirectory("nativedeps_filename").getRelative(nativeDepsFileName),ruleContext.getBinOrGenfilesDirectory());
+    ruleContext.registerAction(new FileWriteAction(ruleContext.getActionOwner(),nativeDepsName,anyNativeLibrary.getExecPath().getBaseName(),false));
+    return new NativeLibs(ImmutableMap.copyOf(result),nativeDepsName);
+  }
+}

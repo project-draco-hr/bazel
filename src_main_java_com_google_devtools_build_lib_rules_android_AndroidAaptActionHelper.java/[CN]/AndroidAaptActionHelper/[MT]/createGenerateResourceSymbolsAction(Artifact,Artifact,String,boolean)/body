@@ -1,0 +1,15 @@
+{
+  PathFragment javaPath=new PathFragment(javaPackage.replace('.','/'));
+  PathFragment javaResourcesRoot=javaSourcesJar.getRoot().getExecPath().getRelative(ruleContext.getUniqueDirectory("_java_resources"));
+  String javaResources=javaResourcesRoot.getRelative(javaPath).getPathString();
+  List<String> args=new ArrayList<>();
+  args.add(javaSourcesJar.getExecPathString());
+  args.add(javaResourcesRoot.getPathString());
+  args.add(javaResources);
+  args.addAll(createAaptCommand("javasrcs",javaSourcesJar,rTxt,inlineConstants,"-J",javaResources,"--custom-package",javaPackage,"--rename-manifest-package",javaPackage));
+  final Builder builder=new SpawnAction.Builder().addInputs(getInputs()).addTool(tools.getAapt()).setExecutable(tools.getAaptJavaGenerator()).addOutput(javaSourcesJar).setCommandLine(CommandLine.of(args,false)).useParameterFile(ParameterFileType.UNQUOTED).setProgressMessage("Generating Java resources").setMnemonic("AndroidAapt");
+  if (rTxt != null) {
+    builder.addOutput(rTxt);
+  }
+  ruleContext.registerAction(builder.build(ruleContext));
+}

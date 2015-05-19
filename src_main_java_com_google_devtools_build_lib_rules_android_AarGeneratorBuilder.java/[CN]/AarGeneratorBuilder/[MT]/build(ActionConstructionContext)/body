@@ -1,0 +1,29 @@
+{
+  List<Artifact> outs=new ArrayList<>();
+  List<Artifact> ins=new ArrayList<>();
+  List<String> args=new ArrayList<>();
+  args.add("--mainData");
+  addPrimaryResourceContainer(ins,args,primary);
+  if (manifest != null) {
+    args.add("--manifest");
+    args.add(manifest.getExecPathString());
+    ins.add(manifest);
+  }
+  if (rTxt != null) {
+    args.add("--rtxt");
+    args.add(rTxt.getExecPathString());
+    ins.add(rTxt);
+  }
+  if (classes != null) {
+    args.add("--classes");
+    args.add(classes.getExecPathString());
+    ins.add(classes);
+  }
+  if (!strictMerge) {
+    args.add("--nostrictMerge");
+  }
+  args.add("--aarOutput");
+  args.add(aarOut.getExecPathString());
+  outs.add(aarOut);
+  ruleContext.registerAction(this.builder.addInputs(ImmutableList.<Artifact>copyOf(ins)).addOutputs(ImmutableList.<Artifact>copyOf(outs)).setCommandLine(CommandLine.of(args,false)).setExecutable(androidTools.getAarGenerator()).setProgressMessage("Building AAR package").setMnemonic("AARGenerator").build(context));
+}

@@ -1,0 +1,13 @@
+{
+  this.transitiveIdlImportData=transitiveIdlImportData;
+  this.transitiveResources=transitiveResources;
+  ImmutableList.Builder<Artifact> extraSrcsBuilder=new ImmutableList.Builder<Artifact>().addAll(extraArtifacts);
+  idls=getIdlSrcs(ruleContext);
+  if (!idls.isEmpty() && !ruleContext.hasErrors()) {
+    translatedIdlSources=generateTranslatedIdlArtifacts(ruleContext,idls);
+  }
+  javaCommon.initializeJavacOpts(androidSemantics.getJavacArguments());
+  JavaTargetAttributes.Builder attributes=javaCommon.initCommon(extraSrcsBuilder.addAll(translatedIdlSources.values()).build());
+  attributes.setBootClassPath(ImmutableList.of(tools.getAndroidJar()));
+  return attributes;
+}

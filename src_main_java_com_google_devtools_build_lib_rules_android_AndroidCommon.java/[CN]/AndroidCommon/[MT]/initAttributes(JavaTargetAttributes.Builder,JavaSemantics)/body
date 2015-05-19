@@ -1,0 +1,12 @@
+{
+  JavaCompilationHelper helper=new JavaCompilationHelper(ruleContext,semantics,javaCommon.getJavacOpts(),attributes);
+  Iterable<? extends TransitiveInfoCollection> deps=javaCommon.targetsTreatedAsDeps(ClasspathType.BOTH);
+  helper.addLibrariesToAttributes(deps);
+  helper.addProvidersToAttributes(javaCommon.compilationArgsFromSources(),asNeverLink);
+  attributes.setStrictJavaDeps(getStrictAndroidDeps());
+  attributes.setRuleKind(ruleContext.getRule().getRuleClass());
+  attributes.setTargetLabel(ruleContext.getLabel());
+  JavaCommon.validateConstraint(ruleContext,"android",deps);
+  ruleContext.checkSrcsSamePackage(true);
+  return helper;
+}

@@ -1,0 +1,7 @@
+{
+  Artifact strippedJar=AndroidBinary.getDxArtifact(ruleContext,"main_dex_intermediate.jar");
+  ruleContext.registerAction(new SpawnAction.Builder().addOutput(strippedJar).setExecutable(tools.getProguard()).setProgressMessage("Generating streamlined input jar for main dex classes list").setMnemonic("MainDexClassesIntermediate").addArgument("-injars").addInputArgument(jar).addArgument("-libraryjars").addInputArgument(tools.getShrinkedAndroidJar()).addArgument("-outjars").addArgument(strippedJar.getExecPathString()).addArgument("-dontwarn").addArgument("-dontnote").addArgument("-forceprocessing").addArgument("-dontoptimize").addArgument("-dontobfuscate").addArgument("-dontpreverify").addArgument("-include").addInputArgument(tools.getMainDexClasses()).build(ruleContext));
+  Artifact mainDexList=AndroidBinary.getDxArtifact(ruleContext,"main_dex_list.txt");
+  ruleContext.registerAction(tools.mainDexListAction(jar,strippedJar,mainDexList));
+  return mainDexList;
+}
