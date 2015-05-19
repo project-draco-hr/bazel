@@ -1,0 +1,23 @@
+def test_patch_dict_with_clear(self):
+    foo = {'initial': object(), 'other': 'something', }
+    original = foo.copy()
+
+    @patch.dict(foo, clear=True)
+    def test():
+        self.assertEqual(foo, {})
+        foo['a'] = 3
+        foo['other'] = 'something else'
+    test()
+    self.assertEqual(foo, original)
+
+    @patch.dict(foo, {'a': 'b', }, clear=True)
+    def test():
+        self.assertEqual(foo, {'a': 'b', })
+    test()
+    self.assertEqual(foo, original)
+
+    @patch.dict(foo, [('a', 'b')], clear=True)
+    def test():
+        self.assertEqual(foo, {'a': 'b', })
+    test()
+    self.assertEqual(foo, original)

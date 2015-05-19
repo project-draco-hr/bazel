@@ -1,0 +1,14 @@
+def get_original(self):
+    target = self.getter()
+    name = self.attribute
+    original = DEFAULT
+    local = False
+    try:
+        original = target.__dict__[name]
+    except (AttributeError, KeyError):
+        original = getattr(target, name, DEFAULT)
+    else:
+        local = True
+    if ((not self.create) and (original is DEFAULT)):
+        raise AttributeError(('%s does not have the attribute %r' % (target, name)))
+    return (original, local)

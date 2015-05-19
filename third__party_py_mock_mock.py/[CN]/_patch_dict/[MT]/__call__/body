@@ -1,0 +1,12 @@
+def __call__(self, f):
+    if isinstance(f, ClassTypes):
+        return self.decorate_class(f)
+
+    @wraps(f)
+    def _inner(*args, **kw):
+        self._patch_dict()
+        try:
+            return f(*args, **kw)
+        finally:
+            self._unpatch_dict()
+    return _inner

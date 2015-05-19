@@ -1,0 +1,19 @@
+def test_args_list_contains_call_list(self):
+    mock = Mock()
+    self.assertIsInstance(mock.call_args_list, _CallList)
+    mock(1, 2)
+    mock(a=3)
+    mock(3, 4)
+    mock(b=6)
+    for kall in (call(1, 2), call(a=3), call(3, 4), call(b=6)):
+        self.assertTrue((kall in mock.call_args_list))
+    calls = [call(a=3), call(3, 4)]
+    self.assertTrue((calls in mock.call_args_list))
+    calls = [call(1, 2), call(a=3)]
+    self.assertTrue((calls in mock.call_args_list))
+    calls = [call(3, 4), call(b=6)]
+    self.assertTrue((calls in mock.call_args_list))
+    calls = [call(3, 4)]
+    self.assertTrue((calls in mock.call_args_list))
+    self.assertFalse((call('fish') in mock.call_args_list))
+    self.assertFalse(([call('fish')] in mock.call_args_list))

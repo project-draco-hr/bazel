@@ -1,0 +1,110 @@
+__all__ = ('Mock', 'MagicMock', 'patch', 'sentinel', 'DEFAULT', 'ANY', 'call', 'create_autospec', 'FILTER_DIR', 'NonCallableMock', 'NonCallableMagicMock', 'mock_open', 'PropertyMock')
+__version__ = '1.0.1'
+import pprint
+import sys
+try:
+    import inspect
+except ImportError:
+    inspect = None
+try:
+    from functools import wraps as original_wraps
+except ImportError:
+
+    def wraps(original):
+
+        def inner(f):
+            f.__name__ = original.__name__
+            f.__doc__ = original.__doc__
+            f.__module__ = original.__module__
+            f.__wrapped__ = original
+            return f
+        return inner
+else:
+    if (sys.version_info[:2] >= (3, 3)):
+        wraps = original_wraps
+    else:
+
+        def wraps(func):
+
+            def inner(f):
+                f = original_wraps(func)(f)
+                f.__wrapped__ = func
+                return f
+            return inner
+try:
+    unicode
+except NameError:
+    basestring = unicode = str
+try:
+    long
+except NameError:
+    long = int
+try:
+    BaseException
+except NameError:
+    BaseException = Exception
+try:
+    next
+except NameError:
+
+    def next(obj):
+        return obj.next()
+BaseExceptions = (BaseException,)
+if ('java' in sys.platform):
+    import java
+    BaseExceptions = (BaseException, java.lang.Throwable)
+try:
+    _isidentifier = str.isidentifier
+except AttributeError:
+    import keyword
+    import re
+    regex = re.compile('^[a-z_][a-z0-9_]*$', re.I)
+
+    def _isidentifier(string):
+        if (string in keyword.kwlist):
+            return False
+        return regex.match(string)
+inPy3k = (sys.version_info[0] == 3)
+_super = super
+self = 'im_self'
+builtin = '__builtin__'
+if inPy3k:
+    self = '__self__'
+    builtin = 'builtins'
+FILTER_DIR = True
+DescriptorTypes = (type(_slotted.a), property)
+sentinel = _Sentinel()
+DEFAULT = sentinel.DEFAULT
+_missing = sentinel.MISSING
+_deleted = sentinel.DELETED
+ClassType = type(OldStyleClass)
+ClassTypes = (type,)
+if (not inPy3k):
+    ClassTypes = (type, ClassType)
+_allowed_names = set(['return_value', '_mock_return_value', 'side_effect', '_mock_side_effect', '_mock_parent', '_mock_new_parent', '_mock_name', '_mock_new_name'])
+patch.object = _patch_object
+patch.dict = _patch_dict
+patch.multiple = _patch_multiple
+patch.stopall = _patch_stopall
+patch.TEST_PREFIX = 'test'
+magic_methods = 'lt le gt ge eq ne getitem setitem delitem len contains iter hash str sizeof enter exit divmod neg pos abs invert complex int float index trunc floor ceil '
+numerics = 'add sub mul div floordiv mod lshift rshift and xor or pow '
+inplace = ' '.join((('i%s' % n) for n in numerics.split()))
+right = ' '.join((('r%s' % n) for n in numerics.split()))
+extra = ''
+if inPy3k:
+    extra = 'bool next '
+else:
+    extra = 'unicode long nonzero oct hex truediv rtruediv '
+_non_defaults = set((('__%s__' % method) for method in ['cmp', 'getslice', 'setslice', 'coerce', 'subclasses', 'format', 'get', 'set', 'delete', 'reversed', 'missing', 'reduce', 'reduce_ex', 'getinitargs', 'getnewargs', 'getstate', 'setstate', 'getformat', 'setformat', 'repr', 'dir']))
+_magics = set((('__%s__' % method) for method in ' '.join([magic_methods, numerics, inplace, right, extra]).split()))
+_all_magics = (_magics | _non_defaults)
+_unsupported_magics = set(['__getattr__', '__setattr__', '__init__', '__new__', '__prepare____instancecheck__', '__subclasscheck__', '__del__'])
+_calculate_return_value = {'__hash__': (lambda self: object.__hash__(self)), '__str__': (lambda self: object.__str__(self)), '__sizeof__': (lambda self: object.__sizeof__(self)), '__unicode__': (lambda self: unicode(object.__str__(self))), }
+_return_values = {'__lt__': NotImplemented, '__gt__': NotImplemented, '__le__': NotImplemented, '__ge__': NotImplemented, '__int__': 1, '__contains__': False, '__len__': 0, '__exit__': False, '__complex__': 1j, '__float__': 1.0, '__bool__': True, '__nonzero__': True, '__oct__': '1', '__hex__': '0x1', '__long__': long(1), '__index__': 1, }
+_side_effect_methods = {'__eq__': _get_eq, '__ne__': _get_ne, '__iter__': _get_iter, }
+ANY = _ANY()
+call = _Call(from_kall=False)
+FunctionTypes = (type(create_autospec), type(ANY.__eq__), type(_ANY.__eq__))
+FunctionAttributes = set(['func_closure', 'func_code', 'func_defaults', 'func_dict', 'func_doc', 'func_globals', 'func_name'])
+file_spec = None

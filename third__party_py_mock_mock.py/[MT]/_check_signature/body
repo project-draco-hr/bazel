@@ -1,0 +1,11 @@
+def _check_signature(func, mock, skipfirst, instance=False):
+    if (not _callable(func)):
+        return
+    result = _getsignature(func, skipfirst, instance)
+    if (result is None):
+        return
+    (signature, func) = result
+    src = ('lambda _mock_self, %s: None' % signature)
+    checksig = eval(src, {})
+    _copy_func_details(func, checksig)
+    type(mock)._mock_check_sig = checksig

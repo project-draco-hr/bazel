@@ -1,0 +1,20 @@
+def _set_signature(mock, original, instance=False):
+    if (not _callable(original)):
+        return
+    skipfirst = isinstance(original, ClassTypes)
+    result = _getsignature(original, skipfirst, instance)
+    if (result is None):
+        return
+    (signature, func) = result
+    src = ('lambda %s: None' % signature)
+    checksig = eval(src, {})
+    _copy_func_details(func, checksig)
+    name = original.__name__
+    if (not _isidentifier(name)):
+        name = 'funcopy'
+    context = {'_checksig_': checksig, 'mock': mock, }
+    src = ('def %s(*args, **kwargs):\n    _checksig_(*args, **kwargs)\n    return mock(*args, **kwargs)' % name)
+    exec src in context
+    funcopy = context[name]
+    _setup_func(funcopy, mock)
+    return funcopy

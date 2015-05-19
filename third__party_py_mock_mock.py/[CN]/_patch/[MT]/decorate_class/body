@@ -1,0 +1,10 @@
+def decorate_class(self, klass):
+    for attr in dir(klass):
+        if (not attr.startswith(patch.TEST_PREFIX)):
+            continue
+        attr_value = getattr(klass, attr)
+        if (not hasattr(attr_value, '__call__')):
+            continue
+        patcher = self.copy()
+        setattr(klass, attr, patcher(attr_value))
+    return klass

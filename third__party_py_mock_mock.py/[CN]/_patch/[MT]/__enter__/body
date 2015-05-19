@@ -1,0 +1,90 @@
+def __enter__(self):
+    'Perform the patch.'
+    (new, spec, spec_set) = (self.new, self.spec, self.spec_set)
+    (autospec, kwargs) = (self.autospec, self.kwargs)
+    new_callable = self.new_callable
+    self.target = self.getter()
+    if (spec is False):
+        spec = None
+    if (spec_set is False):
+        spec_set = None
+    if (autospec is False):
+        autospec = None
+    if ((spec is not None) and (autospec is not None)):
+        raise TypeError("Can't specify spec and autospec")
+    if (((spec is not None) or (autospec is not None)) and (spec_set not in (True, None))):
+        raise TypeError("Can't provide explicit spec_set *and* spec or autospec")
+    (original, local) = self.get_original()
+    if ((new is DEFAULT) and (autospec is None)):
+        inherit = False
+        if (spec is True):
+            spec = original
+            if (spec_set is True):
+                spec_set = original
+                spec = None
+        elif (spec is not None):
+            if (spec_set is True):
+                spec_set = spec
+                spec = None
+        elif (spec_set is True):
+            spec_set = original
+        if ((spec is not None) or (spec_set is not None)):
+            if (original is DEFAULT):
+                raise TypeError("Can't use 'spec' with create=True")
+            if isinstance(original, ClassTypes):
+                inherit = True
+        Klass = MagicMock
+        _kwargs = {}
+        if (new_callable is not None):
+            Klass = new_callable
+        elif ((spec is not None) or (spec_set is not None)):
+            this_spec = spec
+            if (spec_set is not None):
+                this_spec = spec_set
+            if _is_list(this_spec):
+                not_callable = ('__call__' not in this_spec)
+            else:
+                not_callable = (not _callable(this_spec))
+            if not_callable:
+                Klass = NonCallableMagicMock
+        if (spec is not None):
+            _kwargs['spec'] = spec
+        if (spec_set is not None):
+            _kwargs['spec_set'] = spec_set
+        if (isinstance(Klass, type) and issubclass(Klass, NonCallableMock) and self.attribute):
+            _kwargs['name'] = self.attribute
+        _kwargs.update(kwargs)
+        new = Klass(**_kwargs)
+        if (inherit and _is_instance_mock(new)):
+            this_spec = spec
+            if (spec_set is not None):
+                this_spec = spec_set
+            if ((not _is_list(this_spec)) and (not _instance_callable(this_spec))):
+                Klass = NonCallableMagicMock
+            _kwargs.pop('name')
+            new.return_value = Klass(_new_parent=new, _new_name='()', **_kwargs)
+    elif (autospec is not None):
+        if (new is not DEFAULT):
+            raise TypeError("autospec creates the mock for you. Can't specify autospec and new.")
+        if (original is DEFAULT):
+            raise TypeError("Can't use 'autospec' with create=True")
+        spec_set = bool(spec_set)
+        if (autospec is True):
+            autospec = original
+        new = create_autospec(autospec, spec_set=spec_set, _name=self.attribute, **kwargs)
+    elif kwargs:
+        raise TypeError("Can't pass kwargs to a mock we aren't creating")
+    new_attr = new
+    self.temp_original = original
+    self.is_local = local
+    setattr(self.target, self.attribute, new_attr)
+    if (self.attribute_name is not None):
+        extra_args = {}
+        if (self.new is DEFAULT):
+            extra_args[self.attribute_name] = new
+        for patching in self.additional_patchers:
+            arg = patching.__enter__()
+            if (patching.new is DEFAULT):
+                extra_args.update(arg)
+        return extra_args
+    return new

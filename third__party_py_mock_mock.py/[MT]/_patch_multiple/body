@@ -1,0 +1,17 @@
+def _patch_multiple(target, spec=None, create=False, spec_set=None, autospec=None, new_callable=None, **kwargs):
+    "Perform multiple patches in a single call. It takes the object to be\n    patched (either as an object or a string to fetch the object by importing)\n    and keyword arguments for the patches::\n\n        with patch.multiple(settings, FIRST_PATCH='one', SECOND_PATCH='two'):\n            ...\n\n    Use `DEFAULT` as the value if you want `patch.multiple` to create\n    mocks for you. In this case the created mocks are passed into a decorated\n    function by keyword, and a dictionary is returned when `patch.multiple` is\n    used as a context manager.\n\n    `patch.multiple` can be used as a decorator, class decorator or a context\n    manager. The arguments `spec`, `spec_set`, `create`,\n    `autospec` and `new_callable` have the same meaning as for `patch`. These\n    arguments will be applied to *all* patches done by `patch.multiple`.\n\n    When used as a class decorator `patch.multiple` honours `patch.TEST_PREFIX`\n    for choosing which methods to wrap.\n    "
+    if (type(target) in (unicode, str)):
+        getter = (lambda : _importer(target))
+    else:
+        getter = (lambda : target)
+    if (not kwargs):
+        raise ValueError('Must supply at least one keyword argument with patch.multiple')
+    items = list(kwargs.items())
+    (attribute, new) = items[0]
+    patcher = _patch(getter, attribute, new, spec, create, spec_set, autospec, new_callable, {})
+    patcher.attribute_name = attribute
+    for (attribute, new) in items[1:]:
+        this_patcher = _patch(getter, attribute, new, spec, create, spec_set, autospec, new_callable, {})
+        this_patcher.attribute_name = attribute
+        patcher.additional_patchers.append(this_patcher)
+    return patcher

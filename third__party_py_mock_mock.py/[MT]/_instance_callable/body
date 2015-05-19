@@ -1,0 +1,11 @@
+def _instance_callable(obj):
+    'Given an object, return True if the object is callable.\n    For classes, return True if instances would be callable.'
+    if (not isinstance(obj, ClassTypes)):
+        return (getattr(obj, '__call__', None) is not None)
+    klass = obj
+    if (klass.__dict__.get('__call__') is not None):
+        return True
+    for base in klass.__bases__:
+        if _instance_callable(base):
+            return True
+    return False

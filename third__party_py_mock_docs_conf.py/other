@@ -1,0 +1,24 @@
+import sys, os
+sys.path.insert(0, os.path.abspath('..'))
+from mock import __version__
+extensions = ['sphinx.ext.doctest']
+doctest_global_setup = "\nimport os\nimport sys\nimport mock\nfrom mock import * # yeah, I know :-/\nimport unittest2\nimport __main__\n\nif os.getcwd() not in sys.path:\n    sys.path.append(os.getcwd())\n\n# keep a reference to __main__\nsys.modules['__main'] = __main__\n\nclass ProxyModule(object):\n    def __init__(self):\n        self.__dict__ = globals()\n\nsys.modules['__main__'] = ProxyModule()\n"
+doctest_global_cleanup = "\nsys.modules['__main__'] = sys.modules['__main']\n"
+html_theme = 'nature'
+html_theme_options = {}
+source_suffix = '.txt'
+master_doc = 'index'
+project = u'Mock'
+copyright = u'2007-2012, Michael Foord & the mock team'
+version = __version__[:3]
+release = __version__
+today_fmt = '%B %d, %Y'
+exclude_trees = []
+add_module_names = False
+pygments_style = 'friendly'
+html_last_updated_fmt = '%b %d, %Y'
+html_use_modindex = False
+htmlhelp_basename = 'Mockdoc'
+latex_font_size = '12pt'
+latex_documents = [('index', 'Mock.tex', u'Mock Documentation', u'Michael Foord', 'manual')]
+latex_use_modindex = False

@@ -1,0 +1,10 @@
+def test_patch_multiple_create(self):
+    patcher = patch.multiple(Foo, blam='blam')
+    self.assertRaises(AttributeError, patcher.start)
+    patcher = patch.multiple(Foo, blam='blam', create=True)
+    patcher.start()
+    try:
+        self.assertEqual(Foo.blam, 'blam')
+    finally:
+        patcher.stop()
+    self.assertFalse(hasattr(Foo, 'blam'))

@@ -1,0 +1,20 @@
+def test_recursive(self):
+
+
+    class A(object):
+
+        def a(self):
+            pass
+        foo = 'foo bar baz'
+        bar = foo
+    A.B = A
+    mock = create_autospec(A)
+    mock()
+    self.assertFalse(mock.B.called)
+    mock.a()
+    mock.B.a()
+    self.assertEqual(mock.method_calls, [call.a(), call.B.a()])
+    self.assertIs(A.foo, A.bar)
+    self.assertIsNot(mock.foo, mock.bar)
+    mock.foo.lower()
+    self.assertRaises(AssertionError, mock.bar.lower.assert_called_with)

@@ -1,0 +1,28 @@
+def test_comparison(self):
+    if (not inPy3k):
+        self.assertEqual((Mock() < 3), (object() < 3))
+        self.assertEqual((Mock() > 3), (object() > 3))
+        self.assertEqual((Mock() <= 3), (object() <= 3))
+        self.assertEqual((Mock() >= 3), (object() >= 3))
+    else:
+        self.assertRaises(TypeError, (lambda : (MagicMock() < object())))
+        self.assertRaises(TypeError, (lambda : (object() < MagicMock())))
+        self.assertRaises(TypeError, (lambda : (MagicMock() < MagicMock())))
+        self.assertRaises(TypeError, (lambda : (MagicMock() > object())))
+        self.assertRaises(TypeError, (lambda : (object() > MagicMock())))
+        self.assertRaises(TypeError, (lambda : (MagicMock() > MagicMock())))
+        self.assertRaises(TypeError, (lambda : (MagicMock() <= object())))
+        self.assertRaises(TypeError, (lambda : (object() <= MagicMock())))
+        self.assertRaises(TypeError, (lambda : (MagicMock() <= MagicMock())))
+        self.assertRaises(TypeError, (lambda : (MagicMock() >= object())))
+        self.assertRaises(TypeError, (lambda : (object() >= MagicMock())))
+        self.assertRaises(TypeError, (lambda : (MagicMock() >= MagicMock())))
+    mock = Mock()
+
+    def comp(s, o):
+        return True
+    mock.__lt__ = mock.__gt__ = mock.__le__ = mock.__ge__ = comp
+    self.assertTrue((mock < 3))
+    self.assertTrue((mock > 3))
+    self.assertTrue((mock <= 3))
+    self.assertTrue((mock >= 3))

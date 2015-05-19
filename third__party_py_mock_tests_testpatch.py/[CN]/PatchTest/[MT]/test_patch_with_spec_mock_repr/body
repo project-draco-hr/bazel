@@ -1,0 +1,11 @@
+def test_patch_with_spec_mock_repr(self):
+    for arg in ('spec', 'autospec', 'spec_set'):
+        p = patch(('%s.SomeClass' % __name__), **{arg: True, })
+        m = p.start()
+        try:
+            self.assertIn(" name='SomeClass'", repr(m))
+            self.assertIn(" name='SomeClass.class_attribute'", repr(m.class_attribute))
+            self.assertIn(" name='SomeClass()'", repr(m()))
+            self.assertIn(" name='SomeClass().class_attribute'", repr(m().class_attribute))
+        finally:
+            p.stop()

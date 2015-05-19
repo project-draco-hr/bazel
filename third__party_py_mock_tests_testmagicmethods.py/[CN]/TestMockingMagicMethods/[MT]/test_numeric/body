@@ -1,0 +1,24 @@
+def test_numeric(self):
+    original = mock = Mock()
+    mock.value = 0
+    self.assertRaises(TypeError, (lambda : (mock + 3)))
+
+    def add(self, other):
+        mock.value += other
+        return self
+    mock.__add__ = add
+    self.assertEqual((mock + 3), mock)
+    self.assertEqual(mock.value, 3)
+    del mock.__add__
+
+    def iadd(mock):
+        mock += 3
+    self.assertRaises(TypeError, iadd, mock)
+    mock.__iadd__ = add
+    mock += 6
+    self.assertEqual(mock, original)
+    self.assertEqual(mock.value, 9)
+    self.assertRaises(TypeError, (lambda : (3 + mock)))
+    mock.__radd__ = add
+    self.assertEqual((7 + mock), mock)
+    self.assertEqual(mock.value, 16)

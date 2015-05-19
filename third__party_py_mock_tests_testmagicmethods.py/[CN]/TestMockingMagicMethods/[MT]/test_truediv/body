@@ -1,0 +1,12 @@
+@unittest2.skipIf(inPy3k, 'no truediv in Python 3')
+def test_truediv(self):
+    mock = MagicMock()
+    mock.__truediv__.return_value = 6
+    context = {'mock': mock, }
+    code = 'from __future__ import division\nresult = mock / 7\n'
+    exec code in context
+    self.assertEqual(context['result'], 6)
+    mock.__rtruediv__.return_value = 3
+    code = 'from __future__ import division\nresult = 2 / mock\n'
+    exec code in context
+    self.assertEqual(context['result'], 3)

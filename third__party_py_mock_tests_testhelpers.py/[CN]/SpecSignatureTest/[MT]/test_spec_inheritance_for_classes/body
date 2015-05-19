@@ -1,0 +1,32 @@
+def test_spec_inheritance_for_classes(self):
+
+
+    class Foo(object):
+
+        def a(self):
+            pass
+
+
+        class Bar(object):
+
+            def f(self):
+                pass
+    class_mock = create_autospec(Foo)
+    self.assertIsNot(class_mock, class_mock())
+    for this_mock in (class_mock, class_mock()):
+        this_mock.a()
+        this_mock.a.assert_called_with()
+        self.assertRaises(TypeError, this_mock.a, 'foo')
+        self.assertRaises(AttributeError, getattr, this_mock, 'b')
+    instance_mock = create_autospec(Foo())
+    instance_mock.a()
+    instance_mock.a.assert_called_with()
+    self.assertRaises(TypeError, instance_mock.a, 'foo')
+    self.assertRaises(AttributeError, getattr, instance_mock, 'b')
+    self.assertRaises(TypeError, instance_mock)
+    instance_mock.Bar.f()
+    instance_mock.Bar.f.assert_called_with()
+    self.assertRaises(AttributeError, getattr, instance_mock.Bar, 'g')
+    instance_mock.Bar().f()
+    instance_mock.Bar().f.assert_called_with()
+    self.assertRaises(AttributeError, getattr, instance_mock.Bar(), 'g')

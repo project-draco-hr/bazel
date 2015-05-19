@@ -1,0 +1,17 @@
+def test_call(self):
+    mock = Mock()
+    self.assertTrue(is_instance(mock.return_value, Mock), 'Default return_value should be a Mock')
+    result = mock()
+    self.assertEqual(mock(), result, 'different result from consecutive calls')
+    mock.reset_mock()
+    ret_val = mock(sentinel.Arg)
+    self.assertTrue(mock.called, 'called not set')
+    self.assertEqual(mock.call_count, 1, 'call_count incoreect')
+    self.assertEqual(mock.call_args, ((sentinel.Arg,), {}), 'call_args not set')
+    self.assertEqual(mock.call_args_list, [((sentinel.Arg,), {})], 'call_args_list not initialised correctly')
+    mock.return_value = sentinel.ReturnValue
+    ret_val = mock(sentinel.Arg, key=sentinel.KeyArg)
+    self.assertEqual(ret_val, sentinel.ReturnValue, 'incorrect return value')
+    self.assertEqual(mock.call_count, 2, 'call_count incorrect')
+    self.assertEqual(mock.call_args, ((sentinel.Arg,), {'key': sentinel.KeyArg, }), 'call_args not set')
+    self.assertEqual(mock.call_args_list, [((sentinel.Arg,), {}), ((sentinel.Arg,), {'key': sentinel.KeyArg, })], 'call_args_list not set')

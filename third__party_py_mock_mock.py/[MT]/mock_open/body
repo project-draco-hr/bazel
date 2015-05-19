@@ -1,0 +1,17 @@
+def mock_open(mock=None, read_data=''):
+    '\n    A helper function to create a mock to replace the use of `open`. It works\n    for `open` called directly or used as a context manager.\n\n    The `mock` argument is the mock object to configure. If `None` (the\n    default) then a `MagicMock` will be created for you, with the API limited\n    to methods or attributes available on standard file handles.\n\n    `read_data` is a string for the `read` method of the file handle to return.\n    This is an empty string by default.\n    '
+    global file_spec
+    if (file_spec is None):
+        if inPy3k:
+            import _io
+            file_spec = list(set(dir(_io.TextIOWrapper)).union(set(dir(_io.BytesIO))))
+        else:
+            file_spec = file
+    if (mock is None):
+        mock = MagicMock(name='open', spec=open)
+    handle = MagicMock(spec=file_spec)
+    handle.write.return_value = None
+    handle.__enter__.return_value = handle
+    handle.read.return_value = read_data
+    mock.return_value = handle
+    return mock

@@ -1,0 +1,25 @@
+def test_nested_patch_failure(self):
+    original_f = Foo.f
+    original_g = Foo.g
+
+    @patch.object(Foo, 'g', 1)
+    @patch.object(Foo, 'missing', 1)
+    @patch.object(Foo, 'f', 1)
+    def thing1():
+        pass
+
+    @patch.object(Foo, 'missing', 1)
+    @patch.object(Foo, 'g', 1)
+    @patch.object(Foo, 'f', 1)
+    def thing2():
+        pass
+
+    @patch.object(Foo, 'g', 1)
+    @patch.object(Foo, 'f', 1)
+    @patch.object(Foo, 'missing', 1)
+    def thing3():
+        pass
+    for func in (thing1, thing2, thing3):
+        self.assertRaises(AttributeError, func)
+        self.assertEqual(Foo.f, original_f)
+        self.assertEqual(Foo.g, original_g)

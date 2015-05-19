@@ -1,0 +1,11 @@
+def _get_child_mock(self, **kw):
+    'Create the child mocks for attributes and return value.\n        By default child mocks will be the same type as the parent.\n        Subclasses of Mock may want to override this to customize the way\n        child mocks are made.\n\n        For non-callable mocks the callable variant will be used (rather than\n        any custom subclass).'
+    _type = type(self)
+    if (not issubclass(_type, CallableMixin)):
+        if issubclass(_type, NonCallableMagicMock):
+            klass = MagicMock
+        elif issubclass(_type, NonCallableMock):
+            klass = Mock
+    else:
+        klass = _type.__mro__[1]
+    return klass(**kw)

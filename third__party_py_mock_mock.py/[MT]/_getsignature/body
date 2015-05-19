@@ -1,0 +1,34 @@
+def _getsignature(func, skipfirst, instance=False):
+    if (inspect is None):
+        raise ImportError('inspect module not available')
+    if (isinstance(func, ClassTypes) and (not instance)):
+        try:
+            func = func.__init__
+        except AttributeError:
+            return
+        skipfirst = True
+    elif (not isinstance(func, FunctionTypes)):
+        try:
+            func = func.__call__
+        except AttributeError:
+            return
+    if inPy3k:
+        try:
+            argspec = inspect.getfullargspec(func)
+        except TypeError:
+            return
+        (regargs, varargs, varkw, defaults, kwonly, kwonlydef, ann) = argspec
+    else:
+        try:
+            (regargs, varargs, varkwargs, defaults) = inspect.getargspec(func)
+        except TypeError:
+            return
+    if (getattr(func, self, None) is not None):
+        regargs = regargs[1:]
+    if skipfirst:
+        regargs = regargs[1:]
+    if inPy3k:
+        signature = inspect.formatargspec(regargs, varargs, varkw, defaults, kwonly, kwonlydef, ann, formatvalue=(lambda value: ''))
+    else:
+        signature = inspect.formatargspec(regargs, varargs, varkwargs, defaults, formatvalue=(lambda value: ''))
+    return (signature[1:(-1)], func)

@@ -1,0 +1,15 @@
+def assert_has_calls(self, calls, any_order=False):
+    'assert the mock has been called with the specified calls.\n        The `mock_calls` list is checked for the calls.\n\n        If `any_order` is False (the default) then the calls must be\n        sequential. There can be extra calls before or after the\n        specified calls.\n\n        If `any_order` is True then the calls can be in any order, but\n        they must all appear in `mock_calls`.'
+    if (not any_order):
+        if (calls not in self.mock_calls):
+            raise AssertionError(('Calls not found.\nExpected: %r\nActual: %r' % (calls, self.mock_calls)))
+        return
+    all_calls = list(self.mock_calls)
+    not_found = []
+    for kall in calls:
+        try:
+            all_calls.remove(kall)
+        except ValueError:
+            not_found.append(kall)
+    if not_found:
+        raise AssertionError(('%r not all found in call list' % (tuple(not_found),)))

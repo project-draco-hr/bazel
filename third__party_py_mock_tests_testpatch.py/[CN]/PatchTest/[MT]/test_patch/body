@@ -1,0 +1,27 @@
+def test_patch(self):
+
+    @patch(('%s.something' % __name__), sentinel.Something2)
+    def test():
+        self.assertEqual(PTModule.something, sentinel.Something2, 'unpatched')
+    test()
+    self.assertEqual(PTModule.something, sentinel.Something, 'patch not restored')
+
+    @patch(('%s.something' % __name__), sentinel.Something2)
+    @patch(('%s.something_else' % __name__), sentinel.SomethingElse)
+    def test():
+        self.assertEqual(PTModule.something, sentinel.Something2, 'unpatched')
+        self.assertEqual(PTModule.something_else, sentinel.SomethingElse, 'unpatched')
+    self.assertEqual(PTModule.something, sentinel.Something, 'patch not restored')
+    self.assertEqual(PTModule.something_else, sentinel.SomethingElse, 'patch not restored')
+    test()
+    self.assertEqual(PTModule.something, sentinel.Something, 'patch not restored')
+    self.assertEqual(PTModule.something_else, sentinel.SomethingElse, 'patch not restored')
+    mock = Mock()
+    mock.return_value = sentinel.Handle
+
+    @patch(('%s.open' % builtin_string), mock)
+    def test():
+        self.assertEqual(open('filename', 'r'), sentinel.Handle, 'open not patched')
+    test()
+    test()
+    self.assertNotEqual(open, mock, 'patch not restored')
