@@ -1,0 +1,15 @@
+def map(self, fn, *iterables, **kwargs):
+    'Returns a iterator equivalent to map(fn, iter).\n\n        Args:\n            fn: A callable that will take take as many arguments as there are\n                passed iterables.\n            timeout: The maximum number of seconds to wait. If None, then there\n                is no limit on the wait time.\n\n        Returns:\n            An iterator equivalent to: map(func, *iterables) but the calls may\n            be evaluated out-of-order.\n\n        Raises:\n            TimeoutError: If the entire result iterator could not be generated\n                before the given timeout.\n            Exception: If fn(*args) raises for any values.\n        '
+    timeout = kwargs.get('timeout')
+    if (timeout is not None):
+        end_time = (timeout + time.time())
+    fs = [self.submit(fn, *args) for args in zip(*iterables)]
+    try:
+        for future in fs:
+            if (timeout is None):
+                yield future.result()
+            else:
+                yield future.result((end_time - time.time()))
+    finally:
+        for future in fs:
+            future.cancel()

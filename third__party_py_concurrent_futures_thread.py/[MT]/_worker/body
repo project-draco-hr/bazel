@@ -1,0 +1,14 @@
+def _worker(executor_reference, work_queue):
+    try:
+        while True:
+            try:
+                work_item = work_queue.get(block=True, timeout=0.1)
+            except queue.Empty:
+                executor = executor_reference()
+                if (_shutdown or (executor is None) or executor._shutdown):
+                    return
+                del executor
+            else:
+                work_item.run()
+    except BaseException:
+        _base.LOGGER.critical('Exception in worker', exc_info=True)

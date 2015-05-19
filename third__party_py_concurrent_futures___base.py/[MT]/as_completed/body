@@ -1,0 +1,29 @@
+def as_completed(fs, timeout=None):
+    'An iterator over the given futures that yields each as it completes.\n\n    Args:\n        fs: The sequence of Futures (possibly created by different Executors) to\n            iterate over.\n        timeout: The maximum number of seconds to wait. If None, then there\n            is no limit on the wait time.\n\n    Returns:\n        An iterator that yields the given Futures as they complete (finished or\n        cancelled).\n\n    Raises:\n        TimeoutError: If the entire result iterator could not be generated\n            before the given timeout.\n    '
+    if (timeout is not None):
+        end_time = (timeout + time.time())
+    with _AcquireFutures(fs):
+        finished = set((f for f in fs if (f._state in [CANCELLED_AND_NOTIFIED, FINISHED])))
+        pending = (set(fs) - finished)
+        waiter = _create_and_install_waiters(fs, _AS_COMPLETED)
+    try:
+        for future in finished:
+            yield future
+        while pending:
+            if (timeout is None):
+                wait_timeout = None
+            else:
+                wait_timeout = (end_time - time.time())
+                if (wait_timeout < 0):
+                    raise TimeoutError(('%d (of %d) futures unfinished' % (len(pending), len(fs))))
+            waiter.event.wait(wait_timeout)
+            with waiter.lock:
+                finished = waiter.finished_futures
+                waiter.finished_futures = []
+                waiter.event.clear()
+            for future in finished:
+                yield future
+                pending.remove(future)
+    finally:
+        for f in fs:
+            f._waiters.remove(waiter)

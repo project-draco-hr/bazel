@@ -1,0 +1,17 @@
+def __init__(self, max_workers=None):
+    'Initializes a new ProcessPoolExecutor instance.\n\n        Args:\n            max_workers: The maximum number of processes that can be used to\n                execute the given calls. If None or not given then as many\n                worker processes will be created as the machine has processors.\n        '
+    _remove_dead_thread_references()
+    if (max_workers is None):
+        self._max_workers = multiprocessing.cpu_count()
+    else:
+        self._max_workers = max_workers
+    self._call_queue = multiprocessing.Queue((self._max_workers + EXTRA_QUEUED_CALLS))
+    self._result_queue = multiprocessing.Queue()
+    self._work_ids = queue.Queue()
+    self._queue_management_thread = None
+    self._processes = set()
+    self._shutdown_thread = False
+    self._shutdown_process_event = multiprocessing.Event()
+    self._shutdown_lock = threading.Lock()
+    self._queue_count = 0
+    self._pending_work_items = {}

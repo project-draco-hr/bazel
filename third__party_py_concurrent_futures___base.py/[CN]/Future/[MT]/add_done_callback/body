@@ -1,0 +1,7 @@
+def add_done_callback(self, fn):
+    'Attaches a callable that will be called when the future finishes.\n\n        Args:\n            fn: A callable that will be called with this future as its only\n                argument when the future completes or is cancelled. The callable\n                will always be called by a thread in the same process in which\n                it was added. If the future has already completed or been\n                cancelled then the callable will be called immediately. These\n                callables are called in the order that they were added.\n        '
+    with self._condition:
+        if (self._state not in [CANCELLED, CANCELLED_AND_NOTIFIED, FINISHED]):
+            self._done_callbacks.append(fn)
+            return
+    fn(self)

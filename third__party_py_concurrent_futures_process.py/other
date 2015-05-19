@@ -1,0 +1,17 @@
+'Implements ProcessPoolExecutor.\n\nThe follow diagram and text describe the data-flow through the system:\n\n|======================= In-process =====================|== Out-of-process ==|\n\n+----------+     +----------+       +--------+     +-----------+    +---------+\n|          |  => | Work Ids |    => |        |  => | Call Q    | => |         |\n|          |     +----------+       |        |     +-----------+    |         |\n|          |     | ...      |       |        |     | ...       |    |         |\n|          |     | 6        |       |        |     | 5, call() |    |         |\n|          |     | 7        |       |        |     | ...       |    |         |\n| Process  |     | ...      |       | Local  |     +-----------+    | Process |\n|  Pool    |     +----------+       | Worker |                      |  #1..n  |\n| Executor |                        | Thread |                      |         |\n|          |     +----------- +     |        |     +-----------+    |         |\n|          | <=> | Work Items | <=> |        | <=  | Result Q  | <= |         |\n|          |     +------------+     |        |     +-----------+    |         |\n|          |     | 6: call()  |     |        |     | ...       |    |         |\n|          |     |    future  |     |        |     | 4, result |    |         |\n|          |     | ...        |     |        |     | 3, except |    |         |\n+----------+     +------------+     +--------+     +-----------+    +---------+\n\nExecutor.submit() called:\n- creates a uniquely numbered _WorkItem and adds it to the "Work Items" dict\n- adds the id of the _WorkItem to the "Work Ids" queue\n\nLocal worker thread:\n- reads work ids from the "Work Ids" queue and looks up the corresponding\n  WorkItem from the "Work Items" dict: if the work item has been cancelled then\n  it is simply removed from the dict, otherwise it is repackaged as a\n  _CallItem and put in the "Call Q". New _CallItems are put in the "Call Q"\n  until "Call Q" is full. NOTE: the size of the "Call Q" is kept small because\n  calls placed in the "Call Q" can no longer be cancelled with Future.cancel().\n- reads _ResultItems from "Result Q", updates the future stored in the\n  "Work Items" dict and deletes the dict entry\n\nProcess #1..n:\n- reads _CallItems from "Call Q", executes the calls, and puts the resulting\n  _ResultItems in "Request Q"\n'
+from __future__ import with_statement
+import atexit
+import multiprocessing
+import threading
+import weakref
+import sys
+from concurrent.futures import _base
+try:
+    import queue
+except ImportError:
+    import Queue as queue
+__author__ = 'Brian Quinlan (brian@sweetapp.com)'
+_thread_references = set()
+_shutdown = False
+EXTRA_QUEUED_CALLS = 1
+atexit.register(_python_exit)

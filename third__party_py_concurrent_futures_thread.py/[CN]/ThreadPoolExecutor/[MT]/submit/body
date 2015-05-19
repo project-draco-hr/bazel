@@ -1,0 +1,9 @@
+def submit(self, fn, *args, **kwargs):
+    with self._shutdown_lock:
+        if self._shutdown:
+            raise RuntimeError('cannot schedule new futures after shutdown')
+        f = _base.Future()
+        w = _WorkItem(f, fn, args, kwargs)
+        self._work_queue.put(w)
+        self._adjust_thread_count()
+        return f

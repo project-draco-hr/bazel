@@ -1,0 +1,16 @@
+def _process_worker(call_queue, result_queue, shutdown):
+    'Evaluates calls from call_queue and places the results in result_queue.\n\n    This worker is run in a seperate process.\n\n    Args:\n        call_queue: A multiprocessing.Queue of _CallItems that will be read and\n            evaluated by the worker.\n        result_queue: A multiprocessing.Queue of _ResultItems that will written\n            to by the worker.\n        shutdown: A multiprocessing.Event that will be set as a signal to the\n            worker that it should exit when call_queue is empty.\n    '
+    while True:
+        try:
+            call_item = call_queue.get(block=True, timeout=0.1)
+        except queue.Empty:
+            if shutdown.is_set():
+                return
+        else:
+            try:
+                r = call_item.fn(*call_item.args, **call_item.kwargs)
+            except BaseException:
+                e = sys.exc_info()[1]
+                result_queue.put(_ResultItem(call_item.work_id, exception=e))
+            else:
+                result_queue.put(_ResultItem(call_item.work_id, result=r))

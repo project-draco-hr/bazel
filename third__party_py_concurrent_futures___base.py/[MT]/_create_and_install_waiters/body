@@ -1,0 +1,16 @@
+def _create_and_install_waiters(fs, return_when):
+    if (return_when == _AS_COMPLETED):
+        waiter = _AsCompletedWaiter()
+    elif (return_when == FIRST_COMPLETED):
+        waiter = _FirstCompletedWaiter()
+    else:
+        pending_count = sum(((f._state not in [CANCELLED_AND_NOTIFIED, FINISHED]) for f in fs))
+        if (return_when == FIRST_EXCEPTION):
+            waiter = _AllCompletedWaiter(pending_count, stop_on_exception=True)
+        elif (return_when == ALL_COMPLETED):
+            waiter = _AllCompletedWaiter(pending_count, stop_on_exception=False)
+        else:
+            raise ValueError(('Invalid return condition: %r' % return_when))
+    for f in fs:
+        f._waiters.append(waiter)
+    return waiter

@@ -1,0 +1,11 @@
+def shutdown(self, wait=True):
+    with self._shutdown_lock:
+        self._shutdown_thread = True
+    if wait:
+        if self._queue_management_thread:
+            self._queue_management_thread.join()
+    self._queue_management_thread = None
+    self._call_queue = None
+    self._result_queue = None
+    self._shutdown_process_event = None
+    self._processes = None

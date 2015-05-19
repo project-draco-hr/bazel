@@ -1,0 +1,11 @@
+def cancel(self):
+    'Cancel the future if possible.\n\n        Returns True if the future was cancelled, False otherwise. A future\n        cannot be cancelled if it is running or has already completed.\n        '
+    with self._condition:
+        if (self._state in [RUNNING, FINISHED]):
+            return False
+        if (self._state in [CANCELLED, CANCELLED_AND_NOTIFIED]):
+            return True
+        self._state = CANCELLED
+        self._condition.notify_all()
+    self._invoke_callbacks()
+    return True

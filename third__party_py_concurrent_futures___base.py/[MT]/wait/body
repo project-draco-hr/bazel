@@ -1,0 +1,18 @@
+def wait(fs, timeout=None, return_when=ALL_COMPLETED):
+    "Wait for the futures in the given sequence to complete.\n\n    Args:\n        fs: The sequence of Futures (possibly created by different Executors) to\n            wait upon.\n        timeout: The maximum number of seconds to wait. If None, then there\n            is no limit on the wait time.\n        return_when: Indicates when this function should return. The options\n            are:\n\n            FIRST_COMPLETED - Return when any future finishes or is\n                              cancelled.\n            FIRST_EXCEPTION - Return when any future finishes by raising an\n                              exception. If no future raises an exception\n                              then it is equivalent to ALL_COMPLETED.\n            ALL_COMPLETED -   Return when all futures finish or are cancelled.\n\n    Returns:\n        A named 2-tuple of sets. The first set, named 'done', contains the\n        futures that completed (is finished or cancelled) before the wait\n        completed. The second set, named 'not_done', contains uncompleted\n        futures.\n    "
+    with _AcquireFutures(fs):
+        done = set((f for f in fs if (f._state in [CANCELLED_AND_NOTIFIED, FINISHED])))
+        not_done = (set(fs) - done)
+        if ((return_when == FIRST_COMPLETED) and done):
+            return DoneAndNotDoneFutures(done, not_done)
+        elif ((return_when == FIRST_EXCEPTION) and done):
+            if any((f for f in done if ((not f.cancelled()) and (f.exception() is not None)))):
+                return DoneAndNotDoneFutures(done, not_done)
+        if (len(done) == len(fs)):
+            return DoneAndNotDoneFutures(done, not_done)
+        waiter = _create_and_install_waiters(fs, return_when)
+    waiter.event.wait(timeout)
+    for f in fs:
+        f._waiters.remove(waiter)
+    done.update(waiter.finished_futures)
+    return DoneAndNotDoneFutures(done, (set(fs) - done))

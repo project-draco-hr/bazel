@@ -1,0 +1,14 @@
+def result(self, timeout=None):
+    "Return the result of the call that the future represents.\n\n        Args:\n            timeout: The number of seconds to wait for the result if the future\n                isn't done. If None, then there is no limit on the wait time.\n\n        Returns:\n            The result of the call that the future represents.\n\n        Raises:\n            CancelledError: If the future was cancelled.\n            TimeoutError: If the future didn't finish executing before the given\n                timeout.\n            Exception: If the call raised then that exception will be raised.\n        "
+    with self._condition:
+        if (self._state in [CANCELLED, CANCELLED_AND_NOTIFIED]):
+            raise CancelledError()
+        elif (self._state == FINISHED):
+            return self.__get_result()
+        self._condition.wait(timeout)
+        if (self._state in [CANCELLED, CANCELLED_AND_NOTIFIED]):
+            raise CancelledError()
+        elif (self._state == FINISHED):
+            return self.__get_result()
+        else:
+            raise TimeoutError()

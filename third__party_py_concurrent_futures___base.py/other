@@ -1,0 +1,25 @@
+from __future__ import with_statement
+import functools
+import logging
+import threading
+import time
+try:
+    from collections import namedtuple
+except ImportError:
+    from concurrent.futures._compat import namedtuple
+__author__ = 'Brian Quinlan (brian@sweetapp.com)'
+FIRST_COMPLETED = 'FIRST_COMPLETED'
+FIRST_EXCEPTION = 'FIRST_EXCEPTION'
+ALL_COMPLETED = 'ALL_COMPLETED'
+_AS_COMPLETED = '_AS_COMPLETED'
+PENDING = 'PENDING'
+RUNNING = 'RUNNING'
+CANCELLED = 'CANCELLED'
+CANCELLED_AND_NOTIFIED = 'CANCELLED_AND_NOTIFIED'
+FINISHED = 'FINISHED'
+_FUTURE_STATES = [PENDING, RUNNING, CANCELLED, CANCELLED_AND_NOTIFIED, FINISHED]
+_STATE_TO_DESCRIPTION_MAP = {PENDING: 'pending', RUNNING: 'running', CANCELLED: 'cancelled', CANCELLED_AND_NOTIFIED: 'cancelled', FINISHED: 'finished', }
+LOGGER = logging.getLogger('concurrent.futures')
+STDERR_HANDLER = logging.StreamHandler()
+LOGGER.addHandler(STDERR_HANDLER)
+DoneAndNotDoneFutures = namedtuple('DoneAndNotDoneFutures', 'done not_done')
