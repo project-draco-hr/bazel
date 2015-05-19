@@ -1,7 +1,9 @@
 {
-  RootedPath rootedPath=(RootedPath)skyKey.argument();
+  RecursivePkgKey recursivePkgKey=(RecursivePkgKey)skyKey.argument();
+  RootedPath rootedPath=recursivePkgKey.getRootedPath();
   Path root=rootedPath.getRoot();
   PathFragment rootRelativePath=rootedPath.getRelativePath();
+  Set<PathFragment> excludedPaths=recursivePkgKey.getExcludedPaths();
   SkyKey fileKey=FileValue.key(rootedPath);
   FileValue fileValue=(FileValue)env.getValue(fileKey);
   if (fileValue == null) {
@@ -49,7 +51,17 @@
     if (rootRelativePath.equals(PathFragment.EMPTY_FRAGMENT) && PathPackageLocator.DEFAULT_TOP_LEVEL_EXCLUDES.contains(basename)) {
       continue;
     }
-    SkyKey req=RecursivePkgValue.key(RootedPath.toRootedPath(root,rootRelativePath.getRelative(basename)));
+    PathFragment subdirectory=rootRelativePath.getRelative(basename);
+    if (excludedPaths.contains(subdirectory)) {
+      continue;
+    }
+    ImmutableSet.Builder<PathFragment> excludedSubdirectoriesBeneathThisSubdirectory=ImmutableSet.builder();
+    for (    PathFragment excludedPath : excludedPaths) {
+      if (excludedPath.startsWith(subdirectory)) {
+        excludedSubdirectoriesBeneathThisSubdirectory.add(excludedPath);
+      }
+    }
+    SkyKey req=RecursivePkgValue.key(RootedPath.toRootedPath(root,subdirectory),excludedSubdirectoriesBeneathThisSubdirectory.build());
     childDeps.add(req);
   }
   Map<SkyKey,SkyValue> childValueMap=env.getValues(childDeps);
