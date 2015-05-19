@@ -1,0 +1,13 @@
+def __call__(mcs, *args, **kwargs):
+    'Returns an instance of the argument parser cls.\n\n    This method overrides behavior of the __new__ methods in\n    all subclasses of ArgumentParser (inclusive). If an instance\n    for mcs with the same set of arguments exists, this instance is\n    returned, otherwise a new instance is created.\n\n    If any keyword arguments are defined, or the values in args\n    are not hashable, this method always returns a new instance of\n    cls.\n\n    Args:\n      args: Positional initializer arguments.\n      kwargs: Initializer keyword arguments.\n\n    Returns:\n      An instance of cls, shared or new.\n    '
+    if kwargs:
+        return type.__call__(mcs, *args, **kwargs)
+    else:
+        instances = mcs._instances
+        key = ((mcs,) + tuple(args))
+        try:
+            return instances[key]
+        except KeyError:
+            return instances.setdefault(key, type.__call__(mcs, *args))
+        except TypeError:
+            return type.__call__(mcs, *args)

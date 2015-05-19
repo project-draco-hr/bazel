@@ -1,0 +1,14 @@
+def test_unrecognized_nonglobal_flags(self):
+    'Test unrecognized non-global flags'
+    nonglobal_flags = gflags.FlagValues()
+    argv = ('./program', '--nosuchflag')
+    try:
+        argv = nonglobal_flags(argv)
+        raise AssertionError('Unknown flag exception not raised')
+    except gflags.UnrecognizedFlag as e:
+        assert (e.flagname == 'nosuchflag')
+        pass
+    argv = ('./program', '--nosuchflag', '--undefok=nosuchflag')
+    argv = nonglobal_flags(argv)
+    assert (len(argv) == 1), 'wrong number of arguments pulled'
+    assert (argv[0] == './program'), 'program name not preserved'

@@ -1,0 +1,11 @@
+def __delattr__(self, flag_name):
+    "Deletes a previously-defined flag from a flag object.\n\n    This method makes sure we can delete a flag by using\n\n      del flag_values_object.<flag_name>\n\n    E.g.,\n\n      gflags.DEFINE_integer('foo', 1, 'Integer flag.')\n      del gflags.FLAGS.foo\n\n    Args:\n      flag_name: A string, the name of the flag to be deleted.\n\n    Raises:\n      AttributeError: When there is no registered flag named flag_name.\n    "
+    fl = self.FlagDict()
+    if (flag_name not in fl):
+        raise AttributeError(flag_name)
+    flag_obj = fl[flag_name]
+    del fl[flag_name]
+    if (not self._FlagIsRegistered(flag_obj)):
+        self.__RemoveFlagFromDictByModule(self.FlagsByModuleDict(), flag_obj)
+        self.__RemoveFlagFromDictByModule(self.FlagsByModuleIdDict(), flag_obj)
+        self.__RemoveFlagFromDictByModule(self.KeyFlagsByModuleDict(), flag_obj)

@@ -1,0 +1,21 @@
+def testKeyFlagsWithNonDefaultFlagValuesObject(self):
+    fv = gflags.FlagValues()
+    self.assertListEqual(self._GetNamesOfKeyFlags(module_bar, fv), [])
+    self.assertListEqual(self._GetNamesOfDefinedFlags(module_bar, fv), [])
+    module_bar.DefineFlags(flag_values=fv)
+    self._AssertListsHaveSameElements(fv._GetFlagsDefinedByModule(module_bar), fv._GetKeyFlagsForModule(module_bar))
+    self._AssertListsHaveSameElements(self._GetNamesOfDefinedFlags(module_bar, fv), module_bar.NamesOfDefinedFlags())
+    main_module = gflags._GetMainModule()
+    names_of_flags_defined_by_bar = module_bar.NamesOfDefinedFlags()
+    flag_name_0 = names_of_flags_defined_by_bar[0]
+    flag_name_2 = names_of_flags_defined_by_bar[2]
+    gflags.DECLARE_key_flag(flag_name_0, flag_values=fv)
+    self._AssertListsHaveSameElements(self._GetNamesOfKeyFlags(main_module, fv), [flag_name_0])
+    gflags.DECLARE_key_flag(flag_name_2, flag_values=fv)
+    self._AssertListsHaveSameElements(self._GetNamesOfKeyFlags(main_module, fv), [flag_name_0, flag_name_2])
+    gflags.DECLARE_key_flag('undefok', flag_values=fv)
+    self._AssertListsHaveSameElements(self._GetNamesOfKeyFlags(main_module, fv), [flag_name_0, flag_name_2, 'undefok'])
+    gflags.ADOPT_module_key_flags(module_bar, fv)
+    self._AssertListsHaveSameElements(self._GetNamesOfKeyFlags(main_module, fv), (names_of_flags_defined_by_bar + ['undefok']))
+    gflags.ADOPT_module_key_flags(gflags, flag_values=fv)
+    self._AssertListsHaveSameElements(self._GetNamesOfKeyFlags(main_module, fv), (names_of_flags_defined_by_bar + ['flagfile', 'undefok']))

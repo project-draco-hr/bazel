@@ -1,0 +1,30 @@
+def __RenderFlagList(self, flaglist, output_lines, prefix='  '):
+    fl = self.FlagDict()
+    special_fl = _SPECIAL_FLAGS.FlagDict()
+    flaglist = [(flag.name, flag) for flag in flaglist]
+    flaglist.sort()
+    flagset = {}
+    for (name, flag) in flaglist:
+        if ((fl.get(name, None) != flag) and (special_fl.get(name, None) != flag)):
+            continue
+        if (flag in flagset):
+            continue
+        flagset[flag] = 1
+        flaghelp = ''
+        if flag.short_name:
+            flaghelp += ('-%s,' % flag.short_name)
+        if flag.boolean:
+            flaghelp += (('--[no]%s' % flag.name) + ':')
+        else:
+            flaghelp += (('--%s' % flag.name) + ':')
+        flaghelp += '  '
+        if flag.help:
+            flaghelp += flag.help
+        flaghelp = TextWrap(flaghelp, indent=(prefix + '  '), firstline_indent=prefix)
+        if flag.default_as_str:
+            flaghelp += '\n'
+            flaghelp += TextWrap(('(default: %s)' % flag.default_as_str), indent=(prefix + '  '))
+        if flag.parser.syntactic_help:
+            flaghelp += '\n'
+            flaghelp += TextWrap(('(%s)' % flag.parser.syntactic_help), indent=(prefix + '  '))
+        output_lines.append(flaghelp)

@@ -1,0 +1,410 @@
+def test_flags(self):
+    number_test_framework_flags = len(FLAGS.RegisteredFlags())
+    repeatHelp = 'how many times to repeat (0-5)'
+    gflags.DEFINE_integer('repeat', 4, repeatHelp, lower_bound=0, short_name='r')
+    gflags.DEFINE_string('name', 'Bob', 'namehelp')
+    gflags.DEFINE_boolean('debug', 0, 'debughelp')
+    gflags.DEFINE_boolean('q', 1, 'quiet mode')
+    gflags.DEFINE_boolean('quack', 0, "superstring of 'q'")
+    gflags.DEFINE_boolean('noexec', 1, 'boolean flag with no as prefix')
+    gflags.DEFINE_integer('x', 3, 'how eXtreme to be')
+    gflags.DEFINE_integer('l', 9223372032559808512, 'how long to be')
+    gflags.DEFINE_list('letters', 'a,b,c', 'a list of letters')
+    gflags.DEFINE_list('numbers', [1, 2, 3], 'a list of numbers')
+    gflags.DEFINE_enum('kwery', None, ['who', 'what', 'why', 'where', 'when'], '?')
+    number_defined_flags = (11 + 1)
+    self.assertEqual(len(FLAGS.RegisteredFlags()), (number_defined_flags + number_test_framework_flags))
+    assert (FLAGS.repeat == 4), ('integer default values not set:' + FLAGS.repeat)
+    assert (FLAGS.name == 'Bob'), ('default values not set:' + FLAGS.name)
+    assert (FLAGS.debug == 0), ('boolean default values not set:' + FLAGS.debug)
+    assert (FLAGS.q == 1), ('boolean default values not set:' + FLAGS.q)
+    assert (FLAGS.x == 3), ('integer default values not set:' + FLAGS.x)
+    assert (FLAGS.l == 9223372032559808512), ('integer default values not set:' + FLAGS.l)
+    assert (FLAGS.letters == ['a', 'b', 'c']), ('list default values not set:' + FLAGS.letters)
+    assert (FLAGS.numbers == [1, 2, 3]), ('list default values not set:' + FLAGS.numbers)
+    assert (FLAGS.kwery is None), ('enum default None value not set:' + FLAGS.kwery)
+    flag_values = FLAGS.FlagValuesDict()
+    assert (flag_values['repeat'] == 4)
+    assert (flag_values['name'] == 'Bob')
+    assert (flag_values['debug'] == 0)
+    assert (flag_values['r'] == 4)
+    assert (flag_values['q'] == 1)
+    assert (flag_values['quack'] == 0)
+    assert (flag_values['x'] == 3)
+    assert (flag_values['l'] == 9223372032559808512)
+    assert (flag_values['letters'] == ['a', 'b', 'c'])
+    assert (flag_values['numbers'] == [1, 2, 3])
+    assert (flag_values['kwery'] is None)
+    assert (FLAGS['repeat'].default_as_str == "'4'")
+    assert (FLAGS['name'].default_as_str == "'Bob'")
+    assert (FLAGS['debug'].default_as_str == "'false'")
+    assert (FLAGS['q'].default_as_str == "'true'")
+    assert (FLAGS['quack'].default_as_str == "'false'")
+    assert (FLAGS['noexec'].default_as_str == "'true'")
+    assert (FLAGS['x'].default_as_str == "'3'")
+    assert (FLAGS['l'].default_as_str == "'9223372032559808512'")
+    assert (FLAGS['letters'].default_as_str == "'a,b,c'")
+    assert (FLAGS['numbers'].default_as_str == "'1,2,3'")
+    keys = list(FLAGS)
+    keys.sort()
+    reg_flags = FLAGS.RegisteredFlags()
+    reg_flags.sort()
+    self.assertEqual(keys, reg_flags)
+    argv = ('./program',)
+    argv = FLAGS(argv)
+    assert (len(argv) == 1), 'wrong number of arguments pulled'
+    assert (argv[0] == './program'), 'program name not preserved'
+    argv = ('./program', '--debug', '--name=Bob', '-q', '--x=8')
+    argv = FLAGS(argv)
+    assert (len(argv) == 1), 'wrong number of arguments pulled'
+    assert (argv[0] == './program'), 'program name not preserved'
+    assert (FLAGS['debug'].present == 1)
+    FLAGS['debug'].present = 0
+    assert (FLAGS['name'].present == 1)
+    FLAGS['name'].present = 0
+    assert (FLAGS['q'].present == 1)
+    FLAGS['q'].present = 0
+    assert (FLAGS['x'].present == 1)
+    FLAGS['x'].present = 0
+    self.assertEqual(len(FLAGS.RegisteredFlags()), (number_defined_flags + number_test_framework_flags))
+    assert ('name' in FLAGS.RegisteredFlags())
+    assert ('debug' in FLAGS.RegisteredFlags())
+    assert ('repeat' in FLAGS.RegisteredFlags())
+    assert ('r' in FLAGS.RegisteredFlags())
+    assert ('q' in FLAGS.RegisteredFlags())
+    assert ('quack' in FLAGS.RegisteredFlags())
+    assert ('x' in FLAGS.RegisteredFlags())
+    assert ('l' in FLAGS.RegisteredFlags())
+    assert ('letters' in FLAGS.RegisteredFlags())
+    assert ('numbers' in FLAGS.RegisteredFlags())
+    assert FLAGS.has_key('name')
+    assert (not FLAGS.has_key('name2'))
+    assert ('name' in FLAGS)
+    assert ('name2' not in FLAGS)
+    del FLAGS.r
+    self.assertEqual(len(FLAGS.RegisteredFlags()), ((number_defined_flags - 1) + number_test_framework_flags))
+    assert (not ('r' in FLAGS.RegisteredFlags()))
+    argv = ('./program', '--debug', '--name=Bob', 'extra')
+    argv = FLAGS(argv)
+    assert (len(argv) == 2), 'wrong number of arguments pulled'
+    assert (argv[0] == './program'), 'program name not preserved'
+    assert (argv[1] == 'extra'), 'extra argument not preserved'
+    assert (FLAGS['debug'].present == 1)
+    FLAGS['debug'].present = 0
+    assert (FLAGS['name'].present == 1)
+    FLAGS['name'].present = 0
+    argv = ('./program', '--debug')
+    argv = FLAGS(argv)
+    assert (len(argv) == 1), 'wrong number of arguments pulled'
+    assert (argv[0] == './program'), 'program name not preserved'
+    assert (FLAGS['debug'].present == 1)
+    assert FLAGS['debug'].value
+    FLAGS.Reset()
+    assert (FLAGS['debug'].present == 0)
+    assert (not FLAGS['debug'].value)
+    argv = ('./program', '--kwery=who')
+    argv = FLAGS(argv)
+    assert (len(argv) == 1), 'wrong number of arguments pulled'
+    assert (argv[0] == './program'), 'program name not preserved'
+    assert (FLAGS['kwery'].present == 1)
+    assert (FLAGS['kwery'].value == 'who')
+    FLAGS.Reset()
+    assert (FLAGS['kwery'].present == 0)
+    assert (FLAGS['kwery'].value == None)
+    argv = ('./program', '--x', '0x12345')
+    argv = FLAGS(argv)
+    self.assertEquals(FLAGS.x, 74565)
+    self.assertEquals(type(FLAGS.x), int)
+    argv = ('./program', '--x', '0x1234567890ABCDEF1234567890ABCDEF')
+    argv = FLAGS(argv)
+    self.assertEquals(FLAGS.x, 24197857200151252728969465429440056815L)
+    self.assertEquals(type(FLAGS.x), long)
+    argv = ('./program', '--x', '012345')
+    argv = FLAGS(argv)
+    self.assertEquals(FLAGS.x, 12345)
+    self.assertEquals(type(FLAGS.x), int)
+    argv = ('./program', '--x', '0123459')
+    argv = FLAGS(argv)
+    self.assertEquals(FLAGS.x, 123459)
+    self.assertEquals(type(FLAGS.x), int)
+    argv = ('./program', '--x', '0x123efg')
+    try:
+        argv = FLAGS(argv)
+        raise AssertionError('failed to detect invalid hex argument')
+    except gflags.IllegalFlagValue:
+        pass
+    gflags.DEFINE_boolean('test0', None, 'test boolean parsing')
+    argv = ('./program', '--notest0')
+    argv = FLAGS(argv)
+    assert (FLAGS.test0 == 0)
+    gflags.DEFINE_boolean('test1', None, 'test boolean parsing')
+    argv = ('./program', '--test1')
+    argv = FLAGS(argv)
+    assert (FLAGS.test1 == 1)
+    FLAGS.test0 = None
+    argv = ('./program', '--test0=false')
+    argv = FLAGS(argv)
+    assert (FLAGS.test0 == 0)
+    FLAGS.test1 = None
+    argv = ('./program', '--test1=true')
+    argv = FLAGS(argv)
+    assert (FLAGS.test1 == 1)
+    FLAGS.test0 = None
+    argv = ('./program', '--test0=0')
+    argv = FLAGS(argv)
+    assert (FLAGS.test0 == 0)
+    FLAGS.test1 = None
+    argv = ('./program', '--test1=1')
+    argv = FLAGS(argv)
+    assert (FLAGS.test1 == 1)
+    FLAGS.noexec = None
+    argv = ('./program', '--nonoexec', '--name', 'Bob')
+    argv = FLAGS(argv)
+    assert (FLAGS.noexec == 0)
+    FLAGS.noexec = None
+    argv = ('./program', '--name', 'Bob', '--noexec')
+    argv = FLAGS(argv)
+    assert (FLAGS.noexec == 1)
+    gflags.DEFINE_boolean('testnone', None, 'test boolean parsing')
+    argv = ('./program',)
+    argv = FLAGS(argv)
+    assert (FLAGS.testnone == None)
+    gflags.DEFINE_boolean('testget1', None, 'test parsing with defaults')
+    gflags.DEFINE_boolean('testget2', None, 'test parsing with defaults')
+    gflags.DEFINE_boolean('testget3', None, 'test parsing with defaults')
+    gflags.DEFINE_integer('testget4', None, 'test parsing with defaults')
+    argv = ('./program', '--testget1', '--notestget2')
+    argv = FLAGS(argv)
+    assert (FLAGS.get('testget1', 'foo') == 1)
+    assert (FLAGS.get('testget2', 'foo') == 0)
+    assert (FLAGS.get('testget3', 'foo') == 'foo')
+    assert (FLAGS.get('testget4', 'foo') == 'foo')
+    lists = [['hello', 'moo', 'boo', '1'], []]
+    gflags.DEFINE_list('testlist', '', 'test lists parsing')
+    gflags.DEFINE_spaceseplist('testspacelist', '', 'tests space lists parsing')
+    for (name, sep) in (('testlist', ','), ('testspacelist', ' '), ('testspacelist', '\n')):
+        for lst in lists:
+            argv = ('./program', ('--%s=%s' % (name, sep.join(lst))))
+            argv = FLAGS(argv)
+            self.assertEquals(getattr(FLAGS, name), lst)
+    flagsHelp = str(FLAGS)
+    assert (flagsHelp.find('repeat') != (-1)), 'cannot find flag in help'
+    assert (flagsHelp.find(repeatHelp) != (-1)), 'cannot find help string in help'
+    argv = ('./program', '--repeat=4', '--repeat=2', '--debug', '--nodebug')
+    argv = FLAGS(argv)
+    self.assertEqual(FLAGS.get('repeat', None), 2)
+    self.assertEqual(FLAGS.get('debug', None), 0)
+    gflags.DEFINE_multistring('s_str', 'sing1', 'string option that can occur multiple times', short_name='s')
+    self.assertEqual(FLAGS.get('s_str', None), ['sing1'])
+    multi_string_defs = ['def1', 'def2']
+    gflags.DEFINE_multistring('m_str', multi_string_defs, 'string option that can occur multiple times', short_name='m')
+    self.assertEqual(FLAGS.get('m_str', None), multi_string_defs)
+    argv = ('./program', '--m_str=str1', '-m', 'str2')
+    argv = FLAGS(argv)
+    self.assertEqual(FLAGS.get('m_str', None), ['str1', 'str2'])
+    argv = ('./program', '-q', '-x8')
+    argv = FLAGS(argv)
+    self.assertEqual(FLAGS.get('q', None), 1)
+    self.assertEqual(FLAGS.get('x', None), 8)
+    argv = ('./program', '--q', '--x', '9', '--noqu')
+    argv = FLAGS(argv)
+    self.assertEqual(FLAGS.get('q', None), 1)
+    self.assertEqual(FLAGS.get('x', None), 9)
+    self.assertEqual(FLAGS.get('quack', None), 0)
+    argv = ('./program', '--noq', '--x=10', '--qu')
+    argv = FLAGS(argv)
+    self.assertEqual(FLAGS.get('q', None), 0)
+    self.assertEqual(FLAGS.get('x', None), 10)
+    self.assertEqual(FLAGS.get('quack', None), 1)
+    oldtestlist = FLAGS.testlist
+    oldtestspacelist = FLAGS.testspacelist
+    argv = ('./program', FLAGS['test0'].Serialize(), FLAGS['test1'].Serialize(), FLAGS['testnone'].Serialize(), FLAGS['s_str'].Serialize())
+    argv = FLAGS(argv)
+    self.assertEqual(FLAGS['test0'].Serialize(), '--notest0')
+    self.assertEqual(FLAGS['test1'].Serialize(), '--test1')
+    self.assertEqual(FLAGS['testnone'].Serialize(), '')
+    self.assertEqual(FLAGS['s_str'].Serialize(), '--s_str=sing1')
+    testlist1 = ['aa', 'bb']
+    testspacelist1 = ['aa', 'bb', 'cc']
+    FLAGS.testlist = list(testlist1)
+    FLAGS.testspacelist = list(testspacelist1)
+    argv = ('./program', FLAGS['testlist'].Serialize(), FLAGS['testspacelist'].Serialize())
+    argv = FLAGS(argv)
+    self.assertEqual(FLAGS.testlist, testlist1)
+    self.assertEqual(FLAGS.testspacelist, testspacelist1)
+    testlist1 = ['aa some spaces', 'bb']
+    testspacelist1 = ['aa', 'bb,some,commas,', 'cc']
+    FLAGS.testlist = list(testlist1)
+    FLAGS.testspacelist = list(testspacelist1)
+    argv = ('./program', FLAGS['testlist'].Serialize(), FLAGS['testspacelist'].Serialize())
+    argv = FLAGS(argv)
+    self.assertEqual(FLAGS.testlist, testlist1)
+    self.assertEqual(FLAGS.testspacelist, testspacelist1)
+    FLAGS.testlist = oldtestlist
+    FLAGS.testspacelist = oldtestspacelist
+
+    def ArgsString():
+        flagnames = FLAGS.RegisteredFlags()
+        flagnames.sort()
+        nonbool_flags = [('--%s %s' % (name, FLAGS.get(name, None))) for name in flagnames if (not isinstance(FLAGS[name], gflags.BooleanFlag))]
+        truebool_flags = [('--%s' % name) for name in flagnames if (isinstance(FLAGS[name], gflags.BooleanFlag) and FLAGS.get(name, None))]
+        falsebool_flags = [('--no%s' % name) for name in flagnames if (isinstance(FLAGS[name], gflags.BooleanFlag) and (not FLAGS.get(name, None)))]
+        return ' '.join(((nonbool_flags + truebool_flags) + falsebool_flags))
+    argv = ('./program', '--repeat=3', '--name=giants', '--nodebug')
+    FLAGS(argv)
+    self.assertEqual(FLAGS.get('repeat', None), 3)
+    self.assertEqual(FLAGS.get('name', None), 'giants')
+    self.assertEqual(FLAGS.get('debug', None), 0)
+    self.assertEqual(ArgsString(), "--kwery None --l 9223372032559808512 --letters ['a', 'b', 'c'] --m ['str1', 'str2'] --m_str ['str1', 'str2'] --name giants --numbers [1, 2, 3] --repeat 3 --s ['sing1'] --s_str ['sing1'] --testget4 None --testlist [] --testspacelist [] --x 10 --noexec --quack --test1 --testget1 --tmod_baz_x --no? --nodebug --nohelp --nohelpshort --nohelpxml --noq --notest0 --notestget2 --notestget3 --notestnone")
+    argv = ('./program', '--debug', '--m_str=upd1', '-s', 'upd2')
+    FLAGS(argv)
+    self.assertEqual(FLAGS.get('repeat', None), 3)
+    self.assertEqual(FLAGS.get('name', None), 'giants')
+    self.assertEqual(FLAGS.get('debug', None), 1)
+    self.assertEqual(ArgsString(), "--kwery None --l 9223372032559808512 --letters ['a', 'b', 'c'] --m ['str1', 'str2', 'upd1'] --m_str ['str1', 'str2', 'upd1'] --name giants --numbers [1, 2, 3] --repeat 3 --s ['upd2'] --s_str ['upd2'] --testget4 None --testlist [] --testspacelist [] --x 10 --debug --noexec --quack --test1 --testget1 --tmod_baz_x --no? --nohelp --nohelpshort --nohelpxml --noq --notest0 --notestget2 --notestget3 --notestnone")
+    try:
+        gflags.DEFINE_boolean('run', 0, 'runhelp', short_name='q')
+        raise AssertionError('duplicate flag detection failed')
+    except gflags.DuplicateFlag:
+        pass
+    try:
+        gflags.DEFINE_boolean('zoom1', 0, 'runhelp z1', short_name='z')
+        gflags.DEFINE_boolean('zoom2', 0, 'runhelp z2', short_name='z')
+        raise AssertionError('duplicate short flag detection failed')
+    except gflags.DuplicateFlag as e:
+        self.assertTrue(("The flag 'z' is defined twice. " in e.args[0]))
+        self.assertTrue(('First from' in e.args[0]))
+        self.assertTrue((', Second from' in e.args[0]))
+    try:
+        gflags.DEFINE_boolean('short1', 0, 'runhelp s1', short_name='s')
+        gflags.DEFINE_boolean('s', 0, 'runhelp s2')
+        raise AssertionError('duplicate mixed flag detection failed')
+    except gflags.DuplicateFlag as e:
+        self.assertTrue(("The flag 's' is defined twice. " in e.args[0]))
+        self.assertTrue(('First from' in e.args[0]))
+        self.assertTrue((', Second from' in e.args[0]))
+    flagnames = ['repeated']
+    original_flags = gflags.FlagValues()
+    gflags.DEFINE_boolean(flagnames[0], False, 'Flag about to be repeated.', flag_values=original_flags)
+    duplicate_flags = module_foo.DuplicateFlags(flagnames)
+    try:
+        original_flags.AppendFlagValues(duplicate_flags)
+    except gflags.DuplicateFlagError as e:
+        self.assertTrue(('flags_unittest' in str(e)))
+        self.assertTrue(('module_foo' in str(e)))
+    try:
+        gflags.DEFINE_boolean('dup1', 0, 'runhelp d11', short_name='u', allow_override=0)
+        flag = FLAGS.FlagDict()['dup1']
+        self.assertEqual(flag.default, 0)
+        gflags.DEFINE_boolean('dup1', 1, 'runhelp d12', short_name='u', allow_override=1)
+        flag = FLAGS.FlagDict()['dup1']
+        self.assertEqual(flag.default, 1)
+    except gflags.DuplicateFlag:
+        raise AssertionError('allow_override did not permit a flag duplication')
+    try:
+        gflags.DEFINE_boolean('dup2', 0, 'runhelp d21', short_name='u', allow_override=1)
+        flag = FLAGS.FlagDict()['dup2']
+        self.assertEqual(flag.default, 0)
+        gflags.DEFINE_boolean('dup2', 1, 'runhelp d22', short_name='u', allow_override=0)
+        flag = FLAGS.FlagDict()['dup2']
+        self.assertEqual(flag.default, 1)
+    except gflags.DuplicateFlag:
+        raise AssertionError('allow_override did not permit a flag duplication')
+    try:
+        gflags.DEFINE_boolean('dup3', 0, 'runhelp d31', short_name='u3', allow_override=0)
+        flag = FLAGS.FlagDict()['dup3']
+        self.assertEqual(flag.default, 0)
+        gflags.DEFINE_boolean('dup3', None, 'runhelp d32', short_name='u3', allow_override=1)
+        raise AssertionError('Cannot override a flag with a default of None')
+    except gflags.DuplicateFlagCannotPropagateNoneToSwig:
+        pass
+    try:
+        sys.modules.pop('flags_modules_for_testing.module_baz')
+        import flags_modules_for_testing.module_baz
+    except gflags.DuplicateFlagError:
+        raise AssertionError('Module reimport caused flag duplication error')
+    gflags.DEFINE_boolean('dup3', 0, 'runhelp d31', short_name='u', allow_override=1)
+    gflags.DEFINE_boolean('dup3', 1, 'runhelp d32', short_name='u', allow_override=1)
+    self.assert_((str(FLAGS).find('runhelp d31') == (-1)))
+    self.assert_((str(FLAGS).find('runhelp d32') != (-1)))
+    new_flags = gflags.FlagValues()
+    gflags.DEFINE_boolean('new1', 0, 'runhelp n1', flag_values=new_flags)
+    gflags.DEFINE_boolean('new2', 0, 'runhelp n2', flag_values=new_flags)
+    self.assertEqual(len(new_flags.FlagDict()), 2)
+    old_len = len(FLAGS.FlagDict())
+    FLAGS.AppendFlagValues(new_flags)
+    self.assertEqual((len(FLAGS.FlagDict()) - old_len), 2)
+    self.assertEqual(('new1' in FLAGS.FlagDict()), True)
+    self.assertEqual(('new2' in FLAGS.FlagDict()), True)
+    FLAGS.RemoveFlagValues(new_flags)
+    self.assertEqual(len(FLAGS.FlagDict()), old_len)
+    self.assertFalse(('new1' in FLAGS.FlagDict()))
+    self.assertFalse(('new2' in FLAGS.FlagDict()))
+    new_flags = gflags.FlagValues()
+    gflags.DEFINE_boolean('new3', 0, 'runhelp n3', flag_values=new_flags)
+    gflags.DEFINE_boolean('new4', 0, 'runhelp n4', flag_values=new_flags, short_name='n4')
+    self.assertEqual(len(new_flags.FlagDict()), 3)
+    old_len = len(FLAGS.FlagDict())
+    FLAGS.AppendFlagValues(new_flags)
+    self.assertEqual((len(FLAGS.FlagDict()) - old_len), 3)
+    self.assertTrue(('new3' in FLAGS.FlagDict()))
+    self.assertTrue(('new4' in FLAGS.FlagDict()))
+    self.assertTrue(('n4' in FLAGS.FlagDict()))
+    self.assertEqual(FLAGS.FlagDict()['n4'], FLAGS.FlagDict()['new4'])
+    FLAGS.RemoveFlagValues(new_flags)
+    self.assertEqual(len(FLAGS.FlagDict()), old_len)
+    self.assertFalse(('new3' in FLAGS.FlagDict()))
+    self.assertFalse(('new4' in FLAGS.FlagDict()))
+    self.assertFalse(('n4' in FLAGS.FlagDict()))
+    gflags.DEFINE_boolean('dup4', 0, 'runhelp d41')
+    new_flags = gflags.FlagValues()
+    gflags.DEFINE_boolean('dup4', 0, 'runhelp d42', flag_values=new_flags)
+    try:
+        FLAGS.AppendFlagValues(new_flags)
+        raise AssertionError('ignore_copy was not set but caused no exception')
+    except gflags.DuplicateFlag:
+        pass
+    try:
+        argv = ('./program', '--repeat=-4')
+        FLAGS(argv)
+        raise AssertionError(('integer bounds exception not raised:' + str(FLAGS.repeat)))
+    except gflags.IllegalFlagValue:
+        pass
+    try:
+        argv = ('./program', '--repeat=2.5')
+        FLAGS(argv)
+        raise AssertionError('malformed integer value exception not raised')
+    except gflags.IllegalFlagValue:
+        pass
+    try:
+        argv = ('./program', '--name')
+        FLAGS(argv)
+        raise AssertionError('Flag argument required exception not raised')
+    except gflags.FlagsError:
+        pass
+    try:
+        argv = ('./program', '--debug=goofup')
+        FLAGS(argv)
+        raise AssertionError('Illegal flag value exception not raised')
+    except gflags.IllegalFlagValue:
+        pass
+    try:
+        argv = ('./program', '--debug=42')
+        FLAGS(argv)
+        raise AssertionError('Illegal flag value exception not raised')
+    except gflags.IllegalFlagValue:
+        pass
+    try:
+        argv = ('./program', '--repeat', 'Bob', 'extra')
+        FLAGS(argv)
+        raise AssertionError('Illegal flag value exception not raised')
+    except gflags.IllegalFlagValue:
+        pass
+    helpstr = FLAGS.ModuleHelp(module_baz)
+    expected_help = ((('\n' + module_baz.__name__) + ':') + "\n  --[no]tmod_baz_x: Boolean flag.\n    (default: 'true')")
+    self.assertMultiLineEqual(expected_help, helpstr)
+    helpstr = FLAGS.MainModuleHelp()
+    expected_help = ((('\n' + sys.argv[0]) + ':') + '\n  --[no]debug: debughelp\n    (default: \'false\')\n  -u,--[no]dup1: runhelp d12\n    (default: \'true\')\n  -u,--[no]dup2: runhelp d22\n    (default: \'true\')\n  -u,--[no]dup3: runhelp d32\n    (default: \'true\')\n  --[no]dup4: runhelp d41\n    (default: \'false\')\n  --kwery: <who|what|why|where|when>: ?\n  --l: how long to be\n    (default: \'9223372032559808512\')\n    (an integer)\n  --letters: a list of letters\n    (default: \'a,b,c\')\n    (a comma separated list)\n  -m,--m_str: string option that can occur multiple times;\n    repeat this option to specify a list of values\n    (default: "[\'def1\', \'def2\']")\n  --name: namehelp\n    (default: \'Bob\')\n  --[no]noexec: boolean flag with no as prefix\n    (default: \'true\')\n  --numbers: a list of numbers\n    (default: \'1,2,3\')\n    (a comma separated list)\n  --[no]q: quiet mode\n    (default: \'true\')\n  --[no]quack: superstring of \'q\'\n    (default: \'false\')\n  -r,--repeat: how many times to repeat (0-5)\n    (default: \'4\')\n    (a non-negative integer)\n  -s,--s_str: string option that can occur multiple times;\n    repeat this option to specify a list of values\n    (default: "[\'sing1\']")\n  --[no]test0: test boolean parsing\n  --[no]test1: test boolean parsing\n  --[no]testget1: test parsing with defaults\n  --[no]testget2: test parsing with defaults\n  --[no]testget3: test parsing with defaults\n  --testget4: test parsing with defaults\n    (an integer)\n  --testlist: test lists parsing\n    (default: \'\')\n    (a comma separated list)\n  --[no]testnone: test boolean parsing\n  --testspacelist: tests space lists parsing\n    (default: \'\')\n    (a whitespace separated list)\n  --x: how eXtreme to be\n    (default: \'3\')\n    (an integer)\n  -z,--[no]zoom1: runhelp z1\n    (default: \'false\')')
+    help_help = '  -?,--[no]help: show this help\n  --[no]helpshort: show usage only for this module\n  --[no]helpxml: like --help, but generates XML output\n'
+    expected_help = expected_help.replace('  --kwery', (help_help + '  --kwery'))
+    self.assertMultiLineEqual(expected_help, helpstr)

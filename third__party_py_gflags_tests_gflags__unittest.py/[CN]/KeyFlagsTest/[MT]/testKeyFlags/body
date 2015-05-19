@@ -1,0 +1,17 @@
+def testKeyFlags(self):
+    self.assertListEqual(self._GetNamesOfKeyFlags(module_foo, self.flag_values), [])
+    self.assertListEqual(self._GetNamesOfKeyFlags(module_bar, self.flag_values), [])
+    self.assertListEqual(self._GetNamesOfDefinedFlags(module_foo, self.flag_values), [])
+    self.assertListEqual(self._GetNamesOfDefinedFlags(module_bar, self.flag_values), [])
+    module_foo.DefineFlags(flag_values=self.flag_values)
+    try:
+        for module in [module_foo, module_bar]:
+            self._AssertListsHaveSameElements(self.flag_values._GetFlagsDefinedByModule(module), self.flag_values._GetKeyFlagsForModule(module))
+            self._AssertListsHaveSameElements(self._GetNamesOfDefinedFlags(module, self.flag_values), module.NamesOfDefinedFlags())
+        module_foo.DeclareKeyFlags(flag_values=self.flag_values)
+        self._AssertListsHaveSameElements(self._GetNamesOfDefinedFlags(module_foo, self.flag_values), module_foo.NamesOfDefinedFlags())
+        self._AssertListsHaveSameElements(self._GetNamesOfKeyFlags(module_foo, self.flag_values), module_foo.NamesOfDeclaredKeyFlags())
+        module_foo.DeclareExtraKeyFlags(flag_values=self.flag_values)
+        self._AssertListsHaveSameElements(self._GetNamesOfKeyFlags(module_foo, self.flag_values), (module_foo.NamesOfDeclaredKeyFlags() + module_foo.NamesOfDeclaredExtraKeyFlags()))
+    finally:
+        module_foo.RemoveFlags(flag_values=self.flag_values)

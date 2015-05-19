@@ -1,0 +1,9 @@
+def _GetCallingModuleObjectAndName():
+    "Returns the module that's calling into this module.\n\n  We generally use this function to get the name of the module calling a\n  DEFINE_foo... function.\n  "
+    for depth in range(1, sys.getrecursionlimit()):
+        if (not (sys._getframe(depth).f_globals is globals())):
+            globals_for_frame = sys._getframe(depth).f_globals
+            (module, module_name) = _GetModuleObjectAndName(globals_for_frame)
+            if (module_name is not None):
+                return (module, module_name)
+    raise AssertionError('No module was found')

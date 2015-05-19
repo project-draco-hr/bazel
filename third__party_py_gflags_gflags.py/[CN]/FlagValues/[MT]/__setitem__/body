@@ -1,0 +1,22 @@
+def __setitem__(self, name, flag):
+    'Registers a new flag variable.'
+    fl = self.FlagDict()
+    if (not isinstance(flag, Flag)):
+        raise IllegalFlagValue(flag)
+    if (not isinstance(name, type(''))):
+        raise FlagsError('Flag name must be a string')
+    if (len(name) == 0):
+        raise FlagsError('Flag name cannot be empty')
+    if ((name in fl) and (not flag.allow_override) and (not fl[name].allow_override) and (not _RUNNING_PYCHECKER)):
+        (module, module_name) = _GetCallingModuleObjectAndName()
+        if ((self.FindModuleDefiningFlag(name) == module_name) and (id(module) != self.FindModuleIdDefiningFlag(name))):
+            return
+        raise DuplicateFlagError(name, self)
+    short_name = flag.short_name
+    if (short_name is not None):
+        if ((short_name in fl) and (not flag.allow_override) and (not fl[short_name].allow_override) and (not _RUNNING_PYCHECKER)):
+            raise DuplicateFlagError(short_name, self)
+        fl[short_name] = flag
+    fl[name] = flag
+    global _exported_flags
+    _exported_flags[name] = flag

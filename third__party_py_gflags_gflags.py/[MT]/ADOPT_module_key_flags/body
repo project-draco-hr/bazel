@@ -1,0 +1,7 @@
+def ADOPT_module_key_flags(module, flag_values=FLAGS):
+    'Declares that all flags key to a module are key to the current module.\n\n  Args:\n    module: A module object.\n    flag_values: A FlagValues object.  This should almost never need\n      to be overridden.\n\n  Raises:\n    FlagsError: When given an argument that is a module name (a\n    string), instead of a module object.\n  '
+    if isinstance(module, str):
+        raise FlagsError(('Received module name %s; expected a module object.' % module))
+    _InternalDeclareKeyFlags([f.name for f in flag_values._GetKeyFlagsForModule(module.__name__)], flag_values=flag_values)
+    if (module == _GetThisModuleObjectAndName()[0]):
+        _InternalDeclareKeyFlags([f.name for f in _SPECIAL_FLAGS.FlagDict().values()], flag_values=_SPECIAL_FLAGS, key_flag_values=flag_values)

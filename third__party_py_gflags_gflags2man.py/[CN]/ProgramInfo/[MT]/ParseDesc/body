@@ -1,0 +1,27 @@
+def ParseDesc(self, start_line=0):
+    "Parse the initial description.\n\n    This could be Python or C++.\n\n    Returns:\n      (start_line, lang_type)\n        start_line  Line to start parsing flags on (int)\n        lang_type   Either 'python' or 'c'\n       (-1, '')  if the flags start could not be found\n    "
+    exec_mod_start = (self.executable + ':')
+    after_blank = 0
+    start_line = 0
+    for start_line in range(start_line, len(self.output)):
+        line = self.output[start_line].rstrip()
+        if (('flags:' == line) and (len(self.output) > (start_line + 1)) and ('' == self.output[(start_line + 1)].rstrip())):
+            start_line += 2
+            logging.debug(('Flags start (python): %s' % line))
+            return (start_line, 'python')
+        if (exec_mod_start == line):
+            logging.debug(('Flags start (swig): %s' % line))
+            return (start_line, 'python')
+        if (after_blank and line.startswith('  Flags from ')):
+            logging.debug(('Flags start (c): %s' % line))
+            return (start_line, 'c')
+        if (line == 'where flags are'):
+            logging.debug(('Flags start (java): %s' % line))
+            start_line += 2
+            return (start_line, 'java')
+        logging.debug(('Desc: %s' % line))
+        self.desc.append(line)
+        after_blank = (line == '')
+    else:
+        logging.warn(('Never found the start of the flags section for "%s"!' % self.long_name))
+        return ((-1), '')

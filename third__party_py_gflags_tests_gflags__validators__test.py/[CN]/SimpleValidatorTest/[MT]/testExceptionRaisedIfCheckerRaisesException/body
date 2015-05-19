@@ -1,0 +1,17 @@
+def testExceptionRaisedIfCheckerRaisesException(self):
+
+    def Checker(x):
+        self.call_args.append(x)
+        if (x == 1):
+            return True
+        raise gflags_validators.Error('Specific message')
+    gflags.DEFINE_integer('test_flag', None, 'Usual integer flag', flag_values=self.flag_values)
+    gflags.RegisterValidator('test_flag', Checker, message='Errors happen', flag_values=self.flag_values)
+    argv = ('./program', '--test_flag=1')
+    self.flag_values(argv)
+    try:
+        self.flag_values.test_flag = 2
+        raise AssertionError('gflags.IllegalFlagValue expected')
+    except gflags.IllegalFlagValue as e:
+        self.assertEquals('flag --test_flag=2: Specific message', str(e))
+    self.assertEquals([1, 2], self.call_args)

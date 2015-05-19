@@ -1,0 +1,27 @@
+def ReadFlagsFromFiles(self, argv, force_gnu=True):
+    'Processes command line args, but also allow args to be read from file.\n\n    Args:\n      argv: A list of strings, usually sys.argv[1:], which may contain one or\n        more flagfile directives of the form --flagfile="./filename".\n        Note that the name of the program (sys.argv[0]) should be omitted.\n      force_gnu: If False, --flagfile parsing obeys normal flag semantics.\n        If True, --flagfile parsing instead follows gnu_getopt semantics.\n        *** WARNING *** force_gnu=False may become the future default!\n\n    Returns:\n\n      A new list which has the original list combined with what we read\n      from any flagfile(s).\n\n    References: Global gflags.FLAG class instance.\n\n    This function should be called before the normal FLAGS(argv) call.\n    This function scans the input list for a flag that looks like:\n    --flagfile=<somefile>. Then it opens <somefile>, reads all valid key\n    and value pairs and inserts them into the input list between the\n    first item of the list and any subsequent items in the list.\n\n    Note that your application\'s flags are still defined the usual way\n    using gflags DEFINE_flag() type functions.\n\n    Notes (assuming we\'re getting a commandline of some sort as our input):\n    --> Flags from the command line argv _should_ always take precedence!\n    --> A further "--flagfile=<otherfile.cfg>" CAN be nested in a flagfile.\n        It will be processed after the parent flag file is done.\n    --> For duplicate flags, first one we hit should "win".\n    --> In a flagfile, a line beginning with # or // is a comment.\n    --> Entirely blank lines _should_ be ignored.\n    '
+    parsed_file_list = []
+    rest_of_args = argv
+    new_argv = []
+    while rest_of_args:
+        current_arg = rest_of_args[0]
+        rest_of_args = rest_of_args[1:]
+        if self.__IsFlagFileDirective(current_arg):
+            if ((current_arg == '--flagfile') or (current_arg == '-flagfile')):
+                if (not rest_of_args):
+                    raise IllegalFlagValue('--flagfile with no argument')
+                flag_filename = os.path.expanduser(rest_of_args[0])
+                rest_of_args = rest_of_args[1:]
+            else:
+                flag_filename = self.ExtractFilename(current_arg)
+            new_argv.extend(self.__GetFlagFileLines(flag_filename, parsed_file_list))
+        else:
+            new_argv.append(current_arg)
+            if (current_arg == '--'):
+                break
+            if (not current_arg.startswith('-')):
+                if ((not force_gnu) and (not self.__dict__['__use_gnu_getopt'])):
+                    break
+    if rest_of_args:
+        new_argv.extend(rest_of_args)
+    return new_argv

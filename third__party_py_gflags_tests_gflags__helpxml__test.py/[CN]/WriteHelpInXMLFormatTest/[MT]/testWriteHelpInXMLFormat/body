@@ -1,0 +1,32 @@
+def testWriteHelpInXMLFormat(self):
+    fv = gflags.FlagValues()
+    gflags.DEFINE_integer('index', 17, 'An integer flag', flag_values=fv)
+    gflags.DEFINE_integer('nb_iters', 17, 'An integer flag', lower_bound=5, upper_bound=27, flag_values=fv)
+    gflags.DEFINE_string('file_path', '/path/to/my/dir', 'A test string flag.', flag_values=fv)
+    gflags.DEFINE_boolean('use_hack', False, 'Use performance hack', flag_values=fv)
+    gflags.DEFINE_enum('cc_version', 'stable', ['stable', 'experimental'], 'Compiler version to use.', flag_values=fv)
+    gflags.DEFINE_list('files', 'a.cc,a.h,archive/old.zip', 'Files to process.', flag_values=fv)
+    gflags.DEFINE_list('allow_users', ['alice', 'bob'], 'Users with access.', flag_values=fv)
+    gflags.DEFINE_spaceseplist('dirs', 'src libs bins', 'Directories to create.', flag_values=fv)
+    gflags.DEFINE_multistring('to_delete', ['a.cc', 'b.h'], 'Files to delete', flag_values=fv)
+    gflags.DEFINE_multi_int('cols', [5, 7, 23], 'Columns to select', flag_values=fv)
+    module_bar.DefineFlags(flag_values=fv)
+    gflags.DECLARE_key_flag('tmod_bar_z', flag_values=fv)
+    gflags.DECLARE_key_flag('tmod_bar_u', flag_values=fv)
+    sio = StringIO.StringIO()
+    fv.WriteHelpInXMLFormat(sio)
+    expected_output_template = EXPECTED_HELP_XML_START
+    main_module_name = gflags._GetMainModule()
+    module_bar_name = module_bar.__name__
+    if (main_module_name < module_bar_name):
+        expected_output_template += EXPECTED_HELP_XML_FOR_FLAGS_FROM_MAIN_MODULE
+        expected_output_template += EXPECTED_HELP_XML_FOR_FLAGS_FROM_MODULE_BAR
+    else:
+        expected_output_template += EXPECTED_HELP_XML_FOR_FLAGS_FROM_MODULE_BAR
+        expected_output_template += EXPECTED_HELP_XML_FOR_FLAGS_FROM_MAIN_MODULE
+    expected_output_template += EXPECTED_HELP_XML_END
+    whitespace_separators = _ListSeparatorsInXMLFormat(string.whitespace, indent='    ')
+    expected_output = (expected_output_template % {'usage_doc': sys.modules['__main__'].__doc__, 'main_module_name': main_module_name, 'module_bar_name': module_bar_name, 'whitespace_separators': whitespace_separators, })
+    actual_output = sio.getvalue()
+    self.assertMultiLineEqual(actual_output, expected_output)
+    xml.dom.minidom.parseString(actual_output)

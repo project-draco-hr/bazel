@@ -1,0 +1,17 @@
+def test_GetCallingModuleWithIteritemsError(self):
+    orig_sys_modules = sys.modules
+
+
+    class SysModulesMock(dict):
+
+        def __init__(self, original_content):
+            dict.__init__(self, original_content)
+
+        def iteritems(self):
+            raise RuntimeError('dictionary changed size during iteration')
+    sys.modules = SysModulesMock(orig_sys_modules)
+    try:
+        self.assertEqual(gflags._GetCallingModule(), sys.argv[0])
+        self.assertEqual(module_foo.GetModuleName(), 'flags_modules_for_testing.module_foo')
+    finally:
+        sys.modules = orig_sys_modules

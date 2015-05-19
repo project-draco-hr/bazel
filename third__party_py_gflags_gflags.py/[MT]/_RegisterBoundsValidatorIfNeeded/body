@@ -1,0 +1,10 @@
+def _RegisterBoundsValidatorIfNeeded(parser, name, flag_values):
+    'Enforce lower and upper bounds for numeric flags.\n\n  Args:\n    parser: NumericParser (either FloatParser or IntegerParser). Provides lower\n      and upper bounds, and help text to display.\n    name: string, name of the flag\n    flag_values: FlagValues\n  '
+    if ((parser.lower_bound is not None) or (parser.upper_bound is not None)):
+
+        def Checker(value):
+            if ((value is not None) and parser.IsOutsideBounds(value)):
+                message = ('%s is not %s' % (value, parser.syntactic_help))
+                raise gflags_validators.Error(message)
+            return True
+        RegisterValidator(name, Checker, flag_values=flag_values)

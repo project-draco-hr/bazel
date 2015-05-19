@@ -1,0 +1,9 @@
+def _InternalDeclareKeyFlags(flag_names, flag_values=FLAGS, key_flag_values=None):
+    'Declares a flag as key for the calling module.\n\n  Internal function.  User code should call DECLARE_key_flag or\n  ADOPT_module_key_flags instead.\n\n  Args:\n    flag_names: A list of strings that are names of already-registered\n      Flag objects.\n    flag_values: A FlagValues object that the flags listed in\n      flag_names have registered with (the value of the flag_values\n      argument from the DEFINE_* calls that defined those flags).\n      This should almost never need to be overridden.\n    key_flag_values: A FlagValues object that (among possibly many\n      other things) keeps track of the key flags for each module.\n      Default None means "same as flag_values".  This should almost\n      never need to be overridden.\n\n  Raises:\n    UnrecognizedFlagError: when we refer to a flag that was not\n      defined yet.\n  '
+    key_flag_values = (key_flag_values or flag_values)
+    module = _GetCallingModule()
+    for flag_name in flag_names:
+        if (flag_name not in flag_values):
+            raise UnrecognizedFlagError(flag_name)
+        flag = flag_values.FlagDict()[flag_name]
+        key_flag_values._RegisterKeyFlagForModule(module, flag)

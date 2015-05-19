@@ -1,0 +1,10 @@
+def test_nonglobal_flags(self):
+    'Test use of non-global FlagValues'
+    nonglobal_flags = gflags.FlagValues()
+    gflags.DEFINE_string('nonglobal_flag', 'Bob', 'flaghelp', nonglobal_flags)
+    argv = ('./program', '--nonglobal_flag=Mary', 'extra')
+    argv = nonglobal_flags(argv)
+    assert (len(argv) == 2), 'wrong number of arguments pulled'
+    assert (argv[0] == './program'), 'program name not preserved'
+    assert (argv[1] == 'extra'), 'extra argument not preserved'
+    assert (nonglobal_flags['nonglobal_flag'].value == 'Mary')

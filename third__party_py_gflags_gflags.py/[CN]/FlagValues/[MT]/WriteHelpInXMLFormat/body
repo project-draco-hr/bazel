@@ -1,0 +1,25 @@
+def WriteHelpInXMLFormat(self, outfile=None):
+    'Outputs flag documentation in XML format.\n\n    NOTE: We use element names that are consistent with those used by\n    the C++ command-line flag library, from\n    http://code.google.com/p/google-gflags\n    We also use a few new elements (e.g., <key>), but we do not\n    interfere / overlap with existing XML elements used by the C++\n    library.  Please maintain this consistency.\n\n    Args:\n      outfile: File object we write to.  Default None means sys.stdout.\n    '
+    outfile = (outfile or sys.stdout)
+    outfile.write('<?xml version="1.0"?>\n')
+    outfile.write('<AllFlags>\n')
+    indent = '  '
+    _WriteSimpleXMLElement(outfile, 'program', os.path.basename(sys.argv[0]), indent)
+    usage_doc = sys.modules['__main__'].__doc__
+    if (not usage_doc):
+        usage_doc = ('\nUSAGE: %s [flags]\n' % sys.argv[0])
+    else:
+        usage_doc = usage_doc.replace('%s', sys.argv[0])
+    _WriteSimpleXMLElement(outfile, 'usage', usage_doc, indent)
+    key_flags = self._GetKeyFlagsForModule(_GetMainModule())
+    flags_by_module = self.FlagsByModuleDict()
+    all_module_names = list(flags_by_module.keys())
+    all_module_names.sort()
+    for module_name in all_module_names:
+        flag_list = [(f.name, f) for f in flags_by_module[module_name]]
+        flag_list.sort()
+        for (unused_flag_name, flag) in flag_list:
+            is_key = (flag in key_flags)
+            flag.WriteInfoInXMLFormat(outfile, module_name, is_key=is_key, indent=indent)
+    outfile.write('</AllFlags>\n')
+    outfile.flush()

@@ -1,0 +1,39 @@
+def ParseJavaFlags(self, start_line=0):
+    'Parse Java style flags (com.google.common.flags).'
+    modname = 'Standard flags'
+    self.module_list.append(modname)
+    self.modules.setdefault(modname, [])
+    modlist = self.modules[modname]
+    flag = None
+    for line_num in range(start_line, len(self.output)):
+        line = self.output[line_num].rstrip()
+        logging.vlog(2, ('Line: "%s"' % line))
+        if (not line):
+            if flag:
+                modlist.append(flag)
+                flag = None
+            continue
+        mobj = self.module_java_re.match(line)
+        if mobj:
+            modname = mobj.group(1)
+            logging.debug(('Module: %s' % line))
+            if flag:
+                modlist.append(flag)
+            self.module_list.append(modname)
+            self.modules.setdefault(modname, [])
+            modlist = self.modules[modname]
+            flag = None
+            continue
+        mobj = self.flag_java_re.match(line)
+        if mobj:
+            if flag:
+                modlist.append(flag)
+            logging.debug(('Flag: %s' % line))
+            flag = Flag(mobj.group(1), mobj.group(2))
+            continue
+        if flag:
+            flag.help += (' ' + line.strip())
+        else:
+            logging.info(('Extra: %s' % line))
+    if flag:
+        modlist.append(flag)

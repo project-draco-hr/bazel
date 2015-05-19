@@ -1,0 +1,12 @@
+def GetHelpWidth():
+    'Returns: an integer, the width of help lines that is used in TextWrap.'
+    if ((not sys.stdout.isatty()) or (termios is None) or (fcntl is None)):
+        return _help_width
+    try:
+        data = fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ, '1234')
+        columns = struct.unpack('hh', data)[1]
+        if (columns >= 40):
+            return columns
+        return int(os.getenv('COLUMNS', _help_width))
+    except (TypeError, IOError, struct.error):
+        return _help_width

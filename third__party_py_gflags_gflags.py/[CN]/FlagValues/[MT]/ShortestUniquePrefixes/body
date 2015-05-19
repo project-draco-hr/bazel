@@ -1,0 +1,26 @@
+def ShortestUniquePrefixes(self, fl):
+    'Returns: dictionary; maps flag names to their shortest unique prefix.'
+    sorted_flags = []
+    for (name, flag) in fl.items():
+        sorted_flags.append(name)
+        if flag.boolean:
+            sorted_flags.append(('no%s' % name))
+    sorted_flags.sort()
+    shortest_matches = {}
+    prev_idx = 0
+    for flag_idx in range(len(sorted_flags)):
+        curr = sorted_flags[flag_idx]
+        if (flag_idx == (len(sorted_flags) - 1)):
+            next = None
+        else:
+            next = sorted_flags[(flag_idx + 1)]
+            next_len = len(next)
+        for curr_idx in range(len(curr)):
+            if ((next is None) or (curr_idx >= next_len) or (curr[curr_idx] != next[curr_idx])):
+                shortest_matches[curr] = curr[:(max(prev_idx, curr_idx) + 1)]
+                prev_idx = curr_idx
+                break
+        else:
+            shortest_matches[curr] = curr
+            prev_idx = (curr_idx + 1)
+    return shortest_matches

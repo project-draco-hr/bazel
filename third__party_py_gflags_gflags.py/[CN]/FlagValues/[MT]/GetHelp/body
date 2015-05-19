@@ -1,0 +1,16 @@
+def GetHelp(self, prefix=''):
+    'Generates a help string for all known flags.'
+    helplist = []
+    flags_by_module = self.FlagsByModuleDict()
+    if flags_by_module:
+        modules = sorted(flags_by_module)
+        main_module = _GetMainModule()
+        if (main_module in modules):
+            modules.remove(main_module)
+            modules = ([main_module] + modules)
+        for module in modules:
+            self.__RenderOurModuleFlags(module, helplist)
+        self.__RenderModuleFlags('gflags', _SPECIAL_FLAGS.FlagDict().values(), helplist)
+    else:
+        self.__RenderFlagList((self.FlagDict().values() + _SPECIAL_FLAGS.FlagDict().values()), helplist, prefix)
+    return '\n'.join(helplist)

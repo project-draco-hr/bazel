@@ -1,0 +1,81 @@
+def __call__(self, argv):
+    'Parses flags from argv; stores parsed flags into this FlagValues object.\n\n    All unparsed arguments are returned.  Flags are parsed using the GNU\n    Program Argument Syntax Conventions, using getopt:\n\n    http://www.gnu.org/software/libc/manual/html_mono/libc.html#Getopt\n\n    Args:\n       argv: argument list. Can be of any type that may be converted to a list.\n\n    Returns:\n       The list of arguments not parsed as options, including argv[0]\n\n    Raises:\n       FlagsError: on any parsing error\n    '
+    argv = list(argv)
+    shortopts = ''
+    longopts = []
+    fl = self.FlagDict()
+    argv = (argv[:1] + self.ReadFlagsFromFiles(argv[1:], force_gnu=False))
+    original_argv = list(argv)
+    shortest_matches = None
+    for (name, flag) in fl.items():
+        if (not flag.boolean):
+            continue
+        if (shortest_matches is None):
+            shortest_matches = self.ShortestUniquePrefixes(fl)
+        no_name = ('no' + name)
+        prefix = shortest_matches[name]
+        no_prefix = shortest_matches[no_name]
+        for arg_idx in range(1, len(argv)):
+            arg = argv[arg_idx]
+            if (arg.find('=') >= 0):
+                continue
+            if (arg.startswith(('--' + prefix)) and ('--' + name).startswith(arg)):
+                argv[arg_idx] = ('--%s=true' % name)
+            elif (arg.startswith(('--' + no_prefix)) and ('--' + no_name).startswith(arg)):
+                argv[arg_idx] = ('--%s=false' % name)
+    for (name, flag) in fl.items():
+        longopts.append((name + '='))
+        if (len(name) == 1):
+            shortopts += name
+            if (not flag.boolean):
+                shortopts += ':'
+    longopts.append('undefok=')
+    undefok_flags = []
+    unrecognized_opts = []
+    args = argv[1:]
+    while True:
+        try:
+            if self.__dict__['__use_gnu_getopt']:
+                (optlist, unparsed_args) = getopt.gnu_getopt(args, shortopts, longopts)
+            else:
+                (optlist, unparsed_args) = getopt.getopt(args, shortopts, longopts)
+            break
+        except getopt.GetoptError as e:
+            if ((not e.opt) or (e.opt in fl)):
+                raise FlagsError(e)
+            for arg_index in range(len(args)):
+                if ((args[arg_index] == ('--' + e.opt)) or (args[arg_index] == ('-' + e.opt)) or args[arg_index].startswith((('--' + e.opt) + '='))):
+                    unrecognized_opts.append((e.opt, args[arg_index]))
+                    args = (args[0:arg_index] + args[(arg_index + 1):])
+                    break
+            else:
+                raise FlagsError(e)
+    for (name, arg) in optlist:
+        if (name == '--undefok'):
+            flag_names = arg.split(',')
+            undefok_flags.extend(flag_names)
+            undefok_flags.extend((('no' + name) for name in flag_names))
+            continue
+        if name.startswith('--'):
+            name = name[2:]
+            short_option = 0
+        else:
+            name = name[1:]
+            short_option = 1
+        if (name in fl):
+            flag = fl[name]
+            if (flag.boolean and short_option):
+                arg = 1
+            flag.Parse(arg)
+    for (opt, value) in unrecognized_opts:
+        if (opt not in undefok_flags):
+            raise UnrecognizedFlagError(opt, value)
+    if unparsed_args:
+        if self.__dict__['__use_gnu_getopt']:
+            ret_val = (argv[:1] + unparsed_args)
+        else:
+            ret_val = (argv[:1] + original_argv[(- len(unparsed_args)):])
+    else:
+        ret_val = argv[:1]
+    self._AssertAllValidators()
+    return ret_val

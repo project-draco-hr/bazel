@@ -1,0 +1,8 @@
+def _AssertValidators(self, validators):
+    'Assert if all validators in the list are satisfied.\n\n    Asserts validators in the order they were created.\n    Args:\n      validators: Iterable(gflags_validators.Validator), validators to be\n        verified\n    Raises:\n      AttributeError: if validators work with a non-existing flag.\n      IllegalFlagValue: if validation fails for at least one validator\n    '
+    for validator in sorted(validators, key=(lambda validator: validator.insertion_index)):
+        try:
+            validator.Verify(self)
+        except gflags_validators.Error as e:
+            message = validator.PrintFlagsWithValues(self)
+            raise IllegalFlagValue(('%s: %s' % (message, str(e))))

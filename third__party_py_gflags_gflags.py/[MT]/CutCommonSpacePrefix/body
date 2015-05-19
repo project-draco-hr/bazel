@@ -1,0 +1,18 @@
+def CutCommonSpacePrefix(text):
+    'Removes a common space prefix from the lines of a multiline text.\n\n  If the first line does not start with a space, it is left as it is and\n  only in the remaining lines a common space prefix is being searched\n  for. That means the first line will stay untouched. This is especially\n  useful to turn doc strings into help texts. This is because some\n  people prefer to have the doc comment start already after the\n  apostrophe and then align the following lines while others have the\n  apostrophes on a separate line.\n\n  The function also drops trailing empty lines and ignores empty lines\n  following the initial content line while calculating the initial\n  common whitespace.\n\n  Args:\n    text: text to work on\n\n  Returns:\n    the resulting text\n  '
+    text_lines = text.splitlines()
+    while (text_lines and (not text_lines[(-1)])):
+        text_lines = text_lines[:(-1)]
+    if text_lines:
+        if (text_lines[0] and text_lines[0][0].isspace()):
+            text_first_line = []
+        else:
+            text_first_line = [text_lines.pop(0)]
+        common_prefix = os.path.commonprefix([line for line in text_lines if line])
+        space_prefix_len = (len(common_prefix) - len(common_prefix.lstrip()))
+        if space_prefix_len:
+            for index in xrange(len(text_lines)):
+                if text_lines[index]:
+                    text_lines[index] = text_lines[index][space_prefix_len:]
+        return '\n'.join((text_first_line + text_lines))
+    return ''

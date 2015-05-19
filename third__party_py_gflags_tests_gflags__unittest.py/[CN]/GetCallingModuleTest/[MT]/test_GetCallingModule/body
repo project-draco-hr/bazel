@@ -1,0 +1,14 @@
+def test_GetCallingModule(self):
+    self.assertEqual(gflags._GetCallingModule(), sys.argv[0])
+    self.assertEqual(module_foo.GetModuleName(), 'flags_modules_for_testing.module_foo')
+    self.assertEqual(module_bar.GetModuleName(), 'flags_modules_for_testing.module_bar')
+    code = 'import gflags\nmodule_name = gflags._GetCallingModule()'
+    exec code
+    exec code in {}
+    exec code in dict(vars(self))
+    global_dict = {}
+    exec code in global_dict
+    self.assertEqual(global_dict['module_name'], sys.argv[0])
+    global_dict = {}
+    module_bar.ExecuteCode(code, global_dict)
+    self.assertEqual(global_dict['module_name'], 'flags_modules_for_testing.module_bar')

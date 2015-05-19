@@ -1,0 +1,10 @@
+def testBadMultiNumericalFlags(self):
+    'Test multi_int and multi_float flags with non-parseable values.'
+    self.assertRaisesWithRegexpMatch(gflags.IllegalFlagValue, "flag --m_int2=abc: invalid literal for int\\(\\) with base 10: 'abc'", gflags.DEFINE_multi_int, 'm_int2', ['abc'], 'desc')
+    self.assertRaisesWithRegexpMatch(gflags.IllegalFlagValue, 'flag --m_float2=abc: invalid literal for float\\(\\): abc', gflags.DEFINE_multi_float, 'm_float2', ['abc'], 'desc')
+    gflags.DEFINE_multi_int('m_int2', '77', 'integer option that can occur multiple times')
+    argv = ('./program', '--m_int2=def')
+    self.assertRaisesWithRegexpMatch(gflags.IllegalFlagValue, "flag --m_int2=def: invalid literal for int\\(\\) with base 10: 'def'", FLAGS, argv)
+    gflags.DEFINE_multi_float('m_float2', 2.2, 'float option that can occur multiple times')
+    argv = ('./program', '--m_float2=def')
+    self.assertRaisesWithRegexpMatch(gflags.IllegalFlagValue, 'flag --m_float2=def: invalid literal for float\\(\\): def', FLAGS, argv)

@@ -1,0 +1,30 @@
+def testFlagValuesDelAttr(self):
+    'Checks that del self.flag_values.flag_id works.'
+    default_value = 'default value for testFlagValuesDelAttr'
+    flag_values = gflags.FlagValues()
+    gflags.DEFINE_string('delattr_foo', default_value, 'A simple flag.', flag_values=flag_values)
+    self.assertEquals(flag_values.delattr_foo, default_value)
+    flag_obj = flag_values['delattr_foo']
+    self.assertTrue(flag_values._FlagIsRegistered(flag_obj))
+    del flag_values.delattr_foo
+    self.assertFalse(('delattr_foo' in flag_values.FlagDict()))
+    self.assertFalse(flag_values._FlagIsRegistered(flag_obj))
+    gflags.DEFINE_integer('delattr_foo', 3, 'A simple flag.', flag_values=flag_values)
+    del flag_values.delattr_foo
+    self.assertFalse(('delattr_foo' in flag_values.RegisteredFlags()))
+    gflags.DEFINE_string('delattr_bar', default_value, 'flag with short name', short_name='x5', flag_values=flag_values)
+    flag_obj = flag_values['delattr_bar']
+    self.assertTrue(flag_values._FlagIsRegistered(flag_obj))
+    del flag_values.x5
+    self.assertTrue(flag_values._FlagIsRegistered(flag_obj))
+    del flag_values.delattr_bar
+    self.assertFalse(flag_values._FlagIsRegistered(flag_obj))
+    gflags.DEFINE_string('delattr_bar', default_value, 'flag with short name', short_name='x5', flag_values=flag_values)
+    flag_obj = flag_values['delattr_bar']
+    self.assertTrue(flag_values._FlagIsRegistered(flag_obj))
+    del flag_values.delattr_bar
+    self.assertTrue(flag_values._FlagIsRegistered(flag_obj))
+    del flag_values.x5
+    self.assertFalse(flag_values._FlagIsRegistered(flag_obj))
+    self.assertFalse(('delattr_bar' in flag_values.RegisteredFlags()))
+    self.assertFalse(('x5' in flag_values.RegisteredFlags()))

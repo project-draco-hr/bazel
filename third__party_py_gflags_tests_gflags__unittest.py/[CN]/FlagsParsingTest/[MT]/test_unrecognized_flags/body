@@ -1,0 +1,79 @@
+def test_unrecognized_flags(self):
+    gflags.DEFINE_string('name', 'Bob', 'namehelp', flag_values=self.flag_values)
+    try:
+        argv = ('./program', '--nosuchflag', '--name=Bob', 'extra')
+        self.flag_values(argv)
+        raise AssertionError('Unknown flag exception not raised')
+    except gflags.UnrecognizedFlag as e:
+        assert (e.flagname == 'nosuchflag')
+        assert (e.flagvalue == '--nosuchflag')
+    try:
+        argv = ('./program', '-w', '--name=Bob', 'extra')
+        self.flag_values(argv)
+        raise AssertionError('Unknown flag exception not raised')
+    except gflags.UnrecognizedFlag as e:
+        assert (e.flagname == 'w')
+        assert (e.flagvalue == '-w')
+    try:
+        argv = ('./program', '--nosuchflagwithparam=foo', '--name=Bob', 'extra')
+        self.flag_values(argv)
+        raise AssertionError('Unknown flag exception not raised')
+    except gflags.UnrecognizedFlag as e:
+        assert (e.flagname == 'nosuchflagwithparam')
+        assert (e.flagvalue == '--nosuchflagwithparam=foo')
+    argv = ('./program', '--nosuchflag', '--name=Bob', '--undefok=nosuchflag', 'extra')
+    argv = self.flag_values(argv)
+    assert (len(argv) == 2), 'wrong number of arguments pulled'
+    assert (argv[0] == './program'), 'program name not preserved'
+    assert (argv[1] == 'extra'), 'extra argument not preserved'
+    argv = ('./program', '--noboolflag', '--name=Bob', '--undefok=boolflag', 'extra')
+    argv = self.flag_values(argv)
+    assert (len(argv) == 2), 'wrong number of arguments pulled'
+    assert (argv[0] == './program'), 'program name not preserved'
+    assert (argv[1] == 'extra'), 'extra argument not preserved'
+    try:
+        argv = ('./program', '--nosuchflag', '--name=Bob', '--undefok=nosuchfla', 'extra')
+        self.flag_values(argv)
+        raise AssertionError('Unknown flag exception not raised')
+    except gflags.UnrecognizedFlag as e:
+        assert (e.flagname == 'nosuchflag')
+    try:
+        argv = ('./program', '--nosuchflag', '--name=Bob', '--undefok=nosuchflagg', 'extra')
+        self.flag_values(argv)
+        raise AssertionError('Unknown flag exception not raised')
+    except gflags.UnrecognizedFlag as e:
+        assert (e.flagname == 'nosuchflag')
+    argv = ('./program', '-w', '--name=Bob', '--undefok=w', 'extra')
+    argv = self.flag_values(argv)
+    assert (len(argv) == 2), 'wrong number of arguments pulled'
+    assert (argv[0] == './program'), 'program name not preserved'
+    assert (argv[1] == 'extra'), 'extra argument not preserved'
+    argv = ('./program', '--nosuchflagwithparam=foo', '--name=Bob', '--undefok=nosuchflagwithparam', 'extra')
+    argv = self.flag_values(argv)
+    assert (len(argv) == 2), 'wrong number of arguments pulled'
+    assert (argv[0] == './program'), 'program name not preserved'
+    assert (argv[1] == 'extra'), 'extra argument not preserved'
+    argv = ('./program', '--nosuchflag', '-w', '--nosuchflagwithparam=foo', '--name=Bob', '--undefok=nosuchflag,w,nosuchflagwithparam', 'extra')
+    argv = self.flag_values(argv)
+    assert (len(argv) == 2), 'wrong number of arguments pulled'
+    assert (argv[0] == './program'), 'program name not preserved'
+    assert (argv[1] == 'extra'), 'extra argument not preserved'
+    try:
+        argv = ('./program', '--nosuchflag', '--name=Bob', '--undefok=another_such', 'extra')
+        self.flag_values(argv)
+        raise AssertionError('Unknown flag exception not raised')
+    except gflags.UnrecognizedFlag as e:
+        assert (e.flagname == 'nosuchflag')
+    try:
+        argv = ('./program', '--undefok=name', '--name')
+        self.flag_values(argv)
+        raise AssertionError('Missing option parameter exception not raised')
+    except gflags.UnrecognizedFlag:
+        raise AssertionError('Wrong kind of error exception raised')
+    except gflags.FlagsError:
+        pass
+    argv = ('./program', '--nosuchflag', '-w', '--nosuchflagwithparam=foo', '--name=Bob', '--undefok', 'nosuchflag,w,nosuchflagwithparam', 'extra')
+    argv = self.flag_values(argv)
+    assert (len(argv) == 2), 'wrong number of arguments pulled'
+    assert (argv[0] == './program'), 'program name not preserved'
+    assert (argv[1] == 'extra'), 'extra argument not preserved'

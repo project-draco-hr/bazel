@@ -1,0 +1,26 @@
+def __GetFlagFileLines(self, filename, parsed_file_list):
+    "Returns the useful (!=comments, etc) lines from a file with flags.\n\n    Args:\n      filename: A string, the name of the flag file.\n      parsed_file_list: A list of the names of the files we have\n        already read.  MUTATED BY THIS FUNCTION.\n\n    Returns:\n      List of strings. See the note below.\n\n    NOTE(springer): This function checks for a nested --flagfile=<foo>\n    tag and handles the lower file recursively. It returns a list of\n    all the lines that _could_ contain command flags. This is\n    EVERYTHING except whitespace lines and comments (lines starting\n    with '#' or '//').\n    "
+    line_list = []
+    flag_line_list = []
+    try:
+        file_obj = open(filename, 'r')
+    except IOError as e_msg:
+        raise CantOpenFlagFileError(('ERROR:: Unable to open flagfile: %s' % e_msg))
+    line_list = file_obj.readlines()
+    file_obj.close()
+    parsed_file_list.append(filename)
+    for line in line_list:
+        if line.isspace():
+            pass
+        elif (line.startswith('#') or line.startswith('//')):
+            pass
+        elif self.__IsFlagFileDirective(line):
+            sub_filename = self.ExtractFilename(line)
+            if (not (sub_filename in parsed_file_list)):
+                included_flags = self.__GetFlagFileLines(sub_filename, parsed_file_list)
+                flag_line_list.extend(included_flags)
+            else:
+                sys.stderr.write(('Warning: Hit circular flagfile dependency: %s\n' % (sub_filename,)))
+        else:
+            flag_line_list.append(line.strip())
+    return flag_line_list

@@ -1,0 +1,53 @@
+def TextWrap(text, length=None, indent='', firstline_indent=None, tabs='    '):
+    'Wraps a given text to a maximum line length and returns it.\n\n  We turn lines that only contain whitespace into empty lines.  We keep\n  new lines and tabs (e.g., we do not treat tabs as spaces).\n\n  Args:\n    text:             text to wrap\n    length:           maximum length of a line, includes indentation\n                      if this is None then use GetHelpWidth()\n    indent:           indent for all but first line\n    firstline_indent: indent for first line; if None, fall back to indent\n    tabs:             replacement for tabs\n\n  Returns:\n    wrapped text\n\n  Raises:\n    FlagsError: if indent not shorter than length\n    FlagsError: if firstline_indent not shorter than length\n  '
+    if (length is None):
+        length = GetHelpWidth()
+    if (indent is None):
+        indent = ''
+    if (len(indent) >= length):
+        raise FlagsError('Indent must be shorter than length')
+    if (firstline_indent is None):
+        firstline_indent = ''
+        line = indent
+    else:
+        line = firstline_indent
+        if (len(firstline_indent) >= length):
+            raise FlagsError('First line indent must be shorter than length')
+    if ((not tabs) or (tabs == ' ')):
+        text = text.replace('\t', ' ')
+    else:
+        tabs_are_whitespace = (not tabs.strip())
+    line_regex = re.compile('([ ]*)(\t*)([^ \t]+)', re.MULTILINE)
+    result = []
+    for text_line in text.splitlines():
+        old_result_len = len(result)
+        for (spaces, current_tabs, word) in line_regex.findall(text_line.rstrip()):
+            if current_tabs:
+                if (((result and (line != indent)) or ((not result) and (line != firstline_indent))) and (line[(-1)] == ' ')):
+                    line = line[:(-1)]
+                if tabs_are_whitespace:
+                    line += (tabs * len(current_tabs))
+                else:
+                    word = ((tabs * len(current_tabs)) + word)
+            if (((len(line) + len(word)) > length) and ((len(indent) + len(word)) <= length)):
+                result.append(line.rstrip())
+                line = (indent + word)
+                word = ''
+                if ((len(line) + 1) >= length):
+                    result.append(line.rstrip())
+                    line = indent
+                else:
+                    line += ' '
+            while ((len(line) + len(word)) >= length):
+                line += word
+                result.append(line[:length])
+                word = line[length:]
+                line = indent
+            if word:
+                line += (word + ' ')
+        if ((result and (line != indent)) or ((not result) and (line != firstline_indent))):
+            result.append(line.rstrip())
+        elif (len(result) == old_result_len):
+            result.append('')
+        line = indent
+    return '\n'.join(result)

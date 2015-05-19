@@ -1,0 +1,13 @@
+def testValidatorNotCalledWhenOtherFlagIsChanged(self):
+
+    def Checker(x):
+        self.call_args.append(x)
+        return True
+    gflags.DEFINE_integer('test_flag', 1, 'Usual integer flag', flag_values=self.flag_values)
+    gflags.DEFINE_integer('other_flag', 2, 'Other integer flag', flag_values=self.flag_values)
+    gflags.RegisterValidator('test_flag', Checker, message='Errors happen', flag_values=self.flag_values)
+    argv = './program'
+    self.flag_values(argv)
+    self.assertEquals(1, self.flag_values.test_flag)
+    self.flag_values.other_flag = 3
+    self.assertEquals([1], self.call_args)

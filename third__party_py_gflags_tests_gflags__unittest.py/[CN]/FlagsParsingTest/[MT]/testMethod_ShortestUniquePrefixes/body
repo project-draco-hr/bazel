@@ -1,0 +1,24 @@
+def testMethod_ShortestUniquePrefixes(self):
+    'Test FlagValues.ShortestUniquePrefixes'
+    gflags.DEFINE_string('a', '', '', flag_values=self.flag_values)
+    gflags.DEFINE_string('abc', '', '', flag_values=self.flag_values)
+    gflags.DEFINE_string('common_a_string', '', '', flag_values=self.flag_values)
+    gflags.DEFINE_boolean('common_b_boolean', 0, '', flag_values=self.flag_values)
+    gflags.DEFINE_boolean('common_c_boolean', 0, '', flag_values=self.flag_values)
+    gflags.DEFINE_boolean('common', 0, '', flag_values=self.flag_values)
+    gflags.DEFINE_integer('commonly', 0, '', flag_values=self.flag_values)
+    gflags.DEFINE_boolean('zz', 0, '', flag_values=self.flag_values)
+    gflags.DEFINE_integer('nozz', 0, '', flag_values=self.flag_values)
+    shorter_flags = self.flag_values.ShortestUniquePrefixes(self.flag_values.FlagDict())
+    expected_results = {'nocommon_b_boolean': 'nocommon_b', 'common_c_boolean': 'common_c', 'common_b_boolean': 'common_b', 'a': 'a', 'abc': 'ab', 'zz': 'z', 'nozz': 'nozz', 'common_a_string': 'common_a', 'commonly': 'commonl', 'nocommon_c_boolean': 'nocommon_c', 'nocommon': 'nocommon', 'common': 'common', }
+    for (name, shorter) in expected_results.iteritems():
+        self.assertEquals(shorter_flags[name], shorter)
+    self.flag_values.__delattr__('a')
+    self.flag_values.__delattr__('abc')
+    self.flag_values.__delattr__('common_a_string')
+    self.flag_values.__delattr__('common_b_boolean')
+    self.flag_values.__delattr__('common_c_boolean')
+    self.flag_values.__delattr__('common')
+    self.flag_values.__delattr__('commonly')
+    self.flag_values.__delattr__('zz')
+    self.flag_values.__delattr__('nozz')

@@ -1,0 +1,43 @@
+def _SetupTestFiles(self):
+    ' Creates and sets up some dummy flagfile files with bogus flags'
+    tmp_path = '/tmp/flags_unittest'
+    if os.path.exists(tmp_path):
+        shutil.rmtree(tmp_path)
+    os.makedirs(tmp_path)
+    try:
+        tmp_flag_file_1 = open((tmp_path + '/UnitTestFile1.tst'), 'w')
+        tmp_flag_file_2 = open((tmp_path + '/UnitTestFile2.tst'), 'w')
+        tmp_flag_file_3 = open((tmp_path + '/UnitTestFile3.tst'), 'w')
+        tmp_flag_file_4 = open((tmp_path + '/UnitTestFile4.tst'), 'w')
+    except IOError as e_msg:
+        print e_msg
+        print 'FAIL\n File Creation problem in Unit Test'
+        sys.exit(1)
+    tmp_flag_file_1.write('#A Fake Comment\n')
+    tmp_flag_file_1.write('--UnitTestMessage1=tempFile1!\n')
+    tmp_flag_file_1.write('\n')
+    tmp_flag_file_1.write('--UnitTestNumber=54321\n')
+    tmp_flag_file_1.write('--noUnitTestBoolFlag\n')
+    file_list = [tmp_flag_file_1.name]
+    tmp_flag_file_2.write('//A Different Fake Comment\n')
+    tmp_flag_file_2.write(('--flagfile=%s\n' % tmp_flag_file_1.name))
+    tmp_flag_file_2.write('--UnitTestMessage2=setFromTempFile2\n')
+    tmp_flag_file_2.write('\t\t\n')
+    tmp_flag_file_2.write('--UnitTestNumber=6789a\n')
+    file_list.append(tmp_flag_file_2.name)
+    tmp_flag_file_3.write(('--flagfile=%s\n' % tmp_flag_file_3.name))
+    tmp_flag_file_3.write('--UnitTestMessage1=setFromTempFile3\n')
+    tmp_flag_file_3.write('#YAFC\n')
+    tmp_flag_file_3.write('--UnitTestBoolFlag\n')
+    file_list.append(tmp_flag_file_3.name)
+    tmp_flag_file_4.write(('--flagfile=%s\n' % tmp_flag_file_3.name))
+    tmp_flag_file_4.write('--UnitTestMessage1=setFromTempFile3\n')
+    tmp_flag_file_4.write('--UnitTestMessage1=setFromTempFile3\n')
+    os.chmod((tmp_path + '/UnitTestFile4.tst'), 0)
+    file_list.append(tmp_flag_file_4.name)
+    tmp_flag_file_1.close()
+    tmp_flag_file_2.close()
+    tmp_flag_file_3.close()
+    tmp_flag_file_4.close()
+    self.files_to_delete = file_list
+    return file_list

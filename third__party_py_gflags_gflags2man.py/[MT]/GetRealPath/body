@@ -1,0 +1,16 @@
+def GetRealPath(filename):
+    'Given an executable filename, find in the PATH or find absolute path.\n  Args:\n    filename  An executable filename (string)\n  Returns:\n    Absolute version of filename.\n    None if filename could not be found locally, absolutely, or in PATH\n  '
+    if os.path.isabs(filename):
+        return filename
+    if (filename.startswith('./') or filename.startswith('../')):
+        return os.path.abspath(filename)
+    path = os.getenv('PATH', '')
+    for directory in path.split(':'):
+        tryname = os.path.join(directory, filename)
+        if os.path.exists(tryname):
+            if (not os.path.isabs(directory)):
+                return os.path.abspath(tryname)
+            return tryname
+    if os.path.exists(filename):
+        return os.path.abspath(filename)
+    return None

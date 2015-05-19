@@ -1,0 +1,17 @@
+def testMultiNumericalFlags(self):
+    'Test multi_int and multi_float flags.'
+    int_defaults = [77, 88]
+    gflags.DEFINE_multi_int('m_int', int_defaults, 'integer option that can occur multiple times', short_name='mi')
+    self.assertListEqual(FLAGS.get('m_int', None), int_defaults)
+    argv = ('./program', '--m_int=-99', '--mi=101')
+    FLAGS(argv)
+    self.assertListEqual(FLAGS.get('m_int', None), [(-99), 101])
+    float_defaults = [2.2, 3]
+    gflags.DEFINE_multi_float('m_float', float_defaults, 'float option that can occur multiple times', short_name='mf')
+    for (expected, actual) in zip(float_defaults, FLAGS.get('m_float', None)):
+        self.assertAlmostEquals(expected, actual)
+    argv = ('./program', '--m_float=-17', '--mf=2.78e9')
+    FLAGS(argv)
+    expected_floats = [(-17.0), 2780000000.0]
+    for (expected, actual) in zip(expected_floats, FLAGS.get('m_float', None)):
+        self.assertAlmostEquals(expected, actual)

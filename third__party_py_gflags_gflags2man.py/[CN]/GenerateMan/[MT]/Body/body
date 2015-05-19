@@ -1,0 +1,20 @@
+def Body(self):
+    self.fp.write('.SH DESCRIPTION\n.\\" Add any additional description here\n.PP\n')
+    for ln in self.info.desc:
+        self.fp.write(('%s\n' % ln))
+    self.fp.write('.SH OPTIONS\n')
+    for modname in self.info.module_list:
+        if (modname.find(self.info.executable) >= 0):
+            mod = modname.replace(self.info.executable, self.info.name)
+        else:
+            mod = modname
+        self.fp.write(('\n.P\n.I %s\n' % mod))
+        for flag in self.info.modules[modname]:
+            help_string = flag.help
+            if (flag.default or flag.tips):
+                help_string += '\n.br\n'
+            if flag.default:
+                help_string += ("  (default: '%s')" % flag.default)
+            if flag.tips:
+                help_string += ('  (%s)' % flag.tips)
+            self.fp.write(('.TP\n%s\n%s\n' % (flag.desc, help_string)))

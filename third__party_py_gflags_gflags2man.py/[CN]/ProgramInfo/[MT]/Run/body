@@ -1,0 +1,16 @@
+def Run(self):
+    'Run it and collect output.\n\n    Returns:\n      1 (true)   If everything went well.\n      0 (false)  If there were problems.\n    '
+    if (not self.executable):
+        logging.error(('Could not locate "%s"' % self.long_name))
+        return 0
+    finfo = os.stat(self.executable)
+    self.date = time.localtime(finfo[stat.ST_MTIME])
+    logging.info(('Running: %s %s </dev/null 2>&1' % (self.executable, FLAGS.help_flag)))
+    (child_stdin, child_stdout_and_stderr) = os.popen4([self.executable, FLAGS.help_flag])
+    child_stdin.close()
+    self.output = child_stdout_and_stderr.readlines()
+    child_stdout_and_stderr.close()
+    if (len(self.output) < _MIN_VALID_USAGE_MSG):
+        logging.error(('Error: "%s %s" returned only %d lines: %s' % (self.name, FLAGS.help_flag, len(self.output), self.output)))
+        return 0
+    return 1

@@ -1,0 +1,23 @@
+def testMainModuleHelpWithKeyFlags(self):
+    expected_help = ''
+    self.assertMultiLineEqual(expected_help, self.flag_values.MainModuleHelp())
+    gflags.DEFINE_integer('main_module_int_fg', 1, 'Integer flag in the main module.', flag_values=self.flag_values)
+    try:
+        main_module_int_fg_help = "  --main_module_int_fg: Integer flag in the main module.\n    (default: '1')\n    (an integer)"
+        expected_help += ('\n%s:\n%s' % (sys.argv[0], main_module_int_fg_help))
+        self.assertMultiLineEqual(expected_help, self.flag_values.MainModuleHelp())
+        gflags.DECLARE_key_flag('main_module_int_fg', flag_values=self.flag_values)
+        self.assertMultiLineEqual(expected_help, self.flag_values.MainModuleHelp())
+        module_foo.DefineFlags(flag_values=self.flag_values)
+        self.assertMultiLineEqual(expected_help, self.flag_values.MainModuleHelp())
+        gflags.DECLARE_key_flag('tmod_foo_bool', flag_values=self.flag_values)
+        tmod_foo_bool_help = "  --[no]tmod_foo_bool: Boolean flag from module foo.\n    (default: 'true')"
+        expected_help += ('\n' + tmod_foo_bool_help)
+        self.assertMultiLineEqual(expected_help, self.flag_values.MainModuleHelp())
+        gflags.DECLARE_key_flag('tmod_bar_z', flag_values=self.flag_values)
+        tmod_bar_z_help = "  --[no]tmod_bar_z: Another boolean flag from module bar.\n    (default: 'false')"
+        expected_help = ('\n%s:\n%s\n%s\n%s' % (sys.argv[0], main_module_int_fg_help, tmod_bar_z_help, tmod_foo_bool_help))
+        self.assertMultiLineEqual(self.flag_values.MainModuleHelp(), expected_help)
+    finally:
+        self.flag_values.__delattr__('main_module_int_fg')
+        module_foo.RemoveFlags(flag_values=self.flag_values)

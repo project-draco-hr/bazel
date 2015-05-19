@@ -1,0 +1,14 @@
+def testErrorMessageWhenCheckerReturnsFalseOnStart(self):
+
+    def Checker(x):
+        self.call_args.append(x)
+        return False
+    gflags.DEFINE_integer('test_flag', None, 'Usual integer flag', flag_values=self.flag_values)
+    gflags.RegisterValidator('test_flag', Checker, message='Errors happen', flag_values=self.flag_values)
+    argv = ('./program', '--test_flag=1')
+    try:
+        self.flag_values(argv)
+        raise AssertionError('gflags.IllegalFlagValue expected')
+    except gflags.IllegalFlagValue as e:
+        self.assertEquals('flag --test_flag=1: Errors happen', str(e))
+    self.assertEquals([1], self.call_args)

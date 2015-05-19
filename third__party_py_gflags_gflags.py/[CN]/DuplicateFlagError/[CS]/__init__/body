@@ -1,0 +1,10 @@
+def __init__(self, flagname, flag_values, other_flag_values=None):
+    "Create a DuplicateFlagError.\n\n    Args:\n      flagname: Name of the flag being redefined.\n      flag_values: FlagValues object containing the first definition of\n          flagname.\n      other_flag_values: If this argument is not None, it should be the\n          FlagValues object where the second definition of flagname occurs.\n          If it is None, we assume that we're being called when attempting\n          to create the flag a second time, and we use the module calling\n          this one as the source of the second definition.\n    "
+    self.flagname = flagname
+    first_module = flag_values.FindModuleDefiningFlag(flagname, default='<unknown>')
+    if (other_flag_values is None):
+        second_module = _GetCallingModule()
+    else:
+        second_module = other_flag_values.FindModuleDefiningFlag(flagname, default='<unknown>')
+    msg = ("The flag '%s' is defined twice. First from %s, Second from %s" % (self.flagname, first_module, second_module))
+    DuplicateFlag.__init__(self, msg)

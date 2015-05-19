@@ -1,0 +1,36 @@
+def ParseCFlags(self, start_line=0):
+    'Parse C style flags.'
+    modname = None
+    modlist = []
+    flag = None
+    for line_num in range(start_line, len(self.output)):
+        line = self.output[line_num].rstrip()
+        if (not line):
+            if flag:
+                modlist.append(flag)
+                flag = None
+            continue
+        mobj = self.module_c_re.match(line)
+        if mobj:
+            modname = mobj.group(1)
+            logging.debug(('Module: %s' % line))
+            if flag:
+                modlist.append(flag)
+            self.module_list.append(modname)
+            self.modules.setdefault(modname, [])
+            modlist = self.modules[modname]
+            flag = None
+            continue
+        mobj = self.flag_c_re.match(line)
+        if mobj:
+            if flag:
+                modlist.append(flag)
+            logging.debug(('Flag: %s' % line))
+            flag = Flag(mobj.group(1), mobj.group(2))
+            continue
+        if flag:
+            flag.help += (' ' + line.strip())
+        else:
+            logging.info(('Extra: %s' % line))
+    if flag:
+        modlist.append(flag)

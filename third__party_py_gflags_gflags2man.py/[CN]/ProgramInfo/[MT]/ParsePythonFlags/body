@@ -1,0 +1,45 @@
+def ParsePythonFlags(self, start_line=0):
+    'Parse python/swig style flags.'
+    modname = None
+    modlist = []
+    flag = None
+    for line_num in range(start_line, len(self.output)):
+        line = self.output[line_num].rstrip()
+        if (not line):
+            continue
+        mobj = self.module_py_re.match(line)
+        if mobj:
+            modname = mobj.group(1)
+            logging.debug(('Module: %s' % line))
+            if flag:
+                modlist.append(flag)
+            self.module_list.append(modname)
+            self.modules.setdefault(modname, [])
+            modlist = self.modules[modname]
+            flag = None
+            continue
+        mobj = self.flag_py_re.match(line)
+        if mobj:
+            if flag:
+                modlist.append(flag)
+            logging.debug(('Flag: %s' % line))
+            flag = Flag(mobj.group(1), mobj.group(2))
+            continue
+        if (not flag):
+            logging.error(('Flag info, but no current flag "%s"' % line))
+        mobj = self.flag_default_py_re.match(line)
+        if mobj:
+            flag.default = mobj.group(1)
+            logging.debug(('Fdef: %s' % line))
+            continue
+        mobj = self.flag_tips_py_re.match(line)
+        if mobj:
+            flag.tips = mobj.group(1)
+            logging.debug(('Ftip: %s' % line))
+            continue
+        if (flag and flag.help):
+            flag.help += line
+        else:
+            logging.info(('Extra: %s' % line))
+    if flag:
+        modlist.append(flag)

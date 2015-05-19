@@ -1,0 +1,21 @@
+def WriteInfoInXMLFormat(self, outfile, module_name, is_key=False, indent=''):
+    'Writes common info about this flag, in XML format.\n\n    This is information that is relevant to all flags (e.g., name,\n    meaning, etc.).  If you defined a flag that has some other pieces of\n    info, then please override _WriteCustomInfoInXMLFormat.\n\n    Please do NOT override this method.\n\n    Args:\n      outfile: File object we write to.\n      module_name: A string, the name of the module that defines this flag.\n      is_key: A boolean, True iff this flag is key for main module.\n      indent: A string that is prepended to each generated line.\n    '
+    outfile.write((indent + '<flag>\n'))
+    inner_indent = (indent + '  ')
+    if is_key:
+        _WriteSimpleXMLElement(outfile, 'key', 'yes', inner_indent)
+    _WriteSimpleXMLElement(outfile, 'file', module_name, inner_indent)
+    _WriteSimpleXMLElement(outfile, 'name', self.name, inner_indent)
+    if self.short_name:
+        _WriteSimpleXMLElement(outfile, 'short_name', self.short_name, inner_indent)
+    if self.help:
+        _WriteSimpleXMLElement(outfile, 'meaning', self.help, inner_indent)
+    if (self.serializer and (not isinstance(self.default, str))):
+        default_serialized = self.serializer.Serialize(self.default)
+    else:
+        default_serialized = self.default
+    _WriteSimpleXMLElement(outfile, 'default', default_serialized, inner_indent)
+    _WriteSimpleXMLElement(outfile, 'current', self.value, inner_indent)
+    _WriteSimpleXMLElement(outfile, 'type', self.Type(), inner_indent)
+    self._WriteCustomInfoInXMLFormat(outfile, inner_indent)
+    outfile.write((indent + '</flag>\n'))
