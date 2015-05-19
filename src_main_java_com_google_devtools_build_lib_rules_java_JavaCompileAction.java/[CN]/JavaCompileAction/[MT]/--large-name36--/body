@@ -28,6 +28,14 @@
     }
   }
 );
+  if (!extdirInputs.isEmpty()) {
+    result.add("--extdir");
+    LinkedHashSet<PathFragment> extdirs=new LinkedHashSet<>();
+    for (    Artifact extjar : extdirInputs) {
+      extdirs.add(extjar.getExecPath().getParentDirectory());
+    }
+    result.add(Joiner.on(configuration.getHostPathSeparator()).join(extdirs));
+  }
   if (!processorPath.isEmpty()) {
     result.addJoinExecPaths("--processorpath",configuration.getHostPathSeparator(),processorPath);
   }
