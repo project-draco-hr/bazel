@@ -47,8 +47,6 @@
   ImmutableMap.Builder<Artifact,FilesToRunProvider> executableRunfilesbuilder=new ImmutableMap.Builder<>();
   ImmutableMap.Builder<String,Object> fileBuilder=new ImmutableMap.Builder<>();
   ImmutableMap.Builder<String,Object> filesBuilder=new ImmutableMap.Builder<>();
-  ImmutableMap.Builder<String,Object> targetBuilder=new ImmutableMap.Builder<>();
-  ImmutableMap.Builder<String,Object> targetsBuilder=new ImmutableMap.Builder<>();
   for (  Attribute a : ruleContext.getRule().getAttributes()) {
     Type<?> type=a.getType();
     Object val=ruleContext.attributes().get(a.getName(),type);
@@ -80,13 +78,11 @@
     }
     filesBuilder.put(skyname,ruleContext.getPrerequisiteArtifacts(a.getName(),mode).list());
     List<?> allPrereq=ruleContext.getPrerequisites(a.getName(),mode);
-    targetsBuilder.put(skyname,SkylarkList.list(allPrereq,TransitiveInfoCollection.class));
     if (type == Type.LABEL) {
       Object prereq=ruleContext.getPrerequisite(a.getName(),mode);
       if (prereq == null) {
         prereq=Environment.NONE;
       }
-      targetBuilder.put(skyname,prereq);
       attrBuilder.put(skyname,prereq);
     }
  else {
@@ -97,8 +93,6 @@
   executableObject=new SkylarkClassObject(executableBuilder.build(),"No such executable. " + "Make sure there is a '%s' label type attribute marked as 'executable'");
   fileObject=new SkylarkClassObject(fileBuilder.build(),"No such file. Make sure there is a '%s' label type attribute marked as 'single_file'");
   filesObject=new SkylarkClassObject(filesBuilder.build(),"No such files. Make sure there is a '%s' label or label_list type attribute");
-  targetObject=new SkylarkClassObject(targetBuilder.build(),"No such target. Make sure there is a '%s' label type attribute");
-  targetsObject=new SkylarkClassObject(targetsBuilder.build(),"No such targets. Make sure there is a '%s' label or label_list type attribute");
   executableRunfilesMap=executableRunfilesbuilder.build();
   makeVariables=ruleContext.getConfigurationMakeVariableContext().collectMakeVariables();
 }
