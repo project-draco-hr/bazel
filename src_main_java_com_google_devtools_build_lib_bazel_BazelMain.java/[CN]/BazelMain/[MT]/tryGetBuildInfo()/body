@@ -1,0 +1,21 @@
+{
+  try (InputStream in=BazelMain.class.getResourceAsStream(BUILD_DATA_PROPERTIES)){
+    if (in == null) {
+      return ImmutableMap.of();
+    }
+    Properties props=new Properties();
+    props.load(in);
+    ImmutableMap.Builder<String,String> buildData=ImmutableMap.builder();
+    for (    Object key : props.keySet()) {
+      String stringKey=key.toString();
+      if (stringKey.startsWith("build.")) {
+        String buildDataKey="B" + stringKey.substring(1).replace('.',' ');
+        buildData.put(buildDataKey,props.getProperty(stringKey,""));
+      }
+    }
+    return buildData.build();
+  }
+ catch (  IOException ignored) {
+    return ImmutableMap.of();
+  }
+}
