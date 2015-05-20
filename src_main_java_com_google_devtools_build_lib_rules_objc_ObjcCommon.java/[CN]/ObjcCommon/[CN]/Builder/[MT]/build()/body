@@ -1,6 +1,12 @@
 {
   Iterable<BundleableFile> bundleImports=BundleableFile.bundleImportsFromRule(context);
   ObjcProvider.Builder objcProvider=new ObjcProvider.Builder().addAll(IMPORTED_LIBRARY,extraImportLibraries).addAll(BUNDLE_FILE,bundleImports).addAll(BUNDLE_IMPORT_DIR,uniqueContainers(BundleableFile.toArtifacts(bundleImports),BUNDLE_CONTAINER_TYPE)).addAll(SDK_FRAMEWORK,extraSdkFrameworks).addAll(WEAK_SDK_FRAMEWORK,extraWeakSdkFrameworks).addAll(SDK_DYLIB,extraSdkDylibs).addAll(FRAMEWORK_FILE,frameworkImports).addAll(FRAMEWORK_DIR,uniqueContainers(frameworkImports,FRAMEWORK_CONTAINER_TYPE)).addAll(INCLUDE,userHeaderSearchPaths).addAll(DEFINE,defines).addAll(HEADER,headers).addTransitiveAndPropagate(depObjcProviders).addTransitiveWithoutPropagating(directDepObjcProviders);
+  for (  CppCompilationContext headerProvider : depCcHeaderProviders) {
+    objcProvider.addTransitiveAndPropagate(HEADER,headerProvider.getDeclaredIncludeSrcs());
+  }
+  for (  CcLinkParamsProvider linkProvider : depCcLinkProviders) {
+    objcProvider.addTransitiveAndPropagate(CC_LIBRARY,linkProvider.getCcLinkParams(true,false).getLibraries());
+  }
   if (compilationAttributes.isPresent()) {
     CompilationAttributes attributes=compilationAttributes.get();
     ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(context);
