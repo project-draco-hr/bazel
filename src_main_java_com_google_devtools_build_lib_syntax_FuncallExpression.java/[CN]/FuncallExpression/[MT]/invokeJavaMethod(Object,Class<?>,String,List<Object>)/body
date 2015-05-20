@@ -1,51 +1,32 @@
 {
-  try {
-    MethodDescriptor matchingMethod=null;
-    List<MethodDescriptor> methods=getMethods(objClass,methodName,args.size());
-    if (methods != null) {
-      for (      MethodDescriptor method : methods) {
-        Class<?>[] params=method.getMethod().getParameterTypes();
-        int i=0;
-        boolean matching=true;
-        for (        Class<?> param : params) {
-          if (!param.isAssignableFrom(args.get(i).getClass())) {
-            matching=false;
-            break;
-          }
-          i++;
+  MethodDescriptor matchingMethod=null;
+  List<MethodDescriptor> methods=getMethods(objClass,methodName,args.size(),getLocation());
+  if (methods != null) {
+    for (    MethodDescriptor method : methods) {
+      Class<?>[] params=method.getMethod().getParameterTypes();
+      int i=0;
+      boolean matching=true;
+      for (      Class<?> param : params) {
+        if (!param.isAssignableFrom(args.get(i).getClass())) {
+          matching=false;
+          break;
         }
-        if (matching) {
-          if (matchingMethod == null) {
-            matchingMethod=method;
-          }
+        i++;
+      }
+      if (matching) {
+        if (matchingMethod == null) {
+          matchingMethod=method;
+        }
  else {
-            throw new EvalException(func.getLocation(),"Multiple matching methods for " + formatMethod(methodName,args) + " in "+ EvalUtils.getDataTypeNameFromClass(objClass));
-          }
+          throw new EvalException(func.getLocation(),"Multiple matching methods for " + formatMethod(methodName,args) + " in "+ EvalUtils.getDataTypeNameFromClass(objClass));
         }
       }
     }
-    if (matchingMethod != null && !matchingMethod.getAnnotation().structField()) {
-      return callMethod(matchingMethod,methodName,obj,args.toArray(),getLocation());
-    }
+  }
+  if (matchingMethod != null && !matchingMethod.getAnnotation().structField()) {
+    return callMethod(matchingMethod,methodName,obj,args.toArray(),getLocation());
+  }
  else {
-      throw new EvalException(getLocation(),"No matching method found for " + formatMethod(methodName,args) + " in "+ EvalUtils.getDataTypeNameFromClass(objClass));
-    }
-  }
- catch (  IllegalAccessException e) {
-    throw new EvalException(getLocation(),"Method invocation failed: " + e);
-  }
-catch (  InvocationTargetException e) {
-    if (e.getCause() instanceof FuncallException) {
-      throw new EvalException(getLocation(),e.getCause().getMessage());
-    }
- else     if (e.getCause() != null) {
-      throw new EvalExceptionWithJavaCause(getLocation(),e.getCause());
-    }
- else {
-      throw new EvalException(getLocation(),"Method invocation failed: " + e);
-    }
-  }
-catch (  ExecutionException e) {
-    throw new EvalException(getLocation(),"Method invocation failed: " + e);
+    throw new EvalException(getLocation(),"No matching method found for " + formatMethod(methodName,args) + " in "+ EvalUtils.getDataTypeNameFromClass(objClass));
   }
 }
