@@ -1,0 +1,38 @@
+'Installs an Android application, possibly in an incremental way.'
+import collections
+import hashlib
+import logging
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import zipfile
+from third_party.py import gflags
+from third_party.py.concurrent import futures
+gflags.DEFINE_string('split_main_apk', None, 'The main APK for split install')
+gflags.DEFINE_multistring('split_apk', [], 'Split APKs to install')
+gflags.DEFINE_string('dexmanifest', None, 'The .dex manifest')
+gflags.DEFINE_string('resource_apk', None, 'The resource .apk')
+gflags.DEFINE_string('apk', None, 'The app .apk. If not specified, do incremental deployment')
+gflags.DEFINE_string('adb', None, 'ADB to use')
+gflags.DEFINE_string('stub_datafile', None, 'The stub data file')
+gflags.DEFINE_string('output_marker', None, 'The output marker file')
+gflags.DEFINE_multistring('extra_adb_arg', [], 'Extra arguments to adb')
+gflags.DEFINE_string('execroot', '.', 'The exec root')
+gflags.DEFINE_integer('adb_jobs', 2, 'The number of instances of adb to use in parallel to update files on the device', lower_bound=1)
+gflags.DEFINE_boolean('start_app', False, 'Whether to start the app after installing it.')
+gflags.DEFINE_string('user_home_dir', None, "Path to the user's home directory")
+gflags.DEFINE_string('flagfile', None, 'Path to a file to read additional flags from')
+gflags.DEFINE_string('verbosity', None, 'Logging verbosity')
+FLAGS = gflags.FLAGS
+DEVICE_DIRECTORY = '/data/local/tmp/incrementaldeployment'
+ManifestEntry = collections.namedtuple('ManifestEntry', ['input_file', 'zippath', 'installpath', 'sha256'])
+if (__name__ == '__main__'):
+    FLAGS(sys.argv)
+    if FLAGS.flagfile:
+        with open(FLAGS.flagfile) as flagsfile:
+            FLAGS((sys.argv + [line.strip() for line in flagsfile.readlines()]))
+    main()

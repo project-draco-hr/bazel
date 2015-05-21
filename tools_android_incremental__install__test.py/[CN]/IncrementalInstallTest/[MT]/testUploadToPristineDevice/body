@@ -1,0 +1,13 @@
+def testUploadToPristineDevice(self):
+    self._CreateZip()
+    with open('dex1', 'w') as f:
+        f.write('content3')
+    manifest = self._CreateLocalManifest('zip1 zp1 ip1 0', 'zip1 zp2 ip2 0', 'dex1 - ip3 0')
+    self._CallIncrementalInstall(incremental=False)
+    resources_checksum_path = self._GetDeviceAppPath('resources_checksum')
+    self.assertTrue((resources_checksum_path in self._mock_adb.files))
+    self.assertEquals(manifest, self._GetDeviceFile('dex/manifest'))
+    self.assertEquals('content1', self._GetDeviceFile('dex/ip1'))
+    self.assertEquals('content2', self._GetDeviceFile('dex/ip2'))
+    self.assertEquals('content3', self._GetDeviceFile('dex/ip3'))
+    self.assertEquals('resource apk', self._GetDeviceFile('resources.ap_'))

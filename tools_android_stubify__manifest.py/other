@@ -1,0 +1,16 @@
+'Stubifies an AndroidManifest.xml.\n\nDoes the following things:\n  - Replaces the Application class in an Android manifest with a stub one\n  - Resolve string and integer resources to their default values\n\nusage: %s [input manifest] [output manifest] [file for old application class]\n\nWrites the old application class into the file designated by the third argument.\n'
+import sys
+from xml.etree import ElementTree
+from third_party.py import gflags
+gflags.DEFINE_string('input_manifest', None, 'The input manifest')
+gflags.DEFINE_string('output_manifest', None, 'The output manifest')
+gflags.DEFINE_string('output_datafile', None, 'The output data file that will be embedded in the final APK')
+gflags.DEFINE_string('override_package', None, 'The Android package. Override the one specified in the input manifest')
+FLAGS = gflags.FLAGS
+ANDROID = 'http://schemas.android.com/apk/res/android'
+READ_EXTERNAL_STORAGE = 'android.permission.READ_EXTERNAL_STORAGE'
+STUB_APPLICATION = 'com.google.devtools.build.android.incrementaldeployment.StubApplication'
+ElementTree.register_namespace('android', ANDROID)
+if (__name__ == '__main__'):
+    FLAGS(sys.argv)
+    main()

@@ -1,0 +1,10 @@
+def testUploadWithNewFile(self):
+    self._CreateRemoteManifest('zip1 zp1 ip1 0')
+    self._PutDeviceFile('dex/ip1', 'content1')
+    self._PutDeviceFile('install_timestamp', '0')
+    self._mock_adb.package_timestamp = '0'
+    self._CreateLocalManifest('zip1 zp1 ip1 0', 'zip1 zp2 ip2 1')
+    self._CreateZip()
+    self._CallIncrementalInstall(incremental=True)
+    self.assertEquals('content1', self._GetDeviceFile('dex/ip1'))
+    self.assertEquals('content2', self._GetDeviceFile('dex/ip2'))

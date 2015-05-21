@@ -1,0 +1,12 @@
+def UploadResources(adb, resource_apk, app_dir):
+    'Uploads resources to the device.\n\n  Args:\n    adb: The Adb instance representing the device to install to.\n    resource_apk: Path to the resource apk.\n    app_dir: The directory things should be installed under on the device.\n\n  Returns:\n    None.\n  '
+    new_checksum = Checksum(resource_apk)
+    device_checksum_file = ('%s/%s' % (app_dir, 'resources_checksum'))
+    old_checksum = adb.Pull(device_checksum_file)
+    if (old_checksum == new_checksum):
+        logging.info('Application resources up-to-date')
+        return
+    logging.info('Updating application resources...')
+    adb.Delete(device_checksum_file)
+    adb.Push(resource_apk, ('%s/%s' % (app_dir, 'resources.ap_'))).result()
+    adb.PushString(new_checksum, device_checksum_file).result()

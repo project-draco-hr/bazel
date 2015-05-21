@@ -1,0 +1,40 @@
+def Exec(self, args):
+    if self._error:
+        (error_info, arg) = self._error
+        if ((not arg) or (arg in args)):
+            return self._CreatePopenMock(*error_info)
+    returncode = 0
+    stdout = ''
+    stderr = ''
+    cmd = args[1]
+    if (cmd == 'push'):
+        with open(args[2]) as f:
+            content = f.read()
+        self.files[args[3]] = content
+    elif (cmd == 'pull'):
+        remote = args[2]
+        local = args[3]
+        content = self.files.get(remote)
+        if (content is not None):
+            with open(local, 'w') as f:
+                f.write(content)
+        else:
+            returncode = 1
+            stderr = ("remote object '%s' does not exist\n" % remote)
+    elif (cmd == 'install'):
+        self.package_timestamp = self._last_package_timestamp
+        self._last_package_timestamp += 1
+        return self._CreatePopenMock(0, 'Success', '')
+    elif (cmd == 'shell'):
+        shell_cmdln = args[2]
+        self.shell_cmdlns.append(shell_cmdln)
+        if shell_cmdln.startswith(('mkdir', 'am', 'monkey')):
+            pass
+        elif shell_cmdln.startswith('dumpsys package '):
+            return self._CreatePopenMock(0, ('lastUpdateTime=%s' % self.package_timestamp), '')
+        elif shell_cmdln.startswith('rm'):
+            file_path = shell_cmdln.split()[2]
+            self.files.pop(file_path, None)
+        else:
+            raise Exception(('Unknown shell command line: %s' % shell_cmdln))
+    return self._CreatePopenMock(returncode, stdout, stderr)

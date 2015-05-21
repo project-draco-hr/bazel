@@ -1,0 +1,13 @@
+def testIncrementalInstallWithWrongInstallTimestamp(self):
+    self._CreateRemoteManifest('zip1 zp1 ip1 0', 'zip1 zip2 ip2 1', 'dex1 - ip3 0')
+    self._PutDeviceFile('dex/ip1', 'content1')
+    self._PutDeviceFile('dex/ip2', 'content2')
+    self._PutDeviceFile('dex/ip3', 'content3')
+    self._mock_adb.package_timestamp = 'WRONG'
+    self._CreateZip()
+    self._CreateLocalManifest('zip1 zp1 ip1 0', 'zip1 zip2 ip2 1', 'dex1 - ip3 0')
+    try:
+        self._CallIncrementalInstall(incremental=True)
+        self.fail('Should have quit if install timestamp is wrong')
+    except SystemExit:
+        pass

@@ -1,0 +1,9 @@
+def AddDex(self, input_dex_or_zip, zippath, dex):
+    'Adds a dex file to the output.\n\n    Args:\n      input_dex_or_zip: the input file written to the manifest\n      zippath: the zip path written to the manifest or None if the input file\n          is not a .zip .\n      dex: the dex file to be added\n\n    Returns:\n      None.\n    '
+    fs_checksum = self.Checksum(dex)
+    if (fs_checksum in self.checksums):
+        return
+    self.checksums.add(fs_checksum)
+    zip_dex = ('incremental_classes%d.dex' % self.output_dex_counter)
+    self.output_dex_counter += 1
+    self.manifest_lines.append(('%s %s %s %s' % (input_dex_or_zip, (zippath if zippath else '-'), zip_dex, fs_checksum)))

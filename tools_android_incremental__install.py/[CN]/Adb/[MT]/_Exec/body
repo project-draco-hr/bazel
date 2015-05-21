@@ -1,0 +1,23 @@
+def _Exec(self, adb_args):
+    'Executes the given adb command + args.'
+    args = (([self._adb_path] + FLAGS.extra_adb_arg) + adb_args)
+    logging.debug('Executing: %s', ' '.join(args))
+    env = {}
+    if self._user_home_dir:
+        env['HOME'] = self._user_home_dir
+    adb = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+    (stdout, stderr) = adb.communicate()
+    stdout = stdout.strip()
+    stderr = stderr.strip()
+    logging.debug('adb ret: %s', adb.returncode)
+    logging.debug('adb out: %s', stdout)
+    logging.debug('adb err: %s', stderr)
+    if ('device not found' in stderr):
+        raise DeviceNotFoundError()
+    elif ('device unauthorized' in stderr):
+        raise DeviceUnauthorizedError()
+    elif MultipleDevicesError.CheckError(stderr):
+        raise MultipleDevicesError(re.sub('^error: ', '', stderr))
+    if (adb.returncode != 0):
+        raise AdbError(args, adb.returncode, stdout, stderr)
+    return (adb.returncode, stdout, stderr, args)

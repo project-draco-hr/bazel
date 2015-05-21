@@ -1,0 +1,10 @@
+def setUp(self):
+    os.chdir(os.environ['TEST_TMPDIR'])
+    self._mock_adb = MockAdb()
+    with open(self._STUB_DATAFILE, 'w') as f:
+        f.write('\n'.join([self._OLD_APP_PACKGE, self._APP_PACKAGE]))
+    with open(self._RESOURCE_APK, 'w') as f:
+        f.write('resource apk')
+    self._popen_patch = mock.patch.object(incremental_install, 'subprocess')
+    self._popen = self._popen_patch.start().Popen
+    self._popen.side_effect = (lambda args, **kwargs: self._mock_adb.Exec(args))

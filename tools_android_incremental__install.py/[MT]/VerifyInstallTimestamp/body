@@ -1,0 +1,8 @@
+def VerifyInstallTimestamp(adb, app_package):
+    'Verifies that the app is unchanged since the last mobile-install.'
+    expected_timestamp = adb.Pull(('%s/%s/install_timestamp' % (DEVICE_DIRECTORY, app_package)))
+    if (not expected_timestamp):
+        raise TimestampException("Cannot verify last mobile install. At least one non-incremental 'mobile-install' must precede incremental installs")
+    actual_timestamp = adb.GetInstallTime(app_package)
+    if (actual_timestamp != expected_timestamp):
+        raise TimestampException(("Installed app '%s' has an unexpected timestamp. Did you last install the app in a way other than 'mobile-install'?" % app_package))

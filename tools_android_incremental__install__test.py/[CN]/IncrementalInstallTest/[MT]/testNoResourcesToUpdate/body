@@ -1,0 +1,11 @@
+def testNoResourcesToUpdate(self):
+    self._CreateRemoteManifest('zip1 zp1 ip1 0')
+    self._PutDeviceFile('dex/ip1', 'content1')
+    self._PutDeviceFile('resources.ap_', 'resources')
+    self._PutDeviceFile('resources_checksum', incremental_install.Checksum(self._RESOURCE_APK))
+    self._PutDeviceFile('install_timestamp', '0')
+    self._mock_adb.package_timestamp = '0'
+    self._CreateZip()
+    self._CreateLocalManifest('zip1 zp1 ip1 0')
+    self._CallIncrementalInstall(incremental=True)
+    self.assertEquals('resources', self._GetDeviceFile('resources.ap_'))

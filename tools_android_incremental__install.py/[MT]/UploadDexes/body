@@ -1,0 +1,51 @@
+def UploadDexes(adb, execroot, app_dir, temp_dir, dexmanifest, full_install):
+    'Uploads dexes to the device so that the state.\n\n  Does the minimum amount of work necessary to make the state of the device\n  consistent with what was built.\n\n  Args:\n    adb: the Adb instance representing the device to install to\n    execroot: the execroot\n    app_dir: the directory things should be installed under on the device\n    temp_dir: a local temporary directory\n    dexmanifest: contents of the dex manifest\n    full_install: whether to do a full install\n\n  Returns:\n    None.\n  '
+    dex_dir = os.path.join(app_dir, 'dex')
+    adb.Mkdir(dex_dir)
+    old_manifest = None
+    if (not full_install):
+        logging.info('Fetching dex manifest from device...')
+        old_manifest_contents = adb.Pull(('%s/manifest' % dex_dir))
+        if old_manifest_contents:
+            old_manifest = ParseManifest(old_manifest_contents)
+        else:
+            logging.info('Dex manifest not found on device')
+    if (old_manifest is None):
+        old_manifest = {}
+        adb.Delete(('%s/*' % dex_dir))
+    new_manifest = ParseManifest(dexmanifest)
+    dexes_to_delete = (set(old_manifest) - set(new_manifest))
+    common_dexes = set(new_manifest).intersection(old_manifest)
+    dexes_to_upload = set((d for d in common_dexes if (new_manifest[d].sha256 != old_manifest[d].sha256)))
+    dexes_to_upload.update((set(new_manifest) - set(old_manifest)))
+    if ((not dexes_to_delete) and (not dexes_to_upload)):
+        logging.info('Application dexes up-to-date')
+        return
+    adb.Delete(('%s/manifest' % dex_dir))
+    files_to_push = []
+    dexzips_in_upload = set((new_manifest[d].input_file for d in dexes_to_upload if (new_manifest[d].zippath != '-')))
+    for (i, dexzip_name) in enumerate(dexzips_in_upload):
+        zip_dexes = [d for d in dexes_to_upload if (new_manifest[d].input_file == dexzip_name)]
+        dexzip_tempdir = os.path.join(temp_dir, 'dex', str(i))
+        with zipfile.ZipFile(os.path.join(execroot, dexzip_name)) as dexzip:
+            for dex in zip_dexes:
+                zippath = new_manifest[dex].zippath
+                dexzip.extract(zippath, dexzip_tempdir)
+                files_to_push.append((os.path.join(dexzip_tempdir, zippath), ('%s/%s' % (dex_dir, dex))))
+    dexes_to_upload = set((d for d in dexes_to_upload if (new_manifest[d].zippath == '-')))
+    for dex in dexes_to_upload:
+        files_to_push.append((new_manifest[dex].input_file, ('%s/%s' % (dex_dir, dex))))
+    num_files = (len(dexes_to_delete) + len(files_to_push))
+    logging.info('Updating %d dex%s...', num_files, ('es' if (num_files > 1) else ''))
+    adb.DeleteMultiple((os.path.join(dex_dir, dex) for dex in dexes_to_delete))
+    upload_walltime_start = time.time()
+    fs = [adb.Push(local, remote) for (local, remote) in files_to_push]
+    (done, not_done) = futures.wait(fs, return_when=futures.FIRST_EXCEPTION)
+    upload_walltime = (time.time() - upload_walltime_start)
+    logging.debug('Dex upload walltime: %s seconds', upload_walltime)
+    if not_done:
+        for f in not_done:
+            f.cancel()
+    for f in done:
+        f.result()
+    adb.PushString(dexmanifest, ('%s/manifest' % dex_dir)).result()

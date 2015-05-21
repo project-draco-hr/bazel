@@ -1,0 +1,11 @@
+def BuildSplitManifest(main_manifest, override_package, split, hascode):
+    'Builds a split manifest based on the manifest of the main APK.\n\n  Args:\n    main_manifest: the XML manifest of the main APK as a string\n    override_package: if not None, override the package in the main manifest\n    split: the name of the split as a string\n    hascode: if this split APK will contain .dex files\n\n  Returns:\n    The XML split manifest as a string\n\n  Raises:\n    Exception if something goes wrong.\n  '
+    manifest = ElementTree.fromstring(main_manifest)
+    android_namespace_prefix = '{http://schemas.android.com/apk/res/android}'
+    if override_package:
+        package = override_package
+    else:
+        package = manifest.get('package')
+    version_code = manifest.get((android_namespace_prefix + 'versionCode'))
+    version_name = manifest.get((android_namespace_prefix + 'versionName'))
+    return (MANIFEST_TEMPLATE % {'version_code': version_code, 'version_name': version_name, 'package': package, 'split': split, 'hascode': str(hascode).lower(), })
