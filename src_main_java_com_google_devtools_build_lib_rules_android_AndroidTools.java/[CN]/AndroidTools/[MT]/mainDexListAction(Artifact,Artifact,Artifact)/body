@@ -1,6 +1,7 @@
 {
+  SpawnAction.Builder builder=new SpawnAction.Builder().setMnemonic("MainDexClasses").setProgressMessage("Generating main dex classes list");
   if (androidSdk != null) {
-    return new SpawnAction.Builder().setExecutable(androidSdk.getMainDexListCreator()).addOutputArgument(mainDexList).addInputArgument(strippedJar).addInputArgument(jar).build(ruleContext);
+    return builder.setExecutable(androidSdk.getMainDexListCreator()).addOutputArgument(mainDexList).addInputArgument(strippedJar).addInputArgument(jar).addArguments(ruleContext.getTokenizedStringListAttr("main_dex_list_opts")).build(ruleContext);
   }
  else {
     StringBuilder shellCommandBuilder=new StringBuilder().append(ruleContext.getHostConfiguration().getFragment(Jvm.class).getJavaExecutable().getPathString()).append(" -cp ").append(dxJar.getExecPathString()).append(" ").append(AndroidBinary.MAIN_DEX_CLASS_BUILDER);
@@ -8,6 +9,6 @@
       shellCommandBuilder.append(" ").append(opt);
     }
     shellCommandBuilder.append(" ").append(strippedJar.getExecPathString()).append(" ").append(jar.getExecPathString()).append(" >").append(mainDexList.getExecPathString());
-    return new SpawnAction.Builder().addInput(strippedJar).addInput(jar).addInput(dxJar).addTransitiveInputs(BaseJavaCompilationHelper.getHostJavabaseInputs(ruleContext)).addOutput(mainDexList).setProgressMessage("Generating main dex classes list").setMnemonic("MainDexClasses").setShellCommand(shellCommandBuilder.toString()).build(ruleContext);
+    return builder.addInput(strippedJar).addInput(jar).addInput(dxJar).addTransitiveInputs(BaseJavaCompilationHelper.getHostJavabaseInputs(ruleContext)).addOutput(mainDexList).setShellCommand(shellCommandBuilder.toString()).build(ruleContext);
   }
 }
