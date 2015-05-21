@@ -12,5 +12,11 @@
  catch (  ArtifactResolutionException e) {
     throw new IOException("Failed to fetch Maven dependency: " + e.getMessage());
   }
-  return outputDirectory.getRelative(artifact.getFile().getAbsolutePath());
+  Path downloadPath=outputDirectory.getRelative(artifact.getFile().getAbsolutePath());
+  Hasher hasher=Hashing.sha1().newHasher();
+  String downloadSha1=HttpDownloader.getHash(hasher,downloadPath);
+  if (!sha1.equals(downloadSha1)) {
+    throw new IOException("Downloaded file at " + downloadPath + " has SHA-1 of "+ downloadSha1+ ", does not match expected SHA-1 ("+ sha1+ ")");
+  }
+  return downloadPath;
 }
