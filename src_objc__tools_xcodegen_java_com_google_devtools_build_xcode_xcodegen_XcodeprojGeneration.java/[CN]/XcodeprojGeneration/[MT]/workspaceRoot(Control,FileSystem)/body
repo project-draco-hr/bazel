@@ -1,0 +1,17 @@
+{
+  Iterator<String> srcList=allSourceFilePaths(control).iterator();
+  Path workspaceRoot;
+  if (!srcList.hasNext()) {
+    Path pbxprojPath=fileSystem.getPath(control.getPbxproj());
+    return XcodeprojGeneration.relativeWorkspaceRoot(pbxprojPath);
+  }
+ else {
+    Path relSourceFilePath=fileSystem.getPath(srcList.next());
+    Path absSourceFilePath=relSourceFilePath.toRealPath();
+    workspaceRoot=absSourceFilePath;
+    for (int i=0; i < relSourceFilePath.getNameCount(); i++) {
+      workspaceRoot=workspaceRoot.getParent();
+    }
+    return workspaceRoot;
+  }
+}
