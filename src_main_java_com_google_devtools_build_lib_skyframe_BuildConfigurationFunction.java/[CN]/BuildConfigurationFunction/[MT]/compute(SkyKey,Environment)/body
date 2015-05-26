@@ -1,0 +1,18 @@
+{
+  BuildConfigurationValue.Key key=(BuildConfigurationValue.Key)skyKey.argument();
+  Set<Fragment> fragments;
+  try {
+    fragments=getConfigurationFragments(key,env);
+  }
+ catch (  InvalidConfigurationException e) {
+    throw new BuildConfigurationFunctionException(e);
+  }
+  if (fragments == null) {
+    return null;
+  }
+  ClassToInstanceMap<Fragment> fragmentsMap=MutableClassToInstanceMap.create();
+  for (  Fragment fragment : fragments) {
+    fragmentsMap.put(fragment.getClass(),fragment);
+  }
+  return new BuildConfigurationValue(new BuildConfiguration(directories,fragmentsMap,key.getBuildOptions(),!key.actionsEnabled()));
+}

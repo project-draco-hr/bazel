@@ -1,0 +1,15 @@
+{
+  Set<SkyKey> fragmentKeys=new LinkedHashSet<>();
+  for (  Class<? extends BuildConfiguration.Fragment> fragmentClass : key.getFragments()) {
+    fragmentKeys.add(ConfigurationFragmentValue.key(key.getBuildOptions(),fragmentClass));
+  }
+  Map<SkyKey,ValueOrException<InvalidConfigurationException>> fragmentDeps=env.getValuesOrThrow(fragmentKeys,InvalidConfigurationException.class);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  ImmutableSet.Builder<Fragment> fragments=ImmutableSet.builder();
+  for (  ValueOrException<InvalidConfigurationException> value : fragmentDeps.values()) {
+    fragments.add(((ConfigurationFragmentValue)value.get()).getFragment());
+  }
+  return fragments.build();
+}

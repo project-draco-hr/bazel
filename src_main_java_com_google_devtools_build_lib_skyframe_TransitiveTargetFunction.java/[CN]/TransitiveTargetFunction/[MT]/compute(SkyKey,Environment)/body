@@ -59,6 +59,8 @@ catch (  NoSuchThingException e) {
   NestedSetBuilder<PackageIdentifier> transitiveSuccessfulPkgs=NestedSetBuilder.stableOrder();
   NestedSetBuilder<PackageIdentifier> transitiveUnsuccessfulPkgs=NestedSetBuilder.stableOrder();
   NestedSetBuilder<Label> transitiveTargets=NestedSetBuilder.stableOrder();
+  NestedSetBuilder<Class<? extends BuildConfiguration.Fragment>> transitiveConfigFragments=NestedSetBuilder.stableOrder();
+  Set<Class<? extends BuildConfiguration.Fragment>> configFragmentsFromDeps=new LinkedHashSet<>();
   PackageIdentifier packageId=target.getPackage().getPackageIdentifier();
   if (packageLoadedSuccessfully) {
     transitiveSuccessfulPkgs.add(packageId);
@@ -68,23 +70,32 @@ catch (  NoSuchThingException e) {
   }
   transitiveTargets.add(target.getLabel());
   Iterable<SkyKey> depKeys=getLabelDepKeys(target);
-  successfulTransitiveLoading&=processDeps(env,target,transitiveRootCauses,transitiveSuccessfulPkgs,transitiveUnsuccessfulPkgs,transitiveTargets,depKeys);
+  successfulTransitiveLoading&=processDeps(env,target,transitiveRootCauses,transitiveSuccessfulPkgs,transitiveUnsuccessfulPkgs,transitiveTargets,depKeys,transitiveConfigFragments,configFragmentsFromDeps);
   if (env.valuesMissing()) {
     return null;
   }
   depKeys=getLabelAspectKeys(target,env);
-  successfulTransitiveLoading&=processDeps(env,target,transitiveRootCauses,transitiveSuccessfulPkgs,transitiveUnsuccessfulPkgs,transitiveTargets,depKeys);
+  successfulTransitiveLoading&=processDeps(env,target,transitiveRootCauses,transitiveSuccessfulPkgs,transitiveUnsuccessfulPkgs,transitiveTargets,depKeys,transitiveConfigFragments,configFragmentsFromDeps);
   if (env.valuesMissing()) {
     return null;
+  }
+  if (target instanceof Rule) {
+    Set<Class<?>> configFragments=target.getAssociatedRule().getRuleClassObject().getRequiredConfigurationFragments();
+    configFragments=configFragments.isEmpty() ? getAllFragments() : configFragments;
+    for (    Class<?> fragment : configFragments) {
+      if (!configFragmentsFromDeps.contains(fragment)) {
+        transitiveConfigFragments.add((Class<? extends BuildConfiguration.Fragment>)fragment);
+      }
+    }
   }
   NestedSet<PackageIdentifier> successfullyLoadedPackages=transitiveSuccessfulPkgs.build();
   NestedSet<PackageIdentifier> unsuccessfullyLoadedPackages=transitiveUnsuccessfulPkgs.build();
   NestedSet<Label> loadedTargets=transitiveTargets.build();
   if (successfulTransitiveLoading) {
-    return TransitiveTargetValue.successfulTransitiveLoading(successfullyLoadedPackages,unsuccessfullyLoadedPackages,loadedTargets);
+    return TransitiveTargetValue.successfulTransitiveLoading(successfullyLoadedPackages,unsuccessfullyLoadedPackages,loadedTargets,transitiveConfigFragments.build());
   }
  else {
     NestedSet<Label> rootCauses=transitiveRootCauses.build();
-    return TransitiveTargetValue.unsuccessfulTransitiveLoading(successfullyLoadedPackages,unsuccessfullyLoadedPackages,loadedTargets,rootCauses,errorLoadingTarget);
+    return TransitiveTargetValue.unsuccessfulTransitiveLoading(successfullyLoadedPackages,unsuccessfullyLoadedPackages,loadedTargets,rootCauses,errorLoadingTarget,transitiveConfigFragments.build());
   }
 }
