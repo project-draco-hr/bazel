@@ -1,0 +1,25 @@
+def Merge(self):
+    'Takes two manifests, and merges them together to produce a third.'
+    self._RemoveFromMerger()
+    self._ExpandPackageName(self._merger_dom)
+    for (dom, filename) in self._mergees:
+        mergee_dom = xml.dom.minidom.parseString(dom)
+        self._ReplaceArgumentPlaceholders(mergee_dom)
+        self._ExpandPackageName(mergee_dom)
+        self._ApplyExcludePermissions(mergee_dom)
+        for (destination, values) in sorted(self._NODES_TO_COPY_FROM_MERGEE.iteritems()):
+            for node_to_copy in values:
+                for node in mergee_dom.getElementsByTagName(node_to_copy):
+                    if self._IsDuplicate(node_to_copy, node):
+                        continue
+                    merger_parent = self._FindMergerParent(node_to_copy, destination, mergee_dom)
+                    merger_parent.appendChild(self._merger_dom.createComment((' Merged from file: %s ' % filename)))
+                    comment_node = self._FindElementComment(node)
+                    if comment_node:
+                        merger_parent.appendChild(comment_node)
+                    merger_parent.appendChild(node)
+    top_comment = (((' *** WARNING *** DO NOT EDIT! THIS IS GENERATED MANIFEST BY MERGE_MANIFEST TOOL.\n  Merger manifest:\n    %s\n' % self._merger[1]) + ('  Mergee manifests:\n%s' % '\n'.join([('    %s' % mergee[1]) for mergee in self._mergees]))) + '\n  ')
+    manifest_element = self._merger_dom.getElementsByTagName('manifest')[0]
+    manifest_element.insertBefore(self._merger_dom.createComment(top_comment), manifest_element.firstChild)
+    self._SortAliases()
+    return self._merger_dom.toprettyxml(indent='  ')

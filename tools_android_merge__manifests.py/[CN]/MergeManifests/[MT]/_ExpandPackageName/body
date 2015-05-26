@@ -1,0 +1,16 @@
+def _ExpandPackageName(self, node):
+    'Set the package name if it is in a short form.\n\n    Filtering logic for what elements have package expansion:\n    If the name starts with a dot, always prefix it with the package.\n    If the name has a dot anywhere else, do not prefix it.\n    If the name has no dot at all, also prefix it with the package.\n\n    The massageManifest function shows where this rule is applied:\n\n    In the application element, on the name and backupAgent attributes.\n    In the activity, service, receiver, provider, and activity-alias elements,\n    on the name attribute.\n    In the activity-alias element, on the targetActivity attribute.\n\n    Args:\n      node: Xml Node for which to expand package name.\n    '
+    package_name = node.getElementsByTagName(self._MANIFEST).item(0).getAttribute(self._PACKAGE)
+    if (not package_name):
+        return
+    for element in node.getElementsByTagName('*'):
+        if (element.nodeName not in ['activity', 'activity-alias', 'application', 'service', 'receiver', 'provider']):
+            continue
+        self._ExpandPackageNameHelper(package_name, element, self._ANDROID_NAME)
+        if (element.nodeName == 'activity'):
+            self._ExpandPackageNameHelper(package_name, element, 'android:parentActivityName')
+        if (element.nodeName == 'activity-alias'):
+            self._ExpandPackageNameHelper(package_name, element, 'android:targetActivity')
+            continue
+        if (element.nodeName == 'application'):
+            self._ExpandPackageNameHelper(package_name, element, 'android:backupAgent')

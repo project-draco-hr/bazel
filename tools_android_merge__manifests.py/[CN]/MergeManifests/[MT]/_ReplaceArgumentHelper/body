@@ -1,0 +1,11 @@
+def _ReplaceArgumentHelper(self, placeholders, attr):
+    'Replaces argument placeholders within a single string.\n\n    Args:\n      placeholders: A dict mapping between placeholder names and their\n                    replacement values.\n      attr: A string in which to replace argument placeholders.\n\n    Returns:\n      A string with placeholders replaced, or the same string if no placeholders\n      were found.\n    '
+    match_placeholder = '\\${([a-zA-Z]*)}'
+
+    def PlaceholderReplacer(matchobj):
+        found_placeholder = matchobj.group(1)
+        if (found_placeholder not in placeholders):
+            raise UndefinedPlaceholderException(('Undefined placeholder when substituting arguments: ' + found_placeholder))
+        return placeholders[found_placeholder]
+    attr = re.sub(match_placeholder, PlaceholderReplacer, attr)
+    return attr

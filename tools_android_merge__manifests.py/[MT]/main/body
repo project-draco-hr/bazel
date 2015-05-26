@@ -1,0 +1,17 @@
+def main():
+    if (not FLAGS.merger):
+        raise RuntimeError(('Missing merger value.\n' + USAGE))
+    if (len(FLAGS.mergee) < 1):
+        raise RuntimeError(('Missing mergee value.\n' + USAGE))
+    if (not FLAGS.output):
+        raise RuntimeError(('Missing output value.\n' + USAGE))
+    if FLAGS.exclude_permission:
+        warning = _ValidateAndWarnPermissions(FLAGS.exclude_permission)
+        if warning:
+            print warning
+    merged_manifests = MergeManifests(_ReadFile(FLAGS.merger), _ReadFiles(FLAGS.mergee), FLAGS.exclude_permission).Merge()
+    with open(FLAGS.output, 'w') as out_file:
+        for line in merged_manifests.split('\n'):
+            if (not line.strip()):
+                continue
+            out_file.write((line + '\n'))

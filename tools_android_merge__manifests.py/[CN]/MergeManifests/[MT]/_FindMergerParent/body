@@ -1,0 +1,10 @@
+def _FindMergerParent(self, tag_to_copy, destination_tag_name, mergee_dom):
+    'Finds merger parent node, or appends mergee equivalent node if none.'
+    if self._merger_dom.getElementsByTagName(destination_tag_name):
+        return self._merger_dom.getElementsByTagName(destination_tag_name)[0]
+    else:
+        mergee_element = mergee_dom.getElementsByTagName(destination_tag_name)[0]
+        parents = self._merger_dom.getElementsByTagName(mergee_element.parentNode.tagName)
+        if (not parents):
+            raise MalformedManifestException('Malformed manifest has tag %s but no parent tag %s', (tag_to_copy, destination_tag_name))
+        return parents[0].insertBefore(mergee_element, parents[0].firstChild)

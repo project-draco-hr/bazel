@@ -1,0 +1,16 @@
+'Merges two android manifest xml files.'
+import re
+import sys
+import xml.dom.minidom
+from tools.android import android_permissions
+from third_party.py import gflags
+FLAGS = gflags.FLAGS
+EXCLUDE_ALL_ARG = 'all'
+gflags.DEFINE_multistring('exclude_permission', None, ('Permissions to be excluded, e.g.: "android.permission.READ_LOGS".This is a multistring, so multiple of those flags can be provided.Pass "%s" to exclude all permissions contributed by mergees.' % EXCLUDE_ALL_ARG))
+gflags.DEFINE_multistring('mergee', None, 'Mergee manifest that will be merged to merger manifest.This is a multistring, so multiple of those flags can be provided.')
+gflags.DEFINE_string('merger', None, 'Merger AndroidManifest file to be merged.')
+gflags.DEFINE_string('output', None, 'Output file with merged manifests.')
+USAGE = ('Error, invalid arguments.\nUsage: merge_manifests.py --merger=<merger> --mergee=<mergee1> --mergee=<merge2>\n    --exclude_permission=[Exclude permissions from mergee] --output=<output>\nExamples:\n  merge_manifests.py --merger=manifest.xml --mergee=manifest2.xml\n    --mergee=manifest3.xml --exclude_permission=android.permission.READ_LOGS\n    --output=AndroidManifest.xml\n\n    merge_manifests.py --merger=manifest.xml --mergee=manifest2.xml\n    --mergee=manifest3.xml --exclude_permission=%s\n    --output=AndroidManifest.xml\n' % EXCLUDE_ALL_ARG)
+if (__name__ == '__main__'):
+    FLAGS(sys.argv)
+    main()
