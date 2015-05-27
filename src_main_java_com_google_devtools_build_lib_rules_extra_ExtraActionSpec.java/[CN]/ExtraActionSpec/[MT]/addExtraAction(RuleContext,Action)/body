@@ -24,7 +24,8 @@
   String command=createExpandedCommand(owningRule,actionToShadow,owner,extraActionInfoFile);
   Map<String,String> env=owningRule.getConfiguration().getDefaultShellEnvironment();
   CommandHelper commandHelper=new CommandHelper(owningRule,ImmutableList.<FilesToRunProvider>of(),ImmutableMap.<Label,Iterable<Artifact>>of());
-  List<String> argv=commandHelper.buildCommandLine(command,extraActionInputs,".extra_action_script.sh",executionInfo);
+  String actionUniquifier=actionToShadow.getPrimaryOutput().getExecPath().getBaseName() + "." + actionToShadow.getKey();
+  List<String> argv=commandHelper.buildCommandLine(command,extraActionInputs,"." + actionUniquifier + ".extra_action_script.sh",executionInfo);
   String commandMessage=String.format("Executing extra_action %s on %s",label,ownerLabel);
   owningRule.registerAction(new ExtraAction(actionToShadow.getOwner(),ImmutableSet.copyOf(extraActionInputs.build()),manifests,extraActionOutputs,actionToShadow,createDummyOutput,CommandLine.of(argv,false),env,executionInfo,commandMessage,label.getName()));
   return ImmutableSet.<Artifact>builder().addAll(extraActionOutputs).addAll(protoOutputs).build();
