@@ -81,7 +81,7 @@ return null;
 List<Statement> preludeStatements=astLookupValue.getAST() == null ? ImmutableList.<Statement>of() : astLookupValue.getAST().getStatements();
 ParserInputSource inputSource;
 try {
-if (showLoadingProgress.get() && !packageFunctionCache.containsKey(packageId)) {
+if (showLoadingProgress.get() && packageFunctionCache.getIfPresent(packageId) == null) {
 reporter.handle(Event.progress("Loading package: " + packageName));
 }
 inputSource=ParserInputSource.create(buildFilePath);
@@ -100,7 +100,7 @@ try {
 handleLabelsCrossingSubpackagesAndPropagateInconsistentFilesystemExceptions(packageLookupValue.getRoot(),packageId,legacyPkgBuilder,env);
 }
  catch (InternalInconsistentFilesystemException e) {
-packageFunctionCache.remove(packageId);
+packageFunctionCache.invalidate(packageId);
 throw new PackageFunctionException(e,e.isTransient() ? Transience.TRANSIENT : Transience.PERSISTENT);
 }
 if (env.valuesMissing()) {
@@ -115,13 +115,13 @@ try {
 packageShouldBeConsideredInError=markDependenciesAndPropagateInconsistentFilesystemExceptions(pkg,env,globPatterns,subincludes);
 }
  catch (InternalInconsistentFilesystemException e) {
-packageFunctionCache.remove(packageId);
+packageFunctionCache.invalidate(packageId);
 throw new PackageFunctionException(e,e.isTransient() ? Transience.TRANSIENT : Transience.PERSISTENT);
 }
 if (env.valuesMissing()) {
 return null;
 }
-packageFunctionCache.remove(packageId);
+packageFunctionCache.invalidate(packageId);
 if (packageShouldBeConsideredInError) {
 throw new PackageFunctionException(new BuildFileContainsErrorsException(pkg,"Package '" + packageName + "' contains errors"),pkg.containsTemporaryErrors() ? Transience.TRANSIENT : Transience.PERSISTENT);
 }
