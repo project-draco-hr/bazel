@@ -5,6 +5,11 @@
   Preconditions.checkState(providerBuilder.containsKey(RunfilesProvider.class));
   Preconditions.checkState(providerBuilder.containsKey(FileProvider.class));
   Preconditions.checkState(providerBuilder.containsKey(FilesToRunProvider.class));
+  for (  Object provider : skylarkProviders.values()) {
+    if (provider instanceof SkylarkApiProvider) {
+      ((SkylarkApiProvider)provider).init(this);
+    }
+  }
   providerBuilder.put(SkylarkProviders.class,new SkylarkProviders(skylarkProviders));
   this.providers=ImmutableMap.copyOf(providerBuilder);
   this.mandatoryStampFiles=mandatoryStampFiles;
