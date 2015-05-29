@@ -1,0 +1,13 @@
+{
+  NestedSetBuilder<Artifact> builder=NestedSetBuilder.naiveLinkOrder();
+  for (  AndroidNeverLinkLibrariesProvider provider : AnalysisUtils.getProviders(deps,AndroidNeverLinkLibrariesProvider.class)) {
+    builder.addTransitive(provider.getTransitiveNeverLinkLibraries());
+  }
+  if (JavaCommon.isNeverLink(ruleContext)) {
+    builder.addAll(runtimeJars);
+    for (    JavaCompilationArgsProvider provider : AnalysisUtils.getProviders(deps,JavaCompilationArgsProvider.class)) {
+      builder.addTransitive(provider.getRecursiveJavaCompilationArgs().getRuntimeJars());
+    }
+  }
+  return builder.build();
+}

@@ -14,13 +14,14 @@
   common.setJavaCompilationArtifacts(collectJavaArtifacts(jars,interfaceJars));
   CppCompilationContext transitiveCppDeps=common.collectTransitiveCppDeps();
   NestedSet<LinkerInput> transitiveJavaNativeLibraries=common.collectTransitiveJavaNativeLibraries();
-  JavaCompilationArgs javaCompilationArgs=common.collectJavaCompilationArgs(false,common.isNeverLink(),compilationArgsFromSources());
-  JavaCompilationArgs recursiveJavaCompilationArgs=common.collectJavaCompilationArgs(true,common.isNeverLink(),compilationArgsFromSources());
+  boolean neverLink=JavaCommon.isNeverLink(ruleContext);
+  JavaCompilationArgs javaCompilationArgs=common.collectJavaCompilationArgs(false,neverLink,compilationArgsFromSources());
+  JavaCompilationArgs recursiveJavaCompilationArgs=common.collectJavaCompilationArgs(true,neverLink,compilationArgsFromSources());
   NestedSet<Artifact> transitiveJavaSourceJars=collectTransitiveJavaSourceJars(ruleContext,srcJar);
   if (srcJar != null) {
     srcJars=ImmutableList.of(srcJar);
   }
-  Runfiles runfiles=common.isNeverLink() ? Runfiles.EMPTY : new Runfiles.Builder().addArtifacts(common.getJavaCompilationArtifacts().getRuntimeJars()).addTargets(targets,RunfilesProvider.DEFAULT_RUNFILES).addRunfiles(ruleContext,RunfilesProvider.DEFAULT_RUNFILES).addTargets(targets,JavaRunfilesProvider.TO_RUNFILES).add(ruleContext,JavaRunfilesProvider.TO_RUNFILES).build();
+  Runfiles runfiles=neverLink ? Runfiles.EMPTY : new Runfiles.Builder().addArtifacts(common.getJavaCompilationArtifacts().getRuntimeJars()).addTargets(targets,RunfilesProvider.DEFAULT_RUNFILES).addRunfiles(ruleContext,RunfilesProvider.DEFAULT_RUNFILES).addTargets(targets,JavaRunfilesProvider.TO_RUNFILES).add(ruleContext,JavaRunfilesProvider.TO_RUNFILES).build();
   CcLinkParamsStore ccLinkParamsStore=new CcLinkParamsStore(){
     @Override protected void collect(    CcLinkParams.Builder builder,    boolean linkingStatically,    boolean linkShared){
       builder.addTransitiveTargets(common.targetsTreatedAsDeps(ClasspathType.BOTH),JavaCcLinkParamsProvider.TO_LINK_PARAMS,CcLinkParamsProvider.TO_LINK_PARAMS);
@@ -33,5 +34,5 @@
   semantics.addProviders(ruleContext,common,ImmutableList.<String>of(),null,srcJar,null,compilationToRuntimeJarMap.build(),helper,filesBuilder,ruleBuilder);
   NestedSet<Artifact> filesToBuild=filesBuilder.build();
   common.addTransitiveInfoProviders(ruleBuilder,filesToBuild,null);
-  return ruleBuilder.setFilesToBuild(filesToBuild).add(JavaNeverlinkInfoProvider.class,new JavaNeverlinkInfoProvider(common.isNeverLink())).add(RunfilesProvider.class,RunfilesProvider.simple(runfiles)).add(CcLinkParamsProvider.class,new CcLinkParamsProvider(ccLinkParamsStore)).add(JavaCompilationArgsProvider.class,new JavaCompilationArgsProvider(javaCompilationArgs,recursiveJavaCompilationArgs)).add(JavaNativeLibraryProvider.class,new JavaNativeLibraryProvider(transitiveJavaNativeLibraries)).add(CppCompilationContext.class,transitiveCppDeps).add(JavaSourceInfoProvider.class,new JavaSourceInfoProvider(NestedSetBuilder.wrap(Order.STABLE_ORDER,srcJars))).add(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(transitiveJavaSourceJars,srcJars)).addOutputGroup(JavaSemantics.SOURCE_JARS_OUTPUT_GROUP,transitiveJavaSourceJars).build();
+  return ruleBuilder.setFilesToBuild(filesToBuild).add(JavaRuntimeJarProvider.class,new JavaRuntimeJarProvider(common.getJavaCompilationArtifacts().getRuntimeJars())).add(JavaNeverlinkInfoProvider.class,new JavaNeverlinkInfoProvider(neverLink)).add(RunfilesProvider.class,RunfilesProvider.simple(runfiles)).add(CcLinkParamsProvider.class,new CcLinkParamsProvider(ccLinkParamsStore)).add(JavaCompilationArgsProvider.class,new JavaCompilationArgsProvider(javaCompilationArgs,recursiveJavaCompilationArgs)).add(JavaNativeLibraryProvider.class,new JavaNativeLibraryProvider(transitiveJavaNativeLibraries)).add(CppCompilationContext.class,transitiveCppDeps).add(JavaSourceInfoProvider.class,new JavaSourceInfoProvider(NestedSetBuilder.wrap(Order.STABLE_ORDER,srcJars))).add(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(transitiveJavaSourceJars,srcJars)).addOutputGroup(JavaSemantics.SOURCE_JARS_OUTPUT_GROUP,transitiveJavaSourceJars).build();
 }

@@ -1,0 +1,13 @@
+{
+  if (!JavaCommon.getConstraints(ruleContext).contains("android") && !ruleContext.getRule().getRuleClass().startsWith("android_")) {
+    return new Aspect.Builder().build();
+  }
+  List<TransitiveInfoCollection> deps=new ArrayList<>();
+  for (  String attribute : ATTRIBUTES) {
+    if (!ruleContext.getRule().getRuleClassObject().hasAttr(attribute,Type.LABEL_LIST)) {
+      continue;
+    }
+    deps.addAll(ruleContext.getPrerequisites(attribute,Mode.TARGET));
+  }
+  return new Aspect.Builder().addProvider(AndroidNeverLinkLibrariesProvider.class,new AndroidNeverLinkLibrariesProvider(AndroidCommon.collectTransitiveNeverlinkLibraries(ruleContext,deps,base.getProvider(JavaRuntimeJarProvider.class).getRuntimeJars()))).build();
+}
