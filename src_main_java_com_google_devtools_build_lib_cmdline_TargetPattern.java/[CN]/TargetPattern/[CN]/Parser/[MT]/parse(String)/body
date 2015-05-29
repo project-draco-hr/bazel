@@ -1,5 +1,15 @@
 {
   String originalPattern=pattern;
+  final boolean includesRepo=pattern.startsWith("@");
+  String repoName="";
+  if (includesRepo) {
+    int pkgStart=pattern.indexOf("//");
+    if (pkgStart < 0) {
+      throw new TargetParsingException("Couldn't find package in target " + pattern);
+    }
+    repoName=pattern.substring(0,pkgStart);
+    pattern=pattern.substring(pkgStart);
+  }
   final boolean isAbsolute=pattern.startsWith("//");
   pattern=isAbsolute ? pattern.substring(2) : absolutize(pattern);
   if (pattern.startsWith("/")) {
@@ -35,9 +45,9 @@
   if (ALL_TARGETS_IN_SUFFIXES.contains(targetPart)) {
     return new TargetsInPackage(originalPattern,pattern,":" + targetPart,isAbsolute,false,true);
   }
-  if (isAbsolute || pattern.contains(":")) {
+  if (includesRepo || isAbsolute || pattern.contains(":")) {
     PackageAndTarget packageAndTarget;
-    String fullLabel="//" + pattern;
+    String fullLabel=repoName + "//" + pattern;
     try {
       packageAndTarget=LabelValidator.validateAbsoluteLabel(fullLabel);
     }

@@ -1,6 +1,13 @@
 {
-  if (!absName.startsWith("//")) {
+  if (!isAbsolute(absName)) {
     throw new BadLabelException("invalid label: " + absName);
+  }
+  if (absName.startsWith("@")) {
+    int endOfRepo=absName.indexOf("//");
+    if (endOfRepo < 0) {
+      throw new BadLabelException("invalid fully-qualified label: " + absName);
+    }
+    absName=absName.substring(endOfRepo);
   }
   int colonIndex=absName.indexOf(':');
   int splitAt=colonIndex >= 0 ? colonIndex : absName.length();
