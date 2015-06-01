@@ -1,0 +1,14 @@
+{
+  NavigableMap<String,List<SignedPattern>> subdirectories;
+  Iterator<Entry<String,List<SignedPattern>>> remainder;
+  if (directoryKey.length() == 0) {
+    subdirectories=directories.tailMap(directoryKey,false);
+    remainder=Collections.emptyIterator();
+  }
+ else {
+    String afterKey=getKeyAfterAllPathsBelowDirectoryWithoutTrailingSlash(directoryKey.substring(0,directoryKey.length() - 1));
+    subdirectories=directories.subMap(directoryKey,false,afterKey,false);
+    remainder=directories.tailMap(afterKey).entrySet().iterator();
+  }
+  return new SubdirectoriesAndRemainder(subdirectories,remainder);
+}
