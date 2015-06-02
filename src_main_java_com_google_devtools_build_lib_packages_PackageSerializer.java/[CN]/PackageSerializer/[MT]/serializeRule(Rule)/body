@@ -1,10 +1,10 @@
 {
-  Build.Rule.Builder result=Build.Rule.newBuilder();
-  result.setName(rule.getLabel().toString());
-  result.setRuleClass(rule.getRuleClass());
-  result.setParseableLocation(serializeLocation(rule.getLocation()));
+  Build.Rule.Builder builder=Build.Rule.newBuilder();
+  builder.setName(rule.getLabel().toString());
+  builder.setRuleClass(rule.getRuleClass());
+  builder.setParseableLocation(serializeLocation(rule.getLocation()));
   for (  Attribute attribute : rule.getAttributes()) {
-    PackageSerializer.addAttributeToProto(result,attribute,getAttributeValues(rule,attribute),rule.getAttributeLocation(attribute.getName()),rule.isAttributeValueExplicitlySpecified(attribute),true);
+    PackageSerializer.addAttributeToProto(builder,attribute,getAttributeValues(rule,attribute),rule.getAttributeLocation(attribute.getName()),rule.isAttributeValueExplicitlySpecified(attribute),true);
   }
-  return result.build();
+  return Build.Target.newBuilder().setType(Build.Target.Discriminator.RULE).setRule(builder.build()).build();
 }

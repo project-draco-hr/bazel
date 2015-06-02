@@ -1,4 +1,5 @@
 {
+  Build.Package.Builder builder=Build.Package.newBuilder();
   builder.setName(pkg.getName());
   builder.setRepository(pkg.getPackageIdentifier().getRepository().toString());
   builder.setBuildFilePath(pkg.getFilename().getPathString());
@@ -34,22 +35,11 @@
   for (  Build.MakeVar makeVar : serializeMakeEnvironment(pkg.getMakeEnvironment())) {
     builder.addMakeVariable(makeVar);
   }
-  for (  Target target : pkg.getTargets()) {
-    if (target instanceof InputFile) {
-      builder.addSourceFile(serializeInputFile((InputFile)target));
-    }
- else     if (target instanceof OutputFile) {
-    }
- else     if (target instanceof PackageGroup) {
-      builder.addPackageGroup(serializePackageGroup((PackageGroup)target));
-    }
- else     if (target instanceof Rule) {
-      builder.addRule(serializeRule((Rule)target));
-    }
-  }
   for (  Event event : pkg.getEvents()) {
     builder.addEvent(serializeEvent(event));
   }
   builder.setContainsErrors(pkg.containsErrors());
   builder.setContainsTemporaryErrors(pkg.containsTemporaryErrors());
+  builder.build().writeDelimitedTo(out);
+  emitTargets(pkg.getTargets(),out);
 }
