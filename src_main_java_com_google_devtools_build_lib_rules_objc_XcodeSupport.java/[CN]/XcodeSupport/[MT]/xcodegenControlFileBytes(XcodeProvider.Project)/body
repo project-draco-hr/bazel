@@ -3,7 +3,12 @@
   final ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
   return new ByteSource(){
     @Override public InputStream openStream(){
-      return XcodeGenProtos.Control.newBuilder().setPbxproj(pbxproj.getExecPathString()).addAllTarget(project.targets()).addBuildSetting(XcodeGenProtos.XcodeprojBuildSetting.newBuilder().setName("IPHONEOS_DEPLOYMENT_TARGET").setValue(objcConfiguration.getMinimumOs()).build()).addBuildSetting(XcodeGenProtos.XcodeprojBuildSetting.newBuilder().setName("DEBUG_INFORMATION_FORMAT").setValue(objcConfiguration.generateDebugSymbols() ? "dwarf-with-dsym" : "dwarf").build()).build().toByteString().newInput();
+      XcodeGenProtos.Control.Builder builder=XcodeGenProtos.Control.newBuilder();
+      Path workspaceRoot=objcConfiguration.getClientWorkspaceRoot();
+      if (workspaceRoot != null) {
+        builder.setWorkspaceRoot(workspaceRoot.getPathString());
+      }
+      return builder.setPbxproj(pbxproj.getExecPathString()).addAllTarget(project.targets()).addBuildSetting(XcodeGenProtos.XcodeprojBuildSetting.newBuilder().setName("IPHONEOS_DEPLOYMENT_TARGET").setValue(objcConfiguration.getMinimumOs()).build()).addBuildSetting(XcodeGenProtos.XcodeprojBuildSetting.newBuilder().setName("DEBUG_INFORMATION_FORMAT").setValue(objcConfiguration.generateDebugSymbols() ? "dwarf-with-dsym" : "dwarf").build()).build().toByteString().newInput();
     }
   }
 ;
