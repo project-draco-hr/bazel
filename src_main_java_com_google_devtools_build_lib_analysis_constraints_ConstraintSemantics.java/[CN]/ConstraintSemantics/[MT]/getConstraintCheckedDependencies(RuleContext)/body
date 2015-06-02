@@ -4,14 +4,14 @@
   for (  String attr : attributes.getAttributeNames()) {
     Attribute attrDef=attributes.getAttributeDefinition(attr);
     Type<?> attrType=attributes.getAttributeType(attr);
-    if ((attrType != Type.LABEL && attrType != Type.LABEL_LIST) || RuleClass.isConstraintAttribute(attr) || attr.equals("visibility")|| attrDef.isImplicit()|| attrDef.isLateBound()) {
+    if ((attrType != Type.LABEL && attrType != Type.LABEL_LIST) || RuleClass.isConstraintAttribute(attr) || attr.equals("visibility")|| attrDef.isImplicit()|| attrDef.isLateBound()|| attrDef.getConfigurationTransition() == Attribute.ConfigurationTransition.HOST) {
       continue;
     }
     for (    TransitiveInfoCollection dep : ruleContext.getPrerequisites(attr,RuleConfiguredTarget.Mode.DONT_CHECK)) {
       if (dep instanceof OutputFileConfiguredTarget) {
         dep=((OutputFileConfiguredTarget)dep).getGeneratingRule();
       }
-      if (dep.getProvider(SupportedEnvironmentsProvider.class) != null && !Verify.verifyNotNull(dep.getConfiguration()).isHostConfiguration()) {
+      if (dep.getProvider(SupportedEnvironmentsProvider.class) != null) {
         depsToCheck.add(dep);
       }
     }
