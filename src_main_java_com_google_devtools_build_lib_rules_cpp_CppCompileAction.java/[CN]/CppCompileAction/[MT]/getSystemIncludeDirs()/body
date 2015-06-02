@@ -1,9 +1,19 @@
 {
   ImmutableList.Builder<PathFragment> result=ImmutableList.builder();
-  result.addAll(context.getSystemIncludeDirs());
-  for (  String opt : cppCompileCommandLine.copts) {
-    if (opt.startsWith("-isystem") && opt.length() > 8) {
-      result.add(new PathFragment(opt.substring(8)));
+  List<String> compilerOptions=getCompilerOptions();
+  for (int i=0; i < compilerOptions.size(); i++) {
+    String opt=compilerOptions.get(i);
+    if (opt.startsWith("-isystem")) {
+      if (opt.length() > 8) {
+        result.add(new PathFragment(opt.substring(8).trim()));
+      }
+ else       if (i + 1 < compilerOptions.size()) {
+        i++;
+        result.add(new PathFragment(compilerOptions.get(i)));
+      }
+ else {
+        System.err.println("WARNING: dangling -isystem flag in options for " + prettyPrint());
+      }
     }
   }
   return result.build();
