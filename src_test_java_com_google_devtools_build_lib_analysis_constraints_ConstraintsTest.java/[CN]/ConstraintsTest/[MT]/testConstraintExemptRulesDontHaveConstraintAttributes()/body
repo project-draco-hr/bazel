@@ -1,0 +1,7 @@
+{
+  new EnvironmentGroupMaker("foo_env").setEnvironments("a","b").setDefaults("a").make();
+  scratch.file("ihave/BUILD","totally_free_rule(","    name = 'nolimits',","    restricted_to = ['//foo_env:b']",")");
+  reporter.removeHandler(failFastHandler);
+  assertNull(getConfiguredTarget("//ihave:nolimits"));
+  assertContainsEvent("no such attribute 'restricted_to' in 'totally_free_rule'");
+}
