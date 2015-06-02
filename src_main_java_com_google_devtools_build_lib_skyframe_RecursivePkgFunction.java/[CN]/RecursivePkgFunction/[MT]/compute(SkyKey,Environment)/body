@@ -5,18 +5,30 @@
   PathFragment rootRelativePath=rootedPath.getRelativePath();
   Set<PathFragment> excludedPaths=recursivePkgKey.getExcludedPaths();
   SkyKey fileKey=FileValue.key(rootedPath);
-  FileValue fileValue=(FileValue)env.getValue(fileKey);
+  FileValue fileValue=null;
+  try {
+    fileValue=(FileValue)env.getValueOrThrow(fileKey,InconsistentFilesystemException.class,FileSymlinkCycleException.class,IOException.class);
+  }
+ catch (  InconsistentFilesystemException|FileSymlinkCycleException|IOException e) {
+    return reportErrorAndReturn(e,rootRelativePath,env.getListener());
+  }
   if (fileValue == null) {
     return null;
   }
   if (!fileValue.isDirectory()) {
-    return new RecursivePkgValue(NestedSetBuilder.<String>emptySet(ORDER));
+    return RecursivePkgValue.EMPTY;
   }
   if (fileValue.isSymlink()) {
-    return new RecursivePkgValue(NestedSetBuilder.<String>emptySet(ORDER));
+    return RecursivePkgValue.EMPTY;
   }
   PackageIdentifier packageId=PackageIdentifier.createInDefaultRepo(rootRelativePath.getPathString());
-  PackageLookupValue pkgLookupValue=(PackageLookupValue)env.getValue(PackageLookupValue.key(packageId));
+  PackageLookupValue pkgLookupValue;
+  try {
+    pkgLookupValue=(PackageLookupValue)env.getValueOrThrow(PackageLookupValue.key(packageId),NoSuchPackageException.class,InconsistentFilesystemException.class);
+  }
+ catch (  NoSuchPackageException|InconsistentFilesystemException e) {
+    return reportErrorAndReturn(e,rootRelativePath,env.getListener());
+  }
   if (pkgLookupValue == null) {
     return null;
   }
@@ -73,5 +85,5 @@
       packages.addTransitive(((RecursivePkgValue)childValue).getPackages());
     }
   }
-  return new RecursivePkgValue(packages.build());
+  return RecursivePkgValue.create(packages);
 }
