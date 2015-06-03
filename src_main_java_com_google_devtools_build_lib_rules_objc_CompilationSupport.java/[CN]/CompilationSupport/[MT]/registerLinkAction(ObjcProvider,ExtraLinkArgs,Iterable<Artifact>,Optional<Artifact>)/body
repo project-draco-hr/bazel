@@ -1,4 +1,5 @@
 {
   Artifact linkedBinary=ObjcRuleClasses.intermediateArtifacts(ruleContext).singleArchitectureBinary();
-  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setMnemonic("ObjcLink").setShellCommand(ImmutableList.of("/bin/bash","-c")).setCommandLine(linkCommandLine(extraLinkArgs,objcProvider,linkedBinary,dsymBundle)).addOutput(linkedBinary).addOutputs(dsymBundle.asSet()).addTransitiveInputs(objcProvider.get(LIBRARY)).addTransitiveInputs(objcProvider.get(IMPORTED_LIBRARY)).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(extraLinkInputs).build(ruleContext));
+  ImmutableList<Artifact> ccLibraries=ccLibraries(objcProvider);
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setMnemonic("ObjcLink").setShellCommand(ImmutableList.of("/bin/bash","-c")).setCommandLine(linkCommandLine(extraLinkArgs,objcProvider,linkedBinary,dsymBundle,ccLibraries)).addOutput(linkedBinary).addOutputs(dsymBundle.asSet()).addTransitiveInputs(objcProvider.get(LIBRARY)).addTransitiveInputs(objcProvider.get(IMPORTED_LIBRARY)).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(ccLibraries).addInputs(extraLinkInputs).build(ruleContext));
 }
