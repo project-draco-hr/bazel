@@ -2,7 +2,11 @@
   if (ruleContext == null) {
     return;
   }
+  Iterable<PathFragment> ignoredDirs=getValidationIgnoredDirs();
   for (  PathFragment include : Iterables.concat(getIncludeDirs(),getSystemIncludeDirs())) {
+    if (FileSystemUtils.startsWithAny(include,ignoredDirs)) {
+      continue;
+    }
     if (include.isAbsolute() || !PathFragment.EMPTY_FRAGMENT.getRelative(include).normalize().isNormalized()) {
       ruleContext.ruleError("The include path '" + include + "' references a path outside of the execution root.");
     }
