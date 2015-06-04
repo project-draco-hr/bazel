@@ -1,7 +1,6 @@
 {
-  ObjcProvider objcProvider=bundling.getObjcProvider();
   mergeZipPrefix+=bundling.getBundleDir() + "/";
-  BundleMergeProtos.Control.Builder control=BundleMergeProtos.Control.newBuilder().addAllBundleFile(BundleableFile.toBundleFiles(bundling.getExtraBundleFiles())).addAllBundleFile(BundleableFile.toBundleFiles(objcProvider.get(BUNDLE_FILE))).addAllSourcePlistFile(Artifact.toExecPaths(bundling.getBundleInfoplist().asSet())).setMinimumOsVersion(bundling.getMinimumOsVersion()).setSdkVersion(objcConfiguration.getIosSdkVersion()).setPlatform(objcConfiguration.getBundlingPlatform().name()).setBundleRoot(bundling.getBundleDir());
+  BundleMergeProtos.Control.Builder control=BundleMergeProtos.Control.newBuilder().addAllBundleFile(BundleableFile.toBundleFiles(bundling.getBundleFiles())).addAllSourcePlistFile(Artifact.toExecPaths(bundling.getBundleInfoplist().asSet())).setMinimumOsVersion(bundling.getMinimumOsVersion()).setSdkVersion(objcConfiguration.getIosSdkVersion()).setPlatform(objcConfiguration.getBundlingPlatform().name()).setBundleRoot(bundling.getBundleDir());
   for (  Artifact mergeZip : bundling.getMergeZips()) {
     control.addMergeZip(MergeZip.newBuilder().setEntryNamePrefix(mergeZipPrefix).setSourcePath(mergeZip.getExecPathString()).build());
   }
@@ -16,7 +15,7 @@
   for (  Artifact linkedBinary : bundling.getCombinedArchitectureBinary().asSet()) {
     control.addBundleFile(BundleMergeProtos.BundleFile.newBuilder().setSourceFile(linkedBinary.getExecPathString()).setBundlePath(bundling.getName()).setExternalFileAttribute(BundleableFile.EXECUTABLE_EXTERNAL_FILE_ATTRIBUTE).build()).setExecutableName(bundling.getName());
   }
-  for (  Bundling nestedBundling : bundling.getObjcProvider().get(NESTED_BUNDLE)) {
+  for (  Bundling nestedBundling : bundling.getNestedBundlings()) {
     if (nestedBundling.getArchitecture().equals(bundling.getArchitecture())) {
       control.addNestedBundle(control(mergeZipPrefix,nestedBundling));
     }

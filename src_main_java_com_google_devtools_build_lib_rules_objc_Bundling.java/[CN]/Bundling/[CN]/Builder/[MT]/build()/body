@@ -4,18 +4,10 @@
   Optional<Artifact> bundleInfoplist=bundleInfoplist(bundleInfoplistInputs);
   Optional<Artifact> actoolzipOutput=actoolzipOutput();
   Optional<Artifact> combinedArchitectureBinary=combinedArchitectureBinary();
-  NestedSet<Artifact> mergeZips=getMergeZips(actoolzipOutput);
-  NestedSetBuilder<Artifact> bundleContentArtifactsBuilder=NestedSetBuilder.<Artifact>stableOrder().addTransitive(nestedBundleContentArtifacts(objcProvider.get(NESTED_BUNDLE))).addAll(combinedArchitectureBinary.asSet()).addAll(bundleInfoplist.asSet()).addTransitive(mergeZips).addAll(BundleableFile.toArtifacts(objcProvider.get(BUNDLE_FILE)));
-  Set<String> bundlePaths=new HashSet<>();
-  for (  Artifact stringsFile : objcProvider.get(STRINGS)) {
-    Artifact binaryStrings=intermediateArtifacts.convertedStringsFile(stringsFile);
-    BundleableFile bundleFile=new BundleableFile(binaryStrings,BundleableFile.flatBundlePath(stringsFile.getExecPath()));
-    if (bundlePaths.add(bundleFile.getBundlePath())) {
-      extraBundleFilesBuilder.add(bundleFile);
-      bundleContentArtifactsBuilder.add(binaryStrings);
-    }
-  }
-  ImmutableList<BundleableFile> extraBundleFiles=extraBundleFilesBuilder.build();
-  bundleContentArtifactsBuilder.addAll(BundleableFile.toArtifacts(extraBundleFiles));
-  return new Bundling(name,bundleDirFormat,combinedArchitectureBinary,extraBundleFiles,objcProvider,bundleInfoplist,actoolzipOutput,bundleContentArtifactsBuilder.build(),mergeZips,primaryBundleId,fallbackBundleId,architecture,minimumOsVersion,bundleInfoplistInputs);
+  NestedSet<BundleableFile> binaryStringsFiles=binaryStringsFiles();
+  NestedSet<Artifact> mergeZips=mergeZips(actoolzipOutput);
+  bundleFilesBuilder.addAll(binaryStringsFiles).addAll(objcProvider.get(BUNDLE_FILE));
+  ImmutableList<BundleableFile> bundleFiles=deduplicateByBundlePaths(bundleFilesBuilder.build());
+  NestedSetBuilder<Artifact> bundleContentArtifactsBuilder=NestedSetBuilder.<Artifact>stableOrder().addTransitive(nestedBundleContentArtifacts(objcProvider.get(NESTED_BUNDLE))).addAll(combinedArchitectureBinary.asSet()).addAll(bundleInfoplist.asSet()).addTransitive(mergeZips).addAll(BundleableFile.toArtifacts(binaryStringsFiles)).addAll(BundleableFile.toArtifacts(bundleFiles));
+  return new Bundling(name,bundleDirFormat,combinedArchitectureBinary,bundleFiles,bundleInfoplist,actoolzipOutput,bundleContentArtifactsBuilder.build(),mergeZips,primaryBundleId,fallbackBundleId,architecture,minimumOsVersion,bundleInfoplistInputs,objcProvider.get(NESTED_BUNDLE));
 }
