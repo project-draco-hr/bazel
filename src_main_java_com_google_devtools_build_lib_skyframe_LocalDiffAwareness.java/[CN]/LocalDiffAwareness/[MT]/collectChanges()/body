@@ -24,8 +24,10 @@
  else       if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
         createdFilesAndDirectories.remove(path);
         deletedOrModifiedFilesAndDirectories.add(path);
-        if (watchKeyToDirBiMap.containsValue(path)) {
+        WatchKey deletedDirectoryKey=watchKeyToDirBiMap.inverse().get(path);
+        if (deletedDirectoryKey != null) {
           deletedTrackedDirectories.add(path);
+          deletedDirectoryKey.cancel();
         }
       }
  else       if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
