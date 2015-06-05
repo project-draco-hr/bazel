@@ -42,9 +42,9 @@ catch (  AbruptExitException e) {
   }
   PrintStream output=new PrintStream(runtime.getReporter().getOutErr().getOutputStream());
   try {
-    QueryOutputUtils.output(queryOptions,result,formatter,output);
+    QueryOutputUtils.output(queryOptions,result,formatter,output,queryOptions.withAspectDeps ? new AspectResolver(runtime.getPackageManager(),runtime.getReporter()) : null);
   }
- catch (  ClosedByInterruptException e) {
+ catch (  ClosedByInterruptException|InterruptedException e) {
     runtime.getReporter().handle(Event.error("query interrupted"));
     return ExitCode.INTERRUPTED;
   }

@@ -1,0 +1,32 @@
+{
+  Set<Label> result=new LinkedHashSet<>();
+  result.addAll(mode.getDependencies(pkg));
+  Set<PackageIdentifier> dependentPackages=new LinkedHashSet<>();
+  for (  Target target : pkg.getTargets()) {
+    if (!(target instanceof Rule)) {
+      continue;
+    }
+    Multimap<Attribute,Label> depsWithPossibleAspects=((Rule)target).getTransitions(new BinaryPredicate<Rule,Attribute>(){
+      @Override public boolean apply(      @Nullable Rule rule,      @Nullable Attribute attribute){
+        return !attribute.getAspects().isEmpty();
+      }
+    }
+);
+    for (    Label depLabel : depsWithPossibleAspects.values()) {
+      dependentPackages.add(depLabel.getPackageIdentifier());
+    }
+  }
+  for (  PackageIdentifier packageIdentifier : dependentPackages) {
+    try {
+      result.add(Label.create(packageIdentifier,"BUILD"));
+      Package dependentPackage=packageProvider.getPackage(eventHandler,packageIdentifier);
+      result.addAll(mode.getDependencies(dependentPackage));
+    }
+ catch (    NoSuchPackageException e) {
+    }
+catch (    Label.SyntaxException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+  return result;
+}
