@@ -1,0 +1,23 @@
+{
+  CustomCommandLine.Builder builder=CustomCommandLine.builder().add(SANITY_CHECKS).add(useSanityChecks ? SANITY_CHECKS_ON : SANITY_CHECKS_OFF).addExecPath(OUTPUT_JACK,outputArtifact).addJoinExecPaths(CLASSPATH,":",classpathJackLibraries);
+  if (!processorNames.isEmpty()) {
+    builder.add(PROCESSOR_NAMES).add(Joiner.on(',').join(processorNames));
+  }
+  if (!processorClasspathJars.isEmpty()) {
+    builder.addJoinExecPaths(PROCESSOR_CLASSPATH,":",processorClasspathJars);
+  }
+  for (  Artifact resource : resources) {
+    builder.add(IMPORT_RESOURCE_FILE);
+    PathFragment execPath=resource.getExecPath();
+    PathFragment resourcePath=javaSemantics.getJavaResourcePath(resource.getRootRelativePath());
+    if (execPath.equals(resourcePath)) {
+      builder.addPaths(":%s",resourcePath);
+    }
+ else {
+      PathFragment rootPrefix=execPath.subFragment(0,execPath.segmentCount() - resourcePath.segmentCount());
+      builder.addPaths("%s:%s",rootPrefix,resourcePath);
+    }
+  }
+  builder.addBeforeEachExecPath(IMPORT_SOURCE_ZIP,sourceJars).addExecPaths(javaSources);
+  ruleContext.registerAction(new SpawnAction.Builder().setExecutable(jackBinary).addInputs(classpathJackLibraries).addOutput(outputArtifact).addInputs(processorClasspathJars).addInputs(resources).addInputs(sourceJars).addInputs(javaSources).setCommandLine(builder.build()).setProgressMessage("Compiling " + ruleContext.getLabel() + " as Jack library").setMnemonic("AndroidJackLibrary").build(ruleContext));
+}

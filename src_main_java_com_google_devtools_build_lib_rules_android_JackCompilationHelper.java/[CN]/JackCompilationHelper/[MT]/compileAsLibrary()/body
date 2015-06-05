@@ -1,0 +1,33 @@
+{
+  if (alreadyCompiledLibrary != null) {
+    return alreadyCompiledLibrary;
+  }
+  Function<Artifact,Artifact> nonLibraryFileConverter=CacheBuilder.newBuilder().initialCapacity(exportedJars.size() + classpathJars.size()).build(new CacheLoader<Artifact,Artifact>(){
+    @Override public Artifact load(    Artifact artifact) throws Exception {
+      if (JavaSemantics.JAR.matches(artifact.getFilename())) {
+        return postprocessPartialJackAndAddResources(convertJarToPartialJack(artifact),extractResourcesFromJar(artifact));
+      }
+ else       if (JACK_LIBRARY_TYPE.matches(artifact.getFilename())) {
+        return artifact;
+      }
+      throw new AssertionError("Invalid type for library file: " + artifact);
+    }
+  }
+);
+  NestedSet<Artifact> transitiveClasspath=new NestedSetBuilder<Artifact>(Order.NAIVE_LINK_ORDER).addAll(Iterables.transform(classpathJars,nonLibraryFileConverter)).addTransitive(classpathJacks).build();
+  NestedSet<Artifact> classpath=new NestedSetBuilder<Artifact>(Order.NAIVE_LINK_ORDER).add(androidBaseLibraryForJack).addTransitive(transitiveClasspath).build();
+  NestedSetBuilder<Artifact> exports=new NestedSetBuilder<>(Order.NAIVE_LINK_ORDER);
+  NestedSetBuilder<Artifact> dexContents=new NestedSetBuilder<>(Order.NAIVE_LINK_ORDER);
+  if (javaSources.isEmpty() && sourceJars.isEmpty() && resources.isEmpty()) {
+    buildEmptyJackAction();
+  }
+ else {
+    buildJackAction(javaSources,sourceJars,resources,classpath);
+    exports.add(outputArtifact);
+    dexContents.add(outputArtifact);
+  }
+  exports.addAll(Iterables.transform(exportedJars,nonLibraryFileConverter)).addTransitive(exportedJacks).addTransitive(transitiveClasspath);
+  dexContents.addAll(Iterables.transform(dexJars,nonLibraryFileConverter)).addTransitive(dexJacks);
+  alreadyCompiledLibrary=new JackLibraryProvider(dexContents.build(),exports.build());
+  return alreadyCompiledLibrary;
+}

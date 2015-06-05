@@ -1,0 +1,15 @@
+{
+  for (  TransitiveInfoCollection dep : deps) {
+    JackLibraryProvider jackLibraryProvider=dep.getProvider(JackLibraryProvider.class);
+    if (jackLibraryProvider != null) {
+      jackLibs.addTransitive(jackLibraryProvider.getTransitiveJackClasspathLibraries());
+    }
+ else {
+      NestedSet<Artifact> filesToBuild=dep.getProvider(FileProvider.class).getFilesToBuild();
+      for (      Artifact file : FileType.filter(filesToBuild,JavaSemantics.JAR,JACK_LIBRARY_TYPE)) {
+        nonLibraryFiles.add(file);
+      }
+    }
+  }
+  return this;
+}

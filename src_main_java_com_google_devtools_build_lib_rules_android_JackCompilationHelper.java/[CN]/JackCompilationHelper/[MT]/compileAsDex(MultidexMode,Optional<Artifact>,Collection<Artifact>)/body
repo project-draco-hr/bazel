@@ -1,0 +1,24 @@
+{
+  Preconditions.checkNotNull(multidexMode);
+  Preconditions.checkNotNull(manualMainDexList);
+  Preconditions.checkNotNull(proguardSpecs);
+  Preconditions.checkArgument(multidexMode.isSupportedByJack(),"Multidex mode '%s' is not supported by Jack",multidexMode);
+  Preconditions.checkArgument(manualMainDexList.isPresent() == (multidexMode == MultidexMode.MANUAL_MAIN_DEX),"The main dex list must be supplied if and only if the multidex mode is 'manual_main_dex'");
+  Preconditions.checkState(!wasDexBuilt,"A dex file has already been built.");
+  Artifact outputZip=AndroidBinary.getDxArtifact(ruleContext,ZIP_OUTPUT_FILENAME);
+  NestedSet<Artifact> transitiveJackLibraries=compileAsLibrary().getTransitiveJackLibrariesToLink();
+  CustomCommandLine.Builder builder=CustomCommandLine.builder().add(SANITY_CHECKS).add(useSanityChecks ? SANITY_CHECKS_ON : SANITY_CHECKS_OFF).add(JACK_PROPERTY).add(PROPERTY_KEEP_FIRST_RESOURCE).add(JACK_PROPERTY).add(PROPERTY_KEEP_FIRST_TYPE);
+  for (  Artifact jackLibrary : transitiveJackLibraries) {
+    builder.addExecPath(IMPORT_JACK_LIBRARY,jackLibrary);
+  }
+  for (  Artifact proguardSpec : proguardSpecs) {
+    builder.addExecPath(CONFIG_PROGUARD,proguardSpec);
+  }
+  builder.add(MULTI_DEX).add(multidexMode.getJackFlagValue());
+  if (manualMainDexList.isPresent()) {
+    builder.addExecPath(MAIN_DEX_LIST,manualMainDexList.get());
+  }
+  builder.addExecPath(OUTPUT_DEX_ZIP,outputZip);
+  ruleContext.registerAction(new SpawnAction.Builder().setExecutable(jackBinary).addInputs(transitiveJackLibraries).addInputs(proguardSpecs).addInputs(manualMainDexList.asSet()).addOutput(outputZip).setCommandLine(builder.build()).setProgressMessage("Dexing " + ruleContext.getLabel() + " with Jack").setMnemonic("AndroidJackDex").build(ruleContext));
+  return outputZip;
+}

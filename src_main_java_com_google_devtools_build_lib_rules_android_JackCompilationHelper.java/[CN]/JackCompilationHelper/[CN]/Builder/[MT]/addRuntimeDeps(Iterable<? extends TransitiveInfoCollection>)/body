@@ -1,0 +1,15 @@
+{
+  for (  TransitiveInfoCollection dep : Preconditions.checkNotNull(runtimeDeps)) {
+    JackLibraryProvider jackLibraryProvider=dep.getProvider(JackLibraryProvider.class);
+    if (jackLibraryProvider != null) {
+      dexJacks.addTransitive(jackLibraryProvider.getTransitiveJackLibrariesToLink());
+    }
+ else {
+      NestedSet<Artifact> filesToBuild=dep.getProvider(FileProvider.class).getFilesToBuild();
+      for (      Artifact file : FileType.filter(filesToBuild,JavaSemantics.JAR,JACK_LIBRARY_TYPE)) {
+        dexJars.add(file);
+      }
+    }
+  }
+  return this;
+}

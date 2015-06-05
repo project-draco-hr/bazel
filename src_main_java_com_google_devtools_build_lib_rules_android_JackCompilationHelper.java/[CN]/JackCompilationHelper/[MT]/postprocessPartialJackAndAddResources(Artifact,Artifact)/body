@@ -1,0 +1,7 @@
+{
+  PathFragment outputPath=getFinalizedJackRoot().getRelative(partialJackLibrary.getRootRelativePath().relativeTo(getPartialJackRoot()));
+  Artifact result=ruleContext.getAnalysisEnvironment().getDerivedArtifact(outputPath,ruleContext.getBinOrGenfilesDirectory());
+  CustomCommandLine.Builder builder=CustomCommandLine.builder().add(SANITY_CHECKS).add(useSanityChecks ? SANITY_CHECKS_ON : SANITY_CHECKS_OFF).addExecPath(IMPORT_JACK_LIBRARY,partialJackLibrary).addExecPath(IMPORT_RESOURCE_ZIP,resources).addExecPath(OUTPUT_JACK,result);
+  ruleContext.registerAction(new SpawnAction.Builder().setExecutable(jackBinary).addInput(partialJackLibrary).addInput(resources).addOutput(result).setCommandLine(builder.build()).setProgressMessage("Processing " + partialJackLibrary.getExecPath().getBaseName() + " as Jack library").setMnemonic("AndroidJillPostprocess").build(ruleContext));
+  return result;
+}
