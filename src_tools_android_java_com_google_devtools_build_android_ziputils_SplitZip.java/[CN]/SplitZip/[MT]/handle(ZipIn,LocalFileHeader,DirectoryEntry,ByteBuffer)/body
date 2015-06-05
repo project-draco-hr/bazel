@@ -1,0 +1,22 @@
+{
+  String localFilename=header.getFilename();
+  ZipOut out=assignments.remove(localFilename);
+  if (out == null) {
+    return;
+  }
+  if (dirEntry == null) {
+    System.out.println("Warning: no directory entry");
+    return;
+  }
+  DirectoryEntry entryOut=out.nextEntry(dirEntry);
+  if (dosTime != null) {
+    header.set(LOCTIM,dosTime.time);
+    entryOut.set(CENTIM,dosTime.time);
+  }
+  out.write(header);
+  out.write(data);
+  if ((header.get(LOCFLG) & LocalFileHeader.SIZE_MASKED_FLAG) != 0) {
+    DataDescriptor desc=DataDescriptor.allocate().set(EXTCRC,dirEntry.get(CENCRC)).set(EXTSIZ,dirEntry.get(CENSIZ)).set(EXTLEN,dirEntry.get(CENLEN));
+    out.write(desc);
+  }
+}

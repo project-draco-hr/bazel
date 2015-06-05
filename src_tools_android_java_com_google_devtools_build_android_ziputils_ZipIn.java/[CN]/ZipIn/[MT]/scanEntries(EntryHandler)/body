@@ -1,0 +1,16 @@
+{
+  centralDirectory();
+  ZipEntry zipEntry=nextFrom(null);
+  while (zipEntry.getCode() != ZipEntry.Status.ENTRY_NOT_FOUND) {
+    if (zipEntry.getCode() != ZipEntry.Status.ENTRY_OK) {
+      throw new IOException(zipEntry.getCode().toString());
+    }
+    handler.handle(this,zipEntry.getHeader(),zipEntry.getDirEntry(),zipEntry.getContent());
+    if (useDirectory && ignoreDeleted) {
+      zipEntry=ZipIn.this.nextFrom(zipEntry.getDirEntry());
+    }
+ else {
+      zipEntry=nextFrom(zipEntry.limit());
+    }
+  }
+}

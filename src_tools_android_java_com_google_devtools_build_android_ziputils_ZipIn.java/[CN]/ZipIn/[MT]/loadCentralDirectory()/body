@@ -1,0 +1,20 @@
+{
+  if (eocd == null) {
+    loadEndOfCentralDirectory();
+  }
+  if (eocd == null) {
+    return;
+  }
+  long cdOffset=eocd.get(ENDOFF);
+  long len=eocd.fileOffset() - cdOffset;
+  verbose("-- CDIR: " + cdOffset + " size: "+ len+ " count: "+ eocd.get(ENDSUB));
+  ByteBuffer buffer=ByteBuffer.allocateDirect((int)len);
+  while (len > 0) {
+    int read=fileChannel.read(buffer,cdOffset);
+    len-=read;
+    cdOffset+=read;
+  }
+  buffer.rewind();
+  cdir=CentralDirectory.viewOf(buffer).at(cdOffset).parse();
+  cdir.buffer.flip();
+}

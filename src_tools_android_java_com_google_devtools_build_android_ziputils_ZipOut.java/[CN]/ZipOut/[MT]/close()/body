@@ -1,0 +1,22 @@
+{
+  if (!finished) {
+    finish();
+  }
+  try {
+    executor.shutdown();
+    executor.awaitTermination(30,TimeUnit.SECONDS);
+    for (    Future<?> f : futures) {
+      try {
+        f.get();
+      }
+ catch (      ExecutionException ex) {
+        throw new IOException(ex.getCause().getMessage());
+      }
+    }
+  }
+ catch (  InterruptedException ex) {
+    executor.shutdownNow();
+    Thread.currentThread().interrupt();
+  }
+  fileChannel.close();
+}

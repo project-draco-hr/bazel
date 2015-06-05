@@ -1,0 +1,40 @@
+{
+  cdir=null;
+  long size=fileChannel.size();
+  verbose("Loading ZipIn: " + filename);
+  verbose("-- size: " + size);
+  int cap=(int)Math.min(size,MAX_EOCD_SIZE);
+  ByteBuffer buffer=ByteBuffer.allocate(cap).order(ByteOrder.LITTLE_ENDIAN);
+  long offset=size - cap;
+  while (true) {
+    fileChannel.position(offset);
+    while (buffer.hasRemaining()) {
+      fileChannel.read(buffer,offset);
+    }
+    int endOfDirOffset=ScanUtil.scanBackwardsTo(EOCD_SIG,buffer);
+    if (endOfDirOffset < 0) {
+      if (offset == 0) {
+        if (useDirectory) {
+          throw new IllegalStateException("No end of central directory marker");
+        }
+ else {
+          break;
+        }
+      }
+      offset=Math.max(offset - 1000,0);
+      buffer.clear();
+      continue;
+    }
+    long eocdFileOffset=offset + endOfDirOffset;
+    verbose("-- EOCD: " + eocdFileOffset + " size: "+ (size - eocdFileOffset));
+    buffer.position(endOfDirOffset);
+    eocd=EndOfCentralDirectory.viewOf(buffer).at(offset + endOfDirOffset);
+    break;
+  }
+  if (eocd != null) {
+    bufferedFile=new BufferedFile(fileChannel,0,eocd.get(ENDOFF),READ_BLOCK_SIZE);
+  }
+ else {
+    bufferedFile=new BufferedFile(fileChannel,READ_BLOCK_SIZE);
+  }
+}

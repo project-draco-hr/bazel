@@ -1,0 +1,14 @@
+{
+  int skipped=0;
+  for (ByteBuffer buffer=getData(offset + skipped,MAX_HEADER_SIZE); buffer.limit() >= 16; buffer=getData(offset + skipped,MAX_HEADER_SIZE)) {
+    int markerOffset=ScanUtil.scanTo(DATA_DESC_SIG,buffer);
+    if (markerOffset < 0) {
+      skipped+=buffer.limit() - 3;
+    }
+ else {
+      skipped+=markerOffset;
+      return markerOffset == 0 ? descriptorIn(buffer,offset + skipped,dirEntry) : descriptorAt(offset + skipped,dirEntry);
+    }
+  }
+  return null;
+}

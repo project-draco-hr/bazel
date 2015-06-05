@@ -1,0 +1,19 @@
+{
+  if (finished) {
+    return;
+  }
+  finished=true;
+  int cdOffset=fileOffset;
+  for (  CentralDirectory cd : centralDirectory) {
+    cd.buffer.flip();
+    write(cd.buffer);
+  }
+  int size=fileOffset - cdOffset;
+  verbose("ZipOut finishing: " + filename);
+  verbose("-- CDIR: " + cdOffset + " count: "+ entryCount);
+  verbose("-- EOCD: " + fileOffset + " size: "+ size);
+  EndOfCentralDirectory eocd=EndOfCentralDirectory.allocate(null).set(ENDSUB,(short)entryCount).set(ENDTOT,(short)entryCount).set(ENDSIZ,size).set(ENDOFF,cdOffset).at(fileOffset);
+  eocd.buffer.rewind();
+  write(eocd.buffer);
+  verbose("-- size: " + fileOffset);
+}

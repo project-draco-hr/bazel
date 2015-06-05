@@ -1,0 +1,24 @@
+{
+  for (  ZipIn in : inputs) {
+    CentralDirectory cdir=centralDirectories.get(in.getFilename());
+    for (    DirectoryEntry entry : cdir.list()) {
+      String filename=entry.getFilename();
+      if (filename.endsWith(".class")) {
+        classes.add(filename);
+      }
+ else       if (!filename.endsWith("/")) {
+        assignments.put(filename,resourceOut);
+      }
+    }
+  }
+  Splitter entryFilter=new Splitter(outputs.size(),classes.size());
+  if (filter != null) {
+    entryFilter.assign(filter);
+    entryFilter.nextShard();
+  }
+  for (  String path : classes) {
+    int assignment=entryFilter.assign(path);
+    Preconditions.checkState(assignment >= 0 && assignment < zipOuts.length);
+    assignments.put(path,zipOuts[assignment]);
+  }
+}

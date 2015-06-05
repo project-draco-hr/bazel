@@ -1,0 +1,15 @@
+{
+  Preconditions.checkState(fileOffset != -1,"File offset not set prior to parsing");
+  count=0;
+  clearMaps();
+  int relPos=0;
+  buffer.position(0);
+  while (buffer.hasRemaining() && buffer.getInt(buffer.position()) == DirectoryEntry.SIGNATURE) {
+    count++;
+    DirectoryEntry entry=DirectoryEntry.viewOf(buffer).at(fileOffset + relPos);
+    entries.add(entry);
+    relPos+=entry.getSize();
+    buffer.position(relPos);
+  }
+  return this;
+}

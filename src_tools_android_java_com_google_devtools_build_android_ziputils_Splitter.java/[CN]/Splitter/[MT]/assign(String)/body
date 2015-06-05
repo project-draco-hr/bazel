@@ -1,0 +1,35 @@
+{
+  Preconditions.checkState(shard < numberOfShards,"Too many shards!");
+  Integer assignment=assigned.get(path);
+  if (assignment != null) {
+    return assignment;
+  }
+  remaining--;
+  if (shard == numberOfShards - 1) {
+    size++;
+    assigned.put(currPath,shard);
+    return shard;
+  }
+  if (remaining < numberOfShards - shard - 1) {
+    if (size > 0) {
+      nextShard();
+    }
+    size++;
+    assigned.put(currPath,shard);
+    return shard;
+  }
+  String prevPath=currPath;
+  currPath=path;
+  if (prevPath != null && size >= almostFull) {
+    int i=currPath.lastIndexOf(ARCHIVE_FILE_SEPARATOR);
+    String dir=i > 0 ? currPath.substring(0,i) : ".";
+    i=prevPath.lastIndexOf(ARCHIVE_FILE_SEPARATOR);
+    String prevDir=i > 0 ? prevPath.substring(0,i) : ".";
+    if (!dir.equals(prevDir)) {
+      nextShard();
+    }
+  }
+  assigned.put(currPath,shard);
+  size++;
+  return shard;
+}

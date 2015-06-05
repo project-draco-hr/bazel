@@ -1,0 +1,26 @@
+{
+  Preconditions.checkNotNull(target);
+  Preconditions.checkNotNull(buffer);
+  if (target.length == 0) {
+    return buffer.position() - 1;
+  }
+  int pos=buffer.position() - target.length;
+  if (pos < 0) {
+    return -1;
+  }
+  scan:   while (true) {
+    while (pos >= 0 && buffer.get(pos) != target[0]) {
+      pos--;
+    }
+    if (pos < 0) {
+      return -1;
+    }
+    for (int i=1; i < target.length; i++) {
+      if (buffer.get(pos + i) != target[i]) {
+        pos--;
+        continue scan;
+      }
+    }
+    return pos;
+  }
+}

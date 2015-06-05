@@ -1,0 +1,17 @@
+{
+  String path=header.getFilename();
+  if (!path.endsWith(".dex")) {
+    return;
+  }
+  count++;
+  String filename=BASENAME + (count == 1 ? "" : Integer.toString(count)) + SUFFIX;
+  String comment=dirEntry.getComment();
+  byte[] extra=dirEntry.getExtraData();
+  out.nextEntry(dirEntry.clone(filename,extra,comment).set(CENTIM,DosTime.EPOCH.time));
+  out.write(header.clone(filename,extra).set(LOCTIM,DosTime.EPOCH.time));
+  out.write(data);
+  if ((header.get(LOCFLG) & LocalFileHeader.SIZE_MASKED_FLAG) != 0) {
+    DataDescriptor desc=DataDescriptor.allocate().set(EXTCRC,dirEntry.get(CENCRC)).set(EXTSIZ,dirEntry.get(CENSIZ)).set(EXTLEN,dirEntry.get(CENLEN));
+    out.write(desc);
+  }
+}

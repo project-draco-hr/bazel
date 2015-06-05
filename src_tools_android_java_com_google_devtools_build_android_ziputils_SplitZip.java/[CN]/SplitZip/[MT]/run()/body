@@ -1,0 +1,22 @@
+{
+  verbose("SplitZip: Splitting in: " + outputs.size());
+  verbose("SplitZip: with filter: " + filterFile);
+  checkConfig();
+  zipOuts=outputs.toArray(new ZipOut[outputs.size()]);
+  if (resourceFile != null) {
+    resourceOut=new ZipOut(new FileOutputStream(resourceFile,false).getChannel(),resourceFile);
+  }
+ else   if (resourceOut == null) {
+    resourceOut=zipOuts[0];
+  }
+  for (  ZipIn zip : inputs) {
+    zip.endOfCentralDirectory();
+    centralDirectories.put(zip.getFilename(),zip.centralDirectory());
+    zip.centralDirectory();
+  }
+  split();
+  for (  ZipIn zip : inputs) {
+    zip.scanEntries(this);
+  }
+  return this;
+}

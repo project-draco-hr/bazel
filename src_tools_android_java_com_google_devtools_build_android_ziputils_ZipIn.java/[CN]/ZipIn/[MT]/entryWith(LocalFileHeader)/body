@@ -1,0 +1,14 @@
+{
+  if (header == null) {
+    return new ZipEntry().withCode(ZipEntry.Status.ENTRY_NOT_FOUND);
+  }
+  long offset=header.fileOffset();
+  DirectoryEntry dirEntry=null;
+  if (useDirectory) {
+    dirEntry=cdir.mapByOffset().get((int)offset);
+    if (dirEntry == null && ignoreDeleted) {
+      return new ZipEntry().withCode(ZipEntry.Status.ENTRY_DELETED);
+    }
+  }
+  return entryWith(header,dirEntry);
+}

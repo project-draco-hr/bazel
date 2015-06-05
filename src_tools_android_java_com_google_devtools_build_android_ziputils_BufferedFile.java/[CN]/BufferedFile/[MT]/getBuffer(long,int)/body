@@ -1,0 +1,20 @@
+{
+  Preconditions.checkArgument(off >= offset);
+  Preconditions.checkArgument(len >= 0);
+  Preconditions.checkArgument(off < limit || (off == limit && len == 0));
+  if (limit - off < len) {
+    len=(int)(limit - off);
+  }
+  Preconditions.checkState(off + len <= limit);
+  if (current == null || off < currOff || off + len > currOff + current.capacity()) {
+    allocate(off,len);
+    Preconditions.checkState(current != null && off == currOff && off + len <= currOff + current.capacity());
+  }
+  Preconditions.checkState(current != null && off >= currOff && off + len <= currOff + current.capacity());
+  if (off - currOff + len > current.limit()) {
+    readMore((int)(off - currOff) + len);
+  }
+  Preconditions.checkState(current != null && off >= currOff && off + len <= currOff + current.limit());
+  current.position((int)(off - currOff));
+  return (ByteBuffer)current.slice().limit(len);
+}
