@@ -1,4 +1,5 @@
 {
+  FilesToRunProvider toolRunner=ruleContext.getExecutablePrerequisite("$android_tool_runner",Mode.HOST);
   Set<Artifact> preprocessedIdls=new LinkedHashSet<>();
   List<String> preprocessedArgs=new ArrayList<>();
   for (  String idlImport : transitiveIdlImportData.getTransitiveIdlImportRoots()) {
@@ -12,11 +13,11 @@
     Artifact preprocessed=ruleContext.getAnalysisEnvironment().getDerivedArtifact(preprocessedPath,ruleContext.getConfiguration().getGenfilesDirectory());
     preprocessedIdls.add(preprocessed);
     preprocessedArgs.add("-p" + preprocessed.getExecPathString());
-    createAndroidIdlPreprocessAction(ruleContext,tools,idl,preprocessed);
+    createAndroidIdlPreprocessAction(ruleContext,tools,toolRunner,idl,preprocessed);
   }
   MiddlemanFactory middlemanFactory=ruleContext.getAnalysisEnvironment().getMiddlemanFactory();
   Artifact preprocessedIdlsMiddleman=middlemanFactory.createAggregatingMiddleman(ruleContext.getActionOwner(),"AndroidIDLMiddleman",preprocessedIdls,ruleContext.getConfiguration().getMiddlemanDirectory());
   for (  Artifact idl : translatedIdlSources.keySet()) {
-    createAndroidIdlAction(ruleContext,tools,idl,transitiveIdlImportData.getTransitiveIdlImports(),preprocessedIdlsMiddleman,translatedIdlSources.get(idl),preprocessedArgs);
+    createAndroidIdlAction(ruleContext,tools,toolRunner,idl,transitiveIdlImportData.getTransitiveIdlImports(),preprocessedIdlsMiddleman,translatedIdlSources.get(idl),preprocessedArgs);
   }
 }
