@@ -1,0 +1,34 @@
+{
+  DefaultModelProcessor processor=new DefaultModelProcessor();
+  processor.setModelLocator(new DefaultModelLocator());
+  processor.setModelReader(new DefaultModelReader());
+  File pom=processor.locatePom(projectDirectory);
+  DefaultModelBuilderFactory factory=new DefaultModelBuilderFactory();
+  DefaultModelBuildingRequest request=new DefaultModelBuildingRequest();
+  request.setPomFile(pom);
+  Model model=null;
+  try {
+    ModelBuildingResult result=factory.newInstance().build(request);
+    model=result.getEffectiveModel();
+  }
+ catch (  ModelBuildingException e) {
+    System.err.println("Unable to resolve Maven model from " + pom + ": "+ e.getMessage());
+    return;
+  }
+  CollectRequest collectRequest=new CollectRequest();
+  for (  Repository repo : model.getRepositories()) {
+    collectRequest.addRepository(new RemoteRepository.Builder(repo.getId(),repo.getName(),repo.getUrl()).build());
+  }
+  for (  org.apache.maven.model.Dependency dependency : model.getDependencies()) {
+    Rule rule=Rule.create(dependency.getArtifactId(),dependency.getGroupId(),dependency.getVersion());
+    if (deps.containsKey(rule.name())) {
+      Rule existingDependency=deps.get(rule.name());
+      if (!existingDependency.version().equals(dependency.getVersion())) {
+        handler.handle(new Event(EventKind.ERROR,null,dependency.getGroupId() + ":" + dependency.getArtifactId()+ " already processed for version "+ existingDependency.version()+ " but "+ model+ " wants version "+ dependency.getVersion()+ ", ignoring."));
+      }
+    }
+ else {
+      deps.put(rule.name(),rule);
+    }
+  }
+}
