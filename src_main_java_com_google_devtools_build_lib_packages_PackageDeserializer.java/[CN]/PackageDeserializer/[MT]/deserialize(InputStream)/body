@@ -1,14 +1,9 @@
 {
-  Build.Package packagePb=Build.Package.parseDelimitedFrom(in);
-  Package.Builder builder;
   try {
-    builder=new Package.Builder(new PackageIdentifier(packagePb.getRepository(),new PathFragment(packagePb.getName())));
+    return deserializeInternal(in);
   }
- catch (  SyntaxException e) {
-    throw new PackageDeserializationException(e);
+ catch (  PackageDeserializationException|RuntimeException e) {
+    LOG.log(Level.WARNING,"Failed to deserialize Package object",e);
+    throw e;
   }
-  StoredEventHandler eventHandler=new StoredEventHandler();
-  deserializeInternal(packagePb,eventHandler,builder,in);
-  builder.addEvents(eventHandler.getEvents());
-  return builder.build();
 }
