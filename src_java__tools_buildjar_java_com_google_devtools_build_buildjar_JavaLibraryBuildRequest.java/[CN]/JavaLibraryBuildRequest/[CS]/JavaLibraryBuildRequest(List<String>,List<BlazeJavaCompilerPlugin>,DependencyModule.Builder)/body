@@ -1,28 +1,39 @@
 {
   OptionsParser optionsParser=new OptionsParser(args);
-  builder.addDirectMappings(optionsParser.getDirectMappings());
-  builder.addIndirectMappings(optionsParser.getIndirectMappings());
+  depsBuilder.addDirectMappings(optionsParser.getDirectMappings());
+  depsBuilder.addIndirectMappings(optionsParser.getIndirectMappings());
   if (optionsParser.getStrictJavaDeps() != null) {
-    builder.setStrictJavaDeps(optionsParser.getStrictJavaDeps());
+    depsBuilder.setStrictJavaDeps(optionsParser.getStrictJavaDeps());
   }
   if (optionsParser.getOutputDepsFile() != null) {
-    builder.setOutputDepsFile(optionsParser.getOutputDepsFile());
+    depsBuilder.setOutputDepsFile(optionsParser.getOutputDepsFile());
   }
   if (optionsParser.getOutputDepsProtoFile() != null) {
-    builder.setOutputDepsProtoFile(optionsParser.getOutputDepsProtoFile());
+    depsBuilder.setOutputDepsProtoFile(optionsParser.getOutputDepsProtoFile());
   }
-  builder.addDepsArtifacts(optionsParser.getDepsArtifacts());
+  depsBuilder.addDepsArtifacts(optionsParser.getDepsArtifacts());
   if (optionsParser.reduceClasspath()) {
-    builder.setReduceClasspath();
+    depsBuilder.setReduceClasspath();
   }
   if (optionsParser.getRuleKind() != null) {
-    builder.setRuleKind(optionsParser.getRuleKind());
+    depsBuilder.setRuleKind(optionsParser.getRuleKind());
   }
   if (optionsParser.getTargetLabel() != null) {
-    builder.setTargetLabel(optionsParser.getTargetLabel());
+    depsBuilder.setTargetLabel(optionsParser.getTargetLabel());
   }
-  this.dependencyModule=builder.build();
-  this.plugins=ImmutableList.<BlazeJavaCompilerPlugin>builder().add(dependencyModule.getPlugin()).addAll(extraPlugins).build();
+  this.dependencyModule=depsBuilder.build();
+  AnnotationProcessingModule.Builder processingBuilder=AnnotationProcessingModule.builder();
+  if (optionsParser.getSourceGenDir() != null) {
+    processingBuilder.setSourceGenDir(Paths.get(optionsParser.getSourceGenDir()));
+  }
+  if (optionsParser.getClassDir() != null) {
+    processingBuilder.setClassDir(Paths.get(optionsParser.getClassDir()));
+  }
+  this.processingModule=processingBuilder.build();
+  ImmutableList.Builder<BlazeJavaCompilerPlugin> pluginsBuilder=ImmutableList.<BlazeJavaCompilerPlugin>builder().add(dependencyModule.getPlugin());
+  processingModule.registerPlugin(pluginsBuilder);
+  pluginsBuilder.addAll(extraPlugins);
+  this.plugins=pluginsBuilder.build();
   this.compressJar=optionsParser.compressJar();
   this.sourceFiles=optionsParser.getSourceFiles();
   this.sourceJars=ImmutableList.copyOf(optionsParser.getSourceJars());
@@ -55,4 +66,5 @@
   this.javacOpts=ImmutableList.copyOf(optionsParser.getJavacOpts());
   this.sourceGenDir=optionsParser.getSourceGenDir();
   this.generatedSourcesOutputJar=optionsParser.getGeneratedSourcesOutputJar();
+  this.generatedClassOutputJar=optionsParser.getGeneratedClassOutputJar();
 }
