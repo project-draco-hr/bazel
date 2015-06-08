@@ -1,6 +1,13 @@
 {
-  ImmutableMap.Builder<String,String> builder=ImmutableMap.builder();
-  builder.put("Genrule",options.genruleStrategy);
-  builder.put("",options.spawnStrategy);
-  return builder.build();
+  Map<String,String> contexts=new HashMap<>();
+  contexts.put("Genrule",options.genruleStrategy);
+  for (  Map.Entry<String,String> strategy : options.strategy) {
+    String strategyName=strategy.getValue();
+    if (strategyName.equals("local")) {
+      strategyName="standalone";
+    }
+    contexts.put(strategy.getKey(),strategyName);
+  }
+  contexts.put("",options.spawnStrategy);
+  return ImmutableMap.copyOf(contexts);
 }
