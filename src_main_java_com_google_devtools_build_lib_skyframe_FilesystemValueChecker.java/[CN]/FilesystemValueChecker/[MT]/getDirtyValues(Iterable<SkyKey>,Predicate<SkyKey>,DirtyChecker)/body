@@ -7,13 +7,11 @@
     final SkyValue value=valuesSupplier.get().get(key);
     executor.execute(wrapper.wrap(new Runnable(){
       @Override public void run(){
-        if (value == null) {
-          batchResult.add(key,null);
-          return;
-        }
-        DirtyResult result=checker.check(key,value,tsgm);
-        if (result.isDirty()) {
-          batchResult.add(key,result.getNewValue());
+        if (value != null) {
+          DirtyResult result=checker.check(key,value,tsgm);
+          if (result.isDirty()) {
+            batchResult.add(key,result.getNewValue());
+          }
         }
       }
     }
