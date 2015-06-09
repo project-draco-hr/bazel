@@ -19,7 +19,7 @@
       ApplicationManifest applicationManifest=androidSemantics.getManifestForRule(ruleContext);
       ResourceApk resourceApk=applicationManifest.packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,transitiveResources,tools,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),ImmutableList.<String>of(),ImmutableList.<String>of(),ImmutableList.<String>of(),null,null,null,false,null);
       androidCommon.init(javaSemantics,androidSemantics,tools,resourceApk,transitiveIdlImportData,false,true);
-      Artifact classesJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_CLASS_JAR);
+      Artifact classesJar=mergeJarsFromSrcs(ruleContext,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_CLASS_JAR));
       Artifact aarOut=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_AAR);
       new AarGeneratorBuilder(tools,ruleContext).withPrimary(resourceApk.getPrimaryResource()).withManifest(resourceApk.getPrimaryResource().getManifest()).withRtxt(resourceApk.getPrimaryResource().getRTxt()).withClasses(classesJar).strictResourceMerging().setAAROut(aarOut).build(ruleContext);
       RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
@@ -40,7 +40,7 @@
     androidSemantics.addTransitiveInfoProviders(targetBuilder,ruleContext,javaCommon,androidCommon,null,null,null,ImmutableList.<Artifact>of());
     targetBuilder.add(AndroidNativeLibraryProvider.class,new AndroidNativeLibraryProvider(transitiveNativeLibraries)).add(JavaSourceJarsProvider.class,androidCommon.getJavaSourceJarsProvider()).add(AndroidCcLinkParamsProvider.class,new AndroidCcLinkParamsProvider(androidCommon.getCcLinkParamsStore())).add(JavaNeverlinkInfoProvider.class,new JavaNeverlinkInfoProvider(androidCommon.isNeverLink())).add(ProguardSpecProvider.class,new ProguardSpecProvider(transitiveProguardConfigs)).addOutputGroup(OutputGroupProvider.HIDDEN_TOP_LEVEL,transitiveProguardConfigs);
     Artifact aarOut=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_AAR);
-    Artifact classesJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_CLASS_JAR);
+    Artifact classesJar=mergeJarsFromSrcs(ruleContext,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_CLASS_JAR));
     ResourceContainer primaryResources;
     if (AndroidCommon.getAndroidResources(ruleContext) != null) {
       primaryResources=Iterables.getOnlyElement(AndroidCommon.getAndroidResources(ruleContext).getTransitiveAndroidResources());
