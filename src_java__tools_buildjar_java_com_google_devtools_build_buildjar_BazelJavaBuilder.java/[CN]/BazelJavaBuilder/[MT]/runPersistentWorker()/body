@@ -1,0 +1,34 @@
+{
+  PrintStream originalStdOut=System.out;
+  PrintStream originalStdErr=System.err;
+  while (true) {
+    try {
+      WorkRequest request=WorkRequest.parseDelimitedFrom(System.in);
+      if (request == null) {
+        break;
+      }
+      ByteArrayOutputStream baos=new ByteArrayOutputStream();
+      PrintStream ps=new PrintStream(baos,true);
+      int exitCode=1;
+      System.setOut(ps);
+      System.setErr(ps);
+      try {
+        exitCode=processRequest(request.getArgumentsList());
+      }
+  finally {
+        System.setOut(originalStdOut);
+        System.setErr(originalStdErr);
+      }
+      WorkResponse.newBuilder().setOutput(baos.toString()).setExitCode(exitCode).build().writeDelimitedTo(System.out);
+      System.out.flush();
+    }
+ catch (    IOException e) {
+      e.printStackTrace();
+      return 1;
+    }
+ finally {
+      System.gc();
+    }
+  }
+  return 0;
+}

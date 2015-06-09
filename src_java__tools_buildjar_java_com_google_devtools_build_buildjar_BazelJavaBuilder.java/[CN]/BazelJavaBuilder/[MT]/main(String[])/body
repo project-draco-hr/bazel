@@ -1,13 +1,8 @@
 {
-  try {
-    ImmutableList<BlazeJavaCompilerPlugin> plugins=ImmutableList.<BlazeJavaCompilerPlugin>of(new FileManagerInitializationPlugin(),new ErrorProneOptionsPlugin());
-    JavaLibraryBuildRequest build=new JavaLibraryBuildRequest(Arrays.asList(args),plugins,new DependencyModule.Builder());
-    build.setJavacOpts(JavacOptions.normalizeOptions(build.getJavacOpts()));
-    AbstractJavaBuilder builder=build.getDependencyModule().reduceClasspath() ? new ReducedClasspathJavaLibraryBuilder() : new SimpleJavaLibraryBuilder();
-    builder.run(build,System.err);
+  if (args.length == 1 && args[0].equals("--persistent_worker")) {
+    System.exit(runPersistentWorker());
   }
- catch (  IOException|InvalidCommandLineException e) {
-    System.err.println(CMDNAME + " threw exception : " + e.getMessage());
-    System.exit(1);
+ else {
+    System.exit(processRequest(Arrays.asList(args)));
   }
 }
