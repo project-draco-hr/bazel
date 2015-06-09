@@ -1,0 +1,25 @@
+{
+  final Path path;
+  try {
+    Package containingPackage=env.getTarget(crosstoolTop.getLocalTargetLabel("BUILD")).getPackage();
+    if (containingPackage == null) {
+      return null;
+    }
+    path=env.getPath(containingPackage,CROSSTOOL_CONFIGURATION_FILENAME);
+  }
+ catch (  SyntaxException e) {
+    throw new InvalidConfigurationException(e);
+  }
+catch (  NoSuchThingException e) {
+    return null;
+  }
+  if (path == null || !path.exists()) {
+    return null;
+  }
+  return new CrosstoolProto(path.getMD5Digest(),"CROSSTOOL file " + path.getPathString()){
+    @Override public String getContents() throws IOException {
+      return new String(FileSystemUtils.readContentAsLatin1(path.getInputStream()));
+    }
+  }
+;
+}

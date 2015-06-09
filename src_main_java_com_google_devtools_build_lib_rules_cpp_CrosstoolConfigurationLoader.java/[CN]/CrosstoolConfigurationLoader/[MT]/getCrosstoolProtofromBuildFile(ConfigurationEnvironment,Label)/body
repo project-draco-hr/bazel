@@ -1,0 +1,24 @@
+{
+  Target target;
+  try {
+    target=env.getTarget(crosstoolTop);
+  }
+ catch (  NoSuchThingException e) {
+    throw new IllegalStateException(e);
+  }
+  if (!(target instanceof Rule)) {
+    return null;
+  }
+  Rule rule=(Rule)target;
+  if (!(rule.getRuleClass().equals("cc_toolchain_suite")) || !rule.isAttributeValueExplicitlySpecified("proto")) {
+    return null;
+  }
+  final String contents=NonconfigurableAttributeMapper.of(rule).get("proto",Type.STRING);
+  byte[] md5=new Fingerprint().addBytes(contents.getBytes(UTF_8)).digestAndReset();
+  return new CrosstoolProto(md5,"cc_toolchain_suite rule " + crosstoolTop.toString()){
+    @Override public String getContents() throws IOException {
+      return contents;
+    }
+  }
+;
+}

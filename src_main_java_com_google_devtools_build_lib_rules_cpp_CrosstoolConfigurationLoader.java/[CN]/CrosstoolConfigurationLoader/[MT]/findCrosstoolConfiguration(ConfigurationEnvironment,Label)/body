@@ -1,0 +1,26 @@
+{
+  CrosstoolProto crosstoolProto=getCrosstoolProtofromBuildFile(env,crosstoolTop);
+  if (crosstoolProto == null) {
+    crosstoolProto=getCrosstoolProtoFromCrosstoolFile(env,crosstoolTop);
+  }
+  if (crosstoolProto == null) {
+    throw new InvalidConfigurationException("The crosstool_top you specified was resolved to '" + crosstoolTop + "', which does not contain a CROSSTOOL file. "+ "You can use a crosstool from the depot by specifying its label.");
+  }
+ else {
+    final CrosstoolProto finalProto=crosstoolProto;
+    String md5=BaseEncoding.base16().lowerCase().encode(finalProto.getMd5());
+    CrosstoolConfig.CrosstoolRelease release;
+    try {
+      release=crosstoolReleaseCache.get(md5,new Callable<CrosstoolRelease>(){
+        @Override public CrosstoolRelease call() throws Exception {
+          return toReleaseConfiguration(finalProto.getName(),finalProto.getContents());
+        }
+      }
+);
+    }
+ catch (    ExecutionException e) {
+      throw new InvalidConfigurationException(e);
+    }
+    return new CrosstoolFile(finalProto.getName(),release,md5);
+  }
+}
