@@ -8,7 +8,12 @@
     }
     Multimap<Attribute,Label> depsWithPossibleAspects=((Rule)target).getTransitions(new BinaryPredicate<Rule,Attribute>(){
       @Override public boolean apply(      @Nullable Rule rule,      @Nullable Attribute attribute){
-        return !attribute.getAspects().isEmpty();
+        for (        Class<? extends AspectFactory<?,?,?>> aspectFactory : attribute.getAspects()) {
+          if (!AspectFactory.Util.create(aspectFactory).getDefinition().getAttributes().isEmpty()) {
+            return true;
+          }
+        }
+        return false;
       }
     }
 );
