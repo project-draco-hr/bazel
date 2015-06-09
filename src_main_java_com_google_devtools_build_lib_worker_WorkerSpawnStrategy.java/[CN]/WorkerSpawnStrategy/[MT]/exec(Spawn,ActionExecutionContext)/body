@@ -1,0 +1,34 @@
+{
+  String paramFile=Iterables.getLast(spawn.getArguments());
+  Preconditions.checkArgument(Iterables.getLast(spawn.getArguments()).startsWith("@"));
+  ImmutableList<String> args=ImmutableList.<String>builder().addAll(spawn.getArguments().subList(0,spawn.getArguments().size() - 1)).add("--persistent_worker").build();
+  ImmutableMap<String,String> env=spawn.getEnvironment();
+  Path workDir=actionExecutionContext.getExecutor().getExecRoot();
+  WorkerKey key=new WorkerKey(args,env,workDir);
+  try {
+    Worker worker=workers.borrowObject(key);
+    try {
+      WorkRequest.newBuilder().addArguments(paramFile).build().writeDelimitedTo(worker.getOutputStream());
+      worker.getOutputStream().flush();
+      WorkResponse response=WorkResponse.parseDelimitedFrom(worker.getInputStream());
+      if (response == null) {
+        throw new UserExecException("Worker did not return a correct WorkResponse");
+      }
+      String trimmedOutput=response.getOutput().trim();
+      if (!trimmedOutput.isEmpty()) {
+        System.err.println(trimmedOutput);
+      }
+      if (response.getExitCode() != 0) {
+        throw new UserExecException(String.format("Failed with exit code: %d.",response.getExitCode()));
+      }
+    }
+  finally {
+      if (worker != null) {
+        workers.returnObject(key,worker);
+      }
+    }
+  }
+ catch (  Exception e) {
+    throw new UserExecException(e.getMessage(),e);
+  }
+}

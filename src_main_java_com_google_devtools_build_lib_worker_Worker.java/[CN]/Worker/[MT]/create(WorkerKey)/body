@@ -1,0 +1,14 @@
+{
+  Preconditions.checkNotNull(key);
+  ProcessBuilder processBuilder=new ProcessBuilder(key.getArgs().toArray(new String[0])).directory(key.getWorkDir().getPathFile()).redirectError(Redirect.INHERIT);
+  processBuilder.environment().putAll(key.getEnv());
+  final Process process=processBuilder.start();
+  Thread shutdownHook=new Thread(){
+    @Override public void run(){
+      process.destroy();
+    }
+  }
+;
+  Runtime.getRuntime().addShutdownHook(shutdownHook);
+  return new Worker(process,shutdownHook);
+}
