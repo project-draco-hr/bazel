@@ -1,0 +1,29 @@
+{
+  List<String> args=Lists.newArrayList(testScript);
+  TestTargetExecutionSettings execSettings=testAction.getExecutionSettings();
+  List<String> execArgs=new ArrayList<>();
+  if (!coverageScript.isEmpty() && isCoverageMode(testAction)) {
+    execArgs.add(coverageScript);
+  }
+  execArgs.add(execSettings.getExecutable().getRootRelativePath().getPathString());
+  execArgs.addAll(execSettings.getArgs());
+  if (execSettings.getRunUnder() == null) {
+    args.addAll(execArgs);
+  }
+ else   if (execSettings.getRunUnderExecutable() != null) {
+    args.add(execSettings.getRunUnderExecutable().getRootRelativePath().getPathString());
+    args.addAll(execSettings.getRunUnder().getOptions());
+    args.addAll(execArgs);
+  }
+ else {
+    args.add(testAction.getConfiguration().getShExecutable().getPathString());
+    args.add("-c");
+    String runUnderCommand=ShellEscaper.escapeString(execSettings.getRunUnder().getCommand());
+    Path fullySpecified=SearchPath.which(SearchPath.parse(testAction.getTestLog().getPath().getFileSystem(),clientEnv.get("PATH")),runUnderCommand);
+    if (fullySpecified != null) {
+      runUnderCommand=fullySpecified.toString();
+    }
+    args.add(runUnderCommand + ' ' + ShellEscaper.escapeJoinAll(Iterables.concat(execSettings.getRunUnder().getOptions(),execArgs)));
+  }
+  return args;
+}
