@@ -7,5 +7,5 @@
   collectTransitivePythonSourcesFromDeps(depBuilder);
   NestedSet<Artifact> dependencies=depBuilder.build();
   PythonInfo info=PythonInfo.newBuilder().addAllSourceFile(Artifact.toExecPaths(sources)).addAllDepFile(Artifact.toExecPaths(dependencies)).build();
-  ruleContext.getAnalysisEnvironment().registerAction(new PyPseudoAction(ruleContext.getActionOwner(),ImmutableList.copyOf(Iterables.concat(sources,dependencies)),ImmutableList.of(PseudoAction.getDummyOutput(ruleContext)),"Python",PythonInfo.pythonInfo,info));
+  ruleContext.getAnalysisEnvironment().registerAction(new PyPseudoAction(ruleContext.getActionOwner(),NestedSetBuilder.wrap(Order.STABLE_ORDER,Iterables.concat(sources,dependencies)),ImmutableList.of(PseudoAction.getDummyOutput(ruleContext)),"Python",PythonInfo.pythonInfo,info));
 }
