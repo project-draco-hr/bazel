@@ -1,12 +1,12 @@
 {
   long eocdLocation=findEndOfCentralDirectoryRecord();
-  InputStream stream=new BufferedInputStream(Channels.newInputStream(in.getChannel().position(eocdLocation)));
+  InputStream stream=getStreamAt(eocdLocation);
   EndOfCentralDirectoryRecord.read(stream,zipData);
   if (zipData.isMaybeZip64()) {
     try {
-      stream=new BufferedInputStream(Channels.newInputStream(in.getChannel().position(eocdLocation - Zip64EndOfCentralDirectoryLocator.FIXED_DATA_SIZE)));
+      stream=getStreamAt(eocdLocation - Zip64EndOfCentralDirectoryLocator.FIXED_DATA_SIZE);
       Zip64EndOfCentralDirectoryLocator.read(stream,zipData);
-      stream=new BufferedInputStream(Channels.newInputStream(in.getChannel().position(zipData.getZip64EndOfCentralDirectoryOffset())));
+      stream=getStreamAt(zipData.getZip64EndOfCentralDirectoryOffset());
       Zip64EndOfCentralDirectory.read(stream,zipData);
     }
  catch (    ZipException e) {

@@ -1,12 +1,12 @@
 {
-  stream=new BufferedInputStream(Channels.newInputStream(in.getChannel().position(zipEntry.getLocalHeaderOffset())));
+  stream=getStreamAt(zipEntry.getLocalHeaderOffset());
   byte[] fileHeader=new byte[LocalFileHeader.FIXED_DATA_SIZE];
-  stream.read(fileHeader);
+  ZipUtil.readFully(stream,fileHeader);
   if (!ZipUtil.arrayStartsWith(fileHeader,ZipUtil.intToLittleEndian(LocalFileHeader.SIGNATURE))) {
     throw new ZipException(String.format("The file '%s' is not a correctly formatted zip file: " + "Expected a File Header at file offset %d, but was not present.",file.getName(),zipEntry.getLocalHeaderOffset()));
   }
   int nameLength=ZipUtil.getUnsignedShort(fileHeader,LocalFileHeader.FILENAME_LENGTH_OFFSET);
   int extraFieldLength=ZipUtil.getUnsignedShort(fileHeader,LocalFileHeader.EXTRA_FIELD_LENGTH_OFFSET);
-  stream.skip(nameLength + extraFieldLength);
+  ZipUtil.readFully(stream,new byte[nameLength + extraFieldLength]);
   rem=zipEntry.getCompressedSize();
 }

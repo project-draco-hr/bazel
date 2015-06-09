@@ -1,6 +1,6 @@
 {
   byte[] fixedSizeData=new byte[FIXED_DATA_SIZE];
-  if (in.read(fixedSizeData) != FIXED_DATA_SIZE) {
+  if (readFully(in,fixedSizeData) != FIXED_DATA_SIZE) {
     throw new ZipException("Unexpected end of file while reading Central Directory File Header.");
   }
   if (!arrayStartsWith(fixedSizeData,intToLittleEndian(SIGNATURE))) {
@@ -9,13 +9,13 @@
   byte[] name=new byte[getUnsignedShort(fixedSizeData,FILENAME_LENGTH_OFFSET)];
   byte[] extraField=new byte[getUnsignedShort(fixedSizeData,EXTRA_FIELD_LENGTH_OFFSET)];
   byte[] comment=new byte[getUnsignedShort(fixedSizeData,COMMENT_LENGTH_OFFSET)];
-  if (name.length > 0 && in.read(name) != name.length) {
+  if (name.length > 0 && readFully(in,name) != name.length) {
     throw new ZipException("Unexpected end of file while reading Central Directory File Header.");
   }
-  if (extraField.length > 0 && in.read(extraField) != extraField.length) {
+  if (extraField.length > 0 && readFully(in,extraField) != extraField.length) {
     throw new ZipException("Unexpected end of file while reading Central Directory File Header.");
   }
-  if (comment.length > 0 && in.read(comment) != comment.length) {
+  if (comment.length > 0 && readFully(in,comment) != comment.length) {
     throw new ZipException("Unexpected end of file while reading Central Directory File Header.");
   }
   ExtraDataList extra=new ExtraDataList(extraField);

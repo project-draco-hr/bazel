@@ -15,19 +15,19 @@
     zout.write(expectedBarData);
     zout.closeEntry();
   }
-   try (ZipReader reader=new ZipReader(test,UTF_8)){
+   try (ZipReader reader=new SlowZipReader(test,UTF_8)){
     ZipFileEntry fooEntry=reader.getEntry("foo");
     ZipFileEntry barEntry=reader.getEntry("bar");
     InputStream fooIn=reader.getInputStream(fooEntry);
     InputStream barIn=reader.getInputStream(barEntry);
     byte[] fooData=new byte[expectedFooData.length];
     byte[] barData=new byte[expectedBarData.length];
-    fooIn.read(fooData,0,10);
-    barIn.read(barData,0,10);
-    fooIn.read(fooData,10,10);
-    barIn.read(barData,10,10);
-    fooIn.read(fooData,20,fooData.length - 20);
-    barIn.read(barData,20,barData.length - 20);
+    ZipUtil.readFully(fooIn,fooData,0,10);
+    ZipUtil.readFully(barIn,barData,0,10);
+    ZipUtil.readFully(fooIn,fooData,10,10);
+    ZipUtil.readFully(barIn,barData,10,10);
+    ZipUtil.readFully(fooIn,fooData,20,fooData.length - 20);
+    ZipUtil.readFully(barIn,barData,20,barData.length - 20);
     assertThat(fooData).isEqualTo(expectedFooData);
     assertThat(barData).isEqualTo(expectedBarData);
   }

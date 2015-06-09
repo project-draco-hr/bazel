@@ -3,14 +3,14 @@
     throw new NullPointerException();
   }
   byte[] fixedSizeData=new byte[FIXED_DATA_SIZE];
-  if (in.read(fixedSizeData) != FIXED_DATA_SIZE) {
+  if (readFully(in,fixedSizeData) != FIXED_DATA_SIZE) {
     throw new ZipException("Unexpected end of file while reading End of Central Directory Record.");
   }
   if (!arrayStartsWith(fixedSizeData,intToLittleEndian(SIGNATURE))) {
     throw new ZipException(String.format("Malformed End of Central Directory Record; does not start with %08x",SIGNATURE));
   }
   byte[] comment=new byte[getUnsignedShort(fixedSizeData,COMMENT_LENGTH_OFFSET)];
-  if (comment.length > 0 && in.read(comment) != comment.length) {
+  if (comment.length > 0 && readFully(in,comment) != comment.length) {
     throw new ZipException("Unexpected end of file while reading End of Central Directory Record.");
   }
   short diskNumber=get16(fixedSizeData,DISK_NUMBER_OFFSET);
