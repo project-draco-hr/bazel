@@ -5,7 +5,13 @@
   }
   Preconditions.checkState(action.discoversInputs(),action);
   PackageRootResolverWithEnvironment resolver=new PackageRootResolverWithEnvironment(env);
-  Iterable<Artifact> actionCacheInputs=skyframeActionExecutor.getActionCachedInputs(action,resolver);
+  Iterable<Artifact> actionCacheInputs;
+  try {
+    actionCacheInputs=skyframeActionExecutor.getActionCachedInputs(action,resolver);
+  }
+ catch (  PackageRootResolutionException rre) {
+    throw new ActionExecutionFunctionException(new ActionExecutionException("Failed to get cached inputs",rre,action,true));
+  }
   if (actionCacheInputs == null) {
     Preconditions.checkState(env.valuesMissing(),action);
     return null;

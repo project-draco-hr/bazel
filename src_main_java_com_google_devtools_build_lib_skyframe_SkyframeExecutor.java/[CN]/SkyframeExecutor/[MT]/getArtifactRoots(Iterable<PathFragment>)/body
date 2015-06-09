@@ -18,6 +18,9 @@ synchronized (valueLookupLock) {
  catch (  Exception e) {
     throw new IllegalStateException(e);
   }
+  if (result.hasError()) {
+    throw new PackageRootResolutionException("Exception encountered determining package roots",result.getError().getException());
+  }
   Map<PathFragment,Root> roots=new HashMap<>();
   for (  PathFragment execPath : execPaths) {
     ContainingPackageLookupValue value=result.get(ContainingPackageLookupValue.key(PackageIdentifier.createInDefaultRepo(execPath)));

@@ -6,13 +6,19 @@
     depKeys.put(path,depKey);
     keysRequested.add(depKey);
   }
-  Map<SkyKey,SkyValue> values=env.getValues(depKeys.values());
+  Map<SkyKey,ValueOrException2<NoSuchPackageException,InconsistentFilesystemException>> values=env.getValuesOrThrow(depKeys.values(),NoSuchPackageException.class,InconsistentFilesystemException.class);
   if (env.valuesMissing()) {
     return null;
   }
   Map<PathFragment,Root> result=new HashMap<>();
   for (  PathFragment path : execPaths) {
-    ContainingPackageLookupValue value=(ContainingPackageLookupValue)values.get(depKeys.get(path));
+    ContainingPackageLookupValue value;
+    try {
+      value=(ContainingPackageLookupValue)values.get(depKeys.get(path)).get();
+    }
+ catch (    NoSuchPackageException|InconsistentFilesystemException e) {
+      throw new PackageRootResolutionException("Could not determine containing package for " + path,e);
+    }
     if (value.hasContainingPackage()) {
       result.put(path,Root.asSourceRoot(value.getContainingPackageRoot()));
     }
