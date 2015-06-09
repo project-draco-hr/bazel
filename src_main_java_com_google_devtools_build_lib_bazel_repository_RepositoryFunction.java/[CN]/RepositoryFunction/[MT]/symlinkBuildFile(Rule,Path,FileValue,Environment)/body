@@ -23,9 +23,12 @@
  catch (  IOException|FileSymlinkCycleException|InconsistentFilesystemException e) {
     throw new RepositoryFunctionException(new IOException("Cannot lookup " + buildFile + ": "+ e.getMessage()),Transience.TRANSIENT);
   }
-  Path buildFilePath=repositoryDirectory.getRelative("BUILD");
+  Path buildFilePath=directoryValue.realRootedPath().asPath().getRelative("BUILD");
   if (createSymbolicLink(buildFilePath,buildFileTarget,env) == null) {
     return null;
   }
-  return buildFileValue;
+  if (buildFileValue == null) {
+    return null;
+  }
+  return RepositoryValue.createNew(directoryValue,buildFileValue);
 }

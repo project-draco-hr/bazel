@@ -1,0 +1,16 @@
+{
+  Path repositoryDirectory=getExternalRepositoryDirectory().getRelative(rule.getName());
+  try {
+    FileSystemUtils.deleteTree(repositoryDirectory);
+    FileSystemUtils.createDirectoryAndParents(repositoryDirectory);
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(e,Transience.TRANSIENT);
+  }
+  FileValue directoryValue=getRepositoryDirectory(repositoryDirectory,env);
+  if (directoryValue == null) {
+    return null;
+  }
+  createWorkspaceFile(repositoryDirectory,rule);
+  return directoryValue;
+}

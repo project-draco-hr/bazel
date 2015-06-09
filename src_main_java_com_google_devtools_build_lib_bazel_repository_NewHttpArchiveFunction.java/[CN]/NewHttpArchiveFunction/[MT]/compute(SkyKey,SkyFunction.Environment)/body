@@ -1,6 +1,6 @@
 {
   RepositoryName repositoryName=(RepositoryName)skyKey.argument();
-  Rule rule=RepositoryFunction.getRule(repositoryName,NewHttpArchiveRule.NAME,env);
+  Rule rule=getRule(repositoryName,NewHttpArchiveRule.NAME,env);
   if (rule == null) {
     return null;
   }
@@ -32,10 +32,6 @@
  catch (  DecompressorFactory.DecompressorException e) {
     throw new RepositoryFunctionException(new IOException(e.getMessage()),Transience.TRANSIENT);
   }
-  NewLocalRepositoryFunction.createWorkspaceFile(decompressedDirectory,rule);
-  FileValue buildFile=NewLocalRepositoryFunction.createBuildFile(rule,getWorkspace(),outputDirectory,env);
-  if (buildFile == null) {
-    return null;
-  }
-  return RepositoryValue.createNew(repositoryDirectory,buildFile);
+  createWorkspaceFile(decompressedDirectory,rule);
+  return symlinkBuildFile(rule,getWorkspace(),repositoryDirectory,env);
 }
