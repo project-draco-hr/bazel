@@ -4,8 +4,15 @@
   int i=0;
   for (  Object it : ImmutableList.copyOf(col)) {
     variable.assign(env,getLocation(),it);
-    for (    Statement stmt : block) {
-      stmt.exec(env);
+    try {
+      for (      Statement stmt : block) {
+        stmt.exec(env);
+      }
+    }
+ catch (    FlowException ex) {
+      if (ex.mustTerminateLoop()) {
+        return;
+      }
     }
     i++;
   }
