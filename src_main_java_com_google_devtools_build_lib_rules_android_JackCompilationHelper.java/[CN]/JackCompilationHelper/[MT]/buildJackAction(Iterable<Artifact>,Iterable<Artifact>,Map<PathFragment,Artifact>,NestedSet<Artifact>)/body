@@ -6,10 +6,10 @@
   if (!processorClasspathJars.isEmpty()) {
     builder.addJoinExecPaths(PROCESSOR_CLASSPATH,":",processorClasspathJars);
   }
-  for (  Artifact resource : resources) {
+  for (  Entry<PathFragment,Artifact> resource : resources.entrySet()) {
     builder.add(IMPORT_RESOURCE_FILE);
-    PathFragment execPath=resource.getExecPath();
-    PathFragment resourcePath=javaSemantics.getJavaResourcePath(resource.getRootRelativePath());
+    PathFragment execPath=resource.getValue().getExecPath();
+    PathFragment resourcePath=resource.getKey();
     if (execPath.equals(resourcePath)) {
       builder.addPaths(":%s",resourcePath);
     }
@@ -19,5 +19,5 @@
     }
   }
   builder.addBeforeEachExecPath(IMPORT_SOURCE_ZIP,sourceJars).addExecPaths(javaSources);
-  ruleContext.registerAction(new SpawnAction.Builder().setExecutable(jackBinary).addInputs(classpathJackLibraries).addOutput(outputArtifact).addInputs(processorClasspathJars).addInputs(resources).addInputs(sourceJars).addInputs(javaSources).setCommandLine(builder.build()).setProgressMessage("Compiling " + ruleContext.getLabel() + " as Jack library").setMnemonic("AndroidJackLibrary").build(ruleContext));
+  ruleContext.registerAction(new SpawnAction.Builder().setExecutable(jackBinary).addInputs(classpathJackLibraries).addOutput(outputArtifact).addInputs(processorClasspathJars).addInputs(resources.values()).addInputs(sourceJars).addInputs(javaSources).setCommandLine(builder.build()).setProgressMessage("Compiling " + ruleContext.getLabel() + " as Jack library").setMnemonic("AndroidJackLibrary").build(ruleContext));
 }
