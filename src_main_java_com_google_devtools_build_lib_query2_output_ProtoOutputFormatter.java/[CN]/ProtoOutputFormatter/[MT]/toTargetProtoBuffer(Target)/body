@@ -11,16 +11,12 @@
     if (env != null) {
       rulePb.addAttribute(Build.Attribute.newBuilder().setName(RULE_IMPLEMENTATION_HASH_ATTR_NAME).setType(ProtoUtils.getDiscriminatorFromType(com.google.devtools.build.lib.packages.Type.STRING)).setStringValue(env.getTransitiveFileContentHashCode()));
     }
-    if (aspectResolver != null) {
-      Map<Attribute,Collection<Label>> aspectsDependencies=aspectResolver.computeAspectDependenciesWithAttributes(target);
-      for (      Entry<Attribute,Collection<Label>> entry : aspectsDependencies.entrySet()) {
-        PackageSerializer.addAttributeToProto(rulePb,entry.getKey(),Lists.<Object>newArrayList(entry.getValue()),null,false,false);
-      }
-      for (      Collection<Label> labelCollection : aspectsDependencies.values()) {
-        for (        Label label : labelCollection) {
-          rulePb.addRuleInput(label.toString());
-        }
-      }
+    ImmutableMultimap<Attribute,Label> aspectsDependencies=aspectResolver.computeAspectDependencies(target);
+    for (    Entry<Attribute,Collection<Label>> entry : aspectsDependencies.asMap().entrySet()) {
+      PackageSerializer.addAttributeToProto(rulePb,entry.getKey(),Lists.<Object>newArrayList(entry.getValue()),null,false,false);
+    }
+    for (    Label label : aspectsDependencies.values()) {
+      rulePb.addRuleInput(label.toString());
     }
     for (    Label label : rule.getLabels(dependencyFilter)) {
       rulePb.addRuleInput(label.toString());
