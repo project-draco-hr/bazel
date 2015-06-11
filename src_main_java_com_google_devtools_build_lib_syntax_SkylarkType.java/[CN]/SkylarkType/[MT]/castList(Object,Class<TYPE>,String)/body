@@ -2,15 +2,14 @@
   if (obj == null) {
     return ImmutableList.of();
   }
-  return Iterables.transform(com.google.devtools.build.lib.packages.Type.LIST.convert(obj,what),new com.google.common.base.Function<Object,TYPE>(){
-    @Override public TYPE apply(    Object input){
-      try {
-        return type.cast(input);
-      }
- catch (      ClassCastException e) {
-        throw new IllegalArgumentException(String.format("expected %s type for '%s' but got %s instead",EvalUtils.getDataTypeNameFromClass(type),what,EvalUtils.getDataTypeName(input)));
-      }
+  List<TYPE> results=new ArrayList<>();
+  for (  Object object : com.google.devtools.build.lib.packages.Type.LIST.convert(obj,what)) {
+    try {
+      results.add(type.cast(object));
+    }
+ catch (    ClassCastException e) {
+      throw new EvalException(null,String.format("Illegal argument: expected %s type for '%s' but got %s instead",EvalUtils.getDataTypeNameFromClass(type),what,EvalUtils.getDataTypeName(object)));
     }
   }
-);
+  return results;
 }

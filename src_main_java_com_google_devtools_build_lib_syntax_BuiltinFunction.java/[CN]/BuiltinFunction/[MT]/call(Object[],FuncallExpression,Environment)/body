@@ -23,13 +23,13 @@ return invokeMethod.invoke(this,args);
  catch (InvocationTargetException x) {
 Throwable e=x.getCause();
 if (e instanceof EvalException) {
-throw (EvalException)e;
+throw ((EvalException)e).ensureLocation(loc);
 }
  else if (e instanceof InterruptedException) {
 throw (InterruptedException)e;
 }
- else if (e instanceof ConversionException || e instanceof ClassCastException || e instanceof ExecutionException|| e instanceof IllegalStateException) {
-throw new EvalException(loc,e);
+ else if (e instanceof ClassCastException || e instanceof ExecutionException || e instanceof IllegalStateException) {
+throw new EvalException(loc,"in call to " + getName(),e);
 }
  else if (e instanceof IllegalArgumentException) {
 throw new EvalException(loc,"Illegal argument in call to " + getName(),e);
