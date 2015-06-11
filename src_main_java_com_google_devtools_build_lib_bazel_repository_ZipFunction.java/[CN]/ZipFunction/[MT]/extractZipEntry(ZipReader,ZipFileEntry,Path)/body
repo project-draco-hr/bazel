@@ -1,0 +1,18 @@
+{
+  PathFragment relativePath=new PathFragment(entry.getName());
+  if (relativePath.isAbsolute()) {
+    throw new IOException(String.format("Failed to extract %s, zipped paths cannot be absolute",relativePath));
+  }
+  Path outputPath=destinationDirectory.getRelative(relativePath);
+  FileSystemUtils.createDirectoryAndParents(outputPath.getParentDirectory());
+  int permissions=entry.getExternalAttributes() >>> 16;
+  boolean isDirectory=(permissions & 040000) == 040000;
+  if (isDirectory) {
+    FileSystemUtils.createDirectoryAndParents(outputPath);
+  }
+ else {
+    File outputFile=outputPath.getPathFile();
+    Files.copy(reader.getInputStream(entry),outputFile.toPath());
+    outputPath.chmod(permissions);
+  }
+}

@@ -1,0 +1,14 @@
+{
+  DecompressorDescriptor descriptor=(DecompressorDescriptor)skyKey.argument();
+  Path destinationDirectory=descriptor.archivePath().getParentDirectory();
+  try (ZipReader reader=new ZipReader(descriptor.archivePath().getPathFile())){
+    Collection<ZipFileEntry> entries=reader.entries();
+    for (    ZipFileEntry entry : entries) {
+      extractZipEntry(reader,entry,destinationDirectory);
+    }
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(new IOException(String.format("Error extracting %s to %s: %s",descriptor.archivePath(),destinationDirectory,e.getMessage())),Transience.TRANSIENT);
+  }
+  return new DecompressorValue(destinationDirectory);
+}

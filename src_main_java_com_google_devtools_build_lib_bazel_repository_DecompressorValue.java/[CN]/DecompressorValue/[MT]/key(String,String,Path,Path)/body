@@ -1,0 +1,20 @@
+{
+  String baseName=archivePath.getBaseName();
+  if (targetKind.startsWith(HttpJarRule.NAME + " ") || targetKind.equals(MavenJarRule.NAME)) {
+    if (baseName.endsWith(".jar")) {
+      return new SkyKey(JarFunction.NAME,new DecompressorDescriptor(targetKind,targetName,archivePath,repositoryPath));
+    }
+ else {
+      throw new IOException(String.format("Expected %s %s to create file with a .jar suffix (got %s)",targetKind,targetName,archivePath));
+    }
+  }
+  if (targetKind.startsWith(HttpArchiveRule.NAME + " ") || targetKind.startsWith(NewHttpArchiveRule.NAME + " ")) {
+    if (baseName.endsWith(".zip") || baseName.endsWith(".jar")) {
+      return new SkyKey(ZipFunction.NAME,new DecompressorDescriptor(targetKind,targetName,archivePath,repositoryPath));
+    }
+ else {
+      throw new IOException(String.format("Expected %s %s to create file with a .zip or .jar suffix (got %s)",HttpArchiveRule.NAME,targetName,archivePath));
+    }
+  }
+  throw new IOException(String.format("No decompressor found for %s rule %s (got %s)",targetKind,targetName,archivePath));
+}

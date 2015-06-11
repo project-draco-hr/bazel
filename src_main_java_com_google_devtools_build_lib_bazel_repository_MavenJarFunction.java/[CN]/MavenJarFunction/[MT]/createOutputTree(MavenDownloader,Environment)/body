@@ -10,15 +10,17 @@
  catch (  IOException e) {
     throw new RepositoryFunctionException(e,Transience.TRANSIENT);
   }
-  JarDecompressor decompressor=new JarDecompressor(MavenJarRule.NAME,downloader.getName(),repositoryJar,outputDirectoryValue.realRootedPath().asPath());
-  Path repositoryDirectory=null;
+  DecompressorValue value;
   try {
-    repositoryDirectory=decompressor.decompress();
+    value=(DecompressorValue)env.getValueOrThrow(DecompressorValue.key(MavenJarRule.NAME,downloader.getName(),repositoryJar,outputDirectoryValue.realRootedPath().asPath()),IOException.class);
+    if (value == null) {
+      return null;
+    }
   }
- catch (  DecompressorException e) {
-    throw new RepositoryFunctionException(new IOException(e.getMessage()),Transience.TRANSIENT);
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(e,Transience.TRANSIENT);
   }
-  FileValue repositoryFileValue=getRepositoryDirectory(repositoryDirectory,env);
+  FileValue repositoryFileValue=getRepositoryDirectory(value.getDirectory(),env);
   if (repositoryFileValue == null) {
     return null;
   }

@@ -4,25 +4,18 @@
   if (directoryValue == null) {
     return null;
   }
-  AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(rule);
-  URL url=null;
   try {
-    url=new URL(mapper.get("url",Type.STRING));
-  }
- catch (  MalformedURLException e) {
-    throw new RepositoryFunctionException(new EvalException(rule.getLocation(),"Error parsing URL: " + e.getMessage()),Transience.PERSISTENT);
-  }
-  String sha256=mapper.get("sha256",Type.STRING);
-  HttpDownloader downloader=new HttpDownloader(url,sha256,outputDirectory);
-  try {
-    Path archiveFile=downloader.download();
-    outputDirectory=DecompressorFactory.create(rule.getTargetKind(),rule.getName(),archiveFile,outputDirectory).decompress();
+    HttpDownloadValue downloadValue=(HttpDownloadValue)env.getValueOrThrow(HttpDownloadFunction.key(rule,outputDirectory),IOException.class);
+    if (downloadValue == null) {
+      return null;
+    }
+    DecompressorValue value=(DecompressorValue)env.getValueOrThrow(DecompressorValue.key(rule.getTargetKind(),rule.getName(),downloadValue.getPath(),outputDirectory),IOException.class);
+    if (value == null) {
+      return null;
+    }
   }
  catch (  IOException e) {
     throw new RepositoryFunctionException(e,Transience.TRANSIENT);
-  }
-catch (  DecompressorException e) {
-    throw new RepositoryFunctionException(new IOException(e.getMessage()),Transience.TRANSIENT);
   }
   return RepositoryValue.create(directoryValue);
 }

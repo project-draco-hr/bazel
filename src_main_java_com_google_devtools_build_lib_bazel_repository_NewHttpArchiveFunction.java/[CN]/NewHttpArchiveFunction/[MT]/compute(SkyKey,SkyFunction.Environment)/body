@@ -25,13 +25,16 @@
   if (downloadedFileValue == null) {
     return null;
   }
-  Path decompressedDirectory;
+  DecompressorValue decompressed;
   try {
-    decompressedDirectory=DecompressorFactory.create(rule.getTargetKind(),rule.getName(),downloadedFileValue.getPath(),outputDirectory).decompress();
+    decompressed=(DecompressorValue)env.getValueOrThrow(DecompressorValue.key(rule.getTargetKind(),rule.getName(),downloadedFileValue.getPath(),outputDirectory),IOException.class);
+    if (decompressed == null) {
+      return null;
+    }
   }
- catch (  DecompressorFactory.DecompressorException e) {
+ catch (  IOException e) {
     throw new RepositoryFunctionException(new IOException(e.getMessage()),Transience.TRANSIENT);
   }
-  createWorkspaceFile(decompressedDirectory,rule);
+  createWorkspaceFile(decompressed.getDirectory(),rule);
   return symlinkBuildFile(rule,getWorkspace(),repositoryDirectory,env);
 }
