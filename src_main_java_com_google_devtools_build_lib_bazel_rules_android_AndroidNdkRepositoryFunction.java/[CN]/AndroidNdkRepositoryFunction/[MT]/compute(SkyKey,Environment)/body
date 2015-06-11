@@ -12,5 +12,31 @@
   if (!symlinkLocalRepositoryContents(directoryValue,getOutputBase().getFileSystem().getPath(pathFragment),env)) {
     return null;
   }
-  return writeBuildFile(directoryValue,"filegroup(name='ndk')");
+  AttributeMap attributes=NonconfigurableAttributeMapper.of(rule);
+  String ruleName=rule.getName();
+  String apiLevel=attributes.get("api_level",Type.INTEGER).toString();
+  List<String> cpus=ImmutableList.of("arm");
+  String abi="armeabi-v7a";
+  String compiler="4.9";
+  String ccToolchainSuiteTemplate;
+  String ccToolchainTemplate;
+  String toolchainTemplate;
+  try {
+    ccToolchainSuiteTemplate=ResourceFileLoader.loadResource(AndroidNdkRepositoryFunction.class,"android_ndk_cc_toolchain_suite_template.txt");
+    ccToolchainTemplate=ResourceFileLoader.loadResource(AndroidNdkRepositoryFunction.class,"android_ndk_cc_toolchain_template.txt");
+    toolchainTemplate=ResourceFileLoader.loadResource(AndroidNdkRepositoryFunction.class,"android_ndk_toolchain_template.txt");
+  }
+ catch (  IOException e) {
+    throw new IllegalStateException(e);
+  }
+  StringBuilder toolchainMap=new StringBuilder();
+  StringBuilder toolchainProtos=new StringBuilder();
+  StringBuilder toolchains=new StringBuilder();
+  for (  String cpu : cpus) {
+    toolchainMap.append(String.format("\"%s\": \":cc-compiler-%s\", ",cpu,cpu));
+    toolchainProtos.append(toolchainTemplate.replace("%repository%",ruleName).replace("%cpu%",cpu).replace("%abi%",abi).replace("%api_level%",apiLevel).replace("%compiler%",compiler));
+    toolchains.append(ccToolchainTemplate.replace("%repository%",ruleName).replace("%cpu%",cpu).replace("%abi%",abi).replace("%api_level%",apiLevel).replace("%compiler%",compiler));
+  }
+  String buildFile=ccToolchainSuiteTemplate.replace("%toolchain_map%",toolchainMap).replace("%toolchain_protos%",toolchainProtos).replace("%toolchains%",toolchains).replace("%default_cpu%",cpus.get(0));
+  return writeBuildFile(directoryValue,buildFile);
 }
