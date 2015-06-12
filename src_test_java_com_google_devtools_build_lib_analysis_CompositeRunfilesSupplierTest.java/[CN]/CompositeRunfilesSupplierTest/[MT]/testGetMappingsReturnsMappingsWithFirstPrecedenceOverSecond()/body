@@ -1,0 +1,12 @@
+{
+  PathFragment first=new PathFragment("first");
+  Map<PathFragment,Artifact> firstMappings=mkMappings(rootDir,"first1","first2");
+  PathFragment second=new PathFragment("second");
+  Map<PathFragment,Artifact> secondMappings=mkMappings(rootDir,"second1","second2");
+  PathFragment shared=new PathFragment("shared");
+  Map<PathFragment,Artifact> firstSharedMappings=mkMappings(rootDir,"shared1","shared2");
+  Map<PathFragment,Artifact> secondSharedMappings=mkMappings(rootDir,"lost1","lost2");
+  when(mockFirst.getMappings()).thenReturn(ImmutableMap.of(first,firstMappings,shared,firstSharedMappings));
+  when(mockSecond.getMappings()).thenReturn(ImmutableMap.of(second,secondMappings,shared,secondSharedMappings));
+  assertThat(underTest.getMappings()).isEqualTo(ImmutableMap.of(first,firstMappings,second,secondMappings,shared,firstSharedMappings));
+}
