@@ -1,8 +1,10 @@
 {
   try {
-    String embedLabelLine=String.format("BUILD_EMBED_LABEL %s\n",options.get().embedLabel);
-    FileSystemUtils.writeContent(stableStatus.getPath(),embedLabelLine.getBytes(StandardCharsets.UTF_8));
-    FileSystemUtils.writeContent(volatileStatus.getPath(),new byte[]{});
+    Joiner joiner=Joiner.on('\n');
+    String info=joiner.join(BuildInfo.BUILD_EMBED_LABEL + " " + options.get().embedLabel,BuildInfo.BUILD_HOST + " " + hostname,BuildInfo.BUILD_USER + " " + username);
+    FileSystemUtils.writeContent(stableStatus.getPath(),info.getBytes(StandardCharsets.UTF_8));
+    String volatileInfo=BuildInfo.BUILD_TIMESTAMP + " " + timestamp+ "\n";
+    FileSystemUtils.writeContent(volatileStatus.getPath(),volatileInfo.getBytes(StandardCharsets.UTF_8));
   }
  catch (  IOException e) {
     throw new ActionExecutionException(e,this,true);
