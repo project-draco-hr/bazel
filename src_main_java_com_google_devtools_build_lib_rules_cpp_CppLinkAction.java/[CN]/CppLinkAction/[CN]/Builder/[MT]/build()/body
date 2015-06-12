@@ -15,7 +15,8 @@
   final LibraryToLink interfaceOutputLibrary=interfaceOutput == null ? null : LinkerInputs.newInputLibrary(interfaceOutput,filteredNonLibraryArtifacts);
   final ImmutableMap<Artifact,Artifact> linkstampMap=mapLinkstampsToOutputs(linkstamps,ruleContext,output);
   final ImmutableList<Artifact> actionOutputs=constructOutputs(outputLibrary.getArtifact(),linkstampMap.values(),interfaceOutputLibrary == null ? null : interfaceOutputLibrary.getArtifact(),symbolCountOutput);
-  LinkCommandLine linkCommandLine=new LinkCommandLine.Builder(configuration,getOwner()).setOutput(outputLibrary.getArtifact()).setInterfaceOutput(interfaceOutput).setSymbolCountsOutput(symbolCountOutput).setBuildInfoHeaderArtifacts(buildInfoHeaderArtifacts).setLinkerInputs(linkerInputs).setRuntimeInputs(ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs))).setLinkTargetType(linkType).setLinkStaticness(linkStaticness).setLinkopts(ImmutableList.copyOf(linkopts)).setFeatures(features).setLinkstamps(linkstampMap).addLinkstampCompileOptions(linkstampOptions).setRuntimeSolibDir(linkType.isStaticLibraryLink() ? null : runtimeSolibDir).setNativeDeps(isNativeDeps).setUseTestOnlyFlags(useTestOnlyFlags).setNeedWholeArchive(needWholeArchive).setInterfaceSoBuilder(getInterfaceSoBuilder()).setSupportsParamFiles(supportsParamFiles).build();
+  final PathFragment paramFileFragment=supportsParamFiles ? ParameterFile.derivePath(outputLibrary.getArtifact().getExecPath()) : null;
+  LinkCommandLine linkCommandLine=new LinkCommandLine.Builder(configuration,getOwner()).setOutput(outputLibrary.getArtifact()).setInterfaceOutput(interfaceOutput).setSymbolCountsOutput(symbolCountOutput).setBuildInfoHeaderArtifacts(buildInfoHeaderArtifacts).setLinkerInputs(linkerInputs).setRuntimeInputs(ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs))).setLinkTargetType(linkType).setLinkStaticness(linkStaticness).setLinkopts(ImmutableList.copyOf(linkopts)).setFeatures(features).setLinkstamps(linkstampMap).addLinkstampCompileOptions(linkstampOptions).setRuntimeSolibDir(linkType.isStaticLibraryLink() ? null : runtimeSolibDir).setNativeDeps(isNativeDeps).setUseTestOnlyFlags(useTestOnlyFlags).setNeedWholeArchive(needWholeArchive).setInterfaceSoBuilder(getInterfaceSoBuilder()).setParamFileFragment(paramFileFragment).build();
   NestedSetBuilder<Artifact> dependencyInputsBuilder=NestedSetBuilder.stableOrder();
   dependencyInputsBuilder.addAll(buildInfoHeaderArtifacts);
   dependencyInputsBuilder.addAll(linkstamps);
@@ -25,6 +26,12 @@
   }
   dependencyInputsBuilder.addTransitive(compilationInputs.build());
   Iterable<Artifact> expandedInputs=LinkerInputs.toLibraryArtifacts(Link.mergeInputsDependencies(uniqueLibraries,needWholeArchive,cppConfiguration.archiveType()));
-  Iterable<Artifact> inputs=IterablesChain.<Artifact>builder().add(ImmutableList.copyOf(LinkerInputs.toLibraryArtifacts(nonLibraries))).add(dependencyInputsBuilder.build()).add(ImmutableIterable.from(expandedInputs)).deduplicate().build();
-  return new CppLinkAction(getOwner(),inputs,actionOutputs,cppConfiguration,outputLibrary,interfaceOutputLibrary,fake,linkCommandLine);
+  IterablesChain.Builder<Artifact> inputsBuilder=IterablesChain.<Artifact>builder().add(ImmutableList.copyOf(LinkerInputs.toLibraryArtifacts(nonLibraries))).add(dependencyInputsBuilder.build()).add(ImmutableIterable.from(expandedInputs));
+  if (linkCommandLine.canBeSplit()) {
+    Artifact paramFile=createArtifact(ParameterFile.derivePath(outputLibrary.getArtifact().getRootRelativePath()));
+    inputsBuilder.add(ImmutableList.of(paramFile));
+    Action parameterFileWriteAction=new ParameterFileWriteAction(getOwner(),paramFile,linkCommandLine.paramCmdLine(),ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1);
+    analysisEnvironment.registerAction(parameterFileWriteAction);
+  }
+  return new CppLinkAction(getOwner(),inputsBuilder.deduplicate().build(),actionOutputs,cppConfiguration,outputLibrary,interfaceOutputLibrary,fake,linkCommandLine);
 }
