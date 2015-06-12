@@ -1,7 +1,7 @@
 {
-  ImmutableMap.Builder<PathFragment,Artifact> resourcesBuilder=new ImmutableMap.Builder<>();
+  Map<PathFragment,Artifact> resourcesMap=new LinkedHashMap<>();
   for (  Artifact resource : attributes.getResources()) {
-    resourcesBuilder.put(javaSemantics.getJavaResourcePath(resource.getRootRelativePath()),resource);
+    resourcesMap.put(javaSemantics.getJavaResourcePath(resource.getRootRelativePath()),resource);
   }
-  return new JackCompilationHelper.Builder().setRuleContext(ruleContext).setOutputArtifact(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_JACK_FILE)).setAndroidBaseLibraryForJack(ruleContext.getHostPrerequisiteArtifact("$android_jack")).addJavaSources(attributes.getSourceFiles()).addSourceJars(attributes.getSourceJars()).addCompiledJars(attributes.getJarFiles()).addResources(resourcesBuilder.build()).addProcessorNames(attributes.getProcessorNames()).addProcessorClasspathJars(attributes.getProcessorPath()).addExports(JavaCommon.getExports(ruleContext)).addClasspathDeps(javaCommon.targetsTreatedAsDeps(ClasspathType.COMPILE_ONLY)).addRuntimeDeps(javaCommon.targetsTreatedAsDeps(ClasspathType.RUNTIME_ONLY)).build();
+  return new JackCompilationHelper.Builder().setRuleContext(ruleContext).setOutputArtifact(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_JACK_FILE)).setAndroidBaseLibraryForJack(ruleContext.getHostPrerequisiteArtifact("$android_jack")).addJavaSources(attributes.getSourceFiles()).addSourceJars(attributes.getSourceJars()).addCompiledJars(attributes.getJarFiles()).addResources(ImmutableMap.copyOf(resourcesMap)).addProcessorNames(attributes.getProcessorNames()).addProcessorClasspathJars(attributes.getProcessorPath()).addExports(JavaCommon.getExports(ruleContext)).addClasspathDeps(javaCommon.targetsTreatedAsDeps(ClasspathType.COMPILE_ONLY)).addRuntimeDeps(javaCommon.targetsTreatedAsDeps(ClasspathType.RUNTIME_ONLY)).build();
 }
