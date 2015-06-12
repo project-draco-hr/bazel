@@ -1,0 +1,17 @@
+{
+  CppCompilationContext ccContext=getInfo().getProvider(CppCompilationContext.class);
+  ImmutableList.Builder<String> options=ImmutableList.builder();
+  for (  String define : ccContext.getDefines()) {
+    options.add("-D" + define);
+  }
+  for (  PathFragment path : ccContext.getSystemIncludeDirs()) {
+    options.add("-isystem " + path.getSafePathString());
+  }
+  for (  PathFragment path : ccContext.getIncludeDirs()) {
+    options.add("-I " + path.getSafePathString());
+  }
+  for (  PathFragment path : ccContext.getQuoteIncludeDirs()) {
+    options.add("-iquote " + path.getSafePathString());
+  }
+  return options.build();
+}
