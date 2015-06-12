@@ -1,3 +1,4 @@
 {
-  return new CompilationArtifacts.Builder().addSrcs(ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).errorsForNonMatching(SRCS_TYPE).list()).addNonArcSrcs(ruleContext.getPrerequisiteArtifacts("non_arc_srcs",Mode.TARGET).errorsForNonMatching(NON_ARC_SRCS_TYPE).list()).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).setPchFile(Optional.fromNullable(ruleContext.getPrerequisiteArtifact("pch",Mode.TARGET))).build();
+  PrerequisiteArtifacts srcs=ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).errorsForNonMatching(SRCS_TYPE);
+  return new CompilationArtifacts.Builder().addSrcs(srcs.filter(COMPILABLE_SRCS_TYPE).list()).addNonArcSrcs(ruleContext.getPrerequisiteArtifacts("non_arc_srcs",Mode.TARGET).errorsForNonMatching(NON_ARC_SRCS_TYPE).list()).addPrivateHdrs(srcs.filter(HEADERS).list()).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).setPchFile(Optional.fromNullable(ruleContext.getPrerequisiteArtifact("pch",Mode.TARGET))).build();
 }

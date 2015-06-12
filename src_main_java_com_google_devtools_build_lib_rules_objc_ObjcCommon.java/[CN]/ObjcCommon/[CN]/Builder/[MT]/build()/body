@@ -1,6 +1,6 @@
 {
   Iterable<BundleableFile> bundleImports=BundleableFile.bundleImportsFromRule(context);
-  ObjcProvider.Builder objcProvider=new ObjcProvider.Builder().addAll(IMPORTED_LIBRARY,extraImportLibraries).addAll(BUNDLE_FILE,bundleImports).addAll(BUNDLE_IMPORT_DIR,uniqueContainers(BundleableFile.toArtifacts(bundleImports),BUNDLE_CONTAINER_TYPE)).addAll(SDK_FRAMEWORK,extraSdkFrameworks).addAll(WEAK_SDK_FRAMEWORK,extraWeakSdkFrameworks).addAll(SDK_DYLIB,extraSdkDylibs).addAll(FRAMEWORK_FILE,frameworkImports).addAll(FRAMEWORK_DIR,uniqueContainers(frameworkImports,FRAMEWORK_CONTAINER_TYPE)).addAll(INCLUDE,userHeaderSearchPaths).addAll(DEFINE,defines).addAll(HEADER,headers).addTransitiveAndPropagate(depObjcProviders).addTransitiveWithoutPropagating(directDepObjcProviders);
+  ObjcProvider.Builder objcProvider=new ObjcProvider.Builder().addAll(IMPORTED_LIBRARY,extraImportLibraries).addAll(BUNDLE_FILE,bundleImports).addAll(BUNDLE_IMPORT_DIR,uniqueContainers(BundleableFile.toArtifacts(bundleImports),BUNDLE_CONTAINER_TYPE)).addAll(SDK_FRAMEWORK,extraSdkFrameworks).addAll(WEAK_SDK_FRAMEWORK,extraWeakSdkFrameworks).addAll(SDK_DYLIB,extraSdkDylibs).addAll(FRAMEWORK_FILE,frameworkImports).addAll(FRAMEWORK_DIR,uniqueContainers(frameworkImports,FRAMEWORK_CONTAINER_TYPE)).addAll(INCLUDE,userHeaderSearchPaths).addAll(DEFINE,defines).addTransitiveAndPropagate(depObjcProviders).addTransitiveWithoutPropagating(directDepObjcProviders);
   for (  CppCompilationContext headerProvider : depCcHeaderProviders) {
     objcProvider.addTransitiveAndPropagate(HEADER,headerProvider.getDeclaredIncludeSrcs());
   }
@@ -19,8 +19,7 @@
   }
   for (  CompilationArtifacts artifacts : compilationArtifacts.asSet()) {
     Iterable<Artifact> allSources=Iterables.concat(artifacts.getSrcs(),artifacts.getNonArcSrcs());
-    objcProvider.addAll(LIBRARY,artifacts.getArchive().asSet());
-    objcProvider.addAll(SOURCE,allSources);
+    objcProvider.addAll(HEADER,artifacts.getAdditionalHdrs()).addAll(HEADER,artifacts.getPrivateHdrs()).addAll(LIBRARY,artifacts.getArchive().asSet()).addAll(SOURCE,allSources);
     BuildConfiguration configuration=context.getConfiguration();
     RegexFilter filter=configuration.getInstrumentationFilter();
     if (configuration.isCodeCoverageEnabled() && filter.isIncluded(context.getLabel().toString())) {
@@ -48,6 +47,11 @@
       objcProvider.add(FORCE_LOAD_LIBRARY,archive);
       objcProvider.add(FORCE_LOAD_FOR_XCODEGEN,"$(WORKSPACE_ROOT)/" + archive.getExecPath().getSafePathString());
     }
+  }
+  if (this.generatesModuleMap) {
+    CppModuleMap moduleMap=intermediateArtifacts.moduleMap();
+    objcProvider.addWithoutPropagating(TOP_LEVEL_MODULE_MAP,moduleMap);
+    objcProvider.add(MODULE_MAP,moduleMap.getArtifact());
   }
   objcProvider.addAll(LINKED_BINARY,linkedBinary.asSet()).addAll(BREAKPAD_FILE,breakpadFile.asSet());
   return new ObjcCommon(objcProvider.build(),compilationArtifacts);

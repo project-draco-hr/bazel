@@ -1,0 +1,15 @@
+{
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  ImmutableList.Builder<String> coverageFlags=new ImmutableList.Builder<>();
+  ImmutableList.Builder<Artifact> gcnoFiles=new ImmutableList.Builder<>();
+  if (isCodeCoverageEnabled) {
+    coverageFlags.addAll(CLANG_COVERAGE_FLAGS);
+    gcnoFiles.add(intermediateArtifacts.gcnoFile(sourceFile));
+  }
+  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder();
+  if (ObjcRuleClasses.CPP_SOURCES.matches(sourceFile.getExecPath())) {
+    commandLine.add("-stdlib=libc++");
+  }
+  commandLine.add(IosSdkCommands.compileFlagsForClang(objcConfiguration)).add("-fmodule-maps").add("-fmodule-map-file=" + moduleMap.getArtifact().getExecPath()).add("-fmodule-name=" + moduleMap.getName()).add(IosSdkCommands.commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration)).add(objcConfiguration.getCoptsForCompilationMode()).addBeforeEachPath("-iquote",ObjcCommon.userHeaderSearchPaths(ruleContext.getConfiguration())).addBeforeEachExecPath("-include",pchFile.asSet()).addBeforeEachPath("-I",objcProvider.get(INCLUDE)).add(otherFlags).addFormatEach("-D%s",objcProvider.get(DEFINE)).add(coverageFlags.build()).add(objcConfiguration.getCopts()).add(attributes.copts()).add(attributes.optionsCopts()).addExecPath("-c",sourceFile).addExecPath("-o",objFile);
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setMnemonic("ObjcCompile").setExecutable(CLANG).setCommandLine(commandLine.build()).addInput(sourceFile).addOutput(objFile).addOutputs(gcnoFiles.build()).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addInputs(pchFile.asSet()).build(ruleContext));
+}
