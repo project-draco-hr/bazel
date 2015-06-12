@@ -1,0 +1,26 @@
+{
+  PackageFactory factory=runtime.getPackageFactory();
+  List<String> ruleClassNames=new ArrayList<>(factory.getRuleClassNames());
+  Collections.sort(ruleClassNames);
+  for (  String name : ruleClassNames) {
+    if (name.startsWith("$")) {
+      continue;
+    }
+    RuleClass ruleClass=factory.getRuleClass(name);
+    out.print(ruleClass + "(");
+    boolean first=true;
+    for (    Attribute attribute : ruleClass.getAttributes()) {
+      if (attribute.isImplicit()) {
+        continue;
+      }
+      if (first) {
+        first=false;
+      }
+ else {
+        out.print(", ");
+      }
+      out.print(attribute.getName());
+    }
+    out.println(")");
+  }
+}
