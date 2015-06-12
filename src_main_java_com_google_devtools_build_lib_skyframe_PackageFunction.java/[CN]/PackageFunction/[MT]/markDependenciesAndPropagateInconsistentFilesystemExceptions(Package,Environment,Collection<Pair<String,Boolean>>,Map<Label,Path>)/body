@@ -1,12 +1,13 @@
 {
-  boolean packageShouldBeInError=pkg.containsErrors();
+  boolean packageWasOriginallyInError=pkg.containsErrors();
+  boolean packageShouldBeInError=packageWasOriginallyInError;
   Set<SkyKey> subincludePackageLookupDepKeys=Sets.newHashSet();
   for (  Label label : pkg.getSubincludeLabels()) {
     subincludePackageLookupDepKeys.add(PackageLookupValue.key(label.getPackageFragment()));
   }
-  Pair<? extends Map<PathFragment,PackageLookupValue>,Boolean> subincludePackageLookupResult=getPackageLookupDepsAndPropagateInconsistentFilesystemExceptions(pkg.getName(),subincludePackageLookupDepKeys,env,pkg.containsErrors());
+  Pair<? extends Map<PathFragment,PackageLookupValue>,Boolean> subincludePackageLookupResult=getPackageLookupDepsAndPropagateInconsistentFilesystemExceptions(pkg.getName(),subincludePackageLookupDepKeys,env,packageWasOriginallyInError);
   Map<PathFragment,PackageLookupValue> subincludePackageLookupDeps=subincludePackageLookupResult.getFirst();
-  packageShouldBeInError=subincludePackageLookupResult.getSecond();
+  packageShouldBeInError|=subincludePackageLookupResult.getSecond();
   List<SkyKey> subincludeFileDepKeys=Lists.newArrayList();
   for (  Entry<Label,Path> subincludeEntry : subincludes.entrySet()) {
     Label label=subincludeEntry.getKey();
@@ -26,7 +27,7 @@
       }
     }
   }
-  packageShouldBeInError=markFileDepsAndPropagateInconsistentFilesystemExceptions(pkg.getName(),subincludeFileDepKeys,env,pkg.containsErrors());
+  packageShouldBeInError|=markFileDepsAndPropagateInconsistentFilesystemExceptions(pkg.getName(),subincludeFileDepKeys,env,packageWasOriginallyInError);
   PackageIdentifier packageId=pkg.getPackageIdentifier();
   List<SkyKey> globDepKeys=Lists.newArrayList();
   for (  Pair<String,Boolean> globPattern : globPatterns) {
@@ -41,6 +42,6 @@
     }
     globDepKeys.add(globSkyKey);
   }
-  packageShouldBeInError=markGlobDepsAndPropagateInconsistentFilesystemExceptions(pkg.getName(),globDepKeys,env,pkg.containsErrors());
+  packageShouldBeInError|=markGlobDepsAndPropagateInconsistentFilesystemExceptions(pkg.getName(),globDepKeys,env,packageWasOriginallyInError);
   return packageShouldBeInError;
 }
