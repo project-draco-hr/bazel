@@ -1,0 +1,23 @@
+{
+  assertEquals("foo\nbar",Printer.str("foo\nbar"));
+  assertEquals("\"foo\\nbar\"",Printer.repr("foo\nbar"));
+  assertEquals("'",Printer.str("'"));
+  assertEquals("\"'\"",Printer.repr("'"));
+  assertEquals("\"",Printer.str("\""));
+  assertEquals("\"\\\"\"",Printer.repr("\""));
+  assertEquals("3",Printer.str(3));
+  assertEquals("3",Printer.repr(3));
+  assertEquals("None",Printer.repr(Environment.NONE));
+  assertEquals("//x:x",Printer.str(Label.parseAbsolute("//x")));
+  assertEquals("\"//x:x\"",Printer.repr(Label.parseAbsolute("//x")));
+  List<?> list=makeList("foo","bar");
+  List<?> tuple=makeTuple("foo","bar");
+  assertEquals("(1, [\"foo\", \"bar\"], 3)",Printer.str(makeTuple(1,list,3)));
+  assertEquals("(1, [\"foo\", \"bar\"], 3)",Printer.repr(makeTuple(1,list,3)));
+  assertEquals("[1, (\"foo\", \"bar\"), 3]",Printer.str(makeList(1,tuple,3)));
+  assertEquals("[1, (\"foo\", \"bar\"), 3]",Printer.repr(makeList(1,tuple,3)));
+  Map<Object,Object> dict=ImmutableMap.of(1,tuple,2,list,"foo",makeList());
+  assertEquals("{1: (\"foo\", \"bar\"), 2: [\"foo\", \"bar\"], \"foo\": []}",Printer.str(dict));
+  assertEquals("{1: (\"foo\", \"bar\"), 2: [\"foo\", \"bar\"], \"foo\": []}",Printer.repr(dict));
+  assertEquals("FilesetEntry(srcdir = \"//foo:bar\", files = [], " + "excludes = [\"xyz\"], destdir = \"\", " + "strip_prefix = \".\", symlinks = \"copy\")",Printer.repr(makeFilesetEntry()));
+}
