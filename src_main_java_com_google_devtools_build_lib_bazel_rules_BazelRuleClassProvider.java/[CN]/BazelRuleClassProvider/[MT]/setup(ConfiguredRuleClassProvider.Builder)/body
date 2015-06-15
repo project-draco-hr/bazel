@@ -35,7 +35,12 @@
   builder.addRuleDefinition(new BazelPyLibraryRule());
   builder.addRuleDefinition(new BazelPyBinaryRule());
   builder.addRuleDefinition(new BazelPyTestRule());
-  builder.addWorkspaceFile(BazelJavaRuleClasses.getDefaultWorkspace());
+  try {
+    builder.addWorkspaceFile(ResourceFileLoader.loadResource(BazelJavaRuleClasses.class,"jdk.WORKSPACE"));
+  }
+ catch (  IOException e) {
+    throw new IllegalStateException(e);
+  }
   builder.addRuleDefinition(new BazelJavaRuleClasses.BaseJavaBinaryRule());
   builder.addRuleDefinition(new BazelJavaRuleClasses.IjarBaseRule());
   builder.addRuleDefinition(new BazelJavaRuleClasses.JavaBaseRule());

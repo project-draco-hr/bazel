@@ -6,18 +6,17 @@
   }
   Path repoWorkspace=workspaceRoot.getRoot().getRelative(workspaceRoot.getRelativePath());
   Builder builder=new Builder(repoWorkspace);
-  List<PathFragment> workspaceFiles=packageFactory.getRuleClassProvider().getWorkspaceFiles();
-  for (  PathFragment workspaceFile : workspaceFiles) {
-    workspaceRoot=RootedPath.toRootedPath(installDir,workspaceFile);
-    if (env.getValue(FileValue.key(workspaceRoot)) == null) {
-      return null;
-    }
-    parseWorkspaceFile(installDir.getRelative(workspaceFile),builder);
-  }
+  parseWorkspaceFile(ParserInputSource.create(ruleClassProvider.getDefaultWorkspaceFile(),new PathFragment("DEFAULT.WORKSPACE")),builder);
   if (!workspaceFileValue.exists()) {
     return new PackageValue(builder.build());
   }
-  parseWorkspaceFile(repoWorkspace,builder);
+  try {
+    ParserInputSource repoWorkspaceSource=ParserInputSource.create(repoWorkspace);
+    parseWorkspaceFile(repoWorkspaceSource,builder);
+  }
+ catch (  IOException e) {
+    throw new WorkspaceFileFunctionException(e,Transience.TRANSIENT);
+  }
   try {
     builder.resolveBindTargets(packageFactory.getRuleClass(BIND));
   }
