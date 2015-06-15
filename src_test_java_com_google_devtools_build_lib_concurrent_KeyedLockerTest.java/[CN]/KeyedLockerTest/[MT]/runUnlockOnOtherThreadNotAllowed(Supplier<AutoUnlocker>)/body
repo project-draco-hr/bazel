@@ -28,9 +28,10 @@
     }
   }
 ;
-  executorService.submit(runnable1);
-  executorService.submit(runnable2);
+  executorService.submit(wrapper.wrap(runnable1));
+  executorService.submit(wrapper.wrap(runnable2));
   boolean interrupted=ExecutorShutdownUtil.interruptibleShutdown(executorService);
+  Throwables.propagateIfPossible(wrapper.getFirstThrownError());
   if (interrupted || runnableInterrupted.get()) {
     Thread.currentThread().interrupt();
     throw new InterruptedException();

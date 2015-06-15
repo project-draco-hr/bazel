@@ -3,7 +3,11 @@
   final Iterator<List<String>> permutationsIter=Iterables.cycle(perms).iterator();
   return new Supplier<KeyedLocker.AutoUnlocker>(){
     @Override public AutoUnlocker get(){
-      return batchLocker.lockBatch(ImmutableSet.copyOf(permutationsIter.next()));
+      Set<String> keys;
+synchronized (this) {
+        keys=ImmutableSet.copyOf(permutationsIter.next());
+      }
+      return batchLocker.lockBatch(keys);
     }
   }
 ;

@@ -24,9 +24,10 @@
   }
 ;
   for (int i=0; i < NUM_EXECUTOR_THREADS; i++) {
-    executorService.submit(runnable);
+    executorService.submit(wrapper.wrap(runnable));
   }
   boolean interrupted=ExecutorShutdownUtil.interruptibleShutdown(executorService);
+  Throwables.propagateIfPossible(wrapper.getFirstThrownError());
   if (interrupted) {
     Thread.currentThread().interrupt();
     throw new InterruptedException();

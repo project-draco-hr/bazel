@@ -3,7 +3,7 @@
   final AtomicLongMap<String> mutexCounters=AtomicLongMap.create();
   Set<Set<String>> powerSet=Sets.powerSet(ImmutableSet.of("k1","k2","k3","k4","k5","k6","k8","k9","k10"));
   for (  final Set<String> keys : powerSet) {
-    executorService.submit(new Runnable(){
+    executorService.submit(wrapper.wrap(new Runnable(){
       @Override public void run(){
         if (keys.size() == 1) {
           String key=Iterables.getOnlyElement(keys);
@@ -25,9 +25,10 @@
         count.incrementAndGet();
       }
     }
-);
+));
   }
   boolean interrupted=ExecutorShutdownUtil.interruptibleShutdown(executorService);
+  Throwables.propagateIfPossible(wrapper.getFirstThrownError());
   if (interrupted) {
     Thread.currentThread().interrupt();
     throw new InterruptedException();
