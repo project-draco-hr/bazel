@@ -1,0 +1,32 @@
+{
+  int extra=100;
+  int frequency=NUM_EXECUTOR_THREADS - extra;
+  final Object objA=new Object();
+  store.put("a",objA,frequency);
+  final AtomicInteger nullCount=new AtomicInteger(0);
+  final AtomicInteger nonNullCount=new AtomicInteger(0);
+  Runnable runnable=new Runnable(){
+    @Override public void run(){
+      Object obj=store.consume("a");
+      if (obj == null) {
+        nullCount.incrementAndGet();
+      }
+ else {
+        assertSame(objA,obj);
+        nonNullCount.incrementAndGet();
+      }
+    }
+  }
+;
+  for (int i=0; i < NUM_EXECUTOR_THREADS; i++) {
+    executorService.submit(wrapper.wrap(runnable));
+  }
+  boolean interrupted=ExecutorShutdownUtil.interruptibleShutdown(executorService);
+  Throwables.propagateIfPossible(wrapper.getFirstThrownError());
+  if (interrupted) {
+    Thread.currentThread().interrupt();
+    throw new InterruptedException();
+  }
+  assertEquals(frequency,nonNullCount.get());
+  assertEquals(extra,nullCount.get());
+}
