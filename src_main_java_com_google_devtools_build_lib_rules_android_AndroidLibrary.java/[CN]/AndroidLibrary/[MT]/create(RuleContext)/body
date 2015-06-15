@@ -20,7 +20,7 @@
       JavaCommon javaCommon=new JavaCommon(ruleContext,javaSemantics);
       AndroidCommon androidCommon=new AndroidCommon(ruleContext,javaCommon);
       ApplicationManifest applicationManifest=androidSemantics.getManifestForRule(ruleContext);
-      ResourceApk resourceApk=applicationManifest.packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,transitiveResources,tools,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),ImmutableList.<String>of(),ImmutableList.<String>of(),ImmutableList.<String>of(),null,null,null,false,null);
+      ResourceApk resourceApk=applicationManifest.packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,transitiveResources,tools,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_SYMBOLS_TXT),ImmutableList.<String>of(),ImmutableList.<String>of(),ImmutableList.<String>of(),null,null,null,false,null);
       androidCommon.init(javaSemantics,androidSemantics,tools,resourceApk,transitiveIdlImportData,false,true);
       Artifact classesJar=mergeJarsFromSrcs(ruleContext,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_CLASS_JAR));
       Artifact aarOut=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_AAR);
@@ -62,7 +62,7 @@
       if (ruleContext.attributes().isAttributeValueExplicitlySpecified("custom_package")) {
         javaPackage=ruleContext.attributes().get("custom_package",Type.STRING);
       }
-      primaryResources=new ResourceContainer(ruleContext.getLabel(),javaPackage,null,false,apk,applicationManifest.getManifest(),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_JAVA_SOURCE_JAR),ImmutableList.<Artifact>of(),ImmutableList.<Artifact>of(),ImmutableList.<PathFragment>of(),ImmutableList.<PathFragment>of(),ruleContext.attributes().get("exports_manifest",Type.BOOLEAN),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT));
+      primaryResources=new ResourceContainer(ruleContext.getLabel(),javaPackage,null,false,apk,applicationManifest.getManifest(),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_JAVA_SOURCE_JAR),ImmutableList.<Artifact>of(),ImmutableList.<Artifact>of(),ImmutableList.<PathFragment>of(),ImmutableList.<PathFragment>of(),ruleContext.attributes().get("exports_manifest",Type.BOOLEAN),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),null);
       primaryResources=new AndroidResourcesProcessorBuilder(tools,ruleContext).setApkOut(apk).setRTxtOut(primaryResources.getRTxt()).setSourceJarOut(primaryResources.getJavaSourceJar()).setJavaPackage(primaryResources.getJavaPackage()).withPrimary(primaryResources).withDependencies(transitiveResources).setDebug(ruleContext.getConfiguration().getCompilationMode() != CompilationMode.OPT).setWorkingDirectory(ruleContext.getUniqueDirectory("_resources")).build(ruleContext);
     }
     new AarGeneratorBuilder(tools,ruleContext).withPrimary(primaryResources).withManifest(primaryResources.getManifest()).withRtxt(primaryResources.getRTxt()).withClasses(classesJar).setAAROut(aarOut).build(ruleContext);
