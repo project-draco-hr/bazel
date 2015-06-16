@@ -1,0 +1,17 @@
+{
+  CompilationUnit.Builder builder=CompilationUnit.newBuilder();
+  if (toplevel.sourcefile != null) {
+    Path path=Paths.get(toplevel.sourcefile.getName());
+    builder.setPath(processingModule.stripSourceRoot(path).toString());
+    builder.setGeneratedByAnnotationProcessor(processingModule.isGenerated(path));
+  }
+  if (toplevel.getPackageName() != null) {
+    builder.setPkg(toplevel.getPackageName().toString());
+  }
+  for (  JCTree decl : toplevel.defs) {
+    if (decl instanceof JCClassDecl) {
+      builder.addTopLevel(((JCClassDecl)decl).getSimpleName().toString());
+    }
+  }
+  processingModule.recordUnit(builder.build());
+}
