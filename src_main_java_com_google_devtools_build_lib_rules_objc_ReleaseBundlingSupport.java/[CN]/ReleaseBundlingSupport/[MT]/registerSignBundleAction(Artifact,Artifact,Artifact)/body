@@ -1,4 +1,13 @@
 {
-  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setMnemonic("IosSignBundle").setProgressMessage("Signing iOS bundle: " + ruleContext.getLabel()).setExecutable(new PathFragment("/bin/bash")).addArgument("-c").addArgument("set -e && " + "t=$(mktemp -d -t signing_intermediate) && " + "signed_ipa=${PWD}/" + ipaOutput.getExecPathString() + " && "+ "unzip -qq "+ ipaUnsigned.getExecPathString()+ " -d ${t} && "+ codesignCommand(attributes.provisioningProfile(),entitlements,"${t}/" + bundling.getBundleDir())+ " && cd \"${t}\" && /usr/bin/zip -q -r \"${signed_ipa}\" .").addInput(ipaUnsigned).addInput(attributes.provisioningProfile()).addInput(entitlements).addOutput(ipaOutput).build(ruleContext));
+  ImmutableList.Builder<String> dirsToSign=new ImmutableList.Builder<>();
+  if (objcProvider.is(USES_SWIFT)) {
+    dirsToSign.add(bundling.getBundleDir() + "/Frameworks/*");
+  }
+  dirsToSign.add(bundling.getBundleDir());
+  StringBuilder codesignCommandLineBuilder=new StringBuilder();
+  for (  String dir : dirsToSign.build()) {
+    codesignCommandLineBuilder.append(codesignCommand(attributes.provisioningProfile(),entitlements,"${t}/" + dir)).append(" && ");
+  }
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setMnemonic("IosSignBundle").setProgressMessage("Signing iOS bundle: " + ruleContext.getLabel()).setExecutable(new PathFragment("/bin/bash")).addArgument("-c").addArgument("set -e && " + "t=$(mktemp -d -t signing_intermediate) && " + "signed_ipa=${PWD}/" + ipaOutput.getExecPathString() + " && "+ "unzip -qq "+ ipaUnsigned.getExecPathString()+ " -d ${t} && "+ codesignCommandLineBuilder.toString()+ "cd \"${t}\" && /usr/bin/zip -q -r \"${signed_ipa}\" .").addInput(ipaUnsigned).addInput(attributes.provisioningProfile()).addInput(entitlements).addOutput(ipaOutput).build(ruleContext));
   return this;
 }

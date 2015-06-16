@@ -1,0 +1,23 @@
+{
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  ImmutableList.Builder<Artifact> moduleFiles=new ImmutableList.Builder<>();
+  for (  Artifact src : compilationArtifacts.getSrcs()) {
+    if (ObjcRuleClasses.SWIFT_SOURCES.matches(src.getFilename())) {
+      moduleFiles.add(intermediateArtifacts.swiftModuleFile(src));
+    }
+  }
+  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder();
+  commandLine.add("-frontend");
+  commandLine.add("-emit-module");
+  commandLine.add("-sdk").add(IosSdkCommands.sdkDir(objcConfiguration));
+  commandLine.add("-target").add(IosSdkCommands.swiftTarget(objcConfiguration));
+  if (objcConfiguration.generateDebugSymbols()) {
+    commandLine.add("-g");
+  }
+  commandLine.add("-module-name").add(getModuleName());
+  commandLine.add("-parse-as-library");
+  commandLine.addExecPaths(moduleFiles.build());
+  commandLine.addExecPath("-o",intermediateArtifacts.swiftModule());
+  commandLine.addExecPath("-emit-objc-header-path",intermediateArtifacts.swiftHeader());
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setMnemonic("SwiftModuleMerge").setExecutable(SWIFT).setCommandLine(commandLine.build()).addInputs(moduleFiles.build()).addOutput(intermediateArtifacts.swiftModule()).addOutput(intermediateArtifacts.swiftHeader()).build(ruleContext));
+}

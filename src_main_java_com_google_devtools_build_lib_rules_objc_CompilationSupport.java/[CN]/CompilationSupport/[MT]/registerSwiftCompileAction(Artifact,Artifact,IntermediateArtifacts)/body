@@ -1,0 +1,17 @@
+{
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  ImmutableSet.Builder<Artifact> otherSwiftSourcesBuilder=ImmutableSet.builder();
+  for (  Artifact otherSourceFile : compilationArtifacts(ruleContext).getSrcs()) {
+    if (ObjcRuleClasses.SWIFT_SOURCES.matches(otherSourceFile.getFilename()) && otherSourceFile != sourceFile) {
+      otherSwiftSourcesBuilder.add(otherSourceFile);
+    }
+  }
+  ImmutableSet<Artifact> otherSwiftSources=otherSwiftSourcesBuilder.build();
+  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder().add("-frontend").add("-emit-object").add("-target").add(IosSdkCommands.swiftTarget(objcConfiguration)).add("-sdk").add(IosSdkCommands.sdkDir(objcConfiguration)).add("-enable-objc-interop");
+  if (objcConfiguration.generateDebugSymbols()) {
+    commandLine.add("-g");
+  }
+  commandLine.add("-Onone").add("-module-name").add(getModuleName()).add("-parse-as-library").addExecPath("-primary-file",sourceFile).addExecPaths(otherSwiftSources).addExecPath("-o",objFile).addExecPath("-emit-module-path",intermediateArtifacts.swiftModuleFile(sourceFile));
+  commandLine.addBeforeEachExecPath("-import-objc-header",attributes.hdrs());
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setMnemonic("SwiftCompile").setExecutable(SWIFT).setCommandLine(commandLine.build()).addInput(sourceFile).addInputs(otherSwiftSources).addInputs(attributes.hdrs()).addOutput(objFile).addOutput(intermediateArtifacts.swiftModuleFile(sourceFile)).build(ruleContext));
+}

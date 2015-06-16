@@ -1,0 +1,8 @@
+{
+  if (!objcProvider.is(USES_SWIFT)) {
+    return;
+  }
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  CustomCommandLine.Builder commandLine=CustomCommandLine.builder().addPath(intermediateArtifacts.swiftFrameworksFileZip().getExecPath()).add("Frameworks").addPath(ObjcRuleClasses.SWIFT_STDLIB_TOOL).add("--platform").add(IosSdkCommands.swiftPlatform(objcConfiguration)).addExecPath("--scan-executable",intermediateArtifacts.singleArchitectureBinary());
+  ruleContext.registerAction(ObjcRuleClasses.spawnJavaOnDarwinActionBuilder(attributes.swiftStdlibToolDeployJar()).setMnemonic("SwiftStdlibCopy").setCommandLine(commandLine.build()).addOutput(intermediateArtifacts.swiftFrameworksFileZip()).addInput(intermediateArtifacts.singleArchitectureBinary()).build(ruleContext));
+}

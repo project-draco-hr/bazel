@@ -11,6 +11,9 @@
   if (ruleContext.getConfiguration().isCodeCoverageEnabled()) {
     commandLine.add(LINKER_COVERAGE_FLAGS);
   }
+  if (objcProvider.is(USES_SWIFT)) {
+    commandLine.add("-L").add(IosSdkCommands.swiftLibDir(objcConfiguration)).add("-Xlinker").add("-rpath").add("-Xlinker").add("@executable_path/Frameworks");
+  }
   if (dsymBundle.isPresent()) {
     commandLine.add("&&").addPath(DSYMUTIL).add(linkedBinary.getExecPathString()).addExecPath("-o",dsymBundle.get());
   }

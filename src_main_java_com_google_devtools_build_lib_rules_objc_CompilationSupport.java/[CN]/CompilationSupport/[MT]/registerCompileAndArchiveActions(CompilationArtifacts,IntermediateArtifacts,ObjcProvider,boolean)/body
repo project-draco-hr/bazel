@@ -3,12 +3,20 @@
   for (  Artifact sourceFile : compilationArtifacts.getSrcs()) {
     Artifact objFile=intermediateArtifacts.objFile(sourceFile);
     objFiles.add(objFile);
-    registerCompileAction(sourceFile,objFile,compilationArtifacts.getPchFile(),objcProvider,intermediateArtifacts,ImmutableList.of("-fobjc-arc"),isCodeCoverageEnabled);
+    if (ObjcRuleClasses.SWIFT_SOURCES.matches(sourceFile.getFilename())) {
+      registerSwiftCompileAction(sourceFile,objFile,intermediateArtifacts);
+    }
+ else {
+      registerCompileAction(sourceFile,objFile,objcProvider,intermediateArtifacts,compilationArtifacts,ImmutableList.of("-fobjc-arc"),isCodeCoverageEnabled);
+    }
   }
   for (  Artifact nonArcSourceFile : compilationArtifacts.getNonArcSrcs()) {
     Artifact objFile=intermediateArtifacts.objFile(nonArcSourceFile);
     objFiles.add(objFile);
-    registerCompileAction(nonArcSourceFile,objFile,compilationArtifacts.getPchFile(),objcProvider,intermediateArtifacts,ImmutableList.of("-fno-objc-arc"),isCodeCoverageEnabled);
+    registerCompileAction(nonArcSourceFile,objFile,objcProvider,intermediateArtifacts,compilationArtifacts,ImmutableList.of("-fno-objc-arc"),isCodeCoverageEnabled);
+  }
+  if (compilationArtifacts.hasSwiftSources()) {
+    registerSwiftModuleMergeAction(intermediateArtifacts,compilationArtifacts);
   }
   for (  Artifact archive : compilationArtifacts.getArchive().asSet()) {
     registerArchiveActions(intermediateArtifacts,objFiles,archive);
