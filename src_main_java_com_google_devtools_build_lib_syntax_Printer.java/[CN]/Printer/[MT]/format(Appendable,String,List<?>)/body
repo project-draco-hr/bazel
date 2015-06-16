@@ -1,0 +1,55 @@
+{
+  int length=pattern.length();
+  int argLength=arguments.size();
+  int i=0;
+  int a=0;
+  while (i < length) {
+    int p=pattern.indexOf('%',i);
+    if (p == -1) {
+      append(buffer,pattern,i,length);
+      break;
+    }
+    if (p > i) {
+      append(buffer,pattern,i,p);
+    }
+    if (p == length - 1) {
+      throw new MissingFormatWidthException("incomplete format pattern ends with %: " + repr(pattern));
+    }
+    char directive=pattern.charAt(p + 1);
+    i=p + 2;
+switch (directive) {
+case '%':
+      append(buffer,'%');
+    continue;
+case 'd':
+case 'r':
+case 's':
+  if (a >= argLength) {
+    throw new MissingFormatWidthException("not enough arguments for format pattern " + repr(pattern) + ": "+ repr(SkylarkList.tuple(arguments)));
+  }
+Object argument=arguments.get(a++);
+switch (directive) {
+case 'd':
+if (argument instanceof Integer) {
+  append(buffer,argument.toString());
+  continue;
+}
+ else {
+  throw new MissingFormatWidthException("invalid argument " + repr(argument) + " for format pattern %d");
+}
+case 'r':
+write(buffer,argument);
+continue;
+case 's':
+print(buffer,argument);
+continue;
+}
+default :
+throw new MissingFormatWidthException("unsupported format character " + repr(String.valueOf(directive)) + " at index "+ (p + 1)+ " in "+ repr(pattern));
+}
+}
+if (a < argLength) {
+throw new MissingFormatWidthException("not all arguments converted during string formatting");
+}
+return buffer;
+}
