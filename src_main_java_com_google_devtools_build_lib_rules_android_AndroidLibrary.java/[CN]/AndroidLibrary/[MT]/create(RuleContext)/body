@@ -21,7 +21,9 @@
       AndroidCommon androidCommon=new AndroidCommon(ruleContext,javaCommon);
       ApplicationManifest applicationManifest=androidSemantics.getManifestForRule(ruleContext);
       ResourceApk resourceApk=applicationManifest.packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,transitiveResources,tools,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_SYMBOLS_TXT),ImmutableList.<String>of(),ImmutableList.<String>of(),ImmutableList.<String>of(),null,null,null,false,null);
-      androidCommon.init(javaSemantics,androidSemantics,tools,resourceApk,transitiveIdlImportData,false,true);
+      if (androidCommon.init(javaSemantics,androidSemantics,tools,resourceApk,transitiveIdlImportData,false,true) == null) {
+        return null;
+      }
       Artifact classesJar=mergeJarsFromSrcs(ruleContext,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_CLASS_JAR));
       Artifact aarOut=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_AAR);
       new AarGeneratorBuilder(tools,ruleContext).withPrimary(resourceApk.getPrimaryResource()).withManifest(resourceApk.getPrimaryResource().getManifest()).withRtxt(resourceApk.getPrimaryResource().getRTxt()).withClasses(classesJar).strictResourceMerging().setAAROut(aarOut).build(ruleContext);
@@ -38,7 +40,9 @@
     JavaCommon javaCommon=new JavaCommon(ruleContext,javaSemantics);
     AndroidCommon androidCommon=new AndroidCommon(ruleContext,javaCommon);
     ResourceApk resourceApk=ResourceApk.fromTransitiveResources(transitiveResources);
-    androidCommon.init(javaSemantics,androidSemantics,tools,resourceApk,transitiveIdlImportData,false,true);
+    if (androidCommon.init(javaSemantics,androidSemantics,tools,resourceApk,transitiveIdlImportData,false,true) == null) {
+      return null;
+    }
     RuleConfiguredTargetBuilder targetBuilder=androidCommon.addTransitiveInfoProviders(new RuleConfiguredTargetBuilder(ruleContext),tools);
     androidSemantics.addTransitiveInfoProviders(targetBuilder,ruleContext,javaCommon,androidCommon,null,null,null,ImmutableList.<Artifact>of());
     targetBuilder.add(AndroidNativeLibraryProvider.class,new AndroidNativeLibraryProvider(transitiveNativeLibraries)).add(JavaSourceJarsProvider.class,androidCommon.getJavaSourceJarsProvider()).add(AndroidCcLinkParamsProvider.class,new AndroidCcLinkParamsProvider(androidCommon.getCcLinkParamsStore())).add(JavaNeverlinkInfoProvider.class,new JavaNeverlinkInfoProvider(androidCommon.isNeverLink())).add(ProguardSpecProvider.class,new ProguardSpecProvider(transitiveProguardConfigs)).addOutputGroup(OutputGroupProvider.HIDDEN_TOP_LEVEL,transitiveProguardConfigs);

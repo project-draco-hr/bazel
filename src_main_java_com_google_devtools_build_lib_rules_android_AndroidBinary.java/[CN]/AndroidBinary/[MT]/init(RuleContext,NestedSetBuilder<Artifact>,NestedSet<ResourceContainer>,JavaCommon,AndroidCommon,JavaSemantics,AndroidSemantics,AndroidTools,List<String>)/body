@@ -53,6 +53,9 @@
     splitResourceApk=applicationManifest.createSplitManifest(ruleContext,"android_resources",false).packWithResources(getDxArtifact(ruleContext,"android_resources.ap_"),ruleContext,resourceContainers,tools,false,getProguardConfigArtifact(ruleContext,"incremental_split"));
   }
   JavaTargetAttributes resourceClasses=androidCommon.init(javaSemantics,androidSemantics,tools,resourceApk,AndroidIdlProvider.EMPTY,ruleContext.getConfiguration().isCodeCoverageEnabled(),true);
+  if (resourceClasses == null) {
+    return null;
+  }
   Artifact deployJar=createDeployJar(ruleContext,javaSemantics,androidCommon,resourceClasses,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_DEPLOY_JAR));
   return createAndroidBinary(ruleContext,filesBuilder,deployJar,javaCommon,androidCommon,javaSemantics,androidSemantics,tools,nativeLibs,applicationManifest,resourceApk,incrementalResourceApk,splitResourceApk,resourceClasses,ImmutableList.<Artifact>of(),null);
 }
