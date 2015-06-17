@@ -1,4 +1,9 @@
 {
-  GlobVisitor visitor=(threadPool == null) ? new GlobVisitor(checkForInterruption) : new GlobVisitor(threadPool,checkForInterruption);
-  return visitor.globAsync(base,patterns,excludePatterns,excludeDirectories,dirPred,syscalls);
+  Preconditions.checkNotNull(threadPool,"%s %s",base,patterns);
+  try {
+    return new GlobVisitor(threadPool,checkForInterruption).globAsync(base,patterns,excludePatterns,excludeDirectories,dirPred,syscalls);
+  }
+ catch (  IOException e) {
+    throw new IllegalStateException(e);
+  }
 }

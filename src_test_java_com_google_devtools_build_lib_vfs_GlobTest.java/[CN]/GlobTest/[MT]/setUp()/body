@@ -1,5 +1,13 @@
 {
-  fs=new InMemoryFileSystem();
+  fs=new InMemoryFileSystem(){
+    @Override public Collection<Dirent> readdir(    Path path,    boolean followSymlinks) throws IOException {
+      if (path.equals(throwOnReaddir)) {
+        throw new FileNotFoundException(path.getPathString());
+      }
+      return super.readdir(path,followSymlinks);
+    }
+  }
+;
   tmpPath=fs.getPath("/globtmp");
   for (  String dir : ImmutableList.of("foo/bar/wiz","foo/barnacle/wiz","food/barnacle/wiz","fool/barnacle/wiz")) {
     FileSystemUtils.createDirectoryAndParents(tmpPath.getRelative(dir));
