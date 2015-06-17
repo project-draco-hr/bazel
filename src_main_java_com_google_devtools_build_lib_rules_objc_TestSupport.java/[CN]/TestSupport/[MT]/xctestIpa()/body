@@ -1,4 +1,16 @@
 {
   FileProvider fileProvider=ruleContext.getPrerequisite("xctest_app",Mode.TARGET,FileProvider.class);
-  return Iterables.getOnlyElement(Artifact.filterFiles(fileProvider.getFilesToBuild(),FileType.of(".ipa")));
+  if (fileProvider == null) {
+    return Optional.absent();
+  }
+  List<Artifact> files=Artifact.filterFiles(fileProvider.getFilesToBuild(),FileType.of(".ipa"));
+  if (files.size() == 0) {
+    return Optional.absent();
+  }
+ else   if (files.size() == 1) {
+    return Optional.of(Iterables.getOnlyElement(files));
+  }
+ else {
+    throw new IllegalStateException("Expected 0 or 1 files in xctest_app, got: " + files);
+  }
 }
