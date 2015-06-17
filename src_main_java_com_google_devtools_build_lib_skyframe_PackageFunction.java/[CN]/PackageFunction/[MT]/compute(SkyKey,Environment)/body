@@ -11,7 +11,7 @@
     throw new PackageFunctionException(e,Transience.PERSISTENT);
   }
 catch (  InconsistentFilesystemException e) {
-    throw new PackageFunctionException(new InternalInconsistentFilesystemException(packageName,e),Transience.PERSISTENT);
+    throw new PackageFunctionException(new InternalInconsistentFilesystemException(packageId,e),Transience.PERSISTENT);
   }
   if (packageLookupValue == null) {
     return null;
@@ -21,9 +21,9 @@ switch (packageLookupValue.getErrorReason()) {
 case NO_BUILD_FILE:
 case DELETED_PACKAGE:
 case NO_EXTERNAL_PACKAGE:
-      throw new PackageFunctionException(new BuildFileNotFoundException(packageName,packageLookupValue.getErrorMsg()),Transience.PERSISTENT);
+      throw new PackageFunctionException(new BuildFileNotFoundException(packageId,packageLookupValue.getErrorMsg()),Transience.PERSISTENT);
 case INVALID_PACKAGE_NAME:
-    throw new PackageFunctionException(new InvalidPackageNameException(packageName,packageLookupValue.getErrorMsg()),Transience.PERSISTENT);
+    throw new PackageFunctionException(new InvalidPackageNameException(packageId,packageLookupValue.getErrorMsg()),Transience.PERSISTENT);
 default :
   throw new IllegalStateException();
 }
@@ -73,7 +73,7 @@ try {
 astLookupValue=(ASTFileLookupValue)env.getValueOrThrow(astLookupKey,ErrorReadingSkylarkExtensionException.class,InconsistentFilesystemException.class);
 }
  catch (ErrorReadingSkylarkExtensionException|InconsistentFilesystemException e) {
-throw new PackageFunctionException(new BadPreludeFileException(packageName,e.getMessage()),Transience.PERSISTENT);
+throw new PackageFunctionException(new BadPreludeFileException(packageId,e.getMessage()),Transience.PERSISTENT);
 }
 if (astLookupValue == null) {
 return null;
@@ -88,9 +88,9 @@ inputSource=ParserInputSource.create(buildFilePath);
 }
  catch (IOException e) {
 env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
-throw new PackageFunctionException(new BuildFileContainsErrorsException(packageName,e.getMessage()),Transience.TRANSIENT);
+throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.TRANSIENT);
 }
-SkylarkImportResult importResult=fetchImportsFromBuildFile(buildFilePath,buildFileFragment,packageId.getRepository(),preludeStatements,inputSource,packageName,env);
+SkylarkImportResult importResult=fetchImportsFromBuildFile(buildFilePath,buildFileFragment,packageId,preludeStatements,inputSource,env);
 if (importResult == null) {
 return null;
 }

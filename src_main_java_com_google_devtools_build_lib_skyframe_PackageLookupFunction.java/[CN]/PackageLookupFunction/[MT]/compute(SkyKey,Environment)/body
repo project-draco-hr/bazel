@@ -2,22 +2,20 @@
   PathPackageLocator pkgLocator=PrecomputedValue.PATH_PACKAGE_LOCATOR.get(env);
   PackageIdentifier packageKey=(PackageIdentifier)skyKey.argument();
   if (!packageKey.getRepository().isDefault()) {
-    return computeExternalPackageLookupValue(skyKey,env);
+    return computeExternalPackageLookupValue(skyKey,env,packageKey);
   }
  else   if (packageKey.getPackageFragment().equals(new PathFragment(ExternalPackage.NAME))) {
-    return computeWorkspaceLookupValue(env);
+    return computeWorkspaceLookupValue(env,packageKey);
   }
-  PathFragment pkg=packageKey.getPackageFragment();
-  String pkgName=pkg.getPathString();
-  String packageNameErrorMsg=LabelValidator.validatePackageName(pkgName);
+  String packageNameErrorMsg=LabelValidator.validatePackageName(packageKey.getPackageFragment().getPathString());
   if (packageNameErrorMsg != null) {
-    return PackageLookupValue.invalidPackageName("Invalid package name '" + pkgName + "': "+ packageNameErrorMsg);
+    return PackageLookupValue.invalidPackageName("Invalid package name '" + packageKey + "': "+ packageNameErrorMsg);
   }
-  if (deletedPackages.get().contains(pkg.getPathString())) {
+  if (deletedPackages.get().contains(packageKey.getPackageFragment().toString())) {
     return PackageLookupValue.deletedPackage();
   }
   for (  Path packagePathEntry : pkgLocator.getPathEntries()) {
-    PackageLookupValue value=getPackageLookupValue(env,packagePathEntry,pkg);
+    PackageLookupValue value=getPackageLookupValue(env,packagePathEntry,packageKey);
     if (value == null || value.packageExists()) {
       return value;
     }

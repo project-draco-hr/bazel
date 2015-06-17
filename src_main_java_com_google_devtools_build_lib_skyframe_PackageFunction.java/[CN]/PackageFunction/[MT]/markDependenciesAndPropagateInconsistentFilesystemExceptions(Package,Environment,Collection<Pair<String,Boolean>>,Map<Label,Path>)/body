@@ -5,7 +5,7 @@
   for (  Label label : pkg.getSubincludeLabels()) {
     subincludePackageLookupDepKeys.add(PackageLookupValue.key(label.getPackageFragment()));
   }
-  Pair<? extends Map<PathFragment,PackageLookupValue>,Boolean> subincludePackageLookupResult=getPackageLookupDepsAndPropagateInconsistentFilesystemExceptions(pkg.getName(),subincludePackageLookupDepKeys,env,packageWasOriginallyInError);
+  Pair<? extends Map<PathFragment,PackageLookupValue>,Boolean> subincludePackageLookupResult=getPackageLookupDepsAndPropagateInconsistentFilesystemExceptions(pkg.getPackageIdentifier(),subincludePackageLookupDepKeys,env,packageWasOriginallyInError);
   Map<PathFragment,PackageLookupValue> subincludePackageLookupDeps=subincludePackageLookupResult.getFirst();
   packageShouldBeInError|=subincludePackageLookupResult.getSecond();
   List<SkyKey> subincludeFileDepKeys=Lists.newArrayList();
@@ -16,18 +16,18 @@
       Path subincludeFilePath=subincludeEntry.getValue();
       if (subincludeFilePath != null) {
         if (!subincludePackageLookupValue.packageExists()) {
-          throw new InternalInconsistentFilesystemException(pkg.getName(),String.format("Unexpected package in %s. Was it modified during the build?",subincludeFilePath));
+          throw new InternalInconsistentFilesystemException(pkg.getPackageIdentifier(),String.format("Unexpected package in %s. Was it modified during the build?",subincludeFilePath));
         }
         Path subincludeFilePathSkyframe=subincludePackageLookupValue.getRoot().getRelative(label.toPathFragment());
         if (!subincludeFilePathSkyframe.equals(subincludeFilePath)) {
-          throw new InternalInconsistentFilesystemException(pkg.getName(),String.format("Inconsistent package location for %s: '%s' vs '%s'. " + "Was the source tree modified during the build?",label.getPackageFragment(),subincludeFilePathSkyframe,subincludeFilePath));
+          throw new InternalInconsistentFilesystemException(pkg.getPackageIdentifier(),String.format("Inconsistent package location for %s: '%s' vs '%s'. " + "Was the source tree modified during the build?",label.getPackageFragment(),subincludeFilePathSkyframe,subincludeFilePath));
         }
         SkyKey subincludeSkyKey=FileValue.key(RootedPath.toRootedPath(subincludePackageLookupValue.getRoot(),subincludeFilePath));
         subincludeFileDepKeys.add(subincludeSkyKey);
       }
     }
   }
-  packageShouldBeInError|=markFileDepsAndPropagateInconsistentFilesystemExceptions(pkg.getName(),subincludeFileDepKeys,env,packageWasOriginallyInError);
+  packageShouldBeInError|=markFileDepsAndPropagateInconsistentFilesystemExceptions(pkg.getPackageIdentifier(),subincludeFileDepKeys,env,packageWasOriginallyInError);
   PackageIdentifier packageId=pkg.getPackageIdentifier();
   List<SkyKey> globDepKeys=Lists.newArrayList();
   for (  Pair<String,Boolean> globPattern : globPatterns) {
@@ -42,6 +42,6 @@
     }
     globDepKeys.add(globSkyKey);
   }
-  packageShouldBeInError|=markGlobDepsAndPropagateInconsistentFilesystemExceptions(pkg.getName(),globDepKeys,env,packageWasOriginallyInError);
+  packageShouldBeInError|=markGlobDepsAndPropagateInconsistentFilesystemExceptions(pkg.getPackageIdentifier(),globDepKeys,env,packageWasOriginallyInError);
   return packageShouldBeInError;
 }
