@@ -6,10 +6,11 @@
   env.buildTransitiveClosure(expression,fromValue,Integer.MAX_VALUE);
   Set<T> reachableFromX=env.getTransitiveClosure(fromValue);
   Set<T> result=intersection(reachableFromX,toValue);
-  LinkedList<T> worklist=new LinkedList<>(result);
-  T n;
-  while ((n=worklist.poll()) != null) {
-    for (    T np : env.getReverseDeps(n)) {
+  Collection<T> worklist=result;
+  while (!worklist.isEmpty()) {
+    Collection<T> reverseDeps=env.getReverseDeps(worklist);
+    worklist=new ArrayList<>();
+    for (    T np : reverseDeps) {
       if (reachableFromX.contains(np)) {
         if (result.add(np)) {
           worklist.add(np);
