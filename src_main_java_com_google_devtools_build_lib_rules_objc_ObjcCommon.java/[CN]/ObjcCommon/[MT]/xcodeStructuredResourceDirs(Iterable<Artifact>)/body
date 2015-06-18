@@ -1,0 +1,10 @@
+{
+  ImmutableSet.Builder<PathFragment> containers=new ImmutableSet.Builder<>();
+  for (  Artifact artifact : artifacts) {
+    PathFragment ownerRuleDirectory=artifact.getArtifactOwner().getLabel().getPackageFragment();
+    String containerName=artifact.getRootRelativePath().relativeTo(ownerRuleDirectory).getSegment(0);
+    PathFragment rootExecPath=artifact.getRoot().getExecPath();
+    containers.add(rootExecPath.getRelative(ownerRuleDirectory.getRelative(containerName)));
+  }
+  return containers.build();
+}
