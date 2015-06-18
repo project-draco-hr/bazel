@@ -1,0 +1,30 @@
+{
+  CustomCommandLine.Builder argBuilder=CustomCommandLine.builder();
+  PathFragment javaExecutable=ruleContext.getHostConfiguration().getFragment(Jvm.class).getJavaExecutable();
+  argBuilder.add("--java").add(javaExecutable.getPathString());
+  Artifact j2ObjcDeployJar=ruleContext.getPrerequisiteArtifact("$j2objc",Mode.HOST);
+  argBuilder.addExecPath("--j2objc",j2ObjcDeployJar);
+  argBuilder.add("--main_class").add("com.google.devtools.j2objc.J2ObjC");
+  argBuilder.addJoinExecPaths("--translated_source_files",",",j2ObjcSource.getObjcSrcs());
+  argBuilder.add("--objc_file_path").addPath(j2ObjcSource.getObjcFilePath());
+  Artifact outputDependencyMappingFile=j2ObjcOutputDependencyMappingFile(ruleContext);
+  argBuilder.addExecPath("--output_dependency_mapping_file",outputDependencyMappingFile);
+  Iterable<String> translationFlags=ruleContext.getFragment(J2ObjcConfiguration.class).getTranslationFlags();
+  argBuilder.add(translationFlags);
+  if (!depsHeaderMappingFiles.isEmpty()) {
+    argBuilder.addJoinExecPaths("--header-mapping",",",depsHeaderMappingFiles);
+  }
+  Artifact outputHeaderMappingFile=j2ObjcOutputHeaderMappingFile(ruleContext);
+  argBuilder.addExecPath("--output-header-mapping",outputHeaderMappingFile);
+  if (!depsClassMappingFiles.isEmpty()) {
+    argBuilder.addJoinExecPaths("--mapping",",",depsClassMappingFiles);
+  }
+  argBuilder.add("-d").addPath(j2ObjcSource.getObjcFilePath());
+  NestedSet<Artifact> compileTimeJars=compArgsProvider.getRecursiveJavaCompilationArgs().getRuntimeJars();
+  if (!compileTimeJars.isEmpty()) {
+    argBuilder.addJoinExecPaths("-classpath",":",compileTimeJars);
+  }
+  argBuilder.addExecPaths(sources);
+  SpawnAction.Builder builder=new SpawnAction.Builder().setMnemonic("TranspilingJ2objc").setExecutable(ruleContext.getPrerequisiteArtifact("$j2objc_wrapper",Mode.HOST)).addInput(ruleContext.getPrerequisiteArtifact("$j2objc_wrapper",Mode.HOST)).addInput(j2ObjcDeployJar).addInputs(sources).addTransitiveInputs(compileTimeJars).addInputs(JavaCompilationHelper.getHostJavabaseInputs(ruleContext)).addTransitiveInputs(depsHeaderMappingFiles).addTransitiveInputs(depsClassMappingFiles).setCommandLine(argBuilder.build()).addOutputs(j2ObjcSource.getObjcSrcs()).addOutputs(j2ObjcSource.getObjcHdrs()).addOutput(outputHeaderMappingFile).addOutput(outputDependencyMappingFile);
+  ruleContext.registerAction(builder.build(ruleContext));
+}

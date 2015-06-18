@@ -1,0 +1,22 @@
+{
+  checkAttributes(ruleContext);
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
+  J2ObjcSrcsProvider j2ObjcSrcsProvider=new J2ObjcSrcsProvider.Builder().addTransitiveFromDeps(ruleContext).addEntryClasses(ruleContext.attributes().get("entry_classes",Type.STRING_LIST)).build();
+  ObjcProvider.Builder objcProvider=new ObjcProvider.Builder().addTransitiveAndPropagate(ruleContext.getPrerequisite("$jre_emul_lib",Mode.TARGET,ObjcProvider.class)).addTransitiveAndPropagate(ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProvider.class));
+  if (j2ObjcSrcsProvider.hasProtos()) {
+    if (ruleContext.attributes().has("$protobuf_lib",Type.LABEL)) {
+      objcProvider.addTransitiveAndPropagate(ruleContext.getPrerequisite("$protobuf_lib",Mode.TARGET,ObjcProvider.class));
+    }
+ else {
+      throw new IllegalStateException("Found protos in the dependencies of rule " + ruleContext.getLabel() + ", "+ "but protos are not supported in Bazel.");
+    }
+  }
+  for (  J2ObjcSource j2objcSource : j2ObjcSrcsProvider.getSrcs()) {
+    objcProvider.addAll(ObjcProvider.HEADER,j2objcSource.getObjcHdrs());
+    objcProvider.add(ObjcProvider.INCLUDE,j2objcSource.getObjcFilePath());
+    objcProvider.add(ObjcProvider.INCLUDE,new PathFragment(j2objcSource.getObjcFilePath(),ruleContext.getConfiguration().getGenfilesFragment()));
+  }
+  return new RuleConfiguredTargetBuilder(ruleContext).setFilesToBuild(NestedSetBuilder.<Artifact>emptySet(STABLE_ORDER)).add(RunfilesProvider.class,RunfilesProvider.EMPTY).addProvider(J2ObjcSrcsProvider.class,j2ObjcSrcsProvider).addProvider(J2ObjcMappingFileProvider.class,ObjcRuleClasses.j2ObjcMappingFileProvider(ruleContext)).addProvider(ObjcProvider.class,objcProvider.build()).build();
+}
