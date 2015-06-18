@@ -7,7 +7,11 @@
   if (inputSource == null) {
     throw new BuildFileContainsErrorsException(packageId,"IOException occured");
   }
-  Package result=createPackage((new ExternalPackage.Builder(buildFile.getRelative("WORKSPACE"))).build(),packageId,buildFile,ImmutableList.<Statement>of(),inputSource,ImmutableMap.<PathFragment,SkylarkEnvironment>of(),ImmutableList.<Label>of(),locator,ConstantRuleVisibility.PUBLIC,createLegacyGlobber(buildFile.getParentDirectory(),packageId,locator)).build();
+  StoredEventHandler localReporter=new StoredEventHandler();
+  Globber globber=createLegacyGlobber(buildFile.getParentDirectory(),packageId,locator);
+  Preprocessor.Result preprocessingResult=preprocess(packageId,buildFile,inputSource,globber,localReporter);
+  ExternalPackage externalPkg=new ExternalPackage.Builder(buildFile.getRelative("WORKSPACE")).build();
+  Package result=createPackageFromPreprocessingResult(externalPkg,packageId,buildFile,preprocessingResult,localReporter.getEvents(),ImmutableList.<Statement>of(),ImmutableMap.<PathFragment,SkylarkEnvironment>of(),ImmutableList.<Label>of(),locator,ConstantRuleVisibility.PUBLIC,globber).build();
   Event.replayEventsOn(eventHandler,result.getEvents());
   return result;
 }
