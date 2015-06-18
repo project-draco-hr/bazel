@@ -1,17 +1,17 @@
 {
   this.runtime=runtime;
   this.request=request;
-  List<ActionContextConsumer> actionContextConsumers=new ArrayList<>();
-  actionContextProviders=new ArrayList<>();
-  for (  BlazeModule module : runtime.getBlazeModules()) {
-    Iterables.addAll(actionContextProviders,module.getActionContextProviders());
-    Iterables.addAll(actionContextConsumers,module.getActionContextConsumers());
-  }
-  actionContextProviders.add(new FilesetActionContextImpl.Provider(runtime.getReporter(),runtime.getWorkspaceName()));
-  strategies.add(new SymlinkTreeStrategy(runtime.getOutputService(),runtime.getBinTools()));
+  this.actionContextProviders=getActionContextProvidersFromModules(new FilesetActionContextImpl.Provider(runtime.getReporter(),runtime.getWorkspaceName()),new SimpleActionContextProvider(new SymlinkTreeStrategy(runtime.getOutputService(),runtime.getBinTools())));
   StrategyConverter strategyConverter=new StrategyConverter(actionContextProviders);
-  strategies.add(strategyConverter.getStrategy(FilesetActionContext.class,""));
-  strategies.add(strategyConverter.getStrategy(WorkspaceStatusAction.Context.class,""));
+  ImmutableList<ActionContextConsumer> actionContextConsumers=getActionContextConsumersFromModules(new ActionContextConsumer(){
+    @Override public Map<String,String> getSpawnActionContexts(){
+      return ImmutableMap.of();
+    }
+    @Override public Map<Class<? extends ActionContext>,String> getActionContexts(){
+      return ImmutableMap.<Class<? extends ActionContext>,String>builder().put(FilesetActionContext.class,"").put(WorkspaceStatusAction.Context.class,"").put(SymlinkTreeActionContext.class,"").build();
+    }
+  }
+);
   for (  ActionContextConsumer consumer : actionContextConsumers) {
     for (    Map.Entry<String,String> entry : consumer.getSpawnActionContexts().entrySet()) {
       SpawnActionContext context=strategyConverter.getStrategy(SpawnActionContext.class,entry.getValue());
@@ -22,12 +22,10 @@
     }
     for (    Map.Entry<Class<? extends ActionContext>,String> entry : consumer.getActionContexts().entrySet()) {
       ActionContext context=strategyConverter.getStrategy(entry.getKey(),entry.getValue());
-      if (context != null) {
-        strategies.add(context);
-      }
- else       if (!entry.getValue().isEmpty()) {
+      if (context == null) {
         throw makeExceptionForInvalidStrategyValue(entry.getValue(),strategyConverter.getUserFriendlyName(entry.getKey()),strategyConverter.getValidValues(entry.getKey()));
       }
+      strategies.add(context);
     }
   }
   if (request.shouldRunTests()) {
