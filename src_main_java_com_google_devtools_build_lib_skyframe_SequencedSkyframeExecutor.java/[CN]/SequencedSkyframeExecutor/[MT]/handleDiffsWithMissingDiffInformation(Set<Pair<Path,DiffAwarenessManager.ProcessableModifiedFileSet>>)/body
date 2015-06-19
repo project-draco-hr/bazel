@@ -6,15 +6,16 @@
   FilesystemValueChecker fsnc=new FilesystemValueChecker(memoizingEvaluator,tsgm,null);
   Iterable<SkyKey> filesystemSkyKeys=fsnc.getFilesystemSkyKeys();
   Multimap<Path,SkyKey> skyKeysByPathEntry=partitionSkyKeysByPackagePathEntry(ImmutableSet.copyOf(pkgLocator.get().getPathEntries()),filesystemSkyKeys);
+  List<Path> pathEntriesChecked=Lists.newArrayListWithCapacity(pathEntriesWithoutDiffInformation.size());
   List<Iterable<SkyKey>> valuesToCheckManually=Lists.newArrayList();
   for (  Pair<Path,DiffAwarenessManager.ProcessableModifiedFileSet> pair : pathEntriesWithoutDiffInformation) {
     Path pathEntry=pair.getFirst();
     valuesToCheckManually.add(skyKeysByPathEntry.get(pathEntry));
+    pathEntriesChecked.add(pathEntry);
   }
   Differencer.Diff diff=fsnc.getDirtyFilesystemValues(Iterables.concat(valuesToCheckManually));
-  handleChangedFiles(diff);
+  handleChangedFiles(pathEntriesChecked,diff);
   for (  Pair<Path,DiffAwarenessManager.ProcessableModifiedFileSet> pair : pathEntriesWithoutDiffInformation) {
-    DiffAwarenessManager.ProcessableModifiedFileSet processableModifiedFileSet=pair.getSecond();
-    processableModifiedFileSet.markProcessed();
+    pair.getSecond().markProcessed();
   }
 }

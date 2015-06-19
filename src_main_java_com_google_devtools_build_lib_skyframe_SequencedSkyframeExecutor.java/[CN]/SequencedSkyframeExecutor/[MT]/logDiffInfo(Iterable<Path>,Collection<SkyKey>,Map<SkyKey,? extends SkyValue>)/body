@@ -1,0 +1,13 @@
+{
+  int numModified=changedWithNewValue.size() + changedWithoutNewValue.size();
+  StringBuilder result=new StringBuilder("DiffAwareness found ").append(numModified).append(" modified source files and directory listings for ").append(Joiner.on(", ").join(pathEntries));
+  if (numModified > 0) {
+    Iterable<SkyKey> allModifiedKeys=Iterables.concat(changedWithoutNewValue,changedWithNewValue.keySet());
+    Iterable<SkyKey> trimmed=Iterables.limit(allModifiedKeys,5);
+    result.append(": ").append(Joiner.on(", ").join(trimmed));
+    if (numModified > 5) {
+      result.append(", ...");
+    }
+  }
+  LOG.info(result.toString());
+}
