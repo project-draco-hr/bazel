@@ -1,10 +1,5 @@
 {
-  Multimap<SkyKey,SkyKey> packageKeyToTargetKeyMap=Multimaps.newListMultimap(new HashMap<SkyKey,Collection<SkyKey>>(),new Supplier<List<SkyKey>>(){
-    @Override public List<SkyKey> get(){
-      return new ArrayList<>();
-    }
-  }
-);
+  Multimap<SkyKey,SkyKey> packageKeyToTargetKeyMap=ArrayListMultimap.create();
   for (  SkyKey key : keys) {
     SkyFunctionName functionName=key.functionName();
     if (!functionName.equals(SkyFunctions.TRANSITIVE_TARGET)) {
@@ -17,7 +12,7 @@
     }
   }
   ImmutableMap.Builder<SkyKey,Target> result=ImmutableMap.builder();
-  Map<SkyKey,SkyValue> packageMap=graph.getValuesMaybe(packageKeyToTargetKeyMap.keySet());
+  Map<SkyKey,SkyValue> packageMap=graph.getDoneValues(packageKeyToTargetKeyMap.keySet());
   for (  Map.Entry<SkyKey,SkyValue> entry : packageMap.entrySet()) {
     for (    SkyKey targetKey : packageKeyToTargetKeyMap.get(entry.getKey())) {
       try {

@@ -1,0 +1,17 @@
+{
+  Map<SkyKey,Exception> result=new HashMap<>();
+  Map<SkyKey,NodeEntry> graphResult=graph.getBatch(keys);
+  for (  SkyKey key : keys) {
+    NodeEntry nodeEntry=graphResult.get(key);
+    if (nodeEntry == null || !nodeEntry.isDone()) {
+      result.put(key,null);
+    }
+ else {
+      ErrorInfo errorInfo=nodeEntry.getErrorInfo();
+      if (errorInfo != null) {
+        result.put(key,errorInfo.getException());
+      }
+    }
+  }
+  return result;
+}
