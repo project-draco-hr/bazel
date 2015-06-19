@@ -38,6 +38,11 @@
   boolean createDynamicLibrary=!linkStatic && !appearsToHaveNoObjectFiles(ruleContext.attributes());
   helper.setCreateDynamicLibrary(createDynamicLibrary);
   helper.setDynamicLibraryPath(soImplFilename);
+  if (!createDynamicLibrary && ruleContext.attributes().isConfigurable("srcs",Type.LABEL_LIST)) {
+    PathFragment solib=CppHelper.getLinkedFilename(ruleContext,LinkTargetType.DYNAMIC_LIBRARY);
+    Artifact solibArtifact=ruleContext.getAnalysisEnvironment().getDerivedArtifact(solib,ruleContext.getBinOrGenfilesDirectory());
+    ruleContext.registerAction(new FailAction(ruleContext.getActionOwner(),ImmutableList.of(solibArtifact),"configurable \"srcs\" triggers an implicit .so output " + "even though there are no sources to compile in this configuration"));
+  }
   Iterable<LibraryToLink> staticLibrariesFromSrcs=LinkerInputs.opaqueLibrariesToLink(common.getStaticLibrariesFromSrcs());
   helper.addStaticLibraries(staticLibrariesFromSrcs);
   helper.addPicStaticLibraries(Iterables.filter(staticLibrariesFromSrcs,PIC_STATIC_FILTER));
