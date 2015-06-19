@@ -1,0 +1,47 @@
+{
+  int numThreads=50;
+  final KeyedLocker<SkyKey> locker=new RefCountedMultisetKeyedLocker.Factory<SkyKey>().create();
+  ExecutorService pool=Executors.newFixedThreadPool(numThreads);
+  final int numKeys=500;
+  final Set<SkyKey> nodeCreated=Sets.newConcurrentHashSet();
+  final Set<SkyKey> valuesSet=Sets.newConcurrentHashSet();
+  for (int i=0; i < 10; i++) {
+    for (int j=0; j < numKeys; j++) {
+      final int keyNum=j;
+      final SkyKey key=key("foo" + keyNum);
+      Runnable r=new Runnable(){
+        public void run(){
+          NodeEntry entry;
+          try (KeyedLocker.AutoUnlocker unlocker=locker.lock(key)){
+            entry=graph.get(key);
+            if (entry == null) {
+              assertTrue(nodeCreated.add(key));
+            }
+            entry=graph.createIfAbsent(key);
+          }
+           if (startEvaluation(entry).equals(DependencyState.NEEDS_SCHEDULING)) {
+            assertTrue(valuesSet.add(key));
+            entry.setValue(new StringValue("bar" + keyNum),new IntVersion(keyNum));
+            assertThat(entry.isDone()).isTrue();
+          }
+          graph.createIfAbsent(key);
+        }
+      }
+;
+      pool.execute(wrapper.wrap(r));
+    }
+  }
+  boolean interrupted=ExecutorUtil.interruptibleShutdown(pool);
+  Throwables.propagateIfPossible(wrapper.getFirstThrownError());
+  if (interrupted) {
+    Thread.currentThread().interrupt();
+    throw new InterruptedException();
+  }
+  for (int i=0; i < numKeys; i++) {
+    SkyKey key=key("foo" + i);
+    assertTrue(nodeCreated.contains(key));
+    assertTrue(valuesSet.contains(key));
+    assertThat(graph.get(key).getValue()).isEqualTo(new StringValue("bar" + i));
+    assertThat(graph.get(key).getVersion()).isEqualTo(new IntVersion(i));
+  }
+}

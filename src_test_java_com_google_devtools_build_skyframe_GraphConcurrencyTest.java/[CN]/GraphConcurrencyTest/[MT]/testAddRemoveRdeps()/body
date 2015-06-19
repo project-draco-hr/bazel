@@ -1,0 +1,62 @@
+{
+  SkyKey key=key("foo");
+  final NodeEntry entry=graph.createIfAbsent(key);
+  int numThreads=50;
+  int numKeys=100;
+  final int chunkSize=40;
+  final int numIterations=chunkSize * 3;
+  final CountDownLatch countDownLatch1=new CountDownLatch(1);
+  final CountDownLatch countDownLatch2=new CountDownLatch(Math.min(numThreads,numKeys));
+  final CountDownLatch countDownLatch3=new CountDownLatch(1);
+  ExecutorService pool=Executors.newFixedThreadPool(numThreads);
+  assertEquals(DependencyState.NEEDS_SCHEDULING,entry.addReverseDepAndCheckIfDone(key("rdep")));
+  for (int i=0; i < numKeys; i++) {
+    final int j=i;
+    Runnable r=new Runnable(){
+      @Override public void run(){
+        try {
+          countDownLatch1.await();
+          for (int k=1; k <= numIterations; k++) {
+            if (k == chunkSize) {
+              countDownLatch2.countDown();
+            }
+            entry.addReverseDepAndCheckIfDone(key("rdep" + j));
+            entry.removeReverseDep(key("rdep" + j));
+            if (k == chunkSize * 2) {
+              countDownLatch3.await();
+            }
+          }
+          entry.addReverseDepAndCheckIfDone(key("rdep" + j));
+        }
+ catch (        InterruptedException e) {
+          fail("Test failed: " + e.toString());
+        }
+      }
+    }
+;
+    pool.execute(wrapper.wrap(r));
+  }
+  countDownLatch1.countDown();
+  try {
+    countDownLatch2.await();
+  }
+ catch (  InterruptedException e) {
+    fail("Test failed: " + e.toString());
+  }
+  entry.setValue(new StringValue("foo1"),new IntVersion(1));
+  countDownLatch3.countDown();
+  entry.removeReverseDep(key("rdep"));
+  boolean interrupted=ExecutorUtil.interruptibleShutdown(pool);
+  Throwables.propagateIfPossible(wrapper.getFirstThrownError());
+  if (interrupted) {
+    Thread.currentThread().interrupt();
+    throw new InterruptedException();
+  }
+  assertEquals(new StringValue("foo1"),graph.get(key).getValue());
+  assertEquals(numKeys,Iterables.size(graph.get(key).getReverseDeps()));
+  entry.markDirty(true);
+  startEvaluation(entry);
+  entry.setValue(new StringValue("foo2"),new IntVersion(2));
+  assertEquals(new StringValue("foo2"),graph.get(key).getValue());
+  assertEquals(numKeys,Iterables.size(graph.get(key).getReverseDeps()));
+}
