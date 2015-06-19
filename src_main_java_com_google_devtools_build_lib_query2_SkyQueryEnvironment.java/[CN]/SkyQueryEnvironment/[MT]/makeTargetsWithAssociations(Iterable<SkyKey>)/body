@@ -1,26 +1,3 @@
 {
-  Multimap<SkyKey,SkyKey> packageKeyToTargetKeyMap=ArrayListMultimap.create();
-  for (  SkyKey key : keys) {
-    SkyFunctionName functionName=key.functionName();
-    if (!functionName.equals(SkyFunctions.TRANSITIVE_TARGET)) {
-      continue;
-    }
-    try {
-      packageKeyToTargetKeyMap.put(getPackageKeyAndValidateLabel((Label)key.argument()),key);
-    }
- catch (    QueryException e) {
-    }
-  }
-  ImmutableMap.Builder<SkyKey,Target> result=ImmutableMap.builder();
-  Map<SkyKey,SkyValue> packageMap=graph.getDoneValues(packageKeyToTargetKeyMap.keySet());
-  for (  Map.Entry<SkyKey,SkyValue> entry : packageMap.entrySet()) {
-    for (    SkyKey targetKey : packageKeyToTargetKeyMap.get(entry.getKey())) {
-      try {
-        result.put(targetKey,((PackageValue)entry.getValue()).getPackage().getTarget(((Label)targetKey.argument()).getName()));
-      }
- catch (      NoSuchTargetException e) {
-      }
-    }
-  }
-  return result.build();
+  return makeTargetsWithAssociations(keys,SKYKEY_TO_LABEL);
 }
