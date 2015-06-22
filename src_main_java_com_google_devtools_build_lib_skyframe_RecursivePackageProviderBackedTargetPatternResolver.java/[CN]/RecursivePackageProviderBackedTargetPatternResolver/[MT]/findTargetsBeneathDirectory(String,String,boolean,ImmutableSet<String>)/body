@@ -1,11 +1,7 @@
 {
   FilteringPolicy actualPolicy=rulesOnly ? FilteringPolicies.and(FilteringPolicies.RULES_ONLY,policy) : policy;
-  PathFragment pathFragment=getPathFragment(directory);
-  ImmutableSet.Builder<PathFragment> excludedPathFragmentsBuilder=ImmutableSet.builder();
-  for (  String excludedDirectory : excludedSubdirectories) {
-    excludedPathFragmentsBuilder.add(getPathFragment(excludedDirectory));
-  }
-  ImmutableSet<PathFragment> excludedPathFragments=excludedPathFragmentsBuilder.build();
+  ImmutableSet<PathFragment> excludedPathFragments=TargetPatternResolverUtil.getPathFragments(excludedSubdirectories);
+  PathFragment pathFragment=TargetPatternResolverUtil.getPathFragment(directory);
   ResolvedTargets.Builder<Target> targetBuilder=ResolvedTargets.builder();
   for (  Path root : pkgPath.getPathEntries()) {
     RootedPath rootedPath=RootedPath.toRootedPath(root,pathFragment);
