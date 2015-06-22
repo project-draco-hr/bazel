@@ -1,14 +1,5 @@
 {
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
-  CompilationMode compilationMode=objcConfiguration.getCompilationMode();
-  Artifact binaryToLink=compilationMode == CompilationMode.OPT ? intermediateArtifacts.unstrippedSingleArchitectureBinary() : intermediateArtifacts.strippedSingleArchitectureBinary();
+  Artifact linkedBinary=ObjcRuleClasses.intermediateArtifacts(ruleContext).singleArchitectureBinary();
   ImmutableList<Artifact> ccLibraries=ccLibraries(objcProvider);
-  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setMnemonic("ObjcLink").setShellCommand(ImmutableList.of("/bin/bash","-c")).setCommandLine(linkCommandLine(extraLinkArgs,objcProvider,binaryToLink,dsymBundle,ccLibraries)).addOutput(binaryToLink).addOutputs(dsymBundle.asSet()).addTransitiveInputs(objcProvider.get(LIBRARY)).addTransitiveInputs(objcProvider.get(IMPORTED_LIBRARY)).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(ccLibraries).addInputs(extraLinkInputs).build(ruleContext));
-  if (compilationMode == CompilationMode.OPT) {
-    boolean isTestTarget=TargetUtils.isTestRule(ruleContext.getRule());
-    Iterable<String> stripArgs=isTestTarget ? ImmutableList.of("-S") : ImmutableList.<String>of();
-    Artifact strippedBinary=intermediateArtifacts.strippedSingleArchitectureBinary();
-    ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setMnemonic("ObjcBinarySymbolStrip").setExecutable(STRIP).setCommandLine(symbolStripCommandLine(stripArgs,binaryToLink,strippedBinary)).addOutput(strippedBinary).addInput(binaryToLink).build(ruleContext));
-  }
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setMnemonic("ObjcLink").setShellCommand(ImmutableList.of("/bin/bash","-c")).setCommandLine(linkCommandLine(extraLinkArgs,objcProvider,linkedBinary,dsymBundle,ccLibraries)).addOutput(linkedBinary).addOutputs(dsymBundle.asSet()).addTransitiveInputs(objcProvider.get(LIBRARY)).addTransitiveInputs(objcProvider.get(IMPORTED_LIBRARY)).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(ccLibraries).addInputs(extraLinkInputs).build(ruleContext));
 }

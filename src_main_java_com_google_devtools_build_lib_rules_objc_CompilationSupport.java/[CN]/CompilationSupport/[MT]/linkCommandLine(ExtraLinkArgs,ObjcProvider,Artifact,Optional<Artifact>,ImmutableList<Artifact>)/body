@@ -7,10 +7,6 @@
  else {
     commandLine.addPath(CLANG);
   }
-  boolean isTestTarget=TargetUtils.isTestRule(ruleContext.getRule());
-  if (objcConfiguration.getCompilationMode() == CompilationMode.OPT && !isTestTarget) {
-    commandLine.add("-dead_strip").add("-no_dead_strip_inits_and_terms");
-  }
   commandLine.add(IosSdkCommands.commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration)).add("-Xlinker").add("-objc_abi_version").add("-Xlinker").add("2").add("-fobjc-link-runtime").add(IosSdkCommands.DEFAULT_LINKER_FLAGS).addBeforeEach("-framework",frameworkNames(objcProvider)).addBeforeEach("-weak_framework",SdkFramework.names(objcProvider.get(WEAK_SDK_FRAMEWORK))).addExecPath("-o",linkedBinary).addExecPaths(objcProvider.get(LIBRARY)).addExecPaths(objcProvider.get(IMPORTED_LIBRARY)).addExecPaths(ccLibraries).add(dylibPaths(objcProvider)).addBeforeEach("-force_load",Artifact.toExecPaths(objcProvider.get(FORCE_LOAD_LIBRARY))).add(extraLinkArgs).build();
   if (ruleContext.getConfiguration().isCodeCoverageEnabled()) {
     commandLine.add(LINKER_COVERAGE_FLAGS);
