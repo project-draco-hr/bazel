@@ -1,8 +1,16 @@
 {
   IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
   Artifact dsymBundle=intermediateArtifacts.dsymBundle();
+  Artifact linkedBinary=objcConfiguration.shouldStripBinary() ? intermediateArtifacts.unstrippedSingleArchitectureBinary() : intermediateArtifacts.strippedSingleArchitectureBinary();
   Artifact debugSymbolFile=intermediateArtifacts.dsymSymbol();
-  ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("UnzipDsym").setProgressMessage("Unzipping dSYM file: " + ruleContext.getLabel()).setExecutable(new PathFragment("/usr/bin/unzip")).addInput(dsymBundle).setCommandLine(CustomCommandLine.builder().add(dsymBundle.getExecPathString()).add("-d").add(stripSuffix(dsymBundle.getExecPathString(),IntermediateArtifacts.TMP_DSYM_BUNDLE_SUFFIX) + ".app.dSYM").build()).addOutput(intermediateArtifacts.dsymPlist()).addOutput(debugSymbolFile).build(ruleContext));
+  Artifact dsymPlist=intermediateArtifacts.dsymPlist();
+  PathFragment dsymOutputDir=replaceSuffix(dsymBundle.getExecPath(),IntermediateArtifacts.TMP_DSYM_BUNDLE_SUFFIX,".app.dSYM");
+  PathFragment dsymPlistZipEntry=dsymPlist.getExecPath().relativeTo(dsymOutputDir);
+  PathFragment debugSymbolFileZipEntry=debugSymbolFile.getExecPath().replaceName(linkedBinary.getFilename()).relativeTo(dsymOutputDir);
+  StringBuilder unzipDsymCommand=new StringBuilder();
+  unzipDsymCommand.append(String.format("unzip -p %s %s > %s",dsymBundle.getExecPathString(),dsymPlistZipEntry,dsymPlist.getExecPathString())).append(String.format(" && unzip -p %s %s > %s",dsymBundle.getExecPathString(),debugSymbolFileZipEntry,debugSymbolFile.getExecPathString()));
+  ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("UnzipDsym").setShellCommand(unzipDsymCommand.toString()).addInput(dsymBundle).addOutput(dsymPlist).addOutput(debugSymbolFile).build(ruleContext));
   Artifact dumpsyms=ruleContext.getPrerequisiteArtifact(":dumpsyms",Mode.HOST);
   Artifact breakpadFile=intermediateArtifacts.breakpadSym();
   ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setMnemonic("GenBreakpad").setProgressMessage("Generating breakpad file: " + ruleContext.getLabel()).setShellCommand(ImmutableList.of("/bin/bash","-c")).addInput(dumpsyms).addInput(debugSymbolFile).addArgument(String.format("%s %s > %s",ShellUtils.shellEscape(dumpsyms.getExecPathString()),ShellUtils.shellEscape(debugSymbolFile.getExecPathString()),ShellUtils.shellEscape(breakpadFile.getExecPathString()))).addOutput(breakpadFile).build(ruleContext));
