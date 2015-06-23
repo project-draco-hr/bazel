@@ -8,7 +8,8 @@
   }
   Path testTmpDir=TestStrategy.getTmpRoot(workspace,actionExecutionContext.getExecutor().getExecRoot(),executionOptions).getChild(getTmpDirName(action.getExecutionSettings().getExecutable().getExecPath()));
   Path workingDirectory=runfilesDir.getRelative(action.getRunfilesPrefix());
-  Map<String,String> env=getEnv(action,runfilesDir,testTmpDir);
+  TestRunnerAction.ResolvedPaths resolvedPaths=action.resolve(actionExecutionContext.getExecutor().getExecRoot());
+  Map<String,String> env=getEnv(action,runfilesDir,testTmpDir,resolvedPaths);
   Spawn spawn=new BaseSpawn(getArgs(TEST_SETUP,"",action),env,action.getTestProperties().getExecutionInfo(),action,action.getTestProperties().getLocalResourceUsage(executionOptions.usingLocalTestJobs()));
   Executor executor=actionExecutionContext.getExecutor();
   try {
