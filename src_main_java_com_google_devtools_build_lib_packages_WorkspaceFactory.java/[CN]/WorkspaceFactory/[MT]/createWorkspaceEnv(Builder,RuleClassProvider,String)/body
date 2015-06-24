@@ -1,0 +1,16 @@
+{
+  Environment workspaceEnv=new Environment();
+  RuleFactory ruleFactory=new RuleFactory(ruleClassProvider);
+  for (  String ruleClass : ruleFactory.getRuleClassNames()) {
+    BaseFunction ruleFunction=newRuleFunction(ruleFactory,builder,ruleClass);
+    workspaceEnv.update(ruleClass,ruleFunction);
+  }
+  if (installDir != null) {
+    workspaceEnv.update("__embedded_dir__",installDir);
+  }
+  File jreDirectory=new File(System.getProperty("java.home"));
+  workspaceEnv.update("DEFAULT_SERVER_JAVABASE",jreDirectory.getParentFile().toString());
+  workspaceEnv.update("bind",newBindFunction(builder));
+  workspaceEnv.update("workspace",newWorkspaceNameFunction(builder));
+  return workspaceEnv;
+}

@@ -1,0 +1,34 @@
+{
+  DefaultModelProcessor processor=new DefaultModelProcessor();
+  processor.setModelLocator(new DefaultModelLocator());
+  processor.setModelReader(new DefaultModelReader());
+  File pom=processor.locatePom(new File(project));
+  Location pomLocation=Location.fromFile(fileSystem.getPath(pom.getPath()));
+  addHeader(pom.getAbsolutePath());
+  DefaultModelBuilderFactory factory=new DefaultModelBuilderFactory();
+  DefaultModelBuildingRequest request=new DefaultModelBuildingRequest();
+  request.setPomFile(pom);
+  Model model;
+  try {
+    ModelBuildingResult result=factory.newInstance().build(request);
+    model=result.getEffectiveModel();
+  }
+ catch (  ModelBuildingException e) {
+    handler.handle(Event.error(pomLocation,"Unable to resolve Maven model from " + pom + ": "+ e.getMessage()));
+    return;
+  }
+  CollectRequest collectRequest=new CollectRequest();
+  for (  Repository repo : model.getRepositories()) {
+    collectRequest.addRepository(new RemoteRepository.Builder(repo.getId(),repo.getName(),repo.getUrl()).build());
+  }
+  for (  org.apache.maven.model.Dependency dependency : model.getDependencies()) {
+    try {
+      Rule artifactRule=new Rule(dependency.getArtifactId(),dependency.getGroupId(),dependency.getVersion());
+      addArtifact(artifactRule,model.toString(),pomLocation);
+      getArtifactDependencies(artifactRule,pomLocation);
+    }
+ catch (    Rule.InvalidRuleException e) {
+      handler.handle(Event.error(pomLocation,e.getMessage()));
+    }
+  }
+}

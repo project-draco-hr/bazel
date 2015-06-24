@@ -1,0 +1,37 @@
+{
+  Location location=Location.fromFile(externalPackage.getFilename());
+  for (  Target target : externalPackage.getTargets()) {
+    if (target.getTargetKind().startsWith("bind") || target.getTargetKind().startsWith("source ")) {
+      continue;
+    }
+ else     if (target.getTargetKind().startsWith("maven_jar ")) {
+      PackageIdentifier.RepositoryName repositoryName;
+      try {
+        repositoryName=PackageIdentifier.RepositoryName.create("@" + target.getName());
+      }
+ catch (      Label.SyntaxException e) {
+        handler.handle(Event.error(location,"Invalid repository name for " + target + ": "+ e.getMessage()));
+        return;
+      }
+      com.google.devtools.build.lib.packages.Rule workspaceRule=externalPackage.getRepositoryInfo(repositoryName);
+      AttributeMap attributeMap=AggregatingAttributeMapper.of(workspaceRule);
+      Rule rule;
+      try {
+        if (attributeMap.has("artifact",Type.STRING) && !attributeMap.get("artifact",Type.STRING).isEmpty()) {
+          rule=new Rule(attributeMap.get("artifact",Type.STRING));
+        }
+ else {
+          rule=new Rule(attributeMap.get("artifact_id",Type.STRING),attributeMap.get("group_id",Type.STRING),attributeMap.get("version",Type.STRING));
+        }
+      }
+ catch (      Rule.InvalidRuleException e) {
+        handler.handle(Event.error(location,e.getMessage()));
+        return;
+      }
+      resolver.getArtifactDependencies(rule,location);
+    }
+ else {
+      handler.handle(Event.warn(location,"Cannot fetch transitive dependencies for " + target + " yet, skipping"));
+    }
+  }
+}

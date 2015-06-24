@@ -1,0 +1,17 @@
+{
+  String artifactName=dependency.name();
+  if (deps.containsKey(artifactName)) {
+    Rule existingDependency=deps.get(artifactName);
+    if (!existingDependency.version().equals(dependency.version())) {
+      handler.handle(Event.warn(pomLocation,dependency.groupId() + ":" + dependency.artifactId()+ " already processed for version "+ existingDependency.version()+ " but "+ parent+ " wants version "+ dependency.version()+ ", ignoring."));
+      existingDependency.addParent(parent + " wanted version " + dependency.version());
+    }
+ else {
+      existingDependency.addParent(parent);
+    }
+    return false;
+  }
+  deps.put(artifactName,dependency);
+  dependency.addParent(parent);
+  return true;
+}
