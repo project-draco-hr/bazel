@@ -1,9 +1,10 @@
 {
   if (inputs.isEmpty()) {
-    RunfilesSupport aaptRunnerRunfiles=tools.getToolRunner().getRunfilesSupport();
-    Preconditions.checkState(aaptRunnerRunfiles != null,tools.getToolRunner().getLabel());
+    FilesToRunProvider toolRunner=ruleContext.getExecutablePrerequisite("$android_tool_runner",Mode.HOST);
+    RunfilesSupport aaptRunnerRunfiles=toolRunner.getRunfilesSupport();
+    Preconditions.checkState(aaptRunnerRunfiles != null,toolRunner.getLabel());
     Iterables.addAll(inputs,aaptRunnerRunfiles.getRunfilesArtifactsWithoutMiddlemen());
-    inputs.add(tools.getAndroidJar());
+    inputs.add(AndroidSdkProvider.fromRuleContext(ruleContext).getAndroidJar());
     inputs.add(manifest);
     Iterables.addAll(inputs,Iterables.concat(Iterables.transform(resourceContainers,new Function<AndroidResourcesProvider.ResourceContainer,Iterable<Artifact>>(){
       @Override public Iterable<Artifact> apply(      ResourceContainer container){

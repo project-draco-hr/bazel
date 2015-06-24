@@ -1,9 +1,0 @@
-{
-  JavaCompilationArgs dep=ruleContext.getPrerequisite(split ? ":incremental_split_stub_application" : ":incremental_stub_application",Mode.TARGET).getProvider(JavaCompilationArgsProvider.class).getJavaCompilationArgs();
-  JavaTargetAttributes attributes=new JavaTargetAttributes.Builder(javaSemantics).addRuntimeClassPathEntries(dep.getRuntimeJars()).build();
-  Artifact stubDeployJar=getDxArtifact(ruleContext,split ? "split_stub_deploy.jar" : "stub_deploy.jar");
-  new DeployArchiveBuilder(javaSemantics,ruleContext).setOutputJar(stubDeployJar).setAttributes(attributes).build();
-  Artifact stubDex=getDxArtifact(ruleContext,split ? "split_stub_application.dex" : "stub_application.dex");
-  AndroidCommon.createDexAction(ruleContext,androidSemantics,tools,stubDeployJar,stubDex,ImmutableList.<String>of(),false,null);
-  return stubDex;
-}

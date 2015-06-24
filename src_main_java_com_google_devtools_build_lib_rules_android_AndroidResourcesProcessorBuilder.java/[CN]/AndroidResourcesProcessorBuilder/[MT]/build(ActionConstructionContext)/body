@@ -3,14 +3,14 @@
   List<Artifact> ins=new ArrayList<>();
   List<String> args=new ArrayList<>();
   args.add("--aapt");
-  args.add(androidTools.getAapt().getExecutable().getExecPathString());
-  Iterables.addAll(ins,androidTools.getAndroidResourceProcessor().getRunfilesSupport().getRunfilesArtifactsWithoutMiddlemen());
+  args.add(sdk.getAapt().getExecutable().getExecPathString());
+  Iterables.addAll(ins,ruleContext.getExecutablePrerequisite(":android_resources_processor",Mode.HOST).getRunfilesSupport().getRunfilesArtifactsWithoutMiddlemen());
   args.add("--annotationJar");
-  args.add(androidTools.getAnnotationsJar().getExecPathString());
-  ins.add(androidTools.getAnnotationsJar());
+  args.add(sdk.getAnnotationsJar().getExecPathString());
+  ins.add(sdk.getAnnotationsJar());
   args.add("--androidJar");
-  args.add(androidTools.getAndroidJar().getExecPathString());
-  ins.add(androidTools.getAndroidJar());
+  args.add(sdk.getAndroidJar().getExecPathString());
+  ins.add(sdk.getAndroidJar());
   args.add("--primaryData");
   addPrimaryResourceContainer(ins,args,primary);
   if (!dependencies.isEmpty()) {
@@ -87,6 +87,6 @@
     args.add("--packageForR");
     args.add(customJavaPackage);
   }
-  ruleContext.registerAction(this.spawnActionBuilder.addTool(androidTools.getAapt()).addInputs(ImmutableList.<Artifact>copyOf(ins)).addOutputs(ImmutableList.<Artifact>copyOf(outs)).addArguments(ImmutableList.<String>copyOf(args)).setExecutable(androidTools.getAndroidResourceProcessor()).setProgressMessage("Processing resources").setMnemonic("AndroidAapt").build(context));
+  ruleContext.registerAction(this.spawnActionBuilder.addTool(sdk.getAapt()).addInputs(ImmutableList.<Artifact>copyOf(ins)).addOutputs(ImmutableList.<Artifact>copyOf(outs)).addArguments(ImmutableList.<String>copyOf(args)).setExecutable(ruleContext.getExecutablePrerequisite(":android_resources_processor",Mode.HOST)).setProgressMessage("Processing resources").setMnemonic("AndroidAapt").build(context));
   return new ResourceContainer(primary.getLabel(),primary.getJavaPackage(),primary.getRenameManifestPackage(),primary.getConstantsInlined(),apkOut != null ? apkOut : primary.getApk(),primary.getManifest(),sourceJarOut,primary.getArtifacts(ResourceType.ASSETS),primary.getArtifacts(ResourceType.RESOURCES),primary.getRoots(ResourceType.ASSETS),primary.getRoots(ResourceType.RESOURCES),primary.isManifestExported(),rTxtOut,symbolsTxt);
 }

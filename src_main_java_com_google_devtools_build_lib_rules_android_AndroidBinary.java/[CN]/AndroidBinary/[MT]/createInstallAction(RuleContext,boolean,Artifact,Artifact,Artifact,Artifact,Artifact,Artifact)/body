@@ -1,0 +1,8 @@
+{
+  FilesToRunProvider adb=AndroidSdkProvider.fromRuleContext(ruleContext).getAdb();
+  SpawnAction.Builder builder=new SpawnAction.Builder().setExecutable(ruleContext.getExecutablePrerequisite("$incremental_install",Mode.HOST)).executeUnconditionally().setMnemonic("AndroidInstall").setProgressMessage("Installing " + ruleContext.getLabel() + (incremental ? " incrementally" : "")).setExecutionInfo(ImmutableMap.of("local","")).addArgument("--output_marker").addOutputArgument(marker).addArgument("--dexmanifest").addInputArgument(dexmanifest).addArgument("--resource_apk").addInputArgument(resourceApk).addArgument("--stub_datafile").addInputArgument(stubDataFile).addArgument("--adb").addArgument(adb.getExecutable().getExecPathString()).addTool(adb).addArgument("--flagfile").addInputArgument(argsArtifact);
+  if (!incremental) {
+    builder.addArgument("--apk").addInputArgument(apk);
+  }
+  ruleContext.registerAction(builder.build(ruleContext));
+}

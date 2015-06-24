@@ -1,0 +1,8 @@
+{
+  FilesToRunProvider adb=AndroidSdkProvider.fromRuleContext(ruleContext).getAdb();
+  SpawnAction.Builder builder=new SpawnAction.Builder().setExecutable(ruleContext.getExecutablePrerequisite("$incremental_install",Mode.HOST)).addTool(adb).executeUnconditionally().setMnemonic("AndroidInstall").setProgressMessage("Installing " + ruleContext.getLabel() + " using split apks").setExecutionInfo(ImmutableMap.of("local","")).addArgument("--output_marker").addOutputArgument(marker).addArgument("--stub_datafile").addInputArgument(stubDataFile).addArgument("--adb").addArgument(adb.getExecutable().getExecPathString()).addTool(adb).addArgument("--flagfile").addInputArgument(argsArtifact).addArgument("--split_main_apk").addInputArgument(splitMainApk);
+  for (  Artifact splitApk : splitApks) {
+    builder.addArgument("--split_apk").addInputArgument(splitApk);
+  }
+  ruleContext.registerAction(builder.build(ruleContext));
+}

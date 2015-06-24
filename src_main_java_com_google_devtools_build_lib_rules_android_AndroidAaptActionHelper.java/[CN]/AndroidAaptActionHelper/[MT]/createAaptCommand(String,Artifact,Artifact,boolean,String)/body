@@ -2,8 +2,8 @@
   List<String> args=new ArrayList<>();
   args.addAll(getArgs(output,actionKind,ResourceType.RESOURCES));
   args.addAll(getArgs(output,actionKind,ResourceType.ASSETS));
-  args.add(tools.getToolRunner().getExecutable().getExecPathString());
-  args.add(tools.getAapt().getExecutable().getExecPathString());
+  args.add(ruleContext.getExecutablePrerequisite("$android_tool_runner",Mode.HOST).getExecutable().getExecPathString());
+  args.add(AndroidSdkProvider.fromRuleContext(ruleContext).getAapt().getExecutable().getExecPathString());
   args.add("package");
   Collections.addAll(args,outputArgs);
   args.add("--auto-add-overlay");
@@ -18,7 +18,7 @@
     args.add("--debug-mode");
   }
   args.add("-I");
-  args.add(tools.getAndroidJar().getExecPathString());
+  args.add(AndroidSdkProvider.fromRuleContext(ruleContext).getAndroidJar().getExecPathString());
   args.add("-M");
   args.add(manifest.getExecPathString());
   args.addAll(getResourcesDirArg(output,actionKind,"-S",ResourceType.RESOURCES));
