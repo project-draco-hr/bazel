@@ -1,12 +1,9 @@
 {
   File buildEncyclopediaPath=setupDirectories(outputRootDir);
-  try (BufferedWriter bw=new BufferedWriter(new FileWriter(buildEncyclopediaPath))){
-    bw.write(DocgenConsts.HEADER_COMMENT);
-    bw.write("\n");
-    Map<String,RuleDocumentation> ruleDocEntries=collectAndProcessRuleDocs(inputDirs,false);
-    warnAboutUndocumentedRules(Sets.difference(ruleClassProvider.getRuleClassMap().keySet(),ruleDocEntries.keySet()));
-    writeRuleClassDocs(ruleDocEntries.values(),bw);
-    bw.write("\n");
-    bw.write(SourceFileReader.readTemplateContents(DocgenConsts.FOOTER_TEMPLATE));
-  }
- }
+  Page page=TemplateEngine.newPage("com/google/devtools/build/docgen/templates/build-encyclopedia.vm");
+  BuildDocCollector collector=new BuildDocCollector(ruleClassProvider,false);
+  Map<String,RuleDocumentation> ruleDocEntries=collector.collect(inputDirs);
+  warnAboutUndocumentedRules(Sets.difference(ruleClassProvider.getRuleClassMap().keySet(),ruleDocEntries.keySet()));
+  writeRuleClassDocs(ruleDocEntries.values(),page);
+  page.write(buildEncyclopediaPath);
+}
