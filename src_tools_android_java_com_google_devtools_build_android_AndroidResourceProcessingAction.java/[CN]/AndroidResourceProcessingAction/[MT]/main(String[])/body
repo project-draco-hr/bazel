@@ -1,0 +1,49 @@
+{
+  final Stopwatch timer=Stopwatch.createStarted();
+  OptionsParser optionsParser=OptionsParser.newOptionsParser(Options.class);
+  optionsParser.parseAndExitUponError(args);
+  options=optionsParser.getOptions(Options.class);
+  FileSystem fileSystem=FileSystems.getDefault();
+  Path working=fileSystem.getPath("").toAbsolutePath();
+  Path mergedAssets=working.resolve("merged_assets");
+  Path mergedResources=working.resolve("merged_resources");
+  final AndroidResourceProcessor resourceProcessor=new AndroidResourceProcessor(STD_LOGGER);
+  final AndroidSdkTools sdkTools=new AndroidSdkTools(options.apiVersion,options.aapt,options.annotationJar,options.adb,options.zipAlign,options.androidJar,STD_LOGGER);
+  try {
+    LOGGER.fine(String.format("Setup finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    final ImmutableList<DirectoryModifier> modifiers=ImmutableList.of(new PackedResourceTarExpander(working.resolve("expanded"),working),new FileDeDuplicator(Hashing.murmur3_128(),working.resolve("deduplicated"),working));
+    final AndroidBuilder builder=sdkTools.createAndroidBuilder();
+    final MergedAndroidData mergedData=resourceProcessor.mergeData(options.primaryData,options.data,mergedResources,mergedAssets,modifiers,useAaptCruncher() ? builder.getAaptCruncher() : null,true);
+    LOGGER.info(String.format("Merging finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    final Path filteredResources=fileSystem.getPath("resources-filtered");
+    final Path densityManifest=fileSystem.getPath("manifest-filtered/AndroidManifest.xml");
+    final DensityFilteredAndroidData filteredData=mergedData.filter(new DensitySpecificResourceFilter(options.densities,filteredResources,working),new DensitySpecificManifestProcessor(options.densities,densityManifest));
+    LOGGER.info(String.format("Density filtering finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    resourceProcessor.processResources(builder,options.packageType,options.debug,options.packageForR,new FlagAaptOptions(),options.resourceConfigs,options.applicationId,options.versionCode,options.versionName,filteredData,options.data,working.resolve("manifest"),options.generatedSourcePath,options.packagePath,options.proguardOutput);
+    LOGGER.fine(String.format("appt finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    if (options.srcJarOutput != null) {
+      resourceProcessor.createSrcJar(options.generatedSourcePath,options.srcJarOutput);
+    }
+    if (options.rOutput != null) {
+      resourceProcessor.copyRToOutput(options.generatedSourcePath,options.rOutput);
+    }
+    if (options.symbolsTxtOut != null) {
+      resourceProcessor.copyRToOutput(options.generatedSourcePath,options.symbolsTxtOut);
+    }
+    LOGGER.fine(String.format("Packaging finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+  }
+ catch (  MergingException e) {
+    LOGGER.log(java.util.logging.Level.SEVERE,"Error during merging resources",e);
+    System.exit(1);
+  }
+catch (  IOException|InterruptedException|LoggedErrorException e) {
+    LOGGER.log(java.util.logging.Level.SEVERE,"Error during processing resources",e);
+    System.exit(2);
+  }
+catch (  Exception e) {
+    LOGGER.log(java.util.logging.Level.SEVERE,"Unexpected",e);
+    System.exit(3);
+  }
+  LOGGER.info(String.format("Resources processed in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+  System.exit(0);
+}

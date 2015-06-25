@@ -1,0 +1,24 @@
+{
+  List<ResourceInfo> resourceInfos=getResourceInfos(resourcePaths);
+  List<ResourceInfo> densityResourceInfos=filterDensityResourceInfos(resourceInfos);
+  List<ResourceInfo> resourceInfoToRemove=new ArrayList<>();
+  Multimap<String,ResourceInfo> fileGroups=groupResourceInfos(densityResourceInfos,GET_RESOURCE_ID);
+  for (  String key : fileGroups.keySet()) {
+    Multimap<String,ResourceInfo> qualifierGroups=groupResourceInfos(fileGroups.get(key),GET_RESOURCE_QUALIFIERS);
+    for (    String qualifiers : qualifierGroups.keySet()) {
+      Collection<ResourceInfo> qualifierResourceInfos=qualifierGroups.get(qualifiers);
+      if (qualifierResourceInfos.size() != 1) {
+        for (        final String density : densities) {
+          List<ResourceInfo> sortedResourceInfos=Ordering.natural().onResultOf(new Function<ResourceInfo,Double>(){
+            @Override public Double apply(            ResourceInfo info){
+              return matchScore(info,density);
+            }
+          }
+).immutableSortedCopy(qualifierResourceInfos);
+          resourceInfoToRemove.addAll(sortedResourceInfos.subList(1,sortedResourceInfos.size()));
+        }
+      }
+    }
+  }
+  return ImmutableList.copyOf(Lists.transform(resourceInfoToRemove,GET_RESOURCE_PATH));
+}

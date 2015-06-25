@@ -1,0 +1,16 @@
+{
+  if (file.getFileName().endsWith("R.java")) {
+    byte[] content=Files.readAllBytes(file);
+    ZipEntry entry=new ZipEntry(file.toString());
+    entry.setMethod(ZipEntry.STORED);
+    entry.setTime(ZIP_EPOCH);
+    entry.setSize(content.length);
+    CRC32 crc32=new CRC32();
+    crc32.update(content);
+    entry.setCrc(crc32.getValue());
+    zip.putNextEntry(entry);
+    zip.write(content);
+    zip.closeEntry();
+  }
+  return FileVisitResult.CONTINUE;
+}

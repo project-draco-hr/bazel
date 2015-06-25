@@ -1,0 +1,26 @@
+{
+  Stopwatch timer=Stopwatch.createStarted();
+  OptionsParser optionsParser=OptionsParser.newOptionsParser(Options.class);
+  optionsParser.parseAndExitUponError(args);
+  Options options=optionsParser.getOptions(Options.class);
+  checkFlags(options);
+  FileSystem fileSystem=FileSystems.getDefault();
+  Path working=fileSystem.getPath("").toAbsolutePath();
+  AndroidResourceProcessor resourceProcessor=new AndroidResourceProcessor(new StdLogger(com.android.utils.StdLogger.Level.VERBOSE));
+  try {
+    Path resourcesOut=Files.createTempDirectory("tmp-resources");
+    resourcesOut.toFile().deleteOnExit();
+    Path assetsOut=Files.createTempDirectory("tmp-assets");
+    assetsOut.toFile().deleteOnExit();
+    logger.fine(String.format("Setup finished at %dms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    ImmutableList<DirectoryModifier> modifiers=ImmutableList.of(new PackedResourceTarExpander(working.resolve("expanded"),working),new FileDeDuplicator(Hashing.murmur3_128(),working.resolve("deduplicated"),working));
+    MergedAndroidData mergedData=resourceProcessor.mergeData(options.mainData,options.dependencyData,resourcesOut,assetsOut,modifiers,null,options.strictMerge);
+    logger.info(String.format("Merging finished at %dms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    writeAar(options.aarOutput,mergedData,options.manifest,options.rtxt,options.classes);
+    logger.info(String.format("Packaging finished at %dms",timer.elapsed(TimeUnit.MILLISECONDS)));
+  }
+ catch (  IOException|MergingException e) {
+    throw Throwables.propagate(e);
+  }
+  System.exit(0);
+}

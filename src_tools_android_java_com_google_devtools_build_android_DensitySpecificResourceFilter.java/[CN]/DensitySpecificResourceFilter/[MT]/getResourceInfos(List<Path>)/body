@@ -1,0 +1,18 @@
+{
+  List<ResourceInfo> resourceInfos=new ArrayList<>();
+  for (  Path resourcePath : resourcePaths) {
+    String qualifiers=resourcePath.getParent().getFileName().toString();
+    String density="";
+    for (    String densityName : DENSITY_MAP.keySet()) {
+      if (qualifiers.contains("-" + densityName)) {
+        qualifiers=qualifiers.replace("-" + densityName,"");
+        density=densityName;
+      }
+    }
+    String[] qualifierArray=qualifiers.split("-");
+    String restype=qualifierArray[0];
+    qualifiers=(qualifierArray.length) > 0 ? Joiner.on("-").join(Arrays.copyOfRange(qualifierArray,1,qualifierArray.length)) : "";
+    resourceInfos.add(new ResourceInfo(resourcePath,restype,qualifiers,density,resourcePath.getFileName().toString()));
+  }
+  return ImmutableList.copyOf(resourceInfos);
+}

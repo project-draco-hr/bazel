@@ -1,0 +1,14 @@
+{
+  DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance("com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl",null);
+  factory.setValidating(false);
+  factory.setXIncludeAware(false);
+  for (  Map.Entry<String,Boolean> featureAndValue : SECURE_XML_FEATURES.entrySet()) {
+    try {
+      factory.setFeature(featureAndValue.getKey(),featureAndValue.getValue());
+    }
+ catch (    ParserConfigurationException e) {
+      throw new FactoryConfigurationError(e,"Xerces DocumentBuilderFactory doesn't support the required security features: " + e.getMessage());
+    }
+  }
+  return factory.newDocumentBuilder();
+}

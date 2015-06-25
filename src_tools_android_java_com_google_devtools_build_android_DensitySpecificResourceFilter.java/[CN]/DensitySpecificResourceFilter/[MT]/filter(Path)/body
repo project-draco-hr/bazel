@@ -1,0 +1,15 @@
+{
+  if (densities.isEmpty()) {
+    return unFilteredResourceDir;
+  }
+  final Path filteredResourceDir=out.resolve(working.relativize(unFilteredResourceDir));
+  RecursiveFileCopier fileVisitor=new RecursiveFileCopier(filteredResourceDir,unFilteredResourceDir);
+  try {
+    Files.walkFileTree(unFilteredResourceDir,EnumSet.of(FileVisitOption.FOLLOW_LINKS),Integer.MAX_VALUE,fileVisitor);
+  }
+ catch (  IOException e) {
+    throw Throwables.propagate(e);
+  }
+  removeResources(getResourceToRemove(fileVisitor.getCopiedFiles()));
+  return filteredResourceDir;
+}

@@ -1,0 +1,21 @@
+{
+  try (final ZipOutputStream zipOut=new ZipOutputStream(new FileOutputStream(aar.toFile()))){
+    ZipEntry manifestEntry=new ZipEntry("AndroidManifest.xml");
+    zipOut.putNextEntry(manifestEntry);
+    zipOut.write(Files.readAllBytes(manifest));
+    zipOut.closeEntry();
+    ZipEntry classJar=new ZipEntry("classes.jar");
+    zipOut.putNextEntry(classJar);
+    zipOut.write(Files.readAllBytes(classes));
+    zipOut.closeEntry();
+    Files.walkFileTree(data.getResourceDirFile().toPath(),new ZipDirectoryWriter(zipOut,data.getResourceDirFile().toPath(),"res"));
+    ZipEntry r=new ZipEntry("R.txt");
+    zipOut.putNextEntry(r);
+    zipOut.write(Files.readAllBytes(rtxt));
+    zipOut.closeEntry();
+    if (data.getAssetDirFile().exists() && data.getAssetDirFile().list().length > 0) {
+      Files.walkFileTree(data.getAssetDirFile().toPath(),new ZipDirectoryWriter(zipOut,data.getAssetDirFile().toPath(),"assets"));
+    }
+  }
+   aar.toFile().setLastModified(EPOCH);
+}
