@@ -1,20 +1,5 @@
 {
   Set<T> universeValue=args.get(0).getExpression().eval(env);
-  Set<T> argumentValue=args.get(1).getExpression().eval(env);
-  int depthBound=args.size() > 2 ? args.get(2).getInteger() : Integer.MAX_VALUE;
   env.buildTransitiveClosure(expression,universeValue,Integer.MAX_VALUE);
-  Set<T> visited=new LinkedHashSet<>();
-  Set<T> reachableFromUniverse=env.getTransitiveClosure(universeValue);
-  Collection<T> current=argumentValue;
-  for (int i=0; i <= depthBound; i++) {
-    List<T> next=new ArrayList<>();
-    Iterable<T> currentInUniverse=Iterables.filter(current,Predicates.in(reachableFromUniverse));
-    next.addAll(env.getReverseDeps(Iterables.filter(currentInUniverse,Predicates.not(Predicates.in(visited)))));
-    Iterables.addAll(visited,currentInUniverse);
-    if (next.isEmpty()) {
-      break;
-    }
-    current=next;
-  }
-  return visited;
+  return eval(env,args.subList(1,args.size()),Predicates.in(env.getTransitiveClosure(universeValue)));
 }
