@@ -1,0 +1,21 @@
+{
+  CcToolchainFeatures.Variables.Builder buildVariables=new CcToolchainFeatures.Variables.Builder();
+  CppModuleMap cppModuleMap=context.getCppModuleMap();
+  if (featureConfiguration.isEnabled(CppRuleClasses.MODULE_MAPS) && cppModuleMap != null) {
+    buildVariables.addVariable("module_name",cppModuleMap.getName());
+    buildVariables.addVariable("module_map_file",cppModuleMap.getArtifact().getExecPathString());
+  }
+  if (featureConfiguration.isEnabled(CppRuleClasses.USE_HEADER_MODULES)) {
+    buildVariables.addSequenceVariable("module_files",getHeaderModulePaths(builder,usePic));
+  }
+  if (featureConfiguration.isEnabled(CppRuleClasses.INCLUDE_PATHS)) {
+    buildVariables.addSequenceVariable("include_paths",getSafePathStrings(context.getIncludeDirs()));
+    buildVariables.addSequenceVariable("quote_include_paths",getSafePathStrings(context.getQuoteIncludeDirs()));
+    buildVariables.addSequenceVariable("system_include_paths",getSafePathStrings(context.getSystemIncludeDirs()));
+  }
+  if (ccRelativeName != null) {
+    cppConfiguration.getFdoSupport().configureCompilation(builder,buildVariables,ruleContext,ccRelativeName,usePic,featureConfiguration,cppConfiguration);
+  }
+  CcToolchainFeatures.Variables variables=buildVariables.build();
+  builder.setVariables(variables);
+}

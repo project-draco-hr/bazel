@@ -1,0 +1,40 @@
+{
+  LipoContextProvider lipoInputProvider=CppHelper.getLipoContextProvider(ruleContext);
+  Preconditions.checkArgument(lipoInputProvider == null || isLipoEnabled());
+  if ((fdoInstrument == null) && (fdoRoot == null)) {
+    return;
+  }
+  if (featureConfiguration.isEnabled(CppRuleClasses.FDO_INSTRUMENT)) {
+    buildVariables.addVariable("fdo_instrument_path",fdoInstrument.getPathString());
+  }
+  if (fdoRoot != null) {
+    AnalysisEnvironment env=ruleContext.getAnalysisEnvironment();
+    if (env.getSkyframeEnv().valuesMissing()) {
+      return;
+    }
+    Iterable<Artifact> auxiliaryInputs=getAuxiliaryInputs(ruleContext,env,sourceName,usePic,lipoInputProvider);
+    builder.addMandatoryInputs(auxiliaryInputs);
+    if (!Iterables.isEmpty(auxiliaryInputs)) {
+      if (featureConfiguration.isEnabled(CppRuleClasses.AUTOFDO)) {
+        buildVariables.addVariable("fdo_profile_path",getAutoProfilePath().getPathString());
+      }
+      if (featureConfiguration.isEnabled(CppRuleClasses.FDO_OPTIMIZE)) {
+        buildVariables.addVariable("fdo_profile_path",fdoRootExecPath.getPathString());
+      }
+    }
+ else {
+      Collection<String> featureNames=cppConfiguration.getFeatures().getFeatureNames();
+      Collection<String> newFeatureNames=new HashSet<>();
+      for (      String name : featureNames) {
+        if (featureConfiguration.isEnabled(name)) {
+          newFeatureNames.add(name);
+        }
+      }
+      newFeatureNames.remove(CppRuleClasses.FDO_OPTIMIZE);
+      newFeatureNames.remove(CppRuleClasses.AUTOFDO);
+      newFeatureNames.remove(CppRuleClasses.LIPO);
+      FeatureConfiguration newFeatureConfiguration=cppConfiguration.getFeatures().getFeatureConfiguration(newFeatureNames);
+      builder.setFeatureConfiguration(newFeatureConfiguration);
+    }
+  }
+}

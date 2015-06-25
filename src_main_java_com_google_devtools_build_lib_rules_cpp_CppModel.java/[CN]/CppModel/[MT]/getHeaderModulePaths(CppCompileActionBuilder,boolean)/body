@@ -1,0 +1,14 @@
+{
+  Collection<String> result=new LinkedHashSet<>();
+  NestedSet<Artifact> artifacts=featureConfiguration.isEnabled(CppRuleClasses.HEADER_MODULE_INCLUDES_DEPENDENCIES) ? builder.getContext().getTopLevelHeaderModules() : builder.getContext().getAdditionalInputs();
+  for (  Artifact artifact : artifacts) {
+    String filename=artifact.getFilename();
+    if (!filename.endsWith(".pcm")) {
+      continue;
+    }
+    if (usePic == filename.endsWith(".pic.pcm")) {
+      result.add(artifact.getExecPathString());
+    }
+  }
+  return result;
+}

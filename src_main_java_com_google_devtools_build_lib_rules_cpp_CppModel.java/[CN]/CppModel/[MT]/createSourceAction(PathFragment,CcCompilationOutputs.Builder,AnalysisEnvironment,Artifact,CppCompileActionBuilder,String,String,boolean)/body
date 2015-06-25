@@ -1,14 +1,14 @@
 {
   PathFragment ccRelativeName=semantics.getEffectiveSourcePath(sourceArtifact);
-  LipoContextProvider lipoProvider=null;
   if (cppConfiguration.isLipoOptimization()) {
-    lipoProvider=Preconditions.checkNotNull(CppHelper.getLipoContextProvider(ruleContext),outputName);
+    LipoContextProvider lipoProvider=Preconditions.checkNotNull(CppHelper.getLipoContextProvider(ruleContext),outputName);
     builder.setContext(CppCompilationContext.mergeForLipo(lipoProvider.getLipoContext(),context));
   }
   if (fake) {
     Artifact outputFile=ruleContext.getRelatedArtifact(outputName,outputExtension);
     PathFragment tempOutputName=FileSystemUtils.replaceExtension(outputFile.getExecPath(),".temp" + outputExtension);
     builder.setOutputFile(outputFile).setDotdFile(outputName,dependencyFileExtension).setTempOutputFile(tempOutputName);
+    setupBuildVariables(builder,getGeneratePicActions(),ccRelativeName);
     semantics.finalizeCompileActionBuilder(ruleContext,builder);
     CppCompileAction action=builder.build();
     env.registerAction(action);
@@ -22,9 +22,9 @@
     Preconditions.checkState(generatePicAction || generateNoPicAction);
     if (generatePicAction) {
       CppCompileActionBuilder picBuilder=copyAsPicBuilder(builder,outputName,outputExtension,dependencyFileExtension);
-      cppConfiguration.getFdoSupport().configureCompilation(picBuilder,ruleContext,env,ruleContext.getLabel(),ccRelativeName,nocopts,true,lipoProvider);
+      setupBuildVariables(picBuilder,true,ccRelativeName);
       if (maySaveTemps) {
-        result.addTemps(createTempsActions(sourceArtifact,outputName,picBuilder,true));
+        result.addTemps(createTempsActions(sourceArtifact,outputName,picBuilder,true,ccRelativeName));
       }
       if (isCodeCoverageEnabled()) {
         picBuilder.setGcnoFile(ruleContext.getRelatedArtifact(outputName,".pic.gcno"));
@@ -44,9 +44,9 @@
     }
     if (generateNoPicAction) {
       builder.setOutputFile(ruleContext.getRelatedArtifact(outputName,outputExtension)).setDotdFile(outputName,dependencyFileExtension);
-      cppConfiguration.getFdoSupport().configureCompilation(builder,ruleContext,env,ruleContext.getLabel(),ccRelativeName,nocopts,false,lipoProvider);
+      setupBuildVariables(builder,false,ccRelativeName);
       if (maySaveTemps) {
-        result.addTemps(createTempsActions(sourceArtifact,outputName,builder,false));
+        result.addTemps(createTempsActions(sourceArtifact,outputName,builder,false,ccRelativeName));
       }
       if (!cppConfiguration.isLipoOptimization() && isCodeCoverageEnabled()) {
         builder.setGcnoFile(ruleContext.getRelatedArtifact(outputName,".gcno"));
