@@ -1,4 +1,11 @@
 {
+  if (!incrementalHeuristic.shouldUseWorkers()) {
+    SpawnActionContext context=actionExecutionContext.getExecutor().getSpawnActionContext("");
+    if (context != this) {
+      context.exec(spawn,actionExecutionContext);
+      return;
+    }
+  }
   String paramFile=Iterables.getLast(spawn.getArguments());
   Preconditions.checkArgument(Iterables.getLast(spawn.getArguments()).startsWith("@"));
   ImmutableList<String> args=ImmutableList.<String>builder().addAll(spawn.getArguments().subList(0,spawn.getArguments().size() - 1)).add("--persistent_worker").build();

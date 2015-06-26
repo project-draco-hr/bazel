@@ -1,7 +1,10 @@
 {
+  Preconditions.checkNotNull(optionsProvider);
   WorkerOptions options=optionsProvider.getOptions(WorkerOptions.class);
   workers.setMaxTotalPerKey(options.workerMaxInstances);
   workers.setMaxIdlePerKey(options.workerMaxInstances);
   workers.setMinIdlePerKey(options.workerMaxInstances);
   this.workers=workers;
+  this.incrementalHeuristic=new IncrementalHeuristic(options.workerMaxChangedFiles);
+  eventBus.register(incrementalHeuristic);
 }
