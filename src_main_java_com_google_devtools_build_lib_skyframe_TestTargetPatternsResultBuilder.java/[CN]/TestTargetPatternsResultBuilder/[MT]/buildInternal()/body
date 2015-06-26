@@ -1,0 +1,17 @@
+{
+  ResolvedTargets.Builder<Target> finalResult=ResolvedTargets.builder();
+  for (  ResolvedTargetsOfPattern labels : labelsOfPatterns) {
+    ResolvedTargets.Builder<Target> resolvedTargetsBuilder=transformLabelsIntoTargets(labels.getLabels());
+    ResolvedTargets<Target> expanded=TestTargetUtils.expandTestSuites(targetProvider,eventHandler,resolvedTargetsBuilder.build().getTargets(),false,keepGoing);
+    if (expanded.hasError()) {
+      setError();
+    }
+    if (labels.isNegativePattern()) {
+      finalResult.filter(Predicates.not(Predicates.in(expanded.getTargets())));
+    }
+ else {
+      finalResult.addAll(expanded.getTargets());
+    }
+  }
+  return finalResult;
+}
