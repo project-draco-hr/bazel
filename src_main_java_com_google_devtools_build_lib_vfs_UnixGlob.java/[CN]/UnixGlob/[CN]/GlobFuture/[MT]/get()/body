@@ -1,16 +1,3 @@
 {
-synchronized (completionLock) {
-    if (isDone()) {
-      return getSafe();
-    }
-    try {
-      visitor.waitForCompletion();
-      super.set(Lists.newArrayList(visitor.results));
-    }
- catch (    Throwable t) {
-      super.setException(t);
-    }
-    List<Path> result=getSafe();
-    return result;
-  }
+  return checkForInterrupt ? super.get() : Uninterruptibles.getUninterruptibly(delegate());
 }

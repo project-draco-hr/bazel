@@ -1,0 +1,22 @@
+{
+  pendingOps.incrementAndGet();
+  Runnable wrapped=new Runnable(){
+    @Override public void run(){
+      try {
+        if (!canceled && failure.get() == null) {
+          r.run();
+        }
+      }
+  finally {
+        decrementAndCheckDone();
+      }
+    }
+  }
+;
+  if (executor == null) {
+    wrapped.run();
+  }
+ else {
+    executor.execute(wrapped);
+  }
+}

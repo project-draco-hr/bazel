@@ -5,8 +5,14 @@
   }
   List<String[]> splitPatterns=checkAndSplitPatterns(patterns);
   List<String[]> splitExcludes=checkAndSplitPatterns(excludePatterns);
-  for (  String[] splitPattern : splitPatterns) {
-    queueGlob(base,baseStat.isDirectory(),splitPattern,0,excludeDirectories,splitExcludes,0,results,cache,dirPred,syscalls);
+  pendingOps.incrementAndGet();
+  try {
+    for (    String[] splitPattern : splitPatterns) {
+      queueGlob(base,baseStat.isDirectory(),splitPattern,0,excludeDirectories,splitExcludes,0,results,cache,dirPred,syscalls);
+    }
+  }
+  finally {
+    decrementAndCheckDone();
   }
   return result;
 }
