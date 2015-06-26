@@ -1,4 +1,4 @@
 {
   String fingerprintCommand="PLIST=$(mktemp -t cert.plist) && trap \"rm ${PLIST}\" EXIT && " + extractPlistCommand(provisioningProfile) + " > ${PLIST} && "+ "/usr/libexec/PlistBuddy -c 'Print DeveloperCertificates:0' ${PLIST} | "+ "openssl x509 -inform DER -noout -fingerprint | "+ "cut -d= -f2 | sed -e 's#:##g'";
-  return String.format("/usr/bin/codesign --force --sign $(%s) --entitlements %s %s",fingerprintCommand,entitlements.getExecPathString(),appDir);
+  return String.format("/usr/bin/codesign --force --sign $(%s) --entitlements %s %s",fingerprintCommand,entitlements.getShellEscapedExecPathString(),appDir);
 }

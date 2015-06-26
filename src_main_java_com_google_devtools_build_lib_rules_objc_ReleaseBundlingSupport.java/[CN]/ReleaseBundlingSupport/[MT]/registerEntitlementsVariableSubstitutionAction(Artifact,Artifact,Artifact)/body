@@ -1,4 +1,5 @@
 {
   String escapedBundleId=ShellUtils.shellEscape(attributes.bundleId());
-  ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("SubstituteIosEntitlements").setExecutable(new PathFragment("/bin/bash")).addArgument("-c").addArgument("set -e && " + "PREFIX=\"$(cat " + prefix.getExecPathString() + ")\" && "+ "sed "+ "-e \"s#${PREFIX}\\.\\*#${PREFIX}."+ escapedBundleId+ "#g\" "+ "-e \"s#\\$(AppIdentifierPrefix)#${PREFIX}.#g\" "+ "-e \"s#\\$(CFBundleIdentifier)#"+ escapedBundleId+ "#g\" "+ in.getExecPathString()+ " "+ "> "+ out.getExecPathString()).addInput(in).addInput(prefix).addOutput(out).build(ruleContext));
+  String shellCommand="set -e && " + "PREFIX=\"$(cat " + prefix.getShellEscapedExecPathString() + ")\" && "+ "sed "+ "-e \"s#${PREFIX}\\.\\*#${PREFIX}."+ escapedBundleId+ "#g\" "+ "-e \"s#\\$(AppIdentifierPrefix)#${PREFIX}.#g\" "+ "-e \"s#\\$(CFBundleIdentifier)#"+ escapedBundleId+ "#g\" "+ in.getShellEscapedExecPathString()+ " "+ "> "+ out.getShellEscapedExecPathString();
+  ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("SubstituteIosEntitlements").setShellCommand(shellCommand).addInput(in).addInput(prefix).addOutput(out).build(ruleContext));
 }
