@@ -1,0 +1,23 @@
+{
+  if (has(chars,pos + 1,'{')) {
+    output.append("{");
+    return 1;
+  }
+  String key=getFieldName(chars,pos);
+  Object value=null;
+  try {
+    int index=parsePositional(key,history);
+    if (index < 0 || index >= args.size()) {
+      fail("No replacement found for index " + index);
+    }
+    value=args.get(index);
+  }
+ catch (  NumberFormatException nfe) {
+    if (!kwargs.containsKey(key)) {
+      fail("Missing argument '" + key + "'");
+    }
+    value=kwargs.get(key);
+  }
+  output.append(Printer.str(value));
+  return key.length() + 1;
+}
