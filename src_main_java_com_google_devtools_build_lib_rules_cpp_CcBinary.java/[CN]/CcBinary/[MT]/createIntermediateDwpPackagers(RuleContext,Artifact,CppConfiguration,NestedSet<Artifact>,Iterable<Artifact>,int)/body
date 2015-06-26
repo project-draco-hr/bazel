@@ -1,0 +1,25 @@
+{
+  List<SpawnAction.Builder> packagers=new ArrayList<>();
+  SpawnAction.Builder currentPackager=newDwpAction(cppConfiguration,dwpTools);
+  int inputsForCurrentPackager=0;
+  for (  Artifact dwoInput : inputs) {
+    if (inputsForCurrentPackager == MAX_INPUTS_PER_DWP_ACTION) {
+      packagers.add(currentPackager);
+      currentPackager=newDwpAction(cppConfiguration,dwpTools);
+      inputsForCurrentPackager=0;
+    }
+    currentPackager.addInputArgument(dwoInput);
+    inputsForCurrentPackager++;
+  }
+  packagers.add(currentPackager);
+  if (packagers.size() > 1) {
+    List<Artifact> intermediateOutputs=new ArrayList<>();
+    for (    SpawnAction.Builder packager : packagers) {
+      Artifact intermediateOutput=getIntermediateDwpFile(context.getAnalysisEnvironment(),dwpOutput,intermediateDwpCount++);
+      context.registerAction(packager.addArgument("-o").addOutputArgument(intermediateOutput).setMnemonic("CcGenerateIntermediateDwp").build(context));
+      intermediateOutputs.add(intermediateOutput);
+    }
+    return createIntermediateDwpPackagers(context,dwpOutput,cppConfiguration,dwpTools,intermediateOutputs,intermediateDwpCount);
+  }
+  return packagers;
+}
