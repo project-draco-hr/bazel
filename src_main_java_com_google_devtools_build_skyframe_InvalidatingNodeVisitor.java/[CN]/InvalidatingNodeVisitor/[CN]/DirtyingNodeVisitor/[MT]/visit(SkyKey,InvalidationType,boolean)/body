@@ -26,8 +26,10 @@
       for (      SkyKey reverseDep : entry.getReverseDeps()) {
         visit(reverseDep,InvalidationType.DIRTIED,MUST_EXIST);
       }
-      for (      SkyKey dep : depsAndValue.first) {
-        graph.get(dep).removeReverseDep(key);
+      Collection<NodeEntry> children=graph.getBatch(depsAndValue.first).values();
+      Preconditions.checkState(children.size() == Iterables.size(depsAndValue.first),"%s %s %s %s",key,entry,depsAndValue.first,children);
+      for (      NodeEntry child : children) {
+        child.removeReverseDep(key);
       }
       SkyValue value=ValueWithMetadata.justValue(depsAndValue.second);
       informInvalidationReceiver(value,EvaluationProgressReceiver.InvalidationState.DIRTY);
