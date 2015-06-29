@@ -1,5 +1,9 @@
 {
-  Set<BuildConfiguration> allConfigurations=ImmutableSet.of(targetConfiguration,dataConfiguration,hostConfiguration);
+  Set<BuildConfiguration> allConfigurations=new LinkedHashSet<>();
+  allConfigurations.add(targetConfiguration);
+  allConfigurations.add(dataConfiguration);
+  allConfigurations.add(hostConfiguration);
+  allConfigurations.addAll(splitTransitionsTable.values());
   Table<BuildConfiguration,Transition,ConfigurationHolder> transitionBuilder=HashBasedTable.create();
   for (  BuildConfiguration from : allConfigurations) {
     for (    ConfigurationTransition transition : ConfigurationTransition.values()) {
@@ -21,7 +25,7 @@
     transitionBuilder.put(config,CppTransition.TARGET_CONFIG_FOR_LIPO,new ConfigurationHolder(config.isHostConfiguration() ? null : config));
   }
   for (  BuildConfiguration config : allConfigurations) {
-    Transitions outgoingTransitions=new BuildConfigurationCollection.Transitions(config,transitionBuilder.row(config));
+    Transitions outgoingTransitions=new BuildConfigurationCollection.Transitions(config,transitionBuilder.row(config),splitTransitionsTable.values().contains(config) ? ImmutableListMultimap.<SplitTransition<?>,BuildConfiguration>of() : splitTransitionsTable);
     if (config.isHostConfiguration() && config.getTransitions() != null) {
       continue;
     }
