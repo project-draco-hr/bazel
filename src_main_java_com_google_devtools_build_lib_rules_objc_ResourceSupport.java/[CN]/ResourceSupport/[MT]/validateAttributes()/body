@@ -7,5 +7,18 @@
   for (  String error : dataModelErrors) {
     ruleContext.attributeError("datamodels",error);
   }
+  Multiset<Artifact> resources=HashMultiset.create();
+  resources.addAll(attributes.resources());
+  resources.addAll(attributes.structuredResources());
+  resources.addAll(attributes.strings());
+  resources.addAll(attributes.assetCatalogs());
+  resources.addAll(attributes.datamodels());
+  resources.addAll(attributes.xibs());
+  resources.addAll(attributes.storyboards());
+  for (  Multiset.Entry<Artifact> entry : resources.entrySet()) {
+    if (entry.getCount() > 1) {
+      ruleContext.ruleError("The same file was included multiple times in this rule: " + entry.getElement().getRootRelativePathString());
+    }
+  }
   return this;
 }

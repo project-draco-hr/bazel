@@ -8,7 +8,14 @@
   IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(intermediateArtifacts.strippedSingleArchitectureBinary());
+  new ResourceSupport(ruleContext).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
   new CompilationSupport(ruleContext).registerJ2ObjcCompileAndArchiveActions(objcProvider).registerCompileAndArchiveActions(common).addXcodeSettings(xcodeProviderBuilder,common).registerLinkActions(objcProvider,extraLinkArgs,ImmutableList.<Artifact>of()).validateAttributes();
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
   Optional<XcTestAppProvider> xcTestAppProvider;
   Optional<RunfilesSupport> maybeRunfilesSupport=Optional.absent();
 switch (hasReleaseBundlingSupport) {
@@ -30,7 +37,6 @@ break;
 default :
 throw new AssertionError();
 }
-new ResourceSupport(ruleContext).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
 XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,objcProvider,productType).addDependencies(xcodeProviderBuilder,new Attribute("bundles",Mode.TARGET)).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET)).addNonPropagatedDependencies(xcodeProviderBuilder,new Attribute("non_propagated_deps",Mode.TARGET)).addFilesToBuild(filesToBuild);
 if (productType != XcodeProductType.LIBRARY_STATIC) {
 xcodeSupport.generateCompanionLibXcodeTarget(xcodeProviderBuilder);
