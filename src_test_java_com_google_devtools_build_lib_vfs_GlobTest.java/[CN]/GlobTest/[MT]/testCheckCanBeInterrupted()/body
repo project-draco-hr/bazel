@@ -8,12 +8,22 @@
     }
   }
 ;
+  Future<?> globResult=null;
   try {
-    new UnixGlob.Builder(tmpPath).addPattern("**").setDirectoryFilter(interrupterPredicate).setThreadPool(executor).globInterruptible();
+    globResult=new UnixGlob.Builder(tmpPath).addPattern("**").setDirectoryFilter(interrupterPredicate).setThreadPool(executor).globAsync(true);
+    globResult.get();
     fail();
   }
  catch (  InterruptedException e) {
   }
+  globResult.cancel(true);
+  try {
+    Uninterruptibles.getUninterruptibly(globResult);
+    fail();
+  }
+ catch (  CancellationException e) {
+  }
+  Thread.interrupted();
   assertFalse(executor.isShutdown());
   executor.shutdown();
   assertTrue(executor.awaitTermination(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS));
