@@ -1,4 +1,9 @@
 {
+  String cacheKey=buildOptions.computeCacheKey();
+  BuildConfiguration result=cache.getIfPresent(cacheKey);
+  if (result != null) {
+    return result;
+  }
   Map<Class<? extends Fragment>,Fragment> fragments=new HashMap<>();
   for (  ConfigurationFragmentFactory factory : configurationFragmentFactories) {
     Class<? extends Fragment> fragmentType=factory.creates();
@@ -18,11 +23,7 @@
   }
 );
   fragments=ImmutableMap.copyOf(fragments);
-  String key=BuildConfiguration.computeCacheKey(directories,fragments,buildOptions);
-  BuildConfiguration configuration=cache.getIfPresent(key);
-  if (configuration == null) {
-    configuration=new BuildConfiguration(directories,fragments,buildOptions,actionsDisabled);
-    cache.put(key,configuration);
-  }
-  return configuration;
+  result=new BuildConfiguration(directories,fragments,buildOptions,actionsDisabled);
+  cache.put(cacheKey,result);
+  return result;
 }
