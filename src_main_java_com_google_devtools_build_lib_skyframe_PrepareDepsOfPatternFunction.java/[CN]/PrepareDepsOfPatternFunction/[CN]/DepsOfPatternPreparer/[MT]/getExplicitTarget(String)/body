@@ -1,0 +1,15 @@
+{
+  Label label=TargetPatternResolverUtil.label(targetName);
+  try {
+    Target target=packageProvider.getTarget(env.getListener(),label);
+    SkyKey key=TransitiveTargetValue.key(target.getLabel());
+    SkyValue token=env.getValueOrThrow(key,NoSuchPackageException.class,NoSuchTargetException.class);
+    if (token == null) {
+      throw new MissingDepException();
+    }
+    return ResolvedTargets.empty();
+  }
+ catch (  NoSuchThingException e) {
+    throw new TargetParsingException(e.getMessage(),e);
+  }
+}

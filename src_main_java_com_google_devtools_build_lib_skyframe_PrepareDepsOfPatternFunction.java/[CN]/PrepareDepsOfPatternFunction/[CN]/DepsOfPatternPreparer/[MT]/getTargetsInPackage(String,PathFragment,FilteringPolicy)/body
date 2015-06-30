@@ -1,0 +1,22 @@
+{
+  TargetPatternResolverUtil.validatePatternPackage(originalPattern,packageNameFragment,this);
+  try {
+    PackageIdentifier packageId=PackageIdentifier.createInDefaultRepo(packageNameFragment);
+    Package pkg=packageProvider.getPackage(env.getListener(),packageId);
+    ResolvedTargets<Target> packageTargets=TargetPatternResolverUtil.resolvePackageTargets(pkg,policy);
+    ImmutableList.Builder<SkyKey> builder=ImmutableList.builder();
+    for (    Target target : packageTargets.getTargets()) {
+      builder.add(TransitiveTargetValue.key(target.getLabel()));
+    }
+    ImmutableList<SkyKey> skyKeys=builder.build();
+    env.getValuesOrThrow(skyKeys,NoSuchPackageException.class,NoSuchTargetException.class);
+    if (env.valuesMissing()) {
+      throw new MissingDepException();
+    }
+    return ResolvedTargets.empty();
+  }
+ catch (  NoSuchThingException e) {
+    String message=TargetPatternResolverUtil.getParsingErrorMessage("package contains errors",originalPattern);
+    throw new TargetParsingException(message,e);
+  }
+}

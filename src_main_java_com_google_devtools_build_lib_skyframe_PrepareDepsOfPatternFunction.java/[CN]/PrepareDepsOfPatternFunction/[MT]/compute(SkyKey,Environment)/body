@@ -1,0 +1,16 @@
+{
+  TargetPatternValue.TargetPatternKey patternKey=((TargetPatternValue.TargetPatternKey)key.argument());
+  try {
+    TargetPattern parsedPattern=patternKey.getParsedPattern();
+    DepsOfPatternPreparer preparer=new DepsOfPatternPreparer(env,patternKey.getPolicy(),pkgPath.get());
+    ImmutableSet<String> excludedSubdirectories=patternKey.getExcludedSubdirectories();
+    parsedPattern.eval(preparer,excludedSubdirectories);
+  }
+ catch (  TargetParsingException e) {
+    throw new PrepareDepsOfPatternFunctionException(e);
+  }
+catch (  MissingDepException e) {
+    return null;
+  }
+  return PrepareDepsOfPatternValue.INSTANCE;
+}
