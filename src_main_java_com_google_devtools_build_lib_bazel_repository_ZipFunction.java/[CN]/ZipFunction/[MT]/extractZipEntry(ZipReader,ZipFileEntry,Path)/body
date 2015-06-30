@@ -1,11 +1,12 @@
 {
-  PathFragment relativePath=new PathFragment(entry.getName());
+  String relativeString=entry.getName();
+  PathFragment relativePath=new PathFragment(relativeString);
   if (relativePath.isAbsolute()) {
     throw new IOException(String.format("Failed to extract %s, zipped paths cannot be absolute",relativePath));
   }
   Path outputPath=destinationDirectory.getRelative(relativePath);
+  int permissions=getPermissions(entry.getExternalAttributes(),relativeString);
   FileSystemUtils.createDirectoryAndParents(outputPath.getParentDirectory());
-  int permissions=entry.getExternalAttributes() >>> 16;
   boolean isDirectory=(permissions & 040000) == 040000;
   if (isDirectory) {
     FileSystemUtils.createDirectoryAndParents(outputPath);
