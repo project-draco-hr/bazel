@@ -13,7 +13,6 @@
   PerActionFileCache perActionFileCache=new PerActionFileCache(state.inputArtifactData);
   ActionExecutionContext actionExecutionContext=null;
   boolean inputsDiscoveredDuringActionExecution=false;
-  Map<Artifact,FileArtifactValue> metadataFoundDuringActionExecution=null;
   try {
     if (action.discoversInputs()) {
       if (!state.hasDiscoveredInputs()) {
@@ -51,20 +50,20 @@
  catch (      IOException e) {
       }
     }
-    if (inputsDiscoveredDuringActionExecution) {
-      metadataFoundDuringActionExecution=declareAdditionalDependencies(env,action,state.inputArtifactData.keySet());
-      state.discoveredInputs=metadataFoundDuringActionExecution.keySet();
+  }
+  if (inputsDiscoveredDuringActionExecution) {
+    Map<Artifact,FileArtifactValue> metadataFoundDuringActionExecution=declareAdditionalDependencies(env,action,state.inputArtifactData.keySet());
+    state.discoveredInputs=metadataFoundDuringActionExecution.keySet();
+    if (env.valuesMissing()) {
+      return null;
     }
-  }
-  if (env.valuesMissing()) {
-    return null;
-  }
-  if (inputsDiscoveredDuringActionExecution && !metadataFoundDuringActionExecution.isEmpty()) {
-    Map<Artifact,FileArtifactValue> inputArtifactData=new HashMap<>();
-    inputArtifactData.putAll(state.inputArtifactData);
-    inputArtifactData.putAll(metadataFoundDuringActionExecution);
-    state.inputArtifactData=inputArtifactData;
-    metadataHandler=new ActionMetadataHandler(state.inputArtifactData,action.getOutputs(),tsgm);
+    if (!metadataFoundDuringActionExecution.isEmpty()) {
+      Map<Artifact,FileArtifactValue> inputArtifactData=new HashMap<>();
+      inputArtifactData.putAll(state.inputArtifactData);
+      inputArtifactData.putAll(metadataFoundDuringActionExecution);
+      state.inputArtifactData=inputArtifactData;
+      metadataHandler=new ActionMetadataHandler(state.inputArtifactData,action.getOutputs(),tsgm);
+    }
   }
   skyframeActionExecutor.afterExecution(action,metadataHandler,state.token);
   return state.value;
