@@ -1,6 +1,16 @@
 {
-  JavaCompilationArgs dep=ruleContext.getPrerequisite(split ? "$incremental_split_stub_application" : "$incremental_stub_application",Mode.TARGET).getProvider(JavaCompilationArgsProvider.class).getJavaCompilationArgs();
-  JavaTargetAttributes attributes=new JavaTargetAttributes.Builder(javaSemantics).addRuntimeClassPathEntries(dep.getRuntimeJars()).build();
+  String attribute=split ? "$incremental_split_stub_application" : "$incremental_stub_application";
+  TransitiveInfoCollection dep=ruleContext.getPrerequisite(attribute,Mode.TARGET);
+  if (dep == null) {
+    ruleContext.attributeError(attribute,"Stub application cannot be found");
+    return null;
+  }
+  JavaCompilationArgsProvider provider=dep.getProvider(JavaCompilationArgsProvider.class);
+  if (provider == null) {
+    ruleContext.attributeError(attribute,"'" + dep.getLabel() + "' should be a Java target");
+    return null;
+  }
+  JavaTargetAttributes attributes=new JavaTargetAttributes.Builder(javaSemantics).addRuntimeClassPathEntries(provider.getJavaCompilationArgs().getRuntimeJars()).build();
   Artifact stubDeployJar=getDxArtifact(ruleContext,split ? "split_stub_deploy.jar" : "stub_deploy.jar");
   new DeployArchiveBuilder(javaSemantics,ruleContext).setOutputJar(stubDeployJar).setAttributes(attributes).build();
   Artifact stubDex=getDxArtifact(ruleContext,split ? "split_stub_application.dex" : "stub_application.dex");
