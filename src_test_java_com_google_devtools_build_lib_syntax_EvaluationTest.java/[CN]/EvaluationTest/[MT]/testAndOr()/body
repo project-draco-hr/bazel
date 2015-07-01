@@ -1,25 +1,4 @@
 {
-  assertEquals(8,eval("8 or 9"));
-  assertEquals(9,eval("0 or 9"));
-  assertEquals(9,eval("8 and 9"));
-  assertEquals(0,eval("0 and 9"));
-  assertEquals(2,eval("1 and 2 or 3"));
-  assertEquals(3,eval("0 and 2 or 3"));
-  assertEquals(3,eval("1 and 0 or 3"));
-  assertEquals(1,eval("1 or 2 and 3"));
-  assertEquals(3,eval("0 or 2 and 3"));
-  assertEquals(0,eval("0 or 0 and 3"));
-  assertEquals(1,eval("1 or 0 and 3"));
-  assertEquals(1,eval("1 or 0 and 3"));
-  assertEquals(Environment.NONE,eval("None and 1"));
-  assertEquals(9,eval("\"\" or 9"));
-  assertEquals("abc",eval("\"abc\" or 9"));
-  if (isSkylark()) {
-    checkEvalError("ERROR 1:6: name 'foo' is not defined","8 or foo");
-    checkEvalError("ERROR 1:7: name 'foo' is not defined","0 and foo");
-  }
- else {
-    assertEquals(8,eval("8 or foo"));
-    assertEquals(0,eval("0 and foo"));
-  }
+  new BuildTest().testStatement("8 or 9",8).testStatement("0 or 9",9).testStatement("8 and 9",9).testStatement("0 and 9",0).testStatement("1 and 2 or 3",2).testStatement("0 and 2 or 3",3).testStatement("1 and 0 or 3",3).testStatement("1 or 2 and 3",1).testStatement("0 or 2 and 3",3).testStatement("0 or 0 and 3",0).testStatement("1 or 0 and 3",1).testStatement("None and 1",Environment.NONE).testStatement("\"\" or 9",9).testStatement("\"abc\" or 9","abc").testStatement("8 or foo",8).testStatement("0 and foo",0);
+  new SkylarkTest().testIfErrorContains("name 'google' is not defined","0 and google").testIfErrorContains("name 'google' is not defined","8 or google");
 }
