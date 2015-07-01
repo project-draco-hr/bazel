@@ -1,0 +1,80 @@
+{
+  if (o == null) {
+    throw new NullPointerException();
+  }
+ else   if (o instanceof String) {
+    writeString(buffer,(String)o,quotationMark);
+  }
+ else   if (o instanceof Integer || o instanceof Double) {
+    append(buffer,o.toString());
+  }
+ else   if (o == Environment.NONE) {
+    append(buffer,"None");
+  }
+ else   if (o == Boolean.TRUE) {
+    append(buffer,"True");
+  }
+ else   if (o == Boolean.FALSE) {
+    append(buffer,"False");
+  }
+ else   if (o instanceof List<?>) {
+    List<?> seq=(List<?>)o;
+    printList(buffer,seq,EvalUtils.isImmutable(seq),quotationMark);
+  }
+ else   if (o instanceof SkylarkList) {
+    SkylarkList list=(SkylarkList)o;
+    printList(buffer,list.toList(),list.isTuple(),quotationMark);
+  }
+ else   if (o instanceof Map<?,?>) {
+    Map<?,?> dict=(Map<?,?>)o;
+    printList(buffer,dict.entrySet(),"{",", ","}",null,quotationMark);
+  }
+ else   if (o instanceof Map.Entry<?,?>) {
+    Map.Entry<?,?> entry=(Map.Entry<?,?>)o;
+    write(buffer,entry.getKey(),quotationMark);
+    append(buffer,": ");
+    write(buffer,entry.getValue(),quotationMark);
+  }
+ else   if (o instanceof SkylarkNestedSet) {
+    SkylarkNestedSet set=(SkylarkNestedSet)o;
+    append(buffer,"set(");
+    printList(buffer,set,"[",", ","]",null,quotationMark);
+    Order order=set.getOrder();
+    if (order != Order.STABLE_ORDER) {
+      append(buffer,", order = \"" + order.getName() + "\"");
+    }
+    append(buffer,")");
+  }
+ else   if (o instanceof BaseFunction) {
+    BaseFunction func=(BaseFunction)o;
+    append(buffer,"<function " + func.getName() + ">");
+  }
+ else   if (o instanceof Label) {
+    write(buffer,o.toString(),quotationMark);
+  }
+ else   if (o instanceof FilesetEntry) {
+    FilesetEntry entry=(FilesetEntry)o;
+    append(buffer,"FilesetEntry(srcdir = ");
+    write(buffer,entry.getSrcLabel().toString(),quotationMark);
+    append(buffer,", files = ");
+    write(buffer,makeStringList(entry.getFiles()),quotationMark);
+    append(buffer,", excludes = ");
+    write(buffer,makeList(entry.getExcludes()),quotationMark);
+    append(buffer,", destdir = ");
+    write(buffer,entry.getDestDir().getPathString(),quotationMark);
+    append(buffer,", strip_prefix = ");
+    write(buffer,entry.getStripPrefix(),quotationMark);
+    append(buffer,", symlinks = ");
+    append(buffer,quotationMark);
+    append(buffer,entry.getSymlinkBehavior().toString());
+    append(buffer,quotationMark);
+    append(buffer,")");
+  }
+ else   if (o instanceof PathFragment) {
+    append(buffer,((PathFragment)o).getPathString());
+  }
+ else {
+    append(buffer,o.toString());
+  }
+  return buffer;
+}

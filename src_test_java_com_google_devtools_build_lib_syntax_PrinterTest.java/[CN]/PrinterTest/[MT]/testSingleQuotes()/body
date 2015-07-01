@@ -1,0 +1,17 @@
+{
+  assertThat(Printer.str("test",'\'')).isEqualTo("test");
+  assertThat(Printer.repr("test",'\'')).isEqualTo("'test'");
+  assertEquals("'\\''",Printer.repr("'",'\''));
+  assertEquals("\"",Printer.str("\"",'\''));
+  assertEquals("'\"'",Printer.repr("\"",'\''));
+  List<?> list=makeList("foo","bar");
+  List<?> tuple=makeTuple("foo","bar");
+  assertThat(Printer.str(makeTuple(1,list,3),'\'')).isEqualTo("(1, ['foo', 'bar'], 3)");
+  assertThat(Printer.repr(makeTuple(1,list,3),'\'')).isEqualTo("(1, ['foo', 'bar'], 3)");
+  assertThat(Printer.str(makeList(1,tuple,3),'\'')).isEqualTo("[1, ('foo', 'bar'), 3]");
+  assertThat(Printer.repr(makeList(1,tuple,3),'\'')).isEqualTo("[1, ('foo', 'bar'), 3]");
+  Map<Object,Object> dict=ImmutableMap.<Object,Object>of(1,tuple,2,list,"foo",makeList());
+  assertThat(Printer.str(dict,'\'')).isEqualTo("{1: ('foo', 'bar'), 2: ['foo', 'bar'], 'foo': []}");
+  assertThat(Printer.repr(dict,'\'')).isEqualTo("{1: ('foo', 'bar'), 2: ['foo', 'bar'], 'foo': []}");
+  assertThat(Printer.repr(createTestFilesetEntry(),'\'')).isEqualTo(createExpectedFilesetEntryString('\''));
+}
