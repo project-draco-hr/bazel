@@ -1,0 +1,27 @@
+{
+  final Runnable logger=new Runnable(){
+    private static final int KB=1024;
+    private static final String UNITS=" KMGTPEY";
+    private final double logOfKb=Math.log(1024);
+    public void run(){
+      try {
+        reporter.handle(Event.progress("Downloading from " + urlString + ": "+ formatSize(totalBytes.get())));
+      }
+ catch (      Exception e) {
+        reporter.handle(Event.error("Error generating download progress: " + e.getMessage()));
+      }
+    }
+    private String formatSize(    int bytes){
+      if (bytes < KB) {
+        return bytes + "B";
+      }
+      int logBaseUnitOfBytes=(int)(Math.log(bytes) / logOfKb);
+      if (logBaseUnitOfBytes < 0 || logBaseUnitOfBytes >= UNITS.length()) {
+        return bytes + "B";
+      }
+      return (int)(bytes / Math.pow(KB,logBaseUnitOfBytes)) + (UNITS.charAt(logBaseUnitOfBytes) + "B");
+    }
+  }
+;
+  return scheduler.scheduleAtFixedRate(logger,0,1,TimeUnit.SECONDS);
+}
