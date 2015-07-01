@@ -1,0 +1,21 @@
+{
+  ImmutableSet.Builder<String> subincludes=new ImmutableSet.Builder<>();
+  for (  Statement stmt : stmts) {
+    if (!(stmt instanceof ExpressionStatement)) {
+      continue;
+    }
+    Expression expr=((ExpressionStatement)stmt).getExpression();
+    if (!(expr instanceof FuncallExpression)) {
+      continue;
+    }
+    FuncallExpression call=(FuncallExpression)expr;
+    if (!call.getFunction().getName().equals("subinclude") || call.getArguments().size() != 1) {
+      continue;
+    }
+    Expression arg=call.getArguments().get(0).getValue();
+    if (arg instanceof StringLiteral) {
+      subincludes.add(((StringLiteral)arg).getValue());
+    }
+  }
+  return subincludes.build();
+}
