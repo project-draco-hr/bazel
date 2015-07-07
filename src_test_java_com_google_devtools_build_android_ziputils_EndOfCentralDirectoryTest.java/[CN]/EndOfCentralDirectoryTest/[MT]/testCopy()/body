@@ -1,0 +1,11 @@
+{
+  ByteBuffer buffer=ByteBuffer.allocate(100).order(ByteOrder.LITTLE_ENDIAN);
+  EndOfCentralDirectory view=EndOfCentralDirectory.allocate("comment");
+  view.copy(buffer);
+  int expSize=view.getSize();
+  assertEquals("buffer not advanced as expected",expSize,buffer.position());
+  buffer.position(0);
+  EndOfCentralDirectory clone=EndOfCentralDirectory.viewOf(buffer);
+  assertEquals("Fail to copy mark",view.get(ENDSIG),clone.get(ENDSIG));
+  assertEquals("Fail to copy comment",view.getComment(),clone.getComment());
+}

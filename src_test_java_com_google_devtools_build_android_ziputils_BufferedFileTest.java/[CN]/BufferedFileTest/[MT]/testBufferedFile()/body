@@ -1,0 +1,18 @@
+{
+  int fileSize=64;
+  String filename="bytes64";
+  byte[] bytes=fileData(fileSize);
+  fileSystem.addFile(filename,bytes);
+  FileChannel file=fileSystem.getInputChannel(filename);
+  int maxAlloc=16;
+  int regionOff=0;
+  assertException("channel null",null,regionOff,fileSize,maxAlloc,NullPointerException.class);
+  assertException("region offset negative",file,-1,fileSize,maxAlloc,IllegalArgumentException.class);
+  assertException("region size negative",file,regionOff,-1,maxAlloc,IllegalArgumentException.class);
+  assertException("maxAlloc negative",file,regionOff,fileSize,-1,IllegalArgumentException.class);
+  assertException("region exceeds file",file,regionOff,fileSize + 1,maxAlloc,IllegalArgumentException.class);
+  assertException("region too long from offset",file,regionOff + 1,fileSize,maxAlloc,IllegalArgumentException.class);
+  assertException("region short, still too long",file,regionOff + 50,fileSize - 49,maxAlloc,IllegalArgumentException.class);
+  new BufferedFile(file,regionOff,fileSize,0);
+  new BufferedFile(file,regionOff,fileSize,fileSize);
+}

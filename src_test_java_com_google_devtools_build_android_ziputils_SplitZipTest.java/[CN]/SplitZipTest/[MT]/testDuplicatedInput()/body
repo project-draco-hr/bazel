@@ -1,0 +1,14 @@
+{
+  try {
+    new ZipFileBuilder().add("pkg/test.txt","hello world").create("input1.zip");
+    new ZipFileBuilder().add("pkg/test.txt","Goodbye world").create("input2.zip");
+    new SplitZip().addOutput(new ZipOut(fileSystem.getOutputChannel("out/shard1.jar",false),"out/shard1.jar")).setVerbose(true).addInput(new ZipIn(fileSystem.getInputChannel("input1.zip"),"input1.zip")).addInput(new ZipIn(fileSystem.getInputChannel("input2.zip"),"input2.zip")).run().close();
+    new ZipFileBuilder().add("pkg/test.txt","hello world").create("expect.zip");
+    byte[] expectBytes=fileSystem.toByteArray("expect.zip");
+    byte[] outputBytes=fileSystem.toByteArray("out/shard1.jar");
+    assertThat(expectBytes).isEqualTo(outputBytes);
+  }
+ catch (  IOException e) {
+    fail("Exception: " + e);
+  }
+}

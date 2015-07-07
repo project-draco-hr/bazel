@@ -1,0 +1,12 @@
+{
+  String filename="pkg/foo.class";
+  byte[] extraData={1,2,3,4,5,6,7,8};
+  int expSize=ZipInputStream.LOCHDR + filename.getBytes(UTF_8).length + extraData.length;
+  int expPos=0;
+  LocalFileHeader view=LocalFileHeader.allocate(filename,extraData);
+  assertEquals("Incorrect filename",filename,view.getFilename());
+  Assert.assertArrayEquals("Incorrect extra data",extraData,view.getExtraData());
+  assertEquals("Not at position 0",expPos,view.buffer.position());
+  assertEquals("Not sized correctly",expSize,view.getSize());
+  assertEquals("Not limited to size",expSize,view.buffer.limit());
+}

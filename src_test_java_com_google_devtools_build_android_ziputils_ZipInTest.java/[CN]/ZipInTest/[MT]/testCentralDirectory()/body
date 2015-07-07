@@ -1,0 +1,39 @@
+{
+  String filename="test.zip";
+  ByteBuffer buffer;
+  int offset;
+  ZipIn zipIn;
+  String subcase;
+  subcase=" EOCD extra data, ";
+  String commonName="thisIsNotNormal.txt";
+  int filenameLen=commonName.getBytes(UTF_8).length;
+  int count=ENTRY_COUNT;
+  int dirEntry=ZipInputStream.CENHDR;
+  int before=count;
+  int between=0;
+  int after=20;
+  int eocd=ZipInputStream.ENDHDR;
+  int total=before + (count * (dirEntry + filenameLen)) + ((count - 1) * between)+ after+ eocd;
+  byte[] bytes=new byte[total];
+  offset=before;
+  for (int i=0; i < count; i++) {
+    if (i > 0) {
+      offset+=between;
+    }
+    buffer=ByteBuffer.wrap(bytes,offset,bytes.length - offset);
+    DirectoryEntry.view(buffer,commonName,null,null).set(CENHOW,(short)8).set(CENSIZ,before).set(CENLEN,2 * before).set(CENOFF,i);
+    offset+=dirEntry + filenameLen;
+  }
+  offset+=after;
+  buffer=ByteBuffer.wrap(bytes,offset,bytes.length - offset);
+  EndOfCentralDirectory.view(buffer,null).set(ENDOFF,before).set(ENDSIZ,offset - before - after).set(ENDTOT,(short)count).set(ENDSUB,(short)count);
+  fileSystem.addFile(filename,bytes);
+  zipIn=newZipIn(filename);
+  CentralDirectory result=zipIn.centralDirectory();
+  assertNotNull(subcase + "found",result);
+  List<DirectoryEntry> list=result.list();
+  assertEquals(subcase + "size",count,list.size());
+  for (int i=0; i < list.size(); i++) {
+    assertEquals(subcase + "offset check[" + i+ "]",i,list.get(i).get(CENOFF));
+  }
+}

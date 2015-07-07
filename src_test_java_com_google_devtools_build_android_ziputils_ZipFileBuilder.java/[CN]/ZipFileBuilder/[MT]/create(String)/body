@@ -1,0 +1,20 @@
+{
+  ZipOut out=new ZipOut(FileSystem.fileSystem().getOutputChannel(filename,false),filename);
+  for (  FileInfo info : input) {
+    int compressed=info.compressedSize();
+    int uncompressed=info.uncompressedSize();
+    int dirCompressed=info.dirCompressedSize();
+    int dirUncompressed=info.dirUncompressedSize();
+    short flags=info.flags();
+    DirectoryEntry entry=DirectoryEntry.allocate(info.name,info.extra,info.comment);
+    out.nextEntry(entry).set(CENOFF,out.fileOffset()).set(CENFLG,flags).set(CENTIM,info.date).set(CENLEN,dirUncompressed).set(CENSIZ,dirCompressed);
+    LocalFileHeader header=LocalFileHeader.allocate(info.name,null).set(LOCFLG,flags).set(LOCTIM,info.date).set(LOCLEN,uncompressed).set(LOCSIZ,compressed);
+    out.write(header);
+    out.write(ByteBuffer.wrap(info.data));
+    if (flags != 0) {
+      DataDescriptor desc=DataDescriptor.allocate().set(EXTLEN,dirUncompressed).set(EXTSIZ,dirCompressed);
+      out.write(desc);
+    }
+  }
+  out.close();
+}

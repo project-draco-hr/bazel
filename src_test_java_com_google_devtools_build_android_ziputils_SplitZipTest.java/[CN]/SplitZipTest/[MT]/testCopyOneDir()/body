@@ -1,0 +1,12 @@
+{
+  try {
+    new ZipFileBuilder().add("pkg/test.txt","hello world").create("input.zip");
+    byte[] inputBytes=fileSystem.toByteArray("input.zip");
+    new SplitZip().addOutput(new ZipOut(fileSystem.getOutputChannel("out/shard1.jar",false),"out/shard1.jar")).setVerbose(true).addInput(new ZipIn(fileSystem.getInputChannel("input.zip"),"input.zip")).run().close();
+    byte[] outputBytes=fileSystem.toByteArray("out/shard1.jar");
+    assertThat(inputBytes).isEqualTo(outputBytes);
+  }
+ catch (  IOException e) {
+    fail("Exception: " + e);
+  }
+}

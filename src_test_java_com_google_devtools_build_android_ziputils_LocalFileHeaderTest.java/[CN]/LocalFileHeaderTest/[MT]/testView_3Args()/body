@@ -1,0 +1,18 @@
+{
+  ByteBuffer buffer=ByteBuffer.allocate(100).order(ByteOrder.LITTLE_ENDIAN);
+  for (int i=0; i < 100; i++) {
+    buffer.put((byte)i);
+  }
+  int offset=20;
+  buffer.position(offset);
+  String filename="pkg/foo.class";
+  int expMark=LocalFileHeader.SIGNATURE;
+  int expSize=ZipInputStream.LOCHDR + filename.getBytes(UTF_8).length;
+  int expPos=0;
+  LocalFileHeader view=LocalFileHeader.view(buffer,filename,null);
+  assertEquals("not based at current position",expMark,view.get(LOCSIG));
+  assertEquals("Not slice with position 0",expPos,view.buffer.position());
+  assertEquals("Not sized with filename",expSize,view.getSize());
+  assertEquals("Not limited to size",expSize,view.buffer.limit());
+  assertEquals("Incorrect filename",filename,view.getFilename());
+}

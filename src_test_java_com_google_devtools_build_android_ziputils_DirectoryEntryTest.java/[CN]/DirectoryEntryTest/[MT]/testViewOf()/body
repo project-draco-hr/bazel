@@ -1,0 +1,24 @@
+{
+  ByteBuffer buffer=ByteBuffer.allocate(100).order(ByteOrder.LITTLE_ENDIAN);
+  for (int i=0; i < 100; i++) {
+    buffer.put((byte)i);
+  }
+  int offset=20;
+  int filenameLength=10;
+  int extraLength=6;
+  int commentLength=8;
+  int marker=DirectoryEntry.SIGNATURE;
+  buffer.putShort(offset + ZipInputStream.CENNAM,(short)filenameLength);
+  buffer.putShort(offset + ZipInputStream.CENEXT,(short)extraLength);
+  buffer.putShort(offset + ZipInputStream.CENCOM,(short)commentLength);
+  buffer.putInt(20,marker);
+  buffer.position(offset);
+  DirectoryEntry view=DirectoryEntry.viewOf(buffer);
+  int expMark=(int)ZipInputStream.CENSIG;
+  int expSize=ZipInputStream.CENHDR + filenameLength + extraLength+ commentLength;
+  int expPos=0;
+  assertEquals("not based at current position",expMark,view.get(CENSIG));
+  assertEquals("Not slice with position 0",expPos,view.buffer.position());
+  assertEquals("Not sized with comment",expSize,view.getSize());
+  assertEquals("Not limited to size",expSize,view.buffer.limit());
+}

@@ -1,0 +1,18 @@
+{
+  BufferedFile instance;
+  int fileSize=64;
+  String filename="bytes64";
+  byte[] bytes=fileData(fileSize);
+  fileSystem.addFile(filename,bytes);
+  FileChannel file=fileSystem.getInputChannel(filename);
+  int regionOff=5;
+  int regionSize=50;
+  int maxAlloc=20;
+  int cacheOff=regionOff + 5;
+  instance=new BufferedFile(file,regionOff,regionSize,maxAlloc);
+  instance.getBuffer(cacheOff,maxAlloc);
+  assertCase("Cached zero buf",instance,cacheOff,0,0,maxAlloc);
+  assertCase("Cached at front",instance,cacheOff,5,5,maxAlloc);
+  assertCase("Cached at end",instance,cacheOff + 2,5,5,maxAlloc - 2);
+  assertCase("Cached",instance,cacheOff,maxAlloc,maxAlloc,maxAlloc);
+}

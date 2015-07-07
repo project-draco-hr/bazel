@@ -1,0 +1,15 @@
+{
+  ByteBuffer buffer=ByteBuffer.allocate(100).order(ByteOrder.LITTLE_ENDIAN);
+  for (int i=0; i < 100; i++) {
+    buffer.put((byte)i);
+  }
+  buffer.position(50);
+  DataDescriptor view=DataDescriptor.view(buffer);
+  int expMark=(int)ZipInputStream.EXTSIG;
+  int expSize=ZipInputStream.EXTHDR;
+  int expPos=0;
+  assertEquals("not based at current position",expMark,view.get(EXTSIG));
+  assertEquals("Not slice with position 0",expPos,view.buffer.position());
+  assertEquals("Not sized with comment",expSize,view.getSize());
+  assertEquals("Not limited to size",expSize,view.buffer.limit());
+}

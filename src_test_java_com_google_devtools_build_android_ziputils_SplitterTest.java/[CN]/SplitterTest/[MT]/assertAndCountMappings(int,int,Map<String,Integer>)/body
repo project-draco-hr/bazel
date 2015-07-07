@@ -1,0 +1,25 @@
+{
+  int[] counts=new int[shards + 1];
+  String prevPath=null;
+  int prev=-2;
+  for (  Map.Entry<String,Integer> entry : output.entrySet()) {
+    String path=entry.getKey();
+    int assignment=entry.getValue();
+    assertThat(assignment).isIn(Range.closed(0,shards));
+    counts[assignment + 1]++;
+    if (path.endsWith(CLASS_SUFFIX)) {
+      if (prev == -2) {
+        assertThat(assignment).isEqualTo(0);
+      }
+ else       if (prev > 0 && prev != assignment) {
+        String prevDir=prevPath.substring(0,prevPath.lastIndexOf(ARCHIVE_DIR_SUFFIX));
+        String dir=path.substring(0,path.lastIndexOf(ARCHIVE_DIR_SUFFIX));
+        assertThat(assignment).isEqualTo(prev + 1);
+        assertThat(!prevDir.equals(dir) || counts[prev + 1] % packageSize != 0).isTrue();
+      }
+      prevPath=path;
+    }
+    prev=assignment;
+  }
+  return counts;
+}

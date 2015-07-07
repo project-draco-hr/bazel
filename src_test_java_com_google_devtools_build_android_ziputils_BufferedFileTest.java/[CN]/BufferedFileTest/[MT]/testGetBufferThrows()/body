@@ -1,0 +1,17 @@
+{
+  BufferedFile instance;
+  int fileSize=64;
+  String filename="bytes64";
+  byte[] bytes=fileData(fileSize);
+  fileSystem.addFile(filename,bytes);
+  FileChannel file=fileSystem.getInputChannel(filename);
+  int regionOff=4;
+  int regionSize=50;
+  int maxAlloc=16;
+  instance=new BufferedFile(file,regionOff,regionSize,maxAlloc);
+  assertException("buffer negative size",instance,regionOff,-1,IllegalArgumentException.class);
+  assertException("buffer lower bound",instance,regionOff - 1,regionSize,IllegalArgumentException.class);
+  assertException("buffer upper bound",instance,regionOff + regionSize + 1,1,IllegalArgumentException.class);
+  assertException("buffer upper bound zero read",instance,regionOff + regionSize + 1,0,IllegalArgumentException.class);
+  assertException("buffer beyond region non zero read",instance,regionOff + regionSize,1,IllegalArgumentException.class);
+}

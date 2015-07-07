@@ -1,0 +1,13 @@
+{
+  FileChannel file=fileSystem.getOutputChannel("hello",false);
+  byte[] bytes="hello world".getBytes(UTF_8);
+  ByteBuffer buffer=ByteBuffer.wrap(bytes);
+  TestView instance=new TestView(buffer);
+  int expResult=bytes.length;
+  instance.buffer.rewind();
+  int result=file.write(instance.buffer);
+  file.close();
+  assertEquals("incorrect number of bytes written",expResult,result);
+  byte[] bytesWritten=fileSystem.toByteArray("hello");
+  Assert.assertArrayEquals("incorrect bytes written",bytes,bytesWritten);
+}

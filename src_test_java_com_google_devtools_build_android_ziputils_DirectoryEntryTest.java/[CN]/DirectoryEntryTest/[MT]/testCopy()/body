@@ -1,0 +1,16 @@
+{
+  String filename="pkg/foo.class";
+  byte[] extraData={};
+  String comment="always comment!";
+  ByteBuffer buffer=ByteBuffer.allocate(100).order(ByteOrder.LITTLE_ENDIAN);
+  DirectoryEntry view=DirectoryEntry.allocate(filename,extraData,comment);
+  view.copy(buffer);
+  int expSize=view.getSize();
+  assertEquals("buffer not advanced as expected",expSize,buffer.position());
+  buffer.position(0);
+  DirectoryEntry clone=DirectoryEntry.viewOf(buffer);
+  assertEquals("Fail to copy mark",view.get(CENSIG),clone.get(CENSIG));
+  assertEquals("Fail to copy comment",view.getFilename(),clone.getFilename());
+  Assert.assertArrayEquals("Fail to copy comment",view.getExtraData(),clone.getExtraData());
+  assertEquals("Fail to copy comment",view.getComment(),clone.getComment());
+}

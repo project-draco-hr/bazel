@@ -1,0 +1,14 @@
+{
+  try {
+    Date now=new Date();
+    new ZipFileBuilder().add(new ZipFileBuilder.FileInfo("pkg/test.txt",new DosTime(now).time,"hello world")).create("input.zip");
+    new ZipFileBuilder().add(new ZipFileBuilder.FileInfo("pkg/test.txt",DosTime.EPOCH.time,"hello world")).create("expect.zip");
+    byte[] expectBytes=fileSystem.toByteArray("expect.zip");
+    new SplitZip().addOutput(new ZipOut(fileSystem.getOutputChannel("out/shard1.jar",false),"out/shard1.jar")).setVerbose(true).setEntryDate(DosTime.DOS_EPOCH).addInput(new ZipIn(fileSystem.getInputChannel("input.zip"),"input.zip")).run().close();
+    byte[] outputBytes=fileSystem.toByteArray("out/shard1.jar");
+    assertThat(expectBytes).isEqualTo(outputBytes);
+  }
+ catch (  IOException e) {
+    fail("Exception: " + e);
+  }
+}

@@ -1,0 +1,17 @@
+{
+  BufferedFile instance;
+  int fileSize=64;
+  String filename="bytes64";
+  byte[] bytes=fileData(fileSize);
+  fileSystem.addFile(filename,bytes);
+  FileChannel file=fileSystem.getInputChannel(filename);
+  int regionOff=5;
+  int regionSize=50;
+  int maxAlloc=20;
+  int cacheOff=regionOff + 5;
+  int initialRead=maxAlloc / 2;
+  instance=new BufferedFile(file,regionOff,regionSize,maxAlloc);
+  instance.getBuffer(cacheOff,initialRead);
+  assertCase("Read more overlap",instance,cacheOff + 1,initialRead,initialRead,maxAlloc - 1);
+  assertCase("Read more jump",instance,cacheOff + initialRead + 5,5,5,maxAlloc - initialRead - 5);
+}

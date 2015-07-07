@@ -1,0 +1,14 @@
+{
+  String filename="pkg/foo.class";
+  String comment="got milk";
+  byte[] extraData={1,2,3,4,5,6,7,8};
+  int expSize=ZipInputStream.CENHDR + filename.getBytes(UTF_8).length + extraData.length+ comment.getBytes(UTF_8).length;
+  int expPos=0;
+  DirectoryEntry view=DirectoryEntry.allocate(filename,extraData,comment);
+  assertEquals("Incorrect filename",filename,view.getFilename());
+  Assert.assertArrayEquals("Incorrect extra data",extraData,view.getExtraData());
+  assertEquals("Incorrect comment",comment,view.getComment());
+  assertEquals("Not at position 0",expPos,view.buffer.position());
+  assertEquals("Not sized correctly",expSize,view.getSize());
+  assertEquals("Not limited to size",expSize,view.buffer.limit());
+}

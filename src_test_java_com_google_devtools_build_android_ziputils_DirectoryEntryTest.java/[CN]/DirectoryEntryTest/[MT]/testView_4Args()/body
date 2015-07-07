@@ -1,0 +1,22 @@
+{
+  ByteBuffer buffer=ByteBuffer.allocate(100).order(ByteOrder.LITTLE_ENDIAN);
+  for (int i=0; i < 100; i++) {
+    buffer.put((byte)i);
+  }
+  int offset=20;
+  buffer.position(offset);
+  String filename="pkg/foo.class";
+  byte[] extraData={1,2,3,4,5};
+  String comment="c";
+  int expMark=(int)ZipInputStream.CENSIG;
+  int expSize=46 + filename.getBytes(UTF_8).length + extraData.length+ comment.getBytes(UTF_8).length;
+  int expPos=0;
+  DirectoryEntry view=DirectoryEntry.view(buffer,filename,extraData,comment);
+  assertEquals("not based at current position",expMark,view.get(CENSIG));
+  assertEquals("Not slice with position 0",expPos,view.buffer.position());
+  assertEquals("Not sized with filename",expSize,view.getSize());
+  assertEquals("Not limited to size",expSize,view.buffer.limit());
+  assertEquals("Incorrect filename",filename,view.getFilename());
+  Assert.assertArrayEquals("Incorrect extra data",extraData,view.getExtraData());
+  assertEquals("Incorrect comment",comment,view.getComment());
+}

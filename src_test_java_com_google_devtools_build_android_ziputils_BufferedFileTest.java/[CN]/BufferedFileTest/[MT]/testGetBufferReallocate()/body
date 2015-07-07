@@ -1,0 +1,19 @@
+{
+  BufferedFile instance;
+  int fileSize=64;
+  String filename="bytes64";
+  byte[] bytes=fileData(fileSize);
+  fileSystem.addFile(filename,bytes);
+  FileChannel file=fileSystem.getInputChannel(filename);
+  int regionOff=5;
+  int regionSize=50;
+  int maxAlloc=20;
+  int cacheOff=regionOff + 5;
+  instance=new BufferedFile(file,regionOff,regionSize,maxAlloc);
+  instance.getBuffer(cacheOff,maxAlloc);
+  assertCase("Realloc after",instance,cacheOff + maxAlloc,maxAlloc,maxAlloc,maxAlloc);
+  assertCase("Realloc before",instance,cacheOff,maxAlloc,maxAlloc,maxAlloc);
+  assertCase("Realloc just after",instance,cacheOff + 5,maxAlloc,maxAlloc,maxAlloc);
+  assertCase("Realloc just before",instance,cacheOff,maxAlloc,maxAlloc,maxAlloc);
+  assertCase("Realloc supersize",instance,cacheOff,maxAlloc + 5,maxAlloc + 5,maxAlloc + 5);
+}

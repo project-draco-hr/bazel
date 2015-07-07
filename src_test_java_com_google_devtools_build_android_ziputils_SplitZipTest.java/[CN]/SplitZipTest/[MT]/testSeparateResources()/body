@@ -1,0 +1,19 @@
+{
+  try {
+    new ZipFileBuilder().add("resources/oil.xml","oil").add("pkg1/test1.class","hello world").add("pkg2/test1.class","hello world").add("pkg1/test2.class","how are you").add("pkg2/test2.class","how are you").add("pkg1/test3.class","bye bye").add("pkg2/test3.class","bye bye").create("input.jar");
+    ZipIn input=new ZipIn(fileSystem.getInputChannel("input.jar"),"input.jar");
+    String resources="out/resources.zip";
+    ZipOut resourceOut=new ZipOut(fileSystem.getOutputChannel(resources,false),resources);
+    new SplitZip().addOutput(new ZipOut(fileSystem.getOutputChannel("out/shard1.jar",false),"out/shard1.jar")).addOutput(new ZipOut(fileSystem.getOutputChannel("out/shard2.jar",false),"out/shard2.jar")).setResourceFile(resourceOut).setVerbose(true).addInput(input).run().close();
+    new ZipFileBuilder().add("pkg1/test1.class","hello world").add("pkg1/test2.class","how are you").add("pkg1/test3.class","bye bye").create("expected/shard1.jar");
+    new ZipFileBuilder().add("pkg2/test1.class","hello world").add("pkg2/test2.class","how are you").add("pkg2/test3.class","bye bye").create("expected/shard2.jar");
+    new ZipFileBuilder().add("resources/oil.xml","oil").create("expected/resources.zip");
+    assertThat(fileSystem.toByteArray("out/shard1.jar")).isEqualTo(fileSystem.toByteArray("expected/shard1.jar"));
+    assertThat(fileSystem.toByteArray("out/shard2.jar")).isEqualTo(fileSystem.toByteArray("expected/shard2.jar"));
+    assertThat(fileSystem.toByteArray("out/resources.zip")).isEqualTo(fileSystem.toByteArray("expected/resources.zip"));
+  }
+ catch (  IOException e) {
+    e.printStackTrace();
+    fail("Exception: " + e);
+  }
+}

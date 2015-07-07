@@ -1,0 +1,24 @@
+{
+  ByteBuffer inputBuffer=ByteBuffer.allocate(10000).order(ByteOrder.LITTLE_ENDIAN);
+  String comment=null;
+  byte[] extra=null;
+  String filename="pkg/0.txt";
+  DirectoryEntry entry=DirectoryEntry.view(inputBuffer,filename,extra,comment);
+  int expSize=entry.getSize();
+  comment="";
+  extra=new byte[]{};
+  for (int i=1; i < 20; i++) {
+    filename="pkg/" + i + ".txt";
+    entry=DirectoryEntry.view(inputBuffer,filename,extra,comment);
+    expSize+=entry.getSize();
+    extra=new byte[extra.length + 1];
+    comment=comment + "," + i;
+  }
+  CentralDirectory cdir=CentralDirectory.viewOf(inputBuffer).at(0).parse();
+  assertEquals("Count",20,cdir.getCount());
+  assertEquals("Position after parse",expSize,cdir.buffer.position());
+  assertEquals("Limit after parse",10000,cdir.buffer.limit());
+  cdir.buffer.flip();
+  assertEquals("Position after finish",0,cdir.buffer.position());
+  assertEquals("Limit after finish",expSize,cdir.buffer.limit());
+}

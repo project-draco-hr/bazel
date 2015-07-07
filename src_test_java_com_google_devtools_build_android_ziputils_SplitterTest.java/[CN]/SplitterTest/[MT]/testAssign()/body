@@ -1,0 +1,29 @@
+{
+  int size=10;
+  Collection<String> input;
+  ArrayList<String> filter;
+  Map<String,Integer> output;
+  input=genEntries(size,size);
+  filter=new ArrayList<>(10);
+  for (int i=0; i < size; i++) {
+    filter.add("dir" + i + ARCHIVE_FILE_SEPARATOR+ "file"+ i+ CLASS_SUFFIX);
+  }
+  Splitter splitter=new Splitter(size + 1,input.size());
+  splitter.assign(filter);
+  splitter.nextShard();
+  output=new LinkedHashMap<>();
+  for (  String path : input) {
+    output.put(path,splitter.assign(path));
+  }
+  for (int i=0; i < size; i++) {
+    for (int j=0; j < size; j++) {
+      String path="dir" + i + ARCHIVE_FILE_SEPARATOR+ "file"+ j+ CLASS_SUFFIX;
+      if (i == j) {
+        assertThat(output.get(path)).isEqualTo(0);
+      }
+ else {
+        assertThat(output.get(path)).isEqualTo(i + 1);
+      }
+    }
+  }
+}

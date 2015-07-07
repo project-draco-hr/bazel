@@ -1,0 +1,23 @@
+{
+  int count=ENTRY_COUNT;
+  String filename="test.jar";
+  ZipFileBuilder builder=new ZipFileBuilder();
+  for (int i=0; i < count; i++) {
+    builder.add("pkg/f" + i + ".class","All day long");
+  }
+  builder.create(filename);
+  final ZipIn zipIn=newZipIn(filename);
+  zipIn.centralDirectory();
+  List<DirectoryEntry> list=zipIn.centralDirectory().list();
+  count=0;
+  String name;
+  LocalFileHeader header=zipIn.nextHeaderFrom(null);
+  for (  DirectoryEntry dirEntry : list) {
+    name="pkg/f" + count + ".class";
+    assertEquals(name,dirEntry.getFilename());
+    assertEquals(name,header.getFilename());
+    header=zipIn.nextHeaderFrom(dirEntry);
+    count++;
+  }
+  assertNull(header);
+}

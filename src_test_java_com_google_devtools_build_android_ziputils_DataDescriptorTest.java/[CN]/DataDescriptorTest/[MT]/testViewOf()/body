@@ -1,0 +1,20 @@
+{
+  int[] markers={12345678,DataDescriptor.SIGNATURE,0};
+  for (  int marker : markers) {
+    ByteBuffer buffer=ByteBuffer.allocate(50).order(ByteOrder.LITTLE_ENDIAN);
+    for (int i=0; i < 50; i++) {
+      buffer.put((byte)i);
+    }
+    int offset=20;
+    buffer.putInt(offset,marker);
+    buffer.position(offset);
+    DataDescriptor view=DataDescriptor.viewOf(buffer);
+    int expMark=marker == DataDescriptor.SIGNATURE ? (int)ZipInputStream.EXTSIG : -1;
+    int expSize=marker == DataDescriptor.SIGNATURE ? ZipInputStream.EXTHDR : ZipInputStream.EXTHDR - 4;
+    int expPos=0;
+    assertEquals("not based at current position[" + marker + "]",expMark,view.get(EXTSIG));
+    assertEquals("Not slice with position 0[" + marker + "]",expPos,view.buffer.position());
+    assertEquals("Not sized with comment[" + marker + "]",expSize,view.getSize());
+    assertEquals("Not limited to size[" + marker + "]",expSize,view.buffer.limit());
+  }
+}

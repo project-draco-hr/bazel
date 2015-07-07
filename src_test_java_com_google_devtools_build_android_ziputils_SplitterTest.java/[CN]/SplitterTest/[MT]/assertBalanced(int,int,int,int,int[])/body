@@ -1,0 +1,19 @@
+{
+  int classes=packageSize * packageCount;
+  int noneClass=entries - counts[0] - classes;
+  int idealSize=Math.max(1,classes / shards);
+  int superSize=Math.max(1,entries / shards);
+  int almostFull=Math.min(Math.min(10,(idealSize + 3) >> 2),(int)Math.log(shards));
+  int lowerBound=idealSize - almostFull;
+  int upperBound=superSize + Math.max(packageSize,(int)(Math.log(shards)) * 10);
+  for (int i=1; i < counts.length; i++) {
+    int adjusted=i == 1 ? counts[i] - noneClass : counts[i];
+    if (i < shards && counts[i + 1] > 1) {
+      assertThat(counts[i]).isIn(Range.closed(packageSize,entries));
+      if (noneClass == 0 && counts[0] == 0) {
+        assertThat(counts[i]).isIn(Range.closed(lowerBound,entries));
+      }
+    }
+    assertThat(adjusted).isIn(Range.closed(0,upperBound));
+  }
+}

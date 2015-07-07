@@ -1,0 +1,11 @@
+{
+  ByteBuffer buffer=ByteBuffer.allocate(100).order(ByteOrder.LITTLE_ENDIAN);
+  LocalFileHeader view=LocalFileHeader.allocate("pkg/foo.class",null);
+  view.copy(buffer);
+  int expSize=view.getSize();
+  assertEquals("buffer not advanced as expected",expSize,buffer.position());
+  buffer.position(0);
+  LocalFileHeader clone=LocalFileHeader.viewOf(buffer);
+  assertEquals("Fail to copy mark",view.get(LOCSIG),view.get(LOCSIG));
+  assertEquals("Fail to copy comment",view.getFilename(),clone.getFilename());
+}

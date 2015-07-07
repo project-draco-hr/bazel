@@ -1,0 +1,111 @@
+{
+  String filename="test.zip";
+  byte[] bytes;
+  ByteBuffer buffer;
+  String comment;
+  int commentLen;
+  int offset;
+  ZipIn zipIn;
+  EndOfCentralDirectory result;
+  String subcase;
+  subcase=" EOCD found it, ";
+  bytes=new byte[]{0x50,0x4b,0x05,0x06,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  fileSystem.addFile(filename,bytes);
+  zipIn=newZipIn(filename);
+  result=zipIn.endOfCentralDirectory();
+  assertNotNull(subcase + "found",result);
+  subcase=" EOCD not there at all, ";
+  bytes=new byte[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  fileSystem.addFile(filename,bytes);
+  zipIn=newZipIn(filename);
+  try {
+    zipIn.endOfCentralDirectory();
+    fail(subcase + "expected IllegalStateException");
+  }
+ catch (  Exception ex) {
+    assertSame(subcase + "caught exception",IllegalStateException.class,ex.getClass());
+  }
+  subcase=" EOCD too late to read, ";
+  bytes=new byte[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x50,0x4b,0x05,0x06,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  fileSystem.addFile(filename,bytes);
+  zipIn=newZipIn(filename);
+  try {
+    zipIn.endOfCentralDirectory();
+    fail(subcase + "expected IndexOutOfBoundsException");
+  }
+ catch (  Exception ex) {
+    assertSame(subcase + "caught exception",IndexOutOfBoundsException.class,ex.getClass());
+  }
+  subcase=" EOCD good hidden by bad, ";
+  bytes=new byte[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x50,0x4b,0x05,0x06,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x50,0x4b,0x05,0x06,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  fileSystem.addFile(filename,bytes);
+  zipIn=newZipIn(filename);
+  try {
+    zipIn.endOfCentralDirectory();
+    fail(subcase + "expected IndexOutOfBoundsException");
+  }
+ catch (  Exception ex) {
+    assertSame(subcase + "caught exception",IndexOutOfBoundsException.class,ex.getClass());
+  }
+  subcase=" EOCD truncated comment, ";
+  bytes=new byte[100];
+  buffer=ByteBuffer.wrap(bytes);
+  comment="optional file comment";
+  commentLen=comment.getBytes(UTF_8).length;
+  offset=bytes.length - ZipInputStream.ENDHDR - commentLen;
+  buffer.position(offset);
+  EndOfCentralDirectory.view(buffer,comment);
+  byte[] truncated=Arrays.copyOf(bytes,bytes.length - 5);
+  fileSystem.addFile(filename,truncated);
+  zipIn=newZipIn(filename);
+  try {
+    zipIn.endOfCentralDirectory();
+    fail(subcase + "expected IllegalArgumentException");
+  }
+ catch (  Exception ex) {
+    assertSame(subcase + "caught exception",IllegalArgumentException.class,ex.getClass());
+  }
+  subcase=" EOCD no comment, ";
+  bytes=new byte[100];
+  buffer=ByteBuffer.wrap(bytes);
+  comment=null;
+  commentLen=0;
+  offset=bytes.length - ZipInputStream.ENDHDR - commentLen;
+  buffer.position(offset);
+  EndOfCentralDirectory.view(buffer,comment);
+  fileSystem.addFile(filename,bytes);
+  zipIn=newZipIn(filename);
+  result=zipIn.endOfCentralDirectory();
+  assertNotNull(subcase + "found",result);
+  assertEquals(subcase + "comment","",result.getComment());
+  assertEquals(subcase + "marker",ZipInputStream.ENDSIG,(int)result.get(ENDSIG));
+  subcase=" EOCD comment, ";
+  bytes=new byte[100];
+  buffer=ByteBuffer.wrap(bytes);
+  comment="optional file comment";
+  commentLen=comment.getBytes(UTF_8).length;
+  offset=bytes.length - ZipInputStream.ENDHDR - commentLen;
+  buffer.position(offset);
+  EndOfCentralDirectory.view(buffer,comment);
+  assertEquals(subcase + "setup",comment,new String(bytes,bytes.length - commentLen,commentLen,UTF_8));
+  fileSystem.addFile(filename,bytes);
+  zipIn=newZipIn(filename);
+  result=zipIn.endOfCentralDirectory();
+  assertNotNull(subcase + "found",result);
+  assertEquals(subcase + "comment",comment,result.getComment());
+  assertEquals(subcase + "marker",ZipInputStream.ENDSIG,(int)result.get(ENDSIG));
+  subcase=" EOCD extra data, ";
+  bytes=new byte[100];
+  buffer=ByteBuffer.wrap(bytes);
+  comment=null;
+  commentLen=0;
+  offset=bytes.length - ZipInputStream.ENDHDR - commentLen- 10;
+  buffer.position(offset);
+  EndOfCentralDirectory.view(buffer,comment);
+  fileSystem.addFile(filename,bytes);
+  zipIn=newZipIn(filename);
+  result=zipIn.endOfCentralDirectory();
+  assertNotNull(subcase + "found",result);
+  assertEquals(subcase + "comment","",result.getComment());
+  assertEquals(subcase + "marker",ZipInputStream.ENDSIG,(int)result.get(ENDSIG));
+}

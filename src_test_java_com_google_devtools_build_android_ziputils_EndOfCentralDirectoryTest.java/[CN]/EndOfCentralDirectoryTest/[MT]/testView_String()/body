@@ -1,0 +1,14 @@
+{
+  String[] comments={"hello world","",null};
+  for (  String comment : comments) {
+    String expComment=comment != null ? comment : "";
+    EndOfCentralDirectory view=EndOfCentralDirectory.allocate(comment);
+    String commentResult=view.getComment();
+    assertEquals("Incorrect comment",expComment,commentResult);
+    int expSize=ZipInputStream.ENDHDR + (comment != null ? comment.getBytes(UTF_8).length : 0);
+    int expPos=0;
+    assertEquals("Not at position 0",expPos,view.buffer.position());
+    assertEquals("Not sized correctly",expSize,view.getSize());
+    assertEquals("Not limited to size",expSize,view.buffer.limit());
+  }
+}

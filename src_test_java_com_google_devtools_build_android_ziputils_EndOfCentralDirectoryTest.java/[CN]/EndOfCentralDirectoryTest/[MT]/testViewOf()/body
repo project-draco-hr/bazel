@@ -1,0 +1,20 @@
+{
+  ByteBuffer buffer=ByteBuffer.allocate(100).order(ByteOrder.LITTLE_ENDIAN);
+  for (int i=0; i < 100; i++) {
+    buffer.put((byte)i);
+  }
+  int offset=50;
+  int marker=EndOfCentralDirectory.SIGNATURE;
+  int comLength=8;
+  buffer.putInt(offset,marker);
+  buffer.putShort(offset + ZipInputStream.ENDCOM,(short)comLength);
+  buffer.position(offset);
+  EndOfCentralDirectory view=EndOfCentralDirectory.viewOf(buffer);
+  int expMark=(int)ZipInputStream.ENDSIG;
+  int expSize=ZipInputStream.ENDHDR + comLength;
+  int expPos=0;
+  assertEquals("not based at current position",expMark,view.get(ENDSIG));
+  assertEquals("Not slice with position 0",expPos,view.buffer.position());
+  assertEquals("Not sized with comment",expSize,view.getSize());
+  assertEquals("Not limited to size",expSize,view.buffer.limit());
+}

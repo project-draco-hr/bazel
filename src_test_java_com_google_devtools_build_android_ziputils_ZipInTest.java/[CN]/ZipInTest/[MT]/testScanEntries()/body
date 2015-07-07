@@ -1,0 +1,21 @@
+{
+  int count=ENTRY_COUNT * 100;
+  String filename="test.jar";
+  ZipFileBuilder builder=new ZipFileBuilder();
+  for (int i=0; i < count; i++) {
+    builder.add("pkg/f" + i + ".class","All day long");
+  }
+  builder.create(filename);
+  final ZipIn zipIn=newZipIn(filename);
+  zipIn.scanEntries(new EntryHandler(){
+    int count=0;
+    @Override public void handle(    ZipIn in,    LocalFileHeader header,    DirectoryEntry dirEntry,    ByteBuffer data) throws IOException {
+      assertSame(zipIn,in);
+      String filename="pkg/f" + count + ".class";
+      assertEquals(filename,header.getFilename());
+      assertEquals(filename,dirEntry.getFilename());
+      count++;
+    }
+  }
+);
+}

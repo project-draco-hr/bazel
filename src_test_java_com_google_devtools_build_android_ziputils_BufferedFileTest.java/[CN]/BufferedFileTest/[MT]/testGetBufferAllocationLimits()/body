@@ -1,0 +1,31 @@
+{
+  BufferedFile instance;
+  int fileSize=64;
+  String filename="bytes64";
+  byte[] bytes=fileData(fileSize);
+  fileSystem.addFile(filename,bytes);
+  FileChannel file=fileSystem.getInputChannel(filename);
+  int regionOff=4;
+  int regionSize=50;
+  int maxAlloc=16;
+  instance=new BufferedFile(file,regionOff,regionSize,maxAlloc);
+  assertCase("buffer, empty, start",instance,regionOff,0,0,maxAlloc);
+  assertWithMessage("buffer, empty, start").that(regionOff + regionSize).isEqualTo(instance.limit());
+  instance=new BufferedFile(file,regionOff,regionSize,maxAlloc);
+  assertCase("buffer, empty, end",instance,regionOff + regionSize,0,0,0);
+  instance=new BufferedFile(file,regionOff,regionSize,maxAlloc);
+  assertCase("buffer, one, end",instance,regionOff + regionSize - 1,1,1,1);
+  assertWithMessage("buffer, one, end").that(regionOff + regionSize).isEqualTo(instance.limit());
+  instance=new BufferedFile(file,regionOff,regionSize,maxAlloc);
+  assertCase("buffer, small, end",instance,regionOff + regionSize - 2,2,2,2);
+  assertWithMessage("buffer, small, end").that(regionOff + regionSize).isEqualTo(instance.limit());
+  instance=new BufferedFile(file,regionOff,regionSize,maxAlloc);
+  assertCase("buffer, small, start",instance,regionOff,2,2,maxAlloc);
+  assertWithMessage("buffer, small, start").that(regionOff + regionSize).isEqualTo(instance.limit());
+  instance=new BufferedFile(file,regionOff,regionSize,maxAlloc);
+  assertCase("buffer, all region",instance,regionOff,regionSize,regionSize,regionSize);
+  assertWithMessage("buffer, all region").that(regionOff + regionSize).isEqualTo(instance.limit());
+  instance=new BufferedFile(file,regionOff,regionSize,maxAlloc);
+  assertCase("buffer, request more",instance,regionOff + 5,regionSize,regionSize - 5,regionSize - 5);
+  assertWithMessage("buffer, request more").that(regionOff + regionSize).isEqualTo(instance.limit());
+}
