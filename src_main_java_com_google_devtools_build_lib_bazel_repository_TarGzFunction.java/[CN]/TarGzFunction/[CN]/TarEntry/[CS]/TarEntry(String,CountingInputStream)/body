@@ -1,0 +1,55 @@
+{
+  byte buffer[]=new byte[BUFFER_SIZE];
+  this.filename=filename;
+  if (inputStream.read(buffer,0,PERMISSIONS_SIZE) != PERMISSIONS_SIZE) {
+    throw new IOException("Error reading tar file (could not read permissions for " + filename + ")");
+  }
+  String permissionsString;
+  if (buffer[PERMISSIONS_SIZE - 2] == ' ') {
+    permissionsString=new String(buffer,0,PERMISSIONS_SIZE - 2);
+  }
+ else {
+    permissionsString=new String(buffer,0,PERMISSIONS_SIZE - 1);
+  }
+  try {
+    permissions=Integer.parseInt(permissionsString,8);
+  }
+ catch (  NumberFormatException e) {
+    throw new IOException("Error reading tar file (could not parse permissions of " + filename + "): ["+ permissionsString+ "]");
+  }
+  inputStream.skip(16);
+  if (inputStream.read(buffer,0,FILE_SIZE) != FILE_SIZE) {
+    throw new IOException("Error reading tar file (could not read file size of " + filename + ")");
+  }
+  bytesRemaining=Long.parseLong(new String(buffer,0,FILE_SIZE - 1),8);
+  if (bytesRemaining % 512 == 0) {
+    if (bytesRemaining == 0) {
+      done=true;
+    }
+    finalSkip=0;
+  }
+ else {
+    done=false;
+    finalSkip=(int)(512 - bytesRemaining % 512);
+  }
+  inputStream.skip(20);
+  if (inputStream.read(buffer,0,TYPE_SIZE) != TYPE_SIZE) {
+    throw new IOException("Error reading tar file (could not read file type of " + filename + ")");
+  }
+  char type=(char)buffer[0];
+  if (type == '0') {
+    this.type=FileType.NORMAL;
+  }
+ else   if (type == '5') {
+    this.type=FileType.DIRECTORY;
+  }
+ else {
+    throw new IOException("Error reading tar file (unknown file type " + type + " for file "+ filename+ ")");
+  }
+  inputStream.skip(100);
+  if (inputStream.read(buffer,0,USTAR_SIZE) != USTAR_SIZE || !new String(buffer,0,USTAR_SIZE - 1).equals("ustar")) {
+    throw new IOException("Error reading tar file (" + filename + " did not specify 'ustar')");
+  }
+  inputStream.skip(249);
+  this.inputStream=inputStream;
+}
