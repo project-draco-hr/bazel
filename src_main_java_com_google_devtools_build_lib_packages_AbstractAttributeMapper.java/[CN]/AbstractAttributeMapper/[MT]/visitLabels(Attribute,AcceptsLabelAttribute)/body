@@ -3,7 +3,17 @@
   Object value=get(attribute.getName(),type);
   if (value != null) {
     for (    Label label : type.getLabels(value)) {
-      observer.acceptLabelAttribute(label,attribute);
+      Label absoluteLabel;
+      if (attribute.isImplicit() || attribute.isLateBound()) {
+        absoluteLabel=label;
+      }
+ else       if (label.getPackageIdentifier().getRepository().isDefault() && label.getPackageIdentifier().getPackageFragment().equals(new PathFragment("visibility"))) {
+        absoluteLabel=label;
+      }
+ else {
+        absoluteLabel=ruleLabel.resolveRepositoryRelative(label);
+      }
+      observer.acceptLabelAttribute(absoluteLabel,attribute);
     }
   }
 }
