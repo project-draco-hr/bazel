@@ -10,7 +10,10 @@
   Path workingDirectory=runfilesDir.getRelative(action.getRunfilesPrefix());
   TestRunnerAction.ResolvedPaths resolvedPaths=action.resolve(actionExecutionContext.getExecutor().getExecRoot());
   Map<String,String> env=getEnv(action,runfilesDir,testTmpDir,resolvedPaths);
-  Spawn spawn=new BaseSpawn(getArgs(TEST_SETUP,"",action),env,action.getTestProperties().getExecutionInfo(),action,action.getTestProperties().getLocalResourceUsage(executionOptions.usingLocalTestJobs()));
+  Map<String,String> info=new HashMap<>();
+  info.put("timeout","" + getTimeout(action));
+  info.putAll(action.getTestProperties().getExecutionInfo());
+  Spawn spawn=new BaseSpawn(getArgs(TEST_SETUP,"",action),env,info,action,action.getTestProperties().getLocalResourceUsage(executionOptions.usingLocalTestJobs()));
   Executor executor=actionExecutionContext.getExecutor();
   try {
     FileSystemUtils.createDirectoryAndParents(testTmpDir);
