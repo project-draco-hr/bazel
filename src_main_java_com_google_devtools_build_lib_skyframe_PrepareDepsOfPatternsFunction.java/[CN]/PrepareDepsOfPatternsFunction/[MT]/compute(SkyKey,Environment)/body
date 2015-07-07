@@ -2,9 +2,9 @@
   EventHandler eventHandler=env.getListener();
   boolean handlerIsParseFailureListener=eventHandler instanceof ParseFailureListener;
   TargetPatternSequence targetPatternSequence=(TargetPatternSequence)skyKey.argument();
-  Iterable<TargetPatternSkyKeyOrException> keysMaybe=TargetPatternValue.keys(targetPatternSequence.getPatterns(),targetPatternSequence.getPolicy(),targetPatternSequence.getOffset());
+  Iterable<PrepareDepsOfPatternSkyKeyOrException> keysMaybe=PrepareDepsOfPatternValue.keys(targetPatternSequence.getPatterns(),targetPatternSequence.getOffset());
   ImmutableList.Builder<SkyKey> skyKeyBuilder=ImmutableList.builder();
-  for (  TargetPatternSkyKeyOrException skyKeyOrException : keysMaybe) {
+  for (  PrepareDepsOfPatternSkyKeyOrException skyKeyOrException : keysMaybe) {
     try {
       skyKeyBuilder.add(skyKeyOrException.getSkyKey());
     }
@@ -13,34 +13,23 @@
     }
   }
   ImmutableList<SkyKey> skyKeys=skyKeyBuilder.build();
-  Map<SkyKey,ValueOrException<TargetParsingException>> targetPatternValuesByKey=env.getValuesOrThrow(skyKeys,TargetParsingException.class);
+  Map<SkyKey,ValueOrException<TargetParsingException>> tokensByKey=env.getValuesOrThrow(skyKeys,TargetParsingException.class);
   if (env.valuesMissing()) {
     return null;
   }
-  ResolvedTargets.Builder<Label> builder=ResolvedTargets.builder();
   for (  SkyKey key : skyKeys) {
     try {
-      TargetPatternValue resultValue=Preconditions.checkNotNull((TargetPatternValue)targetPatternValuesByKey.get(key).get());
-      ResolvedTargets<Label> results=resultValue.getTargets();
-      if (((TargetPatternKey)key.argument()).isNegative()) {
-        builder.filter(Predicates.not(Predicates.in(results.getTargets())));
-      }
- else {
-        builder.merge(results);
-      }
+      Preconditions.checkNotNull(tokensByKey.get(key).get());
     }
  catch (    TargetParsingException e) {
       handleTargetParsingException(eventHandler,handlerIsParseFailureListener,key,e);
     }
   }
-  ResolvedTargets<Label> resolvedTargets=builder.build();
-  List<SkyKey> targetKeys=new ArrayList<>();
-  for (  Label target : resolvedTargets.getTargets()) {
-    targetKeys.add(TransitiveTargetValue.key(target));
+  ImmutableList<TargetPatternKey> targetPatternKeys=ImmutableList.copyOf(Iterables.transform(skyKeys,new Function<SkyKey,TargetPatternKey>(){
+    @Override public TargetPatternKey apply(    SkyKey skyKey){
+      return (TargetPatternKey)skyKey.argument();
+    }
   }
-  env.getValuesOrThrow(targetKeys,NoSuchPackageException.class,NoSuchTargetException.class);
-  if (env.valuesMissing()) {
-    return null;
-  }
-  return PrepareDepsOfPatternsValue.INSTANCE;
+));
+  return new PrepareDepsOfPatternsValue(targetPatternKeys);
 }

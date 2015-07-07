@@ -1,10 +1,10 @@
 {
-  FilteringPolicy actualPolicy=rulesOnly ? FilteringPolicies.and(FilteringPolicies.RULES_ONLY,policy) : policy;
+  FilteringPolicy policy=rulesOnly ? FilteringPolicies.RULES_ONLY : FilteringPolicies.NO_FILTER;
   ImmutableSet<PathFragment> excludedPathFragments=TargetPatternResolverUtil.getPathFragments(excludedSubdirectories);
   PathFragment pathFragment=TargetPatternResolverUtil.getPathFragment(directory);
   for (  Path root : pkgPath.getPathEntries()) {
     RootedPath rootedPath=RootedPath.toRootedPath(root,pathFragment);
-    SkyValue token=env.getValue(PrepareDepsOfTargetsUnderDirectoryValue.key(rootedPath,excludedPathFragments,actualPolicy));
+    SkyValue token=env.getValue(PrepareDepsOfTargetsUnderDirectoryValue.key(rootedPath,excludedPathFragments,policy));
     if (token == null) {
       throw new MissingDepException();
     }

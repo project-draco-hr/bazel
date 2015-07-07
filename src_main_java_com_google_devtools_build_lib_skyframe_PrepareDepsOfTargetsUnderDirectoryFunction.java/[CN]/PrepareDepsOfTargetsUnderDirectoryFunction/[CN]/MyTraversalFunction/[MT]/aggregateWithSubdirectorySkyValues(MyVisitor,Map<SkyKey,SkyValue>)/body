@@ -1,13 +1,19 @@
 {
-  ImmutableMap.Builder<RootedPath,Integer> builder=ImmutableMap.builder();
+  ImmutableMap.Builder<RootedPath,Boolean> builder=ImmutableMap.builder();
   for (  SkyKey key : subdirectorySkyValues.keySet()) {
     PrepareDepsOfTargetsUnderDirectoryKey prepDepsKey=(PrepareDepsOfTargetsUnderDirectoryKey)key.argument();
     PrepareDepsOfTargetsUnderDirectoryValue prepDepsValue=(PrepareDepsOfTargetsUnderDirectoryValue)subdirectorySkyValues.get(key);
-    int numPackagesInSubdirectory=(prepDepsValue.isDirectoryPackage() ? 1 : 0);
-    for (    Integer numPkgsInSubSub : prepDepsValue.getSubdirectoryPackageCount().values()) {
-      numPackagesInSubdirectory+=numPkgsInSubSub;
+    boolean packagesInSubdirectory=prepDepsValue.isDirectoryPackage();
+    if (!packagesInSubdirectory) {
+      ImmutableCollection<Boolean> subdirectoryValues=prepDepsValue.getSubdirectoryTransitivelyContainsPackages().values();
+      for (      Boolean pkgsInSubSub : subdirectoryValues) {
+        if (pkgsInSubSub) {
+          packagesInSubdirectory=true;
+          break;
+        }
+      }
     }
-    builder.put(prepDepsKey.getRecursivePkgKey().getRootedPath(),numPackagesInSubdirectory);
+    builder.put(prepDepsKey.getRecursivePkgKey().getRootedPath(),packagesInSubdirectory);
   }
   return new PrepareDepsOfTargetsUnderDirectoryValue(visitor.isDirectoryPackage(),builder.build());
 }
