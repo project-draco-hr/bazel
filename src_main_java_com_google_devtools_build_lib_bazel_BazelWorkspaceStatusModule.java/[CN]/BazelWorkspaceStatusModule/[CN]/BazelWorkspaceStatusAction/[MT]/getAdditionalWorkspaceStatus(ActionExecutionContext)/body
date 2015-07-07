@@ -1,0 +1,16 @@
+{
+  try {
+    if (this.getWorkspaceStatusCommand != null) {
+      actionExecutionContext.getExecutor().getEventHandler().handle(Event.progress("Getting additional workspace status by running " + options.get().workspaceStatusCommand));
+      CommandResult result=this.getWorkspaceStatusCommand.execute();
+      if (result.getTerminationStatus().success()) {
+        return new String(result.getStdout());
+      }
+      throw new ActionExecutionException("workspace status command failed: " + result.getTerminationStatus(),this,true);
+    }
+  }
+ catch (  CommandException e) {
+    throw new ActionExecutionException(e,this,true);
+  }
+  return "";
+}
