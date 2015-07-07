@@ -1,0 +1,26 @@
+{
+  BuildData.Builder builder=BuildData.newBuilder();
+  BuildData.CommandLine.Builder cmdLineBuilder=BuildData.CommandLine.newBuilder();
+  for (  OptionValueDescription option : event.getStartupOptions().asListOfEffectiveOptions()) {
+    cmdLineBuilder.addStartupOptions(getOption(option));
+  }
+  for (  OptionValueDescription option : event.getOptions().asListOfEffectiveOptions()) {
+    if (option.getName().equals("client_env")) {
+      String env[]=option.getValue().toString().split("=");
+      if (env.length == 1) {
+        builder.addClientEnv(EnvironmentVar.newBuilder().setName(env[0]).setValue("true").build());
+      }
+ else       if (env.length == 2) {
+        builder.addClientEnv(EnvironmentVar.newBuilder().setName(env[0]).setValue(env[1]).build());
+      }
+    }
+ else {
+      cmdLineBuilder.addOptions(getOption(option));
+    }
+  }
+  for (  String residue : event.getOptions().getResidue()) {
+    cmdLineBuilder.addResidue(residue);
+  }
+  builder.setCommandLine(cmdLineBuilder.build());
+  sender.send("options",builder.build());
+}

@@ -1,0 +1,23 @@
+{
+  BuildData.Builder builder=BuildData.newBuilder();
+  TestData.Builder testDataBuilder=TestData.newBuilder();
+  testDataBuilder.setLabel(result.getLabel());
+  testDataBuilder.setPassed(result.getData().getTestPassed());
+  if (!result.getData().getTestPassed()) {
+    Path logPath=result.getTestLogPath();
+    try {
+      long fileSize=logPath.getFileSize();
+      if (fileSize > ONE_MB) {
+        fileSize=ONE_MB;
+        testDataBuilder.setTruncated(true);
+      }
+      ByteString str=ByteString.copyFrom(FileSystemUtils.readContent(logPath),0,(int)fileSize);
+      testDataBuilder.setLog(str);
+    }
+ catch (    IOException e) {
+      runtime.getReporter().getOutErr().printOutLn("Error reading log file " + logPath + ": "+ e.getMessage());
+      return;
+    }
+  }
+  sender.send("test",builder.build());
+}
