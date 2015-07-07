@@ -1,15 +1,26 @@
 {
-  Iterable<TargetPatternSkyKeyOrException> keysMaybe=TargetPatternValue.keys(patterns,FilteringPolicies.NO_FILTER,offset);
+  List<TargetPatternSkyKeyOrException> keysMaybe=ImmutableList.copyOf(TargetPatternValue.keys(patterns,FilteringPolicies.NO_FILTER,offset));
   ImmutableList.Builder<PrepareDepsOfPatternSkyKeyOrException> builder=ImmutableList.builder();
-  for (  TargetPatternSkyKeyOrException keyMaybe : keysMaybe) {
+  for (int i=0; i < keysMaybe.size(); i++) {
+    TargetPatternSkyKeyOrException keyMaybe=keysMaybe.get(i);
+    SkyKey skyKey;
     try {
-      SkyKey skyKey=keyMaybe.getSkyKey();
-      if (!((TargetPatternKey)skyKey.argument()).isNegative()) {
-        builder.add(new PrepareDepsOfPatternSkyKeyOrExceptionImpl(keyMaybe));
-      }
+      skyKey=keyMaybe.getSkyKey();
     }
  catch (    TargetParsingException e) {
-      builder.add(new PrepareDepsOfPatternSkyKeyOrExceptionImpl(keyMaybe));
+      skyKey=null;
+      builder.add(new PrepareDepsOfPatternSkyKeyException(e,keyMaybe.getOriginalPattern()));
+    }
+    if (skyKey != null) {
+      TargetPatternKey targetPatternKey=(TargetPatternKey)skyKey.argument();
+      if (targetPatternKey.isNegative()) {
+        if (!targetPatternKey.getParsedPattern().getType().equals(Type.TARGETS_BELOW_DIRECTORY)) {
+          builder.add(new PrepareDepsOfPatternSkyKeyException(new TargetParsingException("Negative target patterns of types other than \"targets below directory\"" + " are not permitted."),targetPatternKey.toString()));
+        }
+      }
+ else {
+        builder.add(new PrepareDepsOfPatternSkyKeyValue(setExcludedDirectories(targetPatternKey,excludedDirectoriesBeneath(targetPatternKey,i,keysMaybe))));
+      }
     }
   }
   return builder.build();

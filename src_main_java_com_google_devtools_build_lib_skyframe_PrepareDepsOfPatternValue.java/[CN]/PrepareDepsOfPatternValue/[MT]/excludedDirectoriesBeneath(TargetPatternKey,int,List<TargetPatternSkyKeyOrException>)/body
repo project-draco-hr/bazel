@@ -1,0 +1,21 @@
+{
+  ImmutableSet.Builder<String> excludedDirectoriesBuilder=ImmutableSet.builder();
+  for (int j=position + 1; j < keysMaybe.size(); j++) {
+    TargetPatternSkyKeyOrException laterPatternMaybe=keysMaybe.get(j);
+    SkyKey laterSkyKey;
+    try {
+      laterSkyKey=laterPatternMaybe.getSkyKey();
+    }
+ catch (    TargetParsingException ignored) {
+      laterSkyKey=null;
+    }
+    if (laterSkyKey != null) {
+      TargetPatternKey laterTargetPatternKey=(TargetPatternKey)laterSkyKey.argument();
+      TargetPattern laterParsedPattern=laterTargetPatternKey.getParsedPattern();
+      if (laterTargetPatternKey.isNegative() && targetPatternKey.getParsedPattern().containsBelowDirectory(laterParsedPattern)) {
+        excludedDirectoriesBuilder.add(laterParsedPattern.getDirectory());
+      }
+    }
+  }
+  return excludedDirectoriesBuilder.build();
+}
