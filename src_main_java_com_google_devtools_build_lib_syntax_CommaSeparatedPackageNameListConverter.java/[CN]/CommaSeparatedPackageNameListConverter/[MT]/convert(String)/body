@@ -2,14 +2,13 @@
   if (Strings.isNullOrEmpty(input)) {
     return ImmutableList.of();
   }
-  ImmutableList.Builder<PackageIdentifier> list=ImmutableList.builder();
+  ImmutableList.Builder<String> list=ImmutableList.builder();
   for (  String s : SPACE_SPLITTER.split(input)) {
-    try {
-      list.add(PackageIdentifier.parse(s));
+    String errorMessage=LabelValidator.validatePackageName(s);
+    if (errorMessage != null) {
+      throw new OptionsParsingException(errorMessage);
     }
- catch (    Label.SyntaxException e) {
-      throw new OptionsParsingException(e.getMessage());
-    }
+    list.add(s);
   }
   return list.build();
 }

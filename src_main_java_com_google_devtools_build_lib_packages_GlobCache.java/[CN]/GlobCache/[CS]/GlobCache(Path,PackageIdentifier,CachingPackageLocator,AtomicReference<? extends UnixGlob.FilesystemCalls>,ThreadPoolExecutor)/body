@@ -4,17 +4,18 @@
   this.globExecutor=Preconditions.checkNotNull(globExecutor);
   this.syscalls=syscalls == null ? new AtomicReference<>(UnixGlob.DEFAULT_SYSCALLS) : syscalls;
   Preconditions.checkNotNull(locator);
+  final PathFragment pkgNameFrag=packageId.getPackageFragment();
   childDirectoryPredicate=new Predicate<Path>(){
     @Override public boolean apply(    Path directory){
       if (directory.equals(packageDirectory)) {
         return true;
       }
-      PackageIdentifier subPackageId=new PackageIdentifier(packageId.getRepository(),packageId.getPackageFragment().getRelative(directory.relativeTo(packageDirectory)));
+      PathFragment pkgName=pkgNameFrag.getRelative(directory.relativeTo(packageDirectory));
       UnixGlob.FilesystemCalls syscalls=GlobCache.this.syscalls.get();
       if (syscalls != UnixGlob.DEFAULT_SYSCALLS) {
         syscalls.statNullable(directory.getChild("BUILD"),Symlinks.FOLLOW);
       }
-      return locator.getBuildFileForPackage(subPackageId) == null;
+      return locator.getBuildFileForPackage(pkgName.getPathString()) == null;
     }
   }
 ;

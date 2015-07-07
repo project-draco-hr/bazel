@@ -1,0 +1,14 @@
+{
+  SkyKey packageLookupKey=PackageLookupValue.key(new PathFragment(packageName));
+  try {
+    PackageLookupValue packageLookupValue=(PackageLookupValue)env.getValueOrThrow(packageLookupKey,NoSuchPackageException.class,InconsistentFilesystemException.class);
+    if (packageLookupValue == null) {
+      throw new MissingDepException();
+    }
+    return packageLookupValue.packageExists();
+  }
+ catch (  NoSuchPackageException|InconsistentFilesystemException e) {
+    eventHandler.handle(Event.error(e.getMessage()));
+    return false;
+  }
+}
