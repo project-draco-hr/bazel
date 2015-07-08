@@ -59,7 +59,16 @@
       }
     }
   }
-  DirectoryListingValue dirValue=(DirectoryListingValue)env.getValue(DirectoryListingValue.key(rootedPath));
+  DirectoryListingValue dirValue;
+  try {
+    dirValue=(DirectoryListingValue)env.getValueOrThrow(DirectoryListingValue.key(rootedPath),InconsistentFilesystemException.class,IOException.class,FileSymlinkCycleException.class);
+  }
+ catch (  InconsistentFilesystemException|IOException e) {
+    return reportErrorAndReturn(DirectoryListingValue.class.getSimpleName(),e,rootRelativePath,env.getListener());
+  }
+catch (  FileSymlinkCycleException e) {
+    throw new IllegalStateException("Symlink cycle found after not being found for \"" + rootedPath + "\"");
+  }
   if (dirValue == null) {
     return null;
   }
