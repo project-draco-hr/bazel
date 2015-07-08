@@ -1,0 +1,39 @@
+{
+  JavaTargetAttributes attributes=getAttributes();
+  JavaCompileAction.Builder builder=createJavaCompileActionBuilder(semantics);
+  builder.setClasspathEntries(attributes.getCompileTimeClassPath());
+  builder.addResources(attributes.getResources());
+  builder.addClasspathResources(attributes.getClassPathResources());
+  if (!attributes.getBootClassPath().isEmpty()) {
+    builder.setBootclasspathEntries(attributes.getBootClassPath());
+  }
+ else {
+    builder.setBootclasspathEntries(getBootClasspath());
+  }
+  builder.setExtdirInputs(getExtdirInputs());
+  builder.setLangtoolsJar(getLangtoolsJar());
+  builder.setJavaBuilderJar(getJavaBuilderJar());
+  builder.addTranslations(getTranslations());
+  builder.setOutputJar(outputJar);
+  builder.setManifestProtoOutput(manifestProtoOutput);
+  builder.setGensrcOutputJar(gensrcOutputJar);
+  builder.setOutputDepsProto(outputDepsProto);
+  builder.setMetadata(outputMetadata);
+  builder.setInstrumentationJars(getInstrumentationJars(semantics));
+  builder.addSourceFiles(attributes.getSourceFiles());
+  builder.addSourceJars(attributes.getSourceJars());
+  builder.setJavacOpts(customJavacOpts);
+  builder.setJavacJvmOpts(customJavacJvmOpts);
+  builder.setCompressJar(true);
+  builder.setClassDirectory(outputDir(outputJar));
+  builder.setSourceGenDirectory(sourceGenDir(outputJar));
+  builder.setTempDirectory(tempDir(outputJar));
+  builder.addProcessorPaths(attributes.getProcessorPath());
+  builder.addProcessorNames(attributes.getProcessorNames());
+  builder.setStrictJavaDeps(attributes.getStrictJavaDeps());
+  builder.addDirectJars(attributes.getDirectJars());
+  builder.addCompileTimeDependencyArtifacts(attributes.getCompileTimeDependencyArtifacts());
+  builder.setRuleKind(attributes.getRuleKind());
+  builder.setTargetLabel(attributes.getTargetLabel());
+  getAnalysisEnvironment().registerAction(builder.build());
+}

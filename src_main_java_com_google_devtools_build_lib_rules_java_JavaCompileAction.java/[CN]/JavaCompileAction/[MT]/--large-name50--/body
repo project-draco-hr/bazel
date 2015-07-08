@@ -1,0 +1,102 @@
+{
+  Preconditions.checkNotNull(classDirectory);
+  Preconditions.checkNotNull(tempDirectory);
+  CustomCommandLine.Builder result=CustomCommandLine.builder();
+  result.add("--classdir").addPath(classDirectory);
+  result.add("--tempdir").addPath(tempDirectory);
+  if (outputJar != null) {
+    result.addExecPath("--output",outputJar);
+  }
+  if (sourceGenDirectory != null) {
+    result.add("--sourcegendir").addPath(sourceGenDirectory);
+  }
+  if (gensrcOutputJar != null) {
+    result.addExecPath("--generated_sources_output",gensrcOutputJar);
+  }
+  if (manifestProto != null) {
+    result.addExecPath("--output_manifest_proto",manifestProto);
+  }
+  if (compressJar) {
+    result.add("--compress_jar");
+  }
+  if (outputDepsProto != null) {
+    result.addExecPath("--output_deps_proto",outputDepsProto);
+  }
+  result.add("--classpath").add(new CustomArgv(){
+    @Override public String argv(){
+      List<PathFragment> classpathEntries=new ArrayList<>();
+      for (      Artifact classpathArtifact : classpath) {
+        classpathEntries.add(classpathArtifact.getExecPath());
+      }
+      classpathEntries.add(classDirectory);
+      return Joiner.on(configuration.getHostPathSeparator()).join(classpathEntries);
+    }
+  }
+);
+  if (!extdirInputs.isEmpty()) {
+    result.add("--extdir");
+    LinkedHashSet<PathFragment> extdirs=new LinkedHashSet<>();
+    for (    Artifact extjar : extdirInputs) {
+      extdirs.add(extjar.getExecPath().getParentDirectory());
+    }
+    result.add(Joiner.on(configuration.getHostPathSeparator()).join(extdirs));
+  }
+  if (!processorPath.isEmpty()) {
+    result.addJoinExecPaths("--processorpath",configuration.getHostPathSeparator(),processorPath);
+  }
+  if (!processorNames.isEmpty()) {
+    result.add("--processors",processorNames);
+  }
+  if (!messages.isEmpty()) {
+    result.add("--messages");
+    for (    Artifact message : messages) {
+      addAsResourcePrefixedExecPath(semantics,message,result);
+    }
+  }
+  if (!resources.isEmpty()) {
+    result.add("--resources");
+    for (    Artifact resource : resources) {
+      addAsResourcePrefixedExecPath(semantics,resource,result);
+    }
+  }
+  if (!classpathResources.isEmpty()) {
+    result.addExecPaths("--classpath_resources",classpathResources);
+  }
+  if (!sourceJars.isEmpty()) {
+    result.addExecPaths("--source_jars",sourceJars);
+  }
+  result.addExecPaths("--sources",sourceFiles);
+  if (!javacOpts.isEmpty()) {
+    result.add("--javacopts",javacOpts);
+  }
+  if (strictJavaDeps != BuildConfiguration.StrictDepsMode.OFF) {
+    result.add("--strict_java_deps");
+    result.add((semantics.useStrictJavaDeps(configuration) ? strictJavaDeps : BuildConfiguration.StrictDepsMode.OFF).toString());
+    result.add(new CustomMultiArgv(){
+      @Override public Iterable<String> argv(){
+        return addJarsToTargets(classpath,directJars);
+      }
+    }
+);
+    if (configuration.getFragment(JavaConfiguration.class).getReduceJavaClasspath() == JavaClasspathMode.JAVABUILDER) {
+      result.add("--reduce_classpath");
+      if (!compileTimeDependencyArtifacts.isEmpty()) {
+        result.addExecPaths("--deps_artifacts",compileTimeDependencyArtifacts);
+      }
+    }
+  }
+  if (ruleKind != null) {
+    result.add("--rule_kind");
+    result.add(ruleKind);
+  }
+  if (targetLabel != null) {
+    result.add("--target_label");
+    if (targetLabel.getPackageIdentifier().getRepository().isDefault()) {
+      result.add(targetLabel.toString());
+    }
+ else {
+      result.add("@" + targetLabel);
+    }
+  }
+  return result;
+}

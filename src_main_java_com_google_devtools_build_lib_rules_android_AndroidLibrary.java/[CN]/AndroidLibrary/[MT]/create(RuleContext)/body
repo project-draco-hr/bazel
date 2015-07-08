@@ -20,7 +20,8 @@
       AndroidCommon androidCommon=new AndroidCommon(ruleContext,javaCommon);
       ApplicationManifest applicationManifest=androidSemantics.getManifestForRule(ruleContext);
       ResourceApk resourceApk=applicationManifest.packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,transitiveResources,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_SYMBOLS_TXT),ImmutableList.<String>of(),ImmutableList.<String>of(),ImmutableList.<String>of(),null,null,null,false,null);
-      if (androidCommon.init(javaSemantics,androidSemantics,resourceApk,transitiveIdlImportData,false,true) == null) {
+      JavaTargetAttributes javaTargetAttributes=androidCommon.init(javaSemantics,androidSemantics,resourceApk,transitiveIdlImportData,false,true,AndroidRuleClasses.ANDROID_LIBRARY_GEN_JAR);
+      if (javaTargetAttributes == null) {
         return null;
       }
       Artifact classesJar=mergeJarsFromSrcs(ruleContext,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_CLASS_JAR));
@@ -39,7 +40,8 @@
     JavaCommon javaCommon=new JavaCommon(ruleContext,javaSemantics);
     AndroidCommon androidCommon=new AndroidCommon(ruleContext,javaCommon);
     ResourceApk resourceApk=ResourceApk.fromTransitiveResources(transitiveResources);
-    if (androidCommon.init(javaSemantics,androidSemantics,resourceApk,transitiveIdlImportData,false,true) == null) {
+    JavaTargetAttributes javaTargetAttributes=androidCommon.init(javaSemantics,androidSemantics,resourceApk,transitiveIdlImportData,false,true,AndroidRuleClasses.ANDROID_LIBRARY_GEN_JAR);
+    if (javaTargetAttributes == null) {
       return null;
     }
     RuleConfiguredTargetBuilder targetBuilder=androidCommon.addTransitiveInfoProviders(new RuleConfiguredTargetBuilder(ruleContext));

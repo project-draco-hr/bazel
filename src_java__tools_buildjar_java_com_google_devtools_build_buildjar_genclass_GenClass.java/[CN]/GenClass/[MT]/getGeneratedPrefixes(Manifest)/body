@@ -1,0 +1,19 @@
+{
+  ImmutableSet.Builder<String> prefixes=ImmutableSet.builder();
+  for (  CompilationUnit unit : manifest.getCompilationUnitList()) {
+    if (!unit.getGeneratedByAnnotationProcessor()) {
+      continue;
+    }
+    String pkg;
+    if (unit.hasPkg()) {
+      pkg=unit.getPkg().replace('.','/') + "/";
+    }
+ else {
+      pkg="";
+    }
+    for (    String toplevel : unit.getTopLevelList()) {
+      prefixes.add(pkg + toplevel);
+    }
+  }
+  return prefixes.build();
+}

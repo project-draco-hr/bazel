@@ -25,20 +25,8 @@
   Iterable<Artifact> baseInputs=ImmutableIterable.from(Iterables.concat(javabaseInputs,bootclasspathEntries,extdirInputs,ImmutableList.of(paramFile)));
   Preconditions.checkState(javaExecutable != null,owner);
   Preconditions.checkState(javaExecutable.isAbsolute() ^ !javabaseInputs.isEmpty(),javaExecutable);
-  Collection<Artifact> outputs;
-  ImmutableList.Builder<Artifact> outputsBuilder=ImmutableList.builder();
-  outputsBuilder.add(outputJar);
-  if (metadata != null) {
-    outputsBuilder.add(metadata);
-  }
-  if (gensrcOutputJar != null) {
-    outputsBuilder.add(gensrcOutputJar);
-  }
-  if (outputDepsProto != null) {
-    outputsBuilder.add(outputDepsProto);
-  }
-  outputs=outputsBuilder.build();
-  CustomCommandLine.Builder paramFileContentsBuilder=javaCompileCommandLine(semantics,configuration,classDirectory,sourceGenDirectory,tempDirectory,outputJar,gensrcOutputJar,compressJar,outputDepsProto,classpathEntries,processorPath,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,extdirInputs,internedJcopts,directJars,strictJavaDeps,compileTimeDependencyArtifacts,ruleKind,targetLabel);
+  Collection<Artifact> outputs=Collections2.filter(Arrays.asList(outputJar,metadata,gensrcOutputJar,manifestProtoOutput,outputDepsProto),Predicates.notNull());
+  CustomCommandLine.Builder paramFileContentsBuilder=javaCompileCommandLine(semantics,configuration,classDirectory,sourceGenDirectory,tempDirectory,outputJar,gensrcOutputJar,manifestProtoOutput,compressJar,outputDepsProto,classpathEntries,processorPath,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,extdirInputs,internedJcopts,directJars,strictJavaDeps,compileTimeDependencyArtifacts,ruleKind,targetLabel);
   semantics.buildJavaCommandLine(outputs,configuration,paramFileContentsBuilder);
   CommandLine paramFileContents=paramFileContentsBuilder.build();
   Action parameterFileWriteAction=new ParameterFileWriteAction(owner,paramFile,paramFileContents,ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1);

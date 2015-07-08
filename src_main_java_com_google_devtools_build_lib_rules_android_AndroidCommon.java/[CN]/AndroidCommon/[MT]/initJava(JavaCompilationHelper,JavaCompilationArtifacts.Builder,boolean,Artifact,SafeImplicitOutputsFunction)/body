@@ -1,0 +1,49 @@
+{
+  NestedSetBuilder<Artifact> filesBuilder=NestedSetBuilder.<Artifact>stableOrder();
+  if (additionalSourceJar != null) {
+    filesBuilder.add(additionalSourceJar);
+  }
+  JavaTargetAttributes attributes=helper.getAttributes();
+  if (ruleContext.hasErrors()) {
+    filesToBuild=filesBuilder.build();
+    return;
+  }
+  if (attributes.hasJarFiles()) {
+    javaArtifactsBuilder.addRuntimeJars(attributes.getJarFiles());
+    javaArtifactsBuilder.addCompileTimeJars(attributes.getCompileTimeJarFiles());
+    filesBuilder.addAll(attributes.getJarFiles());
+  }
+  Artifact jar=null;
+  classJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_CLASS_JAR);
+  if (attributes.hasSourceFiles() || attributes.hasSourceJars() || attributes.hasResources()) {
+    javaArtifactsBuilder.addRuntimeJar(classJar);
+    jar=classJar;
+  }
+  filesBuilder.add(classJar);
+  gensrcJar=helper.createGensrcJar(classJar);
+  Artifact manifestProtoOutput=helper.createManifestProtoOutput(classJar);
+  Artifact genClassJar=ruleContext.getImplicitOutputArtifact(genClassJarImplicitOutput);
+  helper.createGenJarAction(classJar,manifestProtoOutput,genClassJar);
+  srcJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_SOURCE_JAR);
+  helper.createSourceJarAction(srcJar,gensrcJar);
+  NestedSetBuilder<Artifact> compileTimeDependenciesBuilder=NestedSetBuilder.stableOrder();
+  Artifact outputDepsProto=helper.createOutputDepsProtoArtifact(classJar,javaArtifactsBuilder);
+  if (outputDepsProto != null) {
+    compileTimeDependenciesBuilder.add(outputDepsProto);
+  }
+  helper.createCompileActionWithInstrumentation(classJar,manifestProtoOutput,gensrcJar,outputDepsProto,javaArtifactsBuilder);
+  compileTimeDependencyArtifacts=compileTimeDependenciesBuilder.build();
+  filesToBuild=filesBuilder.build();
+  if ((attributes.hasSourceFiles() || attributes.hasSourceJars()) && jar != null) {
+    helper.createCompileTimeJarAction(jar,outputDepsProto,javaArtifactsBuilder);
+  }
+  javaCommon.setJavaCompilationArtifacts(javaArtifactsBuilder.build());
+  javaCommon.setClassPathFragment(new ClasspathConfiguredFragment(javaCommon.getJavaCompilationArtifacts(),attributes,asNeverLink));
+  transitiveNeverlinkLibraries=collectTransitiveNeverlinkLibraries(ruleContext,javaCommon.getDependencies(),javaCommon.getJavaCompilationArtifacts().getRuntimeJars());
+  topLevelSourceJars=ImmutableList.of(srcJar);
+  transitiveSourceJars=javaCommon.collectTransitiveSourceJars(srcJar);
+  if (collectJavaCompilationArgs) {
+    this.javaCompilationArgs=collectJavaCompilationArgs(ruleContext,exportDeps,asNeverLink,attributes.hasSourceFiles());
+    this.recursiveJavaCompilationArgs=collectJavaCompilationArgs(ruleContext,true,asNeverLink,true);
+  }
+}
