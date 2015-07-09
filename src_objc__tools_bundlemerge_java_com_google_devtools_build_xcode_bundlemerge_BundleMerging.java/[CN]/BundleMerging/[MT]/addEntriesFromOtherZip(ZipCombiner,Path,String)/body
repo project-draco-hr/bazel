@@ -6,11 +6,18 @@
       if (zipInEntry == null) {
         break;
       }
+      String name=entryNamesPrefix + zipInEntry.getName();
+      if (zipInEntry.isDirectory()) {
+        if (!combiner.containsFile(name)) {
+          combiner.addDirectory(name,DOS_EPOCH);
+        }
+        continue;
+      }
       Integer externalFileAttr=externalFileAttributes.get(zipInEntry.getName());
       if (externalFileAttr == null) {
         externalFileAttr=ZipInputEntry.DEFAULT_EXTERNAL_FILE_ATTRIBUTE;
       }
-      ZipFileEntry zipOutEntry=new ZipFileEntry(entryNamesPrefix + zipInEntry.getName());
+      ZipFileEntry zipOutEntry=new ZipFileEntry(name);
       zipOutEntry.setTime(DOS_EPOCH.getTime());
       zipOutEntry.setVersion(ZipInputEntry.MADE_BY_VERSION);
       zipOutEntry.setExternalAttributes(externalFileAttr);

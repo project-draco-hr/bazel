@@ -1,6 +1,14 @@
 {
+  ZipFileEntry entry=new ZipFileEntry(zipPath);
+  if (Files.isDirectory(source)) {
+    String name=entry.getName();
+    if (!name.endsWith("/")) {
+      name=name + "/";
+    }
+    combiner.addDirectory(name,DOS_EPOCH);
+    return;
+  }
   try (InputStream inputStream=Files.newInputStream(source)){
-    ZipFileEntry entry=new ZipFileEntry(zipPath);
     entry.setTime(DOS_EPOCH.getTime());
     entry.setVersion(MADE_BY_VERSION);
     entry.setExternalAttributes(externalFileAttribute);
