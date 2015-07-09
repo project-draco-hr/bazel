@@ -90,8 +90,19 @@ inputSource=ParserInputSource.create(buildFilePath);
 env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
 throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.TRANSIENT);
 }
-SkylarkImportResult importResult=fetchImportsFromBuildFile(buildFilePath,buildFileFragment,packageId,preludeStatements,inputSource,env);
-if (importResult == null) {
+StoredEventHandler eventHandler=new StoredEventHandler();
+BuildFileAST buildFileAST=BuildFileAST.parseBuildFile(inputSource,preludeStatements,eventHandler,null,true);
+SkylarkImportResult importResult;
+boolean includeRepositoriesFetched;
+if (eventHandler.hasErrors()) {
+importResult=new SkylarkImportResult(ImmutableMap.<PathFragment,SkylarkEnvironment>of(),ImmutableList.<Label>of());
+includeRepositoriesFetched=true;
+}
+ else {
+importResult=fetchImportsFromBuildFile(buildFilePath,buildFileFragment,packageId,buildFileAST,env);
+includeRepositoriesFetched=fetchIncludeRepositoryDeps(env,buildFileAST);
+}
+if (importResult == null || !includeRepositoriesFetched) {
 return null;
 }
 Package.LegacyBuilder legacyPkgBuilder=loadPackage(externalPkg,inputSource,replacementContents,packageId,buildFilePath,defaultVisibility,preludeStatements,importResult);
