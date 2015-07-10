@@ -1,0 +1,12 @@
+{
+  Preconditions.checkState(!env.valuesMissing(),action);
+  if (action instanceof SkyframeAwareAction) {
+    Preconditions.checkState(action.executeUnconditionally(),action);
+    try {
+      ((SkyframeAwareAction)action).establishSkyframeDependencies(env);
+    }
+ catch (    SkyframeAwareAction.ExceptionBase e) {
+      throw new ActionExecutionException(e,action,false);
+    }
+  }
+}

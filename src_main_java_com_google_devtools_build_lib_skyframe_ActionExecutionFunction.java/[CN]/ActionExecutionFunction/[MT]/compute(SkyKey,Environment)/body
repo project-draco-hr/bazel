@@ -1,6 +1,6 @@
 {
   Action action=(Action)skyKey.argument();
-  if (action.isVolatile() || action instanceof NotifyOnActionCacheHit) {
+  if ((action.isVolatile() && !(action instanceof SkyframeAwareAction)) || action instanceof NotifyOnActionCacheHit) {
     PrecomputedValue.BUILD_ID.get(env);
   }
   boolean sharedActionAlreadyRan=skyframeActionExecutor.probeActionExecution(action);
@@ -30,6 +30,15 @@
   }
  catch (  ActionExecutionException e) {
     stateMap.remove(action);
+    throw new ActionExecutionFunctionException(e);
+  }
+  if (env.valuesMissing()) {
+    return null;
+  }
+  try {
+    establishSkyframeDependencies(env,action);
+  }
+ catch (  ActionExecutionException e) {
     throw new ActionExecutionFunctionException(e);
   }
   if (env.valuesMissing()) {
