@@ -4,6 +4,7 @@
     expect(TokenKind.STRING);
     return;
   }
+  Token pathToken=token;
   String path=(String)token.value;
   nextToken();
   expect(TokenKind.COMMA);
@@ -23,5 +24,12 @@
     expect(TokenKind.STRING);
   }
   expect(TokenKind.RPAREN);
-  list.add(setLocation(new LoadStatement(path,symbols),start,token.left));
+  LoadStatement stmt=new LoadStatement(path,symbols);
+  try {
+    stmt.validateLoadPath();
+  }
+ catch (  EvalException e) {
+    syntaxError(pathToken,e.getMessage());
+  }
+  list.add(setLocation(stmt,start,token.left));
 }
