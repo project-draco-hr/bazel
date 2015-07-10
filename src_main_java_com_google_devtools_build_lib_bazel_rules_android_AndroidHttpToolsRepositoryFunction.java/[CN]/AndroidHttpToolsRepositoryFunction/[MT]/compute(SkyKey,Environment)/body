@@ -1,0 +1,32 @@
+{
+  RepositoryName repositoryName=(RepositoryName)skyKey.argument();
+  Rule rule=RepositoryFunction.getRule(repositoryName,AndroidHttpToolsRepositoryRule.NAME,env);
+  if (rule == null) {
+    return null;
+  }
+  Path outputDirectory=getExternalRepositoryDirectory().getRelative(rule.getName());
+  try {
+    FileSystemUtils.createDirectoryAndParents(outputDirectory);
+  }
+ catch (  IOException e1) {
+    throw new RepositoryFunctionException(e1,Transience.TRANSIENT);
+  }
+  FileValue directoryValue=getRepositoryDirectory(outputDirectory,env);
+  if (directoryValue == null) {
+    return null;
+  }
+  try {
+    HttpDownloadValue downloadValue=(HttpDownloadValue)env.getValueOrThrow(HttpDownloadFunction.key(rule,outputDirectory),IOException.class);
+    if (downloadValue == null) {
+      return null;
+    }
+    DecompressorValue value=(DecompressorValue)env.getValueOrThrow(DecompressorValue.key(rule.getTargetKind(),rule.getName(),downloadValue.getPath(),outputDirectory),IOException.class);
+    if (value == null) {
+      return null;
+    }
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(e,Transience.TRANSIENT);
+  }
+  return RepositoryValue.create(directoryValue);
+}
