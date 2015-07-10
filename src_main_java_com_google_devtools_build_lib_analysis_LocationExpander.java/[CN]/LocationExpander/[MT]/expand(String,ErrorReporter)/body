@@ -1,0 +1,57 @@
+{
+  int restart=0;
+  int attrLength=value.length();
+  StringBuilder result=new StringBuilder(value.length());
+  while (true) {
+    String message="$(location)";
+    boolean multiple=false;
+    int start=value.indexOf(LOCATION,restart);
+    int scannedLength=LOCATION.length();
+    if (start == -1 || start + scannedLength == attrLength) {
+      result.append(value.substring(restart));
+      break;
+    }
+    if (value.charAt(start + scannedLength) == 's') {
+      scannedLength++;
+      if (start + scannedLength == attrLength) {
+        result.append(value.substring(restart));
+        break;
+      }
+      message="$(locations)";
+      multiple=true;
+    }
+    if (value.charAt(start + scannedLength) != ' ') {
+      result.append(value,restart,start + scannedLength);
+      restart=start + scannedLength;
+      continue;
+    }
+    scannedLength++;
+    int end=value.indexOf(')',start + scannedLength);
+    if (end == -1) {
+      reporter.report(ruleContext,"unterminated " + message + " expression");
+      return value;
+    }
+    message=String.format(" in %s expression",message);
+    String labelText=value.substring(start + scannedLength,end);
+    Label label=parseLabel(labelText,message,reporter);
+    if (label == null) {
+      return value;
+    }
+    try {
+      Collection<String> paths=resolveLabel(label,message,multiple);
+      result.append(value,restart,start);
+      if (multiple) {
+        Joiner.on(' ').appendTo(result,paths);
+      }
+ else {
+        result.append(Iterables.getOnlyElement(paths));
+      }
+    }
+ catch (    IllegalStateException ise) {
+      reporter.report(ruleContext,ise.getMessage());
+      return value;
+    }
+    restart=end + 1;
+  }
+  return result.toString();
+}

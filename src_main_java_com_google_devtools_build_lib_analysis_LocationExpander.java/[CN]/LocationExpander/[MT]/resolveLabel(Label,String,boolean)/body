@@ -1,0 +1,14 @@
+{
+  Collection<Artifact> artifacts=getLocationMap().get(unresolved);
+  if (artifacts == null) {
+    throw new IllegalStateException("label '" + unresolved + "'"+ message+ " is not a declared prerequisite of this rule");
+  }
+  Set<String> paths=getPaths(artifacts,options.contains(Options.EXEC_PATHS));
+  if (paths.isEmpty()) {
+    throw new IllegalStateException("label '" + unresolved + "'"+ message+ " expression expands to no files");
+  }
+  if (!hasMultipleTargets && paths.size() > 1) {
+    throw new IllegalStateException(String.format("label '%s'%s expands to more than one file, " + "please use $(locations %s) instead.  Files (at most %d shown) are: %s",unresolved,message,unresolved,MAX_PATHS_SHOWN,Iterables.limit(paths,MAX_PATHS_SHOWN)));
+  }
+  return paths;
+}
