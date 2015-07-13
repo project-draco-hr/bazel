@@ -1,0 +1,18 @@
+{
+  initializeTester();
+  SkyKey parent=GraphTester.toSkyKey("parent");
+  SkyKey child=GraphTester.toSkyKey("child");
+  tester.getOrCreate(child).setConstantValue(new StringValue("child")).setWarning("bloop");
+  CountDownLatch parentEvaluated=new CountDownLatch(3);
+  StringValue parentVal=new StringValue("parent");
+  tester.getOrCreate(parent).setBuilder(new ChainedFunction(parentEvaluated,null,null,false,parentVal,ImmutableList.of(child)));
+  assertThat(tester.evalAndGet(false,parent)).isEqualTo(parentVal);
+  assertThat(parentEvaluated.getCount()).isEqualTo(1);
+  JunitTestUtils.assertContainsEvent(eventCollector,"bloop");
+  tester.resetPlayedEvents();
+  tester.getOrCreate(child,true);
+  tester.invalidate();
+  assertThat(tester.evalAndGet(false,parent)).isEqualTo(parentVal);
+  JunitTestUtils.assertContainsEvent(eventCollector,"bloop");
+  assertThat(parentEvaluated.getCount()).isEqualTo(1);
+}
