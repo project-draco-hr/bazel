@@ -6,13 +6,22 @@
     compileResources(javaSemantics,artifactsBuilder,attributes,resourceApk.getTransitiveResources(),resourceApk.getPrimaryResource());
   }
   JavaCompilationHelper helper=initAttributes(attributes,javaSemantics);
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
   if (addCoverageSupport) {
     androidSemantics.addCoverageSupport(ruleContext,this,javaSemantics,true,attributes,artifactsBuilder);
+    if (ruleContext.hasErrors()) {
+      return null;
+    }
   }
   jackCompilationHelper=initJack(helper.getAttributes(),javaSemantics);
-  if (jackCompilationHelper == null) {
+  if (ruleContext.hasErrors()) {
     return null;
   }
   initJava(helper,artifactsBuilder,collectJavaCompilationArgs,resourceApk.getResourceJavaSrcJar(),genClassJarImplicitOutput);
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
   return helper.getAttributes();
 }

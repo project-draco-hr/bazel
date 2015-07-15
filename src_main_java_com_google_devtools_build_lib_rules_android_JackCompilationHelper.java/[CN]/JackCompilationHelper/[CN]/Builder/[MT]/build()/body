@@ -1,10 +1,10 @@
 {
+  Preconditions.checkNotNull(ruleContext);
+  Preconditions.checkNotNull(androidSdk);
   boolean useSanityChecks=ruleContext.getConfiguration().getFragment(AndroidConfiguration.class).isJackSanityChecked();
-  FilesToRunProvider jackBinary=ruleContext.getExecutablePrerequisite("$jack",Mode.HOST);
-  FilesToRunProvider jillBinary=ruleContext.getExecutablePrerequisite("$jill",Mode.HOST);
-  FilesToRunProvider resourceExtractorBinary=ruleContext.getExecutablePrerequisite("$resource_extractor",Mode.HOST);
-  if (ruleContext.hasErrors()) {
-    return null;
-  }
-  return new JackCompilationHelper(Preconditions.checkNotNull(ruleContext),useSanityChecks,resourceExtractorBinary,jackBinary,jillBinary,Preconditions.checkNotNull(androidBaseLibraryForJack),Preconditions.checkNotNull(outputArtifact),ImmutableSet.copyOf(javaSources),ImmutableSet.copyOf(sourceJars),ImmutableMap.copyOf(resources),processorClasspathJars.build(),ImmutableSet.copyOf(processorNames),exportedJackLibraries.build(),ImmutableSet.copyOf(exportedNonLibraryFiles),classpathJackLibraries.build(),ImmutableSet.copyOf(classpathNonLibraryFiles),dexJacks.build(),ImmutableSet.copyOf(dexJars));
+  FilesToRunProvider jackBinary=androidSdk.getJack();
+  FilesToRunProvider jillBinary=androidSdk.getJill();
+  FilesToRunProvider resourceExtractorBinary=androidSdk.getResourceExtractor();
+  Artifact androidBaseLibraryForJack=androidSdk.getAndroidJack();
+  return new JackCompilationHelper(ruleContext,useSanityChecks,Preconditions.checkNotNull(resourceExtractorBinary),Preconditions.checkNotNull(jackBinary),Preconditions.checkNotNull(jillBinary),Preconditions.checkNotNull(androidBaseLibraryForJack),Preconditions.checkNotNull(outputArtifact),ImmutableSet.copyOf(javaSources),ImmutableSet.copyOf(sourceJars),ImmutableMap.copyOf(resources),processorClasspathJars.build(),ImmutableSet.copyOf(processorNames),exportedJackLibraries.build(),ImmutableSet.copyOf(exportedNonLibraryFiles),classpathJackLibraries.build(),ImmutableSet.copyOf(classpathNonLibraryFiles),dexJacks.build(),ImmutableSet.copyOf(dexJars));
 }
