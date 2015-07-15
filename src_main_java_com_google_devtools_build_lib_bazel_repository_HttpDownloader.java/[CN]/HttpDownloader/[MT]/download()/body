@@ -10,12 +10,13 @@
   final ScheduledFuture<?> loggerHandle=getLoggerHandle(totalBytes);
   try (OutputStream outputStream=destination.getOutputStream()){
     ReadableByteChannel rbc=getChannel(url);
+    WritableByteChannel obc=Channels.newChannel(outputStream);
     ByteBuffer byteBuffer=ByteBuffer.allocate(BUFFER_SIZE);
     while ((currentBytes=rbc.read(byteBuffer)) > 0) {
       totalBytes.addAndGet(currentBytes);
       byteBuffer.flip();
       while (byteBuffer.hasRemaining()) {
-        outputStream.write(byteBuffer.get());
+        obc.write(byteBuffer);
       }
       byteBuffer.flip();
     }
