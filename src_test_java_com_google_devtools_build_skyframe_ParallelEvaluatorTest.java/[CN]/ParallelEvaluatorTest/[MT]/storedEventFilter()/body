@@ -1,0 +1,35 @@
+{
+  graph=new InMemoryGraph();
+  SkyKey a=GraphTester.toSkyKey("a");
+  final AtomicBoolean evaluated=new AtomicBoolean(false);
+  tester.getOrCreate(a).setBuilder(new SkyFunction(){
+    @Nullable @Override public SkyValue compute(    SkyKey skyKey,    Environment env){
+      evaluated.set(true);
+      env.getListener().handle(Event.error(null,"boop"));
+      env.getListener().handle(Event.warn(null,"beep"));
+      return new StringValue("a");
+    }
+    @Nullable @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  ParallelEvaluator evaluator=makeEvaluator(graph,ImmutableMap.of(GraphTester.NODE_TYPE,tester.createDelegatingFunction()),false,new Predicate<Event>(){
+    @Override public boolean apply(    Event event){
+      return event.getKind() == EventKind.ERROR;
+    }
+  }
+);
+  evaluator.eval(ImmutableList.of(a));
+  assertTrue(evaluated.get());
+  JunitTestUtils.assertEventCount(2,eventCollector);
+  JunitTestUtils.assertContainsEvent(eventCollector,"boop");
+  JunitTestUtils.assertContainsEvent(eventCollector,"beep");
+  eventCollector.clear();
+  evaluator=makeEvaluator(graph,ImmutableMap.of(GraphTester.NODE_TYPE,tester.createDelegatingFunction()),false);
+  evaluated.set(false);
+  evaluator.eval(ImmutableList.of(a));
+  assertFalse(evaluated.get());
+  JunitTestUtils.assertEventCount(1,eventCollector);
+  JunitTestUtils.assertContainsEvent(eventCollector,"boop");
+}
