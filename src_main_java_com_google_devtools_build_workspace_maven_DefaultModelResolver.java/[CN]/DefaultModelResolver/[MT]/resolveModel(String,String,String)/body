@@ -1,16 +1,13 @@
 {
   for (  Repository repository : repositories) {
-    try {
-      UrlModelSource urlModelSource=new UrlModelSource(new URL(repository.getUrl() + groupId.replaceAll("\\.","/") + "/"+ artifactId+ "/"+ version+ "/"+ artifactId+ "-"+ version+ ".pom"));
-      if (urlModelSource.getInputStream().available() != 0) {
-        return urlModelSource;
-      }
-    }
- catch (    MalformedURLException e) {
-      throw new UnresolvableModelException(e.getMessage(),groupId,artifactId,version,e);
-    }
-catch (    IOException e) {
+    UrlModelSource modelSource=getModelSource(repository.getUrl(),groupId,artifactId,version);
+    if (modelSource != null) {
+      return modelSource;
     }
   }
-  throw new UnresolvableModelException("Could not find any repositories that knew how to " + "resolve the artifact (checked " + Arrays.toString(repositories.toArray()) + ")",groupId,artifactId,version);
+  UrlModelSource modelSource=getModelSource(MavenConnector.getMavenCentral().getUrl(),groupId,artifactId,version);
+  if (modelSource == null) {
+    throw new UnresolvableModelException("Could not find any repositories that knew how to " + "resolve the artifact (checked " + Arrays.toString(repositories.toArray()) + ")",groupId,artifactId,version);
+  }
+  return modelSource;
 }
