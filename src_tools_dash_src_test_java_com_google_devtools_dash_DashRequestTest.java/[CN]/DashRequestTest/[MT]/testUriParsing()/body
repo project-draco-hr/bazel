@@ -1,0 +1,13 @@
+{
+  final String buildId="3b9a81d9-0ed3-48d2-84c6-6296aecc21e6";
+  final DashProtos.BuildData data=DashProtos.BuildData.newBuilder().setBuildId(buildId).build();
+  expect(request.getRequestURI()).andReturn("/result/3b9a81d9-0ed3-48d2-84c6-6296aecc21e6");
+  expect(request.getInputStream()).andReturn(new ProtoInputStream(data));
+  replay(request);
+  DashRequest dashRequest=new DashRequest(request);
+  assertEquals(buildId,dashRequest.getBuildId());
+  Entity entity=dashRequest.getEntity();
+  assertEquals(buildId,entity.getProperty(DashRequest.BUILD_ID));
+  assertEquals("result",entity.getProperty(DashRequest.PAGE_NAME));
+  assertEquals(data,DashProtos.BuildData.parseFrom(((Blob)entity.getProperty(DashRequest.BUILD_DATA)).getBytes()));
+}
