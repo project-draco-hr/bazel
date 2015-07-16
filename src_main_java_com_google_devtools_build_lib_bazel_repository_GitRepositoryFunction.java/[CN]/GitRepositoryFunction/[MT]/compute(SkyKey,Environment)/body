@@ -1,0 +1,22 @@
+{
+  RepositoryName repositoryName=(RepositoryName)skyKey.argument();
+  Rule rule=RepositoryFunction.getRule(repositoryName,GitRepositoryRule.NAME,env);
+  if (rule == null) {
+    return null;
+  }
+  Path outputDirectory=getExternalRepositoryDirectory().getRelative(rule.getName());
+  FileValue directoryValue=createDirectory(outputDirectory,env,rule);
+  if (directoryValue == null) {
+    return null;
+  }
+  try {
+    HttpDownloadValue value=(HttpDownloadValue)env.getValueOrThrow(GitCloneFunction.key(rule,outputDirectory),IOException.class);
+    if (value == null) {
+      return null;
+    }
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(e,Transience.TRANSIENT);
+  }
+  return RepositoryValue.create(directoryValue);
+}

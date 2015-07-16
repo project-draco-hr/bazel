@@ -1,0 +1,14 @@
+{
+  AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(rule);
+  if ((mapper.has("commit",Type.STRING) == mapper.has("tag",Type.STRING)) && (mapper.get("commit",Type.STRING).isEmpty() == mapper.get("tag",Type.STRING).isEmpty())) {
+    throw new RepositoryFunctionException(new EvalException(rule.getLocation(),"One of either commit or tag must be defined"),Transience.PERSISTENT);
+  }
+  String startingPoint;
+  if (mapper.has("commit",Type.STRING) && !mapper.get("commit",Type.STRING).isEmpty()) {
+    startingPoint=mapper.get("commit",Type.STRING);
+  }
+ else {
+    startingPoint="tags/" + mapper.get("tag",Type.STRING);
+  }
+  return new SkyKey(SkyFunctionName.create(NAME),new GitCloneFunction.GitRepositoryDescriptor(mapper.get("remote",Type.STRING),startingPoint,mapper.get("init_submodules",Type.BOOLEAN),outputDirectory));
+}

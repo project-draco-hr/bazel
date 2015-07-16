@@ -1,0 +1,29 @@
+{
+  GitRepositoryDescriptor descriptor=(GitRepositoryDescriptor)skyKey.argument();
+  String outputDirectory=descriptor.directory.toString();
+  Git git=null;
+  try {
+    git=Git.cloneRepository().setURI(descriptor.remote).setDirectory(new File(outputDirectory)).setCloneSubmodules(false).setProgressMonitor(new GitProgressMonitor("Cloning " + descriptor.remote,reporter)).call();
+    git.checkout().setCreateBranch(true).setName("bazel-checkout").setStartPoint(descriptor.checkout).call();
+    if (descriptor.initSubmodules) {
+      if (!git.submoduleInit().call().isEmpty()) {
+        git.submoduleUpdate().setProgressMonitor(new GitProgressMonitor("Cloning submodules for " + descriptor.remote,reporter)).call();
+      }
+    }
+  }
+ catch (  InvalidRemoteException e) {
+    throw new RepositoryFunctionException(new IOException("Invalid Git repository URI: " + e.getMessage()),Transience.PERSISTENT);
+  }
+catch (  RefNotFoundException|InvalidRefNameException e) {
+    throw new RepositoryFunctionException(new IOException("Invalid branch, tag, or commit: " + e.getMessage()),Transience.PERSISTENT);
+  }
+catch (  GitAPIException e) {
+    throw new RepositoryFunctionException(new IOException(e.getMessage()),Transience.TRANSIENT);
+  }
+ finally {
+    if (git != null) {
+      git.close();
+    }
+  }
+  return new HttpDownloadValue(descriptor.directory);
+}
