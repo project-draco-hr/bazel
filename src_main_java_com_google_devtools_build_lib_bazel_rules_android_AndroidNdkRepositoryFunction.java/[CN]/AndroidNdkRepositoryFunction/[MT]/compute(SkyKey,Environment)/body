@@ -9,7 +9,14 @@
     return null;
   }
   PathFragment pathFragment=getTargetPath(rule);
-  if (!symlinkLocalRepositoryContents(directoryValue,getOutputBase().getFileSystem().getPath(pathFragment),env)) {
+  Path ndkSymlinkTreeDirectory=directoryValue.realRootedPath().asPath().getRelative("ndk");
+  try {
+    ndkSymlinkTreeDirectory.createDirectory();
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(e,Transience.TRANSIENT);
+  }
+  if (!symlinkLocalRepositoryContents(ndkSymlinkTreeDirectory,getOutputBase().getFileSystem().getPath(pathFragment),env)) {
     return null;
   }
   AttributeMap attributes=NonconfigurableAttributeMapper.of(rule);
