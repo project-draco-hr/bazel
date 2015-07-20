@@ -24,6 +24,7 @@
     throw new RuntimeException(e);
   }
   Map<String,TargetInfo> targetInfoByLabel=new HashMap<>();
+  List<String> usedTargetNames=new ArrayList<>();
   PBXFileReferences fileReferences=new PBXFileReferences();
   LibraryObjects libraryObjects=new LibraryObjects(fileReferences);
   PBXBuildFiles pbxBuildFiles=new PBXBuildFiles(fileReferences);
@@ -76,7 +77,13 @@
       }
       targetBuildConfigMap.put(name,value);
     }
-    PBXNativeTarget target=new PBXNativeTarget(labelToXcodeTargetName(targetControl.getLabel()),productType);
+    String targetName=targetControl.getName();
+    if (usedTargetNames.contains(targetName)) {
+      targetName=targetControl.getLabel();
+    }
+    checkState(!usedTargetNames.contains(targetName),"Name already exists for target with label/name %s/%s in list: %s",targetControl.getLabel(),targetControl.getName(),usedTargetNames);
+    usedTargetNames.add(targetName);
+    PBXNativeTarget target=new PBXNativeTarget(targetName,productType);
     try {
       target.getBuildConfigurationList().getBuildConfigurationsByName().get(DEFAULT_OPTIONS_NAME).setBuildSettings(targetBuildConfigMap);
     }
