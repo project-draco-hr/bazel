@@ -1,6 +1,6 @@
 {
   Artifact testIpa=testIpa();
-  ImmutableList.Builder<Substitution> substitutions=new ImmutableList.Builder<Substitution>().add(Substitution.of("%(test_app_ipa)s",testIpa.getRootRelativePathString())).add(Substitution.of("%(test_app_name)s",baseNameWithoutIpa(testIpa))).add(Substitution.of("%(iossim_path)s",iossim().getRootRelativePath().getPathString())).add(Substitution.of("%(plugin_jars)s",Artifact.joinRootRelativePaths(":",plugins()))).addAll(deviceSubstitutions().getSubstitutionsForTestRunnerScript());
+  ImmutableList.Builder<Substitution> substitutions=new ImmutableList.Builder<Substitution>().add(Substitution.of("%(test_app_ipa)s",testIpa.getRootRelativePathString())).add(Substitution.of("%(test_app_name)s",baseNameWithoutIpa(testIpa))).add(Substitution.of("%(plugin_jars)s",Artifact.joinRootRelativePaths(":",plugins())));
   Optional<Artifact> xctestIpa=xctestIpa();
   if (xctestIpa.isPresent()) {
     substitutions.add(Substitution.of("%(xctest_app_ipa)s",xctestIpa.get().getRootRelativePathString())).add(Substitution.of("%(xctest_app_name)s",baseNameWithoutIpa(xctestIpa.get())));
@@ -8,10 +8,14 @@
  else {
     substitutions.add(Substitution.of("%(xctest_app_ipa)s","")).add(Substitution.of("%(xctest_app_name)s",""));
   }
-  Optional<Artifact> testRunner=testRunner();
-  if (testRunner.isPresent()) {
-    substitutions.add(Substitution.of("%(testrunner_binary)s",testRunner.get().getRootRelativePathString()));
+  Artifact template;
+  if (!runWithLabDevice()) {
+    substitutions.addAll(substitutionsForSimulator());
+    template=ruleContext.getPrerequisiteArtifact("$test_template",Mode.TARGET);
   }
-  Artifact template=ruleContext.getPrerequisiteArtifact("$test_template",Mode.TARGET);
+ else {
+    substitutions.addAll(substitutionsForLabDevice());
+    template=testTemplateForLabDevice();
+  }
   ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),template,generatedTestScript(),substitutions.build(),true));
 }
