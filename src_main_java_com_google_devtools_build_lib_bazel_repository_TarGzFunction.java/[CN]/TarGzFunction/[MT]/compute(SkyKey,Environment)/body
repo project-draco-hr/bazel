@@ -1,17 +1,17 @@
 {
   DecompressorDescriptor descriptor=(DecompressorDescriptor)skyKey.argument();
   try (GZIPInputStream gzipStream=new GZIPInputStream(new FileInputStream(descriptor.archivePath().getPathFile()))){
-    TarInputStream inputStream=new TarInputStream(gzipStream);
-    while (inputStream.available() != 0) {
-      TarEntry entry=inputStream.getNextEntry();
-      Path filename=descriptor.repositoryPath().getRelative(entry.getFilename());
+    TarArchiveInputStream tarStream=new TarArchiveInputStream(gzipStream);
+    TarArchiveEntry entry;
+    while ((entry=tarStream.getNextTarEntry()) != null) {
+      Path filename=descriptor.repositoryPath().getRelative(entry.getName());
       FileSystemUtils.createDirectoryAndParents(filename.getParentDirectory());
       if (entry.isDirectory()) {
         FileSystemUtils.createDirectoryAndParents(filename);
       }
  else {
-        Files.copy(entry,filename.getPathFile().toPath());
-        filename.chmod(entry.getPermissions());
+        Files.copy(tarStream,filename.getPathFile().toPath());
+        filename.chmod(entry.getMode());
       }
     }
   }
