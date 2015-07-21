@@ -25,25 +25,47 @@
   List<String> cpus=ImmutableList.of("arm");
   String abi="armeabi-v7a";
   String compiler="4.9";
-  String ccToolchainSuiteTemplate;
-  String ccToolchainTemplate;
-  String toolchainTemplate;
-  try {
-    ccToolchainSuiteTemplate=ResourceFileLoader.loadResource(AndroidNdkRepositoryFunction.class,"android_ndk_cc_toolchain_suite_template.txt");
-    ccToolchainTemplate=ResourceFileLoader.loadResource(AndroidNdkRepositoryFunction.class,"android_ndk_cc_toolchain_template.txt");
-    toolchainTemplate=ResourceFileLoader.loadResource(AndroidNdkRepositoryFunction.class,"android_ndk_toolchain_template.txt");
-  }
- catch (  IOException e) {
-    throw new IllegalStateException(e);
-  }
-  StringBuilder toolchainMap=new StringBuilder();
-  StringBuilder toolchainProtos=new StringBuilder();
-  StringBuilder toolchains=new StringBuilder();
-  for (  String cpu : cpus) {
-    toolchainMap.append(String.format("\"%s\": \":cc-compiler-%s\", ",cpu,cpu));
-    toolchainProtos.append(toolchainTemplate.replace("%repository%",ruleName).replace("%cpu%",cpu).replace("%abi%",abi).replace("%api_level%",apiLevel).replace("%compiler%",compiler));
-    toolchains.append(ccToolchainTemplate.replace("%repository%",ruleName).replace("%cpu%",cpu).replace("%abi%",abi).replace("%api_level%",apiLevel).replace("%compiler%",compiler));
-  }
-  String buildFile=ccToolchainSuiteTemplate.replace("%toolchain_map%",toolchainMap).replace("%toolchain_protos%",toolchainProtos).replace("%toolchains%",toolchains).replace("%default_cpu%",cpus.get(0));
-  return writeBuildFile(directoryValue,buildFile);
+  String hostPlatform, hostArch;
+switch (OS.getCurrent()) {
+case DARWIN:
+    hostPlatform="darwin";
+  break;
+case LINUX:
+hostPlatform="linux";
+break;
+default :
+hostPlatform="unknown";
+}
+switch (CPU.getCurrent()) {
+case X86_32:
+hostArch="x86";
+break;
+case X86_64:
+hostArch="x86_64";
+break;
+default :
+hostArch="unknown";
+}
+String hostCpu=hostPlatform + "-" + hostArch;
+String ccToolchainSuiteTemplate;
+String ccToolchainTemplate;
+String toolchainTemplate;
+try {
+ccToolchainSuiteTemplate=ResourceFileLoader.loadResource(AndroidNdkRepositoryFunction.class,"android_ndk_cc_toolchain_suite_template.txt");
+ccToolchainTemplate=ResourceFileLoader.loadResource(AndroidNdkRepositoryFunction.class,"android_ndk_cc_toolchain_template.txt");
+toolchainTemplate=ResourceFileLoader.loadResource(AndroidNdkRepositoryFunction.class,"android_ndk_toolchain_template.txt");
+}
+ catch (IOException e) {
+throw new IllegalStateException(e);
+}
+StringBuilder toolchainMap=new StringBuilder();
+StringBuilder toolchainProtos=new StringBuilder();
+StringBuilder toolchains=new StringBuilder();
+for (String cpu : cpus) {
+toolchainMap.append(String.format("\"%s\": \":cc-compiler-%s\", ",cpu,cpu));
+toolchainProtos.append(toolchainTemplate.replace("%repository%",ruleName).replace("%host_cpu%",hostCpu).replace("%cpu%",cpu).replace("%abi%",abi).replace("%api_level%",apiLevel).replace("%compiler%",compiler));
+toolchains.append(ccToolchainTemplate.replace("%repository%",ruleName).replace("%host_cpu%",hostCpu).replace("%cpu%",cpu).replace("%abi%",abi).replace("%api_level%",apiLevel).replace("%compiler%",compiler));
+}
+String buildFile=ccToolchainSuiteTemplate.replace("%toolchain_map%",toolchainMap).replace("%toolchain_protos%",toolchainProtos).replace("%toolchains%",toolchains).replace("%default_cpu%",cpus.get(0));
+return writeBuildFile(directoryValue,buildFile);
 }
