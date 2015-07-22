@@ -10,8 +10,12 @@
   final AndroidResourceProcessor resourceProcessor=new AndroidResourceProcessor(STD_LOGGER);
   final AndroidSdkTools sdkTools=new AndroidSdkTools(options.apiVersion,options.aapt,options.annotationJar,options.adb,options.zipAlign,options.androidJar,STD_LOGGER);
   try {
+    Path expandedOut=Files.createTempDirectory("tmp-expanded");
+    expandedOut.toFile().deleteOnExit();
+    Path deduplicatedOut=Files.createTempDirectory("tmp-deduplicated");
+    deduplicatedOut.toFile().deleteOnExit();
     LOGGER.fine(String.format("Setup finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
-    final ImmutableList<DirectoryModifier> modifiers=ImmutableList.of(new PackedResourceTarExpander(working.resolve("expanded"),working),new FileDeDuplicator(Hashing.murmur3_128(),working.resolve("deduplicated"),working));
+    final ImmutableList<DirectoryModifier> modifiers=ImmutableList.of(new PackedResourceTarExpander(expandedOut,working),new FileDeDuplicator(Hashing.murmur3_128(),deduplicatedOut,working));
     final AndroidBuilder builder=sdkTools.createAndroidBuilder();
     final MergedAndroidData mergedData=resourceProcessor.mergeData(options.primaryData,options.data,mergedResources,mergedAssets,modifiers,useAaptCruncher() ? builder.getAaptCruncher() : null,true);
     LOGGER.info(String.format("Merging finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
