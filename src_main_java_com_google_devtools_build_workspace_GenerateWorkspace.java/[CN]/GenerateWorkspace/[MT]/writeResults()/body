@@ -1,0 +1,15 @@
+{
+  String date=new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
+  File tempDir=Files.createTempDir();
+  File workspaceFile=new File(tempDir + "/" + date+ ".WORKSPACE");
+  File buildFile=new File(tempDir + "/" + date+ ".BUILD");
+  try (PrintStream workspaceStream=new PrintStream(workspaceFile);PrintStream buildStream=new PrintStream(buildFile)){
+    resolver.writeWorkspace(workspaceStream);
+    resolver.writeBuild(buildStream);
+  }
+ catch (  IOException e) {
+    handler.handle(Event.error("Could not write WORKSPACE and BUILD files to " + tempDir + ": "+ e.getMessage()));
+    return;
+  }
+  System.err.println("Wrote:\n" + workspaceFile + "\n"+ buildFile);
+}

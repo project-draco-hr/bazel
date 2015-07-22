@@ -9,5 +9,11 @@
   GenerateWorkspace workspaceFileGenerator=new GenerateWorkspace();
   workspaceFileGenerator.generateFromWorkspace(options.bazelProjects);
   workspaceFileGenerator.generateFromPom(options.mavenProjects);
-  workspaceFileGenerator.print();
+  if (!workspaceFileGenerator.hasErrors()) {
+    workspaceFileGenerator.writeResults();
+  }
+  workspaceFileGenerator.cleanup();
+  if (workspaceFileGenerator.hasErrors()) {
+    System.exit(1);
+  }
 }
