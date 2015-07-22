@@ -4,7 +4,7 @@
       boolean alwaysLink=rule.get("alwayslink",Type.BOOLEAN);
       boolean linkstatic=rule.get("linkstatic",Type.BOOLEAN);
       SafeImplicitOutputsFunction staticLib=fromTemplates(alwaysLink ? "%{dirname}lib%{basename}.lo" : "%{dirname}lib%{basename}.a");
-      SafeImplicitOutputsFunction allLibs=linkstatic || CcLibrary.appearsToHaveNoObjectFiles(rule) ? staticLib : fromFunctions(staticLib,CC_LIBRARY_DYNAMIC_LIB);
+      SafeImplicitOutputsFunction allLibs=linkstatic || !CcLibrary.appearsToHaveObjectFiles(rule) ? staticLib : fromFunctions(staticLib,CC_LIBRARY_DYNAMIC_LIB);
       return allLibs.getImplicitOutputs(rule);
     }
   }
