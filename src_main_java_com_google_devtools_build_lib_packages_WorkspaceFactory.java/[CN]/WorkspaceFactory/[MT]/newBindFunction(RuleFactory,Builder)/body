@@ -4,8 +4,13 @@
       Label nameLabel=null;
       try {
         nameLabel=Label.parseAbsolute("//external:" + name);
-        Binding binding=new Binding(actual == null ? null : Label.parseAbsolute(actual),loc);
-        builder.addBinding(nameLabel,binding);
+        try {
+          RuleClass ruleClass=ruleFactory.getRuleClass("bind");
+          builder.addBindRule(ruleClass,nameLabel,actual == null ? null : Label.parseAbsolute(actual),loc);
+        }
+ catch (        RuleFactory.InvalidRuleException|Package.NameConflictException|Label.SyntaxException e) {
+          throw new EvalException(loc,e.getMessage());
+        }
       }
  catch (      Label.SyntaxException e) {
         throw new EvalException(loc,e.getMessage());
