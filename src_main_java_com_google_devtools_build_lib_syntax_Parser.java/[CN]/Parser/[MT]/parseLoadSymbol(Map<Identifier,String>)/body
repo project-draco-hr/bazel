@@ -1,0 +1,28 @@
+{
+  Token nameToken, declaredToken;
+  if (token.kind == TokenKind.STRING) {
+    nameToken=token;
+    declaredToken=nameToken;
+  }
+ else {
+    if (token.kind != TokenKind.IDENTIFIER) {
+      syntaxError(token,"Expected either a literal string or an identifier");
+    }
+    nameToken=token;
+    expect(TokenKind.IDENTIFIER);
+    expect(TokenKind.EQUALS);
+    declaredToken=token;
+  }
+  expect(TokenKind.STRING);
+  try {
+    Identifier identifier=new Identifier(nameToken.value.toString());
+    if (symbols.containsKey(identifier)) {
+      syntaxError(nameToken,String.format("Symbol '%s' has already been loaded",identifier.getName()));
+    }
+ else {
+      symbols.put(setLocation(identifier,nameToken.left,token.left),declaredToken.value.toString());
+    }
+  }
+ catch (  NullPointerException npe) {
+  }
+}

@@ -8,25 +8,19 @@
   String path=(String)token.value;
   nextToken();
   expect(TokenKind.COMMA);
-  List<Identifier> symbols=new ArrayList<>();
-  if (token.kind == TokenKind.STRING) {
-    symbols.add(new Identifier((String)token.value));
-  }
-  expect(TokenKind.STRING);
+  Map<Identifier,String> symbols=new HashMap<>();
+  parseLoadSymbol(symbols);
   while (token.kind != TokenKind.RPAREN && token.kind != TokenKind.EOF) {
     expect(TokenKind.COMMA);
     if (token.kind == TokenKind.RPAREN) {
       break;
     }
-    if (token.kind == TokenKind.STRING) {
-      symbols.add(new Identifier((String)token.value));
-    }
-    expect(TokenKind.STRING);
+    parseLoadSymbol(symbols);
   }
   expect(TokenKind.RPAREN);
   LoadStatement stmt=new LoadStatement(path,symbols);
   try {
-    stmt.validateLoadPath();
+    stmt.validatePath();
   }
  catch (  EvalException e) {
     syntaxError(pathToken,e.getMessage());

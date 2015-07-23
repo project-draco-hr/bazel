@@ -1,10 +1,11 @@
 {
-  for (  Identifier i : symbols) {
+  for (  Map.Entry<Identifier,String> entry : symbols.entrySet()) {
     try {
-      if (i.isPrivate()) {
-        throw new EvalException(getLocation(),"symbol '" + i + "' is private and cannot "+ "be imported");
+      Identifier current=entry.getKey();
+      if (current.isPrivate()) {
+        throw new EvalException(getLocation(),"symbol '" + current + "' is private and cannot be imported");
       }
-      env.importSymbol(getImportPath(),i.getName());
+      env.importSymbol(getImportPath(),current,entry.getValue());
     }
  catch (    Environment.NoSuchVariableException|Environment.LoadFailedException e) {
       throw new EvalException(getLocation(),e.getMessage());
