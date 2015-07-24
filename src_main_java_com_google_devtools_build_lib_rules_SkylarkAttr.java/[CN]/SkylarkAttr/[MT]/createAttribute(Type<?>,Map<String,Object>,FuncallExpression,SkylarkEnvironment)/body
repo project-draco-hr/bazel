@@ -1,6 +1,6 @@
 {
   Attribute.Builder<?> builder=Attribute.attr("",type);
-  Object defaultValue=arguments.get("default");
+  Object defaultValue=arguments.get(DEFAULT_ARG);
   if (!EvalUtils.isNullOrNone(defaultValue)) {
     if (defaultValue instanceof UserDefinedFunction) {
       builder.value(new SkylarkLateBound(new SkylarkCallbackFunction((UserDefinedFunction)defaultValue,ast,env)));
@@ -9,23 +9,23 @@
       builder.defaultValue(defaultValue);
     }
   }
-  for (  String flag : castList(arguments.get("flags"),String.class)) {
+  for (  String flag : castList(arguments.get(FLAGS_ARG),String.class)) {
     builder.setPropertyFlag(flag);
   }
-  if (containsNonNoneKey(arguments,"mandatory") && (Boolean)arguments.get("mandatory")) {
+  if (containsNonNoneKey(arguments,MANDATORY_ARG) && (Boolean)arguments.get(MANDATORY_ARG)) {
     builder.setPropertyFlag("MANDATORY");
   }
-  if (containsNonNoneKey(arguments,"non_empty") && (Boolean)arguments.get("non_empty")) {
+  if (containsNonNoneKey(arguments,NON_EMPTY_ARG) && (Boolean)arguments.get(NON_EMPTY_ARG)) {
     builder.setPropertyFlag("NON_EMPTY");
   }
-  if (containsNonNoneKey(arguments,"executable") && (Boolean)arguments.get("executable")) {
+  if (containsNonNoneKey(arguments,EXECUTABLE_ARG) && (Boolean)arguments.get(EXECUTABLE_ARG)) {
     builder.setPropertyFlag("EXECUTABLE");
   }
-  if (containsNonNoneKey(arguments,"single_file") && (Boolean)arguments.get("single_file")) {
+  if (containsNonNoneKey(arguments,SINGLE_FILE_ARG) && (Boolean)arguments.get(SINGLE_FILE_ARG)) {
     builder.setPropertyFlag("SINGLE_ARTIFACT");
   }
-  if (containsNonNoneKey(arguments,"allow_files")) {
-    Object fileTypesObj=arguments.get("allow_files");
+  if (containsNonNoneKey(arguments,ALLOW_FILES_ARG)) {
+    Object fileTypesObj=arguments.get(ALLOW_FILES_ARG);
     if (fileTypesObj == Boolean.TRUE) {
       builder.allowedFileTypes(FileTypeSet.ANY_FILE);
     }
@@ -42,19 +42,19 @@
  else   if (type.equals(Type.LABEL) || type.equals(Type.LABEL_LIST)) {
     builder.allowedFileTypes(FileTypeSet.NO_FILE);
   }
-  Object ruleClassesObj=arguments.get("allow_rules");
+  Object ruleClassesObj=arguments.get(ALLOW_RULES_ARG);
   if (ruleClassesObj != null && ruleClassesObj != Environment.NONE) {
     builder.allowedRuleClasses(castList(ruleClassesObj,String.class,"allowed rule classes for attribute definition"));
   }
-  Iterable<Object> values=castList(arguments.get("values"),Object.class);
+  Iterable<Object> values=castList(arguments.get(VALUES_ARG),Object.class);
   if (!Iterables.isEmpty(values)) {
     builder.allowedValues(new AllowedValueSet(values));
   }
-  if (containsNonNoneKey(arguments,"providers")) {
-    builder.mandatoryProviders(castList(arguments.get("providers"),String.class));
+  if (containsNonNoneKey(arguments,PROVIDERS_ARG)) {
+    builder.mandatoryProviders(castList(arguments.get(PROVIDERS_ARG),String.class));
   }
-  if (containsNonNoneKey(arguments,"cfg")) {
-    builder.cfg((ConfigurationTransition)arguments.get("cfg"));
+  if (containsNonNoneKey(arguments,CONFIGURATION_ARG)) {
+    builder.cfg((ConfigurationTransition)arguments.get(CONFIGURATION_ARG));
   }
   return builder;
 }
