@@ -1,5 +1,6 @@
 {
   ConfigMatchingProvider matchingCondition=null;
+  Set<Label> conditionLabels=new LinkedHashSet<>();
   T matchingValue=null;
   for (  Map.Entry<Label,T> entry : selector.getEntries().entrySet()) {
     Label selectorKey=entry.getKey();
@@ -7,6 +8,7 @@
       continue;
     }
     ConfigMatchingProvider curCondition=Verify.verifyNotNull(configConditions.get(selectorKey));
+    conditionLabels.add(curCondition.label());
     if (curCondition.matches()) {
       if (matchingCondition == null || curCondition.refines(matchingCondition)) {
         matchingCondition=curCondition;
@@ -21,7 +23,7 @@
   }
   if (matchingCondition == null) {
     if (!selector.hasDefault()) {
-      throw new EvalException(rule.getAttributeLocation(attributeName),"Configurable attribute \"" + attributeName + "\" doesn't match this "+ "configuration (would a default condition help?)");
+      throw new EvalException(rule.getAttributeLocation(attributeName),"Configurable attribute \"" + attributeName + "\" doesn't match this "+ "configuration (would a default condition help?).\nConditions checked:\n "+ Joiner.on("\n ").join(conditionLabels));
     }
     matchingValue=selector.getDefault();
   }
