@@ -18,11 +18,8 @@
       builder.addLibrary(LinkerInputs.opaqueLibraryToLink(library));
     }
   }
-  List<String> linkopts=new ArrayList<>();
-  Map<Artifact,ImmutableList<Artifact>> linkstamps=new LinkedHashMap<>();
-  NestedSet<LibraryToLink> librariesInDepsClosure=findLibrariesToLinkInDepsClosure(context,common,cppConfiguration,linkopts,linkstamps);
-  builder.addLinkopts(linkopts);
-  builder.addLinkstamps(linkstamps);
-  builder.addLibraries(librariesInDepsClosure);
+  boolean linkingStatically=getLinkStaticness(context,common,cppConfiguration) != LinkStaticness.DYNAMIC;
+  CcLinkParams linkParams=collectCcLinkParams(context,common,linkingStatically,isLinkShared(context));
+  builder.addLinkParams(linkParams,context);
   return builder;
 }
