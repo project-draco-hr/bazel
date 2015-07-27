@@ -1,0 +1,15 @@
+'A simple cross-platform helper to create a timestamped tar file.'
+import datetime
+import sys
+import tarfile
+from tools.build_defs.docker import archive
+if (__name__ == '__main__'):
+    mtime = int(datetime.datetime.now().strftime('%s'))
+    with archive.TarFileWriter(sys.argv[1]) as f:
+        f.add_file('./', tarfile.DIRTYPE, uname='root', gname='root', mtime=mtime)
+        f.add_file('./usr/', tarfile.DIRTYPE, uname='root', gname='root', mtime=mtime)
+        f.add_file('./usr/bin/', tarfile.DIRTYPE, uname='root', gname='root', mtime=mtime)
+        f.add_file('./usr/bin/java', tarfile.SYMTYPE, link='/path/to/bin/java', uname='root', gname='root', mtime=mtime)
+        f.add_file('./etc/', tarfile.DIRTYPE, uname='root', gname='root', mtime=mtime)
+        f.add_file('./etc/nsswitch.conf', content='hosts:          files dns\n', uname='root', gname='root', mtime=mtime)
+        f.add_file('./tmp/', tarfile.DIRTYPE, uname='root', gname='root', mtime=mtime)

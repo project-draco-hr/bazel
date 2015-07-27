@@ -1,0 +1,49 @@
+def RewriteMetadata(data, options):
+    "Rewrite and return a copy of the input data according to options.\n\n  Args:\n    data: The dict of Docker image layer metadata we're copying and rewriting.\n    options: The changes this layer makes to the overall image's metadata, which\n             first appears in this layer's version of the metadata\n\n  Returns:\n    A deep copy of data, which has been updated to reflect the metadata\n    additions of this layer.\n\n  Raises:\n    Exception: a required option was missing.\n  "
+    output = copy.deepcopy(data)
+    if (not options.name):
+        raise Exception('Missing required option: name')
+    output['id'] = options.name
+    if options.parent:
+        output['parent'] = options.parent
+    elif data:
+        raise Exception('Expected empty input object when parent is omitted')
+    if options.size:
+        output['Size'] = options.size
+    elif ('Size' in output):
+        del output['Size']
+    if ('config' not in output):
+        output['config'] = {}
+    if options.entrypoint:
+        output['config']['Entrypoint'] = options.entrypoint
+    if options.cmd:
+        output['config']['Cmd'] = options.cmd
+    output['docker_version'] = _DOCKER_VERSION
+    output['architecture'] = _PROCESSOR_ARCHITECTURE
+    output['os'] = _OPERATING_SYSTEM
+    if options.env:
+        environ_dict = {}
+        for kv in output['config'].get('Env', []):
+            (k, v) = kv.split('=', 1)
+            environ_dict[k] = v
+        for kv in options.env:
+            (k, v) = kv.split('=', 1)
+            v = Resolve(v, environ_dict)
+            environ_dict[k] = v
+        output['config']['Env'] = [('%s=%s' % (k, environ_dict[k])) for k in sorted(environ_dict.keys())]
+    if options.ports:
+        if ('ExposedPorts' not in output['config']):
+            output['config']['ExposedPorts'] = {}
+        for p in options.ports:
+            if ('/' in p):
+                output['config']['ExposedPorts'][p] = {}
+            else:
+                output['config']['ExposedPorts'][(p + '/tcp')] = {}
+    if options.volumes:
+        if ('Volumes' not in output['config']):
+            output['config']['Volumes'] = {}
+        for p in options.volumes:
+            output['config']['Volumes'][p] = {}
+    if ('container_config' in output):
+        del output['container_config']
+    return output

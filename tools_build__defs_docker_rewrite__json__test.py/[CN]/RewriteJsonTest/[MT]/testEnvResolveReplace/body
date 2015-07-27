@@ -1,0 +1,8 @@
+def testEnvResolveReplace(self):
+    in_data = {'config': {'User': 'mattmoor', 'WorkingDir': '/usr/home/mattmoor', 'Env': ['foo=bar', 'baz=blah', 'blah=still around'], }, }
+    name = 'deadbeef'
+    parent = 'blah'
+    env = ['baz=replacement', 'foo=$foo:asdf']
+    expected = {'id': name, 'parent': parent, 'config': {'User': 'mattmoor', 'WorkingDir': '/usr/home/mattmoor', 'Env': ['baz=replacement', 'blah=still around', 'foo=bar:asdf'], }, 'docker_version': _DOCKER_VERSION, 'architecture': _PROCESSOR_ARCHITECTURE, 'os': _OPERATING_SYSTEM, }
+    actual = RewriteMetadata(in_data, MetadataOptions(name=name, env=env, parent=parent))
+    self.assertEquals(expected, actual)

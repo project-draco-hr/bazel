@@ -1,0 +1,9 @@
+def add_file(self, f):
+    "Add a file to the layer.\n\n    Args:\n       f: the file to add to the layer\n\n    `f` will be copied into the `self.directory` sub-directory of the layer.\n    Directory structure beyond `self.file_path` will be preserved (so, if\n    `f`'s path is `a/b/c/file`, `directory` is `d/e` and `file_path` is `a/b`,\n    the path of the file in the layer will be `d/e/c/file`).\n    "
+    dest = f
+    if dest.startswith(self.file_path):
+        dest = dest[len(self.file_path):]
+    if self.directory:
+        dest = ((self.directory + '/') + dest)
+    dest = dest.lstrip('/')
+    self.tarfile.add_file(dest, file_content=f)

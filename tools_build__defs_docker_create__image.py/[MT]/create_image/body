@@ -1,0 +1,12 @@
+def create_image(output, identifier, base=None, layer=None, metadata=None, name=None, repository=None):
+    'Creates a Docker image.\n\n  Args:\n    output: the name of the docker image file to create.\n    identifier: the identifier of the top layer for this image.\n    base: a base layer (optional) to merge to current layer.\n    layer: the layer content (a tar file).\n    metadata: the json metadata file for the top layer.\n    name: symbolic name for this docker image.\n    repository: repository name for this docker image.\n  '
+    tar = archive.TarFileWriter(output)
+    tar.add_file('top', content=identifier)
+    tar.add_file((identifier + '/'), tarfile.DIRTYPE)
+    tar.add_file((identifier + '/VERSION'), content=DATA_FORMAT_VERSION)
+    tar.add_file((identifier + '/layer.tar'), file_content=layer)
+    tar.add_file((identifier + '/json'), file_content=metadata)
+    if base:
+        tar.add_tar(base, name_filter=_base_name_filter)
+    if repository:
+        tar.add_file('repositories', content='\n'.join(['{', ('  "%s": {' % repository), ('    "%s": "%s"' % (name, identifier)), '  }', '}']))

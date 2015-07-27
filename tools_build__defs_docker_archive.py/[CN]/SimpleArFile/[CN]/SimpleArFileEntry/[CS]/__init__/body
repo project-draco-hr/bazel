@@ -1,0 +1,12 @@
+def __init__(self, f):
+    self.filename = f.read(16).strip()
+    if self.filename.endswith('/'):
+        self.filename = self.filename[:(-1)]
+    self.timestamp = int(f.read(12).strip())
+    self.owner_id = int(f.read(6).strip())
+    self.group_id = int(f.read(6).strip())
+    self.mode = int(f.read(8).strip(), 8)
+    self.size = int(f.read(10).strip())
+    if (f.read(2) != '`\n'):
+        raise self.ArError('Invalid AR file header')
+    self.data = f.read(self.size)

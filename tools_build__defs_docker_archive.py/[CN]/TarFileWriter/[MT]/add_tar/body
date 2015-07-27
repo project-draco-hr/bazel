@@ -1,0 +1,29 @@
+def add_tar(self, tar, rootuid=None, rootgid=None, numeric=False, name_filter=None):
+    'Merge a tar content into the current tar, stripping timestamp.\n\n    Args:\n      tar: the name of tar to extract and put content into the current tar.\n      rootuid: user id that we will pretend is root (replaced by uid 0).\n      rootgid: group id that we will pretend is root (replaced by gid 0).\n      numeric: set to true to strip out name of owners (and just use the\n          numeric values).\n      name_filter: filter out file by names. If not none, this method will be\n          called for each file to add, given the name and should return true if\n          the file is to be added to the final tar and false otherwise.\n    '
+    compression = os.path.splitext(tar)[(-1)][1:]
+    if (compression == 'tgz'):
+        compression = 'gz'
+    elif (compression == 'bzip2'):
+        compression = 'bz2'
+    elif (compression not in ['gz', 'bz2']):
+        compression = ''
+    with tarfile.open(name=tar, mode=('r:' + compression)) as intar:
+        for tarinfo in intar:
+            if ((name_filter is None) or name_filter(tarinfo.name)):
+                tarinfo.mtime = 0
+                if ((rootuid is not None) and (tarinfo.uid == rootuid)):
+                    tarinfo.uid = 0
+                    tarinfo.uname = 'root'
+                if ((rootgid is not None) and (tarinfo.gid == rootgid)):
+                    tarinfo.gid = 0
+                    tarinfo.gname = 'root'
+                if numeric:
+                    tarinfo.uname = ''
+                    tarinfo.gname = ''
+                name = tarinfo.name
+                if ((not name.startswith('/')) and (not name.startswith('.'))):
+                    tarinfo.name = ('./' + name)
+                if tarinfo.isfile():
+                    self.tar.addfile(tarinfo, intar.extractfile(tarinfo.name))
+                else:
+                    self.tar.addfile(tarinfo)
