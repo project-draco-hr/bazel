@@ -4,5 +4,12 @@
   if (!incremental) {
     builder.addArgument("--apk").addInputArgument(apk);
   }
+  if (ruleContext.getFragment(AndroidConfiguration.class).useIncrementalNativeLibs()) {
+    for (    Map.Entry<String,Iterable<Artifact>> arch : nativeLibs.getMap().entrySet()) {
+      for (      Artifact lib : arch.getValue()) {
+        builder.addArgument("--native_lib").addArgument(arch.getKey() + ":" + lib.getExecPathString()).addInput(lib);
+      }
+    }
+  }
   ruleContext.registerAction(builder.build(ruleContext));
 }
