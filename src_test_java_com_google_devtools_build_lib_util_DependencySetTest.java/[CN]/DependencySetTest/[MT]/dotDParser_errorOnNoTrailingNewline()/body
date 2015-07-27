@@ -1,0 +1,12 @@
+{
+  PathFragment file1=new PathFragment("/usr/local/blah/blah/genhello/hello.cc");
+  Path dotd=scratch.file("/tmp/foo.d");
+  FileSystemUtils.writeContent(dotd,("hello.o: \\\n " + file1).getBytes(Charset.forName("UTF-8")));
+  try {
+    newDependencySet().read(dotd);
+    fail();
+  }
+ catch (  IOException e) {
+    assertThat(e.getMessage()).contains("File does not end in a newline");
+  }
+}
