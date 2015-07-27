@@ -4,16 +4,18 @@
     Path outputPath=runtime.getOutputPath();
     Path localOutputPath=runtime.getDirectories().getLocalOutputPath();
     if (outputPath.isSymbolicLink()) {
-      outputPath.delete();
-      if (localOutputPath.exists()) {
-        localOutputPath.renameTo(outputPath);
+      try {
+        outputPath.delete();
+        if (localOutputPath.exists()) {
+          localOutputPath.renameTo(outputPath);
+        }
+      }
+ catch (      IOException e) {
+        throw new ExecutorInitException("Couldn't handle local output directory symlinks",e);
       }
     }
   }
- catch (  IOException e) {
-    throw new BuildFailedException(e.getMessage());
-  }
- finally {
+  finally {
     Profiler.instance().logSimpleTask(startTime,ProfilerTask.INFO,"Starting local output build");
   }
 }
