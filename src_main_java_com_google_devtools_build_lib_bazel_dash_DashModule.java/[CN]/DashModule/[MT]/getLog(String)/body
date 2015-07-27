@@ -1,0 +1,18 @@
+{
+  Log.Builder builder=Log.newBuilder().setPath(logPath);
+  File log=new File(logPath);
+  try {
+    long fileSize=Files.size(log.toPath());
+    if (fileSize > ONE_MB) {
+      fileSize=ONE_MB;
+      builder.setTruncated(true);
+    }
+    byte buffer[]=new byte[(int)fileSize];
+    new FileInputStream(log).read(buffer,0,(int)fileSize);
+    builder.setContents(ByteString.copyFrom(buffer));
+  }
+ catch (  IOException e) {
+    runtime.getReporter().getOutErr().printOutLn("Error reading log file " + logPath + ": "+ e.getMessage());
+  }
+  return builder.build();
+}
