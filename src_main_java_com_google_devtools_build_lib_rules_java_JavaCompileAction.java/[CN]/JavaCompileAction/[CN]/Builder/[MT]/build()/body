@@ -25,12 +25,13 @@
   Iterable<Artifact> baseInputs=ImmutableIterable.from(Iterables.concat(javabaseInputs,bootclasspathEntries,extdirInputs,ImmutableList.of(paramFile)));
   Preconditions.checkState(javaExecutable != null,owner);
   Preconditions.checkState(javaExecutable.isAbsolute() ^ !javabaseInputs.isEmpty(),javaExecutable);
-  Collection<Artifact> outputs=Collections2.filter(Arrays.asList(outputJar,metadata,gensrcOutputJar,manifestProtoOutput,outputDepsProto),Predicates.notNull());
+  ArrayList<Artifact> outputs=new ArrayList<>(Collections2.filter(Arrays.asList(outputJar,metadata,gensrcOutputJar,manifestProtoOutput,outputDepsProto),Predicates.notNull()));
+  PathFragment classDirectory=configuration.getBinFragment().getRelative(workDir(outputJar,"_files"));
   CustomCommandLine.Builder paramFileContentsBuilder=javaCompileCommandLine(semantics,configuration,classDirectory,sourceGenDirectory,tempDirectory,outputJar,gensrcOutputJar,manifestProtoOutput,compressJar,outputDepsProto,classpathEntries,processorPath,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,extdirInputs,internedJcopts,directJars,strictJavaDeps,compileTimeDependencyArtifacts,ruleKind,targetLabel);
   semantics.buildJavaCommandLine(outputs,configuration,paramFileContentsBuilder);
   CommandLine paramFileContents=paramFileContentsBuilder.build();
   Action parameterFileWriteAction=new ParameterFileWriteAction(owner,paramFile,paramFileContents,ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1);
   analysisEnvironment.registerAction(parameterFileWriteAction);
   CommandLine javaBuilderCommandLine=spawnCommandLine(javaExecutable,javaBuilderJar,langtoolsJar,instrumentationJars,paramFile,javacJvmOpts,semantics.getJavaBuilderMainClass(),configuration.getHostPathSeparator());
-  return new JavaCompileAction(owner,baseInputs,outputs,paramFileContents,javaBuilderCommandLine,classDirectory,outputJar,classpathEntries,extdirInputs,processorPath,langtoolsJar,javaBuilderJar,instrumentationJars,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,internedJcopts,directJars,strictJavaDeps,compileTimeDependencyArtifacts,semantics);
+  return new JavaCompileAction(owner,baseInputs,outputs,paramFileContents,javaBuilderCommandLine,classDirectory,outputJar,classpathEntries,extdirInputs,processorPath,langtoolsJar,javaBuilderJar,instrumentationJars,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,internedJcopts,directJars,strictJavaDeps,compileTimeDependencyArtifacts);
 }
