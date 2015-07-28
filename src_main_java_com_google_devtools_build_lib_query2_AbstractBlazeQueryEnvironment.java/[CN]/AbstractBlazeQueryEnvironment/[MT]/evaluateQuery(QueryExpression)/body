@@ -1,4 +1,5 @@
 {
+  long startTime=Profiler.nanoTimeMaybe();
   resolvedTargetPatterns.clear();
   Set<String> targetPatternSet=new LinkedHashSet<>();
   expr.collectTargetPatterns(targetPatternSet);
@@ -14,6 +15,12 @@
   }
  catch (  QueryException e) {
     throw new QueryException(e,expr);
+  }
+ finally {
+    long duration=Profiler.nanoTimeMaybe() - startTime;
+    if (duration > 0) {
+      LOG.info("Spent " + (duration / 1000 / 1000) + " ms evaluating query");
+    }
   }
   if (eventHandler.hasErrors()) {
     if (!keepGoing) {

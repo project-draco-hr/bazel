@@ -1,7 +1,12 @@
 {
+  long startTime=Profiler.nanoTimeMaybe();
   EvaluationResult<SkyValue> result=graphFactory.prepareAndGet(universeScope,loadingPhaseThreads,eventHandler);
   graph=result.getWalkableGraph();
   Collection<SkyValue> values=result.values();
+  long duration=Profiler.nanoTimeMaybe() - startTime;
+  if (duration > 0) {
+    LOG.info("Spent " + (duration / 1000 / 1000) + " ms on evaluation and walkable graph");
+  }
   boolean singleValueEvaluated=values.size() == 1;
   boolean foundError=!result.errorMap().isEmpty();
   boolean evaluationFoundCycle=foundError && !Iterables.isEmpty(result.getError().getCycleInfo());
