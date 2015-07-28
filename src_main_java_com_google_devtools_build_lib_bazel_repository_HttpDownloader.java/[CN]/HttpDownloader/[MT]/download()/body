@@ -8,6 +8,14 @@
     filename+="." + type;
   }
   Path destination=outputDirectory.getRelative(filename);
+  try {
+    String currentSha256=getHash(Hashing.sha256().newHasher(),destination);
+    if (currentSha256.equals(sha256)) {
+      return destination;
+    }
+  }
+ catch (  IOException e) {
+  }
   int currentBytes;
   final AtomicInteger totalBytes=new AtomicInteger(0);
   final ScheduledFuture<?> loggerHandle=getLoggerHandle(totalBytes);
