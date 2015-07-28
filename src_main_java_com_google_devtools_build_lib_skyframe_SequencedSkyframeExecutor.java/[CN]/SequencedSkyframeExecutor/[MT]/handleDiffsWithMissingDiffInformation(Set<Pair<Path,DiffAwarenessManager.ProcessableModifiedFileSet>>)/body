@@ -1,20 +1,15 @@
 {
-  if (pathEntriesWithoutDiffInformation.isEmpty()) {
+  if (pathEntriesWithoutDiffInformation.isEmpty() && Iterables.isEmpty(customDirtinessCheckers)) {
     return;
   }
   buildDriver.evaluate(ImmutableList.<SkyKey>of(),false,DEFAULT_THREAD_COUNT,reporter);
   FilesystemValueChecker fsnc=new FilesystemValueChecker(memoizingEvaluator,tsgm,null);
-  Iterable<SkyKey> filesystemSkyKeys=fsnc.getFilesystemSkyKeys();
-  Multimap<Path,SkyKey> skyKeysByPathEntry=partitionSkyKeysByPackagePathEntry(ImmutableSet.copyOf(pkgLocator.get().getPathEntries()),filesystemSkyKeys);
-  List<Path> pathEntriesChecked=Lists.newArrayListWithCapacity(pathEntriesWithoutDiffInformation.size());
-  List<Iterable<SkyKey>> valuesToCheckManually=Lists.newArrayList();
+  Set<Path> pathEntries=new HashSet<>();
   for (  Pair<Path,DiffAwarenessManager.ProcessableModifiedFileSet> pair : pathEntriesWithoutDiffInformation) {
-    Path pathEntry=pair.getFirst();
-    valuesToCheckManually.add(skyKeysByPathEntry.get(pathEntry));
-    pathEntriesChecked.add(pathEntry);
+    pathEntries.add(pair.getFirst());
   }
-  Differencer.Diff diff=fsnc.getDirtyFilesystemValues(Iterables.concat(valuesToCheckManually));
-  handleChangedFiles(pathEntriesChecked,diff);
+  Differencer.Diff diff=fsnc.getDirtyKeys(new UnionDirtinessChecker(Iterables.concat(customDirtinessCheckers,ImmutableList.<SkyValueDirtinessChecker>of(new MissingDiffDirtinessChecker(pathEntries)))));
+  handleChangedFiles(pathEntries,diff);
   for (  Pair<Path,DiffAwarenessManager.ProcessableModifiedFileSet> pair : pathEntriesWithoutDiffInformation) {
     pair.getSecond().markProcessed();
   }
