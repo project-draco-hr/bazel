@@ -3,13 +3,15 @@
   File newManifestFile=new File(nativeLibDir,"native_manifest");
   File incrementalDir=new File("/data/data/" + packageName + "/incrementallib");
   File installedManifestFile=new File(incrementalDir,"manifest");
+  String defaultNativeLibDir="/data/data/" + packageName + "/lib";
   if (!newManifestFile.exists()) {
-    return "/data/data/" + packageName + "/lib";
+    return defaultNativeLibDir;
   }
   Map<String,String> newManifest=parseManifest(newManifestFile);
   Map<String,String> installedManifest=new HashMap<String,String>();
   Set<String> libsToDelete=new HashSet<String>();
   Set<String> libsToUpdate=new HashSet<String>();
+  String realNativeLibDir=newManifest.isEmpty() ? defaultNativeLibDir : incrementalDir.toString();
   if (!incrementalDir.exists()) {
     if (!incrementalDir.mkdirs()) {
       throw new IOException("Could not mkdir " + incrementalDir);
@@ -34,7 +36,7 @@
     }
   }
   if (libsToDelete.isEmpty() && libsToUpdate.isEmpty()) {
-    return incrementalDir.toString();
+    return realNativeLibDir;
   }
   installedManifestFile.delete();
   for (  String toDelete : libsToDelete) {
@@ -55,5 +57,5 @@
   finally {
     installedManifestFile.delete();
   }
-  return incrementalDir.toString();
+  return realNativeLibDir;
 }
