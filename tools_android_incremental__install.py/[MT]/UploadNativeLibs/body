@@ -1,0 +1,45 @@
+def UploadNativeLibs(adb, native_lib_args, app_dir):
+    'Uploads native libraries to the device.'
+    native_libs = ConvertNativeLibs(native_lib_args)
+    libs = set()
+    if native_libs:
+        abi = adb.GetAbi()
+        if (abi not in native_libs):
+            logging.warn("No native libs for device ABI '%s'. Available ABIs: %s", abi, ', '.join(native_libs))
+        else:
+            libs = native_libs[abi]
+    basename_to_path = {}
+    install_checksums = {}
+    for lib in sorted(libs):
+        install_checksums[os.path.basename(lib)] = Checksum(lib)
+        basename_to_path[os.path.basename(lib)] = lib
+    device_manifest = adb.Pull(('%s/native/native_manifest' % app_dir))
+    device_checksums = {}
+    if device_manifest:
+        for (name, checksum) in [l.split(' ') for l in device_manifest.split('\n')]:
+            device_checksums[name] = checksum
+    libs_to_delete = (set(device_checksums) - set(install_checksums))
+    libs_to_upload = (set(install_checksums) - set(device_checksums))
+    common_libs = set(install_checksums).intersection(set(device_checksums))
+    libs_to_upload.update([l for l in common_libs if (install_checksums[l] != device_checksums[l])])
+    libs_to_push = [(basename_to_path[lib], ('%s/native/%s' % (app_dir, lib))) for lib in libs_to_upload]
+    if ((not libs_to_delete) and (not libs_to_push) and (device_manifest is not None)):
+        logging.info('Native libs up-to-date')
+        return
+    num_files = (len(libs_to_delete) + len(libs_to_push))
+    logging.info('Updating %d native lib%s...', num_files, ('s' if (num_files != 1) else ''))
+    adb.Delete(('%s/native/native_manifest' % app_dir))
+    if libs_to_delete:
+        adb.DeleteMultiple([('%s/native/%s' % (app_dir, lib)) for lib in libs_to_delete])
+    upload_walltime_start = time.time()
+    fs = [adb.Push(local, remote) for (local, remote) in libs_to_push]
+    (done, not_done) = futures.wait(fs, return_when=futures.FIRST_EXCEPTION)
+    upload_walltime = (time.time() - upload_walltime_start)
+    logging.debug('Native library upload walltime: %s seconds', upload_walltime)
+    if not_done:
+        for f in not_done:
+            f.cancel()
+    for f in done:
+        f.result()
+    install_manifest = [((name + ' ') + checksum) for (name, checksum) in install_checksums.iteritems()]
+    adb.PushString('\n'.join(install_manifest), ('%s/native/native_manifest' % app_dir)).result()

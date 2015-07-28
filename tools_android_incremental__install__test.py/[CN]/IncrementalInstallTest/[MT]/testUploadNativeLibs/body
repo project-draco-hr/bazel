@@ -1,0 +1,18 @@
+def testUploadNativeLibs(self):
+    self._CreateZip()
+    with open('liba.so', 'w') as f:
+        f.write('liba_1')
+    with open('libb.so', 'w') as f:
+        f.write('libb_1')
+    native_libs = ['armeabi-v7a:liba.so', 'armeabi-v7a:libb.so']
+    self._CallIncrementalInstall(incremental=False, native_libs=native_libs)
+    self.assertEquals('liba_1', self._GetDeviceFile('native/liba.so'))
+    self.assertEquals('libb_1', self._GetDeviceFile('native/libb.so'))
+    with open('libb.so', 'w') as f:
+        f.write('libb_2')
+    self._CallIncrementalInstall(incremental=True, native_libs=native_libs)
+    self.assertEquals('libb_2', self._GetDeviceFile('native/libb.so'))
+    self._CallIncrementalInstall(incremental=True, native_libs=['armeabi-v7a:liba.so'])
+    self.assertFalse((self._GetDeviceAppPath('native/libb.so') in self._mock_adb.files))
+    self._CallIncrementalInstall(incremental=True, native_libs=native_libs)
+    self.assertEquals('libb_2', self._GetDeviceFile('native/libb.so'))
