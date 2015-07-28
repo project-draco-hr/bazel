@@ -1,6 +1,13 @@
 {
   externalResourceFile=getExternalResourceFile();
-  IncrementalClassLoader.inject(StubApplication.class.getClassLoader(),packageName,codeCacheDir,getDexList(packageName));
+  String nativeLibDir;
+  try {
+    nativeLibDir=copyNativeLibs();
+  }
+ catch (  IOException e) {
+    throw new IllegalStateException(e);
+  }
+  IncrementalClassLoader.inject(StubApplication.class.getClassLoader(),packageName,codeCacheDir,nativeLibDir,getDexList(packageName));
   try {
     @SuppressWarnings("unchecked") Class<? extends Application> realClass=(Class<? extends Application>)Class.forName(realClassName);
     Constructor<? extends Application> ctor=realClass.getConstructor();

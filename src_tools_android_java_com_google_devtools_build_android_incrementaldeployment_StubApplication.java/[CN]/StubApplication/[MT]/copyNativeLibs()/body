@@ -1,0 +1,59 @@
+{
+  File nativeLibDir=new File(INCREMENTAL_DEPLOYMENT_DIR + "/" + packageName+ "/native");
+  File newManifestFile=new File(nativeLibDir,"native_manifest");
+  File incrementalDir=new File("/data/data/" + packageName + "/incrementallib");
+  File installedManifestFile=new File(incrementalDir,"manifest");
+  if (!newManifestFile.exists()) {
+    return "/data/data/" + packageName + "/lib";
+  }
+  Map<String,String> newManifest=parseManifest(newManifestFile);
+  Map<String,String> installedManifest=new HashMap<String,String>();
+  Set<String> libsToDelete=new HashSet<String>();
+  Set<String> libsToUpdate=new HashSet<String>();
+  if (!incrementalDir.exists()) {
+    if (!incrementalDir.mkdirs()) {
+      throw new IOException("Could not mkdir " + incrementalDir);
+    }
+  }
+  if (installedManifestFile.exists()) {
+    installedManifest=parseManifest(installedManifestFile);
+  }
+ else {
+    for (    String installed : incrementalDir.list(SO)) {
+      libsToDelete.add(installed);
+    }
+  }
+  for (  String installed : installedManifest.keySet()) {
+    if (!newManifest.containsKey(installed) || !newManifest.get(installed).equals(installedManifest.get(installed))) {
+      libsToDelete.add(installed);
+    }
+  }
+  for (  String newLib : newManifest.keySet()) {
+    if (!installedManifest.containsKey(newLib) || !installedManifest.get(newLib).equals(newManifest.get(newLib))) {
+      libsToUpdate.add(newLib);
+    }
+  }
+  if (libsToDelete.isEmpty() && libsToUpdate.isEmpty()) {
+    return incrementalDir.toString();
+  }
+  installedManifestFile.delete();
+  for (  String toDelete : libsToDelete) {
+    File fileToDelete=new File(incrementalDir + "/" + toDelete);
+    Log.v("StubApplication","Deleting " + fileToDelete);
+    if (fileToDelete.exists() && !fileToDelete.delete()) {
+      throw new IOException("Could not delete " + fileToDelete);
+    }
+  }
+  for (  String toUpdate : libsToUpdate) {
+    Log.v("StubApplication","Copying: " + toUpdate);
+    File src=new File(nativeLibDir + "/" + toUpdate);
+    copy(src,new File(incrementalDir + "/" + toUpdate));
+  }
+  try {
+    copy(newManifestFile,installedManifestFile);
+  }
+  finally {
+    installedManifestFile.delete();
+  }
+  return incrementalDir.toString();
+}
