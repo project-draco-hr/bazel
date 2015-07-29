@@ -4,11 +4,10 @@
   SkyKey targetKey=TargetMarkerValue.key(label);
   Target target;
   boolean packageLoadedSuccessfully;
-  boolean successfulTransitiveLoading=true;
   NestedSetBuilder<Label> transitiveRootCauses=NestedSetBuilder.stableOrder();
   NoSuchTargetException errorLoadingTarget=null;
   try {
-    TargetMarkerValue targetValue=(TargetMarkerValue)env.getValueOrThrow(targetKey,NoSuchThingException.class);
+    TargetMarkerValue targetValue=(TargetMarkerValue)env.getValueOrThrow(targetKey,NoSuchTargetException.class,NoSuchPackageException.class);
     if (targetValue == null) {
       return null;
     }
@@ -45,16 +44,11 @@
  catch (    NoSuchTargetException nste) {
       throw new IllegalStateException("Expected target to exist",nste);
     }
-    successfulTransitiveLoading=false;
-    transitiveRootCauses.add(label);
     errorLoadingTarget=e;
     packageLoadedSuccessfully=false;
   }
 catch (  NoSuchPackageException e) {
     throw new TransitiveTargetFunctionException(e);
-  }
-catch (  NoSuchThingException e) {
-    throw new IllegalStateException(e + " not NoSuchTargetException or NoSuchPackageException");
   }
   NestedSetBuilder<PackageIdentifier> transitiveSuccessfulPkgs=NestedSetBuilder.stableOrder();
   NestedSetBuilder<PackageIdentifier> transitiveUnsuccessfulPkgs=NestedSetBuilder.stableOrder();
@@ -66,10 +60,12 @@ catch (  NoSuchThingException e) {
     transitiveSuccessfulPkgs.add(packageId);
   }
  else {
+    transitiveRootCauses.add(label);
     transitiveUnsuccessfulPkgs.add(packageId);
   }
   transitiveTargets.add(target.getLabel());
   Iterable<SkyKey> depKeys=getLabelDepKeys(target);
+  boolean successfulTransitiveLoading=packageLoadedSuccessfully;
   successfulTransitiveLoading&=processDeps(env,target,transitiveRootCauses,transitiveSuccessfulPkgs,transitiveUnsuccessfulPkgs,transitiveTargets,depKeys,transitiveConfigFragments,configFragmentsFromDeps);
   if (env.valuesMissing()) {
     return null;
