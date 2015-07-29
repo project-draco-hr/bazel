@@ -6,11 +6,10 @@
     preprocessedArgs.add("-I" + idlImport);
   }
   preprocessedArgs.add("-p" + sdk.getFrameworkAidl().getExecPathString());
-  PathFragment rulePackage=ruleContext.getRule().getLabel().getPackageFragment();
   String ruleName=ruleContext.getRule().getName();
   for (  Artifact idl : idls) {
-    PathFragment preprocessedPath=rulePackage.getRelative(ruleName + "_aidl").getRelative(idl.getRootRelativePath());
-    Artifact preprocessed=ruleContext.getAnalysisEnvironment().getDerivedArtifact(preprocessedPath,ruleContext.getConfiguration().getGenfilesDirectory());
+    PathFragment preprocessedPath=new PathFragment(ruleName + "_aidl").getRelative(idl.getRootRelativePath());
+    Artifact preprocessed=ruleContext.getPackageRelativeArtifact(preprocessedPath,ruleContext.getConfiguration().getGenfilesDirectory());
     preprocessedIdls.add(preprocessed);
     preprocessedArgs.add("-p" + preprocessed.getExecPathString());
     createAndroidIdlPreprocessAction(ruleContext,idl,preprocessed);

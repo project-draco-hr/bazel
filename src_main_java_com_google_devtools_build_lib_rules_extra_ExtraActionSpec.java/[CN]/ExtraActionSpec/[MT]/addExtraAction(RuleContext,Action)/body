@@ -2,8 +2,7 @@
   Collection<Artifact> extraActionOutputs=new LinkedHashSet<>();
   Collection<Artifact> protoOutputs=new ArrayList<>();
   NestedSetBuilder<Artifact> extraActionInputs=NestedSetBuilder.stableOrder();
-  ActionOwner owner=actionToShadow.getOwner();
-  Label ownerLabel=owner.getLabel();
+  Label ownerLabel=owningRule.getLabel();
   if (requiresActionOutput) {
     extraActionInputs.addAll(actionToShadow.getOutputs());
   }
@@ -11,17 +10,17 @@
   extraActionInputs.addAll(resolvedData);
   boolean createDummyOutput=false;
   for (  String outputTemplate : outputTemplates) {
-    extraActionOutputs.add(getExtraActionOutputArtifact(owningRule,actionToShadow,owner,outputTemplate));
+    extraActionOutputs.add(getExtraActionOutputArtifact(owningRule,actionToShadow,outputTemplate));
   }
   if (extraActionOutputs.isEmpty()) {
     createDummyOutput=true;
-    extraActionOutputs.add(getExtraActionOutputArtifact(owningRule,actionToShadow,owner,"$(ACTION_ID).dummy"));
+    extraActionOutputs.add(getExtraActionOutputArtifact(owningRule,actionToShadow,"$(ACTION_ID).dummy"));
   }
-  Artifact extraActionInfoFile=getExtraActionOutputArtifact(owningRule,actionToShadow,owner,"$(ACTION_ID).xa");
+  Artifact extraActionInfoFile=getExtraActionOutputArtifact(owningRule,actionToShadow,"$(ACTION_ID).xa");
   owningRule.registerAction(new ExtraActionInfoFileWriteAction(actionToShadow.getOwner(),extraActionInfoFile,actionToShadow));
   extraActionInputs.add(extraActionInfoFile);
   protoOutputs.add(extraActionInfoFile);
-  String command=createExpandedCommand(owningRule,actionToShadow,owner,extraActionInfoFile);
+  String command=createExpandedCommand(owningRule,actionToShadow,extraActionInfoFile);
   Map<String,String> env=owningRule.getConfiguration().getDefaultShellEnvironment();
   CommandHelper commandHelper=new CommandHelper(owningRule,ImmutableList.<FilesToRunProvider>of(),ImmutableMap.<Label,Iterable<Artifact>>of());
   String actionUniquifier=actionToShadow.getPrimaryOutput().getExecPath().getBaseName() + "." + actionToShadow.getKey();

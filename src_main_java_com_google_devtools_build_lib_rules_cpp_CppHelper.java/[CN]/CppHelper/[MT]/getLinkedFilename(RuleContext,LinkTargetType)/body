@@ -1,5 +1,7 @@
 {
-  PathFragment relativePath=Util.getWorkspaceRelativePath(ruleContext.getTarget());
-  PathFragment linkedFileName=(linkType == LinkTargetType.EXECUTABLE) ? relativePath : relativePath.replaceName("lib" + relativePath.getBaseName() + linkType.getExtension());
-  return linkedFileName;
+  PathFragment result=ruleContext.getPackageDirectory().getRelative(ruleContext.getLabel().getName());
+  if (linkType != LinkTargetType.EXECUTABLE) {
+    result=result.replaceName("lib" + result.getBaseName() + linkType.getExtension());
+  }
+  return result;
 }

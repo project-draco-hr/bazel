@@ -1,12 +1,7 @@
 {
-  PathFragment runfilesDir=getRunfilesDirectoryExecPath();
-  if (runfilesDir != null) {
-    PathFragment sourcesManifestPath=runfilesDir.getRelative("SOURCES");
-    Artifact sourceOnlyManifest=context.getAnalysisEnvironment().getDerivedArtifact(sourcesManifestPath,context.getConfiguration().getBinDirectory());
-    context.getAnalysisEnvironment().registerAction(SourceManifestAction.forRunfiles(ManifestType.SOURCES_ONLY,context.getActionOwner(),sourceOnlyManifest,runfiles));
-    return sourceOnlyManifest;
-  }
- else {
-    return null;
-  }
+  PathFragment executablePath=owningExecutable.getRootRelativePath();
+  PathFragment sourcesManifestPath=executablePath.getParentDirectory().getChild(executablePath.getBaseName() + ".runfiles.SOURCES");
+  Artifact sourceOnlyManifest=context.getDerivedArtifact(sourcesManifestPath,context.getConfiguration().getBinDirectory());
+  context.getAnalysisEnvironment().registerAction(SourceManifestAction.forRunfiles(ManifestType.SOURCES_ONLY,context.getActionOwner(),sourceOnlyManifest,runfiles));
+  return sourceOnlyManifest;
 }
