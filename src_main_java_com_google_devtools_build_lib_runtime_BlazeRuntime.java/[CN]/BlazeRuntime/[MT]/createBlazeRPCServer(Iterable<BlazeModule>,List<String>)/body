@@ -3,15 +3,11 @@
   BlazeServerStartupOptions startupOptions=options.getOptions(BlazeServerStartupOptions.class);
   final BlazeRuntime runtime=newRuntime(modules,options);
   final BlazeCommandDispatcher dispatcher=new BlazeCommandDispatcher(runtime,getBuiltinCommandList());
-  final String memoryWarning=validateJvmMemorySettings();
   final ServerCommand blazeCommand;
   blazeCommand=new ServerCommand(){
     private boolean shutdown=false;
     @Override public int exec(    List<String> args,    OutErr outErr,    long firstContactTime){
       LOG.info(getRequestLogString(args));
-      if (memoryWarning != null) {
-        outErr.printErrLn(memoryWarning);
-      }
       try {
         return dispatcher.exec(args,outErr,firstContactTime);
       }
