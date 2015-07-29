@@ -2,7 +2,7 @@
   Preconditions.checkState(Iterables.all(depKeys,SkyFunctions.isSkyFunction(SkyFunctions.PACKAGE_LOOKUP)),depKeys);
   boolean packageShouldBeInError=packageWasInError;
   ImmutableMap.Builder<PathFragment,PackageLookupValue> builder=ImmutableMap.builder();
-  for (  Map.Entry<SkyKey,ValueOrException3<BuildFileNotFoundException,InconsistentFilesystemException,FileSymlinkCycleException>> entry : env.getValuesOrThrow(depKeys,BuildFileNotFoundException.class,InconsistentFilesystemException.class,FileSymlinkCycleException.class).entrySet()) {
+  for (  Map.Entry<SkyKey,ValueOrException3<BuildFileNotFoundException,InconsistentFilesystemException,FileSymlinkException>> entry : env.getValuesOrThrow(depKeys,BuildFileNotFoundException.class,InconsistentFilesystemException.class,FileSymlinkException.class).entrySet()) {
     PathFragment pkgName=((PackageIdentifier)entry.getKey().argument()).getPackageFragment();
     try {
       PackageLookupValue value=(PackageLookupValue)entry.getValue().get();
@@ -16,7 +16,7 @@
 catch (    InconsistentFilesystemException e) {
       throw new InternalInconsistentFilesystemException(packageIdentifier,e);
     }
-catch (    FileSymlinkCycleException e) {
+catch (    FileSymlinkException e) {
       packageShouldBeInError=true;
     }
   }

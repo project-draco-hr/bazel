@@ -1,0 +1,45 @@
+{
+  RootedPath symlinkTargetRootedPath;
+  if (symlinkTarget.isAbsolute()) {
+    Path path=rootedPath.asPath().getFileSystem().getRootDirectory().getRelative(symlinkTarget);
+    symlinkTargetRootedPath=RootedPath.toRootedPathMaybeUnderRoot(path,pkgLocator.get().getPathEntries());
+  }
+ else {
+    Path path=rootedPath.asPath();
+    Path symlinkTargetPath;
+    if (path.getParentDirectory() != null) {
+      RootedPath parentRootedPath=RootedPath.toRootedPathMaybeUnderRoot(path.getParentDirectory(),pkgLocator.get().getPathEntries());
+      FileValue parentFileValue=(FileValue)env.getValue(FileValue.key(parentRootedPath));
+      if (parentFileValue == null) {
+        return null;
+      }
+      symlinkTargetPath=parentFileValue.realRootedPath().asPath().getRelative(symlinkTarget);
+    }
+ else {
+      symlinkTargetPath=path.getRelative(symlinkTarget);
+    }
+    symlinkTargetRootedPath=RootedPath.toRootedPathMaybeUnderRoot(symlinkTargetPath,pkgLocator.get().getPathEntries());
+  }
+  Path symlinkTargetPath=symlinkTargetRootedPath.asPath();
+  Path existingFloorPath=orderedSeenPaths.floor(symlinkTargetPath);
+  if (existingFloorPath != null && symlinkTargetPath.startsWith(existingFloorPath)) {
+    SkyKey uniquenessKey;
+    FileSymlinkException fse;
+    if (symlinkTargetPath.equals(existingFloorPath)) {
+      Pair<ImmutableList<RootedPath>,ImmutableList<RootedPath>> pathAndChain=splitIntoPathAndChain(symlinkTargetRootedPath.asPath(),symlinkChain);
+      FileSymlinkCycleException fsce=new FileSymlinkCycleException(pathAndChain.getFirst(),pathAndChain.getSecond());
+      uniquenessKey=FileSymlinkCycleUniquenessValue.key(fsce.getCycle());
+      fse=fsce;
+    }
+ else {
+      Pair<ImmutableList<RootedPath>,ImmutableList<RootedPath>> pathAndChain=splitIntoPathAndChain(existingFloorPath,ImmutableList.copyOf(Iterables.concat(symlinkChain,ImmutableList.of(symlinkTargetRootedPath))));
+      uniquenessKey=FileSymlinkInfiniteExpansionUniquenessValue.key(pathAndChain.getSecond());
+      fse=new FileSymlinkInfiniteExpansionException(pathAndChain.getFirst(),pathAndChain.getSecond());
+    }
+    if (env.getValue(uniquenessKey) == null) {
+      return null;
+    }
+    throw new FileFunctionException(fse);
+  }
+  return resolveFromAncestors(symlinkTargetRootedPath,env);
+}

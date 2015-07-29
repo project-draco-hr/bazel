@@ -6,9 +6,9 @@
   SkyKey fileKey=FileValue.key(rootedPath);
   FileValue fileValue;
   try {
-    fileValue=(FileValue)env.getValueOrThrow(fileKey,InconsistentFilesystemException.class,FileSymlinkCycleException.class,IOException.class);
+    fileValue=(FileValue)env.getValueOrThrow(fileKey,InconsistentFilesystemException.class,FileSymlinkException.class,IOException.class);
   }
- catch (  InconsistentFilesystemException|FileSymlinkCycleException|IOException e) {
+ catch (  InconsistentFilesystemException|FileSymlinkException|IOException e) {
     return reportErrorAndReturn("Failed to get information about path",e,rootRelativePath,env.getListener());
   }
   if (fileValue == null) {
@@ -61,12 +61,12 @@
   }
   DirectoryListingValue dirValue;
   try {
-    dirValue=(DirectoryListingValue)env.getValueOrThrow(DirectoryListingValue.key(rootedPath),InconsistentFilesystemException.class,IOException.class,FileSymlinkCycleException.class);
+    dirValue=(DirectoryListingValue)env.getValueOrThrow(DirectoryListingValue.key(rootedPath),InconsistentFilesystemException.class,IOException.class,FileSymlinkException.class);
   }
  catch (  InconsistentFilesystemException|IOException e) {
     return reportErrorAndReturn("Failed to list directory contents",e,rootRelativePath,env.getListener());
   }
-catch (  FileSymlinkCycleException e) {
+catch (  FileSymlinkException e) {
     throw new IllegalStateException("Symlink cycle found after not being found for \"" + rootedPath + "\"");
   }
   if (dirValue == null) {

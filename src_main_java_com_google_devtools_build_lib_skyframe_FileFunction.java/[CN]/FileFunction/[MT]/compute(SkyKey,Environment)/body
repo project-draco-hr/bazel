@@ -18,15 +18,11 @@
   if (realFileStateValue == null) {
     realFileStateValue=fileStateValue;
   }
-  LinkedHashSet<RootedPath> seenPaths=Sets.newLinkedHashSet();
+  ArrayList<RootedPath> symlinkChain=new ArrayList<>();
+  TreeSet<Path> orderedSeenPaths=Sets.newTreeSet();
   while (realFileStateValue.getType().equals(FileStateValue.Type.SYMLINK)) {
-    if (!seenPaths.add(realRootedPath)) {
-      FileSymlinkCycleException fileSymlinkCycleException=makeFileSymlinkCycleException(realRootedPath,seenPaths);
-      if (env.getValue(FileSymlinkCycleUniquenessValue.key(fileSymlinkCycleException.getCycle())) == null) {
-        return null;
-      }
-      throw new FileFunctionException(fileSymlinkCycleException);
-    }
+    symlinkChain.add(realRootedPath);
+    orderedSeenPaths.add(realRootedPath.asPath());
     if (externalFilesHelper.shouldAssumeImmutable(realRootedPath)) {
       try {
         Path realPath=rootedPath.asPath().resolveSymbolicLinks();
@@ -41,7 +37,7 @@ catch (      InconsistentFilesystemException e) {
       }
     }
  else {
-      Pair<RootedPath,FileStateValue> resolvedState=getSymlinkTargetRootedPath(realRootedPath,realFileStateValue.getSymlinkTarget(),env);
+      Pair<RootedPath,FileStateValue> resolvedState=getSymlinkTargetRootedPath(realRootedPath,realFileStateValue.getSymlinkTarget(),orderedSeenPaths,symlinkChain,env);
       if (resolvedState == null) {
         return null;
       }
