@@ -1,0 +1,33 @@
+{
+  Label label=(Label)key.argument();
+  LoadTargetResults loadTargetResults;
+  try {
+    loadTargetResults=loadTarget(env,label);
+  }
+ catch (  NoSuchTargetException e) {
+    throw new TransitiveBaseTraversalFunctionException(e);
+  }
+catch (  NoSuchPackageException e) {
+    throw new TransitiveBaseTraversalFunctionException(e);
+  }
+  LoadTargetResultsType loadTargetResultsType=loadTargetResults.getType();
+  if (loadTargetResultsType.equals(LoadTargetResultsType.VALUES_MISSING)) {
+    return null;
+  }
+  Preconditions.checkState(loadTargetResultsType.equals(LoadTargetResultsType.TARGET_AND_ERROR_IF_ANY),loadTargetResultsType);
+  TargetAndErrorIfAny targetAndErrorIfAny=(TargetAndErrorIfAny)loadTargetResults;
+  TProcessedTargets processedTargets=processTarget(label,targetAndErrorIfAny);
+  Iterable<SkyKey> labelDepKeys=getLabelDepKeys(targetAndErrorIfAny.getTarget());
+  Set<Entry<SkyKey,ValueOrException2<NoSuchPackageException,NoSuchTargetException>>> labelDepEntries=env.getValuesOrThrow(labelDepKeys,NoSuchPackageException.class,NoSuchTargetException.class).entrySet();
+  processDeps(processedTargets,env.getListener(),targetAndErrorIfAny,labelDepEntries);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  Iterable<SkyKey> labelAspectKeys=getLabelAspectKeys(targetAndErrorIfAny.getTarget(),env);
+  Set<Entry<SkyKey,ValueOrException2<NoSuchPackageException,NoSuchTargetException>>> labelAspectEntries=env.getValuesOrThrow(labelAspectKeys,NoSuchPackageException.class,NoSuchTargetException.class).entrySet();
+  processDeps(processedTargets,env.getListener(),targetAndErrorIfAny,labelAspectEntries);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  return computeSkyValue(targetAndErrorIfAny,processedTargets);
+}

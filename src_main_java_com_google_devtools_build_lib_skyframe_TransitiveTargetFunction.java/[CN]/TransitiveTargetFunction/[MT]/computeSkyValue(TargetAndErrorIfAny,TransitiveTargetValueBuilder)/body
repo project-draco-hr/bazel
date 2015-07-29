@@ -1,0 +1,14 @@
+{
+  Target target=targetAndErrorIfAny.getTarget();
+  NoSuchTargetException errorLoadingTarget=targetAndErrorIfAny.getErrorLoadingTarget();
+  if (target instanceof Rule) {
+    Set<Class<?>> configFragments=target.getAssociatedRule().getRuleClassObject().getRequiredConfigurationFragments();
+    configFragments=configFragments.isEmpty() ? getAllFragments() : configFragments;
+    for (    Class<?> fragment : configFragments) {
+      if (!builder.getConfigFragmentsFromDeps().contains(fragment)) {
+        builder.getTransitiveConfigFragments().add((Class<? extends BuildConfiguration.Fragment>)fragment);
+      }
+    }
+  }
+  return builder.build(errorLoadingTarget);
+}

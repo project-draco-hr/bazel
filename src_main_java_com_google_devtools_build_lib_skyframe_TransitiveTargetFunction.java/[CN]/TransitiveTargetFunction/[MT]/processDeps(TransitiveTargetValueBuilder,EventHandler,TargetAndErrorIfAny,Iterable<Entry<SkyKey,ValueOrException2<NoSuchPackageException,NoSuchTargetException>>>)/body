@@ -1,0 +1,40 @@
+{
+  boolean successfulTransitiveLoading=builder.isSuccessfulTransitiveLoading();
+  Target target=targetAndErrorIfAny.getTarget();
+  NestedSetBuilder<Label> transitiveRootCauses=builder.getTransitiveRootCauses();
+  for (  Entry<SkyKey,ValueOrException2<NoSuchPackageException,NoSuchTargetException>> entry : depEntries) {
+    Label depLabel=(Label)entry.getKey().argument();
+    TransitiveTargetValue transitiveTargetValue;
+    try {
+      transitiveTargetValue=(TransitiveTargetValue)entry.getValue().get();
+      if (transitiveTargetValue == null) {
+        continue;
+      }
+    }
+ catch (    NoSuchPackageException|NoSuchTargetException e) {
+      successfulTransitiveLoading=false;
+      transitiveRootCauses.add(depLabel);
+      maybeReportErrorAboutMissingEdge(target,depLabel,e,eventHandler);
+      continue;
+    }
+    builder.getTransitiveSuccessfulPkgs().addTransitive(transitiveTargetValue.getTransitiveSuccessfulPackages());
+    builder.getTransitiveUnsuccessfulPkgs().addTransitive(transitiveTargetValue.getTransitiveUnsuccessfulPackages());
+    builder.getTransitiveTargets().addTransitive(transitiveTargetValue.getTransitiveTargets());
+    NestedSet<Label> rootCauses=transitiveTargetValue.getTransitiveRootCauses();
+    if (rootCauses != null) {
+      successfulTransitiveLoading=false;
+      transitiveRootCauses.addTransitive(rootCauses);
+      if (transitiveTargetValue.getErrorLoadingTarget() != null) {
+        maybeReportErrorAboutMissingEdge(target,depLabel,transitiveTargetValue.getErrorLoadingTarget(),eventHandler);
+      }
+    }
+    NestedSet<Class<? extends Fragment>> depFragments=transitiveTargetValue.getTransitiveConfigFragments();
+    Collection<Class<? extends Fragment>> depFragmentsAsCollection=depFragments.toCollection();
+    Set<Class<? extends Fragment>> addedConfigFragments=builder.getConfigFragmentsFromDeps();
+    if (!addedConfigFragments.containsAll(depFragmentsAsCollection)) {
+      builder.getTransitiveConfigFragments().addTransitive(depFragments);
+      addedConfigFragments.addAll(depFragmentsAsCollection);
+    }
+  }
+  builder.setSuccessfulTransitiveLoading(successfulTransitiveLoading);
+}

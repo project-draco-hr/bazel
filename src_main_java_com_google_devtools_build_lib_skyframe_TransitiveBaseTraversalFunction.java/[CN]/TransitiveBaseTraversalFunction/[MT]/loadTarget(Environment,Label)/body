@@ -1,0 +1,49 @@
+{
+  SkyKey packageKey=PackageValue.key(label.getPackageIdentifier());
+  SkyKey targetKey=TargetMarkerValue.key(label);
+  boolean packageLoadedSuccessfully;
+  Target target;
+  NoSuchTargetException errorLoadingTarget=null;
+  try {
+    TargetMarkerValue targetValue=(TargetMarkerValue)env.getValueOrThrow(targetKey,NoSuchTargetException.class,NoSuchPackageException.class);
+    if (targetValue == null) {
+      return ValuesMissing.INSTANCE;
+    }
+    PackageValue packageValue=(PackageValue)env.getValueOrThrow(packageKey,NoSuchPackageException.class);
+    if (packageValue == null) {
+      return ValuesMissing.INSTANCE;
+    }
+    packageLoadedSuccessfully=true;
+    try {
+      target=packageValue.getPackage().getTarget(label.getName());
+    }
+ catch (    NoSuchTargetException unexpected) {
+      throw new IllegalStateException(unexpected);
+    }
+  }
+ catch (  NoSuchTargetException e) {
+    if (!e.hasTarget()) {
+      throw e;
+    }
+    Package pkg;
+    try {
+      PackageValue packageValue=(PackageValue)env.getValueOrThrow(packageKey,NoSuchPackageException.class);
+      if (packageValue == null) {
+        return ValuesMissing.INSTANCE;
+      }
+      throw new IllegalStateException("Expected bad package: " + label.getPackageIdentifier());
+    }
+ catch (    NoSuchPackageException nsp) {
+      pkg=Preconditions.checkNotNull(nsp.getPackage(),label.getPackageIdentifier());
+    }
+    try {
+      target=pkg.getTarget(label.getName());
+    }
+ catch (    NoSuchTargetException nste) {
+      throw new IllegalStateException("Expected target to exist",nste);
+    }
+    errorLoadingTarget=e;
+    packageLoadedSuccessfully=false;
+  }
+  return new TargetAndErrorIfAnyImpl(packageLoadedSuccessfully,errorLoadingTarget,target);
+}
