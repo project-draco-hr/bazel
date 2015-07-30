@@ -1,0 +1,10 @@
+def testMissingNativeManifestWithIncrementalInstall(self):
+    self._CreateZip()
+    with open('liba.so', 'w') as f:
+        f.write('liba_1')
+    native_libs = ['armeabi-v7a:liba.so']
+    self._CallIncrementalInstall(incremental=False, native_libs=native_libs)
+    self.assertEquals('liba_1', self._GetDeviceFile('native/liba.so'))
+    self._PutDeviceFile('native/liba.so', 'GARBAGE')
+    self._CallIncrementalInstall(incremental=False, native_libs=native_libs)
+    self.assertEquals('liba_1', self._GetDeviceFile('native/liba.so'))

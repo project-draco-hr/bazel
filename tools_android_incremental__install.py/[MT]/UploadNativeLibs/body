@@ -1,4 +1,4 @@
-def UploadNativeLibs(adb, native_lib_args, app_dir):
+def UploadNativeLibs(adb, native_lib_args, app_dir, full_install):
     'Uploads native libraries to the device.'
     native_libs = ConvertNativeLibs(native_lib_args)
     libs = set()
@@ -13,10 +13,14 @@ def UploadNativeLibs(adb, native_lib_args, app_dir):
     for lib in sorted(libs):
         install_checksums[os.path.basename(lib)] = Checksum(lib)
         basename_to_path[os.path.basename(lib)] = lib
-    device_manifest = adb.Pull(('%s/native/native_manifest' % app_dir))
+    device_manifest = None
+    if (not full_install):
+        device_manifest = adb.Pull(('%s/native/native_manifest' % app_dir))
     device_checksums = {}
-    if device_manifest:
-        for (name, checksum) in [l.split(' ') for l in device_manifest.split('\n')]:
+    if (device_manifest is None):
+        adb.Delete(('%s/native' % app_dir))
+    else:
+        for (name, checksum) in [l.split(' ') for l in device_manifest.split('\n') if l]:
             device_checksums[name] = checksum
     libs_to_delete = (set(device_checksums) - set(install_checksums))
     libs_to_upload = (set(install_checksums) - set(device_checksums))
