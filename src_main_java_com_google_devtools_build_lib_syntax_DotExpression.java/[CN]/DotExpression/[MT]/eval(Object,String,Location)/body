@@ -1,9 +1,11 @@
 {
   if (objValue instanceof ClassObject) {
     Object result=((ClassObject)objValue).getValue(name);
-    result=SkylarkType.convertToSkylark(result,loc);
-    SkylarkType.checkTypeAllowedInSkylark(result,loc);
-    return result;
+    if (result != null) {
+      result=SkylarkType.convertToSkylark(result,loc);
+      SkylarkType.checkTypeAllowedInSkylark(result,loc);
+      return result;
+    }
   }
   List<MethodDescriptor> methods=FuncallExpression.getMethods(objValue.getClass(),name,0,loc);
   if (methods != null && !methods.isEmpty()) {
