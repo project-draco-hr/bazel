@@ -7,14 +7,15 @@
   }
   ImmutableList<Artifact> libProtobuf=ruleContext.getPrerequisiteArtifacts(ObjcProtoLibraryRule.LIBPROTOBUF_ATTR,Mode.TARGET).list();
   ImmutableList<Artifact> protoSupport=ruleContext.getPrerequisiteArtifacts(ObjcProtoLibraryRule.PROTO_SUPPORT_ATTR,Mode.HOST).list();
-  PathFragment rootRelativeOutputDir=new PathFragment(ruleContext.getLabel().getPackageFragment(),new PathFragment("_generated_protos_" + ruleContext.getLabel().getName()));
+  String uniqueDirectoryName="_generated_protos";
+  PathFragment rootRelativeOutputDir=ruleContext.getUniqueDirectory(uniqueDirectoryName);
   PathFragment workspaceRelativeOutputDir=new PathFragment(ruleContext.getBinOrGenfilesDirectory().getExecPath(),rootRelativeOutputDir);
   PathFragment generatedProtoDir=new PathFragment(workspaceRelativeOutputDir,ruleContext.getLabel().getPackageFragment());
   boolean outputCpp=ruleContext.attributes().get(ObjcProtoLibraryRule.OUTPUT_CPP_ATTR,Type.BOOLEAN);
   boolean useObjcHeaderNames=ruleContext.attributes().get(ObjcProtoLibraryRule.USE_OBJC_HEADER_NAMES_ATTR,Type.BOOLEAN);
-  ImmutableList<Artifact> protoGeneratedSources=outputArtifacts(ruleContext,rootRelativeOutputDir,protos,FileType.of(".pb." + (outputCpp ? "cc" : "m")),outputCpp);
-  ImmutableList<Artifact> protoGeneratedHeaders=outputArtifacts(ruleContext,rootRelativeOutputDir,protos,FileType.of(".pb" + (useObjcHeaderNames ? "objc.h" : ".h")),outputCpp);
-  Artifact inputFileList=ruleContext.getAnalysisEnvironment().getDerivedArtifact(AnalysisUtils.getUniqueDirectory(ruleContext.getLabel(),new PathFragment("_protos")).getRelative("_proto_input_files"),ruleContext.getConfiguration().getGenfilesDirectory());
+  ImmutableList<Artifact> protoGeneratedSources=outputArtifacts(ruleContext,uniqueDirectoryName,protos,FileType.of(".pb." + (outputCpp ? "cc" : "m")),outputCpp);
+  ImmutableList<Artifact> protoGeneratedHeaders=outputArtifacts(ruleContext,uniqueDirectoryName,protos,FileType.of(".pb" + (useObjcHeaderNames ? "objc.h" : ".h")),outputCpp);
+  Artifact inputFileList=ruleContext.getUniqueDirectoryArtifact("_protos","_proto_input_files",ruleContext.getConfiguration().getGenfilesDirectory());
   ruleContext.registerAction(new FileWriteAction(ruleContext.getActionOwner(),inputFileList,Artifact.joinExecPaths("\n",protos),false));
   CustomCommandLine.Builder commandLineBuilder=new CustomCommandLine.Builder().add(compileProtos.getExecPathString()).add("--input-file-list").add(inputFileList.getExecPathString()).add("--output-dir").add(workspaceRelativeOutputDir.getSafePathString());
   if (optionsFile.isPresent()) {
