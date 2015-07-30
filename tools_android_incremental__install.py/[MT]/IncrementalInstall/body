@@ -1,5 +1,5 @@
-def IncrementalInstall(adb_path, execroot, stub_datafile, output_marker, adb_jobs, start_app, dexmanifest=None, apk=None, native_libs=None, resource_apk=None, split_main_apk=None, split_apks=None, user_home_dir=None):
-    "Performs an incremental install.\n\n  Args:\n    adb_path: Path to the adb executable.\n    execroot: Exec root.\n    stub_datafile: The stub datafile containing the app's package name.\n    output_marker: Path to the output marker file.\n    adb_jobs: The number of instances of adb to use in parallel.\n    start_app: If True, starts the app after updating.\n    dexmanifest: Path to the .dex manifest file.\n    apk: Path to the .apk file. May be None to perform an incremental install.\n    native_libs: Native libraries to install.\n    resource_apk: Path to the apk containing the app's resources.\n    split_main_apk: the split main .apk if split installation is desired.\n    split_apks: the list of split .apks to be installed.\n    user_home_dir: Path to the user's home directory.\n  "
+def IncrementalInstall(adb_path, execroot, stub_datafile, output_marker, adb_jobs, start_type, dexmanifest=None, apk=None, native_libs=None, resource_apk=None, split_main_apk=None, split_apks=None, user_home_dir=None):
+    "Performs an incremental install.\n\n  Args:\n    adb_path: Path to the adb executable.\n    execroot: Exec root.\n    stub_datafile: The stub datafile containing the app's package name.\n    output_marker: Path to the output marker file.\n    adb_jobs: The number of instances of adb to use in parallel.\n    start_type: A string describing whether/how to start the app after\n                installing it. Can be 'no', 'cold', or 'warm'.\n    dexmanifest: Path to the .dex manifest file.\n    apk: Path to the .apk file. May be None to perform an incremental install.\n    native_libs: Native libraries to install.\n    resource_apk: Path to the apk containing the app's resources.\n    split_main_apk: the split main .apk if split installation is desired.\n    split_apks: the list of split .apks to be installed.\n    user_home_dir: Path to the user's home directory.\n  "
     temp_dir = tempfile.mkdtemp()
     try:
         try:
@@ -23,9 +23,11 @@ def IncrementalInstall(adb_path, execroot, stub_datafile, output_marker, adb_job
                     adb.Install(apk_path)
                     future = adb.PushString(adb.GetInstallTime(app_package), ('%s/%s/install_timestamp' % (DEVICE_DIRECTORY, app_package)))
                     future.result()
+                elif (start_type == 'warm'):
+                    adb.StopAppAndSaveState(app_package)
                 else:
                     adb.StopApp(app_package)
-            if start_app:
+            if (start_type in ['cold', 'warm']):
                 logging.info('Starting application %s', app_package)
                 adb.StartApp(app_package)
             with file(output_marker, 'w') as _:
