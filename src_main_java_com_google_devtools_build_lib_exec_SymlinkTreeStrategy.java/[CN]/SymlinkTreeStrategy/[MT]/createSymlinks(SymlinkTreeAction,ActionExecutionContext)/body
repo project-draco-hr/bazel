@@ -1,5 +1,6 @@
 {
   Executor executor=actionExecutionContext.getExecutor();
+  LocalActionLogging logging=new LocalActionLogging(action);
   try {
     SymlinkTreeHelper helper=new SymlinkTreeHelper(action.getInputManifest().getExecPath(),action.getOutputManifest().getExecPath().getParentDirectory(),action.isFilesetTree());
     if (outputService != null && outputService.canCreateSymlinkTree()) {
@@ -11,5 +12,8 @@
   }
  catch (  ExecException e) {
     throw e.toActionExecutionException(action.getProgressMessage(),executor.getVerboseFailures(),action);
+  }
+ finally {
+    logging.finish();
   }
 }
