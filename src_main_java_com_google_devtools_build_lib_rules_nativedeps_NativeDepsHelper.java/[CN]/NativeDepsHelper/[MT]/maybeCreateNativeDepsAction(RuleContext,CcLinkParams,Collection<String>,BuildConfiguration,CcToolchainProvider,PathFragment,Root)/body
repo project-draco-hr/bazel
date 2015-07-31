@@ -9,7 +9,8 @@
   boolean shareNativeDeps=configuration.getFragment(CppConfiguration.class).shareNativeDeps();
   NestedSet<LibraryToLink> linkerInputs=linkParams.getLibraries();
   PathFragment linkerOutputPath=shareNativeDeps ? getSharedNativeDepsPath(LinkerInputs.toLibraryArtifacts(linkerInputs),linkopts,linkstamps.keySet(),buildInfoArtifacts,ruleContext.getFeatures()) : nativeDepsPath;
-  CppLinkAction.Builder builder=new CppLinkAction.Builder(ruleContext,linkerOutputPath,configuration,toolchain);
+  Artifact sharedLibrary=ruleContext.getAnalysisEnvironment().getDerivedArtifact(linkerOutputPath,configuration.getBinDirectory());
+  CppLinkAction.Builder builder=new CppLinkAction.Builder(ruleContext,sharedLibrary,configuration,toolchain);
   CppLinkAction linkAction=builder.setCrosstoolInputs(toolchain.getLink()).addLibraries(linkerInputs).setLinkType(LinkTargetType.DYNAMIC_LIBRARY).setLinkStaticness(LinkStaticness.MOSTLY_STATIC).addLinkopts(linkopts).setNativeDeps(true).setRuntimeInputs(toolchain.getDynamicRuntimeLinkMiddleman(),toolchain.getDynamicRuntimeLinkInputs()).addLinkstamps(linkstamps).build();
   ruleContext.registerAction(linkAction);
   final Artifact linkerOutput=linkAction.getPrimaryOutput();

@@ -1,11 +1,8 @@
 {
-  if (interfaceOutputPath != null && (fake || linkType != LinkTargetType.DYNAMIC_LIBRARY)) {
+  if (interfaceOutput != null && (fake || linkType != LinkTargetType.DYNAMIC_LIBRARY)) {
     throw new RuntimeException("Interface output can only be used " + "with non-fake DYNAMIC_LIBRARY targets");
   }
-  final Artifact output=createArtifact(outputPath);
-  final Artifact interfaceOutput=(interfaceOutputPath != null) ? createArtifact(interfaceOutputPath) : null;
   final ImmutableList<Artifact> buildInfoHeaderArtifacts=!linkstamps.isEmpty() ? ruleContext.getBuildInfo(CppBuildInfo.KEY) : ImmutableList.<Artifact>of();
-  final Artifact symbolCountOutput=enableSymbolsCounts(cppConfiguration,fake,linkType) ? createArtifact(output.getRootRelativePath().replaceName(output.getExecPath().getBaseName() + ".sc")) : null;
   boolean needWholeArchive=wholeArchive || needWholeArchive(linkStaticness,linkType,linkopts,isNativeDeps,cppConfiguration);
   NestedSet<LibraryToLink> uniqueLibraries=libraries.build();
   final Iterable<Artifact> filteredNonLibraryArtifacts=filterLinkerInputArtifacts(LinkerInputs.toLibraryArtifacts(nonLibraries));
@@ -14,9 +11,9 @@
   final LibraryToLink outputLibrary=LinkerInputs.newInputLibrary(output,filteredNonLibraryArtifacts);
   final LibraryToLink interfaceOutputLibrary=interfaceOutput == null ? null : LinkerInputs.newInputLibrary(interfaceOutput,filteredNonLibraryArtifacts);
   final ImmutableMap<Artifact,Artifact> linkstampMap=mapLinkstampsToOutputs(linkstamps,ruleContext,output);
-  final ImmutableList<Artifact> actionOutputs=constructOutputs(outputLibrary.getArtifact(),linkstampMap.values(),interfaceOutputLibrary == null ? null : interfaceOutputLibrary.getArtifact(),symbolCountOutput);
-  @Nullable final Artifact paramFile=canSplitCommandLine() ? createArtifact(ParameterFile.derivePath(outputLibrary.getArtifact().getRootRelativePath())) : null;
-  LinkCommandLine linkCommandLine=new LinkCommandLine.Builder(configuration,getOwner(),ruleContext).setOutput(outputLibrary.getArtifact()).setInterfaceOutput(interfaceOutput).setSymbolCountsOutput(symbolCountOutput).setBuildInfoHeaderArtifacts(buildInfoHeaderArtifacts).setLinkerInputs(linkerInputs).setRuntimeInputs(ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs))).setLinkTargetType(linkType).setLinkStaticness(linkStaticness).setLinkopts(ImmutableList.copyOf(linkopts)).setFeatures(features).setLinkstamps(linkstampMap).addLinkstampCompileOptions(linkstampOptions).setRuntimeSolibDir(linkType.isStaticLibraryLink() ? null : runtimeSolibDir).setNativeDeps(isNativeDeps).setUseTestOnlyFlags(useTestOnlyFlags).setNeedWholeArchive(needWholeArchive).setInterfaceSoBuilder(getInterfaceSoBuilder()).setParamFile(paramFile).build();
+  final ImmutableList<Artifact> actionOutputs=constructOutputs(outputLibrary.getArtifact(),linkstampMap.values(),interfaceOutputLibrary == null ? null : interfaceOutputLibrary.getArtifact(),symbolCounts);
+  @Nullable final Artifact paramFile=canSplitCommandLine() ? ParamFileHelper.getParamsFile(analysisEnvironment,configuration,outputLibrary.getArtifact()) : null;
+  LinkCommandLine linkCommandLine=new LinkCommandLine.Builder(configuration,getOwner(),ruleContext).setOutput(outputLibrary.getArtifact()).setInterfaceOutput(interfaceOutput).setSymbolCountsOutput(symbolCounts).setBuildInfoHeaderArtifacts(buildInfoHeaderArtifacts).setLinkerInputs(linkerInputs).setRuntimeInputs(ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs))).setLinkTargetType(linkType).setLinkStaticness(linkStaticness).setLinkopts(ImmutableList.copyOf(linkopts)).setFeatures(features).setLinkstamps(linkstampMap).addLinkstampCompileOptions(linkstampOptions).setRuntimeSolibDir(linkType.isStaticLibraryLink() ? null : runtimeSolibDir).setNativeDeps(isNativeDeps).setUseTestOnlyFlags(useTestOnlyFlags).setNeedWholeArchive(needWholeArchive).setInterfaceSoBuilder(getInterfaceSoBuilder()).setParamFile(paramFile).build();
   NestedSetBuilder<Artifact> dependencyInputsBuilder=NestedSetBuilder.stableOrder();
   dependencyInputsBuilder.addAll(buildInfoHeaderArtifacts);
   dependencyInputsBuilder.addAll(linkstamps);

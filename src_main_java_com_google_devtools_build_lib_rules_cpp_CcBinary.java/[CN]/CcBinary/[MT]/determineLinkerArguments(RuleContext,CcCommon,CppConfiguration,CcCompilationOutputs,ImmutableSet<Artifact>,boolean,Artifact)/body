@@ -1,0 +1,24 @@
+{
+  CppLinkAction.Builder builder=new CppLinkAction.Builder(context,binary).setCrosstoolInputs(CppHelper.getToolchain(context).getLink()).addNonLibraryInputs(compilationPrerequisites);
+  boolean usePic=CppHelper.usePic(context,!isLinkShared(context)) && !fake;
+  Iterable<Artifact> compiledObjectFiles=compilationOutputs.getObjectFiles(usePic);
+  if (fake) {
+    builder.addFakeNonLibraryInputs(compiledObjectFiles);
+  }
+ else {
+    builder.addNonLibraryInputs(compiledObjectFiles);
+  }
+  builder.addNonLibraryInputs(common.getLinkerScripts());
+  for (  Artifact library : common.getLibrariesFromSrcs()) {
+    if (SHARED_LIBRARY_FILETYPES.matches(library.getFilename())) {
+      builder.addLibrary(common.getDynamicLibrarySymlink(library,true));
+    }
+ else {
+      builder.addLibrary(LinkerInputs.opaqueLibraryToLink(library));
+    }
+  }
+  boolean linkingStatically=getLinkStaticness(context,common,cppConfiguration) != LinkStaticness.DYNAMIC;
+  CcLinkParams linkParams=collectCcLinkParams(context,common,linkingStatically,isLinkShared(context));
+  builder.addLinkParams(linkParams,context);
+  return builder;
+}
