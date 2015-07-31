@@ -3,9 +3,10 @@
   if (javaResourceZip != null) {
     actionBuilder.addArgument("-rj").addInputArgument(javaResourceZip);
   }
-  ImmutableList<Artifact> nativeSymlinks=nativeLibs.createApkBuilderSymlinks(ruleContext);
-  if (!nativeSymlinks.isEmpty()) {
-    actionBuilder.addInputs(nativeSymlinks).addArgument("-nf").addArgument(nativeSymlinks.get(0).getExecPath().getParentDirectory().getParentDirectory().getPathString());
+  Artifact nativeSymlinks=nativeLibs.createApkBuilderSymlinks(ruleContext);
+  if (nativeSymlinks != null) {
+    PathFragment nativeSymlinksDir=nativeSymlinks.getExecPath().getParentDirectory();
+    actionBuilder.addInputManifest(nativeSymlinks,nativeSymlinksDir).addInput(nativeSymlinks).addInputs(nativeLibs.getAllNativeLibs()).addArgument("-nf").addArgument(nativeSymlinksDir.getPathString());
   }
   if (nativeLibs.getName() != null) {
     actionBuilder.addArgument("-rf").addArgument(nativeLibs.getName().getExecPath().getParentDirectory().getPathString()).addInput(nativeLibs.getName());
