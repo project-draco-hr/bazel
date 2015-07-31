@@ -2,8 +2,9 @@
   if (TestConstants.THIS_IS_BAZEL) {
     return;
   }
-  BuildConfiguration config=create("--cpu=piii");
+  BuildConfigurationCollection configs=createCollection("--cpu=piii");
+  BuildConfiguration config=Iterables.getOnlyElement(configs.getTargetConfigurations());
   assertEquals(Label.parseAbsoluteUnchecked("//third_party/crosstool/mock:cc-compiler-piii"),config.getFragment(CppConfiguration.class).getCcToolchainRuleLabel());
-  BuildConfiguration hostConfig=config.getConfiguration(ConfigurationTransition.HOST);
+  BuildConfiguration hostConfig=configs.getHostConfiguration();
   assertEquals(Label.parseAbsoluteUnchecked("//third_party/crosstool/mock:cc-compiler-k8"),hostConfig.getFragment(CppConfiguration.class).getCcToolchainRuleLabel());
 }
