@@ -62,14 +62,12 @@
     return ExitCode.COMMAND_LINE_ERROR.getNumericExitCode();
   }
   BlazeCommandEventHandler.Options eventHandlerOptions=optionsParser.getOptions(BlazeCommandEventHandler.Options.class);
-  OutErr colorfulOutErr=outErr;
   if (!eventHandlerOptions.useColor()) {
-    outErr=ansiStripOut(ansiStripErr(outErr));
     if (!commandAnnotation.binaryStdOut()) {
-      colorfulOutErr=ansiStripOut(colorfulOutErr);
+      outErr=ansiStripOut(outErr);
     }
     if (!commandAnnotation.binaryStdErr()) {
-      colorfulOutErr=ansiStripErr(colorfulOutErr);
+      outErr=ansiStripErr(outErr);
     }
   }
   BlazeRuntime.setupLogging(commonOptions.verbosity);
@@ -80,10 +78,6 @@
   EventHandler handler=createEventHandler(outErr,eventHandlerOptions);
   Reporter reporter=runtime.getReporter();
   reporter.addHandler(handler);
-  if (!eventHandlerOptions.useColor()) {
-    EventHandler ansiAllowingHandler=createEventHandler(colorfulOutErr,eventHandlerOptions);
-    reporter.registerAnsiAllowingHandler(handler,ansiAllowingHandler);
-  }
   try {
     OutErr reporterOutErr=reporter.getOutErr();
     System.setOut(new PrintStream(reporterOutErr.getOutputStream(),true));
