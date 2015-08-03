@@ -7,7 +7,8 @@
   LinkTargetType linkType=isLinkShared(ruleContext) ? LinkTargetType.DYNAMIC_LIBRARY : LinkTargetType.EXECUTABLE;
   List<String> linkopts=common.getLinkopts();
   LinkStaticness linkStaticness=getLinkStaticness(ruleContext,linkopts,cppConfiguration);
-  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,semantics,featureConfiguration).fromCommon(common).addDeps(ImmutableList.of(CppHelper.mallocForTarget(ruleContext))).addPrivateHeaders(FileType.filter(ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list(),CppFileTypes.CPP_HEADER)).setFake(fake).setLinkType(linkType).addPrecompiledFiles(precompiledFiles);
+  ImmutableList<Pair<Artifact,Label>> cAndCppSources=common.getCAndCppSources();
+  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,semantics,featureConfiguration).fromCommon(common).addSources(cAndCppSources).addDeps(ImmutableList.of(CppHelper.mallocForTarget(ruleContext))).addPrivateHeaders(FileType.filter(ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list(),CppFileTypes.CPP_HEADER)).setFake(fake).setLinkType(linkType).addPrecompiledFiles(precompiledFiles);
   CcLibraryHelper.Info info=helper.build();
   CppCompilationContext cppCompilationContext=info.getCppCompilationContext();
   CcCompilationOutputs ccCompilationOutputs=info.getCcCompilationOutputs();
@@ -64,7 +65,7 @@
   if (!cppConfiguration.useFission()) {
     explicitDwpFile=null;
   }
-  Runfiles runfiles=collectRunfiles(ruleContext,common,linkingOutputs,cppCompilationContext,linkStaticness,filesToBuild,fakeLinkerInputs,fake);
+  Runfiles runfiles=collectRunfiles(ruleContext,linkingOutputs,cppCompilationContext,linkStaticness,filesToBuild,fakeLinkerInputs,fake,cAndCppSources);
   RunfilesSupport runfilesSupport=RunfilesSupport.withExecutable(ruleContext,runfiles,executable,ruleContext.getConfiguration().buildRunfiles());
   TransitiveLipoInfoProvider transitiveLipoInfo;
   if (cppConfiguration.isLipoContextCollector()) {
