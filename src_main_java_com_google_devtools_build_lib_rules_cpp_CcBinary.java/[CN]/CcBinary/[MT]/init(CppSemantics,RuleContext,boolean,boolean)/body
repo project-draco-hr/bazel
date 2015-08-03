@@ -5,17 +5,18 @@
   CppConfiguration cppConfiguration=ruleContext.getFragment(CppConfiguration.class);
   PrecompiledFiles precompiledFiles=new PrecompiledFiles(ruleContext);
   LinkTargetType linkType=isLinkShared(ruleContext) ? LinkTargetType.DYNAMIC_LIBRARY : LinkTargetType.EXECUTABLE;
+  List<String> linkopts=common.getLinkopts();
+  LinkStaticness linkStaticness=getLinkStaticness(ruleContext,linkopts,cppConfiguration);
   CcLibraryHelper helper=new CcLibraryHelper(ruleContext,semantics,featureConfiguration).fromCommon(common).addDeps(ImmutableList.of(CppHelper.mallocForTarget(ruleContext))).addPrivateHeaders(FileType.filter(ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list(),CppFileTypes.CPP_HEADER)).setFake(fake).setLinkType(linkType).addPrecompiledFiles(precompiledFiles);
   CcLibraryHelper.Info info=helper.build();
   CppCompilationContext cppCompilationContext=info.getCppCompilationContext();
   CcCompilationOutputs ccCompilationOutputs=info.getCcCompilationOutputs();
   PathFragment binaryPath=new PathFragment(ruleContext.getTarget().getName() + OsUtils.executableExtension());
   Artifact binary=ruleContext.getPackageRelativeArtifact(binaryPath,ruleContext.getConfiguration().getBinDirectory());
-  CppLinkAction.Builder linkActionBuilder=determineLinkerArguments(ruleContext,common,precompiledFiles,cppConfiguration,ccCompilationOutputs,cppCompilationContext.getCompilationPrerequisites(),fake,binary);
+  CppLinkAction.Builder linkActionBuilder=determineLinkerArguments(ruleContext,common,precompiledFiles,ccCompilationOutputs,cppCompilationContext.getCompilationPrerequisites(),fake,binary,linkStaticness,linkopts);
   linkActionBuilder.setUseTestOnlyFlags(useTestOnlyFlags);
   linkActionBuilder.addNonLibraryInputs(ccCompilationOutputs.getHeaderTokenFiles());
   CcToolchainProvider ccToolchain=CppHelper.getToolchain(ruleContext);
-  LinkStaticness linkStaticness=getLinkStaticness(ruleContext,common,cppConfiguration);
   if (linkStaticness == LinkStaticness.DYNAMIC) {
     linkActionBuilder.setRuntimeInputs(ccToolchain.getDynamicRuntimeLinkMiddleman(),ccToolchain.getDynamicRuntimeLinkInputs());
   }
@@ -56,7 +57,7 @@
   NestedSet<Artifact> filesToBuild=NestedSetBuilder.create(Order.STABLE_ORDER,executable);
   Artifact strippedFile=ruleContext.getImplicitOutputArtifact(CppRuleClasses.CC_BINARY_STRIPPED);
   createStripAction(ruleContext,cppConfiguration,executable,strippedFile);
-  DwoArtifactsCollector dwoArtifacts=collectTransitiveDwoArtifacts(ruleContext,common,cppConfiguration,ccCompilationOutputs);
+  DwoArtifactsCollector dwoArtifacts=collectTransitiveDwoArtifacts(ruleContext,ccCompilationOutputs,linkStaticness);
   Artifact dwpFile=ruleContext.getImplicitOutputArtifact(CppRuleClasses.CC_BINARY_DEBUG_PACKAGE);
   createDebugPackagerActions(ruleContext,cppConfiguration,dwpFile,dwoArtifacts);
   Artifact explicitDwpFile=dwpFile;
