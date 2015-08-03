@@ -5,8 +5,11 @@
   for (int i=0; i < numKeys; i++) {
     NodeEntry entry=graph.createIfAbsent(key("foo" + i));
     startEvaluation(entry);
-    entry.setValue(new StringValue("bar"),new IntVersion(0));
+    entry.setValue(new StringValue("bar"),startingVersion);
   }
+  assertNotNull(graph.get(key("foo" + 0)));
+  graph=getGraph(startingVersion.next());
+  assertNotNull(graph.get(key("foo" + 0)));
   ExecutorService pool1=Executors.newFixedThreadPool(numThreads);
   ExecutorService pool2=Executors.newFixedThreadPool(numThreads);
   ExecutorService pool3=Executors.newFixedThreadPool(numThreads);
@@ -23,14 +26,14 @@
           getCountDownLatch.await();
         }
  catch (        InterruptedException e) {
-          fail("Test failed: " + e.toString());
+          throw new AssertionError(e);
         }
         NodeEntry entry=graph.get(key("foo" + keyNum));
         entry.markDirty(true);
         entry.addReverseDepAndCheckIfDone(key("rdep"));
         addTemporaryDirectDep(entry,key("dep"));
         entry.signalDep();
-        entry.setValue(new StringValue("bar" + keyNum),new IntVersion(1));
+        entry.setValue(new StringValue("bar" + keyNum),startingVersion.next());
       }
     }
 ;
@@ -40,11 +43,11 @@
           makeBatchCountDownLatch.await();
         }
  catch (        InterruptedException e) {
-          fail("Test failed: " + e.toString());
+          throw new AssertionError(e);
         }
         NodeEntry entry=graph.get(key("foo" + keyNum));
-        assertNotEquals(null,entry);
-        assertThat(entry.getVersion()).isAnyOf(new IntVersion(0),new IntVersion(1));
+        assertNotNull(entry);
+        assertThat(entry.getVersion()).isAnyOf(startingVersion,startingVersion.next());
         getCountDownLatch.countDown();
       }
     }
@@ -67,31 +70,27 @@
           makeBatchCountDownLatch.await();
         }
  catch (        InterruptedException e) {
-          fail("Test failed: " + e.toString());
+          throw new AssertionError(e);
         }
         Map<SkyKey,NodeEntry> batchMap=graph.getBatch(batch);
         getBatchCountDownLatch.countDown();
-        assertEquals(batch.size(),batchMap.size());
+        assertThat(batchMap).hasSize(batch.size());
         for (        NodeEntry entry : batchMap.values()) {
-          assertThat(entry.getVersion()).isAnyOf(new IntVersion(0),new IntVersion(1));
+          assertThat(entry.getVersion()).isAnyOf(startingVersion,startingVersion.next());
         }
       }
     }
 ;
     pool3.execute(wrapper.wrap(r3));
   }
-  boolean interrupted=ExecutorUtil.interruptibleShutdown(pool1);
-  interrupted|=ExecutorUtil.interruptibleShutdown(pool2);
-  interrupted|=ExecutorUtil.interruptibleShutdown(pool3);
-  Throwables.propagateIfPossible(wrapper.getFirstThrownError());
-  if (interrupted) {
-    Thread.currentThread().interrupt();
-    throw new InterruptedException();
-  }
+  wrapper.waitForTasksAndMaybeThrow();
+  assertFalse(ExecutorUtil.interruptibleShutdown(pool1));
+  assertFalse(ExecutorUtil.interruptibleShutdown(pool2));
+  assertFalse(ExecutorUtil.interruptibleShutdown(pool3));
   for (int i=0; i < numKeys; i++) {
     NodeEntry entry=graph.get(key("foo" + i));
     assertThat(entry.getValue()).isEqualTo(new StringValue("bar" + i));
-    assertThat(entry.getVersion()).isEqualTo(new IntVersion(1));
+    assertThat(entry.getVersion()).isEqualTo(startingVersion.next());
     for (    SkyKey key : entry.getReverseDeps()) {
       assertEquals(key("rdep"),key);
     }

@@ -21,7 +21,7 @@
           }
            if (startEvaluation(entry).equals(DependencyState.NEEDS_SCHEDULING)) {
             assertTrue(valuesSet.add(key));
-            entry.setValue(new StringValue("bar" + keyNum),new IntVersion(keyNum));
+            entry.setValue(new StringValue("bar" + keyNum),startingVersion);
             assertThat(entry.isDone()).isTrue();
           }
           graph.createIfAbsent(key);
@@ -31,17 +31,13 @@
       pool.execute(wrapper.wrap(r));
     }
   }
-  boolean interrupted=ExecutorUtil.interruptibleShutdown(pool);
-  Throwables.propagateIfPossible(wrapper.getFirstThrownError());
-  if (interrupted) {
-    Thread.currentThread().interrupt();
-    throw new InterruptedException();
-  }
+  wrapper.waitForTasksAndMaybeThrow();
+  assertFalse(ExecutorUtil.interruptibleShutdown(pool));
   for (int i=0; i < numKeys; i++) {
     SkyKey key=key("foo" + i);
     assertTrue(nodeCreated.contains(key));
     assertTrue(valuesSet.contains(key));
     assertThat(graph.get(key).getValue()).isEqualTo(new StringValue("bar" + i));
-    assertThat(graph.get(key).getVersion()).isEqualTo(new IntVersion(i));
+    assertThat(graph.get(key).getVersion()).isEqualTo(startingVersion);
   }
 }

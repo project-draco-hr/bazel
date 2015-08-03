@@ -43,20 +43,18 @@
  catch (  InterruptedException e) {
     fail("Test failed: " + e.toString());
   }
-  entry.setValue(new StringValue("foo1"),new IntVersion(1));
+  entry.setValue(new StringValue("foo1"),startingVersion);
   countDownLatch3.countDown();
   entry.removeReverseDep(key("rdep"));
-  boolean interrupted=ExecutorUtil.interruptibleShutdown(pool);
-  Throwables.propagateIfPossible(wrapper.getFirstThrownError());
-  if (interrupted) {
-    Thread.currentThread().interrupt();
-    throw new InterruptedException();
-  }
+  wrapper.waitForTasksAndMaybeThrow();
+  assertFalse(ExecutorUtil.interruptibleShutdown(pool));
   assertEquals(new StringValue("foo1"),graph.get(key).getValue());
   assertEquals(numKeys,Iterables.size(graph.get(key).getReverseDeps()));
-  entry.markDirty(true);
-  startEvaluation(entry);
-  entry.setValue(new StringValue("foo2"),new IntVersion(2));
+  graph=getGraph(startingVersion.next());
+  NodeEntry sameEntry=Preconditions.checkNotNull(graph.get(key));
+  sameEntry.markDirty(true);
+  startEvaluation(sameEntry);
+  sameEntry.setValue(new StringValue("foo2"),startingVersion.next());
   assertEquals(new StringValue("foo2"),graph.get(key).getValue());
   assertEquals(numKeys,Iterables.size(graph.get(key).getReverseDeps()));
 }
