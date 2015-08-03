@@ -1,7 +1,8 @@
 {
   FeatureConfiguration featureConfiguration=CcCommon.configureFeatures(ruleContext);
   final CcCommon common=new CcCommon(ruleContext,featureConfiguration);
-  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,semantics,featureConfiguration).fromCommon(common).addLinkopts(common.getLinkopts()).addPublicHeaders(CcCommon.getHeaders(ruleContext)).enableCcNativeLibrariesProvider().enableCompileProviders().enableInterfaceSharedObjects().setGenerateLinkActionsIfEmpty(ruleContext.getRule().getRuleClassObject().getImplicitOutputsFunction() != ImplicitOutputsFunction.NONE).setLinkType(linkType).setNeverLink(neverLink);
+  PrecompiledFiles precompiledFiles=new PrecompiledFiles(ruleContext);
+  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,semantics,featureConfiguration).fromCommon(common).addLinkopts(common.getLinkopts()).addPublicHeaders(CcCommon.getHeaders(ruleContext)).enableCcNativeLibrariesProvider().enableCompileProviders().enableInterfaceSharedObjects().setGenerateLinkActionsIfEmpty(ruleContext.getRule().getRuleClassObject().getImplicitOutputsFunction() != ImplicitOutputsFunction.NONE).setLinkType(linkType).setNeverLink(neverLink).addPrecompiledFiles(precompiledFiles);
   if (collectLinkstamp) {
     helper.addLinkstamps(ruleContext.getPrerequisites("linkstamp",Mode.TARGET));
   }
@@ -42,11 +43,11 @@
     Artifact solibArtifact=CppHelper.getLinkedArtifact(ruleContext,LinkTargetType.DYNAMIC_LIBRARY);
     ruleContext.registerAction(new FailAction(ruleContext.getActionOwner(),ImmutableList.of(solibArtifact),"configurable \"srcs\" triggers an implicit .so output " + "even though there are no sources to compile in this configuration"));
   }
-  Iterable<LibraryToLink> staticLibrariesFromSrcs=LinkerInputs.opaqueLibrariesToLink(common.getStaticLibrariesFromSrcs());
+  Iterable<LibraryToLink> staticLibrariesFromSrcs=LinkerInputs.opaqueLibrariesToLink(precompiledFiles.getStaticLibraries());
   helper.addStaticLibraries(staticLibrariesFromSrcs);
   helper.addPicStaticLibraries(Iterables.filter(staticLibrariesFromSrcs,PIC_STATIC_FILTER));
-  helper.addPicStaticLibraries(common.getPicStaticLibrariesFromSrcs());
-  helper.addDynamicLibraries(Iterables.transform(common.getSharedLibrariesFromSrcs(),new Function<Artifact,LibraryToLink>(){
+  helper.addPicStaticLibraries(precompiledFiles.getPicStaticLibraries());
+  helper.addDynamicLibraries(Iterables.transform(precompiledFiles.getSharedLibraries(),new Function<Artifact,LibraryToLink>(){
     @Override public LibraryToLink apply(    Artifact library){
       return common.getDynamicLibrarySymlink(library,true);
     }

@@ -3,14 +3,15 @@
   FeatureConfiguration featureConfiguration=CcCommon.configureFeatures(ruleContext);
   CcCommon common=new CcCommon(ruleContext,featureConfiguration);
   CppConfiguration cppConfiguration=ruleContext.getFragment(CppConfiguration.class);
+  PrecompiledFiles precompiledFiles=new PrecompiledFiles(ruleContext);
   LinkTargetType linkType=isLinkShared(ruleContext) ? LinkTargetType.DYNAMIC_LIBRARY : LinkTargetType.EXECUTABLE;
-  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,semantics,featureConfiguration).fromCommon(common).addDeps(ImmutableList.of(CppHelper.mallocForTarget(ruleContext))).addPrivateHeaders(FileType.filter(ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list(),CppFileTypes.CPP_HEADER)).setFake(fake).setLinkType(linkType);
+  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,semantics,featureConfiguration).fromCommon(common).addDeps(ImmutableList.of(CppHelper.mallocForTarget(ruleContext))).addPrivateHeaders(FileType.filter(ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list(),CppFileTypes.CPP_HEADER)).setFake(fake).setLinkType(linkType).addPrecompiledFiles(precompiledFiles);
   CcLibraryHelper.Info info=helper.build();
   CppCompilationContext cppCompilationContext=info.getCppCompilationContext();
   CcCompilationOutputs ccCompilationOutputs=info.getCcCompilationOutputs();
   PathFragment binaryPath=new PathFragment(ruleContext.getTarget().getName() + OsUtils.executableExtension());
   Artifact binary=ruleContext.getPackageRelativeArtifact(binaryPath,ruleContext.getConfiguration().getBinDirectory());
-  CppLinkAction.Builder linkActionBuilder=determineLinkerArguments(ruleContext,common,cppConfiguration,ccCompilationOutputs,cppCompilationContext.getCompilationPrerequisites(),fake,binary);
+  CppLinkAction.Builder linkActionBuilder=determineLinkerArguments(ruleContext,common,precompiledFiles,cppConfiguration,ccCompilationOutputs,cppCompilationContext.getCompilationPrerequisites(),fake,binary);
   linkActionBuilder.setUseTestOnlyFlags(useTestOnlyFlags);
   linkActionBuilder.addNonLibraryInputs(ccCompilationOutputs.getHeaderTokenFiles());
   CcToolchainProvider ccToolchain=CppHelper.getToolchain(ruleContext);
@@ -46,7 +47,7 @@
       ruleContext.attributeError("linkshared","'linkshared' used in non-shared library");
     }
   }
-  for (  Artifact library : common.getSharedLibrariesFromSrcs()) {
+  for (  Artifact library : precompiledFiles.getSharedLibraries()) {
     LibraryToLink symlink=common.getDynamicLibrarySymlink(library,true);
     linkingOutputsBuilder.addDynamicLibrary(symlink);
     linkingOutputsBuilder.addExecutionDynamicLibrary(symlink);
