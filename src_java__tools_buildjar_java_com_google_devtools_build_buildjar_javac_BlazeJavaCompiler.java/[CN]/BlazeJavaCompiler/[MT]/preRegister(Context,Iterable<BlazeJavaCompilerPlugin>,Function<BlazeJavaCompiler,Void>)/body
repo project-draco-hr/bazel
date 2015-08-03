@@ -1,0 +1,17 @@
+{
+  context.put(compilerKey,new Context.Factory<JavaCompiler>(){
+    boolean first=true;
+    @Override public JavaCompiler make(    Context c){
+      if (!first) {
+        throw new AssertionError("Expected a single creation of BlazeJavaCompiler.");
+      }
+      first=false;
+      BlazeJavaCompiler compiler=new BlazeJavaCompiler(c,plugins);
+      if (listener != null) {
+        listener.apply(compiler);
+      }
+      return compiler;
+    }
+  }
+);
+}
