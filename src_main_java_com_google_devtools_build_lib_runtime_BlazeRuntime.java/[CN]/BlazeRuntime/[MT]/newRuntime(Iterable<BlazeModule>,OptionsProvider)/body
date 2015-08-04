@@ -42,6 +42,9 @@
     throw new AbruptExitException("Cannot enumerate embedded binaries: " + e.getMessage(),ExitCode.LOCAL_ENVIRONMENTAL_ERROR);
   }
   BlazeRuntime.Builder runtimeBuilder=new BlazeRuntime.Builder().setDirectories(directories).setStartupOptionsProvider(options).setBinTools(binTools).setClock(clock).setEventBusExceptionHandler(startupOptions.fatalEventBusExceptions || !BlazeVersionInfo.instance().isReleasedBlaze() ? new BlazeRuntime.BugReportingExceptionHandler() : new BlazeRuntime.RemoteExceptionHandler());
+  if (System.getenv("TEST_TMPDIR") != null && System.getenv("NO_CRASH_ON_LOGGING_IN_TEST") == null) {
+    LoggingUtil.installRemoteLogger(getTestCrashLogger());
+  }
   for (  BlazeModule blazeModule : blazeModules) {
     runtimeBuilder.addBlazeModule(blazeModule);
   }

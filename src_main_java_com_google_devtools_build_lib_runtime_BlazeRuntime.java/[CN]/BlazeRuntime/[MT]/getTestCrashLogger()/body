@@ -1,0 +1,16 @@
+{
+  Logger crashLogger=Logger.getAnonymousLogger();
+  crashLogger.addHandler(new Handler(){
+    @Override public void publish(    LogRecord record){
+      throw new IllegalStateException(record.getSourceClassName() + "#" + record.getSourceMethodName()+ ": "+ record.getMessage()+ "\n"+ record.getThrown());
+    }
+    @Override public void flush(){
+      throw new IllegalStateException();
+    }
+    @Override public void close(){
+      throw new IllegalStateException();
+    }
+  }
+);
+  return Futures.immediateFuture(crashLogger);
+}
