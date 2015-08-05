@@ -4,22 +4,14 @@
     LipoContextProvider lipoProvider=Preconditions.checkNotNull(CppHelper.getLipoContextProvider(ruleContext),outputName);
     builder.setContext(CppCompilationContext.mergeForLipo(lipoProvider.getLipoContext(),context));
   }
+  boolean generatePicAction=getGeneratePicActions();
+  boolean generateNoPicAction=getGenerateNoPicActions();
+  Preconditions.checkState(generatePicAction || generateNoPicAction);
   if (fake) {
-    Artifact outputFile=ruleContext.getRelatedArtifact(outputName,outputExtension);
-    PathFragment tempOutputName=FileSystemUtils.replaceExtension(outputFile.getExecPath(),".temp" + outputExtension);
-    builder.setOutputFile(outputFile).setDotdFile(outputName,dependencyFileExtension).setTempOutputFile(tempOutputName);
-    setupBuildVariables(builder,getGeneratePicActions(),ccRelativeName);
-    semantics.finalizeCompileActionBuilder(ruleContext,builder);
-    CppCompileAction action=builder.build();
-    env.registerAction(action);
-    if (addObject) {
-      result.addObjectFile(action.getOutputFile());
-    }
+    boolean usePic=!generateNoPicAction;
+    createFakeSourceAction(outputName,result,env,builder,outputExtension,dependencyFileExtension,addObject,ccRelativeName,usePic);
   }
  else {
-    boolean generatePicAction=getGeneratePicActions();
-    boolean generateNoPicAction=getGenerateNoPicActions();
-    Preconditions.checkState(generatePicAction || generateNoPicAction);
     if (generatePicAction) {
       CppCompileActionBuilder picBuilder=copyAsPicBuilder(builder,outputName,outputExtension,dependencyFileExtension);
       setupBuildVariables(picBuilder,true,ccRelativeName);
