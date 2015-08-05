@@ -1,8 +1,9 @@
 {
-  ImmutableMap.Builder<String,Fragment> builder=ImmutableMap.builder();
-  for (  Fragment fragment : fragments.values()) {
-    if (fragment.isSkylarkVisible()) {
-      builder.put(fragment.getName(),fragment);
+  ImmutableMap.Builder<String,Class<? extends Fragment>> builder=ImmutableMap.builder();
+  for (  Class<? extends Fragment> fragmentClass : fragments.keySet()) {
+    SkylarkModule annotation=fragmentClass.getAnnotation(SkylarkModule.class);
+    if (annotation != null) {
+      builder.put(annotation.name(),fragmentClass);
     }
   }
   return builder.build();
