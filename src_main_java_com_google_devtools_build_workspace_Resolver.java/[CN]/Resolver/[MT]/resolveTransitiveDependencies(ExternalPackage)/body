@@ -14,6 +14,7 @@
         return;
       }
       com.google.devtools.build.lib.packages.Rule workspaceRule=externalPackage.getRepositoryInfo(repositoryName);
+      DefaultModelResolver modelResolver=resolver.getModelResolver();
       AttributeMap attributeMap=AggregatingAttributeMapper.of(workspaceRule);
       Rule rule;
       try {
@@ -23,12 +24,24 @@
  else {
           rule=new Rule(attributeMap.get("artifact_id",Type.STRING),attributeMap.get("group_id",Type.STRING),attributeMap.get("version",Type.STRING));
         }
+        if (attributeMap.has("repository",Type.STRING) && !attributeMap.get("repository",Type.STRING).isEmpty()) {
+          modelResolver.addUserRepository(attributeMap.get("repository",Type.STRING));
+          rule.setRepository(attributeMap.get("repository",Type.STRING));
+        }
       }
- catch (      Rule.InvalidRuleException e) {
-        handler.handle(Event.error(location,e.getMessage()));
+ catch (      Rule.InvalidRuleException|InvalidRepositoryException e) {
+        handler.handle(Event.error(location,"Couldn't get attribute: " + e.getMessage()));
         return;
       }
-      resolver.getArtifactDependencies(rule,location);
+      ModelSource modelSource;
+      try {
+        modelSource=modelResolver.resolveModel(rule.groupId(),rule.artifactId(),rule.version());
+      }
+ catch (      UnresolvableModelException e) {
+        handler.handle(Event.error("Could not resolve model for " + target + ": "+ e.getMessage()));
+        continue;
+      }
+      resolver.resolveModelSource(modelSource);
     }
  else {
       handler.handle(Event.warn(location,"Cannot fetch transitive dependencies for " + target + " yet, skipping"));

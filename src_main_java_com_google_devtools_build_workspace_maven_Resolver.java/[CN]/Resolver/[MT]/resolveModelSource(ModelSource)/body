@@ -1,0 +1,45 @@
+{
+  DefaultModelBuildingRequest request=new DefaultModelBuildingRequest();
+  request.setModelResolver(modelResolver);
+  request.setModelSource(modelSource);
+  Model model;
+  try {
+    ModelBuildingResult result=modelBuilder.build(request);
+    model=result.getEffectiveModel();
+  }
+ catch (  ModelBuildingException|IllegalArgumentException e) {
+    handler.handle(Event.error("Unable to resolve Maven model from " + modelSource.getLocation() + ": "+ e.getMessage()));
+    return null;
+  }
+  for (  Repository repo : model.getRepositories()) {
+    try {
+      modelResolver.addRepository(repo);
+    }
+ catch (    InvalidRepositoryException e) {
+      handler.handle(Event.error("Unable to add repository " + repo.getName() + " ("+ repo.getId()+ ","+ repo.getUrl()+ ")"));
+      return model;
+    }
+  }
+  for (  org.apache.maven.model.Dependency dependency : model.getDependencies()) {
+    if (!dependency.getScope().equals(COMPILE_SCOPE)) {
+      continue;
+    }
+    try {
+      Rule artifactRule=new Rule(dependency.getArtifactId(),dependency.getGroupId(),dependency.getVersion());
+      boolean isNewDependency=addArtifact(artifactRule,model.toString());
+      if (isNewDependency) {
+        ModelSource depModelSource=modelResolver.resolveModel(dependency.getGroupId(),dependency.getArtifactId(),dependency.getVersion());
+        if (depModelSource != null) {
+          resolveModelSource(depModelSource);
+        }
+ else {
+          handler.handle(Event.error("Could not get a model for " + dependency));
+        }
+      }
+    }
+ catch (    UnresolvableModelException|Rule.InvalidRuleException e) {
+      handler.handle(Event.error("Could not resolve dependency " + dependency.getGroupId() + ":"+ dependency.getArtifactId()+ ":"+ dependency.getVersion()+ ": "+ e.getMessage()));
+    }
+  }
+  return model;
+}

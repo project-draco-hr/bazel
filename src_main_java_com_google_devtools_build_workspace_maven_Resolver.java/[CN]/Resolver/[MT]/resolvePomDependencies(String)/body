@@ -2,43 +2,8 @@
   DefaultModelProcessor processor=new DefaultModelProcessor();
   processor.setModelLocator(new DefaultModelLocator());
   processor.setModelReader(new DefaultModelReader());
-  File pom=processor.locatePom(new File(project));
-  Location pomLocation=Location.fromFile(fileSystem.getPath(pom.getPath()));
+  File pom=processor.locatePom(new File(projectPath));
   addHeader(pom.getAbsolutePath());
-  DefaultModelBuilderFactory factory=new DefaultModelBuilderFactory();
-  DefaultModelBuildingRequest request=new DefaultModelBuildingRequest();
-  ModelResolver modelResolver=new DefaultModelResolver();
-  request.setModelResolver(modelResolver);
-  request.setPomFile(pom);
-  Model model;
-  try {
-    ModelBuildingResult result=factory.newInstance().build(request);
-    model=result.getEffectiveModel();
-  }
- catch (  ModelBuildingException|IllegalArgumentException e) {
-    handler.handle(Event.error(pomLocation,"Unable to resolve Maven model from " + pom + ": "+ e.getMessage()));
-    return;
-  }
-  for (  Repository repo : model.getRepositories()) {
-    try {
-      modelResolver.addRepository(repo);
-    }
- catch (    InvalidRepositoryException e) {
-      handler.handle(Event.error("Unable to add repository " + repo.getName() + " ("+ repo.getId()+ ","+ repo.getUrl()+ ")"));
-      return;
-    }
-  }
-  for (  String module : model.getModules()) {
-    resolvePomDependencies(project + "/" + module);
-  }
-  for (  org.apache.maven.model.Dependency dependency : model.getDependencies()) {
-    try {
-      Rule artifactRule=new Rule(dependency.getArtifactId(),dependency.getGroupId(),dependency.getVersion());
-      addArtifact(artifactRule,model.toString());
-      getArtifactDependencies(artifactRule,pomLocation);
-    }
- catch (    Rule.InvalidRuleException e) {
-      handler.handle(Event.error(pomLocation,e.getMessage()));
-    }
-  }
+  Model model=resolveModelSource(new FileModelSource(pom));
+  resolveSubmodules(model,pom);
 }

@@ -1,14 +1,17 @@
 {
   try {
-    UrlModelSource urlModelSource=new UrlModelSource(new URL(url + groupId.replaceAll("\\.","/") + "/"+ artifactId+ "/"+ version+ "/"+ artifactId+ "-"+ version+ ".pom"));
-    if (urlModelSource.getInputStream().available() != 0) {
+    if (!url.endsWith("/")) {
+      url+="/";
+    }
+    URL urlUrl=new URL(url + groupId.replaceAll("\\.","/") + "/"+ artifactId+ "/"+ version+ "/"+ artifactId+ "-"+ version+ ".pom");
+    if (pomFileExists(urlUrl)) {
+      UrlModelSource urlModelSource=new UrlModelSource(urlUrl);
+      artifactToRepository.put(Rule.name(groupId,artifactId),urlModelSource);
       return urlModelSource;
     }
   }
  catch (  MalformedURLException e) {
-    throw new UnresolvableModelException(e.getMessage(),groupId,artifactId,version,e);
-  }
-catch (  IOException e) {
+    throw new UnresolvableModelException("Bad URL " + url + ": "+ e.getMessage(),groupId,artifactId,version,e);
   }
   return null;
 }
