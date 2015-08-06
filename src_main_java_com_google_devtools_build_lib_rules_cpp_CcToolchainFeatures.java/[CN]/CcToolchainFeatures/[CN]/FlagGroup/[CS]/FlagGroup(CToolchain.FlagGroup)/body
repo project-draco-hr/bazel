@@ -1,11 +1,21 @@
 {
-  ImmutableList.Builder<Flag> flags=ImmutableList.builder();
+  ImmutableList.Builder<Expandable> expandables=ImmutableList.builder();
   ImmutableSet.Builder<String> usedVariables=ImmutableSet.builder();
-  for (  String flag : flagGroup.getFlagList()) {
+  Collection<String> flags=flagGroup.getFlagList();
+  Collection<CToolchain.FlagGroup> groups=flagGroup.getFlagGroupList();
+  if (!flags.isEmpty() && !groups.isEmpty()) {
+    throw new ExpansionException("Invalid toolchain configuration: a flag_group must not contain both a flag " + "and another flag_group.");
+  }
+  for (  String flag : flags) {
     FlagParser parser=new FlagParser(flag);
-    flags.add(new Flag(parser.getChunks()));
+    expandables.add(new Flag(parser.getChunks()));
     usedVariables.addAll(parser.getUsedVariables());
   }
-  this.flags=flags.build();
+  for (  CToolchain.FlagGroup group : groups) {
+    FlagGroup subgroup=new FlagGroup(group);
+    expandables.add(subgroup);
+    usedVariables.addAll(subgroup.getControllingVariables());
+  }
+  this.expandables=expandables.build();
   this.usedVariables=usedVariables.build();
 }

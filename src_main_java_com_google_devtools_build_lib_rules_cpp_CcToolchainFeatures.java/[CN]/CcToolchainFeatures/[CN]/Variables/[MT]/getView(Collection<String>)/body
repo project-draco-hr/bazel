@@ -1,0 +1,27 @@
+{
+  Map<String,String> viewMap=new HashMap<>();
+  String sequenceName=null;
+  for (  String name : controllingVariables) {
+    if (sequenceVariables.containsKey(name)) {
+      if (variables.containsKey(name)) {
+        throw new ExpansionException("Internal error: variable '" + name + "' provided both as sequence and standard variable.");
+      }
+ else       if (sequenceName != null) {
+        throw new ExpansionException("Invalid toolchain configuration: trying to expand two variable list in one " + "flag group: '" + sequenceName + "' and '"+ name+ "'");
+      }
+ else {
+        sequenceName=name;
+      }
+    }
+ else     if (variables.containsKey(name)) {
+      viewMap.put(name,variables.get(name));
+    }
+ else {
+      throw new ExpansionException("Invalid toolchain configuration: unknown variable '" + name + "' can not be expanded.");
+    }
+  }
+  if (sequenceName == null) {
+    return new FixedView(viewMap);
+  }
+  return new NestedView(viewMap,sequenceName,sequenceVariables.get(sequenceName));
+}
