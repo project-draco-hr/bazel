@@ -32,8 +32,11 @@
   prepareToBuild(new SkyframePackageRootResolver(skyframeExecutor));
   skyframeExecutor.injectWorkspaceStatusData();
   Collection<ConfiguredTarget> configuredTargets;
+  WalkableGraph graph;
   try {
-    configuredTargets=skyframeBuildView.configureTargets(targetSpecs,eventBus,viewOptions.keepGoing);
+    Pair<Collection<ConfiguredTarget>,WalkableGraph> configuredTargetsResult=skyframeBuildView.configureTargets(targetSpecs,eventBus,viewOptions.keepGoing);
+    configuredTargets=configuredTargetsResult.getFirst();
+    graph=configuredTargetsResult.getSecond();
   }
   finally {
     skyframeBuildView.clearInvalidatedConfiguredTargets();
@@ -46,7 +49,7 @@
     eventHandler.handle(Event.info(msg));
     LOG.info(msg);
   }
-  AnalysisResult result=createResult(loadingResult,topLevelOptions,viewOptions,configuredTargets,analysisSuccessful);
+  AnalysisResult result=createResult(loadingResult,topLevelOptions,viewOptions,configuredTargets,analysisSuccessful,graph);
   LOG.info("Finished analysis");
   return result;
 }
