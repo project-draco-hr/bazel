@@ -90,11 +90,10 @@ inputSource=ParserInputSource.create(buildFilePath);
 env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
 throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.TRANSIENT);
 }
-SkylarkImportResult importResult=discoverSkylarkImports(buildFilePath,buildFileFragment,packageId,env,inputSource,preludeStatements);
-if (importResult == null) {
+Package.LegacyBuilder legacyPkgBuilder=loadPackage(externalPkg,inputSource,replacementContents,packageId,buildFilePath,buildFileFragment,defaultVisibility,preludeStatements,env);
+if (legacyPkgBuilder == null) {
 return null;
 }
-Package.LegacyBuilder legacyPkgBuilder=loadPackage(externalPkg,inputSource,replacementContents,packageId,buildFilePath,defaultVisibility,preludeStatements,importResult);
 legacyPkgBuilder.buildPartial();
 try {
 handleLabelsCrossingSubpackagesAndPropagateInconsistentFilesystemExceptions(packageLookupValue.getRoot(),packageId,legacyPkgBuilder,env);
