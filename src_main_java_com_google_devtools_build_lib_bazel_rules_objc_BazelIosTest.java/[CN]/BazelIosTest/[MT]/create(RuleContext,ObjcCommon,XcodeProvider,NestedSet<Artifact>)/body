@@ -1,6 +1,8 @@
 {
   Artifact testRunner=ruleContext.getPrerequisiteArtifact(IOS_TEST_ON_BAZEL_ATTR,Mode.TARGET);
-  Runfiles runfiles=new Runfiles.Builder().addArtifact(testRunner).build();
-  RunfilesSupport runfilesSupport=RunfilesSupport.withExecutable(ruleContext,runfiles,testRunner);
+  Artifact testScript=ObjcRuleClasses.artifactByAppendingToBaseName(ruleContext,"_test_script");
+  ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),testRunner,testScript,ImmutableList.<TemplateExpansionAction.Substitution>of(),true));
+  Runfiles runfiles=new Runfiles.Builder().addArtifact(testScript).build();
+  RunfilesSupport runfilesSupport=RunfilesSupport.withExecutable(ruleContext,runfiles,testScript);
   return new RuleConfiguredTargetBuilder(ruleContext).setFilesToBuild(NestedSetBuilder.<Artifact>stableOrder().addTransitive(filesToBuild).add(testRunner).build()).add(XcodeProvider.class,xcodeProvider).add(RunfilesProvider.class,RunfilesProvider.simple(runfiles)).setRunfilesSupport(runfilesSupport,testRunner).build();
 }
