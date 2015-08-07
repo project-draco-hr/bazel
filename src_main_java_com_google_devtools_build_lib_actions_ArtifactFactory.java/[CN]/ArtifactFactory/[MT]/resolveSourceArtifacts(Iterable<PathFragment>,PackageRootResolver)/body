@@ -7,7 +7,7 @@
       result.put(execPath,null);
       continue;
     }
-    Artifact a=pathToSourceArtifact.get(execPathNormalized);
+    Artifact a=sourceArtifactCache.getArtifactIfValid(execPathNormalized);
     if (a != null) {
       result.put(execPath,a);
     }
@@ -23,13 +23,7 @@
     return null;
   }
   for (  PathFragment path : unresolvedPaths) {
-    Root sourceRoot=sourceRoots.get(path);
-    if (sourceRoot != null) {
-      result.put(path,getSourceArtifact(path.normalize(),sourceRoot,ArtifactOwner.NULL_OWNER));
-    }
- else {
-      result.put(path,null);
-    }
+    result.put(path,createArtifactIfNotValid(sourceRoots.get(path),path));
   }
   return result;
 }

@@ -4,14 +4,10 @@
   if (!root.isSourceRoot()) {
     return createArtifact(path,root,execPath,owner,type);
   }
-  Artifact artifact=pathToSourceArtifact.get(execPath);
-  if (artifact == null || !Objects.equals(artifact.getArtifactOwner(),owner)) {
+  Artifact artifact=sourceArtifactCache.getArtifact(execPath);
+  if (artifact == null || !Objects.equals(artifact.getArtifactOwner(),owner) || !root.equals(artifact.getRoot())) {
     artifact=createArtifact(path,root,execPath,owner,type);
-    pathToSourceArtifact.put(execPath,artifact);
-  }
- else {
-    Preconditions.checkState(root.equals(artifact.getRoot()),"root for path %s changed from %s to %s",path,artifact.getRoot(),root);
-    Preconditions.checkState(execPath.equals(artifact.getExecPath()),"execPath for path %s changed from %s to %s",path,artifact.getExecPath(),execPath);
+    sourceArtifactCache.putArtifact(execPath,artifact);
   }
   return artifact;
 }

@@ -1,20 +1,14 @@
 {
   execPath=execPath.normalize();
+  Artifact artifact=sourceArtifactCache.getArtifactIfValid(execPath);
+  if (artifact != null) {
+    return artifact;
+  }
   if (execPath.containsUplevelReferences()) {
     return null;
-  }
-  Artifact a=pathToSourceArtifact.get(execPath);
-  if (a != null) {
-    return a;
   }
   if (findDerivedRoot(execRoot.getRelative(execPath)) != null) {
     return null;
   }
-  for (PathFragment dir=execPath.getParentDirectory(); dir != null; dir=dir.getParentDirectory()) {
-    Root sourceRoot=packageRoots.get(PackageIdentifier.createInDefaultRepo(dir));
-    if (sourceRoot != null) {
-      return getSourceArtifact(execPath,sourceRoot,ArtifactOwner.NULL_OWNER);
-    }
-  }
-  return null;
+  return createArtifactIfNotValid(findSourceRoot(execPath),execPath);
 }
