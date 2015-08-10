@@ -18,18 +18,18 @@
         pendingVisitations.remove(invalidationPair);
         return;
       }
-      Pair<? extends Iterable<SkyKey>,? extends SkyValue> depsAndValue=entry.markDirty(isChanged);
-      if (depsAndValue == null) {
+      Iterable<SkyKey> deps=entry.markDirty(isChanged);
+      if (deps == null) {
         pendingVisitations.remove(invalidationPair);
         return;
       }
       for (      SkyKey reverseDep : entry.getReverseDeps()) {
         visit(reverseDep,InvalidationType.DIRTIED,MUST_EXIST);
       }
-      Map<SkyKey,NodeEntry> children=graph.getBatch(depsAndValue.first);
-      if (children.size() != Iterables.size(depsAndValue.first)) {
-        Set<SkyKey> deps=ImmutableSet.copyOf(depsAndValue.first);
-        throw new IllegalStateException("Mismatch in getBatch: " + key + ", "+ entry+ "\n"+ Sets.difference(deps,children.keySet())+ "\n"+ Sets.difference(children.keySet(),deps));
+      Map<SkyKey,NodeEntry> children=graph.getBatch(deps);
+      if (children.size() != Iterables.size(deps)) {
+        Set<SkyKey> depsSet=ImmutableSet.copyOf(deps);
+        throw new IllegalStateException("Mismatch in getBatch: " + key + ", "+ entry+ "\n"+ Sets.difference(depsSet,children.keySet())+ "\n"+ Sets.difference(children.keySet(),depsSet));
       }
       for (      NodeEntry child : children.values()) {
         child.removeReverseDep(key);
