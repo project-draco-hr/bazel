@@ -14,12 +14,13 @@
  else {
     if (generatePicAction) {
       CppCompileActionBuilder picBuilder=copyAsPicBuilder(builder,outputName,outputExtension,dependencyFileExtension);
-      setupBuildVariables(picBuilder,true,ccRelativeName);
+      Artifact gcnoFile=isCodeCoverageEnabled() ? ruleContext.getRelatedArtifact(outputName,".pic.gcno") : null;
+      if (gcnoFile != null) {
+        picBuilder.setGcnoFile(gcnoFile);
+      }
+      setupBuildVariables(picBuilder,true,ccRelativeName,gcnoFile);
       if (maySaveTemps) {
         result.addTemps(createTempsActions(sourceArtifact,outputName,picBuilder,true,ccRelativeName));
-      }
-      if (isCodeCoverageEnabled()) {
-        picBuilder.setGcnoFile(ruleContext.getRelatedArtifact(outputName,".pic.gcno"));
       }
       semantics.finalizeCompileActionBuilder(ruleContext,picBuilder);
       CppCompileAction picAction=picBuilder.build();
@@ -36,12 +37,13 @@
     }
     if (generateNoPicAction) {
       builder.setOutputFile(ruleContext.getRelatedArtifact(outputName,outputExtension)).setDotdFile(outputName,dependencyFileExtension);
-      setupBuildVariables(builder,false,ccRelativeName);
+      Artifact gcnoFile=!cppConfiguration.isLipoOptimization() && isCodeCoverageEnabled() ? ruleContext.getRelatedArtifact(outputName,".gcno") : null;
+      if (gcnoFile != null) {
+        builder.setGcnoFile(gcnoFile);
+      }
+      setupBuildVariables(builder,false,ccRelativeName,gcnoFile);
       if (maySaveTemps) {
         result.addTemps(createTempsActions(sourceArtifact,outputName,builder,false,ccRelativeName));
-      }
-      if (!cppConfiguration.isLipoOptimization() && isCodeCoverageEnabled()) {
-        builder.setGcnoFile(ruleContext.getRelatedArtifact(outputName,".gcno"));
       }
       semantics.finalizeCompileActionBuilder(ruleContext,builder);
       CppCompileAction compileAction=builder.build();
