@@ -5,5 +5,9 @@
       return modelSource;
     }
   }
-  throw new UnresolvableModelException("Could not find any repositories that knew how to " + "resolve " + groupId + ":"+ artifactId+ ":"+ version+ " (checked "+ Arrays.toString(repositories.toArray())+ ")",groupId,artifactId,version);
+  List<String> urls=Lists.newArrayList();
+  for (  Repository repository : repositories) {
+    urls.add(repository.getUrl());
+  }
+  throw new UnresolvableModelException("Could not find any repositories that knew how to " + "resolve " + groupId + ":"+ artifactId+ ":"+ version+ " (checked "+ Joiner.on(", ").join(urls)+ ")",groupId,artifactId,version);
 }
