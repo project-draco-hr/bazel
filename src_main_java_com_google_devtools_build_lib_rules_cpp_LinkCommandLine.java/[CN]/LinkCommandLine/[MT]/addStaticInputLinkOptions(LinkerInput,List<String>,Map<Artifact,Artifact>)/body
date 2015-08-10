@@ -5,13 +5,29 @@
     if (!Iterables.isEmpty(archiveMembers)) {
       options.add("-Wl,--start-lib");
       for (      Artifact member : archiveMembers) {
-        options.add(member.getExecPathString());
+        if (ltoMap != null) {
+          Artifact backend=ltoMap.remove(member);
+          if (backend == null) {
+            System.err.println("LTO backend file missing for " + member + " already did: "+ options);
+            backend=member;
+          }
+          options.add(backend.getExecPathString());
+        }
+ else {
+          options.add(member.getExecPathString());
+        }
       }
       options.add("-Wl,--end-lib");
     }
   }
  else {
     Artifact inputArtifact=input.getArtifact();
+    if (ltoMap != null) {
+      Artifact ltoArtifact=ltoMap.remove(inputArtifact);
+      if (ltoArtifact != null) {
+        inputArtifact=ltoArtifact;
+      }
+    }
     if (input.isFake()) {
       options.add(Link.FAKE_OBJECT_PREFIX + inputArtifact.getExecPathString());
     }

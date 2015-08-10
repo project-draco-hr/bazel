@@ -34,6 +34,15 @@
     linkActionBuilder.setSymbolCountsOutput(ruleContext.getPackageRelativeArtifact(CppLinkAction.symbolCountsFileName(binaryPath),ruleContext.getConfiguration().getBinDirectory()));
   }
   CppLinkAction.Context linkContext=new CppLinkAction.Context(linkActionBuilder);
+  if (featureConfiguration.isEnabled(CppRuleClasses.THIN_LTO)) {
+    linkActionBuilder.setLTOIndexing(true);
+    CppLinkAction indexAction=linkActionBuilder.build();
+    ruleContext.registerAction(indexAction);
+    for (    LTOBackendArtifacts ltoArtifacts : indexAction.getAllLTOBackendArtifacts()) {
+      ltoArtifacts.scheduleLTOBackendAction(ruleContext);
+    }
+    linkActionBuilder.setLTOIndexing(false);
+  }
   CppLinkAction linkAction=linkActionBuilder.build();
   ruleContext.registerAction(linkAction);
   LibraryToLink outputLibrary=linkAction.getOutputLibrary();
