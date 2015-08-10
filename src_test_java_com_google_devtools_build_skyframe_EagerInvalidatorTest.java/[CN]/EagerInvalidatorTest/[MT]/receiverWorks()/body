@@ -1,9 +1,9 @@
 {
-  final Set<String> invalidated=Sets.newConcurrentHashSet();
+  final Set<SkyKey> invalidated=Sets.newConcurrentHashSet();
   EvaluationProgressReceiver receiver=new EvaluationProgressReceiver(){
-    @Override public void invalidated(    SkyValue value,    InvalidationState state){
+    @Override public void invalidated(    SkyKey skyKey,    InvalidationState state){
       Preconditions.checkState(state == expectedState());
-      invalidated.add(((StringValue)value).getValue());
+      invalidated.add(skyKey);
     }
     @Override public void enqueueing(    SkyKey skyKey){
       throw new UnsupportedOperationException();
@@ -20,9 +20,9 @@
   assertValueValue("ab","ab");
   set("a","c");
   invalidateWithoutError(receiver,skyKey("a"));
-  assertThat(invalidated).containsExactly("a","ab");
+  assertThat(invalidated).containsExactly(skyKey("a"),skyKey("ab"));
   assertValueValue("ab","cb");
   set("b","d");
   invalidateWithoutError(receiver,skyKey("b"));
-  assertThat(invalidated).containsExactly("a","ab","b","cb");
+  assertThat(invalidated).containsExactly(skyKey("a"),skyKey("ab"),skyKey("b"));
 }

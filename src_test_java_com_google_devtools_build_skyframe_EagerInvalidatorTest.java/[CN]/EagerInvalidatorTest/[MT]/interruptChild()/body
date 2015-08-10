@@ -15,14 +15,14 @@
   tester.getOrCreate(parent).addDependency(family[numValues - 1]).setComputedValue(CONCATENATE);
   eval(false,parent);
   final Thread mainThread=Thread.currentThread();
-  final AtomicReference<SkyValue> badValue=new AtomicReference<>();
+  final AtomicReference<SkyKey> badKey=new AtomicReference<>();
   EvaluationProgressReceiver receiver=new EvaluationProgressReceiver(){
-    @Override public void invalidated(    SkyValue value,    InvalidationState state){
-      if (value == childValue) {
+    @Override public void invalidated(    SkyKey skyKey,    InvalidationState state){
+      if (skyKey.equals(child)) {
         mainThread.interrupt();
       }
- else       if (!childValue.equals(value)) {
-        badValue.set(value);
+ else       if (skyKey.functionName() != NODE_TYPE) {
+        badKey.set(skyKey);
       }
       try {
         assertTrue(visitor.get().awaitInterruptionForTestingOnly(2,TimeUnit.HOURS));
@@ -44,15 +44,15 @@
   }
  catch (  InterruptedException e) {
   }
-  assertNull(badValue.get());
+  assertNull(badKey.get());
   assertFalse(state.isEmpty());
-  final Set<SkyValue> invalidated=Sets.newConcurrentHashSet();
+  final Set<SkyKey> invalidated=Sets.newConcurrentHashSet();
   assertFalse(isInvalidated(parent));
   SkyValue parentValue=graph.getValue(parent);
   assertNotNull(parentValue);
   receiver=new EvaluationProgressReceiver(){
-    @Override public void invalidated(    SkyValue value,    InvalidationState state){
-      invalidated.add(value);
+    @Override public void invalidated(    SkyKey skyKey,    InvalidationState state){
+      invalidated.add(skyKey);
     }
     @Override public void enqueueing(    SkyKey skyKey){
       throw new UnsupportedOperationException();
@@ -63,7 +63,7 @@
   }
 ;
   invalidateWithoutError(receiver);
-  assertTrue(invalidated.contains(parentValue));
+  assertTrue(invalidated.contains(parent));
   assertThat(state.getInvalidationsForTesting()).isEmpty();
   assertTrue(isInvalidated(child));
   assertChanged(child);

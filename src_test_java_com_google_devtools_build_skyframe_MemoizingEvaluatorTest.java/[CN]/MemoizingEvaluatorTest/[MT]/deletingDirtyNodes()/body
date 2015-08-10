@@ -3,11 +3,11 @@
   final AtomicBoolean interruptInvalidation=new AtomicBoolean(false);
   initializeTester(new TrackingInvalidationReceiver(){
     private final AtomicBoolean firstInvalidation=new AtomicBoolean(true);
-    @Override public void invalidated(    SkyValue value,    InvalidationState state){
+    @Override public void invalidated(    SkyKey skyKey,    InvalidationState state){
       if (interruptInvalidation.get() && !firstInvalidation.getAndSet(false)) {
         thread.interrupt();
       }
-      super.invalidated(value,state);
+      super.invalidated(skyKey,state);
     }
   }
 );
