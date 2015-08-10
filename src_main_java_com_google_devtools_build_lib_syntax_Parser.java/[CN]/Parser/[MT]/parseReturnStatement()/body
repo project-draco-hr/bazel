@@ -1,6 +1,14 @@
 {
   int start=token.left;
+  int end=token.right;
   expect(TokenKind.RETURN);
-  Expression expression=parseExpression();
+  Expression expression;
+  if (STATEMENT_TERMINATOR_SET.contains(token.kind)) {
+    expression=new Identifier("None");
+    setLocation(expression,start,end);
+  }
+ else {
+    expression=parseExpression();
+  }
   return setLocation(new ReturnStatement(expression),start,expression);
 }
