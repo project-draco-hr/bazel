@@ -2,23 +2,17 @@
   ObjcCommon common=common(ruleContext);
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
-  ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,common.getObjcProvider(),LinkedBinary.DEPENDENCIES_ONLY,bundleDirFormat,bundleMinimumOsVersion(ruleContext));
+  ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,common.getObjcProvider(),LinkedBinary.DEPENDENCIES_ONLY,bundleDirFormat,bundleName(ruleContext),bundleMinimumOsVersion(ruleContext));
   releaseBundlingSupport.registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateResources().validateAttributes();
   XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addFilesToBuild(filesToBuild).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),xcodeProductType,ObjcRuleClasses.objcConfiguration(ruleContext).getDependencySingleArchitecture(),configurationDistinguisher).addDummySource(xcodeProviderBuilder);
   for (  Attribute attribute : dependencyAttributes) {
     xcodeSupport.addDependencies(xcodeProviderBuilder,attribute);
   }
   xcodeSupport.registerActions(xcodeProviderBuilder.build());
-  Optional<ObjcProvider> exposedObjcProvider;
-  if (exposeAsNestedBundle == ExposeAsNestedBundle.YES) {
-    exposedObjcProvider=Optional.of(new ObjcProvider.Builder().add(MERGE_ZIP,ruleContext.getImplicitOutputArtifact(ReleaseBundlingSupport.IPA)).build());
-  }
- else {
-    exposedObjcProvider=Optional.absent();
-  }
   RuleConfiguredTargetBuilder targetBuilder=ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build()).addProvider(XcTestAppProvider.class,releaseBundlingSupport.xcTestAppProvider()).addProvider(XcodeProvider.class,xcodeProviderBuilder.build());
-  if (exposedObjcProvider.isPresent()) {
-    targetBuilder.addProvider(ObjcProvider.class,exposedObjcProvider.get());
+  ObjcProvider exposedObjcProvider=exposedObjcProvider(ruleContext);
+  if (exposedObjcProvider != null) {
+    targetBuilder.addProvider(ObjcProvider.class,exposedObjcProvider);
   }
   configureTarget(targetBuilder,ruleContext,releaseBundlingSupport);
   return targetBuilder.build();

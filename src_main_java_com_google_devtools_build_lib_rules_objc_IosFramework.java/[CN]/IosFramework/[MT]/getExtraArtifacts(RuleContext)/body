@@ -1,0 +1,12 @@
+{
+  IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
+  ImmutableList<Artifact> headers=ImmutableList.copyOf(CcCommon.getHeaders(ruleContext));
+  ImmutableMap.Builder<Artifact,Artifact> builder=new ImmutableMap.Builder<>();
+  Artifact frameworkBinary=outputArtifact(ruleContext,new PathFragment(bundleName(ruleContext)));
+  builder.put(intermediateArtifacts.combinedArchitectureBinary(),frameworkBinary);
+  for (  Artifact header : headers) {
+    Artifact frameworkHeader=outputArtifact(ruleContext,new PathFragment("Headers/" + header.getFilename()));
+    builder.put(header,frameworkHeader);
+  }
+  return builder.build();
+}
