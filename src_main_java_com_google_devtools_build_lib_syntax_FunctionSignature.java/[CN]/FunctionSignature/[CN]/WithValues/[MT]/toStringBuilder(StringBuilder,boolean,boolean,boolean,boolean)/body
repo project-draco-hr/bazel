@@ -1,0 +1,92 @@
+{
+  FunctionSignature signature=getSignature();
+  Shape shape=signature.getShape();
+  final ImmutableList<String> names=signature.getNames();
+  @Nullable final List<V> defaultValues=getDefaultValues();
+  @Nullable final List<T> types=getTypes();
+  int mandatoryPositionals=shape.getMandatoryPositionals();
+  int optionalPositionals=shape.getOptionalPositionals();
+  int mandatoryNamedOnly=shape.getMandatoryNamedOnly();
+  int optionalNamedOnly=shape.getOptionalNamedOnly();
+  boolean starArg=shape.hasStarArg();
+  boolean kwArg=shape.hasKwArg();
+  int positionals=mandatoryPositionals + optionalPositionals;
+  int namedOnly=mandatoryNamedOnly + optionalNamedOnly;
+  int named=positionals + namedOnly;
+  int args=named + (starArg ? 1 : 0) + (kwArg ? 1 : 0);
+  int endMandatoryNamedOnly=positionals + mandatoryNamedOnly;
+  boolean hasStar=starArg || (namedOnly > 0);
+  int iStarArg=named;
+  int iKwArg=args - 1;
+class Show {
+    private boolean isMore=false;
+    private int j=0;
+    public void comma(){
+      if (isMore) {
+        sb.append(", ");
+      }
+      isMore=true;
+    }
+    public void type(    int i){
+      boolean noTypeDefined=(types == null || types.get(i) == null);
+      String typeString=noTypeDefined ? "object" : types.get(i).toString();
+      if (noTypeDefined && showNames && skipMissingTypeNames) {
+      }
+ else {
+        if (showNames) {
+          sb.append(": ");
+        }
+        sb.append(typeString);
+      }
+    }
+    public void mandatory(    int i){
+      comma();
+      if (showNames) {
+        sb.append(names.get(i));
+      }
+      type(i);
+    }
+    public void optional(    int i){
+      mandatory(i);
+      if (showDefaults) {
+        sb.append(" = ");
+        if (defaultValues == null) {
+          sb.append("?");
+        }
+ else {
+          Printer.write(sb,defaultValues.get(j++));
+        }
+      }
+    }
+  }
+  ;
+  Show show=new Show();
+  int i=skipFirstMandatory ? 1 : 0;
+  for (; i < mandatoryPositionals; i++) {
+    show.mandatory(i);
+  }
+  for (; i < positionals; i++) {
+    show.optional(i);
+  }
+  if (hasStar) {
+    show.comma();
+    sb.append("*");
+    if (starArg && showNames) {
+      sb.append(names.get(iStarArg));
+    }
+  }
+  for (; i < endMandatoryNamedOnly; i++) {
+    show.mandatory(i);
+  }
+  for (; i < named; i++) {
+    show.optional(i);
+  }
+  if (kwArg) {
+    show.comma();
+    sb.append("**");
+    if (showNames) {
+      sb.append(names.get(iKwArg));
+    }
+  }
+  return sb;
+}
