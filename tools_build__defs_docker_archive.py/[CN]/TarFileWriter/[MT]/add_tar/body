@@ -5,25 +5,32 @@ def add_tar(self, tar, rootuid=None, rootgid=None, numeric=False, name_filter=No
         compression = 'gz'
     elif (compression == 'bzip2'):
         compression = 'bz2'
-    elif (compression not in ['gz', 'bz2']):
+    elif (compression == 'lzma'):
+        compression = 'xz'
+    elif (compression not in ['gz', 'bz2', 'xz']):
         compression = ''
-    with tarfile.open(name=tar, mode=('r:' + compression)) as intar:
-        for tarinfo in intar:
-            if ((name_filter is None) or name_filter(tarinfo.name)):
-                tarinfo.mtime = 0
-                if ((rootuid is not None) and (tarinfo.uid == rootuid)):
-                    tarinfo.uid = 0
-                    tarinfo.uname = 'root'
-                if ((rootgid is not None) and (tarinfo.gid == rootgid)):
-                    tarinfo.gid = 0
-                    tarinfo.gname = 'root'
-                if numeric:
-                    tarinfo.uname = ''
-                    tarinfo.gname = ''
-                name = tarinfo.name
-                if ((not name.startswith('/')) and (not name.startswith('.'))):
-                    tarinfo.name = ('./' + name)
-                if tarinfo.isfile():
-                    self.tar.addfile(tarinfo, intar.extractfile(tarinfo.name))
-                else:
-                    self.tar.addfile(tarinfo)
+    if (compression == 'xz'):
+        f = StringIO(os.popen(('cat %s | xzcat' % tar)).read())
+        intar = tarfile.open(fileobj=f, mode='r:')
+    else:
+        intar = tarfile.open(name=tar, mode=('r:' + compression))
+    for tarinfo in intar:
+        if ((name_filter is None) or name_filter(tarinfo.name)):
+            tarinfo.mtime = 0
+            if ((rootuid is not None) and (tarinfo.uid == rootuid)):
+                tarinfo.uid = 0
+                tarinfo.uname = 'root'
+            if ((rootgid is not None) and (tarinfo.gid == rootgid)):
+                tarinfo.gid = 0
+                tarinfo.gname = 'root'
+            if numeric:
+                tarinfo.uname = ''
+                tarinfo.gname = ''
+            name = tarinfo.name
+            if ((not name.startswith('/')) and (not name.startswith('.'))):
+                tarinfo.name = ('./' + name)
+            if tarinfo.isfile():
+                self.tar.addfile(tarinfo, intar.extractfile(tarinfo.name))
+            else:
+                self.tar.addfile(tarinfo)
+    intar.close()
