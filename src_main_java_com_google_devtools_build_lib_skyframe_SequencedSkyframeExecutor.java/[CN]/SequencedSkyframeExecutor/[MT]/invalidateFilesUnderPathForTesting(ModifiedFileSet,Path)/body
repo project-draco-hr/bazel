@@ -3,16 +3,15 @@
     dropConfiguredTargetsNow();
     lastAnalysisDiscarded=false;
   }
-  Iterable<SkyKey> keys;
+  Differencer.Diff diff;
   if (modifiedFileSet.treatEverythingAsModified()) {
-    Differencer.Diff diff=new FilesystemValueChecker(memoizingEvaluator,tsgm,null).getDirtyKeys(new BasicFilesystemDirtinessChecker());
-    keys=diff.changedKeysWithoutNewValues();
-    recordingDiffer.inject(diff.changedKeysWithNewValues());
+    diff=new FilesystemValueChecker(memoizingEvaluator,tsgm,null).getDirtyKeys(new BasicFilesystemDirtinessChecker());
   }
  else {
-    keys=getSkyKeysPotentiallyAffected(modifiedFileSet.modifiedSourceFiles(),pathEntry);
+    diff=getDiff(modifiedFileSet.modifiedSourceFiles(),pathEntry);
   }
   syscalls.set(new PerBuildSyscallCache());
-  recordingDiffer.invalidate(keys);
+  recordingDiffer.invalidate(diff.changedKeysWithoutNewValues());
+  recordingDiffer.inject(diff.changedKeysWithNewValues());
   invalidateTransientErrors();
 }
