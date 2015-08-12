@@ -3,10 +3,6 @@
   runtime.recordCommandStartTime(firstContactTime);
   runtime.getTimestampGranularityMonitor().setCommandStartTime();
   runtime.initEventBus();
-  OutErrEventHandler originalOutErrEventHandler=new OutErrEventHandler(originalOutErr);
-  runtime.getReporter().addHandler(originalOutErrEventHandler);
-  OutErr outErr=originalOutErr;
-  runtime.getReporter().removeHandler(originalOutErrEventHandler);
   if (args.isEmpty()) {
     args=HELP_COMMAND;
   }
@@ -37,7 +33,7 @@
     Path commandLog=getCommandLogPath(runtime.getOutputBase());
     commandLog.delete();
     logOutputStream=commandLog.getOutputStream();
-    outErr=tee(originalOutErr,OutErr.create(logOutputStream,logOutputStream));
+    outErr=tee(outErr,OutErr.create(logOutputStream,logOutputStream));
   }
  catch (  IOException ioException) {
     LoggingUtil.logToRemote(Level.WARNING,"Unable to delete or open command.log",ioException);
