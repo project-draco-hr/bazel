@@ -1,0 +1,13 @@
+def BuildReachabilityTree(dependency_mapping_files, file_open=open):
+    'Builds a reachability tree using entries from dependency mapping files.\n\n  Args:\n    dependency_mapping_files: A comma separated list of J2ObjC-generated\n        dependency mapping files.\n    file_open: Reference to the builtin open function so it may be\n        overridden for testing.\n  Returns:\n    A dict mapping J2ObjC-generated source files to the corresponding direct\n    dependent source files.\n  '
+    tree = dict()
+    for dependency_mapping_file in dependency_mapping_files.split(','):
+        with file_open(dependency_mapping_file, 'r') as f:
+            for line in f:
+                entry = line.strip().split(':')[0]
+                dep = line.strip().split(':')[1]
+                if (entry in tree):
+                    tree[entry].append(dep)
+                else:
+                    tree[entry] = [dep]
+    return tree

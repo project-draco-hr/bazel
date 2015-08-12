@@ -1,0 +1,10 @@
+def BuildHeaderMapping(header_mapping_files, file_open=open):
+    'Builds a mapping between Java classes and J2ObjC-translated header files.\n\n  Args:\n    header_mapping_files: A comma separated list of J2ObjC-generated\n        header mapping files.\n    file_open: Reference to the builtin open function so it may be\n        overridden for testing.\n  Returns:\n    An ordered dict mapping Java class names to corresponding J2ObjC-translated\n    source files.\n  '
+    header_mapping = OrderedDict()
+    for header_mapping_file in header_mapping_files.split(','):
+        with file_open(header_mapping_file, 'r') as f:
+            for line in f:
+                java_class_name = line.strip().split('=')[0]
+                transpiled_file_name = os.path.splitext(line.strip().split('=')[1])[0]
+                header_mapping[java_class_name] = transpiled_file_name
+    return header_mapping

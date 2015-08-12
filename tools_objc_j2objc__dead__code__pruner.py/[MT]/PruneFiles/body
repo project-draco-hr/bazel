@@ -1,0 +1,9 @@
+def PruneFiles(input_files, output_files, objc_file_path, reachable_files, file_open=open, file_shutil=shutil):
+    'Copies over translated files and remove the contents of unreachable files.\n\n  Args:\n    input_files: A comma separated list of input source files to prune. It has\n        a one-on-one pair mapping with the output_file list.\n    output_files: A comma separated list of output source files to write pruned\n        source files to. It has a one-on-one pair mapping with the input_file\n        list.\n    objc_file_path: The file path which represents a directory where the\n        generated ObjC files reside.\n    reachable_files: A set of reachable source files.\n    file_open: Reference to the builtin open function so it may be\n        overridden for testing.\n    file_shutil: Reference to the builtin shutil module so it may be\n        overridden for testing.\n  Returns:\n    None.\n  '
+    file_queue = Queue.Queue()
+    for (input_file, output_file) in zip(input_files.split(','), output_files.split(',')):
+        file_queue.put((input_file, output_file))
+    for _ in xrange(multiprocessing.cpu_count()):
+        t = threading.Thread(target=_PruneFile, args=(file_queue, reachable_files, objc_file_path, file_open, file_shutil))
+        t.start()
+    file_queue.join()

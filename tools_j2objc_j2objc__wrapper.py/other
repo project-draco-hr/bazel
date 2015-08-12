@@ -1,0 +1,21 @@
+'A wrapper script for J2ObjC transpiler.\n\nThis script wraps around J2ObjC transpiler to also output a dependency mapping\nfile by scanning the import and include directives of the J2ObjC-translated\nfiles.\n'
+import argparse
+import multiprocessing
+import os
+import Queue
+import re
+import subprocess
+import threading
+INCLUDE_RE = re.compile('#(include|import) "([^"]+)"')
+if (__name__ == '__main__'):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--java', required=True, help='The path to the Java executable.')
+    parser.add_argument('--jvm_flags', default='', help='A comma-separated list of flags to pass to the JVM.')
+    parser.add_argument('--j2objc', required=True, help='The path to the J2ObjC deploy jar.')
+    parser.add_argument('--main_class', required=True, help='The main class of the J2ObjC deploy jar to execute.')
+    parser.add_argument('--translated_source_files', required=True, help='A comma-separated list of file paths where J2ObjC will write the translated files to.')
+    parser.add_argument('--output_dependency_mapping_file', required=True, help='The file path of the dependency mapping file to write to.')
+    parser.add_argument('--objc_file_path', required=True, help='The file path which represents a directory where the generated ObjC files reside.')
+    (args, pass_through_flags) = parser.parse_known_args()
+    RunJ2ObjC(args.java, args.jvm_flags, args.j2objc, args.main_class, pass_through_flags)
+    WriteDepMappingFile(args.translated_source_files, args.objc_file_path, args.output_dependency_mapping_file)

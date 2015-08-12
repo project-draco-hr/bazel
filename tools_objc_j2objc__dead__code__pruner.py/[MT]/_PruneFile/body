@@ -1,0 +1,14 @@
+def _PruneFile(file_queue, reachable_files, objc_file_path, file_open=open, file_shutil=shutil):
+    while True:
+        try:
+            (input_file, output_file) = file_queue.get_nowait()
+        except Queue.Empty:
+            return
+        file_name = os.path.relpath(os.path.splitext(input_file)[0], objc_file_path)
+        if ((file_name in reachable_files) or file_name.endswith('package-info')):
+            file_shutil.copy(input_file, output_file)
+        else:
+            f = file_open(output_file, 'w')
+            f.write(PRUNED_SRC_CONTENT)
+            f.close()
+        file_queue.task_done()
