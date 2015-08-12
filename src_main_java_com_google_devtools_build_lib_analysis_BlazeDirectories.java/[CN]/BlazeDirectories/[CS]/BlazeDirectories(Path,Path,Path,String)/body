@@ -1,0 +1,16 @@
+{
+  this.installBase=installBase;
+  this.workspace=workspace;
+  this.outputBase=outputBase;
+  this.installMD5=installMD5 == null ? null : checkMD5(HashCode.fromString(installMD5));
+  boolean useDefaultExecRootName=this.workspace == null || this.workspace.isRootDirectory();
+  if (useDefaultExecRootName) {
+    this.execRoot=outputBase.getChild(DEFAULT_EXEC_ROOT);
+  }
+ else {
+    this.execRoot=outputBase.getChild(workspace.getBaseName());
+  }
+  this.outputPath=execRoot.getRelative(RELATIVE_OUTPUT_PATH);
+  Preconditions.checkState(useDefaultExecRootName || outputPath.asFragment().equals(outputPathFromOutputBase(outputBase.asFragment(),workspace.asFragment())));
+  this.localOutputPath=outputBase.getRelative(BlazeDirectories.RELATIVE_OUTPUT_PATH);
+}
