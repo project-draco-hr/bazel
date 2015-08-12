@@ -1,7 +1,7 @@
 {
   final JavaCommon common=new JavaCommon(ruleContext,semantics);
   DeployArchiveBuilder deployArchiveBuilder=new DeployArchiveBuilder(semantics,ruleContext);
-  Runfiles.Builder runfilesBuilder=new Runfiles.Builder();
+  Runfiles.Builder runfilesBuilder=new Runfiles.Builder(ruleContext.getWorkspaceName());
   List<String> jvmFlags=new ArrayList<>();
   common.initializeJavacOpts();
   JavaTargetAttributes.Builder attributesBuilder=common.initCommon();
@@ -81,7 +81,7 @@
   collectDefaultRunfiles(runfilesBuilder,ruleContext,common,filesToBuild,launcher,dynamicRuntimeActionInputs);
   Runfiles defaultRunfiles=runfilesBuilder.build();
   RunfilesSupport runfilesSupport=createExecutable ? runfilesSupport=RunfilesSupport.withExecutable(ruleContext,defaultRunfiles,executable,semantics.getExtraArguments(ruleContext,common)) : null;
-  RunfilesProvider runfilesProvider=RunfilesProvider.withData(defaultRunfiles,new Runfiles.Builder().merge(runfilesSupport).build());
+  RunfilesProvider runfilesProvider=RunfilesProvider.withData(defaultRunfiles,new Runfiles.Builder(ruleContext.getWorkspaceName()).merge(runfilesSupport).build());
   ImmutableList<String> deployManifestLines=getDeployManifestLines(ruleContext,originalMainClass);
   Artifact deployJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_DEPLOY_JAR);
   deployArchiveBuilder.setOutputJar(deployJar).setJavaStartClass(mainClass).setDeployManifestLines(deployManifestLines).setAttributes(attributes).addRuntimeJars(common.getJavaCompilationArtifacts().getRuntimeJars()).setIncludeBuildData(true).setRunfilesMiddleman(runfilesSupport == null ? null : runfilesSupport.getRunfilesMiddleman()).setCompression(COMPRESSED).setLauncher(launcher);
