@@ -32,16 +32,24 @@ return attrPb.hasLicense() ? deserializeLicense(attrPb.getLicense()) : null;
 case STRING_DICT:
 {
 ImmutableMap.Builder<String,String> builder=ImmutableMap.builder();
+HashSet<String> keysSeenSoFar=Sets.newHashSet();
 for (Build.StringDictEntry entry : attrPb.getStringDictValueList()) {
-builder.put(entry.getKey(),entry.getValue());
+String key=entry.getKey();
+if (keysSeenSoFar.add(key)) {
+builder.put(key,entry.getValue());
+}
 }
 return builder.build();
 }
 case STRING_DICT_UNARY:
 {
 ImmutableMap.Builder<String,String> builder=ImmutableMap.builder();
+HashSet<String> keysSeenSoFar=Sets.newHashSet();
 for (StringDictUnaryEntry entry : attrPb.getStringDictUnaryValueList()) {
-builder.put(entry.getKey(),entry.getValue());
+String key=entry.getKey();
+if (keysSeenSoFar.add(key)) {
+builder.put(key,entry.getValue());
+}
 }
 return builder.build();
 }
@@ -50,16 +58,24 @@ return deserializeFilesetEntries(attrPb.getFilesetListValueList());
 case LABEL_LIST_DICT:
 {
 ImmutableMap.Builder<String,List<Label>> builder=ImmutableMap.builder();
+HashSet<String> keysSeenSoFar=Sets.newHashSet();
 for (Build.LabelListDictEntry entry : attrPb.getLabelListDictValueList()) {
-builder.put(entry.getKey(),deserializeLabels(entry.getValueList()));
+String key=entry.getKey();
+if (keysSeenSoFar.add(key)) {
+builder.put(key,deserializeLabels(entry.getValueList()));
+}
 }
 return builder.build();
 }
 case STRING_LIST_DICT:
 {
 ImmutableMap.Builder<String,List<String>> builder=ImmutableMap.builder();
+HashSet<String> keysSeenSoFar=Sets.newHashSet();
 for (Build.StringListDictEntry entry : attrPb.getStringListDictValueList()) {
-builder.put(entry.getKey(),ImmutableList.copyOf(entry.getValueList()));
+String key=entry.getKey();
+if (keysSeenSoFar.add(key)) {
+builder.put(key,ImmutableList.copyOf(entry.getValueList()));
+}
 }
 return builder.build();
 }
