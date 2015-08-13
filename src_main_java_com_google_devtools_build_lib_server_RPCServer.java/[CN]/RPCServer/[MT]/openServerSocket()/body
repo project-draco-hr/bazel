@@ -14,6 +14,14 @@
     deleteAtExit(socketFile,false);
   }
   ensureExclusiveAccess(socketFile);
+  Path pidFile=serverDirectory.getRelative("server.pid");
+  deleteAtExit(pidFile,false);
+  try {
+    pidFile.delete();
+  }
+ catch (  IOException e) {
+  }
+  pidFile.createSymbolicLink(new PathFragment(String.valueOf(OsUtils.getpid())));
   LocalServerSocket serverSocket=new LocalServerSocket();
   serverSocket.bind(new LocalSocketAddress(socketFile.getPathFile()));
   FilesystemUtils.chmod(socketFile.getPathFile(),0600);
