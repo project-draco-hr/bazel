@@ -1,15 +1,15 @@
 {
-  Location ruleLocation=deserializeLocation(rulePb.getParseableLocation());
+  Location ruleLocation=deserializeLocation(context,rulePb.getParseableLocation());
   RuleClass ruleClass=packageDeserializationEnvironment.getRuleClass(rulePb,ruleLocation);
   Map<String,ParsedAttributeValue> attributeValues=new HashMap<>();
   for (  Build.Attribute attrPb : rulePb.getAttributeList()) {
     Type<?> type=ruleClass.getAttributeByName(attrPb.getName()).getType();
-    attributeValues.put(attrPb.getName(),deserializeAttribute(type,attrPb));
+    attributeValues.put(attrPb.getName(),deserializeAttribute(context,type,attrPb));
   }
   Label ruleLabel=deserializeLabel(rulePb.getName());
   try {
-    Rule rule=ruleClass.createRuleWithParsedAttributeValues(ruleLabel,packageBuilder,ruleLocation,attributeValues,NullEventHandler.INSTANCE);
-    packageBuilder.addRule(rule);
+    Rule rule=ruleClass.createRuleWithParsedAttributeValues(ruleLabel,context.packageBuilder,ruleLocation,attributeValues,NullEventHandler.INSTANCE);
+    context.packageBuilder.addRule(rule);
     Preconditions.checkState(!rule.containsErrors());
   }
  catch (  NameConflictException|SyntaxException e) {
