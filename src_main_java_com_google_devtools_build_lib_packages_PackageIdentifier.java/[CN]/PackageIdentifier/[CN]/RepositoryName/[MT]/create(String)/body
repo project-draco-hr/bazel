@@ -1,8 +1,9 @@
 {
-  String errorMessage=validate(name);
-  if (errorMessage != null) {
-    errorMessage="invalid repository name '" + StringUtilities.sanitizeControlChars(name) + "': "+ errorMessage;
-    throw new SyntaxException(errorMessage);
+  try {
+    return repositoryNameCache.get(name);
   }
-  return new RepositoryName(StringCanonicalizer.intern(name));
+ catch (  ExecutionException e) {
+    Throwables.propagateIfInstanceOf(e.getCause(),SyntaxException.class);
+    throw new IllegalStateException("Failed to create RepositoryName from " + name,e);
+  }
 }
