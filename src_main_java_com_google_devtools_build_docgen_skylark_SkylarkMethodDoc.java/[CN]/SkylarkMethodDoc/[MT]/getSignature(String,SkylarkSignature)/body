@@ -1,0 +1,31 @@
+{
+  List<String> argList=new ArrayList<>();
+  for (  Param param : adjustedMandatoryPositionals(method)) {
+    argList.add(param.name());
+  }
+  for (  Param param : method.optionalPositionals()) {
+    argList.add(formatOptionalParameter(param));
+  }
+  for (  Param param : method.extraPositionals()) {
+    argList.add("*" + param.name());
+  }
+  if (argList.size() > 0 && method.extraPositionals().length == 0 && (method.optionalNamedOnly().length > 0 || method.mandatoryNamedOnly().length > 0)) {
+    argList.add("*");
+  }
+  for (  Param param : method.mandatoryNamedOnly()) {
+    argList.add(param.name());
+  }
+  for (  Param param : method.optionalNamedOnly()) {
+    argList.add(formatOptionalParameter(param));
+  }
+  for (  Param param : method.extraKeywords()) {
+    argList.add("**" + param.name());
+  }
+  String args="(" + Joiner.on(", ").join(argList) + ")";
+  if (!objectName.equals(TOP_LEVEL_ID)) {
+    return String.format("%s %s.%s%s\n",getTypeAnchor(method.returnType()),objectName,method.name(),args);
+  }
+ else {
+    return String.format("%s %s%s\n",getTypeAnchor(method.returnType()),method.name(),args);
+  }
+}

@@ -1,0 +1,16 @@
+{
+  Map<String,String> modules=new TreeMap<>();
+  for (  SkylarkModuleDoc doc : collectBuiltinModules().values()) {
+    if (doc.getAnnotation() == getTopLevelModule()) {
+      for (      Map.Entry<String,SkylarkBuiltinMethodDoc> entry : doc.getBuiltinMethods().entrySet()) {
+        if (entry.getValue().documented()) {
+          modules.put(entry.getKey(),DocgenConsts.toCommandLineFormat(entry.getValue().getDocumentation()));
+        }
+      }
+    }
+ else {
+      modules.put(doc.getAnnotation().name(),DocgenConsts.toCommandLineFormat(doc.getAnnotation().doc()));
+    }
+  }
+  return modules;
+}

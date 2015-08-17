@@ -1,17 +1,17 @@
 {
-  Map<String,SkylarkModuleDoc> modules=collectModules();
-  SkylarkModuleDoc toplevelModuleDoc=modules.get(getTopLevelModule().name());
+  Map<String,SkylarkModuleDoc> modules=SkylarkDocumentationCollector.collectModules();
+  SkylarkModuleDoc toplevelModuleDoc=modules.get(SkylarkDocumentationCollector.getTopLevelModule().name());
   if (modules.containsKey(params[0])) {
     SkylarkModuleDoc module=modules.get(params[0]);
     if (params.length == 1) {
       String moduleName=module.getAnnotation().name();
       StringBuilder sb=new StringBuilder();
       sb.append(moduleName).append("\n\t").append(module.getAnnotation().doc()).append("\n");
-      for (      SkylarkBuiltinMethod method : module.getBuiltinMethods().values()) {
-        printBuiltinFunctionDoc(moduleName,method.annotation,sb);
+      for (      SkylarkBuiltinMethodDoc method : module.getBuiltinMethods().values()) {
+        printBuiltinFunctionDoc(moduleName,method,sb);
       }
-      for (      SkylarkJavaMethod method : module.getJavaMethods()) {
-        printJavaFunctionDoc(moduleName,method,sb);
+      for (      SkylarkJavaMethodDoc method : module.getJavaMethods()) {
+        printJavaFunctionDoc(method,sb);
       }
       return DocgenConsts.toCommandLineFormat(sb.toString());
     }
