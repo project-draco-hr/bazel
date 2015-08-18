@@ -1,0 +1,16 @@
+{
+  String toolchainDirectory=NdkPaths.getToolchainDirectoryFromToolPath(toolchain.getToolPathList().get(0).getPath());
+  String androidPlatformIncludes=NdkPaths.stripRepositoryPrefix(toolchain.getBuiltinSysroot()) + "/**/*";
+  List<String> toolchainFileGlobPatterns=new ArrayList<String>();
+  toolchainFileGlobPatterns.add(androidPlatformIncludes);
+  for (  String cxxFlag : toolchain.getUnfilteredCxxFlagList()) {
+    if (!cxxFlag.startsWith("-")) {
+      toolchainFileGlobPatterns.add(NdkPaths.stripRepositoryPrefix(cxxFlag) + "/**/*");
+    }
+  }
+  StringBuilder toolchainFileGlobs=new StringBuilder();
+  for (  String toolchainFileGlobPattern : toolchainFileGlobPatterns) {
+    toolchainFileGlobs.append(String.format("        \"%s\",\n",toolchainFileGlobPattern));
+  }
+  return ccToolchainTemplate.replace("%toolchainName%",toolchain.getToolchainIdentifier()).replace("%cpu%",toolchain.getTargetCpu()).replace("%toolchainDirectory%",toolchainDirectory).replace("%toolchainFileGlobs%",toolchainFileGlobs.toString().trim());
+}

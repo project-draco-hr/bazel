@@ -1,0 +1,26 @@
+{
+  Set<String> ndkFiles=getFiles("ndkfiles.txt");
+  Set<String> ndkDirectories=getFiles("ndkdirectories.txt");
+  for (  CToolchain toolchain : CROSSTOOL_RELEASE.getToolchainList()) {
+    for (    ToolPath toolpath : toolchain.getToolPathList()) {
+      String path=NdkPaths.stripRepositoryPrefix(toolpath.getPath());
+      assertThat(ndkFiles).contains(path);
+    }
+    for (    String includeDirectory : toolchain.getCxxBuiltinIncludeDirectoryList()) {
+      if (!includeDirectory.equals("%sysroot%/usr/include")) {
+        String path=NdkPaths.stripRepositoryPrefix(includeDirectory);
+        assertThat(ndkDirectories).contains(path);
+      }
+    }
+{
+      String builtinSysroot=NdkPaths.stripRepositoryPrefix(toolchain.getBuiltinSysroot());
+      assertThat(ndkDirectories).contains(builtinSysroot);
+    }
+    for (    String flag : toolchain.getUnfilteredCxxFlagList()) {
+      if (!flag.equals("-isystem")) {
+        flag=NdkPaths.stripRepositoryPrefix(flag);
+        assertThat(ndkDirectories).contains(flag);
+      }
+    }
+  }
+}

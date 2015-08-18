@@ -1,0 +1,9 @@
+{
+  ImmutableList.Builder<CToolchain.Builder> toolchains=ImmutableList.builder();
+  CToolchain baseToolchain=builder.build();
+  String gccVersion=baseToolchain.getCompiler().split("-")[1];
+  toolchains.add(CToolchain.newBuilder(baseToolchain).setToolchainIdentifier(baseToolchain.getToolchainIdentifier() + "-gnu-libstdcpp").addAllUnfilteredCxxFlag(createIncludeFlags(ndkPaths.createGnuLibstdcIncludePaths(gccVersion,baseToolchain.getTargetCpu()))));
+  toolchains.add(CToolchain.newBuilder(baseToolchain).setToolchainIdentifier(baseToolchain.getToolchainIdentifier() + "-libcpp").addAllUnfilteredCxxFlag(createIncludeFlags(ndkPaths.createLibcxxIncludePaths())));
+  toolchains.add(CToolchain.newBuilder(baseToolchain).setToolchainIdentifier(baseToolchain.getToolchainIdentifier() + "-stlport").addAllUnfilteredCxxFlag(createIncludeFlags(ndkPaths.createStlportIncludePaths())));
+  return toolchains.build();
+}

@@ -1,0 +1,14 @@
+{
+  String ccToolchainSuiteTemplate=getTemplate("android_ndk_cc_toolchain_suite_template.txt");
+  String ccToolchainTemplate=getTemplate("android_ndk_cc_toolchain_template.txt");
+  StringBuilder toolchainMap=new StringBuilder();
+  for (  DefaultCpuToolchain defaultToolchain : androidCrosstoolRelease.getDefaultToolchainList()) {
+    toolchainMap.append(String.format("      \"%s\": \":%s\",\n",defaultToolchain.getCpu(),defaultToolchain.getToolchainIdentifier()));
+  }
+  StringBuilder ccToolchainRules=new StringBuilder();
+  for (  CToolchain toolchain : androidCrosstoolRelease.getToolchainList()) {
+    ccToolchainRules.append(createCcToolchainRule(ccToolchainTemplate,toolchain));
+  }
+  String crosstoolReleaseProto=androidCrosstoolRelease.toString();
+  return ccToolchainSuiteTemplate.replace("%ruleName%",ruleName).replace("%toolchainMap%",toolchainMap.toString().trim()).replace("%crosstoolReleaseProto%",crosstoolReleaseProto).replace("%ccToolchainRules%",ccToolchainRules);
+}

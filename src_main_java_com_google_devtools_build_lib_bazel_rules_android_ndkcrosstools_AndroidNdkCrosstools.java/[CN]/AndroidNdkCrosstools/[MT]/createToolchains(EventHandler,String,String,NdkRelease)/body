@@ -1,0 +1,17 @@
+{
+  String hostPlatform=getHostPlatform(ndkRelease);
+  NdkPaths ndkPaths=new NdkPaths(eventHandler,repositoryName,hostPlatform,apiLevel);
+  List<CToolchain.Builder> toolchainBuilders=new ArrayList<>();
+  toolchainBuilders.addAll(new ArmCrosstools(ndkPaths).createCrosstools());
+  toolchainBuilders.addAll(new MipsCrosstools(ndkPaths).createCrosstools());
+  toolchainBuilders.addAll(new X86Crosstools(ndkPaths).createCrosstools());
+  ImmutableList.Builder<CToolchain> toolchains=new ImmutableList.Builder<>();
+  for (  CToolchain.Builder toolchainBuilder : toolchainBuilders) {
+    toolchainBuilder.setHostSystemName(hostPlatform).setTargetLibc("local").setAbiVersion(toolchainBuilder.getTargetCpu()).setAbiLibcVersion("local");
+    toolchainBuilder.addCxxBuiltinIncludeDirectory("%sysroot%/usr/include");
+    for (    CToolchain.Builder builder : createStlImpls(toolchainBuilder,ndkPaths)) {
+      toolchains.add(builder.build());
+    }
+  }
+  return toolchains.build();
+}
