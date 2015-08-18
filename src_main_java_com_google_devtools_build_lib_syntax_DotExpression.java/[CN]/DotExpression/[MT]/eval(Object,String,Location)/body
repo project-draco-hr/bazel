@@ -1,6 +1,12 @@
 {
   if (objValue instanceof ClassObject) {
-    Object result=((ClassObject)objValue).getValue(name);
+    Object result=null;
+    try {
+      result=((ClassObject)objValue).getValue(name);
+    }
+ catch (    IllegalArgumentException ex) {
+      throw new EvalException(loc,ex);
+    }
     if (result != null) {
       result=SkylarkType.convertToSkylark(result,loc);
       SkylarkType.checkTypeAllowedInSkylark(result,loc);

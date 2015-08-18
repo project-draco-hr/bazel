@@ -25,7 +25,8 @@
     return null;
   }
 catch (  EvalException e) {
-    if (!expectFailure.isEmpty() && e.getMessage().matches(expectFailure)) {
+    addRuleToStackTrace(e,ruleContext.getRule());
+    if (!expectFailure.isEmpty() && getMessageWithoutStackTrace(e).matches(expectFailure)) {
       return new com.google.devtools.build.lib.analysis.RuleConfiguredTargetBuilder(ruleContext).add(RunfilesProvider.class,RunfilesProvider.EMPTY).build();
     }
     ruleContext.ruleError("\n" + e.print());

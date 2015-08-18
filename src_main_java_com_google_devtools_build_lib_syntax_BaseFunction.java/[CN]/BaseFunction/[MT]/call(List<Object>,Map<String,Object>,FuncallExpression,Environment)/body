@@ -1,4 +1,5 @@
 {
+  Environment env=getOrCreateChildEnvironment(parentEnv);
   Preconditions.checkState(isConfigured(),"Function %s was not configured",getName());
   Location loc=ast == null ? location : ast.getLocation();
   Object[] arguments=processArguments(args,kwargs,loc);
@@ -6,7 +7,10 @@
   try {
     return call(arguments,ast,env);
   }
- catch (  ConversionException e) {
-    throw new EvalException(loc,e.getMessage());
+ catch (  EvalExceptionWithStackTrace ex) {
+    throw updateStackTrace(ex,loc);
+  }
+catch (  EvalException|RuntimeException|InterruptedException ex) {
+    throw updateStackTrace(new EvalExceptionWithStackTrace(ex,Location.BUILTIN),loc);
   }
 }
