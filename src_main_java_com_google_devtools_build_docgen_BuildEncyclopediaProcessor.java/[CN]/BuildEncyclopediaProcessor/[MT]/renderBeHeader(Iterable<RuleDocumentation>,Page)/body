@@ -4,28 +4,18 @@
   separateRuleFamilies(docEntries,languageSpecificRuleFamilies,genericRuleFamilies);
   Map<String,ListMultimap<RuleType,RuleDocumentation>> ruleMapping=new HashMap<>();
   createRuleMapping(docEntries,ruleMapping);
-  String languageSpecificTable;
-{
-    StringBuilder sb=new StringBuilder();
-    sb.append("<colgroup span=\"6\" width=\"20%\"></colgroup>\n").append("<tr><th>Language</th><th>Binary rules</th><th>Library rules</th>" + "<th>Test rules</th><th>Other rules</th><th></th></tr>\n");
-    for (    String ruleFamily : languageSpecificRuleFamilies) {
-      generateHeaderTableRuleFamily(sb,ruleMapping.get(ruleFamily),ruleFamily);
-    }
-    languageSpecificTable=sb.toString();
+  List<SummaryRuleFamily> languageSpecificSummaryFamilies=new ArrayList<SummaryRuleFamily>(languageSpecificRuleFamilies.size());
+  for (  String ruleFamily : languageSpecificRuleFamilies) {
+    languageSpecificSummaryFamilies.add(new SummaryRuleFamily(ruleMapping.get(ruleFamily),ruleFamily));
   }
-  String otherRulesTable;
-{
-    StringBuilder sb=new StringBuilder();
-    sb.append("<colgroup span=\"6\" width=\"20%\"></colgroup>\n");
-    for (    String ruleFamily : genericRuleFamilies) {
-      generateHeaderTableRuleFamily(sb,ruleMapping.get(ruleFamily),ruleFamily);
-    }
-    otherRulesTable=sb.toString();
+  List<SummaryRuleFamily> otherSummaryFamilies=new ArrayList<SummaryRuleFamily>(genericRuleFamilies.size());
+  for (  String ruleFamily : genericRuleFamilies) {
+    otherSummaryFamilies.add(new SummaryRuleFamily(ruleMapping.get(ruleFamily),ruleFamily));
   }
-  page.add(DocgenConsts.VAR_LANG_SPECIFIC_HEADER_TABLE,languageSpecificTable);
-  page.add(DocgenConsts.VAR_OTHER_RULES_HEADER_TABLE,otherRulesTable);
-  page.add(DocgenConsts.VAR_COMMON_ATTRIBUTE_DEFINITION,generateCommonAttributeDocs(PredefinedAttributes.COMMON_ATTRIBUTES,DocgenConsts.COMMON_ATTRIBUTES));
-  page.add(DocgenConsts.VAR_TEST_ATTRIBUTE_DEFINITION,generateCommonAttributeDocs(PredefinedAttributes.TEST_ATTRIBUTES,DocgenConsts.TEST_ATTRIBUTES));
-  page.add(DocgenConsts.VAR_BINARY_ATTRIBUTE_DEFINITION,generateCommonAttributeDocs(PredefinedAttributes.BINARY_ATTRIBUTES,DocgenConsts.BINARY_ATTRIBUTES));
+  page.add("langSpecificSummaryFamilies",languageSpecificSummaryFamilies);
+  page.add("otherSummaryFamilies",otherSummaryFamilies);
+  page.add("commonAttributes",PredefinedAttributes.COMMON_ATTRIBUTES);
+  page.add("testAttributes",PredefinedAttributes.TEST_ATTRIBUTES);
+  page.add("binaryAttributes",PredefinedAttributes.BINARY_ATTRIBUTES);
   page.add(DocgenConsts.VAR_LEFT_PANEL,generateLeftNavigationPanel(docEntries));
 }
