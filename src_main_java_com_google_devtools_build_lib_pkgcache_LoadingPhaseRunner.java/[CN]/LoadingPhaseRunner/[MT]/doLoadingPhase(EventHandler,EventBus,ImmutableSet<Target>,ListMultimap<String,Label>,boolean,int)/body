@@ -1,0 +1,11 @@
+{
+  eventHandler.handle(Event.progress("Loading..."));
+  Stopwatch timer=Stopwatch.createStarted();
+  LOG.info("Starting loading phase");
+  BaseLoadingResult baseResult=performLoadingOfTargets(eventHandler,eventBus,targetsToLoad,labelsToLoadUnconditionally,keepGoing,loadingPhaseThreads);
+  BaseLoadingResult expandedResult=expandTestSuites(eventHandler,baseResult.getTargets(),keepGoing);
+  Set<Target> testSuiteTargets=Sets.difference(baseResult.getTargets(),expandedResult.getTargets());
+  eventBus.post(new LoadingPhaseCompleteEvent(expandedResult.getTargets(),testSuiteTargets,packageManager.getStatistics(),timer.stop().elapsed(TimeUnit.MILLISECONDS)));
+  LOG.info("Loading phase finished");
+  return new BaseLoadingResult(expandedResult.getTargets(),baseResult.isSuccesful() && expandedResult.isSuccesful());
+}

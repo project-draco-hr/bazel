@@ -44,9 +44,8 @@
     callback.notifyTargets(targets.getTargets());
   }
   maybeReportDeprecation(eventHandler,targets.getTargets());
-  LoadingResult result=doLoadingPhase(eventHandler,eventBus,targets.getTargets(),testsToRun,labelsToLoadUnconditionally,keepGoing,options.loadingPhaseThreads,targets.hasError());
-  if (callback != null) {
-    callback.notifyVisitedPackages(result.getVisitedPackages());
-  }
-  return result;
+  BaseLoadingResult result=doLoadingPhase(eventHandler,eventBus,targets.getTargets(),labelsToLoadUnconditionally,keepGoing,options.loadingPhaseThreads);
+  LoadingResult loadingResult=new LoadingResult(targets.hasError(),!result.isSuccesful(),result.getTargets(),testsToRun,collectPackageRoots(pkgLoader.getErrorFreeVisitedPackages()));
+  freeMemoryAfterLoading(callback,pkgLoader.getVisitedPackageNames());
+  return loadingResult;
 }

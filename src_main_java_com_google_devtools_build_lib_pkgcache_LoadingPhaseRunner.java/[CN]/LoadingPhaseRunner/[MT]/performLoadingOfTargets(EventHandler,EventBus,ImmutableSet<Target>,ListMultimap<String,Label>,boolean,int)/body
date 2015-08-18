@@ -1,0 +1,16 @@
+{
+  Set<Label> labelsToLoad=ImmutableSet.copyOf(labelsToLoadUnconditionally.values());
+  boolean loadingSuccessful=pkgLoader.sync(eventHandler,targetsToLoad,labelsToLoad,keepGoing,loadingPhaseThreads,Integer.MAX_VALUE);
+  ImmutableSet<Target> targetsToAnalyze;
+  if (loadingSuccessful) {
+    targetsToAnalyze=targetsToLoad;
+  }
+ else   if (keepGoing) {
+    targetsToAnalyze=filterErrorFreeTargets(eventBus,targetsToLoad,labelsToLoadUnconditionally);
+    reportAboutPartiallySuccesfulLoading(targetsToLoad,targetsToAnalyze,eventHandler);
+  }
+ else {
+    throw new LoadingFailedException("Loading failed; build aborted");
+  }
+  return new BaseLoadingResult(targetsToAnalyze,loadingSuccessful);
+}
