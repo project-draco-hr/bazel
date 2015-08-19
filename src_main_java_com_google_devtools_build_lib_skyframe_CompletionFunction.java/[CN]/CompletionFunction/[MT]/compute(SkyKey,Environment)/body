@@ -1,0 +1,46 @@
+{
+  TValue value=completor.getValueFromSkyKey(skyKey,env);
+  TopLevelArtifactContext topLevelContext=PrecomputedValue.TOP_LEVEL_CONTEXT.get(env);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  Map<SkyKey,ValueOrException2<MissingInputFileException,ActionExecutionException>> inputDeps=env.getValuesOrThrow(ArtifactValue.mandatoryKeys(completor.getAllArtifactsToBuild(value,topLevelContext).getAllArtifacts()),MissingInputFileException.class,ActionExecutionException.class);
+  int missingCount=0;
+  ActionExecutionException firstActionExecutionException=null;
+  MissingInputFileException missingInputException=null;
+  NestedSetBuilder<Label> rootCausesBuilder=NestedSetBuilder.stableOrder();
+  for (  Map.Entry<SkyKey,ValueOrException2<MissingInputFileException,ActionExecutionException>> depsEntry : inputDeps.entrySet()) {
+    Artifact input=ArtifactValue.artifact(depsEntry.getKey());
+    try {
+      depsEntry.getValue().get();
+    }
+ catch (    MissingInputFileException e) {
+      missingCount++;
+      final Label inputOwner=input.getOwner();
+      if (inputOwner != null) {
+        rootCausesBuilder.add(inputOwner);
+        env.getListener().handle(completor.getRootCauseError(value,inputOwner));
+      }
+    }
+catch (    ActionExecutionException e) {
+      rootCausesBuilder.addTransitive(e.getRootCauses());
+      if (firstActionExecutionException == null) {
+        firstActionExecutionException=e;
+      }
+    }
+  }
+  if (missingCount > 0) {
+    missingInputException=completor.getMissingFilesException(value,missingCount);
+  }
+  NestedSet<Label> rootCauses=rootCausesBuilder.build();
+  if (!rootCauses.isEmpty()) {
+    eventBusRef.get().post(completor.createFailed(value,rootCauses));
+    if (firstActionExecutionException != null) {
+      throw new CompletionFunctionException(firstActionExecutionException);
+    }
+ else {
+      throw new CompletionFunctionException(missingInputException);
+    }
+  }
+  return env.valuesMissing() ? null : completor.createResult(value);
+}

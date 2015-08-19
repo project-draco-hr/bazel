@@ -1,3 +1,13 @@
 {
-  return new Aspect(ImmutableMap.copyOf(providers));
+  if (!outputGroupBuilders.isEmpty()) {
+    ImmutableMap.Builder<String,NestedSet<Artifact>> outputGroups=ImmutableMap.builder();
+    for (    Map.Entry<String,NestedSetBuilder<Artifact>> entry : outputGroupBuilders.entrySet()) {
+      outputGroups.put(entry.getKey(),entry.getValue().build());
+    }
+    if (providers.containsKey(OutputGroupProvider.class)) {
+      throw new IllegalStateException("OutputGroupProvider was provided explicitly; do not use addOutputGroup");
+    }
+    addProvider(OutputGroupProvider.class,new OutputGroupProvider(outputGroups.build()));
+  }
+  return new Aspect(name,ImmutableMap.copyOf(providers));
 }

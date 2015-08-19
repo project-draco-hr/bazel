@@ -1,0 +1,57 @@
+{
+  LOG.info("Starting analysis");
+  pollInterruptedStatus();
+  skyframeBuildView.resetEvaluatedConfiguredTargetKeysSet();
+  Collection<Target> targets=loadingResult.getTargets();
+  eventBus.post(new AnalysisPhaseStartedEvent(targets));
+  skyframeCacheWasInvalidated=false;
+  if ((this.configurations != null && !configurations.equals(this.configurations)) || skyframeAnalysisWasDiscarded) {
+    LOG.info("Discarding analysis cache: configurations have changed.");
+    skyframeExecutor.dropConfiguredTargets();
+    skyframeCacheWasInvalidated=true;
+    clear();
+  }
+  skyframeAnalysisWasDiscarded=false;
+  ImmutableMap<PackageIdentifier,Path> packageRoots=loadingResult.getPackageRoots();
+  this.configurations=configurations;
+  setArtifactRoots(packageRoots);
+  List<TargetAndConfiguration> nodes=nodesForTargets(targets);
+  List<ConfiguredTargetKey> targetSpecs=Lists.transform(nodes,new Function<TargetAndConfiguration,ConfiguredTargetKey>(){
+    @Override public ConfiguredTargetKey apply(    TargetAndConfiguration node){
+      return new ConfiguredTargetKey(node.getLabel(),node.getConfiguration());
+    }
+  }
+);
+  List<AspectKey> aspectKeys=new ArrayList<>();
+  for (  String aspect : aspects) {
+    @SuppressWarnings("unchecked") final Class<? extends ConfiguredAspectFactory> aspectFactoryClass=(Class<? extends ConfiguredAspectFactory>)ruleClassProvider.getAspectFactoryMap().get(aspect);
+    if (aspectFactoryClass != null) {
+      for (      ConfiguredTargetKey targetSpec : targetSpecs) {
+        aspectKeys.add(AspectValue.createAspectKey(targetSpec.getLabel(),targetSpec.getConfiguration(),aspectFactoryClass));
+      }
+    }
+ else {
+      throw new ViewCreationFailedException("Aspect '" + aspect + "' is unknown");
+    }
+  }
+  prepareToBuild(new SkyframePackageRootResolver(skyframeExecutor));
+  skyframeExecutor.injectWorkspaceStatusData();
+  SkyframeAnalysisResult skyframeAnalysisResult;
+  try {
+    skyframeAnalysisResult=skyframeBuildView.configureTargets(targetSpecs,aspectKeys,eventBus,viewOptions.keepGoing);
+  }
+  finally {
+    skyframeBuildView.clearInvalidatedConfiguredTargets();
+  }
+  int numTargetsToAnalyze=nodes.size();
+  int numSuccessful=skyframeAnalysisResult.getConfiguredTargets().size();
+  boolean analysisSuccessful=(numSuccessful == numTargetsToAnalyze);
+  if (0 < numSuccessful && numSuccessful < numTargetsToAnalyze) {
+    String msg=String.format("Analysis succeeded for only %d of %d top-level targets",numSuccessful,numTargetsToAnalyze);
+    eventHandler.handle(Event.info(msg));
+    LOG.info(msg);
+  }
+  AnalysisResult result=createResult(loadingResult,topLevelOptions,viewOptions,skyframeAnalysisResult.getConfiguredTargets(),skyframeAnalysisResult.getAspects(),skyframeAnalysisResult.getWalkableGraph(),analysisSuccessful);
+  LOG.info("Finished analysis");
+  return result;
+}

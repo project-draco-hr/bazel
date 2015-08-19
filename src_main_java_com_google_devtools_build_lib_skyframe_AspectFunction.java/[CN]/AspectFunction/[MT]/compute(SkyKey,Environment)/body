@@ -16,7 +16,11 @@
   if (!(target instanceof Rule)) {
     throw new AspectFunctionException(new AspectCreationException("aspects must be attached to rules"));
   }
-  RuleConfiguredTarget associatedTarget=(RuleConfiguredTarget)((ConfiguredTargetValue)env.getValue(ConfiguredTargetValue.key(key.getLabel(),key.getConfiguration()))).getConfiguredTarget();
+  final ConfiguredTargetValue configuredTargetValue=(ConfiguredTargetValue)env.getValue(ConfiguredTargetValue.key(key.getLabel(),key.getConfiguration()));
+  if (configuredTargetValue == null) {
+    return null;
+  }
+  RuleConfiguredTarget associatedTarget=(RuleConfiguredTarget)configuredTargetValue.getConfiguredTarget();
   if (associatedTarget == null) {
     return null;
   }

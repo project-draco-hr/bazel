@@ -25,7 +25,8 @@
   Set<ConfiguredTarget> builtTargets=new HashSet<>();
   boolean interrupted=false;
   try {
-    Iterable<Artifact> allArtifactsForProviders=Iterables.concat(additionalArtifacts,TopLevelArtifactHelper.getAllArtifactsToBuild(analysisResult.getTargetsToBuild(),analysisResult.getTopLevelContext()).getAllArtifacts(),TopLevelArtifactHelper.getAllArtifactsToTest(analysisResult.getTargetsToTest()));
+    Collection<AspectValue> aspects=analysisResult.getAspects();
+    Iterable<Artifact> allArtifactsForProviders=Iterables.concat(additionalArtifacts,TopLevelArtifactHelper.getAllArtifactsToBuild(analysisResult.getTargetsToBuild(),analysisResult.getTopLevelContext()).getAllArtifacts(),TopLevelArtifactHelper.getAllArtifactsToBuildFromAspects(aspects,analysisResult.getTopLevelContext()).getAllArtifacts(),TopLevelArtifactHelper.getAllArtifactsToTest(analysisResult.getTargetsToTest()));
     if (request.isRunningInEmacs()) {
       request.getOutErr().printErrLn("blaze: Entering directory `" + getExecRoot() + "/'");
     }
@@ -40,7 +41,7 @@
     }
     configureResourceManager(request);
     Profiler.instance().markPhase(ProfilePhase.EXECUTE);
-    builder.buildArtifacts(additionalArtifacts,analysisResult.getParallelTests(),analysisResult.getExclusiveTests(),analysisResult.getTargetsToBuild(),executor,builtTargets,request.getBuildOptions().explanationPath != null,runtime.getLastExecutionTimeRange());
+    builder.buildArtifacts(additionalArtifacts,analysisResult.getParallelTests(),analysisResult.getExclusiveTests(),analysisResult.getTargetsToBuild(),analysisResult.getAspects(),executor,builtTargets,request.getBuildOptions().explanationPath != null,runtime.getLastExecutionTimeRange());
   }
  catch (  InterruptedException e) {
     interrupted=true;
