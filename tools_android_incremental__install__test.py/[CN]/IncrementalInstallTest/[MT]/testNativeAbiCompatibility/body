@@ -1,0 +1,8 @@
+def testNativeAbiCompatibility(self):
+    self._CreateZip()
+    with open('liba.so', 'w') as f:
+        f.write('liba')
+    native_libs = ['armeabi:liba.so']
+    self._mock_adb.SetAbi('arm64-v8a')
+    self._CallIncrementalInstall(incremental=False, native_libs=native_libs)
+    self.assertEquals('liba', self._GetDeviceFile('native/liba.so'))

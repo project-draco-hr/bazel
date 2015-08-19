@@ -3,10 +3,8 @@ def UploadNativeLibs(adb, native_lib_args, app_dir, full_install):
     native_libs = ConvertNativeLibs(native_lib_args)
     libs = set()
     if native_libs:
-        abi = adb.GetAbi()
-        if (abi not in native_libs):
-            logging.warn("No native libs for device ABI '%s'. Available ABIs: %s", abi, ', '.join(native_libs))
-        else:
+        abi = FindAbi(adb.GetAbi(), native_libs.keys())
+        if abi:
             libs = native_libs[abi]
     basename_to_path = {}
     install_checksums = {}

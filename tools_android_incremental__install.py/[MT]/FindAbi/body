@@ -1,0 +1,11 @@
+def FindAbi(device_abi, app_abis):
+    'Selects which ABI native libs should be installed for.'
+    if (device_abi in app_abis):
+        return device_abi
+    if (device_abi in COMPATIBLE_ABIS):
+        for abi in COMPATIBLE_ABIS[device_abi]:
+            if (abi in app_abis):
+                logging.warn("App does not have native libs for ABI '%s'. Using ABI '%s'.", device_abi, abi)
+                return abi
+    logging.warn("No native libs for device ABI '%s'. App has native libs for ABIs: %s", device_abi, ', '.join(app_abis))
+    return None
