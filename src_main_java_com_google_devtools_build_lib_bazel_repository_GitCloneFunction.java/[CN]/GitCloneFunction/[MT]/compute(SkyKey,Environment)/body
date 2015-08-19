@@ -1,9 +1,19 @@
 {
   GitRepositoryDescriptor descriptor=(GitRepositoryDescriptor)skyKey.argument();
-  String outputDirectory=descriptor.directory.toString();
   Git git=null;
   try {
-    git=Git.cloneRepository().setURI(descriptor.remote).setDirectory(new File(outputDirectory)).setCloneSubmodules(false).setProgressMonitor(new GitProgressMonitor("Cloning " + descriptor.remote,reporter)).call();
+    if (descriptor.directory.exists()) {
+      if (isUpToDate(descriptor)) {
+        return new HttpDownloadValue(descriptor.directory);
+      }
+      try {
+        FileSystemUtils.deleteTree(descriptor.directory);
+      }
+ catch (      IOException e) {
+        throw new RepositoryFunctionException(e,Transience.TRANSIENT);
+      }
+    }
+    git=Git.cloneRepository().setURI(descriptor.remote).setDirectory(descriptor.directory.getPathFile()).setCloneSubmodules(false).setNoCheckout(true).setProgressMonitor(new GitProgressMonitor("Cloning " + descriptor.remote,reporter)).call();
     git.checkout().setCreateBranch(true).setName("bazel-checkout").setStartPoint(descriptor.checkout).call();
     if (descriptor.initSubmodules) {
       if (!git.submoduleInit().call().isEmpty()) {

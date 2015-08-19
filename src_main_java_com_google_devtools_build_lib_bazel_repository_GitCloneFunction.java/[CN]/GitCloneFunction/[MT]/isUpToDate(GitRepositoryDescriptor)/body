@@ -1,0 +1,28 @@
+{
+  if (descriptor.initSubmodules) {
+    return false;
+  }
+  Repository repository=null;
+  try {
+    repository=new FileRepositoryBuilder().setGitDir(descriptor.directory.getChild(Constants.DOT_GIT).getPathFile()).setMustExist(true).build();
+    ObjectId head=repository.resolve(Constants.HEAD);
+    ObjectId checkout=repository.resolve(descriptor.checkout);
+    if (head != null && checkout != null && head.equals(checkout)) {
+      Status status=Git.wrap(repository).status().call();
+      if (!status.hasUncommittedChanges()) {
+        Set<String> untracked=status.getUntracked();
+        if (untracked.isEmpty() || (untracked.size() == 2 && untracked.contains("BUILD") && untracked.contains("WORKSPACE"))) {
+          return true;
+        }
+      }
+    }
+  }
+ catch (  GitAPIException|IOException e) {
+  }
+ finally {
+    if (repository != null) {
+      repository.close();
+    }
+  }
+  return false;
+}
