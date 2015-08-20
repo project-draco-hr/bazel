@@ -25,13 +25,26 @@ def Exec(self, args):
         self.package_timestamp = self._last_package_timestamp
         self._last_package_timestamp += 1
         return self._CreatePopenMock(0, 'Success', '')
+    elif (cmd == 'install-multiple'):
+        if (args[3] == '-p'):
+            with open(args[5]) as f:
+                content = f.read()
+            self.split_apks.add(content)
+        else:
+            self.package_timestamp = self._last_package_timestamp
+            self._last_package_timestamp += 1
+        return self._CreatePopenMock(0, 'Success', '')
+    elif (cmd == 'uninstall'):
+        self._CreatePopenMock(0, 'Success', '')
+        self.split_apks = set()
+        self.package_timestamp = None
     elif (cmd == 'shell'):
         shell_cmdln = args[2]
         self.shell_cmdlns.append(shell_cmdln)
         if shell_cmdln.startswith(('mkdir', 'am', 'monkey', 'input')):
             pass
         elif shell_cmdln.startswith('dumpsys package '):
-            return self._CreatePopenMock(0, ('lastUpdateTime=%s' % self.package_timestamp), '')
+            return self._CreatePopenMock(0, ('firstInstallTime=%s' % self.package_timestamp), '')
         elif shell_cmdln.startswith('rm'):
             file_path = shell_cmdln.split()[2]
             self.files.pop(file_path, None)

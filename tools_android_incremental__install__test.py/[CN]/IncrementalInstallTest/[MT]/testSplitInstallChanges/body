@@ -1,0 +1,12 @@
+def testSplitInstallChanges(self):
+    with open('split1', 'w') as f:
+        f.write('split_content1')
+    with open('main', 'w') as f:
+        f.write('main_Content')
+    self._CallIncrementalInstall(incremental=False, split_main_apk='main', split_apks=['split1'])
+    self.assertEquals(set(['split_content1']), self._mock_adb.split_apks)
+    with open('split1', 'w') as f:
+        f.write('split_content2')
+    self._mock_adb.split_apks = set()
+    self._CallIncrementalInstall(incremental=False, split_main_apk='main', split_apks=['split1'])
+    self.assertEquals(set(['split_content2']), self._mock_adb.split_apks)
