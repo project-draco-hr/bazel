@@ -1,0 +1,26 @@
+{
+  Collection<SkyKey> files=getSkyKeysForFileFragments(fileIdentifiers);
+  Collection<SkyKey> current=graph.getDoneValues(files).keySet();
+  Set<SkyKey> resultKeys=CompactHashSet.create();
+  while (!current.isEmpty()) {
+    Collection<Iterable<SkyKey>> reverseDeps=graph.getReverseDeps(current).values();
+    current=new HashSet<>();
+    for (    SkyKey rdep : Iterables.concat(reverseDeps)) {
+      if (rdep.functionName().equals(SkyFunctions.PACKAGE)) {
+        resultKeys.add(rdep);
+      }
+ else       if (!rdep.functionName().equals(SkyFunctions.PACKAGE_LOOKUP)) {
+        current.add(rdep);
+      }
+    }
+  }
+  Map<SkyKey,SkyValue> packageValues=graph.getDoneValues(resultKeys);
+  if (packageValues.size() != resultKeys.size()) {
+    throw new IllegalStateException("Missing values: " + Sets.difference(resultKeys,packageValues.keySet()));
+  }
+  ImmutableSet.Builder<Target> result=ImmutableSet.builder();
+  for (  SkyValue value : packageValues.values()) {
+    result.add(((PackageValue)value).getPackage().getBuildFile());
+  }
+  return result.build();
+}

@@ -1,0 +1,35 @@
+{
+  Set<SkyKey> result=new HashSet<>();
+  Multimap<PathFragment,PathFragment> currentToOriginal=ArrayListMultimap.create();
+  for (  PathFragment pathFragment : pathFragments) {
+    currentToOriginal.put(pathFragment,pathFragment);
+  }
+  while (!currentToOriginal.isEmpty()) {
+    Map<SkyKey,PathFragment> keys=new HashMap<>();
+    for (    PathFragment pathFragment : currentToOriginal.keySet()) {
+      keys.put(PackageLookupValue.key(PackageIdentifier.createInDefaultRepo(pathFragment)),pathFragment);
+    }
+    Map<SkyKey,SkyValue> lookupValues=graph.getDoneValues(keys.keySet());
+    for (    Map.Entry<SkyKey,SkyValue> entry : lookupValues.entrySet()) {
+      PackageLookupValue packageLookupValue=(PackageLookupValue)entry.getValue();
+      PathFragment dir=keys.get(entry.getKey());
+      if (packageLookupValue.packageExists()) {
+        Collection<PathFragment> originalFiles=currentToOriginal.get(dir);
+        Preconditions.checkState(!originalFiles.isEmpty(),entry);
+        for (        PathFragment fileName : originalFiles) {
+          result.add(FileValue.key(RootedPath.toRootedPath(packageLookupValue.getRoot(),fileName)));
+        }
+      }
+      currentToOriginal.removeAll(dir);
+    }
+    Multimap<PathFragment,PathFragment> newCurrentToOriginal=ArrayListMultimap.create();
+    for (    PathFragment pathFragment : currentToOriginal.keySet()) {
+      PathFragment parent=pathFragment.getParentDirectory();
+      if (parent != null) {
+        newCurrentToOriginal.putAll(parent,currentToOriginal.get(pathFragment));
+      }
+    }
+    currentToOriginal=newCurrentToOriginal;
+  }
+  return result;
+}
