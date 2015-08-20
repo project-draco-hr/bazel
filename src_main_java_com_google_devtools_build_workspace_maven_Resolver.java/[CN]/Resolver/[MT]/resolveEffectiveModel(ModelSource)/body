@@ -12,13 +12,7 @@
     return null;
   }
   for (  Repository repo : model.getRepositories()) {
-    try {
-      modelResolver.addRepository(repo);
-    }
- catch (    InvalidRepositoryException e) {
-      handler.handle(Event.error("Unable to add repository " + repo.getName() + " ("+ repo.getId()+ ","+ repo.getUrl()+ ")"));
-      return model;
-    }
+    modelResolver.addRepository(repo);
   }
   for (  org.apache.maven.model.Dependency dependency : model.getDependencies()) {
     if (!dependency.getScope().equals(COMPILE_SCOPE)) {
@@ -30,8 +24,8 @@
       if (isNewDependency) {
         ModelSource depModelSource=modelResolver.resolveModel(dependency.getGroupId(),dependency.getArtifactId(),dependency.getVersion());
         if (depModelSource != null) {
-          artifactRule.setRepository(depModelSource.getLocation());
-          resolveModelSource(depModelSource);
+          artifactRule.setRepository(depModelSource.getLocation(),handler);
+          resolveEffectiveModel(depModelSource);
         }
  else {
           handler.handle(Event.error("Could not get a model for " + dependency));

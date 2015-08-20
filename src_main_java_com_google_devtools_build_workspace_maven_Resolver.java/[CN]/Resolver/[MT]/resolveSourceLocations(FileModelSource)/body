@@ -1,0 +1,38 @@
+{
+  DefaultModelBuildingRequest request=new DefaultModelBuildingRequest();
+  request.setModelResolver(modelResolver);
+  request.setModelSource(fileModelSource);
+  Model model;
+  try {
+    ModelBuildingResult result=modelBuilder.build(request);
+    model=result.getRawModel();
+  }
+ catch (  ModelBuildingException|IllegalArgumentException e) {
+    handler.handle(Event.error("Unable to resolve raw Maven model from " + fileModelSource.getLocation() + ": "+ e.getMessage()));
+    return;
+  }
+  Parent parent=model.getParent();
+  if (model.getGroupId() == null) {
+    model.setGroupId(parent.getGroupId());
+  }
+  if (!modelResolver.putModelSource(model.getGroupId(),model.getArtifactId(),fileModelSource)) {
+    return;
+  }
+  File pomDirectory=new File(fileModelSource.getLocation()).getParentFile();
+  if (parent != null && !parent.getArtifactId().equals(model.getArtifactId())) {
+    File parentPom;
+    try {
+      parentPom=new File(pomDirectory,parent.getRelativePath()).getCanonicalFile();
+    }
+ catch (    IOException e) {
+      handler.handle(Event.error("Unable to get canonical path of " + pomDirectory + " and "+ parent.getRelativePath()));
+      return;
+    }
+    if (parentPom.exists()) {
+      resolveSourceLocations(new FileModelSource(parentPom));
+    }
+  }
+  for (  String module : model.getModules()) {
+    resolveSourceLocations(new FileModelSource(new File(pomDirectory,module + "/pom.xml")));
+  }
+}
