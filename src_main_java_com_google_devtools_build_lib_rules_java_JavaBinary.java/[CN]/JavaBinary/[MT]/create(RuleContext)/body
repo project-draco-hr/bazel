@@ -28,7 +28,15 @@
   Artifact srcJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_SOURCE_JAR);
   Artifact classJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_CLASS_JAR);
   ImmutableList<Artifact> srcJars=ImmutableList.of(srcJar);
-  Artifact launcher=semantics.getLauncher(ruleContext,common,deployArchiveBuilder,runfilesBuilder,jvmFlags,attributesBuilder);
+  CppConfiguration cppConfiguration=ruleContext.getConfiguration().getFragment(CppConfiguration.class);
+  boolean stripAsDefault=cppConfiguration.useFission();
+  Artifact launcher=semantics.getLauncher(ruleContext,common,deployArchiveBuilder,runfilesBuilder,jvmFlags,attributesBuilder,stripAsDefault);
+  DeployArchiveBuilder unstrippedDeployArchiveBuilder=null;
+  Artifact unstrippedLauncher=null;
+  if (stripAsDefault) {
+    unstrippedDeployArchiveBuilder=new DeployArchiveBuilder(semantics,ruleContext);
+    unstrippedLauncher=semantics.getLauncher(ruleContext,common,unstrippedDeployArchiveBuilder,runfilesBuilder,jvmFlags,attributesBuilder,false);
+  }
   JavaCompilationArtifacts.Builder javaArtifactsBuilder=new JavaCompilationArtifacts.Builder();
   Artifact instrumentationMetadata=helper.createInstrumentationMetadata(classJar,javaArtifactsBuilder);
   NestedSetBuilder<Artifact> filesBuilder=NestedSetBuilder.stableOrder();
@@ -84,8 +92,16 @@
   RunfilesProvider runfilesProvider=RunfilesProvider.withData(defaultRunfiles,new Runfiles.Builder(ruleContext.getWorkspaceName()).merge(runfilesSupport).build());
   ImmutableList<String> deployManifestLines=getDeployManifestLines(ruleContext,originalMainClass);
   Artifact deployJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_DEPLOY_JAR);
+  Artifact unstrippedDeployJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_UNSTRIPPED_BINARY_DEPLOY_JAR);
   deployArchiveBuilder.setOutputJar(deployJar).setJavaStartClass(mainClass).setDeployManifestLines(deployManifestLines).setAttributes(attributes).addRuntimeJars(common.getJavaCompilationArtifacts().getRuntimeJars()).setIncludeBuildData(true).setRunfilesMiddleman(runfilesSupport == null ? null : runfilesSupport.getRunfilesMiddleman()).setCompression(COMPRESSED).setLauncher(launcher);
   deployArchiveBuilder.build();
+  if (stripAsDefault) {
+    unstrippedDeployArchiveBuilder.setOutputJar(unstrippedDeployJar).setJavaStartClass(mainClass).setDeployManifestLines(deployManifestLines).setAttributes(attributes).addRuntimeJars(common.getJavaCompilationArtifacts().getRuntimeJars()).setIncludeBuildData(true).setRunfilesMiddleman(runfilesSupport == null ? null : runfilesSupport.getRunfilesMiddleman()).setCompression(COMPRESSED).setLauncher(unstrippedLauncher);
+    unstrippedDeployArchiveBuilder.build();
+  }
+ else {
+    ruleContext.registerAction(new FileWriteAction(ruleContext.getActionOwner(),unstrippedDeployJar,"",false));
+  }
   common.addTransitiveInfoProviders(builder,filesToBuild,classJar);
   return builder.setFilesToBuild(filesToBuild).add(RunfilesProvider.class,runfilesProvider).setRunfilesSupport(runfilesSupport,executable).add(JavaRuntimeClasspathProvider.class,new JavaRuntimeClasspathProvider(common.getRuntimeClasspath())).add(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(transitiveSourceJars,srcJars)).addOutputGroup(JavaSemantics.SOURCE_JARS_OUTPUT_GROUP,transitiveSourceJars).addOutputGroup(JavaSemantics.GENERATED_JARS_OUTPUT_GROUP,genClassJar).build();
 }
