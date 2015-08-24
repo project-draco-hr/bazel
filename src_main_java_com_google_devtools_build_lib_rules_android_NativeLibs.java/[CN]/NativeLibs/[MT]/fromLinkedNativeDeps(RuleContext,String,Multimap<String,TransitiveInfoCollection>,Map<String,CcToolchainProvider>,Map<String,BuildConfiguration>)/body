@@ -3,8 +3,14 @@
   for (  Map.Entry<String,Collection<TransitiveInfoCollection>> entry : depsByArchitecture.asMap().entrySet()) {
     CcLinkParams linkParams=AndroidCommon.getCcLinkParamsStore(entry.getValue()).get(true,true);
     Artifact nativeDepsLibrary=NativeDepsHelper.maybeCreateAndroidNativeDepsAction(ruleContext,linkParams,configurationMap.get(entry.getKey()),toolchainMap.get(entry.getKey()));
+    ImmutableList.Builder<Artifact> librariesBuilder=ImmutableList.builder();
+    librariesBuilder.addAll(filterUniqueSharedLibraries(ruleContext,linkParams.getLibraries()));
     if (nativeDepsLibrary != null) {
-      result.put(entry.getKey(),ImmutableList.of(nativeDepsLibrary));
+      librariesBuilder.add(nativeDepsLibrary);
+    }
+    ImmutableList<Artifact> libraries=librariesBuilder.build();
+    if (!libraries.isEmpty()) {
+      result.put(entry.getKey(),libraries);
     }
   }
   if (result.isEmpty()) {
