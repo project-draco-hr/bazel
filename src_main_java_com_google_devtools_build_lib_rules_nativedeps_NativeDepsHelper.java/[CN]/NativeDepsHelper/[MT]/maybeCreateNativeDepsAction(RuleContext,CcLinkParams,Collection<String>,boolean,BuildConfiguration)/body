@@ -1,11 +1,15 @@
 {
-  PathFragment relativePath=Util.getWorkspaceRelativePath(ruleContext.getRule());
-  PathFragment nativeDepsPath=relativePath.replaceName(relativePath.getBaseName() + Constants.NATIVE_DEPS_LIB_SUFFIX + ".so");
   if (includeMalloc) {
     CcLinkParams.Builder linkParamsBuilder=CcLinkParams.builder(true,true);
     linkParamsBuilder.addTransitiveArgs(linkParams);
     linkParamsBuilder.addTransitiveTarget(CppHelper.mallocForTarget(ruleContext));
     linkParams=linkParamsBuilder.build();
   }
-  return maybeCreateNativeDepsAction(ruleContext,linkParams,extraLinkOpts,configuration,CppHelper.getToolchain(ruleContext),nativeDepsPath,ruleContext.getConfiguration().getBinDirectory());
+  if (linkParams.getLibraries().isEmpty()) {
+    return NativeDepsRunfiles.EMPTY;
+  }
+  PathFragment relativePath=new PathFragment(ruleContext.getLabel().getName());
+  PathFragment nativeDepsPath=relativePath.replaceName(relativePath.getBaseName() + Constants.NATIVE_DEPS_LIB_SUFFIX + ".so");
+  Artifact nativeDeps=ruleContext.getPackageRelativeArtifact(nativeDepsPath,configuration.getBinDirectory());
+  return createNativeDepsAction(ruleContext,linkParams,extraLinkOpts,configuration,CppHelper.getToolchain(ruleContext),nativeDeps,ruleContext.getConfiguration().getBinDirectory());
 }

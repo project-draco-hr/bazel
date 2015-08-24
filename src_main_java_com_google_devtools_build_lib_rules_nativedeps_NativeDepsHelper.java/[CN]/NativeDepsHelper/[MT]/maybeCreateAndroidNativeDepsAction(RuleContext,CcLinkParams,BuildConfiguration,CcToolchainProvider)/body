@@ -1,5 +1,8 @@
 {
-  PathFragment uniquePath=ruleContext.getUniqueDirectory(ANDROID_UNIQUE_DIR);
-  PathFragment nativeDepsPath=uniquePath.replaceName("lib" + uniquePath.getBaseName() + ".so");
-  return maybeCreateNativeDepsAction(ruleContext,linkParams,ImmutableList.<String>of(),configuration,toolchain,nativeDepsPath,configuration.getBinDirectory()).getLibrary();
+  if (linkParams.getLibraries().isEmpty()) {
+    return null;
+  }
+  PathFragment labelName=new PathFragment(ruleContext.getLabel().getName());
+  Artifact nativeDeps=ruleContext.getUniqueDirectoryArtifact(ANDROID_UNIQUE_DIR,labelName.replaceName("lib" + labelName.getBaseName() + ".so"),configuration.getBinDirectory());
+  return createNativeDepsAction(ruleContext,linkParams,ImmutableList.<String>of(),configuration,toolchain,nativeDeps,configuration.getBinDirectory()).getLibrary();
 }

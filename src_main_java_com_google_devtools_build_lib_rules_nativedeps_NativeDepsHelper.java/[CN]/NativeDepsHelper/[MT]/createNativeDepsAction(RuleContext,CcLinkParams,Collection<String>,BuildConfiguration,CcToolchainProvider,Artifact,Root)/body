@@ -1,16 +1,12 @@
 {
   Preconditions.checkState(ruleContext.isLegalFragment(CppConfiguration.class),"%s does not have access to CppConfiguration",ruleContext.getRule().getRuleClass());
-  if (linkParams.getLibraries().isEmpty()) {
-    return NativeDepsRunfiles.EMPTY;
-  }
   List<String> linkopts=new ArrayList<>(extraLinkOpts);
   linkopts.addAll(linkParams.flattenedLinkopts());
   Map<Artifact,ImmutableList<Artifact>> linkstamps=CppHelper.resolveLinkstamps(ruleContext,linkParams);
   List<Artifact> buildInfoArtifacts=linkstamps.isEmpty() ? ImmutableList.<Artifact>of() : ruleContext.getBuildInfo(CppBuildInfo.KEY);
   boolean shareNativeDeps=configuration.getFragment(CppConfiguration.class).shareNativeDeps();
   NestedSet<LibraryToLink> linkerInputs=linkParams.getLibraries();
-  PathFragment linkerOutputPath=shareNativeDeps ? getSharedNativeDepsPath(LinkerInputs.toLibraryArtifacts(linkerInputs),linkopts,linkstamps.keySet(),buildInfoArtifacts,ruleContext.getFeatures()) : nativeDepsPath;
-  Artifact sharedLibrary=ruleContext.getShareableArtifact(linkerOutputPath,configuration.getBinDirectory());
+  Artifact sharedLibrary=shareNativeDeps ? ruleContext.getShareableArtifact(getSharedNativeDepsPath(LinkerInputs.toLibraryArtifacts(linkerInputs),linkopts,linkstamps.keySet(),buildInfoArtifacts,ruleContext.getFeatures()),ruleContext.getConfiguration().getBinDirectory()) : nativeDeps;
   CppLinkAction.Builder builder=new CppLinkAction.Builder(ruleContext,sharedLibrary,configuration,toolchain);
   builder.setLinkArtifactFactory(SHAREABLE_LINK_ARTIFACT_FACTORY);
   CppLinkAction linkAction=builder.setCrosstoolInputs(toolchain.getLink()).addLibraries(linkerInputs).setLinkType(LinkTargetType.DYNAMIC_LIBRARY).setLinkStaticness(LinkStaticness.MOSTLY_STATIC).addLinkopts(linkopts).setNativeDeps(true).setRuntimeInputs(toolchain.getDynamicRuntimeLinkMiddleman(),toolchain.getDynamicRuntimeLinkInputs()).addLinkstamps(linkstamps).build();
@@ -23,9 +19,8 @@
       ruleContext.registerAction(new SymlinkAction(ruleContext.getActionOwner(),runtimeInput,runtimeSymlink,null));
       runtimeSymlinks.add(runtimeSymlink);
     }
-    Artifact symlink=ruleContext.getAnalysisEnvironment().getDerivedArtifact(nativeDepsPath,bindirIfShared);
-    ruleContext.registerAction(new SymlinkAction(ruleContext.getActionOwner(),linkerOutput,symlink,null));
-    return new NativeDepsRunfiles(symlink,runtimeSymlinks);
+    ruleContext.registerAction(new SymlinkAction(ruleContext.getActionOwner(),linkerOutput,nativeDeps,null));
+    return new NativeDepsRunfiles(nativeDeps,runtimeSymlinks);
   }
   return new NativeDepsRunfiles(linkerOutput,runtimeSymlinks);
 }
