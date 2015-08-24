@@ -19,113 +19,91 @@
   Object rval=rhs.eval(env);
 switch (operator) {
 case PLUS:
-{
-      return plus(lval,rval);
-    }
+    return plus(lval,rval);
+case PIPE:
+  if (lval instanceof SkylarkNestedSet) {
+    return new SkylarkNestedSet((SkylarkNestedSet)lval,rval,getLocation());
+  }
+break;
 case MINUS:
-{
-    if (lval instanceof Integer && rval instanceof Integer) {
-      return ((Integer)lval).intValue() - ((Integer)rval).intValue();
-    }
-    break;
-  }
-case MULT:
-{
-  if (lval instanceof Integer && rval instanceof Integer) {
-    return ((Integer)lval).intValue() * ((Integer)rval).intValue();
-  }
-  if (lval instanceof String && rval instanceof Integer) {
-    return Strings.repeat((String)lval,((Integer)rval).intValue());
-  }
-  if (lval instanceof Integer && rval instanceof String) {
-    return Strings.repeat((String)rval,((Integer)lval).intValue());
-  }
-  break;
-}
-case DIVIDE:
-{
 if (lval instanceof Integer && rval instanceof Integer) {
-  if (rval.equals(0)) {
-    throw new EvalException(getLocation(),"integer division by zero");
-  }
-  return (int)Math.floor(new Double((Integer)lval) / (Integer)rval);
+return ((Integer)lval).intValue() - ((Integer)rval).intValue();
 }
+break;
+case MULT:
+if (lval instanceof Integer && rval instanceof Integer) {
+return ((Integer)lval).intValue() * ((Integer)rval).intValue();
 }
-case PERCENT:
-{
+if (lval instanceof String && rval instanceof Integer) {
+return Strings.repeat((String)lval,((Integer)rval).intValue());
+}
+if (lval instanceof Integer && rval instanceof String) {
+return Strings.repeat((String)rval,((Integer)lval).intValue());
+}
+break;
+case DIVIDE:
 if (lval instanceof Integer && rval instanceof Integer) {
 if (rval.equals(0)) {
-  throw new EvalException(getLocation(),"integer modulo by zero");
+throw new EvalException(getLocation(),"integer division by zero");
+}
+return (int)Math.floor(new Double((Integer)lval) / (Integer)rval);
+}
+break;
+case PERCENT:
+if (lval instanceof Integer && rval instanceof Integer) {
+if (rval.equals(0)) {
+throw new EvalException(getLocation(),"integer modulo by zero");
 }
 int div=(Integer)rval;
 int result=((Integer)lval).intValue() % Math.abs(div);
 if (result > 0 && div < 0) {
-  result+=div;
+result+=div;
 }
  else if (result < 0 && div > 0) {
-  result+=div;
+result+=div;
 }
 return result;
 }
 if (lval instanceof String) {
 try {
-  String pattern=(String)lval;
-  if (rval instanceof List<?>) {
-    List<?> rlist=(List<?>)rval;
-    if (EvalUtils.isTuple(rlist)) {
-      return Printer.formatString(pattern,rlist);
-    }
-  }
-  if (rval instanceof SkylarkList) {
-    SkylarkList rlist=(SkylarkList)rval;
-    if (rlist.isTuple()) {
-      return Printer.formatString(pattern,rlist.toList());
-    }
-  }
-  return Printer.formatString(pattern,Collections.singletonList(rval));
+String pattern=(String)lval;
+if (rval instanceof List<?>) {
+List<?> rlist=(List<?>)rval;
+if (EvalUtils.isTuple(rlist)) {
+return Printer.formatString(pattern,rlist);
+}
+}
+if (rval instanceof SkylarkList) {
+SkylarkList rlist=(SkylarkList)rval;
+if (rlist.isTuple()) {
+return Printer.formatString(pattern,rlist.toList());
+}
+}
+return Printer.formatString(pattern,Collections.singletonList(rval));
 }
  catch (IllegalFormatException e) {
-  throw new EvalException(getLocation(),e.getMessage());
+throw new EvalException(getLocation(),e.getMessage());
 }
 }
 break;
-}
 case EQUALS_EQUALS:
-{
 return lval.equals(rval);
-}
 case NOT_EQUALS:
-{
 return !lval.equals(rval);
-}
 case LESS:
-{
 return compare(lval,rval) < 0;
-}
 case LESS_EQUALS:
-{
 return compare(lval,rval) <= 0;
-}
 case GREATER:
-{
 return compare(lval,rval) > 0;
-}
 case GREATER_EQUALS:
-{
 return compare(lval,rval) >= 0;
-}
 case IN:
-{
 return evalIn(lval,rval);
-}
 case NOT_IN:
-{
 return !evalIn(lval,rval);
-}
 default :
-{
 throw new AssertionError("Unsupported binary operator: " + operator);
-}
 }
 throw new EvalException(getLocation(),String.format("unsupported operand type(s) for %s: '%s' and '%s'",operator,EvalUtils.getDataTypeName(lval),EvalUtils.getDataTypeName(rval)));
 }
