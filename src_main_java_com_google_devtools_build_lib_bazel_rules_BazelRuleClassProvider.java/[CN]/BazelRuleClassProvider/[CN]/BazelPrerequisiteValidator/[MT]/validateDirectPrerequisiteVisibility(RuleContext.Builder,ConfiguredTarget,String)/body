@@ -1,8 +1,11 @@
 {
   Rule rule=context.getRule();
+  if (rule.getLabel().getPackageFragment().equals(EXTERNAL)) {
+    return;
+  }
   Target prerequisiteTarget=prerequisite.getTarget();
   Label prerequisiteLabel=prerequisiteTarget.getLabel();
-  if (!context.getRule().getLabel().getPackageName().equals(prerequisite.getTarget().getLabel().getPackageName()) && !context.isVisible(prerequisite)) {
+  if (!context.getRule().getLabel().getPackageIdentifier().equals(prerequisite.getTarget().getLabel().getPackageIdentifier()) && !context.isVisible(prerequisite)) {
     if (!context.getConfiguration().checkVisibility()) {
       context.ruleWarning(String.format("Target '%s' violates visibility of target " + "'%s'. Continuing because --nocheck_visibility is active",rule.getLabel(),prerequisiteLabel));
     }
