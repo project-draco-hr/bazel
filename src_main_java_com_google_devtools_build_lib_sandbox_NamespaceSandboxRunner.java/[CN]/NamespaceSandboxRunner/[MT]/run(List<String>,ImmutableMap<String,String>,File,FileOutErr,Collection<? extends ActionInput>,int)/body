@@ -1,0 +1,27 @@
+{
+  createFileSystem(outputs);
+  List<String> args=new ArrayList<>();
+  args.add(execRoot.getRelative("_bin/namespace-sandbox").getPathString());
+  if (debug) {
+    args.add("-D");
+  }
+  args.add("-S");
+  args.add(sandboxPath.getPathString());
+  args.add("-W");
+  args.add(cwd.toString());
+  if (timeout != -1) {
+    args.add("-T");
+    args.add(Integer.toString(timeout));
+  }
+  for (  ImmutableMap.Entry<Path,Path> mount : mounts.entries()) {
+    args.add("-M");
+    args.add(mount.getKey().getPathString());
+    args.add("-m");
+    args.add(mount.getValue().getPathString());
+  }
+  args.add("--");
+  args.addAll(spawnArguments);
+  Command cmd=new Command(args.toArray(new String[0]),env,cwd);
+  cmd.execute(new byte[]{},Command.NO_OBSERVER,outErr.getOutputStream(),outErr.getErrorStream(),true);
+  copyOutputs(outputs);
+}

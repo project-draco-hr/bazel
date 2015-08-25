@@ -1,0 +1,19 @@
+{
+  ImmutableMultimap.Builder<Path,Path> mounts=ImmutableMultimap.builder();
+  FileSystem fs=blazeDirs.getFileSystem();
+  Map<PathFragment,Map<PathFragment,Artifact>> rootsAndMappings=spawn.getRunfilesSupplier().getMappings();
+  for (  Entry<PathFragment,Map<PathFragment,Artifact>> rootAndMappings : rootsAndMappings.entrySet()) {
+    PathFragment root=rootAndMappings.getKey();
+    if (root.isAbsolute()) {
+      root=root.relativeTo("/");
+    }
+    for (    Entry<PathFragment,Artifact> mapping : rootAndMappings.getValue().entrySet()) {
+      Artifact sourceArtifact=mapping.getValue();
+      Path source=(sourceArtifact != null) ? sourceArtifact.getPath() : fs.getPath("/dev/null");
+      Preconditions.checkArgument(!mapping.getKey().isAbsolute());
+      Path target=sandboxPath.getRelative(root.getRelative(mapping.getKey()));
+      mounts.put(source,target);
+    }
+  }
+  return mounts.build();
+}

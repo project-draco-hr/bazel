@@ -1,0 +1,23 @@
+{
+  ImmutableMultimap.Builder<Path,Path> mounts=ImmutableMultimap.builder();
+  mounts.putAll(mountUsualUnixDirs(sandboxPath));
+  mounts.putAll(setupBlazeUtils(sandboxPath));
+  mounts.putAll(mountRunfilesFromManifests(spawn,sandboxPath));
+  mounts.putAll(mountRunfilesFromSuppliers(spawn,sandboxPath));
+  mounts.putAll(mountRunfilesForTests(spawn,sandboxPath));
+  mounts.putAll(mountInputs(spawn,sandboxPath,actionExecutionContext));
+  mounts.putAll(mountRunUnderCommand(spawn,sandboxPath));
+  SetMultimap<Path,Path> fixedMounts=LinkedHashMultimap.create();
+  for (  Entry<Path,Path> mount : mounts.build().entries()) {
+    Path source=mount.getKey();
+    Path target=mount.getValue();
+    validateAndAddMount(sandboxPath,fixedMounts,source,target);
+    Set<Path> seenSources=new HashSet<>();
+    while (source.isSymbolicLink() && seenSources.add(source)) {
+      source=source.getParentDirectory().getRelative(source.readSymbolicLink());
+      target=sandboxPath.getRelative(source.asFragment().relativeTo("/"));
+      validateAndAddMount(sandboxPath,fixedMounts,source,target);
+    }
+  }
+  return ImmutableMultimap.copyOf(fixedMounts);
+}

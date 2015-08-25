@@ -1,0 +1,26 @@
+{
+  ImmutableMultimap.Builder<Path,Path> mounts=ImmutableMultimap.builder();
+  if (spawn.getResourceOwner() instanceof TestRunnerAction) {
+    TestRunnerAction testRunnerAction=((TestRunnerAction)spawn.getResourceOwner());
+    RunUnder runUnder=testRunnerAction.getExecutionSettings().getRunUnder();
+    if (runUnder != null && runUnder.getCommand() != null) {
+      PathFragment sourceFragment=new PathFragment(runUnder.getCommand());
+      Path source;
+      if (sourceFragment.isAbsolute()) {
+        source=blazeDirs.getFileSystem().getPath(sourceFragment);
+      }
+ else       if (blazeDirs.getExecRoot().getRelative(sourceFragment).exists()) {
+        source=blazeDirs.getExecRoot().getRelative(sourceFragment);
+      }
+ else {
+        List<Path> searchPath=SearchPath.parse(blazeDirs.getFileSystem(),blazeRuntime.getClientEnv().get("PATH"));
+        source=SearchPath.which(searchPath,runUnder.getCommand());
+      }
+      if (source != null) {
+        Path target=sandboxPath.getRelative(source.asFragment().relativeTo("/"));
+        mounts.put(source,target);
+      }
+    }
+  }
+  return mounts.build();
+}

@@ -1,0 +1,19 @@
+{
+  ImmutableMultimap.Builder<Path,Path> mounts=ImmutableMultimap.builder();
+  List<ActionInput> inputs=ActionInputHelper.expandMiddlemen(spawn.getInputFiles(),actionExecutionContext.getMiddlemanExpander());
+  if (spawn.getResourceOwner() instanceof CppCompileAction) {
+    CppCompileAction action=(CppCompileAction)spawn.getResourceOwner();
+    if (action.shouldScanIncludes()) {
+      inputs.addAll(action.getAdditionalInputs());
+    }
+  }
+  for (  ActionInput input : inputs) {
+    if (input.getExecPathString().contains("internal/_middlemen/")) {
+      continue;
+    }
+    Path source=execRoot.getRelative(input.getExecPathString());
+    Path target=sandboxPath.getRelative(source.asFragment().relativeTo("/"));
+    mounts.put(source,target);
+  }
+  return mounts.build();
+}

@@ -1,45 +1,57 @@
 {
   Executor executor=actionExecutionContext.getExecutor();
+  if (spawn.getOwner().getLabel() == null || spawn.getArguments().get(0).contains("build-runfiles")) {
+    standaloneStrategy.exec(spawn,actionExecutionContext);
+    return;
+  }
   if (executor.reportsSubcommands()) {
     executor.reportSubcommand(Label.print(spawn.getOwner().getLabel()) + " [" + spawn.getResourceOwner().prettyPrint()+ "]",spawn.asShellCommand(executor.getExecRoot()));
   }
-  boolean processHeaders=spawn.getResourceOwner() instanceof CppCompileAction;
-  Path execPath=this.directories.getExecRoot();
-  List<String> spawnArguments=new ArrayList<>();
-  for (  String arg : spawn.getArguments()) {
-    if (arg.startsWith(execPath.getPathString())) {
-      spawnArguments.add(arg.substring(execPath.getPathString().length()));
-    }
- else {
-      spawnArguments.add(arg);
-    }
-  }
-  List<? extends ActionInput> expandedInputs=ActionInputHelper.expandMiddlemen(spawn.getInputFiles(),actionExecutionContext.getMiddlemanExpander());
-  String cwd=executor.getExecRoot().getPathString();
   FileOutErr outErr=actionExecutionContext.getFileOutErr();
+  String execId=uuid + "-" + Integer.toString(execCounter.getAndIncrement());
+  Path sandboxPath=execRoot.getRelative(Constants.PRODUCT_NAME + "-sandbox").getRelative(execId);
+  ImmutableMultimap<Path,Path> mounts;
   try {
-    PathFragment includePrefix=null;
-    List<PathFragment> includeDirectories=ImmutableList.of();
-    if (processHeaders) {
-      CppCompileAction cppAction=(CppCompileAction)spawn.getResourceOwner();
-      includeDirectories=extractIncludeDirs(execPath,cppAction,spawnArguments);
-      includePrefix=getSandboxIncludeDir(cppAction);
+    mounts=getMounts(spawn,sandboxPath,actionExecutionContext);
+  }
+ catch (  IOException e) {
+    throw new UserExecException("Could not prepare mounts for sandbox execution",e);
+  }
+  int timeout=getTimeout(spawn);
+  try {
+    final NamespaceSandboxRunner runner=new NamespaceSandboxRunner(execRoot,sandboxPath,mounts,verboseFailures);
+    try {
+      runner.run(spawn.getArguments(),spawn.getEnvironment(),blazeDirs.getExecRoot().getPathFile(),outErr,spawn.getOutputFiles(),timeout);
     }
-    NamespaceSandboxRunner runner=new NamespaceSandboxRunner(directories,spawn,includePrefix,includeDirectories,verboseFailures);
-    runner.setupSandbox(expandedInputs,spawn.getOutputFiles());
-    runner.run(spawnArguments,spawn.getEnvironment(),new File(cwd),outErr);
-    runner.copyOutputs(spawn.getOutputFiles(),outErr);
-    if (processHeaders) {
-      CppCompileAction cppAction=(CppCompileAction)spawn.getResourceOwner();
-      unmangleHeaderFiles(cppAction);
+  finally {
+      backgroundWorkers.execute(new Runnable(){
+        @Override public void run(){
+          try {
+            while (!Thread.currentThread().isInterrupted()) {
+              try {
+                runner.cleanup();
+                return;
+              }
+ catch (              IOException e2) {
+                Thread.sleep(250);
+              }
+            }
+          }
+ catch (          InterruptedException e) {
+          }
+        }
+      }
+);
     }
-    runner.cleanup();
   }
  catch (  CommandException e) {
-    String message=CommandFailureUtils.describeCommandFailure(verboseFailures,spawn.getArguments(),spawn.getEnvironment(),cwd);
-    throw new UserExecException(String.format("%s: %s",message,e));
+    EventHandler handler=actionExecutionContext.getExecutor().getEventHandler();
+    handler.handle(Event.error("Sandboxed execution failed: " + spawn.getOwner().getLabel() + "."));
+    throw new UserExecException("Error during execution of spawn",e);
   }
 catch (  IOException e) {
-    throw new UserExecException(e.getMessage());
+    EventHandler handler=actionExecutionContext.getExecutor().getEventHandler();
+    handler.handle(Event.error("I/O error during sandboxed execution:\n" + Throwables.getStackTraceAsString(e)));
+    throw new UserExecException("Could not execute spawn",e);
   }
 }

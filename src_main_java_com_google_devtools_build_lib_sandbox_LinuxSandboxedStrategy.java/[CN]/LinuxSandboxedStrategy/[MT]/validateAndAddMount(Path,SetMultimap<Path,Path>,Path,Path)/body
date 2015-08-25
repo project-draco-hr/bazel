@@ -1,0 +1,12 @@
+{
+  Preconditions.checkArgument(source.exists(),source.toString() + " does not exist");
+  if (!mounts.containsEntry(source,target) && mounts.containsValue(target)) {
+    for (    Entry<Path,Path> mount : mounts.entries()) {
+      if (mount.getValue().equals(target)) {
+        throw new IllegalStateException(String.format("Cannot mount both '%s' and '%s' onto '%s'",mount.getKey(),source,target));
+      }
+    }
+  }
+  Preconditions.checkArgument(target.startsWith(sandboxPath),String.format("(%s -> %s) does not mount into sandbox",source,target));
+  return mounts.put(source,target);
+}
