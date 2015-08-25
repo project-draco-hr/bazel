@@ -15,20 +15,25 @@ class DP {
     }
   }
   DP dp=new DP();
-  List<Pair<Integer,Label>> output=new ArrayList<>();
+  List<RankAndLabel> output=new ArrayList<>();
   for (  Node<Set<Node<Target>>> x : result.getStrongComponentGraph().getNodes()) {
     int rank=dp.rank(x);
     for (    Node<Target> y : x.getLabel()) {
-      output.add(Pair.of(rank,y.getLabel().getLabel()));
+      output.add(new RankAndLabel(rank,y.getLabel().getLabel()));
     }
   }
-  Collections.sort(output,new Comparator<Pair<Integer,Label>>(){
-    @Override public int compare(    Pair<Integer,Label> x,    Pair<Integer,Label> y){
-      return x.first - y.first;
-    }
+  if (options.orderOutput == OrderOutput.FULL) {
+    Collections.sort(output);
   }
+ else {
+    Collections.sort(output,new Comparator<RankAndLabel>(){
+      @Override public int compare(      RankAndLabel o1,      RankAndLabel o2){
+        return o1.rank - o2.rank;
+      }
+    }
 );
-  for (  Pair<Integer,Label> pair : output) {
-    out.println(pair.first + " " + pair.second);
+  }
+  for (  RankAndLabel item : output) {
+    out.println(item);
   }
 }

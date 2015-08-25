@@ -1,4 +1,5 @@
 {
+  List<RankAndLabel> outputToOrder=options.orderOutput == OrderOutput.FULL ? new ArrayList<RankAndLabel>() : null;
   Digraph<Set<Node<Target>>> scGraph=result.getStrongComponentGraph();
   Set<Node<Set<Node<Target>>>> rankNodes=scGraph.getRoots();
   Set<Node<Set<Node<Target>>>> seen=new HashSet<>();
@@ -6,7 +7,7 @@
   for (int rank=0; !rankNodes.isEmpty(); rank++) {
     for (    Node<Set<Node<Target>>> xScc : rankNodes) {
       for (      Node<Target> x : xScc.getLabel()) {
-        out.println(rank + " " + x.getLabel().getLabel());
+        outputToStreamOrSave(rank,x.getLabel().getLabel(),out,outputToOrder);
       }
     }
     Set<Node<Set<Node<Target>>>> nextRankNodes=new LinkedHashSet<>();
@@ -18,5 +19,11 @@
       }
     }
     rankNodes=nextRankNodes;
+  }
+  if (outputToOrder != null) {
+    Collections.sort(outputToOrder);
+    for (    RankAndLabel item : outputToOrder) {
+      out.println(item);
+    }
   }
 }
