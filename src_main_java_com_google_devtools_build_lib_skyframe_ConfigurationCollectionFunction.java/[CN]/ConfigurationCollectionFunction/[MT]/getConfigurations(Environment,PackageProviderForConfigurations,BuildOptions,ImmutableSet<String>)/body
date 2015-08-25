@@ -1,0 +1,28 @@
+{
+  Cache<String,BuildConfiguration> cache=CacheBuilder.newBuilder().<String,BuildConfiguration>build();
+  List<BuildConfiguration> targetConfigurations=new ArrayList<>();
+  if (!multiCpu.isEmpty()) {
+    for (    String cpu : multiCpu) {
+      BuildConfiguration targetConfiguration=createConfiguration(cache,env.getListener(),loadedPackageProvider,buildOptions,cpu);
+      if (targetConfiguration == null || targetConfigurations.contains(targetConfiguration)) {
+        continue;
+      }
+      targetConfigurations.add(targetConfiguration);
+    }
+    if (loadedPackageProvider.valuesMissing()) {
+      return null;
+    }
+  }
+ else {
+    BuildConfiguration targetConfiguration=createConfiguration(cache,env.getListener(),loadedPackageProvider,buildOptions,null);
+    if (targetConfiguration == null) {
+      return null;
+    }
+    targetConfigurations.add(targetConfiguration);
+  }
+  BuildConfiguration hostConfiguration=getHostConfiguration(env,targetConfigurations.get(0));
+  if (hostConfiguration == null) {
+    return null;
+  }
+  return new BuildConfigurationCollection(targetConfigurations,hostConfiguration);
+}

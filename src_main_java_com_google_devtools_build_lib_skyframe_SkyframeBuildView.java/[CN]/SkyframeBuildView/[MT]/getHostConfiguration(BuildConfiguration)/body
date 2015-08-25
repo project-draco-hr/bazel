@@ -1,0 +1,13 @@
+{
+  if (config == null || !config.useDynamicConfigurations()) {
+    return topLevelHostConfiguration;
+  }
+  Set<Class<? extends BuildConfiguration.Fragment>> fragmentClasses=config.fragmentClasses();
+  BuildConfiguration hostConfig=hostConfigurationCache.get(fragmentClasses);
+  if (hostConfig != null) {
+    return hostConfig;
+  }
+  BuildConfiguration trimmedConfig=topLevelHostConfiguration.clone(fragmentClasses,ruleClassProvider);
+  hostConfigurationCache.put(fragmentClasses,trimmedConfig);
+  return trimmedConfig;
+}

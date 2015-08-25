@@ -14,6 +14,7 @@
   skyframeAnalysisWasDiscarded=false;
   ImmutableMap<PackageIdentifier,Path> packageRoots=loadingResult.getPackageRoots();
   this.configurations=configurations;
+  skyframeBuildView.setTopLevelHostConfiguration(this.configurations.getHostConfiguration());
   setArtifactRoots(packageRoots);
   List<TargetAndConfiguration> nodes=nodesForTargets(targets);
   List<ConfiguredTargetKey> targetSpecs=Lists.transform(nodes,new Function<TargetAndConfiguration,ConfiguredTargetKey>(){
@@ -35,7 +36,7 @@
     }
   }
   prepareToBuild(new SkyframePackageRootResolver(skyframeExecutor));
-  skyframeExecutor.injectWorkspaceStatusData();
+  skyframeExecutor.injectWorkspaceStatusData(configurations);
   SkyframeAnalysisResult skyframeAnalysisResult;
   try {
     skyframeAnalysisResult=skyframeBuildView.configureTargets(targetSpecs,aspectKeys,eventBus,viewOptions.keepGoing);

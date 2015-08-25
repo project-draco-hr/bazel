@@ -16,8 +16,21 @@
   if (configConditions == null) {
     return null;
   }
-  Collection<Dependency> deps=resolver.dependentNodes(ctgValue,configConditions);
-  env.getValues(Iterables.transform(deps,TO_KEYS));
+  ListMultimap<Attribute,Dependency> deps;
+  try {
+    BuildConfiguration hostConfiguration=buildViewProvider.getSkyframeBuildView().getHostConfiguration(ct.getConfiguration());
+    deps=resolver.dependentNodeMap(ctgValue,hostConfiguration,null,configConditions);
+    if (ct.getConfiguration() != null && ct.getConfiguration().useDynamicConfigurations()) {
+      deps=ConfiguredTargetFunction.trimConfigurations(env,ctgValue,deps,hostConfiguration,ruleClassProvider);
+    }
+  }
+ catch (  EvalException e) {
+    throw new PostConfiguredTargetFunctionException(e);
+  }
+catch (  ConfiguredTargetFunction.DependencyEvaluationException e) {
+    throw new PostConfiguredTargetFunctionException(e);
+  }
+  env.getValues(Iterables.transform(deps.values(),TO_KEYS));
   if (env.valuesMissing()) {
     return null;
   }

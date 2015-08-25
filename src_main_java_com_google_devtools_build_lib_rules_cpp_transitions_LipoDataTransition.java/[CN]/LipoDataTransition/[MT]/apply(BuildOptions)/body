@@ -1,0 +1,18 @@
+{
+  if (options.get(BuildConfiguration.Options.class).isHost) {
+    return options;
+  }
+  CppOptions cppOptions=options.get(CppOptions.class);
+  if (cppOptions.lipoMode == CrosstoolConfig.LipoMode.OFF) {
+    return options;
+  }
+  options=options.clone();
+  cppOptions=options.get(CppOptions.class);
+  if (!cppOptions.autoFdoLipoData && cppOptions.fdoOptimize != null) {
+    cppOptions.autoFdoLipoData=FdoSupport.isAutoFdo(cppOptions.fdoOptimize);
+  }
+  cppOptions.lipoMode=CrosstoolConfig.LipoMode.OFF;
+  cppOptions.fdoInstrument=null;
+  cppOptions.fdoOptimize=null;
+  return options;
+}

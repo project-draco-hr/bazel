@@ -1,0 +1,11 @@
+{
+  Multimap<Class<? extends BuildConfiguration.Fragment>,Class<? extends FragmentOptions>> fragmentToRequiredOptions=ArrayListMultimap.create();
+  for (  ConfigurationFragmentFactory fragmentLoader : ((ConfiguredRuleClassProvider)ruleClassProvider).getConfigurationFragments()) {
+    fragmentToRequiredOptions.putAll(fragmentLoader.creates(),fragmentLoader.requiredOptions());
+  }
+  Set<Class<? extends FragmentOptions>> options=new HashSet<>();
+  for (  Class<? extends BuildConfiguration.Fragment> fragmentClass : fragmentClasses) {
+    options.addAll(fragmentToRequiredOptions.get(fragmentClass));
+  }
+  return options;
+}

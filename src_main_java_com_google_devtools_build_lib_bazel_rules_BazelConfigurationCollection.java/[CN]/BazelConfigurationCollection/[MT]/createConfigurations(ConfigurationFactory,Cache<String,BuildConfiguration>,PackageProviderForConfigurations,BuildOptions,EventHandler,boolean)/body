@@ -11,6 +11,9 @@
   ListMultimap<SplitTransition<?>,BuildConfiguration> splitTransitionsTable=ArrayListMultimap.create();
   for (  SplitTransition<BuildOptions> transition : buildOptions.getPotentialSplitTransitions()) {
     List<BuildOptions> splitOptionsList=transition.split(buildOptions);
+    if (splitOptionsList.size() > 1 && targetConfiguration.useDynamicConfigurations()) {
+      throw new InvalidConfigurationException("dynamic configurations don't yet support split transitions");
+    }
     for (    BuildOptions splitOptions : splitOptionsList) {
       BuildConfiguration splitConfig=configurationFactory.getConfiguration(loadedPackageProvider,splitOptions,false,cache);
       splitTransitionsTable.put(transition,splitConfig);

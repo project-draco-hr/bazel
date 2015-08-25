@@ -27,12 +27,12 @@
   }
   try {
     Set<ConfigMatchingProvider> configConditions=getConfigConditions(ctgValue.getTarget(),env,resolver,ctgValue);
-    if (configConditions == null) {
+    if (env.valuesMissing()) {
       return null;
     }
-    ListMultimap<Attribute,ConfiguredTarget> depValueMap=computeDependencies(env,resolver,ctgValue,null,configConditions);
-    BuildConfiguration hostConfiguration=configuration == null ? null : configuration.getConfiguration(Attribute.ConfigurationTransition.HOST);
-    return createConfiguredTarget(view,env,target,configuration,hostConfiguration,depValueMap,configConditions);
+    ListMultimap<Attribute,ConfiguredTarget> depValueMap=computeDependencies(env,resolver,ctgValue,null,configConditions,ruleClassProvider,view.getHostConfiguration(configuration));
+    ConfiguredTargetValue ans=createConfiguredTarget(view,env,target,configuration,depValueMap,configConditions);
+    return ans;
   }
  catch (  DependencyEvaluationException e) {
     throw new ConfiguredTargetFunctionException(e.getRootCauseSkyKey(),e.getCause());

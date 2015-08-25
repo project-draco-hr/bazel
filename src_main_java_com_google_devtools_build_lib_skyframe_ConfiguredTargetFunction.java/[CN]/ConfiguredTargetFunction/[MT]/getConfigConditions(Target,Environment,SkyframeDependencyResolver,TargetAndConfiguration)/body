@@ -16,6 +16,14 @@
     return ImmutableSet.of();
   }
   Collection<Dependency> configValueNames=resolver.resolveRuleLabels(ctgValue,null,configLabelMap);
+  BuildConfiguration targetConfig=ctgValue.getConfiguration();
+  if (targetConfig != null && targetConfig.useDynamicConfigurations()) {
+    ImmutableList.Builder<Dependency> staticConfigs=ImmutableList.builder();
+    for (    Dependency dep : configValueNames) {
+      staticConfigs.add(new Dependency(dep.getLabel(),targetConfig,dep.getAspects()));
+    }
+    configValueNames=staticConfigs.build();
+  }
   Map<SkyKey,ConfiguredTarget> configValues=resolveConfiguredTargetDependencies(env,configValueNames,target);
   if (configValues == null) {
     return null;

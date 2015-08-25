@@ -14,19 +14,15 @@
   TargetAndConfiguration ctNode=new TargetAndConfiguration(target);
   ListMultimap<Attribute,Dependency> depNodeNames;
   try {
-    depNodeNames=resolver.dependentNodeMap(ctNode,null,getConfigurableAttributeKeys(ctNode));
+    depNodeNames=resolver.dependentNodeMap(ctNode,configurations.getHostConfiguration(),null,getConfigurableAttributeKeys(ctNode));
   }
  catch (  EvalException e) {
     throw new IllegalStateException(e);
   }
-  final Map<LabelAndConfiguration,ConfiguredTarget> depMap=new HashMap<>();
-  for (  ConfiguredTarget dep : skyframeExecutor.getConfiguredTargets(depNodeNames.values())) {
-    depMap.put(LabelAndConfiguration.of(dep.getLabel(),dep.getConfiguration()),dep);
+  ImmutableMap<Dependency,ConfiguredTarget> cts=skyframeExecutor.getConfiguredTargetMap(ctNode.getConfiguration(),ImmutableSet.copyOf(depNodeNames.values()),false);
+  ImmutableListMultimap.Builder<Attribute,ConfiguredTarget> builder=ImmutableListMultimap.builder();
+  for (  Map.Entry<Attribute,Dependency> entry : depNodeNames.entries()) {
+    builder.put(entry.getKey(),cts.get(entry.getValue()));
   }
-  return Multimaps.transformValues(depNodeNames,new Function<Dependency,ConfiguredTarget>(){
-    @Override public ConfiguredTarget apply(    Dependency depName){
-      return depMap.get(LabelAndConfiguration.of(depName.getLabel(),depName.getConfiguration()));
-    }
-  }
-);
+  return builder.build();
 }

@@ -1,0 +1,17 @@
+{
+  if (targetConfiguration.useDynamicConfigurations()) {
+    BuildOptions hostOptions=HostTransition.INSTANCE.apply(targetConfiguration.getOptions());
+    SkyKey hostConfigKey=BuildConfigurationValue.key(targetConfiguration.fragmentClasses(),hostOptions);
+    BuildConfigurationValue skyValHost=(BuildConfigurationValue)env.getValueOrThrow(hostConfigKey,InvalidConfigurationException.class);
+    BuildOptions targetOptions=targetConfiguration.getOptions();
+    SkyKey targetConfigKey=BuildConfigurationValue.key(targetConfiguration.fragmentClasses(),targetOptions);
+    BuildConfigurationValue skyValTarget=(BuildConfigurationValue)env.getValueOrThrow(targetConfigKey,InvalidConfigurationException.class);
+    if (skyValHost == null || skyValTarget == null) {
+      return null;
+    }
+    return skyValHost.getConfiguration();
+  }
+ else {
+    return targetConfiguration.getConfiguration(Attribute.ConfigurationTransition.HOST);
+  }
+}

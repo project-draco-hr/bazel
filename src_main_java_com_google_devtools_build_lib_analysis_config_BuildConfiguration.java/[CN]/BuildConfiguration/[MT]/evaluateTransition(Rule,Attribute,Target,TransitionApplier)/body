@@ -1,0 +1,28 @@
+{
+  if (usesNullConfiguration(toTarget)) {
+    transitionApplier.applyTransition(Attribute.ConfigurationTransition.NULL);
+    return;
+  }
+  if (isHostConfiguration()) {
+    transitionApplier.applyTransition(Attribute.ConfigurationTransition.NONE);
+    return;
+  }
+  if (toTarget instanceof Rule && ((Rule)toTarget).getRuleClass().equals("config_setting")) {
+    transitionApplier.applyTransition(Attribute.ConfigurationTransition.NONE);
+    return;
+  }
+  if (attribute.getConfigurationTransition() instanceof SplitTransition) {
+    Preconditions.checkState(attribute.getConfigurator() == null);
+    transitionApplier.split((SplitTransition<?>)attribute.getConfigurationTransition());
+  }
+ else {
+    @SuppressWarnings("unchecked") Configurator<BuildConfiguration,Rule> configurator=(Configurator<BuildConfiguration,Rule>)attribute.getConfigurator();
+    if (configurator != null) {
+      transitionApplier.applyAttributeConfigurator(attribute,fromRule,toTarget);
+    }
+ else {
+      transitionApplier.applyTransition(attribute.getConfigurationTransition());
+    }
+  }
+  transitionApplier.applyConfigurationHook(fromRule,attribute,toTarget);
+}

@@ -1,0 +1,71 @@
+{
+  Multimap<SkyKey,Map.Entry<Attribute,Dependency>> keysToEntries=ArrayListMultimap.create();
+  Map<FragmentsAndTransition,BuildOptions> transitionsMap=new HashMap<>();
+  Set<Class<? extends BuildConfiguration.Fragment>> ctgFragments=ctgValue.getConfiguration().fragmentClasses();
+  BuildOptions ctgOptions=ctgValue.getConfiguration().getOptions();
+  ListMultimap<Attribute,Dependency> trimmedDeps=ArrayListMultimap.create();
+  for (  Map.Entry<Attribute,Dependency> depsEntry : originalDeps.entries()) {
+    Dependency dep=depsEntry.getValue();
+    if (dep.hasStaticConfiguration()) {
+      trimmedDeps.put(depsEntry.getKey(),new Dependency(dep.getLabel(),dep.getConfiguration(),dep.getAspects()));
+      continue;
+    }
+ else     if (dep.getTransition() == Attribute.ConfigurationTransition.NULL) {
+      trimmedDeps.put(depsEntry.getKey(),new Dependency(dep.getLabel(),(BuildConfiguration)null,dep.getAspects()));
+      continue;
+    }
+    SkyKey fragmentsKey=TransitiveTargetValue.key(dep.getLabel());
+    TransitiveTargetValue transitiveDepInfo=(TransitiveTargetValue)env.getValue(fragmentsKey);
+    if (transitiveDepInfo == null) {
+      return null;
+    }
+    Set<Class<? extends BuildConfiguration.Fragment>> depFragments=transitiveDepInfo.getTransitiveConfigFragments().toSet();
+    boolean sameFragments=depFragments.equals(ctgFragments);
+    Attribute.Transition transition=dep.getTransition();
+    if (sameFragments) {
+      if (transition == Attribute.ConfigurationTransition.NONE) {
+        trimmedDeps.put(depsEntry.getKey(),new Dependency(dep.getLabel(),ctgValue.getConfiguration(),dep.getAspects()));
+        continue;
+      }
+ else       if (transition == HostTransition.INSTANCE) {
+        trimmedDeps.put(depsEntry.getKey(),new Dependency(dep.getLabel(),hostConfiguration,dep.getAspects()));
+        continue;
+      }
+    }
+    FragmentsAndTransition transitionKey=new FragmentsAndTransition(depFragments,transition);
+    BuildOptions toOptions=transitionsMap.get(transitionKey);
+    if (toOptions == null) {
+      Verify.verify(transition == Attribute.ConfigurationTransition.NONE || transition instanceof PatchTransition);
+      BuildOptions fromOptions=ctgOptions;
+      if (!sameFragments) {
+        fromOptions=fromOptions.trim(BuildConfiguration.getOptionsClasses(transitiveDepInfo.getTransitiveConfigFragments(),ruleClassProvider));
+      }
+      toOptions=transition == Attribute.ConfigurationTransition.NONE ? fromOptions : ((PatchTransition)transition).apply(fromOptions);
+      transitionsMap.put(transitionKey,toOptions);
+    }
+    if (sameFragments && toOptions.equals(ctgOptions)) {
+      trimmedDeps.put(depsEntry.getKey(),new Dependency(dep.getLabel(),ctgValue.getConfiguration(),dep.getAspects()));
+      continue;
+    }
+    keysToEntries.put(BuildConfigurationValue.key(depFragments,toOptions),depsEntry);
+  }
+  Map<SkyKey,ValueOrException<InvalidConfigurationException>> depConfigValues=env.getValuesOrThrow(keysToEntries.keySet(),InvalidConfigurationException.class);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  try {
+    for (    Map.Entry<SkyKey,ValueOrException<InvalidConfigurationException>> entry : depConfigValues.entrySet()) {
+      SkyKey key=entry.getKey();
+      BuildConfigurationValue trimmedConfig=(BuildConfigurationValue)entry.getValue().get();
+      for (      Map.Entry<Attribute,Dependency> info : keysToEntries.get(key)) {
+        Attribute attribute=info.getKey();
+        Dependency originalDep=info.getValue();
+        trimmedDeps.put(attribute,new Dependency(originalDep.getLabel(),trimmedConfig.getConfiguration(),originalDep.getAspects()));
+      }
+    }
+  }
+ catch (  InvalidConfigurationException e) {
+    throw new DependencyEvaluationException(e);
+  }
+  return trimmedDeps;
+}
