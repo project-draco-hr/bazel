@@ -4,6 +4,9 @@
   }
   ImmutableList<BaseFunction> stackTrace=new ImmutableList.Builder<BaseFunction>().addAll(callerEnv.getStackTrace()).add(function).build();
   SkylarkEnvironment childEnv=new SkylarkEnvironment(definitionEnv,stackTrace,callerEnv.eventHandler);
+  if (callerEnv.isLoadingPhase()) {
+    childEnv.setLoadingPhase();
+  }
   try {
     for (    String varname : callerEnv.propagatingVariables) {
       childEnv.updateAndPropagate(varname,callerEnv.lookup(varname));
