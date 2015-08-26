@@ -5,7 +5,6 @@
   ImmutableList.Builder<CycleInfo> cycleBuilder=ImmutableList.builder();
   Exception firstException=null;
   SkyKey firstChildKey=null;
-  boolean isTransient=false;
   boolean isCatastrophic=false;
   for (  ErrorInfo child : childErrors) {
     if (firstException == null) {
@@ -14,13 +13,12 @@
     }
     builder.addTransitive(child.rootCauses);
     cycleBuilder.addAll(CycleInfo.prepareCycles(currentValue,child.cycles));
-    isTransient|=child.isTransient();
     isCatastrophic|=child.isCatastrophic();
   }
   this.rootCauses=builder.build();
   this.exception=firstException;
   this.rootCauseOfException=firstChildKey;
   this.cycles=cycleBuilder.build();
-  this.isTransient=isTransient;
+  this.isTransient=false;
   this.isCatastrophic=isCatastrophic;
 }
