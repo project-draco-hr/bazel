@@ -78,11 +78,13 @@
       targetBuildConfigMap.put(name,value);
     }
     String targetName=targetControl.getName();
-    if (usedTargetNames.contains(targetName)) {
+    String targetNameInLowerCase=targetName.toLowerCase();
+    if (usedTargetNames.contains(targetNameInLowerCase)) {
       targetName=targetControl.getLabel();
+      targetNameInLowerCase=targetName.toLowerCase();
     }
-    checkState(!usedTargetNames.contains(targetName),"Name already exists for target with label/name %s/%s in list: %s",targetControl.getLabel(),targetControl.getName(),usedTargetNames);
-    usedTargetNames.add(targetName);
+    checkState(!usedTargetNames.contains(targetNameInLowerCase),"Name (case-insensitive) already exists for target with label/name %s/%s in list: %s",targetControl.getLabel(),targetControl.getName(),usedTargetNames);
+    usedTargetNames.add(targetNameInLowerCase);
     PBXNativeTarget target=new PBXNativeTarget(targetName,productType);
     try {
       target.getBuildConfigurationList().getBuildConfigurationsByName().get(DEFAULT_OPTIONS_NAME).setBuildSettings(targetBuildConfigMap);
