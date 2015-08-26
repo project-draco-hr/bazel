@@ -4,13 +4,23 @@
   for (  String name : names) {
     env.update(name,arguments[i++]);
   }
+  Statement lastStatement=null;
   try {
     for (    Statement stmt : statements) {
+      lastStatement=stmt;
       stmt.exec(env);
     }
   }
  catch (  ReturnStatement.ReturnException e) {
     return e.getValue();
+  }
+catch (  EvalExceptionWithStackTrace ex) {
+    throw ex;
+  }
+catch (  EvalException ex) {
+    EvalExceptionWithStackTrace real=new EvalExceptionWithStackTrace(ex,lastStatement.getLocation());
+    real.registerStatement(lastStatement);
+    throw real;
   }
   return Environment.NONE;
 }
