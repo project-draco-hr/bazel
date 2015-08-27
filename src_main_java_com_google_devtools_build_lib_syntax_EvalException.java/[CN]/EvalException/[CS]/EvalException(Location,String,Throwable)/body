@@ -1,19 +1,17 @@
 {
   super(cause);
   this.location=location;
-  if (message == null) {
-    message="";
-  }
-  if (cause != null) {
-    String causeMsg=cause.getMessage();
-    if (causeMsg != null && !message.contains(causeMsg)) {
-      message=message + (message.isEmpty() ? "" : ": ") + causeMsg;
+  this.message=FIELD_JOINER.join(message,getCauseMessage(message));
+  if (this.message.isEmpty()) {
+    String details;
+    if (cause == null) {
+      details="Invalid EvalException: no cause given!";
     }
+ else {
+      details="Invalid EvalException:\n" + Throwables.getStackTraceAsString(cause);
+    }
+    LoggingUtil.logToRemote(Level.SEVERE,details,cause);
+    throw new IllegalArgumentException(details);
   }
-  if (message.isEmpty()) {
-    LoggingUtil.logToRemote(Level.SEVERE,"Invalid EvalException",cause);
-    throw new IllegalArgumentException("Invalid EvalException");
-  }
-  this.message=message;
   this.dueToIncompleteAST=false;
 }
