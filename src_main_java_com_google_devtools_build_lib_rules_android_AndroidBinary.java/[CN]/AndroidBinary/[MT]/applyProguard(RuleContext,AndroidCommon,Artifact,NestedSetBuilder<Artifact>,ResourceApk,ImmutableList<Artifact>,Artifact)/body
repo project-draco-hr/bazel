@@ -1,6 +1,7 @@
 {
+  Artifact proguardOutputJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_PROGUARD_JAR);
   if (proguardSpecs.isEmpty()) {
-    return new ProguardOutput(deployJarArtifact,null);
+    return createEmptyProguardAction(ruleContext,proguardOutputJar,deployJarArtifact);
   }
   ImmutableSortedSet.Builder<Artifact> builder=ImmutableSortedSet.<Artifact>orderedBy(Artifact.EXEC_PATH_COMPARATOR).addAll(proguardSpecs);
   for (  ProguardSpecProvider dep : ruleContext.getPrerequisites("deps",Mode.TARGET,ProguardSpecProvider.class)) {
@@ -9,7 +10,6 @@
   Artifact output=resourceApk.getResourceProguardConfig();
   builder.add(output);
   proguardSpecs=builder.build().asList();
-  Artifact proguardOutputJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_PROGUARD_JAR);
   AndroidSdkProvider sdk=AndroidSdkProvider.fromRuleContext(ruleContext);
   return createProguardAction(ruleContext,common,sdk.getProguard(),deployJarArtifact,proguardSpecs,proguardMapping,sdk.getAndroidJar(),proguardOutputJar,filesBuilder);
 }

@@ -1,0 +1,8 @@
+{
+  ImmutableList.Builder<Artifact> failures=ImmutableList.<Artifact>builder().add(proguardOutputJar);
+  if (ruleContext.attributes().get("proguard_generate_mapping",Type.BOOLEAN)) {
+    failures.add(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_PROGUARD_MAP));
+  }
+  ruleContext.registerAction(new FailAction(ruleContext.getActionOwner(),failures.build(),"Can't generate Proguard jar or mapping without proguard_specs."));
+  return new ProguardOutput(deployJarArtifact,null);
+}
