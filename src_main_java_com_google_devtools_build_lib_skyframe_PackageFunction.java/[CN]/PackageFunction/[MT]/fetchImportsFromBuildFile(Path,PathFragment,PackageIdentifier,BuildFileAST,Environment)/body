@@ -1,10 +1,12 @@
 {
-  ImmutableCollection<PathFragment> imports=buildFileAST.getImports();
+  ImmutableMap<Location,PathFragment> imports=buildFileAST.getImports();
   Map<PathFragment,SkylarkEnvironment> importMap=new HashMap<>();
   ImmutableList.Builder<SkylarkFileDependency> fileDependencies=ImmutableList.builder();
   try {
-    for (    PathFragment importFile : imports) {
-      SkyKey importsLookupKey=SkylarkImportLookupValue.key(packageId.getRepository(),buildFileFragment,importFile);
+    for (    Map.Entry<Location,PathFragment> entry : imports.entrySet()) {
+      PathFragment importFile=entry.getValue();
+      RepositoryName repository=entry.getKey().getPath().endsWith(PRELUDE_FILE_FRAGMENT) ? PackageIdentifier.DEFAULT_REPOSITORY_NAME : packageId.getRepository();
+      SkyKey importsLookupKey=SkylarkImportLookupValue.key(repository,buildFileFragment,importFile);
       SkylarkImportLookupValue importLookupValue=(SkylarkImportLookupValue)env.getValueOrThrow(importsLookupKey,SkylarkImportFailedException.class,InconsistentFilesystemException.class,ASTLookupInputException.class,BuildFileNotFoundException.class);
       if (importLookupValue != null) {
         importMap.put(importFile,importLookupValue.getImportedEnvironment());

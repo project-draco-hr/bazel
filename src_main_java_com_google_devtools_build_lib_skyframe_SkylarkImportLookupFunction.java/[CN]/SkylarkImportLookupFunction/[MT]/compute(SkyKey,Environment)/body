@@ -3,7 +3,7 @@
   PathFragment file=arg.getPackageFragment();
   ASTFileLookupValue astLookupValue=null;
   try {
-    SkyKey astLookupKey=ASTFileLookupValue.key(file);
+    SkyKey astLookupKey=ASTFileLookupValue.key(arg);
     astLookupValue=(ASTFileLookupValue)env.getValueOrThrow(astLookupKey,ErrorReadingSkylarkExtensionException.class,InconsistentFilesystemException.class);
   }
  catch (  ErrorReadingSkylarkExtensionException e) {
@@ -24,9 +24,11 @@ catch (  ASTLookupInputException e) {
   Map<PathFragment,SkylarkEnvironment> importMap=new HashMap<>();
   ImmutableList.Builder<SkylarkFileDependency> fileDependencies=ImmutableList.builder();
   BuildFileAST ast=astLookupValue.getAST();
-  for (  PathFragment importFile : ast.getImports()) {
+  for (  Map.Entry<Location,PathFragment> entry : ast.getImports().entrySet()) {
     try {
-      SkyKey importsLookupKey=SkylarkImportLookupValue.key(arg.getRepository(),file,importFile);
+      PathFragment importFile=entry.getValue();
+      RepositoryName repository=entry.getKey().getPath().endsWith(PackageFunction.PRELUDE_FILE_FRAGMENT) ? PackageIdentifier.DEFAULT_REPOSITORY_NAME : arg.getRepository();
+      SkyKey importsLookupKey=SkylarkImportLookupValue.key(repository,file,importFile);
       SkylarkImportLookupValue importsLookupValue;
       importsLookupValue=(SkylarkImportLookupValue)env.getValueOrThrow(importsLookupKey,ASTLookupInputException.class);
       if (importsLookupValue != null) {
