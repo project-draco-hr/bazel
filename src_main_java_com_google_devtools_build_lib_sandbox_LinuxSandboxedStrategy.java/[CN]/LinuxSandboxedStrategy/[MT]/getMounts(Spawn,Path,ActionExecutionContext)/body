@@ -12,9 +12,8 @@
     Path source=mount.getKey();
     Path target=mount.getValue();
     validateAndAddMount(sandboxPath,fixedMounts,source,target);
-    Set<Path> seenSources=new HashSet<>();
-    while (source.isSymbolicLink() && seenSources.add(source)) {
-      source=source.getParentDirectory().getRelative(source.readSymbolicLink());
+    if (source.isSymbolicLink()) {
+      source=source.resolveSymbolicLinks();
       target=sandboxPath.getRelative(source.asFragment().relativeTo("/"));
       validateAndAddMount(sandboxPath,fixedMounts,source,target);
     }
