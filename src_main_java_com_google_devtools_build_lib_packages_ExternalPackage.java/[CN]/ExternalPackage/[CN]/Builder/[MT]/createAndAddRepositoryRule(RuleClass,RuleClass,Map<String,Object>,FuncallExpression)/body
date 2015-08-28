@@ -2,7 +2,12 @@
   StoredEventHandler eventHandler=new StoredEventHandler();
   Rule tempRule=RuleFactory.createRule(this,ruleClass,kwargs,eventHandler,ast,ast.getLocation());
   addEvents(eventHandler.getEvents());
-  repositoryMap.put(RepositoryName.create("@" + tempRule.getName()),tempRule);
+  try {
+    repositoryMap.put(RepositoryName.create("@" + tempRule.getName()),tempRule);
+  }
+ catch (  TargetParsingException e) {
+    throw new SyntaxException(e.getMessage());
+  }
   for (  Map.Entry<String,Label> entry : ruleClass.getExternalBindingsFunction().apply(tempRule).entrySet()) {
     Label nameLabel=Label.parseAbsolute("//external:" + entry.getKey());
     addBindRule(bindRuleClass,nameLabel,entry.getValue(),tempRule.getLocation());
