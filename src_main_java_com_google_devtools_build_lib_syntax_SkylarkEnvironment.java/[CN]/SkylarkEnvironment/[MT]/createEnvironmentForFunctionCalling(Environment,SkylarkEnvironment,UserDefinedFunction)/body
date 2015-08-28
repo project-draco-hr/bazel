@@ -1,8 +1,9 @@
 {
-  if (callerEnv.stackTraceContains(function)) {
+  if (callerEnv.getStackTrace().contains(function)) {
     throw new EvalException(function.getLocation(),"Recursion was detected when calling '" + function.getName() + "' from '"+ Iterables.getLast(callerEnv.getStackTrace()).getName()+ "'");
   }
-  SkylarkEnvironment childEnv=new SkylarkEnvironment(definitionEnv,callerEnv.getCopyOfUpdatedStackTrace(function),callerEnv.eventHandler);
+  ImmutableList<BaseFunction> stackTrace=new ImmutableList.Builder<BaseFunction>().addAll(callerEnv.getStackTrace()).add(function).build();
+  SkylarkEnvironment childEnv=new SkylarkEnvironment(definitionEnv,stackTrace,callerEnv.eventHandler);
   if (callerEnv.isLoadingPhase()) {
     childEnv.setLoadingPhase();
   }
