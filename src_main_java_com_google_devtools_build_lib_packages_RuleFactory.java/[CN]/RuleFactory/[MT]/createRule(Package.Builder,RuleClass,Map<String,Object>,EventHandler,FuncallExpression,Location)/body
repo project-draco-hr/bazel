@@ -1,33 +1,3 @@
 {
-  Preconditions.checkNotNull(ruleClass);
-  String ruleClassName=ruleClass.getName();
-  Object nameObject=attributeValues.get("name");
-  if (nameObject == null) {
-    throw new InvalidRuleException(ruleClassName + " rule has no 'name' attribute");
-  }
- else   if (!(nameObject instanceof String)) {
-    throw new InvalidRuleException(ruleClassName + " 'name' attribute must be a string");
-  }
-  String name=(String)nameObject;
-  Label label;
-  try {
-    label=pkgBuilder.createLabel(name);
-  }
- catch (  Label.SyntaxException e) {
-    throw new InvalidRuleException("illegal rule name: " + name + ": "+ e.getMessage());
-  }
-  boolean inWorkspaceFile=location.getPath() != null && location.getPath().getBaseName().contains("WORKSPACE");
-  if (ruleClass.getWorkspaceOnly() && !inWorkspaceFile) {
-    throw new RuleFactory.InvalidRuleException(ruleClass + " must be in the WORKSPACE file " + "(used by "+ label+ ")");
-  }
- else   if (!ruleClass.getWorkspaceOnly() && inWorkspaceFile) {
-    throw new RuleFactory.InvalidRuleException(ruleClass + " cannot be in the WORKSPACE file " + "(used by "+ label+ ")");
-  }
-  try {
-    Rule rule=ruleClass.createRuleWithLabel(pkgBuilder,label,attributeValues,eventHandler,ast,location);
-    return rule;
-  }
- catch (  SyntaxException e) {
-    throw new RuleFactory.InvalidRuleException(ruleClass + " " + e.getMessage());
-  }
+  return createRule(pkgBuilder,ruleClass,attributeValues,eventHandler,ast,location,ImmutableList.<StackTraceElement>of());
 }

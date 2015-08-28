@@ -1,13 +1,12 @@
 {
-  ImmutableList<BaseFunction> stackTrace=env.getStackTrace();
-  if (stackTrace.isEmpty()) {
+  if (stackTrace.size() <= 1) {
     return args;
   }
-  BaseFunction generator=stackTrace.get(0);
+  StackTraceElement generator=stackTrace.get(0);
   ImmutableMap.Builder<String,Object> builder=ImmutableMap.builder();
   builder.putAll(args);
   builder.put("generator_name",args.get("name"));
   builder.put("generator_function",generator.getName());
-  builder.put("generator_location",generator.getLocationPathAndLine());
+  builder.put("generator_location",Location.printPathAndLine(generator.getLocation()));
   return builder.build();
 }
