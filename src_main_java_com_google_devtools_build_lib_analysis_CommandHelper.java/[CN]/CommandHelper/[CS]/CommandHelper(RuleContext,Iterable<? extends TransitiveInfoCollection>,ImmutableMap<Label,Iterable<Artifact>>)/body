@@ -6,8 +6,12 @@
   for (  Map.Entry<Label,Iterable<Artifact>> entry : labelMap.entrySet()) {
     Iterables.addAll(mapGet(tempLabelMap,entry.getKey()),entry.getValue());
   }
-  for (  FilesToRunProvider tool : tools) {
-    Label label=tool.getLabel();
+  for (  TransitiveInfoCollection dep : tools) {
+    Label label=dep.getLabel();
+    FilesToRunProvider tool=dep.getProvider(FilesToRunProvider.class);
+    if (tool == null) {
+      continue;
+    }
     Collection<Artifact> files=tool.getFilesToRun();
     resolvedToolsBuilder.addAll(files);
     Artifact executableArtifact=tool.getExecutable();
