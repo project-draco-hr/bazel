@@ -4,6 +4,7 @@
   for (  String name : names) {
     env.update(name,arguments[i++]);
   }
+  long startTimeProfiler=Profiler.nanoTimeMaybe();
   Statement lastStatement=null;
   try {
     for (    Statement stmt : statements) {
@@ -21,6 +22,9 @@ catch (  EvalException ex) {
     EvalExceptionWithStackTrace real=new EvalExceptionWithStackTrace(ex,lastStatement.getLocation());
     real.registerStatement(lastStatement);
     throw real;
+  }
+ finally {
+    Profiler.instance().logSimpleTask(startTimeProfiler,ProfilerTask.SKYLARK_USER_FN,getName());
   }
   return Environment.NONE;
 }
