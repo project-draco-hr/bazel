@@ -7,8 +7,12 @@
     if (j2ObjcSource.getSourceType() == SourceType.JAVA && j2ObjcSource.hasSourceFiles()) {
       Iterable<Artifact> sourceArtifacts=j2ObjcSource.getObjcSrcs();
       Iterable<Artifact> prunedSourceArtifacts=j2ObjcSource.toPrunedSource(ruleContext).getObjcSrcs();
+      PathFragment paramFilePath=FileSystemUtils.replaceExtension(j2ObjcSource.getTargetLabel().toPathFragment(),".param.j2objc");
+      Artifact paramFile=ruleContext.getUniqueDirectoryArtifact("_j2objc_pruned",paramFilePath,ruleContext.getBinOrGenfilesDirectory());
       PathFragment objcFilePath=j2ObjcSource.getObjcFilePath();
-      ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("DummyPruner").setExecutable(pruner).addInput(pruner).addInputs(sourceArtifacts).addTransitiveInputs(j2ObjcDependencyMappingFiles).addTransitiveInputs(j2ObjcHeaderMappingFiles).setCommandLine(CustomCommandLine.builder().addJoinExecPaths("--input_files",",",sourceArtifacts).addJoinExecPaths("--output_files",",",prunedSourceArtifacts).addJoinExecPaths("--dependency_mapping_files",",",j2ObjcDependencyMappingFiles).addJoinExecPaths("--header_mapping_files",",",j2ObjcHeaderMappingFiles).add("--entry_classes").add(Joiner.on(",").join(entryClasses)).add("--objc_file_path").add(objcFilePath.getPathString()).build()).addOutputs(prunedSourceArtifacts).build(ruleContext));
+      CustomCommandLine commandLine=CustomCommandLine.builder().addJoinExecPaths("--input_files",",",sourceArtifacts).addJoinExecPaths("--output_files",",",prunedSourceArtifacts).addJoinExecPaths("--dependency_mapping_files",",",j2ObjcDependencyMappingFiles).addJoinExecPaths("--header_mapping_files",",",j2ObjcHeaderMappingFiles).add("--entry_classes").add(Joiner.on(",").join(entryClasses)).add("--objc_file_path").add(objcFilePath.getPathString()).build();
+      ruleContext.registerAction(new ParameterFileWriteAction(ruleContext.getActionOwner(),paramFile,commandLine,ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1));
+      ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("DummyPruner").setExecutable(pruner).addInput(pruner).addInput(paramFile).addInputs(sourceArtifacts).addTransitiveInputs(j2ObjcDependencyMappingFiles).addTransitiveInputs(j2ObjcHeaderMappingFiles).setCommandLine(CustomCommandLine.builder().addPaths("@%s",paramFile.getExecPath()).build()).addOutputs(prunedSourceArtifacts).build(ruleContext));
     }
   }
 }

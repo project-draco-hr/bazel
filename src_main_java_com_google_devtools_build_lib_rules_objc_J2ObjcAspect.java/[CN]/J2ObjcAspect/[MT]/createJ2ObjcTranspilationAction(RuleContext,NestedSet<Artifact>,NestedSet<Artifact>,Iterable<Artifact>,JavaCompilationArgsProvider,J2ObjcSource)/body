@@ -25,6 +25,8 @@
     argBuilder.addJoinExecPaths("-classpath",":",compileTimeJars);
   }
   argBuilder.addExecPaths(sources);
-  SpawnAction.Builder builder=new SpawnAction.Builder().setMnemonic("TranspilingJ2objc").setExecutable(ruleContext.getPrerequisiteArtifact("$j2objc_wrapper",Mode.HOST)).addInput(ruleContext.getPrerequisiteArtifact("$j2objc_wrapper",Mode.HOST)).addInput(j2ObjcDeployJar).addInputs(sources).addTransitiveInputs(compileTimeJars).addInputs(JavaCompilationHelper.getHostJavabaseInputs(ruleContext)).addTransitiveInputs(depsHeaderMappingFiles).addTransitiveInputs(depsClassMappingFiles).setCommandLine(argBuilder.build()).addOutputs(j2ObjcSource.getObjcSrcs()).addOutputs(j2ObjcSource.getObjcHdrs()).addOutput(outputHeaderMappingFile).addOutput(outputDependencyMappingFile);
+  Artifact paramFile=j2ObjcOutputParamFile(ruleContext);
+  ruleContext.registerAction(new ParameterFileWriteAction(ruleContext.getActionOwner(),paramFile,argBuilder.build(),ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1));
+  SpawnAction.Builder builder=new SpawnAction.Builder().setMnemonic("TranspilingJ2objc").setExecutable(ruleContext.getPrerequisiteArtifact("$j2objc_wrapper",Mode.HOST)).addInput(ruleContext.getPrerequisiteArtifact("$j2objc_wrapper",Mode.HOST)).addInput(j2ObjcDeployJar).addInputs(sources).addTransitiveInputs(compileTimeJars).addInputs(JavaCompilationHelper.getHostJavabaseInputs(ruleContext)).addTransitiveInputs(depsHeaderMappingFiles).addTransitiveInputs(depsClassMappingFiles).addInput(paramFile).setCommandLine(CustomCommandLine.builder().addPaths("@%s",paramFile.getExecPath()).build()).addOutputs(j2ObjcSource.getObjcSrcs()).addOutputs(j2ObjcSource.getObjcHdrs()).addOutput(outputHeaderMappingFile).addOutput(outputDependencyMappingFile);
   ruleContext.registerAction(builder.build(ruleContext));
 }
