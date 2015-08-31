@@ -1,7 +1,4 @@
 {
-  InstrumentedFilesProvider instrumentedFilesProvider=InstrumentedFilesCollector.collect(ruleContext,semantics.getCoverageInstrumentationSpec(),JAVA_METADATA_COLLECTOR,filesToBuild);
-  builder.add(InstrumentedFilesProvider.class,instrumentedFilesProvider).add(JavaExportsProvider.class,new JavaExportsProvider(collectTransitiveExports())).addOutputGroup(OutputGroupProvider.FILES_TO_COMPILE,getFilesToCompile(classJar));
-  if (!TargetUtils.isTestRule(ruleContext.getTarget())) {
-    builder.addOutputGroup(OutputGroupProvider.BASELINE_COVERAGE,BaselineCoverageAction.getBaselineCoverageArtifacts(ruleContext,instrumentedFilesProvider.getInstrumentedFiles()));
-  }
+  InstrumentedFilesProvider instrumentedFilesProvider=InstrumentedFilesCollector.collect(ruleContext,semantics.getCoverageInstrumentationSpec(),JAVA_METADATA_COLLECTOR,filesToBuild,!TargetUtils.isTestRule(ruleContext.getTarget()));
+  builder.add(InstrumentedFilesProvider.class,instrumentedFilesProvider).add(JavaExportsProvider.class,new JavaExportsProvider(collectTransitiveExports())).addOutputGroup(OutputGroupProvider.FILES_TO_COMPILE,getFilesToCompile(classJar)).addOutputGroup(OutputGroupProvider.BASELINE_COVERAGE,instrumentedFilesProvider.getBaselineCoverageArtifacts());
 }
