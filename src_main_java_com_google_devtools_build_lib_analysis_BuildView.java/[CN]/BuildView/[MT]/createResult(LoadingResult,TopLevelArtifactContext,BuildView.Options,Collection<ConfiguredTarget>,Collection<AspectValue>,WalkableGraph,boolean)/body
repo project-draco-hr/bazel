@@ -7,14 +7,15 @@
   Set<Artifact> artifactsToBuild=new HashSet<>();
   Set<ConfiguredTarget> parallelTests=new HashSet<>();
   Set<ConfiguredTarget> exclusiveTests=new HashSet<>();
-  Collection<Artifact> buildInfoArtifacts;
-  buildInfoArtifacts=skyframeExecutor.getWorkspaceStatusArtifacts();
+  Collection<Artifact> buildInfoArtifacts=skyframeExecutor.getWorkspaceStatusArtifacts();
   Preconditions.checkState(buildInfoArtifacts.size() == 2,buildInfoArtifacts);
   artifactsToBuild.addAll(buildInfoArtifacts);
   addExtraActionsIfRequested(viewOptions,artifactsToBuild,configuredTargets);
+  NestedSet<Artifact> baselineCoverageArtifacts=getBaselineCoverageArtifacts(configuredTargets);
+  Iterables.addAll(artifactsToBuild,baselineCoverageArtifacts);
   if (coverageReportActionFactory != null) {
     CoverageReportActionsWrapper actionsWrapper;
-    actionsWrapper=coverageReportActionFactory.createCoverageReportActionsWrapper(allTargetsToTest,getBaselineCoverageArtifacts(configuredTargets),artifactFactory,CoverageReportValue.ARTIFACT_OWNER);
+    actionsWrapper=coverageReportActionFactory.createCoverageReportActionsWrapper(allTargetsToTest,baselineCoverageArtifacts,artifactFactory,CoverageReportValue.ARTIFACT_OWNER);
     if (actionsWrapper != null) {
       ImmutableList<Action> actions=actionsWrapper.getActions();
       skyframeExecutor.injectCoverageReportData(actions);
