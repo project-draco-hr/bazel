@@ -1,0 +1,16 @@
+{
+  ImmutableMap.Builder<String,Object> builder=new ImmutableMap.Builder<>();
+  for (  String nativeFunction : Runtime.getFunctionNames(SkylarkNativeModule.class)) {
+    builder.put(nativeFunction,Runtime.getFunction(SkylarkNativeModule.class,nativeFunction));
+  }
+  for (  String ruleClass : ruleFactory.getRuleClassNames()) {
+    builder.put(ruleClass,newRuleFunction(ruleFactory,ruleClass));
+  }
+  builder.put("package",newPackageFunction(packageArguments));
+  for (  EnvironmentExtension extension : environmentExtensions) {
+    for (    BaseFunction function : extension.nativeModuleFunctions()) {
+      builder.put(function.getName(),function);
+    }
+  }
+  return new ClassObject.SkylarkClassObject(builder.build(),"no native function or rule '%s'");
+}

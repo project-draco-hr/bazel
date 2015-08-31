@@ -1,17 +1,7 @@
 {
   MethodLibrary.setupMethodEnvironment(env);
-  for (  Map.Entry<Class<?>,ImmutableList<BaseFunction>> entry : FUNCTION_MAP.entrySet()) {
-    for (    BaseFunction function : entry.getValue()) {
-      if (function.getObjectType() != null) {
-        env.registerFunction(function.getObjectType(),function.getName(),function);
-      }
- else {
-        env.update(function.getName(),function);
-      }
-    }
+  for (  Class<?> moduleClass : MODULES) {
+    Runtime.registerModuleGlobals(env,moduleClass);
   }
-  for (  Map.Entry<String,Object> entry : OBJECTS.entrySet()) {
-    env.update(entry.getKey(),entry.getValue());
-  }
-  env.update(Environment.PKG_NAME,Environment.NONE);
+  env.update(Runtime.PKG_NAME,Runtime.NONE);
 }

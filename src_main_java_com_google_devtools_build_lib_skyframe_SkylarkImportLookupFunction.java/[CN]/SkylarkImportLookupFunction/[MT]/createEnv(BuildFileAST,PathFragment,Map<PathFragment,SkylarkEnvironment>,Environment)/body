@@ -1,9 +1,7 @@
 {
   StoredEventHandler eventHandler=new StoredEventHandler();
   SkylarkEnvironment extensionEnv=ruleClassProvider.createSkylarkRuleClassEnvironment(eventHandler,ast.getContentHashCode());
-  for (  BaseFunction function : nativeRuleFunctions) {
-    extensionEnv.registerFunction(SkylarkNativeModule.class,function.getName(),function);
-  }
+  extensionEnv.update("native",packageFactory.getNativeModule());
   extensionEnv.setImportedExtensions(importMap);
   ast.exec(extensionEnv,eventHandler);
   SkylarkRuleClassFunctions.exportRuleFunctions(extensionEnv,file);

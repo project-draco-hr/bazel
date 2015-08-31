@@ -1,0 +1,20 @@
+{
+  try {
+    if (moduleClass.isAnnotationPresent(SkylarkModule.class)) {
+      env.update(moduleClass.getAnnotation(SkylarkModule.class).name(),moduleClass.newInstance());
+    }
+    for (    Field field : moduleClass.getDeclaredFields()) {
+      if (field.isAnnotationPresent(SkylarkSignature.class)) {
+        field.setAccessible(true);
+        SkylarkSignature annotation=field.getAnnotation(SkylarkSignature.class);
+        Object value=field.get(null);
+        if (!(value instanceof BuiltinFunction.Factory || (value instanceof BaseFunction && !annotation.objectType().equals(Object.class)))) {
+          env.update(annotation.name(),value);
+        }
+      }
+    }
+  }
+ catch (  IllegalAccessException|InstantiationException e) {
+    throw new AssertionError(e);
+  }
+}
