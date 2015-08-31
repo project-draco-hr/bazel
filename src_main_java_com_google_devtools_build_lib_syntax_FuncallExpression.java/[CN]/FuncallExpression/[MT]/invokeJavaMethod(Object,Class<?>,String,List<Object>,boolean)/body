@@ -2,6 +2,9 @@
   MethodDescriptor matchingMethod=null;
   List<MethodDescriptor> methods=getMethods(objClass,methodName,args.size(),getLocation());
   if (methods != null) {
+    if (hasKwArgs) {
+      throw new EvalException(func.getLocation(),String.format("Keyword arguments are not allowed when calling a java method" + "\nwhile calling method '%s' on object of type %s",func.getName(),EvalUtils.getDataTypeNameFromClass(objClass)));
+    }
     for (    MethodDescriptor method : methods) {
       Class<?>[] params=method.getMethod().getParameterTypes();
       int i=0;
