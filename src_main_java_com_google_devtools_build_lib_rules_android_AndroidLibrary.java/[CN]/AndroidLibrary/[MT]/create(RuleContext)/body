@@ -8,6 +8,7 @@
   checkResourceInlining(ruleContext);
   checkIdlRootImport(ruleContext);
   NestedSet<AndroidResourcesProvider.ResourceContainer> transitiveResources=collectTransitiveResources(ruleContext);
+  NestedSetBuilder<Aar> transitiveAars=collectTransitiveAars(ruleContext);
   NestedSet<LinkerInput> transitiveNativeLibraries=AndroidCommon.collectTransitiveNativeLibraries(deps);
   NestedSet<Artifact> transitiveProguardConfigs=collectTransitiveProguardConfigs(ruleContext);
   AndroidIdlProvider transitiveIdlImportData=collectTransitiveIdlImports(ruleContext);
@@ -27,10 +28,11 @@
       Artifact classesJar=mergeJarsFromSrcs(ruleContext,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_CLASS_JAR));
       Artifact aarOut=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_AAR);
       new AarGeneratorBuilder(ruleContext).withPrimary(resourceApk.getPrimaryResource()).withManifest(resourceApk.getPrimaryResource().getManifest()).withRtxt(resourceApk.getPrimaryResource().getRTxt()).withClasses(classesJar).strictResourceMerging().setAAROut(aarOut).build(ruleContext);
+      Aar aar=new Aar(aarOut,applicationManifest.getManifest());
       RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
       androidCommon.addTransitiveInfoProviders(builder);
       androidSemantics.addTransitiveInfoProviders(builder,ruleContext,javaCommon,androidCommon,null,resourceApk,null,ImmutableList.<Artifact>of());
-      return builder.add(AndroidNativeLibraryProvider.class,new AndroidNativeLibraryProvider(transitiveNativeLibraries)).add(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(androidCommon.getTransitiveSourceJars(),androidCommon.getTopLevelSourceJars())).addSkylarkTransitiveInfo(JavaSkylarkApiProvider.NAME,new JavaSkylarkApiProvider()).add(JavaNeverlinkInfoProvider.class,new JavaNeverlinkInfoProvider(androidCommon.isNeverLink())).add(AndroidCcLinkParamsProvider.class,new AndroidCcLinkParamsProvider(androidCommon.getCcLinkParamsStore())).add(ProguardSpecProvider.class,new ProguardSpecProvider(transitiveProguardConfigs)).add(AndroidLibraryAarProvider.class,new AndroidLibraryAarProvider(aarOut,applicationManifest.getManifest())).addOutputGroup(OutputGroupProvider.HIDDEN_TOP_LEVEL,transitiveProguardConfigs).build();
+      return builder.add(AndroidNativeLibraryProvider.class,new AndroidNativeLibraryProvider(transitiveNativeLibraries)).add(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(androidCommon.getTransitiveSourceJars(),androidCommon.getTopLevelSourceJars())).addSkylarkTransitiveInfo(JavaSkylarkApiProvider.NAME,new JavaSkylarkApiProvider()).add(JavaNeverlinkInfoProvider.class,new JavaNeverlinkInfoProvider(androidCommon.isNeverLink())).add(AndroidCcLinkParamsProvider.class,new AndroidCcLinkParamsProvider(androidCommon.getCcLinkParamsStore())).add(ProguardSpecProvider.class,new ProguardSpecProvider(transitiveProguardConfigs)).add(AndroidLibraryAarProvider.class,new AndroidLibraryAarProvider(aar,transitiveAars.add(aar).build())).addOutputGroup(OutputGroupProvider.HIDDEN_TOP_LEVEL,transitiveProguardConfigs).build();
     }
  catch (    RuleConfigurationException e) {
       return null;
@@ -52,7 +54,8 @@
     ResourceContainer primaryResources;
     if (AndroidCommon.getAndroidResources(ruleContext) != null) {
       primaryResources=Iterables.getOnlyElement(AndroidCommon.getAndroidResources(ruleContext).getTransitiveAndroidResources());
-      targetBuilder.add(AndroidLibraryAarProvider.class,new AndroidLibraryAarProvider(aarOut,primaryResources.getManifest()));
+      Aar aar=new Aar(aarOut,primaryResources.getManifest());
+      targetBuilder.add(AndroidLibraryAarProvider.class,new AndroidLibraryAarProvider(aar,transitiveAars.add(aar).build()));
     }
  else {
       ApplicationManifest applicationManifest=ApplicationManifest.generatedManifest(ruleContext);
@@ -69,6 +72,7 @@
       }
       primaryResources=new ResourceContainer(ruleContext.getLabel(),javaPackage,null,false,apk,applicationManifest.getManifest(),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_JAVA_SOURCE_JAR),ImmutableList.<Artifact>of(),ImmutableList.<Artifact>of(),ImmutableList.<PathFragment>of(),ImmutableList.<PathFragment>of(),ruleContext.attributes().get("exports_manifest",Type.BOOLEAN),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),null);
       primaryResources=new AndroidResourcesProcessorBuilder(ruleContext).setApkOut(apk).setRTxtOut(primaryResources.getRTxt()).setSourceJarOut(primaryResources.getJavaSourceJar()).setJavaPackage(primaryResources.getJavaPackage()).withPrimary(primaryResources).withDependencies(transitiveResources).setDebug(ruleContext.getConfiguration().getCompilationMode() != CompilationMode.OPT).setWorkingDirectory(ruleContext.getUniqueDirectory("_resources")).build(ruleContext);
+      targetBuilder.add(AndroidLibraryAarProvider.class,new AndroidLibraryAarProvider(null,transitiveAars.build()));
     }
     new AarGeneratorBuilder(ruleContext).withPrimary(primaryResources).withManifest(primaryResources.getManifest()).withRtxt(primaryResources.getRTxt()).withClasses(classesJar).setAAROut(aarOut).build(ruleContext);
     return targetBuilder.build();
