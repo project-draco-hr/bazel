@@ -8,7 +8,7 @@
   pendingVisitations.add(invalidationPair);
   enqueue(new Runnable(){
     @Override public void run(){
-      NodeEntry entry=graph.get(key);
+      ThinNodeEntry entry=graph.get(key);
       if (entry == null) {
         Preconditions.checkState(!mustExist,"%s does not exist in the graph but was enqueued for dirtying by another node",key);
         pendingVisitations.remove(invalidationPair);
@@ -26,12 +26,12 @@
       for (      SkyKey reverseDep : entry.getReverseDeps()) {
         visit(reverseDep,InvalidationType.DIRTIED,MUST_EXIST);
       }
-      Map<SkyKey,NodeEntry> children=graph.getBatch(deps);
+      Map<SkyKey,? extends ThinNodeEntry> children=graph.getBatch(deps);
       if (children.size() != Iterables.size(deps)) {
         Set<SkyKey> depsSet=ImmutableSet.copyOf(deps);
         throw new IllegalStateException("Mismatch in getBatch: " + key + ", "+ entry+ "\n"+ Sets.difference(depsSet,children.keySet())+ "\n"+ Sets.difference(children.keySet(),depsSet));
       }
-      for (      NodeEntry child : children.values()) {
+      for (      ThinNodeEntry child : children.values()) {
         child.removeReverseDep(key);
       }
       informInvalidationReceiver(key,EvaluationProgressReceiver.InvalidationState.DIRTY);
