@@ -1,0 +1,15 @@
+{
+  if (protoSources.isEmpty()) {
+    ImmutableList.Builder<Artifact> builder=new ImmutableList.Builder<>();
+    for (    TransitiveInfoCollection provider : ruleContext.getPrerequisites("deps",Mode.TARGET)) {
+      ProtoSourcesProvider sources=provider.getProvider(ProtoSourcesProvider.class);
+      if (sources != null) {
+        builder.addAll(sources.getProtoSources());
+      }
+    }
+    return builder.build();
+  }
+ else {
+    return protoSources;
+  }
+}

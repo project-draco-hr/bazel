@@ -1,0 +1,12 @@
+{
+  ImmutableList.Builder<Artifact> outputsBuilder=new ImmutableList.Builder<>();
+  Root genfiles=ruleContext.getConfiguration().getGenfilesDirectory();
+  for (  Artifact src : protoSources) {
+    PathFragment srcPath=src.getRootRelativePath();
+    if (pythonNames) {
+      srcPath=srcPath.replaceName(srcPath.getBaseName().replace('-','_'));
+    }
+    outputsBuilder.add(ruleContext.getShareableArtifact(FileSystemUtils.replaceExtension(srcPath,extension),genfiles));
+  }
+  return outputsBuilder.build();
+}
