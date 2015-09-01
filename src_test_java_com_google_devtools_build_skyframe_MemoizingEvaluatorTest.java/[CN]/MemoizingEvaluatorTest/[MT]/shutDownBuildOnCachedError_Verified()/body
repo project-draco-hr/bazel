@@ -10,6 +10,7 @@
   tester.getOrCreate(cachedParentKey).addDependency(errorKey).setComputedValue(CONCATENATE);
   tester.getOrCreate(uncachedParentKey).addDependency(changedKey).addDependency(errorKey).setComputedValue(CONCATENATE);
   final AtomicBoolean synchronizeThreads=new AtomicBoolean(false);
+  final CountDownLatch shutdownAwaiterStarted=new CountDownLatch(1);
   final AtomicReference<Pair<SkyKey,? extends Exception>> unexpectedException=new AtomicReference<>();
   setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
     private final CountDownLatch cachedSignaled=new CountDownLatch(1);
@@ -17,9 +18,20 @@
       if (!synchronizeThreads.get() || order != Order.BEFORE || type != EventType.SIGNAL) {
         return;
       }
+      try {
+        if (!shutdownAwaiterStarted.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS)) {
+          unexpectedException.set(Pair.of(key,new Exception("shutdown awaiter not started at " + System.currentTimeMillis())));
+        }
+      }
+ catch (      InterruptedException e) {
+        unexpectedException.set(Pair.of(key,new Exception("Interrupted at " + System.currentTimeMillis())));
+      }
       if (key.equals(uncachedParentKey)) {
         try {
-          assertTrue(cachedSignaled.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS));
+          if (!cachedSignaled.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS)) {
+            Thread currentThread=Thread.currentThread();
+            unexpectedException.set(Pair.of(key,new Exception("no interruption or signaling in time for " + (currentThread.isInterrupted() ? "" : "un") + "interrupted "+ currentThread+ " with hash "+ System.identityHashCode(currentThread)+ " at "+ System.currentTimeMillis())));
+          }
         }
  catch (        InterruptedException e) {
           Thread.currentThread().interrupt();
@@ -29,7 +41,8 @@
         cachedSignaled.countDown();
         try {
           Thread.sleep(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
-          unexpectedException.set(Pair.of(key,new IllegalStateException("uninterrupted")));
+          Thread currentThread=Thread.currentThread();
+          unexpectedException.set(Pair.of(key,new Exception("no interruption in time for " + (currentThread.isInterrupted() ? "" : "un") + "interrupted "+ currentThread+ " with hash "+ System.identityHashCode(currentThread)+ " at "+ System.currentTimeMillis())));
         }
  catch (        InterruptedException e) {
           Thread.currentThread().interrupt();
@@ -47,6 +60,7 @@
   tester.getOrCreate(waitForShutdownKey).setBuilder(new SkyFunction(){
     @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws InterruptedException {
       try {
+        shutdownAwaiterStarted.countDown();
         TrackingAwaiter.waitAndMaybeThrowInterrupt(((ParallelEvaluator.SkyFunctionEnvironment)env).getExceptionLatchForTesting(),"");
       }
  catch (      InterruptedException e) {
