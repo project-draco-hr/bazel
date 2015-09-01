@@ -1,0 +1,9 @@
+{
+  ImmutableList<Artifact> protoSources=ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list();
+  ImmutableList<Artifact> directProtoSources=ProtoCommon.getDirectProtoSources(ruleContext,protoSources);
+  ProtoCommon.checkSourceFilesAreInSamePackage(ruleContext);
+  NestedSet<Artifact> transitiveImports=ProtoCommon.collectTransitiveImports(ruleContext,protoSources);
+  RunfilesProvider runfilesProvider=ProtoCommon.createRunfilesProvider(transitiveImports,ruleContext);
+  ProtoSourcesProvider sourcesProvider=new ProtoSourcesProvider(transitiveImports,transitiveImports,directProtoSources);
+  return new RuleConfiguredTargetBuilder(ruleContext).add(RunfilesProvider.class,runfilesProvider).addProvider(ProtoSourcesProvider.class,sourcesProvider).addSkylarkTransitiveInfo(ProtoSourcesProvider.SKYLARK_NAME,sourcesProvider).build();
+}
