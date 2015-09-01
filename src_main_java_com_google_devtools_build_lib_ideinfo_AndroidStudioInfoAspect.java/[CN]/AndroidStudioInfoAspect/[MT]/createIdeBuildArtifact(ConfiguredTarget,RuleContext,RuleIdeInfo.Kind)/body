@@ -1,0 +1,23 @@
+{
+  PathFragment ideBuildFilePath=getOutputFilePath(base,ruleContext);
+  Root genfilesDirectory=ruleContext.getConfiguration().getGenfilesDirectory();
+  Artifact ideBuildFile=ruleContext.getAnalysisEnvironment().getDerivedArtifact(ideBuildFilePath,genfilesDirectory);
+  RuleIdeInfo.Builder outputBuilder=RuleIdeInfo.newBuilder();
+  outputBuilder.setLabel(base.getLabel().toString());
+  outputBuilder.setBuildFile(ruleContext.getRule().getPackage().getBuildFile().getPath().toString());
+  outputBuilder.setKind(ruleKind);
+  JavaSourceInfoProvider sourceInfoProvider=base.getProvider(JavaSourceInfoProvider.class);
+  Collection<Artifact> sourceFiles=sourceInfoProvider != null ? sourceInfoProvider.getSourceFiles() : ImmutableList.<Artifact>of();
+  for (  Artifact sourceFile : sourceFiles) {
+    outputBuilder.addSources(makeArtifactLocation(sourceFile));
+  }
+  outputBuilder.setJavaRuleIdeInfo(makeJavaRuleIdeInfo(base));
+  final RuleIdeInfo ruleIdeInfo=outputBuilder.build();
+  ruleContext.registerAction(new BinaryFileWriteAction(ruleContext.getActionOwner(),ideBuildFile,new ByteSource(){
+    @Override public InputStream openStream() throws IOException {
+      return ruleIdeInfo.toByteString().newInput();
+    }
+  }
+,false));
+  return ideBuildFile;
+}

@@ -1,0 +1,14 @@
+{
+  NestedSetBuilder<Artifact> ideBuildFilesBuilder=NestedSetBuilder.stableOrder();
+  Iterable<AndroidStudioInfoFilesProvider> deps=ruleContext.getPrerequisites("deps",Mode.TARGET,AndroidStudioInfoFilesProvider.class);
+  for (  AndroidStudioInfoFilesProvider dep : deps) {
+    ideBuildFilesBuilder.addTransitive(dep.getIdeBuildFiles());
+  }
+  RuleIdeInfo.Kind ruleKind=getRuleKind(ruleContext.getRule());
+  if (ruleKind != RuleIdeInfo.Kind.UNRECOGNIZED) {
+    Artifact ideBuildFile=createIdeBuildArtifact(base,ruleContext,ruleKind);
+    ideBuildFilesBuilder.add(ideBuildFile);
+  }
+  NestedSet<Artifact> ideBuildFiles=ideBuildFilesBuilder.build();
+  return new Aspect.Builder(NAME).addOutputGroup(IDE_BUILD,ideBuildFiles).addProvider(AndroidStudioInfoFilesProvider.class,new AndroidStudioInfoFilesProvider(ideBuildFiles)).build();
+}
