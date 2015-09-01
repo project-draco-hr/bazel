@@ -1,0 +1,16 @@
+{
+  try (PrintStream out=new PrintStream(new BufferedOutputStream(htmlFile.getOutputStream()))){
+    ChartCreator chartCreator;
+    Optional<SkylarkStatistics> skylarkStats;
+    if (detailed) {
+      chartCreator=new DetailedChartCreator(info,statistics);
+      skylarkStats=Optional.of(new SkylarkStatistics(out,info));
+    }
+ else {
+      chartCreator=new AggregatingChartCreator(info,statistics);
+      skylarkStats=Optional.absent();
+    }
+    Chart chart=chartCreator.create();
+    new HtmlCreator(out,chart,skylarkStats,htmlPixelsPerSecond).print();
+  }
+ }

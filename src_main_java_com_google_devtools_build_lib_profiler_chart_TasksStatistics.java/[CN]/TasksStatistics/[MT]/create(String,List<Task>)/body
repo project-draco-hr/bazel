@@ -1,0 +1,25 @@
+{
+  Collections.sort(tasks,new Comparator<Task>(){
+    @Override public int compare(    Task o1,    Task o2){
+      return Long.compare(o1.duration,o2.duration);
+    }
+  }
+);
+  int count=tasks.size();
+  long min=tasks.get(0).duration;
+  long max=tasks.get(count - 1).duration;
+  int midIndex=count / 2;
+  double median=tasks.size() % 2 == 0 ? (tasks.get(midIndex).duration + tasks.get(midIndex - 1).duration) / 2.0 : tasks.get(midIndex).duration;
+  long sum=0L;
+  double sumOfSquaredShiftedMillis=0L;
+  final long shift=min;
+  for (  Task task : tasks) {
+    sum+=task.duration;
+    double taskDurationShiftMillis=toMilliSeconds(task.duration - shift);
+    sumOfSquaredShiftedMillis+=taskDurationShiftMillis * taskDurationShiftMillis;
+  }
+  double sumShiftedMillis=toMilliSeconds(sum - count * shift);
+  double mean=(double)sum / count;
+  double standardDeviation=Math.sqrt((sumOfSquaredShiftedMillis - (sumShiftedMillis * sumShiftedMillis) / count) / count);
+  return new TasksStatistics(name,count,min,max,mean,median,standardDeviation,sum);
+}
