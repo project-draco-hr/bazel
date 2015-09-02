@@ -1,16 +1,22 @@
 {
   Environment env=getOrCreateChildEnvironment(parentEnv);
-  Preconditions.checkState(isConfigured(),"Function %s was not configured",getName());
-  Location loc=ast == null ? location : ast.getLocation();
-  Object[] arguments=processArguments(args,kwargs,loc);
-  canonicalizeArguments(arguments,loc);
+  env.addToStackTrace(new StackTraceElement(this,kwargs));
   try {
-    return call(arguments,ast,env);
+    Preconditions.checkState(isConfigured(),"Function %s was not configured",getName());
+    Location loc=ast == null ? location : ast.getLocation();
+    Object[] arguments=processArguments(args,kwargs,loc);
+    canonicalizeArguments(arguments,loc);
+    try {
+      return call(arguments,ast,env);
+    }
+ catch (    EvalExceptionWithStackTrace ex) {
+      throw updateStackTrace(ex,loc);
+    }
+catch (    EvalException|RuntimeException|InterruptedException ex) {
+      throw updateStackTrace(new EvalExceptionWithStackTrace(ex,loc),loc);
+    }
   }
- catch (  EvalExceptionWithStackTrace ex) {
-    throw updateStackTrace(ex,loc);
-  }
-catch (  EvalException|RuntimeException|InterruptedException ex) {
-    throw updateStackTrace(new EvalExceptionWithStackTrace(ex,loc),loc);
+  finally {
+    env.removeStackTraceElement();
   }
 }

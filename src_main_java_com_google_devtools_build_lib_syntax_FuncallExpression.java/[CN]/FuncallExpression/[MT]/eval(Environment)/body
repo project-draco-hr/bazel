@@ -1,3 +1,11 @@
 {
-  return (obj != null) ? invokeObjectMethod(env) : invokeGlobalFunction(env);
+  boolean hasAddedElement=env.isSkylark() ? false : env.tryAddingStackTraceRoot(new StackTraceElement(func,args));
+  try {
+    return (obj != null) ? invokeObjectMethod(env) : invokeGlobalFunction(env);
+  }
+  finally {
+    if (hasAddedElement) {
+      env.removeStackTraceRoot();
+    }
+  }
 }
