@@ -12,25 +12,20 @@
   final AtomicBoolean synchronizeThreads=new AtomicBoolean(false);
   final CountDownLatch shutdownAwaiterStarted=new CountDownLatch(1);
   final AtomicReference<Pair<SkyKey,? extends Exception>> unexpectedException=new AtomicReference<>();
+  final TrackingAwaiter trackingAwaiter=new TrackingAwaiter();
   setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
     private final CountDownLatch cachedSignaled=new CountDownLatch(1);
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!synchronizeThreads.get() || order != Order.BEFORE || type != EventType.SIGNAL) {
         return;
       }
-      try {
-        if (!shutdownAwaiterStarted.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS)) {
-          unexpectedException.set(Pair.of(key,new Exception("shutdown awaiter not started at " + System.currentTimeMillis())));
-        }
-      }
- catch (      InterruptedException e) {
-        unexpectedException.set(Pair.of(key,new Exception("Interrupted at " + System.currentTimeMillis())));
-      }
+      trackingAwaiter.awaitLatchAndTrackExceptions(shutdownAwaiterStarted,"shutdown awaiter not started");
       if (key.equals(uncachedParentKey)) {
         try {
           if (!cachedSignaled.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS)) {
             Thread currentThread=Thread.currentThread();
             unexpectedException.set(Pair.of(key,new Exception("no interruption or signaling in time for " + (currentThread.isInterrupted() ? "" : "un") + "interrupted "+ currentThread+ " with hash "+ System.identityHashCode(currentThread)+ " at "+ System.currentTimeMillis())));
+            return;
           }
         }
  catch (        InterruptedException e) {
@@ -43,6 +38,7 @@
           Thread.sleep(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
           Thread currentThread=Thread.currentThread();
           unexpectedException.set(Pair.of(key,new Exception("no interruption in time for " + (currentThread.isInterrupted() ? "" : "un") + "interrupted "+ currentThread+ " with hash "+ System.identityHashCode(currentThread)+ " at "+ System.currentTimeMillis())));
+          return;
         }
  catch (        InterruptedException e) {
           Thread.currentThread().interrupt();
@@ -79,4 +75,5 @@
   if (unexpected != null) {
     throw new AssertionError(unexpected.first + ", " + unexpected.second+ ", "+ Arrays.toString(unexpected.second.getStackTrace()));
   }
+  trackingAwaiter.assertNoErrors();
 }
