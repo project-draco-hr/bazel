@@ -7,16 +7,13 @@ synchronized (this) {
       }
     }
   }
-  Path child;
-  Reference<Path> childRef=children.get(childName);
-  if (childRef == null || (child=childRef.get()) == null) {
 synchronized (this) {
-      childRef=children.get(childName);
-      if (childRef == null || (child=childRef.get()) == null) {
-        child=createChildPath(childName);
-        children.put(childName,new PathWeakReferenceForCleanup(child,REFERENCE_QUEUE));
-      }
+    Reference<Path> childRef=children.get(childName);
+    Path child;
+    if (childRef == null || (child=childRef.get()) == null) {
+      child=createChildPath(childName);
+      children.put(childName,new PathWeakReferenceForCleanup(child,REFERENCE_QUEUE));
     }
+    return child;
   }
-  return child;
 }
