@@ -1,0 +1,21 @@
+{
+  ImmutableSetMultimap.Builder<Path,Path> mounts=ImmutableSetMultimap.builder();
+  for (  String line : Files.readLines(manifestFile,Charset.defaultCharset())) {
+    String[] fields=line.trim().split(" ");
+    Path source;
+    Path targetPath=targetDirectory.getRelative(fields[0]);
+    Path targetInSandbox=sandboxPath.getRelative(targetPath.asFragment().relativeTo("/"));
+switch (fields.length) {
+case 1:
+      source=sandboxPath.getFileSystem().getPath("/dev/null");
+    break;
+case 2:
+  source=sandboxPath.getFileSystem().getPath(fields[1]);
+break;
+default :
+throw new IllegalStateException("'" + line + "' splits into more than 2 parts");
+}
+mounts.put(source,targetInSandbox);
+}
+return mounts.build();
+}
