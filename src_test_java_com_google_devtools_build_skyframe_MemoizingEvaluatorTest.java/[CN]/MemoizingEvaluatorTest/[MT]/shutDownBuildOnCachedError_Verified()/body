@@ -12,14 +12,13 @@
   final AtomicBoolean synchronizeThreads=new AtomicBoolean(false);
   final CountDownLatch shutdownAwaiterStarted=new CountDownLatch(1);
   final AtomicReference<Pair<SkyKey,? extends Exception>> unexpectedException=new AtomicReference<>();
-  final TrackingAwaiter trackingAwaiter=new TrackingAwaiter();
   setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
     private final CountDownLatch cachedSignaled=new CountDownLatch(1);
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!synchronizeThreads.get() || order != Order.BEFORE || type != EventType.SIGNAL) {
         return;
       }
-      trackingAwaiter.awaitLatchAndTrackExceptions(shutdownAwaiterStarted,"shutdown awaiter not started");
+      TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(shutdownAwaiterStarted,"shutdown awaiter not started");
       if (key.equals(uncachedParentKey)) {
         try {
           if (!cachedSignaled.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS)) {
@@ -55,13 +54,8 @@
   SkyKey waitForShutdownKey=GraphTester.skyKey("wait-for-shutdown");
   tester.getOrCreate(waitForShutdownKey).setBuilder(new SkyFunction(){
     @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws InterruptedException {
-      try {
-        shutdownAwaiterStarted.countDown();
-        TrackingAwaiter.waitAndMaybeThrowInterrupt(((ParallelEvaluator.SkyFunctionEnvironment)env).getExceptionLatchForTesting(),"");
-      }
- catch (      InterruptedException e) {
-        unexpectedException.set(Pair.of(skyKey,e));
-      }
+      shutdownAwaiterStarted.countDown();
+      TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(((ParallelEvaluator.SkyFunctionEnvironment)env).getExceptionLatchForTesting(),"exception not thrown");
       synchronizeThreads.set(false);
       throw new InterruptedException();
     }
@@ -75,5 +69,4 @@
   if (unexpected != null) {
     throw new AssertionError(unexpected.first + ", " + unexpected.second+ ", "+ Arrays.toString(unexpected.second.getStackTrace()));
   }
-  trackingAwaiter.assertNoErrors();
 }

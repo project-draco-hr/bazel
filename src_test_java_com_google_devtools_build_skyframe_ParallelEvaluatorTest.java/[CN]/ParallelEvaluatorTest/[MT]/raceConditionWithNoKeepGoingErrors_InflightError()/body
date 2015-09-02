@@ -2,17 +2,14 @@
   final SkyKey errorKey=GraphTester.toSkyKey("errorKey");
   final SkyKey otherErrorKey=GraphTester.toSkyKey("otherErrorKey");
   final CountDownLatch errorCommitted=new CountDownLatch(1);
-  final TrackingAwaiter trackingAwaiterForErrorCommitted=new TrackingAwaiter();
   final CountDownLatch otherStarted=new CountDownLatch(1);
-  final TrackingAwaiter trackingAwaiterForOtherStarted=new TrackingAwaiter();
   final CountDownLatch otherDone=new CountDownLatch(1);
-  final TrackingAwaiter trackingAwaiterForOtherDone=new TrackingAwaiter();
   final AtomicInteger numOtherInvocations=new AtomicInteger(0);
   final AtomicReference<String> bogusInvocationMessage=new AtomicReference<>(null);
   final AtomicReference<String> nonNullValueMessage=new AtomicReference<>(null);
   tester.getOrCreate(errorKey).setBuilder(new SkyFunction(){
     @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
-      trackingAwaiterForOtherStarted.awaitLatchAndTrackExceptions(otherStarted,"otherErrorKey's SkyFunction didn't start in time.");
+      TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(otherStarted,"otherErrorKey's SkyFunction didn't start in time.");
       throw new GenericFunctionException(new SomeErrorException("error"),Transience.PERSISTENT);
     }
     @Override public String extractTag(    SkyKey skyKey){
@@ -24,7 +21,7 @@
     @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
       otherStarted.countDown();
       int invocations=numOtherInvocations.incrementAndGet();
-      trackingAwaiterForErrorCommitted.awaitLatchAndTrackExceptions(errorCommitted,"errorKey's error didn't get committed to the graph in time");
+      TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(errorCommitted,"errorKey's error didn't get committed to the graph in time");
       try {
         SkyValue value=env.getValueOrThrow(errorKey,SomeErrorException.class);
         if (value != null) {
@@ -50,7 +47,7 @@
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (key.equals(errorKey) && type == EventType.SET_VALUE && order == Order.AFTER) {
         errorCommitted.countDown();
-        trackingAwaiterForOtherDone.awaitLatchAndTrackExceptions(otherDone,"otherErrorKey's SkyFunction didn't finish in time.");
+        TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(otherDone,"otherErrorKey's SkyFunction didn't finish in time.");
       }
     }
   }

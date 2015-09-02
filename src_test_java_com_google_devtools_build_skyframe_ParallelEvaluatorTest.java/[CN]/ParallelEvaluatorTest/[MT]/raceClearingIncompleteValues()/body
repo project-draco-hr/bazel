@@ -3,7 +3,6 @@
   final SkyKey midKey=GraphTester.toSkyKey("mid");
   SkyKey badKey=GraphTester.toSkyKey("bad");
   final AtomicBoolean waitForSecondCall=new AtomicBoolean(false);
-  final TrackingAwaiter trackingAwaiter=new TrackingAwaiter();
   final CountDownLatch otherThreadWinning=new CountDownLatch(1);
   final AtomicReference<Thread> firstThread=new AtomicReference<>();
   graph=new NotifyingInMemoryGraph(new Listener(){
@@ -18,7 +17,7 @@
         }
         if (type == EventType.ADD_REVERSE_DEP) {
           if (order == Order.BEFORE && Thread.currentThread().equals(firstThread.get())) {
-            trackingAwaiter.awaitLatchAndTrackExceptions(otherThreadWinning,"other thread didn't pass this one");
+            TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(otherThreadWinning,"other thread didn't pass this one");
           }
  else           if (order == Order.AFTER && !Thread.currentThread().equals(firstThread.get())) {
             otherThreadWinning.countDown();
@@ -35,7 +34,6 @@
   assertThat(result.getError(midKey).getRootCauses()).containsExactly(badKey);
   waitForSecondCall.set(true);
   result=eval(true,topKey,midKey);
-  trackingAwaiter.assertNoErrors();
   assertNotNull(firstThread.get());
   assertEquals(0,otherThreadWinning.getCount());
   assertThat(result.getError(midKey).getRootCauses()).containsExactly(badKey);

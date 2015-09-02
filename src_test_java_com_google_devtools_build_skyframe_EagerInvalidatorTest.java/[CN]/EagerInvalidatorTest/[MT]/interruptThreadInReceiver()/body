@@ -21,12 +21,7 @@
         countDownToInterrupt.countDown();
         if (countDownToInterrupt.getCount() == 0) {
           mainThread.interrupt();
-          try {
-            TrackingAwaiter.waitAndMaybeThrowInterrupt(visitor.get().getInterruptionLatchForTestingOnly(),"Main thread was not interrupted");
-          }
- catch (          InterruptedException e) {
-            throw new IllegalStateException(e);
-          }
+          TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(visitor.get().getInterruptionLatchForTestingOnly(),"Main thread was not interrupted");
         }
       }
       @Override public void enqueueing(      SkyKey skyKey){

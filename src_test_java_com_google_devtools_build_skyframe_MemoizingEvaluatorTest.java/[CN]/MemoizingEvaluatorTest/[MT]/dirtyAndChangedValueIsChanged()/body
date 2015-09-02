@@ -3,7 +3,6 @@
   final AtomicBoolean blockingEnabled=new AtomicBoolean(false);
   final CountDownLatch waitForChanged=new CountDownLatch(1);
   final CountDownLatch threadsStarted=new CountDownLatch(3);
-  final TrackingAwaiter trackingAwaiter=new TrackingAwaiter();
   setGraphForTesting(new NotifyingInMemoryGraph(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!blockingEnabled.get()) {
@@ -19,10 +18,10 @@
         threadsStarted.countDown();
       }
       if (type == EventType.MARK_DIRTY) {
-        trackingAwaiter.awaitLatchAndTrackExceptions(threadsStarted,"Both threads did not query if value isChanged in time");
+        TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(threadsStarted,"Both threads did not query if value isChanged in time");
         boolean isChanged=(Boolean)context;
         if (order == Order.BEFORE && !isChanged) {
-          trackingAwaiter.awaitLatchAndTrackExceptions(waitForChanged,"'changed' thread did not mark value changed in time");
+          TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(waitForChanged,"'changed' thread did not mark value changed in time");
           return;
         }
         if (order == Order.AFTER && isChanged) {
@@ -46,7 +45,6 @@
   blockingEnabled.set(true);
   result=tester.eval(false,parent);
   assertEquals("leafother2",result.get(parent).getValue());
-  trackingAwaiter.assertNoErrors();
   assertEquals(0,waitForChanged.getCount());
   assertEquals(0,threadsStarted.getCount());
 }

@@ -1,7 +1,6 @@
 {
   final SkyKey mid=GraphTester.toSkyKey("mid");
   final CountDownLatch valueSet=new CountDownLatch(1);
-  final TrackingAwaiter trackingAwaiter=new TrackingAwaiter();
   setGraphForTesting(new NotifyingInMemoryGraph(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!key.equals(mid)) {
@@ -10,7 +9,7 @@
 switch (type) {
 case ADD_REVERSE_DEP:
         if (context == null) {
-          trackingAwaiter.awaitLatchAndTrackExceptions(valueSet,"value not set");
+          TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(valueSet,"value not set");
         }
       break;
 case SET_VALUE:
@@ -27,6 +26,5 @@ tester.getOrCreate(top).addDependency(mid).setComputedValue(CONCATENATE);
 tester.getOrCreate(mid).setHasError(true);
 tester.eval(false,top,mid);
 assertEquals(0L,valueSet.getCount());
-trackingAwaiter.assertNoErrors();
 assertThat(tester.invalidationReceiver.evaluated).containsExactly(mid);
 }

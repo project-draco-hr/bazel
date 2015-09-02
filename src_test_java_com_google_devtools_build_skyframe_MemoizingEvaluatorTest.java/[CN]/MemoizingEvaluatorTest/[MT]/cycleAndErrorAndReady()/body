@@ -4,7 +4,6 @@
   final CountDownLatch valuesReady=new CountDownLatch(3);
   final CountDownLatch errorThrown=new CountDownLatch(1);
   final AtomicBoolean secondBuild=new AtomicBoolean(false);
-  final TrackingAwaiter trackingAwaiter=new TrackingAwaiter();
   setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!secondBuild.get()) {
@@ -12,7 +11,7 @@
       }
       if (key.equals(otherTop) && type == EventType.SIGNAL) {
         valuesReady.countDown();
-        trackingAwaiter.awaitLatchAndTrackExceptions(errorThrown,"error not thrown");
+        TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(errorThrown,"error not thrown");
         return;
       }
     }
@@ -47,7 +46,6 @@
   tester.invalidate();
   secondBuild.set(true);
   EvaluationResult<StringValue> result=tester.eval(false,otherTop,topKey,exceptionMarker);
-  trackingAwaiter.assertNoErrors();
   assertThat(result.errorMap().keySet()).containsExactly(topKey);
   Iterable<CycleInfo> cycleInfos=result.getError(topKey).getCycleInfo();
   assertWithMessage(result.toString()).that(cycleInfos).isNotEmpty();

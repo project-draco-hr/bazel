@@ -1,10 +1,7 @@
 {
   final CountDownLatch errorCommitted=new CountDownLatch(1);
-  final TrackingAwaiter trackingAwaiterForError=new TrackingAwaiter();
   final CountDownLatch otherStarted=new CountDownLatch(1);
-  final TrackingAwaiter trackingAwaiterForOther=new TrackingAwaiter();
   final CountDownLatch otherParentSignaled=new CountDownLatch(1);
-  final TrackingAwaiter trackingAwaiterForOtherParent=new TrackingAwaiter();
   final SkyKey errorParentKey=GraphTester.toSkyKey("errorParentKey");
   final SkyKey errorKey=GraphTester.toSkyKey("errorKey");
   final SkyKey otherParentKey=GraphTester.toSkyKey("otherParentKey");
@@ -25,7 +22,7 @@
   tester.getOrCreate(otherKey).setBuilder(new SkyFunction(){
     @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
       otherStarted.countDown();
-      trackingAwaiterForError.awaitLatchAndTrackExceptions(errorCommitted,"error didn't get committed to the graph in time");
+      TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(errorCommitted,"error didn't get committed to the graph in time");
       return new StringValue("other");
     }
     @Override public String extractTag(    SkyKey skyKey){
@@ -35,7 +32,7 @@
 );
   tester.getOrCreate(errorKey).setBuilder(new SkyFunction(){
     @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
-      trackingAwaiterForOther.awaitLatchAndTrackExceptions(otherStarted,"other didn't start in time");
+      TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(otherStarted,"other didn't start in time");
       throw new GenericFunctionException(new SomeErrorException("error"),Transience.PERSISTENT);
     }
     @Override public String extractTag(    SkyKey skyKey){
@@ -73,7 +70,7 @@
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (key.equals(errorKey) && type == EventType.SET_VALUE && order == Order.AFTER) {
         errorCommitted.countDown();
-        trackingAwaiterForOtherParent.awaitLatchAndTrackExceptions(otherParentSignaled,"otherParent didn't get signaled in time");
+        TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(otherParentSignaled,"otherParent didn't get signaled in time");
         Uninterruptibles.sleepUninterruptibly(10,TimeUnit.MILLISECONDS);
       }
       if (key.equals(otherParentKey) && type == EventType.SIGNAL && order == Order.AFTER) {

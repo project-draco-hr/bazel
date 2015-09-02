@@ -4,7 +4,6 @@
   final AtomicBoolean delayTopSignaling=new AtomicBoolean(false);
   final CountDownLatch topSignaled=new CountDownLatch(1);
   final CountDownLatch topRestartedBuild=new CountDownLatch(1);
-  final TrackingAwaiter trackingAwaiter=new TrackingAwaiter();
   setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!delayTopSignaling.get()) {
@@ -15,7 +14,7 @@
         return;
       }
       if (key.equals(slowAddingDep) && type == EventType.ADD_REVERSE_DEP && context.equals(top) && order == Order.BEFORE) {
-        trackingAwaiter.awaitLatchAndTrackExceptions(topSignaled,"first key didn't signal top in time");
+        TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(topSignaled,"first key didn't signal top in time");
       }
     }
   }
@@ -40,7 +39,7 @@
       super.handle(e);
       if (e.getKind() == EventKind.WARNING) {
         if (!throwError) {
-          trackingAwaiter.awaitLatchAndTrackExceptions(topRestartedBuild,"top's builder did not start in time");
+          TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(topRestartedBuild,"top's builder did not start in time");
         }
       }
     }
@@ -55,7 +54,6 @@
   tester.invalidate();
   delayTopSignaling.set(true);
   result=tester.eval(false,top);
-  trackingAwaiter.assertNoErrors();
   if (throwError) {
     assertTrue(result.hasError());
     assertThat(result.keyNames()).isEmpty();
