@@ -22,7 +22,8 @@
     commandLine.add("-Xlinker").add("-rpath").add("-Xlinker").add("@executable_path/Frameworks");
   }
   if (dsymBundle.isPresent()) {
-    commandLine.add("&&").addPath(DSYMUTIL).add(linkedBinary.getExecPathString()).addExecPath("-o",dsymBundle.get());
+    PathFragment dsymPath=FileSystemUtils.removeExtension(dsymBundle.get().getExecPath());
+    commandLine.add("&&").addPath(DSYMUTIL).add(linkedBinary.getExecPathString()).add("-o " + dsymPath).add("&& zipped_bundle=${PWD}/" + dsymBundle.get().getShellEscapedExecPathString()).add("&& cd " + dsymPath).add("&& /usr/bin/zip -q -r \"${zipped_bundle}\" .");
   }
   return new SingleArgCommandLine(commandLine.build());
 }
