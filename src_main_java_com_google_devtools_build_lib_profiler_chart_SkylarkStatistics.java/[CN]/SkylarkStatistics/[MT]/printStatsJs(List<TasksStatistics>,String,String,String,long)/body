@@ -1,26 +1,33 @@
 {
   String tmpVar=category + dataVar;
-  out.printf("  var %s = new google.visualization.DataTable();\n",tmpVar);
-  out.printf("  %s.addColumn('string', 'Function');\n",tmpVar);
-  out.printf("  %s.addColumn('number', 'count');\n",tmpVar);
-  out.printf("  %s.addColumn('number', 'min (ms)');\n",tmpVar);
-  out.printf("  %s.addColumn('number', 'mean (ms)');\n",tmpVar);
-  out.printf("  %s.addColumn('number', 'median (ms)');\n",tmpVar);
-  out.printf("  %s.addColumn('number', 'max (ms)');\n",tmpVar);
-  out.printf("  %s.addColumn('number', 'standard deviation (ms)');\n",tmpVar);
-  out.printf("  %s.addColumn('number', 'total (ms)');\n",tmpVar);
-  out.printf("  %s.addColumn('number', 'relative total (%%)');\n",tmpVar);
-  out.printf("  %s.addRows([\n",tmpVar);
-  for (  TasksStatistics stats : statsList) {
-    if (!isValidJsVariable(stats.name)) {
-      continue;
-    }
-    double relativeTotal=(double)stats.totalNanos / totalNanos;
-    out.printf("    ['%s', %d, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, {v:%.4f, f:'%.4f %%'}],\n",stats.name,stats.count,stats.minimumMillis(),stats.meanMillis(),stats.medianMillis(),stats.maximumMillis(),stats.standardDeviationMillis,stats.totalMillis(),relativeTotal,relativeTotal * 100);
-  }
-  out.println("  ]);");
-  out.printf("  %s.%s = %s;\n",dataVar,category,tmpVar);
   out.printf("  var statsDiv = document.getElementById('%s_function_stats');\n",category);
-  out.printf("  %s.%s = new google.visualization.Table(statsDiv);\n",tableVar,category);
-  out.printf("  google.visualization.events.addListener(%s.%s, 'select', selectHandler('%s'));\n",tableVar,category,category);
+  if (statsList.isEmpty()) {
+    out.println("  statsDiv.innerHTML = '<i>No relevant function calls to display. Some minor" + " builtin functions may have been ignored because their names could not be used as" + " variables in JavaScript.</i>'");
+  }
+ else {
+    out.printf("  var %s = new google.visualization.DataTable();\n",tmpVar);
+    out.printf("  %s.addColumn('string', 'Location');\n",tmpVar);
+    out.printf("  %s.addColumn('string', 'Function');\n",tmpVar);
+    out.printf("  %s.addColumn('number', 'count');\n",tmpVar);
+    out.printf("  %s.addColumn('number', 'min (ms)');\n",tmpVar);
+    out.printf("  %s.addColumn('number', 'mean (ms)');\n",tmpVar);
+    out.printf("  %s.addColumn('number', 'median (ms)');\n",tmpVar);
+    out.printf("  %s.addColumn('number', 'max (ms)');\n",tmpVar);
+    out.printf("  %s.addColumn('number', 'standard deviation (ms)');\n",tmpVar);
+    out.printf("  %s.addColumn('number', 'total (ms)');\n",tmpVar);
+    out.printf("  %s.addColumn('number', 'relative total (%%)');\n",tmpVar);
+    out.printf("  %s.addRows([\n",tmpVar);
+    for (    TasksStatistics stats : statsList) {
+      double relativeTotal=(double)stats.totalNanos / totalNanos;
+      String[] split=stats.name.split("#");
+      String location=split[0];
+      String name=split[1];
+      out.printf("    ['%s', '%s', %d, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, {v:%.4f, f:'%.4f %%'}],\n",location,name,stats.count,stats.minimumMillis(),stats.meanMillis(),stats.medianMillis(),stats.maximumMillis(),stats.standardDeviationMillis,stats.totalMillis(),relativeTotal,relativeTotal * 100);
+    }
+    out.println("  ]);");
+    out.printf("  %s.%s = %s;\n",dataVar,category,tmpVar);
+    out.printf("  %s.%s = new google.visualization.Table(statsDiv);\n",tableVar,category);
+    out.printf("  google.visualization.events.addListener(%s.%s, 'select', selectHandler('%s'));\n",tableVar,category,category);
+    out.printf("  %s.%s.draw(%s.%s, {showRowNumber: true, width: '100%%', height: '100%%'});\n",tableVar,category,dataVar,category);
+  }
 }

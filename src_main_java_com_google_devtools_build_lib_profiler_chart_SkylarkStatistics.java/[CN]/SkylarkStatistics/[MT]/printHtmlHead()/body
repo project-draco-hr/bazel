@@ -29,8 +29,6 @@
   out.println("  document.querySelector('#builtin-close').onclick = function() {");
   out.println("    document.querySelector('#builtin-histogram').style.display = 'none';");
   out.println("  };");
-  printDrawTableJs(dataVar,tableVar,"user");
-  printDrawTableJs(dataVar,tableVar,"builtin");
   out.println("};");
   out.println("var options = {");
   out.println("  isStacked: true,");
@@ -45,10 +43,12 @@
   out.printf("    var selection = %s[category].getSelection();\n",tableVar);
   out.println("    if (selection.length < 1) return;");
   out.println("    var item = selection[0];");
-  out.printf("    var func = %s[category].getValue(item.row, 0);\n",dataVar);
-  out.println("    var histData = histogramData[category][func];");
+  out.printf("    var loc = %s[category].getValue(item.row, 0);\n",dataVar);
+  out.printf("    var func = %s[category].getValue(item.row, 1);\n",dataVar);
+  out.println("    var key = loc + '#' + func;");
+  out.println("    var histData = histogramData[category][key];");
   out.println("    var fnOptions = JSON.parse(JSON.stringify(options));");
-  out.println("    fnOptions.title = func;");
+  out.println("    fnOptions.title = loc + ' - ' + func;");
   out.println("    var chartDiv = document.getElementById(category+'-chart');");
   out.println("    var chart = new google.visualization.Histogram(chartDiv);");
   out.println("    var histogramDiv = document.getElementById(category+'-histogram');");
