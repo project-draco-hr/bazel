@@ -22,8 +22,8 @@
   final List<SkyKey> skyKeys=new ArrayList<>();
   for (  Dependency key : keys) {
     skyKeys.add(ConfiguredTargetValue.key(key.getLabel(),configs.get(key)));
-    for (    Class<? extends ConfiguredAspectFactory> aspect : key.getAspects()) {
-      skyKeys.add(AspectValue.key(key.getLabel(),configs.get(key),aspect));
+    for (    AspectWithParameters aspect : key.getAspects()) {
+      skyKeys.add(ConfiguredTargetFunction.createAspectKey(key.getLabel(),configs.get(key),aspect));
     }
   }
   EvaluationResult<SkyValue> result=evaluateSkyKeys(skyKeys);
@@ -35,8 +35,8 @@
     }
     ConfiguredTarget configuredTarget=((ConfiguredTargetValue)result.get(configuredTargetKey)).getConfiguredTarget();
     List<Aspect> aspects=new ArrayList<>();
-    for (    Class<? extends ConfiguredAspectFactory> aspect : key.getAspects()) {
-      SkyKey aspectKey=AspectValue.key(key.getLabel(),configs.get(key),aspect);
+    for (    AspectWithParameters aspect : key.getAspects()) {
+      SkyKey aspectKey=ConfiguredTargetFunction.createAspectKey(key.getLabel(),configs.get(key),aspect);
       if (result.get(aspectKey) == null) {
         continue DependentNodeLoop;
       }

@@ -2,8 +2,8 @@
   ListMultimap<SkyKey,Aspect> result=ArrayListMultimap.create();
   Set<SkyKey> aspectKeys=new HashSet<>();
   for (  Dependency dep : deps) {
-    for (    Class<? extends ConfiguredAspectFactory> depAspect : dep.getAspects()) {
-      aspectKeys.add(AspectValue.key(dep.getLabel(),dep.getConfiguration(),depAspect));
+    for (    AspectWithParameters depAspect : dep.getAspects()) {
+      aspectKeys.add(createAspectKey(dep.getLabel(),dep.getConfiguration(),depAspect));
     }
   }
   Map<SkyKey,ValueOrException3<AspectCreationException,NoSuchThingException,ConfiguredValueCreationException>> depAspects=env.getValuesOrThrow(aspectKeys,AspectCreationException.class,NoSuchThingException.class,ConfiguredValueCreationException.class);
@@ -13,11 +13,11 @@
       continue;
     }
     ConfiguredTarget depConfiguredTarget=configuredTargetMap.get(depKey);
-    for (    Class<? extends ConfiguredAspectFactory> depAspect : dep.getAspects()) {
-      if (!aspectMatchesConfiguredTarget(depConfiguredTarget,depAspect)) {
+    for (    AspectWithParameters depAspect : dep.getAspects()) {
+      if (!aspectMatchesConfiguredTarget(depConfiguredTarget,depAspect.getAspectFactory())) {
         continue;
       }
-      SkyKey aspectKey=AspectValue.key(dep.getLabel(),dep.getConfiguration(),depAspect);
+      SkyKey aspectKey=createAspectKey(dep.getLabel(),dep.getConfiguration(),depAspect);
       AspectValue aspectValue=null;
       try {
         aspectValue=(AspectValue)depAspects.get(aspectKey).get();
@@ -26,7 +26,7 @@
         throw new IllegalStateException(e);
       }
 catch (      NoSuchThingException|AspectCreationException e) {
-        AspectFactory<?,?,?> depAspectFactory=AspectFactory.Util.create(depAspect);
+        AspectFactory<?,?,?> depAspectFactory=AspectFactory.Util.create(depAspect.getAspectFactory());
         throw new DependencyEvaluationException(new ConfiguredValueCreationException(String.format("Evaluation of aspect %s on %s failed: %s",depAspectFactory.getDefinition().getName(),dep.getLabel(),e.toString())));
       }
       if (aspectValue == null) {

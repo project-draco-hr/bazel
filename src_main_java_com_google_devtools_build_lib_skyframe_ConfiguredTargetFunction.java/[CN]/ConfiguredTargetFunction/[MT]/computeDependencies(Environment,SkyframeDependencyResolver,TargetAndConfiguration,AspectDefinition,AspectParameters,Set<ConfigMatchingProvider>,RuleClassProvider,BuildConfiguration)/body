@@ -1,0 +1,25 @@
+{
+  ListMultimap<Attribute,Dependency> depValueNames;
+  try {
+    depValueNames=resolver.dependentNodeMap(ctgValue,hostConfiguration,aspectDefinition,aspectParameters,configConditions);
+  }
+ catch (  EvalException e) {
+    env.getListener().handle(Event.error(e.getLocation(),e.getMessage()));
+    throw new DependencyEvaluationException(new ConfiguredValueCreationException(e.print()));
+  }
+  if (ctgValue.getConfiguration() != null && ctgValue.getConfiguration().useDynamicConfigurations()) {
+    depValueNames=trimConfigurations(env,ctgValue,depValueNames,hostConfiguration,ruleClassProvider);
+    if (depValueNames == null) {
+      return null;
+    }
+  }
+  Map<SkyKey,ConfiguredTarget> depValues=resolveConfiguredTargetDependencies(env,depValueNames.values(),ctgValue.getTarget());
+  if (depValues == null) {
+    return null;
+  }
+  ListMultimap<SkyKey,Aspect> depAspects=resolveAspectDependencies(env,depValues,depValueNames.values());
+  if (depAspects == null) {
+    return null;
+  }
+  return mergeAspects(depValueNames,depValues,depAspects);
+}
