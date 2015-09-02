@@ -1,0 +1,16 @@
+{
+  for (  Entry<String,String> entry : linksAndFiles.entries()) {
+    Path filePath=workingDir.getRelative(entry.getKey());
+    String linkTarget=entry.getValue();
+    FileSystemUtils.createDirectoryAndParents(filePath.getParentDirectory());
+    if (!linkTarget.isEmpty()) {
+      filePath.createSymbolicLink(new PathFragment(linkTarget));
+    }
+ else     if (filePath.getPathString().endsWith("/")) {
+      filePath.createDirectory();
+    }
+ else {
+      FileSystemUtils.createEmptyFile(filePath);
+    }
+  }
+}

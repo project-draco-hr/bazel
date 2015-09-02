@@ -1,0 +1,14 @@
+{
+  ImmutableSetMultimap.Builder<Path,Path> fixedMounts=ImmutableSetMultimap.builder();
+  for (  Entry<Path,Path> mount : mounts.entries()) {
+    Path source=mount.getKey();
+    Path target=mount.getValue();
+    fixedMounts.put(source,target);
+    if (source.isSymbolicLink()) {
+      source=source.resolveSymbolicLinks();
+      target=sandboxPath.getRelative(source.asFragment().relativeTo("/"));
+      fixedMounts.put(source,target);
+    }
+  }
+  return fixedMounts.build();
+}

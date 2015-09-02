@@ -1,0 +1,16 @@
+{
+  for (  Entry<Path,Path> mount : mounts.entries()) {
+    Path source=mount.getKey();
+    Path target=mount.getValue();
+    Preconditions.checkArgument(source.exists(),source.toString() + " does not exist");
+    if (!mounts.containsEntry(source,target) && mounts.containsValue(target)) {
+      for (      Entry<Path,Path> otherMount : mounts.entries()) {
+        if (otherMount.getValue().equals(target)) {
+          throw new IllegalStateException(String.format("Cannot mount both '%s' and '%s' onto '%s'",otherMount.getKey(),source,target));
+        }
+      }
+    }
+    Preconditions.checkArgument(target.startsWith(sandboxPath),String.format("(%s -> %s) does not mount into sandbox",source,target));
+  }
+  return ImmutableSetMultimap.copyOf(mounts);
+}

@@ -1,22 +1,3 @@
 {
-  ImmutableMultimap.Builder<Path,Path> mounts=ImmutableMultimap.builder();
-  mounts.putAll(mountUsualUnixDirs(sandboxPath));
-  mounts.putAll(setupBlazeUtils(sandboxPath));
-  mounts.putAll(mountRunfilesFromManifests(spawn,sandboxPath));
-  mounts.putAll(mountRunfilesFromSuppliers(spawn,sandboxPath));
-  mounts.putAll(mountRunfilesForTests(spawn,sandboxPath));
-  mounts.putAll(mountInputs(spawn,sandboxPath,actionExecutionContext));
-  mounts.putAll(mountRunUnderCommand(spawn,sandboxPath));
-  SetMultimap<Path,Path> fixedMounts=LinkedHashMultimap.create();
-  for (  Entry<Path,Path> mount : mounts.build().entries()) {
-    Path source=mount.getKey();
-    Path target=mount.getValue();
-    validateAndAddMount(sandboxPath,fixedMounts,source,target);
-    if (source.isSymbolicLink()) {
-      source=source.resolveSymbolicLinks();
-      target=sandboxPath.getRelative(source.asFragment().relativeTo("/"));
-      validateAndAddMount(sandboxPath,fixedMounts,source,target);
-    }
-  }
-  return ImmutableMultimap.copyOf(fixedMounts);
+  return validateMounts(sandboxPath,withResolvedSymlinks(sandboxPath,ImmutableSetMultimap.<Path,Path>builder().putAll(mountUsualUnixDirs(sandboxPath)).putAll(withRecursedDirs(setupBlazeUtils(sandboxPath))).putAll(withRecursedDirs(mountRunfilesFromManifests(spawn,sandboxPath))).putAll(withRecursedDirs(mountRunfilesFromSuppliers(spawn,sandboxPath))).putAll(withRecursedDirs(mountRunfilesForTests(spawn,sandboxPath))).putAll(withRecursedDirs(mountInputs(spawn,sandboxPath,executionContext))).putAll(withRecursedDirs(mountRunUnderCommand(spawn,sandboxPath))).build()));
 }

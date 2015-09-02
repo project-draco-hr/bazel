@@ -1,0 +1,17 @@
+{
+  ImmutableSetMultimap.Builder<Path,Path> fixedMounts=ImmutableSetMultimap.builder();
+  for (  Entry<Path,Path> mount : mounts.entries()) {
+    Path source=mount.getKey();
+    Path target=mount.getValue();
+    if (source.isDirectory()) {
+      for (      Path subSource : FileSystemUtils.traverseTree(source,Predicates.alwaysTrue())) {
+        Path subTarget=target.getRelative(subSource.relativeTo(source));
+        fixedMounts.put(subSource,subTarget);
+      }
+    }
+ else {
+      fixedMounts.put(source,target);
+    }
+  }
+  return fixedMounts.build();
+}
