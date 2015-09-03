@@ -1,0 +1,13 @@
+{
+  PackageAndTarget emptyPackage=new PackageAndTarget("","bar");
+  assertEquals(emptyPackage,LabelValidator.validateAbsoluteLabel("//:bar"));
+  assertEquals(emptyPackage,LabelValidator.validateAbsoluteLabel("@repo//:bar"));
+  assertEquals(new PackageAndTarget("foo","bar"),LabelValidator.validateAbsoluteLabel("@repo//foo:bar"));
+  try {
+    LabelValidator.validateAbsoluteLabel("@foo");
+    fail("Should not have been able to validate @foo");
+  }
+ catch (  LabelValidator.BadLabelException expected) {
+    assertThat(expected.getMessage()).contains("invalid fully-qualified label");
+  }
+}
