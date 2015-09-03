@@ -1,0 +1,15 @@
+{
+  final Lock lock=locks.get(key);
+  lock.lock();
+  return new AutoUnlocker(){
+    private final AtomicBoolean closeCalled=new AtomicBoolean(false);
+    @Override public void close(){
+      if (closeCalled.getAndSet(true)) {
+        String msg=String.format("For key %s, 'close' can be called at most once per " + "AutoUnlocker instance",key);
+        throw new IllegalUnlockException(msg);
+      }
+      lock.unlock();
+    }
+  }
+;
+}
