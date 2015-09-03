@@ -5,7 +5,7 @@
   final CountDownLatch topSignaled=new CountDownLatch(1);
   final CountDownLatch topRestartedBuild=new CountDownLatch(1);
   setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
-    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    @Nullable Object context){
       if (!delayTopSignaling.get()) {
         return;
       }
@@ -13,7 +13,7 @@
         topSignaled.countDown();
         return;
       }
-      if (key.equals(slowAddingDep) && type == EventType.ADD_REVERSE_DEP && context.equals(top) && order == Order.BEFORE) {
+      if (key.equals(slowAddingDep) && type == EventType.ADD_REVERSE_DEP && top.equals(context) && order == Order.BEFORE) {
         TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(topSignaled,"first key didn't signal top in time");
       }
     }

@@ -64,9 +64,14 @@
     }
   }
 );
-  tester.eval(false,cachedParentKey,uncachedParentKey,waitForShutdownKey);
+  EvaluationResult<StringValue> result=tester.eval(false,cachedParentKey,uncachedParentKey,waitForShutdownKey);
+  assertWithMessage(result.toString()).that(result.hasError()).isTrue();
   Pair<SkyKey,? extends Exception> unexpected=unexpectedException.get();
   if (unexpected != null) {
     throw new AssertionError(unexpected.first + ", " + unexpected.second+ ", "+ Arrays.toString(unexpected.second.getStackTrace()));
   }
+  tester.getOrCreate(invalidatedKey,true);
+  tester.invalidate();
+  result=tester.eval(false,cachedParentKey,uncachedParentKey);
+  assertWithMessage(result.toString()).that(result.hasError()).isTrue();
 }
