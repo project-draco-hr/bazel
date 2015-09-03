@@ -4,6 +4,14 @@
   for (  Class<? extends OptionsBase> optionsClass : impl.getOptionsClasses()) {
     allFields.addAll(impl.getAnnotatedFieldsFor(optionsClass));
   }
+  Collections.sort(allFields,new Comparator<Field>(){
+    @Override public int compare(    Field f1,    Field f2){
+      String name1=f1.getAnnotation(Option.class).name();
+      String name2=f2.getAnnotation(Option.class).name();
+      return name1.compareTo(name2);
+    }
+  }
+);
   for (  Field optionField : allFields) {
     String category=optionField.getAnnotation(Option.class).category();
     if (documentationLevel(category) == DocumentationLevel.DOCUMENTED) {
