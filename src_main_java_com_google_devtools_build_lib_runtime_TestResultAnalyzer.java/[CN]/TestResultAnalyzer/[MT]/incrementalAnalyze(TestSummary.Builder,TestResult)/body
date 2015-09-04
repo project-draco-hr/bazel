@@ -44,15 +44,6 @@
       }
     }
   }
-  List<String> filtered=new ArrayList<>();
-  warningLoop:   for (  String warning : result.getData().getWarningList()) {
-    for (    String ignoredPrefix : Constants.IGNORED_TEST_WARNING_PREFIXES) {
-      if (warning.startsWith(ignoredPrefix)) {
-        continue warningLoop;
-      }
-    }
-    filtered.add(warning);
-  }
   List<Path> passed=new ArrayList<>();
   if (result.getData().hasPassedLog()) {
     passed.add(result.getTestAction().getTestLog().getPath().getRelative(result.getData().getPassedLog()));
@@ -61,7 +52,7 @@
   for (  String path : result.getData().getFailedLogsList()) {
     failed.add(result.getTestAction().getTestLog().getPath().getRelative(path));
   }
-  summaryBuilder.addTestTimes(result.getData().getTestTimesList()).addPassedLogs(passed).addFailedLogs(failed).addWarnings(filtered).collectFailedTests(result.getData().getTestCase()).setRanRemotely(result.getData().getIsRemoteStrategy());
+  summaryBuilder.addTestTimes(result.getData().getTestTimesList()).addPassedLogs(passed).addFailedLogs(failed).addWarnings(result.getData().getWarningList()).collectFailedTests(result.getData().getTestCase()).setRanRemotely(result.getData().getIsRemoteStrategy());
   List<String> warnings=new ArrayList<>();
   if (status == BlazeTestStatus.PASSED && shouldEmitTestSizeWarningInSummary(summaryOptions.testVerboseTimeoutWarnings,warnings,result.getData().getTestProcessTimesList(),target)) {
     summaryBuilder.setWasUnreportedWrongSize(true);
