@@ -5,6 +5,6 @@
   FileSystemUtils.createEmptyFile(testFile);
   Path manifestFile=workingDir.getRelative("MANIFEST");
   FileSystemUtils.writeContent(manifestFile,Charset.defaultCharset(),String.format("x/testfile %s\nx/emptyfile \n",testFile.getPathString()));
-  ImmutableSetMultimap<Path,Path> mounts=LinuxSandboxedStrategy.parseManifestFile(fakeSandboxDir,targetDir,manifestFile.getPathFile());
-  assertThat(userFriendlyMap(mounts)).containsExactly(userFriendlyMap(ImmutableMultimap.of(testFile,fakeSandboxDir.getRelative("runfiles/x/testfile"),testFS.getPath("/dev/null"),fakeSandboxDir.getRelative("runfiles/x/emptyfile"))));
+  MountMap<Path,Path> mounts=LinuxSandboxedStrategy.parseManifestFile(fakeSandboxDir,targetDir,manifestFile.getPathFile());
+  assertThat(userFriendlyMap(mounts)).isEqualTo(userFriendlyMap(ImmutableMap.of(fakeSandboxDir.getRelative("runfiles/x/testfile"),testFile,fakeSandboxDir.getRelative("runfiles/x/emptyfile"),testFS.getPath("/dev/null"))));
 }

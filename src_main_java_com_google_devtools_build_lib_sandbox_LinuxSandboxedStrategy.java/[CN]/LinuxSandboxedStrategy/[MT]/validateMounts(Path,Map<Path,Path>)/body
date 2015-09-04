@@ -1,0 +1,11 @@
+{
+  ImmutableMap.Builder<Path,Path> validatedMounts=ImmutableMap.builder();
+  for (  Entry<Path,Path> mount : mounts.entrySet()) {
+    Path target=mount.getKey();
+    Path source=mount.getValue();
+    Preconditions.checkArgument(source.exists(),"%s does not exist",source.toString());
+    Preconditions.checkArgument(target.startsWith(sandboxPath),String.format("(%s -> %s) does not mount into sandbox",source,target));
+    validatedMounts.put(target,source);
+  }
+  return validatedMounts.build();
+}

@@ -1,0 +1,17 @@
+{
+  MountMap<Path,Path> fixedMounts=new MountMap<>();
+  for (  Entry<Path,Path> mount : mounts.entrySet()) {
+    Path target=mount.getKey();
+    Path source=mount.getValue();
+    if (source.isDirectory()) {
+      for (      Path subSource : FileSystemUtils.traverseTree(source,Predicates.alwaysTrue())) {
+        Path subTarget=target.getRelative(subSource.relativeTo(source));
+        fixedMounts.put(subTarget,subSource);
+      }
+    }
+ else {
+      fixedMounts.put(target,source);
+    }
+  }
+  return fixedMounts;
+}

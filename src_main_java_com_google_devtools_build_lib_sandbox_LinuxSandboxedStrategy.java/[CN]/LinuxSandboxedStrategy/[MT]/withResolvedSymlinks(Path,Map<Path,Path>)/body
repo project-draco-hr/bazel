@@ -1,0 +1,14 @@
+{
+  MountMap<Path,Path> fixedMounts=new MountMap<>();
+  for (  Entry<Path,Path> mount : mounts.entrySet()) {
+    Path target=mount.getKey();
+    Path source=mount.getValue();
+    fixedMounts.put(target,source);
+    if (source.isSymbolicLink()) {
+      source=source.resolveSymbolicLinks();
+      target=sandboxPath.getRelative(source.asFragment().relativeTo("/"));
+      fixedMounts.put(target,source);
+    }
+  }
+  return fixedMounts;
+}

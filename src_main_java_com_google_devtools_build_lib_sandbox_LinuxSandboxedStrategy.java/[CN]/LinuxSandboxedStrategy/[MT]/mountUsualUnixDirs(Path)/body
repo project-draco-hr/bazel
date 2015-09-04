@@ -1,17 +1,17 @@
 {
-  ImmutableSetMultimap.Builder<Path,Path> mounts=ImmutableSetMultimap.builder();
+  MountMap<Path,Path> mounts=new MountMap<>();
   FileSystem fs=blazeDirs.getFileSystem();
-  mounts.put(fs.getPath("/bin"),sandboxPath.getRelative("bin"));
-  mounts.put(fs.getPath("/etc"),sandboxPath.getRelative("etc"));
+  mounts.put(sandboxPath.getRelative("bin"),fs.getPath("/bin"));
+  mounts.put(sandboxPath.getRelative("etc"),fs.getPath("/etc"));
   for (  String entry : FilesystemUtils.readdir("/")) {
     if (entry.startsWith("lib")) {
-      mounts.put(fs.getRootDirectory().getRelative(entry),sandboxPath.getRelative(entry));
+      mounts.put(sandboxPath.getRelative(entry),fs.getRootDirectory().getRelative(entry));
     }
   }
   for (  String entry : FilesystemUtils.readdir("/usr")) {
     if (!entry.equals("local")) {
-      mounts.put(fs.getPath("/usr").getRelative(entry),sandboxPath.getRelative("usr").getRelative(entry));
+      mounts.put(sandboxPath.getRelative("usr").getRelative(entry),fs.getPath("/usr").getRelative(entry));
     }
   }
-  return mounts.build();
+  return mounts;
 }

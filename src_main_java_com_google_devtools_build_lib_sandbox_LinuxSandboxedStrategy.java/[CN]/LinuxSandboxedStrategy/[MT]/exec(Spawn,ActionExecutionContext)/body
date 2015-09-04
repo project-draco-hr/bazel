@@ -10,11 +10,12 @@
   FileOutErr outErr=actionExecutionContext.getFileOutErr();
   String execId=uuid + "-" + execCounter.getAndIncrement();
   Path sandboxPath=execRoot.getRelative(Constants.PRODUCT_NAME + "-sandbox").getRelative(execId);
-  ImmutableSetMultimap<Path,Path> mounts;
+  ImmutableMap<Path,Path> mounts;
   try {
     mounts=getMounts(spawn,sandboxPath,actionExecutionContext);
+    createTestTmpDir(spawn,sandboxPath);
   }
- catch (  IOException e) {
+ catch (  IllegalArgumentException|IOException e) {
     throw new UserExecException("Could not prepare mounts for sandbox execution",e);
   }
   int timeout=getTimeout(spawn);

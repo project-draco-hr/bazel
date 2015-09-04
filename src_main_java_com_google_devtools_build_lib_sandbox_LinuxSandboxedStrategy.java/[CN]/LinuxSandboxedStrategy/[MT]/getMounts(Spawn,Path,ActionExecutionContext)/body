@@ -1,3 +1,10 @@
 {
-  return validateMounts(sandboxPath,withResolvedSymlinks(sandboxPath,ImmutableSetMultimap.<Path,Path>builder().putAll(mountUsualUnixDirs(sandboxPath)).putAll(withRecursedDirs(setupBlazeUtils(sandboxPath))).putAll(withRecursedDirs(mountRunfilesFromManifests(spawn,sandboxPath))).putAll(withRecursedDirs(mountRunfilesFromSuppliers(spawn,sandboxPath))).putAll(withRecursedDirs(mountRunfilesForTests(spawn,sandboxPath))).putAll(withRecursedDirs(mountInputs(spawn,sandboxPath,executionContext))).putAll(withRecursedDirs(mountRunUnderCommand(spawn,sandboxPath))).build()));
+  MountMap<Path,Path> mounts=new MountMap<>();
+  mounts.putAll(mountUsualUnixDirs(sandboxPath));
+  mounts.putAll(withRecursedDirs(setupBlazeUtils(sandboxPath)));
+  mounts.putAll(withRecursedDirs(mountRunfilesFromManifests(spawn,sandboxPath)));
+  mounts.putAll(withRecursedDirs(mountRunfilesFromSuppliers(spawn,sandboxPath)));
+  mounts.putAll(withRecursedDirs(mountInputs(spawn,sandboxPath,executionContext)));
+  mounts.putAll(withRecursedDirs(mountRunUnderCommand(spawn,sandboxPath)));
+  return validateMounts(sandboxPath,withResolvedSymlinks(sandboxPath,mounts));
 }
