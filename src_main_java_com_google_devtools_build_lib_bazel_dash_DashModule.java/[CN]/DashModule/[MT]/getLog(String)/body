@@ -8,8 +8,10 @@
       builder.setTruncated(true);
     }
     byte buffer[]=new byte[(int)fileSize];
-    new FileInputStream(log).read(buffer,0,(int)fileSize);
-    builder.setContents(ByteString.copyFrom(buffer));
+    try (FileInputStream in=new FileInputStream(log)){
+      ByteStreams.readFully(in,buffer);
+    }
+     builder.setContents(ByteString.copyFrom(buffer));
   }
  catch (  IOException e) {
     runtime.getReporter().getOutErr().printOutLn("Error reading log file " + logPath + ": "+ e.getMessage());
