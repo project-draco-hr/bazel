@@ -1,9 +1,12 @@
 {
-  update("foo","bar");
-  update("wiz",3);
-  Environment nestedEnv=new Environment(getEnvironment());
-  nestedEnv.update("foo","bat");
-  nestedEnv.update("quux",42);
-  assertEquals(Sets.newHashSet("True","False","None","foo","wiz"),getEnvironment().getVariableNames());
-  assertEquals(Sets.newHashSet("True","False","None","foo","wiz","quux"),nestedEnv.getVariableNames());
+  Environment outerEnv;
+  Environment innerEnv;
+  try (Mutability mut=Mutability.create("outer")){
+    outerEnv=Environment.builder(mut).setGlobals(Environment.BUILD).build().update("foo","bar").update("wiz",3);
+  }
+   try (Mutability mut=Mutability.create("inner")){
+    innerEnv=Environment.builder(mut).setGlobals(outerEnv.getGlobals()).build().update("foo","bat").update("quux",42);
+  }
+   assertEquals(Sets.newHashSet("foo","wiz","False","None","True","-","bool","dict","enumerate","int","len","list","range","repr","select","sorted","str","zip"),outerEnv.getVariableNames());
+  assertEquals(Sets.newHashSet("foo","wiz","quux","False","None","True","-","bool","dict","enumerate","int","len","list","range","repr","select","sorted","str","zip"),innerEnv.getVariableNames());
 }

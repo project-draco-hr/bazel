@@ -1,0 +1,30 @@
+{
+  MethodDescriptor matchingMethod=null;
+  List<MethodDescriptor> methods=getMethods(objClass,methodName,args.size(),getLocation());
+  if (methods != null) {
+    for (    MethodDescriptor method : methods) {
+      Class<?>[] params=method.getMethod().getParameterTypes();
+      int i=0;
+      boolean matching=true;
+      for (      Class<?> param : params) {
+        if (!param.isAssignableFrom(args.get(i).getClass())) {
+          matching=false;
+          break;
+        }
+        i++;
+      }
+      if (matching) {
+        if (matchingMethod == null) {
+          matchingMethod=method;
+        }
+ else {
+          throw new EvalException(func.getLocation(),"Multiple matching methods for " + formatMethod(methodName,args) + " in "+ EvalUtils.getDataTypeNameFromClass(objClass));
+        }
+      }
+    }
+  }
+  if (matchingMethod != null && !matchingMethod.getAnnotation().structField()) {
+    return matchingMethod;
+  }
+  throw new EvalException(getLocation(),"No matching method found for " + formatMethod(methodName,args) + " in "+ EvalUtils.getDataTypeNameFromClass(objClass));
+}

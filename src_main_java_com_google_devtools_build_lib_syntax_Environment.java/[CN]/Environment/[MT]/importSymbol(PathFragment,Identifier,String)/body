@@ -1,10 +1,16 @@
 {
+  Preconditions.checkState(isGlobal());
   if (!importedExtensions.containsKey(extension)) {
     throw new LoadFailedException(extension.toString());
   }
   Object value=importedExtensions.get(extension).lookup(nameInLoadedFile);
-  if (!isSkylark()) {
+  if (!isSkylark) {
     value=SkylarkType.convertFromSkylark(value);
   }
-  update(symbol.getName(),value);
+  try {
+    update(symbol.getName(),value);
+  }
+ catch (  EvalException e) {
+    throw new LoadFailedException(extension.toString());
+  }
 }

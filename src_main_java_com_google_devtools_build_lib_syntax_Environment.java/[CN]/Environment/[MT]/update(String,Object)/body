@@ -1,5 +1,16 @@
 {
   Preconditions.checkNotNull(value,"update(value == null)");
-  env.put(varname,value);
+  if (dynamicFrame.get(varname) != null) {
+    throw new EvalException(null,String.format("Trying to update special read-only global variable '%s'",varname));
+  }
+  if (isKnownGlobalVariable(varname)) {
+    throw new EvalException(null,String.format("Trying to update read-only global variable '%s'",varname));
+  }
+  try {
+    currentFrame().put(this,varname,Preconditions.checkNotNull(value));
+  }
+ catch (  MutabilityException e) {
+    throw new AssertionError(Printer.format("Can't update %s to %r in frozen environment",varname,value),e);
+  }
   return this;
 }

@@ -5,19 +5,24 @@
   if (lookupResult == null) {
     return null;
   }
-  BuildFileAST ast=null;
   if (!lookupResult.lookupSuccessful()) {
     return ASTFileLookupValue.noFile();
   }
+  BuildFileAST ast=null;
+  Path path=lookupResult.rootedPath().asPath();
+  boolean parseAsSkylark=astFilePathFragment.getPathString().endsWith(".bzl");
+  try {
+    if (parseAsSkylark) {
+      try (Mutability mutability=Mutability.create("validate")){
+        ast=BuildFileAST.parseSkylarkFile(path,env.getListener(),packageManager,new ValidationEnvironment(ruleClassProvider.createSkylarkRuleClassEnvironment(mutability,env.getListener(),null,null).setupDynamic(Runtime.PKG_NAME,Runtime.NONE)));
+      }
+     }
  else {
-    Path path=lookupResult.rootedPath().asPath();
-    boolean parseAsSkylark=astFilePathFragment.getPathString().endsWith(".bzl");
-    try {
-      ast=parseAsSkylark ? BuildFileAST.parseSkylarkFile(path,env.getListener(),packageManager,ruleClassProvider.getSkylarkValidationEnvironment().clone()) : BuildFileAST.parseBuildFile(path,env.getListener(),packageManager,false);
+      ast=BuildFileAST.parseBuildFile(path,env.getListener(),packageManager,false);
     }
- catch (    IOException e) {
-      throw new ASTLookupFunctionException(new ErrorReadingSkylarkExtensionException(e.getMessage()),Transience.TRANSIENT);
-    }
+  }
+ catch (  IOException e) {
+    throw new ASTLookupFunctionException(new ErrorReadingSkylarkExtensionException(e.getMessage()),Transience.TRANSIENT);
   }
   return ASTFileLookupValue.withFile(ast);
 }

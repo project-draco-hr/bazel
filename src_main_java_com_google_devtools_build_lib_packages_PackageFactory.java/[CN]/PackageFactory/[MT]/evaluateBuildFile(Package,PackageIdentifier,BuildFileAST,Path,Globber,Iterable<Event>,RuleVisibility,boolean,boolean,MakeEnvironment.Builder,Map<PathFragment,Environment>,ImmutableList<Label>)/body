@@ -1,0 +1,33 @@
+{
+  Package.LegacyBuilder pkgBuilder=new Package.LegacyBuilder(packageId,ruleClassProvider.getRunfilesPrefix());
+  StoredEventHandler eventHandler=new StoredEventHandler();
+  try (Mutability mutability=Mutability.create("package %s",packageId)){
+    Environment pkgEnv=Environment.builder(mutability).setGlobals(Environment.BUILD).setEventHandler(eventHandler).setImportedExtensions(imports).setLoadingPhase().build();
+    pkgBuilder.setGlobber(globber).setFilename(buildFilePath).setMakeEnv(pkgMakeEnv).setDefaultVisibility(defaultVisibility).setDefaultVisibilitySet(false).setSkylarkFileDependencies(skylarkFileDependencies).setWorkspaceName(externalPkg.getWorkspaceName());
+    Event.replayEventsOn(eventHandler,pastEvents);
+    PackageContext context=new PackageContext(pkgBuilder,globber,eventHandler);
+    buildPkgEnv(pkgEnv,context,ruleFactory);
+    pkgEnv.setupDynamic(PKG_CONTEXT,context);
+    pkgEnv.setupDynamic(Runtime.PKG_NAME,packageId.toString());
+    if (containsError) {
+      pkgBuilder.setContainsErrors();
+    }
+    if (containsTransientError) {
+      pkgBuilder.setContainsTemporaryErrors();
+    }
+    if (!validatePackageIdentifier(packageId,buildFileAST.getLocation(),eventHandler)) {
+      pkgBuilder.setContainsErrors();
+    }
+    if (!validateAssignmentStatements(pkgEnv,buildFileAST,eventHandler)) {
+      pkgBuilder.setContainsErrors();
+    }
+    if (buildFileAST.containsErrors()) {
+      pkgBuilder.setContainsErrors();
+    }
+    if (!buildFileAST.exec(pkgEnv,eventHandler)) {
+      pkgBuilder.setContainsErrors();
+    }
+  }
+   pkgBuilder.addEvents(eventHandler.getEvents());
+  return pkgBuilder;
+}

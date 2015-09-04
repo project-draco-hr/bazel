@@ -1,10 +1,20 @@
 {
-  Object value=env.get(varname);
-  if (value == null) {
-    if (parent != null) {
-      return parent.lookup(varname);
+  if (lexicalFrame != null) {
+    Object lexicalValue=lexicalFrame.get(varname);
+    if (lexicalValue != null) {
+      return lexicalValue;
     }
+  }
+  Object globalValue=globalFrame.get(varname);
+  Object dynamicValue=dynamicFrame.get(varname);
+  if (globalValue == null && dynamicValue == null) {
     throw new NoSuchVariableException(varname);
   }
-  return value;
+  if (knownGlobalVariables != null) {
+    knownGlobalVariables.add(varname);
+  }
+  if (globalValue != null) {
+    return globalValue;
+  }
+  return dynamicValue;
 }

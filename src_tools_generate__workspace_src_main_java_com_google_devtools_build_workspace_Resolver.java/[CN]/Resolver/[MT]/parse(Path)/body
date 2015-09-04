@@ -1,9 +1,8 @@
 {
   resolver.addHeader(workspacePath.getPathString());
   ExternalPackage.Builder builder=new ExternalPackage.Builder(workspacePath,ruleClassProvider.getRunfilesPrefix());
-  WorkspaceFactory parser=new WorkspaceFactory(builder,ruleClassProvider);
-  try {
-    parser.parse(ParserInputSource.create(workspacePath));
+  try (Mutability mutability=Mutability.create("External Package %s",workspacePath)){
+    new WorkspaceFactory(builder,ruleClassProvider,mutability).parse(ParserInputSource.create(workspacePath));
   }
  catch (  IOException|InterruptedException e) {
     handler.handle(Event.error(Location.fromFile(workspacePath),e.getMessage()));

@@ -1,5 +1,7 @@
 {
-  final Location loc=(ast == null) ? location : ast.getLocation();
+  Preconditions.checkNotNull(ast);
+  Preconditions.checkNotNull(env);
+  Location loc=ast.getLocation();
   if (extraArgs != null) {
     int i=args.length - extraArgs.length;
     for (    BuiltinFunction.ExtraArgKind extraArg : extraArgs) {
@@ -19,6 +21,7 @@ i++;
 }
 long startTime=Profiler.nanoTimeMaybe();
 try {
+env.enterScope(this,ast,env.getGlobals());
 return invokeMethod.invoke(this,args);
 }
  catch (InvocationTargetException x) {
@@ -56,5 +59,6 @@ throw badCallException(loc,e,args);
 }
  finally {
 Profiler.instance().logSimpleTask(startTime,ProfilerTask.SKYLARK_BUILTIN_FN,this.getClass().getName() + "#" + getName());
+env.exitScope();
 }
 }
