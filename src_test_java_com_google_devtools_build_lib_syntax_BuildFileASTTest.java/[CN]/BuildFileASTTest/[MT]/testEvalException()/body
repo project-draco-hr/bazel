@@ -1,8 +1,11 @@
 {
   Path buildFile=scratch.file("/input1.BUILD","x = 1","y = [2,3]","","z = x + y");
-  setFailFast(false);
-  BuildFileAST buildfile=BuildFileAST.parseBuildFile(buildFile,getEventHandler(),null,false);
-  assertFalse(buildfile.exec(env,getEventHandler()));
-  Event e=assertContainsEvent("unsupported operand type(s) for +: 'int' and 'List'");
+  Environment env=new Environment();
+  Reporter reporter=new Reporter();
+  EventCollector collector=new EventCollector(EventKind.ALL_EVENTS);
+  reporter.addHandler(collector);
+  BuildFileAST buildfile=BuildFileAST.parseBuildFile(buildFile,reporter,null,false);
+  assertFalse(buildfile.exec(env,reporter));
+  Event e=MoreAsserts.assertContainsEvent(collector,"unsupported operand type(s) for +: 'int' and 'List'");
   assertEquals(4,e.getLocation().getStartLineAndColumn().getLine());
 }

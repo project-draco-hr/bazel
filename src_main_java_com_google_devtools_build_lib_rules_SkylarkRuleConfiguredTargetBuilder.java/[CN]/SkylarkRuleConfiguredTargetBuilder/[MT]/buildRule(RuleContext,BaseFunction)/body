@@ -1,8 +1,8 @@
 {
   String expectFailure=ruleContext.attributes().get("expect_failure",Type.STRING);
-  try (Mutability mutability=Mutability.create("configured target")){
+  try {
     SkylarkRuleContext skylarkRuleContext=new SkylarkRuleContext(ruleContext);
-    Environment env=Environment.builder(mutability).setSkylark().setGlobals(ruleContext.getRule().getRuleClassObject().getRuleDefinitionEnvironment().getGlobals()).setEventHandler(ruleContext.getAnalysisEnvironment().getEventHandler()).build();
+    SkylarkEnvironment env=ruleContext.getRule().getRuleClassObject().getRuleDefinitionEnvironment().cloneEnv(ruleContext.getAnalysisEnvironment().getEventHandler());
     Object target=ruleImplementation.call(ImmutableList.<Object>of(skylarkRuleContext),ImmutableMap.<String,Object>of(),null,env);
     if (ruleContext.hasErrors()) {
       return null;

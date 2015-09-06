@@ -1,0 +1,18 @@
+{
+  if (callerEnv.stackTraceContains(function)) {
+    throw new EvalException(function.getLocation(),"Recursion was detected when calling '" + function.getName() + "' from '"+ Iterables.getLast(callerEnv.getStackTrace()).getName()+ "'");
+  }
+  SkylarkEnvironment childEnv=new SkylarkEnvironment(definitionEnv,callerEnv.getCopyOfStackTrace(),callerEnv.eventHandler);
+  if (callerEnv.isLoadingPhase()) {
+    childEnv.setLoadingPhase();
+  }
+  try {
+    for (    String varname : callerEnv.propagatingVariables) {
+      childEnv.updateAndPropagate(varname,callerEnv.lookup(varname));
+    }
+  }
+ catch (  NoSuchVariableException e) {
+    throw new IllegalStateException(e);
+  }
+  return childEnv;
+}

@@ -1,7 +1,8 @@
 {
-  setFailFast(false);
+  events.setFailFast(false);
   BuildFileAST buildFileAST=parseBuildFile("a = 'foo' 'bar'");
-  Event event=assertContainsEvent("Implicit string concatenation is forbidden, use the + operator");
+  Event event=events.collector().iterator().next();
+  assertEquals("Implicit string concatenation is forbidden, use the + operator",event.getMessage());
   assertEquals("/a/build/file/BUILD",event.getLocation().getPath().toString());
   assertEquals(1,event.getLocation().getStartLineAndColumn().getLine());
   assertEquals(10,event.getLocation().getStartLineAndColumn().getColumn());

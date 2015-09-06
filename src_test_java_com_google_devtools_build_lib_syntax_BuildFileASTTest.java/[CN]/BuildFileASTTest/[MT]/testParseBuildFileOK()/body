@@ -1,6 +1,8 @@
 {
   Path buildFile=scratch.file("/BUILD","# a file in the build language","","x = [1,2,'foo',4] + [1,2, \"%s%d\" % ('foo', 1)]");
-  BuildFileAST buildfile=BuildFileAST.parseBuildFile(buildFile,getEventHandler(),null,false);
-  assertTrue(buildfile.exec(env,getEventHandler()));
+  Environment env=new Environment();
+  Reporter reporter=new Reporter();
+  BuildFileAST buildfile=BuildFileAST.parseBuildFile(buildFile,reporter,null,false);
+  assertTrue(buildfile.exec(env,reporter));
   assertEquals(Arrays.<Object>asList(1,2,"foo",4,1,2,"foo1"),env.lookup("x"));
 }

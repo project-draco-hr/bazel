@@ -6,18 +6,16 @@
   }
   Path repoWorkspace=workspaceRoot.getRoot().getRelative(workspaceRoot.getRelativePath());
   Builder builder=new Builder(repoWorkspace,packageFactory.getRuleClassProvider().getRunfilesPrefix());
-  try (Mutability mutability=Mutability.create("workspace %s",repoWorkspace)){
-    WorkspaceFactory parser=new WorkspaceFactory(builder,packageFactory.getRuleClassProvider(),mutability,installDir.getPathString());
-    parser.parse(ParserInputSource.create(ruleClassProvider.getDefaultWorkspaceFile(),new PathFragment("DEFAULT.WORKSPACE")));
-    if (!workspaceFileValue.exists()) {
-      return new PackageValue(builder.build());
-    }
-    try {
-      parser.parse(ParserInputSource.create(repoWorkspace));
-    }
- catch (    IOException e) {
-      throw new WorkspaceFileFunctionException(e,Transience.TRANSIENT);
-    }
+  WorkspaceFactory parser=new WorkspaceFactory(builder,packageFactory.getRuleClassProvider(),installDir.getPathString());
+  parser.parse(ParserInputSource.create(ruleClassProvider.getDefaultWorkspaceFile(),new PathFragment("DEFAULT.WORKSPACE")));
+  if (!workspaceFileValue.exists()) {
+    return new PackageValue(builder.build());
   }
-   return new PackageValue(builder.build());
+  try {
+    parser.parse(ParserInputSource.create(repoWorkspace));
+  }
+ catch (  IOException e) {
+    throw new WorkspaceFileFunctionException(e,Transience.TRANSIENT);
+  }
+  return new PackageValue(builder.build());
 }

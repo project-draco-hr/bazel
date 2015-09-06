@@ -18,7 +18,7 @@ catch (  InconsistentFilesystemException e) {
   if (astLookupValue.getAST() == null) {
     throw new SkylarkImportLookupFunctionException(SkylarkImportFailedException.noFile(file));
   }
-  Map<PathFragment,com.google.devtools.build.lib.syntax.Environment> importMap=new HashMap<>();
+  Map<PathFragment,SkylarkEnvironment> importMap=new HashMap<>();
   ImmutableList.Builder<SkylarkFileDependency> fileDependencies=ImmutableList.builder();
   BuildFileAST ast=astLookupValue.getAST();
   for (  Map.Entry<Location,PathFragment> entry : ast.getImports().entrySet()) {
@@ -44,6 +44,6 @@ catch (  InconsistentFilesystemException e) {
   if (ast.containsErrors()) {
     throw new SkylarkImportLookupFunctionException(SkylarkImportFailedException.skylarkErrors(file));
   }
-  com.google.devtools.build.lib.syntax.Environment extensionEnv=createEnv(ast,file,importMap,env);
+  SkylarkEnvironment extensionEnv=createEnv(ast,file,importMap,env);
   return new SkylarkImportLookupValue(extensionEnv,new SkylarkFileDependency(label,fileDependencies.build()));
 }

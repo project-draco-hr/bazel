@@ -1,7 +1,7 @@
 {
   try {
     if (moduleClass.isAnnotationPresent(SkylarkModule.class)) {
-      env.setup(moduleClass.getAnnotation(SkylarkModule.class).name(),moduleClass.newInstance());
+      env.update(moduleClass.getAnnotation(SkylarkModule.class).name(),moduleClass.newInstance());
     }
     for (    Field field : moduleClass.getDeclaredFields()) {
       if (field.isAnnotationPresent(SkylarkSignature.class)) {
@@ -9,7 +9,7 @@
         SkylarkSignature annotation=field.getAnnotation(SkylarkSignature.class);
         Object value=field.get(null);
         if (!(value instanceof BuiltinFunction.Factory || (value instanceof BaseFunction && !annotation.objectType().equals(Object.class)))) {
-          env.setup(annotation.name(),value);
+          env.update(annotation.name(),value);
         }
       }
     }

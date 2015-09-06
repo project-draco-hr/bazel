@@ -1,0 +1,33 @@
+{
+  StoredEventHandler eventHandler=new StoredEventHandler();
+  Environment pkgEnv=new Environment(globalEnv,eventHandler);
+  pkgEnv.setLoadingPhase();
+  Package.LegacyBuilder pkgBuilder=new Package.LegacyBuilder(packageId,ruleClassProvider.getRunfilesPrefix());
+  pkgBuilder.setGlobber(globber).setFilename(buildFilePath).setMakeEnv(pkgMakeEnv).setDefaultVisibility(defaultVisibility).setDefaultVisibilitySet(false).setSkylarkFileDependencies(skylarkFileDependencies).setWorkspaceName(externalPkg.getWorkspaceName());
+  Event.replayEventsOn(eventHandler,pastEvents);
+  PackageContext context=new PackageContext(pkgBuilder,globber,eventHandler);
+  buildPkgEnv(pkgEnv,context,ruleFactory);
+  if (containsError) {
+    pkgBuilder.setContainsErrors();
+  }
+  if (containsTransientError) {
+    pkgBuilder.setContainsTemporaryErrors();
+  }
+  if (!validatePackageIdentifier(packageId,buildFileAST.getLocation(),eventHandler)) {
+    pkgBuilder.setContainsErrors();
+  }
+  pkgEnv.setImportedExtensions(imports);
+  pkgEnv.updateAndPropagate(PKG_CONTEXT,context);
+  pkgEnv.updateAndPropagate(Runtime.PKG_NAME,packageId.toString());
+  if (!validateAssignmentStatements(pkgEnv,buildFileAST,eventHandler)) {
+    pkgBuilder.setContainsErrors();
+  }
+  if (buildFileAST.containsErrors()) {
+    pkgBuilder.setContainsErrors();
+  }
+  if (!buildFileAST.exec(pkgEnv,eventHandler)) {
+    pkgBuilder.setContainsErrors();
+  }
+  pkgBuilder.addEvents(eventHandler.getEvents());
+  return pkgBuilder;
+}
