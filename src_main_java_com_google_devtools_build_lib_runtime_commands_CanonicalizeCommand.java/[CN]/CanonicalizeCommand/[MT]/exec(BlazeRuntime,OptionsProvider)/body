@@ -1,5 +1,10 @@
 {
-  BlazeCommand command=runtime.getCommandMap().get(options.getOptions(Options.class).forCommand);
+  String commandName=options.getOptions(Options.class).forCommand;
+  BlazeCommand command=runtime.getCommandMap().get(commandName);
+  if (command == null) {
+    runtime.getReporter().handle(Event.error("Not a valid command: '" + commandName + "' (should be one of "+ Joiner.on(", ").join(runtime.getCommandMap().keySet())+ ")"));
+    return ExitCode.COMMAND_LINE_ERROR;
+  }
   Collection<Class<? extends OptionsBase>> optionsClasses=BlazeCommandUtils.getOptions(command.getClass(),runtime.getBlazeModules(),runtime.getRuleClassProvider());
   try {
     List<String> result=OptionsParser.canonicalize(optionsClasses,options.getResidue());
