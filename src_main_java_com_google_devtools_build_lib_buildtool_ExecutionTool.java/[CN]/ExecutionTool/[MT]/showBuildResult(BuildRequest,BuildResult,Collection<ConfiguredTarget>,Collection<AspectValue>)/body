@@ -20,25 +20,44 @@
     Collection<ConfiguredTarget> successfulTargets=result.getSuccessfulTargets();
     (successfulTargets.contains(target) ? succeeded : failed).add(target);
   }
-  if (succeeded.size() + failed.size() > request.getBuildOptions().maxResultTargets) {
+  if (succeeded.size() + failed.size() + aspects.size() > request.getBuildOptions().maxResultTargets) {
     return;
   }
   OutErr outErr=request.getOutErr();
+  ArtifactFormatter formatter=request.getBuildOptions().detailedResult ? new DetailedArtifactFormatter() : new BriefArtifactFormatter();
   TopLevelArtifactContext context=request.getTopLevelArtifactContext();
   for (  ConfiguredTarget target : succeeded) {
     Label label=target.getLabel();
     boolean headerFlag=true;
     for (    Artifact artifact : TopLevelArtifactHelper.getAllArtifactsToBuild(target,context).getImportantArtifacts()) {
-      if (!artifact.isSourceArtifact() && !artifact.isMiddlemanArtifact()) {
+      if (formatter.shouldPrint(artifact)) {
         if (headerFlag) {
           outErr.printErr("Target " + label + " up-to-date:\n");
           headerFlag=false;
         }
-        outErr.printErrLn("  " + OutputDirectoryLinksUtils.getPrettyPath(artifact.getPath(),runtime.getWorkspaceName(),getWorkspace(),request.getSymlinkPrefix()));
+        outErr.printErrLn(formatter.format(artifact));
       }
     }
     if (headerFlag) {
       outErr.printErr("Target " + label + " up-to-date (nothing to build)\n");
+    }
+  }
+  for (  AspectValue aspect : aspects) {
+    Label label=aspect.getLabel();
+    String aspectName=aspect.getAspect().getName();
+    boolean headerFlag=true;
+    NestedSet<Artifact> importantArtifacts=TopLevelArtifactHelper.getAllArtifactsToBuild(aspect,context).getImportantArtifacts();
+    for (    Artifact importantArtifact : importantArtifacts) {
+      if (headerFlag) {
+        outErr.printErr("Aspect " + aspectName + " of "+ label+ " up-to-date:\n");
+        headerFlag=false;
+      }
+      if (formatter.shouldPrint(importantArtifact)) {
+        outErr.printErrLn(formatter.format(importantArtifact));
+      }
+    }
+    if (headerFlag) {
+      outErr.printErr("Aspect " + aspectName + " of "+ label+ " up-to-date (nothing to build)\n");
     }
   }
   for (  ConfiguredTarget target : failed) {
