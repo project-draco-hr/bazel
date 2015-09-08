@@ -28,7 +28,13 @@
   try {
     cmd.execute(new byte[]{},Command.NO_OBSERVER,outErr.getOutputStream(),outErr.getErrorStream(),true);
   }
- catch (  CommandException e) {
+ catch (  AbnormalTerminationException e) {
+    TerminationStatus status=e.getResult().getTerminationStatus();
+    boolean timedOut=!status.exited() && (status.getTerminatingSignal() == 14);
+    String message=CommandFailureUtils.describeCommandFailure(verboseFailures,spawn.getArguments(),spawn.getEnvironment(),cwd);
+    throw new UserExecException(String.format("%s: %s",message,e),timedOut);
+  }
+catch (  CommandException e) {
     String message=CommandFailureUtils.describeCommandFailure(verboseFailures,spawn.getArguments(),spawn.getEnvironment(),cwd);
     throw new UserExecException(String.format("%s: %s",message,e));
   }
