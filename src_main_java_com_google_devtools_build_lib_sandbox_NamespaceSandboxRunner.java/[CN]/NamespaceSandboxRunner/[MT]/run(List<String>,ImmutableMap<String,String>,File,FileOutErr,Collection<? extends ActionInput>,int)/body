@@ -2,7 +2,7 @@
   createFileSystem(outputs);
   List<String> args=new ArrayList<>();
   args.add(execRoot.getRelative("_bin/namespace-sandbox").getPathString());
-  if (debug) {
+  if (sandboxDebug) {
     args.add("-D");
   }
   args.add("-S");
@@ -22,6 +22,17 @@
   args.add("--");
   args.addAll(spawnArguments);
   Command cmd=new Command(args.toArray(new String[0]),env,cwd);
-  cmd.execute(new byte[]{},Command.NO_OBSERVER,outErr.getOutputStream(),outErr.getErrorStream(),true);
+  try {
+    cmd.execute(new byte[]{},Command.NO_OBSERVER,outErr.getOutputStream(),outErr.getErrorStream(),true);
+  }
+ catch (  CommandException e) {
+    boolean timedOut=false;
+    if (e instanceof AbnormalTerminationException) {
+      TerminationStatus status=((AbnormalTerminationException)e).getResult().getTerminationStatus();
+      timedOut=!status.exited() && (status.getTerminatingSignal() == 14);
+    }
+    String message=CommandFailureUtils.describeCommandFailure(verboseFailures,spawnArguments,env,cwd.getPath());
+    throw new UserExecException(message,e,timedOut);
+  }
   copyOutputs(outputs);
 }

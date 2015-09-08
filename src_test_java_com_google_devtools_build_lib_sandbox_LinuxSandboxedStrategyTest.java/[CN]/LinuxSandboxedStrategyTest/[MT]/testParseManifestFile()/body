@@ -1,10 +1,10 @@
 {
-  Path targetDir=workingDir.getRelative("runfiles");
+  Path targetDir=workspaceDir.getRelative("runfiles");
   targetDir.createDirectory();
-  Path testFile=workingDir.getRelative("testfile");
+  Path testFile=workspaceDir.getRelative("testfile");
   FileSystemUtils.createEmptyFile(testFile);
-  Path manifestFile=workingDir.getRelative("MANIFEST");
+  Path manifestFile=workspaceDir.getRelative("MANIFEST");
   FileSystemUtils.writeContent(manifestFile,Charset.defaultCharset(),String.format("x/testfile %s\nx/emptyfile \n",testFile.getPathString()));
   MountMap<Path,Path> mounts=LinuxSandboxedStrategy.parseManifestFile(fakeSandboxDir,targetDir,manifestFile.getPathFile());
-  assertThat(userFriendlyMap(mounts)).isEqualTo(userFriendlyMap(ImmutableMap.of(fakeSandboxDir.getRelative("runfiles/x/testfile"),testFile,fakeSandboxDir.getRelative("runfiles/x/emptyfile"),testFS.getPath("/dev/null"))));
+  assertThat(userFriendlyMap(mounts)).isEqualTo(userFriendlyMap(ImmutableMap.of(fakeSandboxDir.getRelative("runfiles/x/testfile"),testFile,fakeSandboxDir.getRelative("runfiles/x/emptyfile"),fileSystem.getPath("/dev/null"))));
 }

@@ -20,7 +20,7 @@
   }
   int timeout=getTimeout(spawn);
   try {
-    final NamespaceSandboxRunner runner=new NamespaceSandboxRunner(execRoot,sandboxPath,mounts,verboseFailures);
+    final NamespaceSandboxRunner runner=new NamespaceSandboxRunner(execRoot,sandboxPath,mounts,verboseFailures,sandboxDebug);
     try {
       runner.run(spawn.getArguments(),spawn.getEnvironment(),blazeDirs.getExecRoot().getPathFile(),outErr,spawn.getOutputFiles(),timeout);
     }
@@ -45,17 +45,7 @@
 );
     }
   }
- catch (  AbnormalTerminationException e) {
-    TerminationStatus status=e.getResult().getTerminationStatus();
-    boolean timedOut=!status.exited() && (status.getTerminatingSignal() == 14);
-    throw new UserExecException("Error during execution of spawn",e,timedOut);
-  }
-catch (  CommandException e) {
-    throw new UserExecException("Error during execution of spawn",e);
-  }
-catch (  IOException e) {
-    EventHandler handler=actionExecutionContext.getExecutor().getEventHandler();
-    handler.handle(Event.error("I/O error during sandboxed execution:\n" + Throwables.getStackTraceAsString(e)));
-    throw new UserExecException("Could not execute spawn",e);
+ catch (  IOException e) {
+    throw new UserExecException("I/O error during sandboxed execution",e);
   }
 }

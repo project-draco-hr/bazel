@@ -1,0 +1,12 @@
+{
+  Spawn spawn=createSpawn("/bin/sh","-c","echo ERROR >&2; exit 1");
+  try {
+    executor.getSpawnActionContext(spawn.getMnemonic()).exec(spawn,createContext());
+    fail();
+  }
+ catch (  UserExecException e) {
+    assertThat(err()).isEqualTo("ERROR\n");
+    assertThat(e.getMessage()).startsWith(CommandFailureUtils.describeCommandFailure(true,spawn.getArguments(),spawn.getEnvironment(),blazeDirs.getExecRoot().toString()));
+    assertThat(e.getCause()).isInstanceOf(BadExitStatusException.class);
+  }
+}
