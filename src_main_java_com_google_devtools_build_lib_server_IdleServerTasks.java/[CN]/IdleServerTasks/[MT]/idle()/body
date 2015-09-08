@@ -2,10 +2,10 @@
   Preconditions.checkState(!executor.isShutdown());
   executor.schedule(new Runnable(){
     @Override public void run(){
-      long before=System.currentTimeMillis();
-      System.gc();
-      LOG.info("Idle GC: " + (System.currentTimeMillis() - before) + "ms");
-    }
+      try (AutoProfiler p=AutoProfiler.logged("Idle GC",LOG)){
+        System.gc();
+      }
+     }
   }
 ,10,TimeUnit.SECONDS);
 }

@@ -1,28 +1,23 @@
 {
-  long startTime=Profiler.nanoTimeMaybe();
-  resolvedTargetPatterns.clear();
-  Set<String> targetPatternSet=new LinkedHashSet<>();
-  expr.collectTargetPatterns(targetPatternSet);
-  try {
-    resolvedTargetPatterns.putAll(preloadOrThrow(expr,targetPatternSet));
-  }
- catch (  TargetParsingException e) {
-    throw new QueryException(expr,e.getMessage());
-  }
   Set<T> resultNodes;
-  try {
-    resultNodes=expr.eval(this);
-  }
- catch (  QueryException e) {
-    throw new QueryException(e,expr);
-  }
- finally {
-    long duration=Profiler.nanoTimeMaybe() - startTime;
-    if (duration > 0) {
-      LOG.info("Spent " + (duration / 1000 / 1000) + " ms evaluating query");
+  try (AutoProfiler p=AutoProfiler.logged("evaluating query",LOG)){
+    resolvedTargetPatterns.clear();
+    Set<String> targetPatternSet=new LinkedHashSet<>();
+    expr.collectTargetPatterns(targetPatternSet);
+    try {
+      resolvedTargetPatterns.putAll(preloadOrThrow(expr,targetPatternSet));
+    }
+ catch (    TargetParsingException e) {
+      throw new QueryException(expr,e.getMessage());
+    }
+    try {
+      resultNodes=expr.eval(this);
+    }
+ catch (    QueryException e) {
+      throw new QueryException(e,expr);
     }
   }
-  if (eventHandler.hasErrors()) {
+   if (eventHandler.hasErrors()) {
     if (!keepGoing) {
       throw new QueryException("Evaluation of query \"" + expr + "\" failed due to BUILD file errors");
     }

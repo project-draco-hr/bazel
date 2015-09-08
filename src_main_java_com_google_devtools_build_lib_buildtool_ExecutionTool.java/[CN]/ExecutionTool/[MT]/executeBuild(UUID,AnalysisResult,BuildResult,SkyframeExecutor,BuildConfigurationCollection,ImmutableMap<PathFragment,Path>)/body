@@ -64,12 +64,12 @@
     if (!interrupted) {
       saveCaches(actionCache);
     }
-    long startTime=Profiler.nanoTimeMaybe();
-    determineSuccessfulTargets(buildResult,configuredTargets,builtTargets,timer);
-    showBuildResult(request,buildResult,configuredTargets,analysisResult.getAspects());
-    Preconditions.checkNotNull(buildResult.getSuccessfulTargets());
-    Profiler.instance().logSimpleTask(startTime,ProfilerTask.INFO,"Show results");
-    if (explanationHandler != null) {
+    try (AutoProfiler p=AutoProfiler.profiled("Show results",ProfilerTask.INFO)){
+      determineSuccessfulTargets(buildResult,configuredTargets,builtTargets,timer);
+      showBuildResult(request,buildResult,configuredTargets,analysisResult.getAspects());
+      Preconditions.checkNotNull(buildResult.getSuccessfulTargets());
+    }
+     if (explanationHandler != null) {
       uninstallExplanationHandler(explanationHandler);
     }
     if (runtime.getOutputService() != null) {

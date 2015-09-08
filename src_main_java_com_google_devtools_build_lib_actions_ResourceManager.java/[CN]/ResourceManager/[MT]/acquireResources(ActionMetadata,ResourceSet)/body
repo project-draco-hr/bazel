@@ -1,6 +1,6 @@
 {
   Preconditions.checkNotNull(resources);
-  long startTime=Profiler.nanoTimeMaybe();
+  AutoProfiler p=profiled(owner,ProfilerTask.ACTION_LOCK);
   CountDownLatch latch=null;
   try {
     waiting(owner);
@@ -13,7 +13,7 @@
     threadLocked.set(resources.getCpuUsage() != 0 || resources.getMemoryMb() != 0 || resources.getIoUsage() != 0 || resources.getLocalTestCount() != 0);
     acquired(owner);
     if (latch != null) {
-      Profiler.instance().logSimpleTask(startTime,ProfilerTask.ACTION_LOCK,owner);
+      p.complete();
     }
   }
 }

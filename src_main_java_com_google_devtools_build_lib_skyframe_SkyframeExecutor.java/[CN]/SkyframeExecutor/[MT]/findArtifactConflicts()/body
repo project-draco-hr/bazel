@@ -1,12 +1,9 @@
 {
   if (skyframeBuildView.isSomeConfiguredTargetEvaluated() || skyframeBuildView.isSomeConfiguredTargetInvalidated()) {
-    long startTime=Profiler.nanoTimeMaybe();
-    skyframeActionExecutor.findAndStoreArtifactConflicts(getActionLookupValues());
-    skyframeBuildView.resetEvaluatedConfiguredTargetFlag();
-    long duration=Profiler.nanoTimeMaybe() - startTime;
-    if (duration > 0) {
-      LOG.info("Spent " + (duration / 1000 / 1000) + " ms discovering artifact conflicts");
+    try (AutoProfiler p=AutoProfiler.logged("discovering artifact conflicts",LOG)){
+      skyframeActionExecutor.findAndStoreArtifactConflicts(getActionLookupValues());
+      skyframeBuildView.resetEvaluatedConfiguredTargetFlag();
     }
-  }
+   }
   return skyframeActionExecutor.badActions();
 }

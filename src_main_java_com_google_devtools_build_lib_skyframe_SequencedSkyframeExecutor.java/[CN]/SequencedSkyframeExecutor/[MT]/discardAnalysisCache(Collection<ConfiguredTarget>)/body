@@ -1,17 +1,14 @@
 {
-  long startTime=Profiler.nanoTimeMaybe();
-  lastAnalysisDiscarded=true;
-  for (  Map.Entry<SkyKey,SkyValue> entry : memoizingEvaluator.getValues().entrySet()) {
-    if (!entry.getKey().functionName().equals(SkyFunctions.CONFIGURED_TARGET)) {
-      continue;
-    }
-    ConfiguredTargetValue ctValue=(ConfiguredTargetValue)entry.getValue();
-    if (ctValue != null && !topLevelTargets.contains(ctValue.getConfiguredTarget())) {
-      ctValue.clear();
+  try (AutoProfiler p=AutoProfiler.logged("discarding analysis cache",LOG)){
+    lastAnalysisDiscarded=true;
+    for (    Map.Entry<SkyKey,SkyValue> entry : memoizingEvaluator.getValues().entrySet()) {
+      if (!entry.getKey().functionName().equals(SkyFunctions.CONFIGURED_TARGET)) {
+        continue;
+      }
+      ConfiguredTargetValue ctValue=(ConfiguredTargetValue)entry.getValue();
+      if (ctValue != null && !topLevelTargets.contains(ctValue.getConfiguredTarget())) {
+        ctValue.clear();
+      }
     }
   }
-  long duration=Profiler.nanoTimeMaybe() - startTime;
-  if (duration > 0) {
-    LOG.info("Spent " + (duration / 1000 / 1000) + " ms discarding analysis cache");
-  }
-}
+ }

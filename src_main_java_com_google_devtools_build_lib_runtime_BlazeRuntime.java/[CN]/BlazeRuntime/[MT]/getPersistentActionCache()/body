@@ -4,24 +4,17 @@
       actionCache=new NullActionCache();
       return actionCache;
     }
-    long startTime=Profiler.nanoTimeMaybe();
-    try {
-      actionCache=new CompactPersistentActionCache(getCacheDirectory(),clock);
-    }
- catch (    IOException e) {
-      LOG.log(Level.WARNING,"Failed to load action cache: " + e.getMessage(),e);
-      LoggingUtil.logToRemote(Level.WARNING,"Failed to load action cache: " + e.getMessage(),e);
-      getReporter().handle(Event.error("Error during action cache initialization: " + e.getMessage() + ". Corrupted files were renamed to '"+ getCacheDirectory()+ "/*.bad'. "+ "Blaze will now reset action cache data, causing a full rebuild"));
-      actionCache=new CompactPersistentActionCache(getCacheDirectory(),clock);
-    }
- finally {
-      long stopTime=Profiler.nanoTimeMaybe();
-      long duration=stopTime - startTime;
-      if (duration > 0) {
-        LOG.info("Spent " + (duration / (1000 * 1000)) + " ms loading persistent action cache");
+    try (AutoProfiler p=profiledAndLogged("Loading action cache",ProfilerTask.INFO,LOG)){
+      try {
+        actionCache=new CompactPersistentActionCache(getCacheDirectory(),clock);
       }
-      Profiler.instance().logSimpleTask(startTime,ProfilerTask.INFO,"Loading action cache");
+ catch (      IOException e) {
+        LOG.log(Level.WARNING,"Failed to load action cache: " + e.getMessage(),e);
+        LoggingUtil.logToRemote(Level.WARNING,"Failed to load action cache: " + e.getMessage(),e);
+        getReporter().handle(Event.error("Error during action cache initialization: " + e.getMessage() + ". Corrupted files were renamed to '"+ getCacheDirectory()+ "/*.bad'. "+ "Blaze will now reset action cache data, causing a full rebuild"));
+        actionCache=new CompactPersistentActionCache(getCacheDirectory(),clock);
+      }
     }
-  }
+   }
   return actionCache;
 }

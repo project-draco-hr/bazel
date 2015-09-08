@@ -1,13 +1,13 @@
 {
   boolean isConflict=false;
-  long startTime=Profiler.nanoTimeMaybe();
+  AutoProfiler p=profiled(owner,ProfilerTask.ACTION_RELEASE);
   try {
     isConflict=release(resources);
   }
   finally {
     threadLocked.set(false);
     if (isConflict) {
-      Profiler.instance().logSimpleTask(startTime,ProfilerTask.ACTION_RELEASE,owner);
+      p.complete();
     }
   }
 }
