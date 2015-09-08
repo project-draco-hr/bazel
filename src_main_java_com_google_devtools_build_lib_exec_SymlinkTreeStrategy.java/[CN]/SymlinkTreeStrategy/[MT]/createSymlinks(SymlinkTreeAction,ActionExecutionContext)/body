@@ -1,19 +1,17 @@
 {
   Executor executor=actionExecutionContext.getExecutor();
-  LocalActionLogging logging=new LocalActionLogging(action);
-  try {
-    SymlinkTreeHelper helper=new SymlinkTreeHelper(action.getInputManifest().getExecPath(),action.getOutputManifest().getExecPath().getParentDirectory(),action.isFilesetTree());
-    if (outputService != null && outputService.canCreateSymlinkTree()) {
-      outputService.createSymlinkTree(action.getInputManifest().getPath(),action.getOutputManifest().getPath(),action.isFilesetTree(),helper.getSymlinkTreeRoot());
-    }
+  try (AutoProfiler p=AutoProfiler.logged("running " + action.prettyPrint(),LOG)){
+    try {
+      SymlinkTreeHelper helper=new SymlinkTreeHelper(action.getInputManifest().getExecPath(),action.getOutputManifest().getExecPath().getParentDirectory(),action.isFilesetTree());
+      if (outputService != null && outputService.canCreateSymlinkTree()) {
+        outputService.createSymlinkTree(action.getInputManifest().getPath(),action.getOutputManifest().getPath(),action.isFilesetTree(),helper.getSymlinkTreeRoot());
+      }
  else {
-      helper.createSymlinks(action,actionExecutionContext,binTools);
+        helper.createSymlinks(action,actionExecutionContext,binTools);
+      }
+    }
+ catch (    ExecException e) {
+      throw e.toActionExecutionException(action.getProgressMessage(),executor.getVerboseFailures(),action);
     }
   }
- catch (  ExecException e) {
-    throw e.toActionExecutionException(action.getProgressMessage(),executor.getVerboseFailures(),action);
-  }
- finally {
-    logging.finish();
-  }
-}
+ }
