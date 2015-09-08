@@ -1,0 +1,19 @@
+{
+  MountMap<Path,Path> mounts=new MountMap<>();
+  FileSystem fs=blazeDirs.getFileSystem();
+  mounts.put(fs.getPath("/bin"),fs.getPath("/bin"));
+  mounts.put(fs.getPath("/etc"),fs.getPath("/etc"));
+  for (  String entry : FilesystemUtils.readdir("/")) {
+    if (entry.startsWith("lib")) {
+      Path libDir=fs.getRootDirectory().getRelative(entry);
+      mounts.put(libDir,libDir);
+    }
+  }
+  for (  String entry : FilesystemUtils.readdir("/usr")) {
+    if (!entry.equals("local")) {
+      Path usrDir=fs.getPath("/usr").getRelative(entry);
+      mounts.put(usrDir,usrDir);
+    }
+  }
+  return mounts;
+}
