@@ -6,18 +6,13 @@
   outputBuilder.setLabel(base.getLabel().toString());
   outputBuilder.setBuildFile(ruleContext.getRule().getPackage().getBuildFile().getPath().toString());
   outputBuilder.setKind(ruleKind);
-  JavaSourceInfoProvider sourceInfoProvider=base.getProvider(JavaSourceInfoProvider.class);
-  Collection<Artifact> sourceFiles=sourceInfoProvider != null ? sourceInfoProvider.getSourceFiles() : ImmutableList.<Artifact>of();
-  for (  Artifact sourceFile : sourceFiles) {
-    outputBuilder.addSources(makeArtifactLocation(sourceFile));
+  if (ruleKind == RuleIdeInfo.Kind.JAVA_LIBRARY) {
+    outputBuilder.setJavaRuleIdeInfo(makeJavaRuleIdeInfo(base));
   }
-  outputBuilder.setJavaRuleIdeInfo(makeJavaRuleIdeInfo(base));
+ else   if (ruleKind == RuleIdeInfo.Kind.ANDROID_SDK) {
+    outputBuilder.setAndroidSdkRuleInfo(makeAndroidSdkRuleInfo(ruleContext,base.getProvider(AndroidSdkProvider.class)));
+  }
   final RuleIdeInfo ruleIdeInfo=outputBuilder.build();
-  ruleContext.registerAction(new BinaryFileWriteAction(ruleContext.getActionOwner(),ideBuildFile,new ByteSource(){
-    @Override public InputStream openStream() throws IOException {
-      return ruleIdeInfo.toByteString().newInput();
-    }
-  }
-,false));
+  ruleContext.registerAction(makeProtoWriteAction(ruleContext.getActionOwner(),ruleIdeInfo,ideBuildFile));
   return ideBuildFile;
 }

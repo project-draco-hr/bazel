@@ -1,14 +1,18 @@
 {
+  Aspect.Builder builder=new Builder(NAME);
   NestedSetBuilder<Artifact> ideBuildFilesBuilder=NestedSetBuilder.stableOrder();
-  Iterable<AndroidStudioInfoFilesProvider> deps=ruleContext.getPrerequisites("deps",Mode.TARGET,AndroidStudioInfoFilesProvider.class);
-  for (  AndroidStudioInfoFilesProvider dep : deps) {
-    ideBuildFilesBuilder.addTransitive(dep.getIdeBuildFiles());
+  if (ruleContext.attributes().has("deps",Type.LABEL_LIST)) {
+    Iterable<AndroidStudioInfoFilesProvider> deps=ruleContext.getPrerequisites("deps",Mode.TARGET,AndroidStudioInfoFilesProvider.class);
+    for (    AndroidStudioInfoFilesProvider dep : deps) {
+      ideBuildFilesBuilder.addTransitive(dep.getIdeBuildFiles());
+    }
   }
-  RuleIdeInfo.Kind ruleKind=getRuleKind(ruleContext.getRule());
+  RuleIdeInfo.Kind ruleKind=getRuleKind(ruleContext.getRule(),base);
   if (ruleKind != RuleIdeInfo.Kind.UNRECOGNIZED) {
     Artifact ideBuildFile=createIdeBuildArtifact(base,ruleContext,ruleKind);
     ideBuildFilesBuilder.add(ideBuildFile);
   }
   NestedSet<Artifact> ideBuildFiles=ideBuildFilesBuilder.build();
-  return new Aspect.Builder(NAME).addOutputGroup(IDE_BUILD,ideBuildFiles).addProvider(AndroidStudioInfoFilesProvider.class,new AndroidStudioInfoFilesProvider(ideBuildFiles)).build();
+  builder.addOutputGroup(IDE_BUILD,ideBuildFiles).addProvider(AndroidStudioInfoFilesProvider.class,new AndroidStudioInfoFilesProvider(ideBuildFiles));
+  return builder.build();
 }
