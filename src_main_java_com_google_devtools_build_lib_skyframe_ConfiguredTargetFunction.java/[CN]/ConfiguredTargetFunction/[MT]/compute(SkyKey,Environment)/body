@@ -1,5 +1,6 @@
 {
   SkyframeBuildView view=buildViewProvider.getSkyframeBuildView();
+  NestedSetBuilder<Package> transitivePackages=NestedSetBuilder.stableOrder();
   ConfiguredTargetKey configuredTargetKey=(ConfiguredTargetKey)key.argument();
   LabelAndConfiguration lc=LabelAndConfiguration.of(configuredTargetKey.getLabel(),configuredTargetKey.getConfiguration());
   BuildConfiguration configuration=lc.getConfiguration();
@@ -14,6 +15,7 @@
  catch (  NoSuchTargetException e1) {
     throw new ConfiguredTargetFunctionException(new NoSuchTargetException(lc.getLabel(),"No such target"));
   }
+  transitivePackages.add(packageValue.getPackage());
   if (target instanceof InputFile) {
     configuration=null;
   }
@@ -26,12 +28,12 @@
     return null;
   }
   try {
-    Set<ConfigMatchingProvider> configConditions=getConfigConditions(ctgValue.getTarget(),env,resolver,ctgValue);
+    Set<ConfigMatchingProvider> configConditions=getConfigConditions(ctgValue.getTarget(),env,resolver,ctgValue,transitivePackages);
     if (env.valuesMissing()) {
       return null;
     }
-    ListMultimap<Attribute,ConfiguredTarget> depValueMap=computeDependencies(env,resolver,ctgValue,null,AspectParameters.EMPTY,configConditions,ruleClassProvider,view.getHostConfiguration(configuration));
-    ConfiguredTargetValue ans=createConfiguredTarget(view,env,target,configuration,depValueMap,configConditions);
+    ListMultimap<Attribute,ConfiguredTarget> depValueMap=computeDependencies(env,resolver,ctgValue,null,AspectParameters.EMPTY,configConditions,ruleClassProvider,view.getHostConfiguration(configuration),transitivePackages);
+    ConfiguredTargetValue ans=createConfiguredTarget(view,env,target,configuration,depValueMap,configConditions,transitivePackages);
     return ans;
   }
  catch (  DependencyEvaluationException e) {

@@ -4,7 +4,10 @@
   for (  Label scopePart : scopeLabels) {
     try {
       SkyFunction.Environment env=context.getAnalysisEnvironment().getSkyframeEnv();
-      PackageValue packageNode=Preconditions.checkNotNull((PackageValue)env.getValue(PackageValue.key(scopePart.getPackageFragment())));
+      PackageValue packageNode=(PackageValue)env.getValue(PackageValue.key(scopePart.getPackageFragment()));
+      if (packageNode == null) {
+        return null;
+      }
       scope.add(packageNode.getPackage().getTarget(scopePart.getName()));
     }
  catch (    NoSuchTargetException e) {

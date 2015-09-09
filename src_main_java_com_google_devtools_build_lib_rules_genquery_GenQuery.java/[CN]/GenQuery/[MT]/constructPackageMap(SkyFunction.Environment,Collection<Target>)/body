@@ -4,7 +4,9 @@
   for (  Target target : scope) {
     SkyKey key=TransitiveTargetValue.key(target.getLabel());
     TransitiveTargetValue transNode=(TransitiveTargetValue)env.getValue(key);
-    Preconditions.checkState(transNode != null,"%s not preloaded",key);
+    if (transNode == null) {
+      return null;
+    }
     validTargets.addTransitive(transNode.getTransitiveTargets());
     packageNames.addTransitive(transNode.getTransitiveSuccessfulPackages());
   }
