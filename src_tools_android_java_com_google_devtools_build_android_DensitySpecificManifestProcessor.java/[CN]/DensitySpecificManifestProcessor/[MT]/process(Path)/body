@@ -10,6 +10,15 @@
       throw new ManifestProcessingException(String.format("Manifest %s does not contain exactly one <manifest> tag. " + "It contains %d.",manifest,manifestElements.getLength()));
     }
     Node manifestElement=manifestElements.item(0);
+    Set<String> existingDensities=new HashSet<>();
+    NodeList screenElements=doc.getElementsByTagName("screen");
+    for (int i=0; i < screenElements.getLength(); i++) {
+      Node screen=screenElements.item(i);
+      existingDensities.add(SCREEN_DENSITIES.inverse().get(screen.getAttributes().getNamedItem("android:screenDensity").getNodeValue()));
+    }
+    if (existingDensities.containsAll(densities)) {
+      return manifest;
+    }
     NodeList compatibleScreensElements=doc.getElementsByTagName("compatible-screens");
     for (int i=0; i < compatibleScreensElements.getLength(); i++) {
       Node compatibleScreensElement=compatibleScreensElements.item(i);
