@@ -9,7 +9,6 @@
   tester.getOrCreate(failingKey).addDependency(errorKey).setComputedValue(CONCATENATE);
   final AtomicBoolean synchronizeThreads=new AtomicBoolean(false);
   final CountDownLatch slowBuilt=new CountDownLatch(1);
-  final AtomicReference<Pair<SkyKey,? extends Exception>> unexpectedException=new AtomicReference<>();
   setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!synchronizeThreads.get()) {
@@ -27,7 +26,7 @@
         slowBuilt.countDown();
         try {
           Thread.sleep(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
-          unexpectedException.set(Pair.of(key,new IllegalStateException("uninterrupted")));
+          throw new IllegalStateException("uninterrupted in " + key);
         }
  catch (        InterruptedException e) {
           Thread.currentThread().interrupt();
@@ -41,8 +40,4 @@
   tester.invalidate();
   synchronizeThreads.set(true);
   tester.eval(false,fastToRequestSlowToSetValueKey,failingKey);
-  Pair<SkyKey,? extends Exception> unexpected=unexpectedException.get();
-  if (unexpected != null) {
-    throw new AssertionError(unexpected.first + ", " + unexpected.second+ ", "+ Arrays.toString(unexpected.second.getStackTrace()));
-  }
 }
