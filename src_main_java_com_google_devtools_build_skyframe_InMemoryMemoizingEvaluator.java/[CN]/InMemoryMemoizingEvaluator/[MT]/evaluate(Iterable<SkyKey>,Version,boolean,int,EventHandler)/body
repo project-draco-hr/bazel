@@ -10,7 +10,13 @@
     invalidate(valuesToInject.keySet());
     performInvalidation();
     injectValues(intVersion);
-    ParallelEvaluator evaluator=new ParallelEvaluator(graph,intVersion,skyFunctions,eventHandler,emittedEventState,DEFAULT_STORED_EVENT_FILTER,keepGoing,numThreads,progressReceiver,dirtyKeyTracker);
+    Receiver<Collection<SkyKey>> lazyDeletingReceiver=new Receiver<Collection<SkyKey>>(){
+      @Override public void accept(      Collection<SkyKey> skyKeys){
+        valuesToDelete.addAll(skyKeys);
+      }
+    }
+;
+    ParallelEvaluator evaluator=new ParallelEvaluator(graph,intVersion,skyFunctions,eventHandler,emittedEventState,DEFAULT_STORED_EVENT_FILTER,keepGoing,numThreads,progressReceiver,dirtyKeyTracker,lazyDeletingReceiver);
     EvaluationResult<T> result=evaluator.eval(roots);
     return EvaluationResult.<T>builder().mergeFrom(result).setWalkableGraph(new DelegatingWalkableGraph(graph)).build();
   }

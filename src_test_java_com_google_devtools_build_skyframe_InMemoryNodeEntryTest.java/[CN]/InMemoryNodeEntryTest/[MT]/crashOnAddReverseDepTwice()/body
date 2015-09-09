@@ -4,9 +4,12 @@
   assertEquals(DependencyState.NEEDS_SCHEDULING,entry.addReverseDepAndCheckIfDone(parent));
   try {
     entry.addReverseDepAndCheckIfDone(parent);
-    entry.getReverseDeps();
+    assertThat(setValue(entry,new SkyValue(){
+    }
+,null,0L)).containsExactly(parent);
     fail("Cannot add same dep twice");
   }
  catch (  IllegalStateException e) {
+    assertThat(e.getMessage()).contains("Duplicate reverse deps");
   }
 }

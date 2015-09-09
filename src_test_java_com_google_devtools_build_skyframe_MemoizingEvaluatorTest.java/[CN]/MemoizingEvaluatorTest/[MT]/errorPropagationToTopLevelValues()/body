@@ -1,14 +1,13 @@
 {
-  graph=new InMemoryGraph();
   SkyKey topKey=GraphTester.toSkyKey("top");
   SkyKey midKey=GraphTester.toSkyKey("mid");
   SkyKey badKey=GraphTester.toSkyKey("bad");
   tester.getOrCreate(topKey).addDependency(midKey).setComputedValue(CONCATENATE);
   tester.getOrCreate(midKey).addDependency(badKey).setComputedValue(CONCATENATE);
   tester.getOrCreate(badKey).setHasError(true);
-  EvaluationResult<SkyValue> result=eval(false,topKey,midKey);
+  EvaluationResult<SkyValue> result=tester.eval(false,topKey,midKey);
   assertThat(result.getError(midKey).getRootCauses()).containsExactly(badKey);
-  result=eval(true,topKey,midKey);
+  result=tester.eval(true,topKey,midKey);
   assertThat(result.getError(midKey).getRootCauses()).containsExactly(badKey);
   assertThat(result.getError(topKey).getRootCauses()).containsExactly(badKey);
 }

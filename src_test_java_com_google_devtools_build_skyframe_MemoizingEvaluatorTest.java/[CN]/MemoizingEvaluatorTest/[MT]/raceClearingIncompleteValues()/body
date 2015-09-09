@@ -5,7 +5,7 @@
   final AtomicBoolean waitForSecondCall=new AtomicBoolean(false);
   final CountDownLatch otherThreadWinning=new CountDownLatch(1);
   final AtomicReference<Thread> firstThread=new AtomicReference<>();
-  graph=new NotifyingInMemoryGraph(new Listener(){
+  setGraphForTesting(new NotifyingInMemoryGraph(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!waitForSecondCall.get()) {
         return;
@@ -26,14 +26,14 @@
       }
     }
   }
-);
+));
   tester.getOrCreate(topKey).addDependency(midKey).setComputedValue(CONCATENATE);
   tester.getOrCreate(midKey).addDependency(badKey).setComputedValue(CONCATENATE);
   tester.getOrCreate(badKey).setHasError(true);
-  EvaluationResult<SkyValue> result=eval(false,topKey,midKey);
+  EvaluationResult<SkyValue> result=tester.eval(false,topKey,midKey);
   assertThat(result.getError(midKey).getRootCauses()).containsExactly(badKey);
   waitForSecondCall.set(true);
-  result=eval(true,topKey,midKey);
+  result=tester.eval(true,topKey,midKey);
   assertNotNull(firstThread.get());
   assertEquals(0,otherThreadWinning.getCount());
   assertThat(result.getError(midKey).getRootCauses()).containsExactly(badKey);

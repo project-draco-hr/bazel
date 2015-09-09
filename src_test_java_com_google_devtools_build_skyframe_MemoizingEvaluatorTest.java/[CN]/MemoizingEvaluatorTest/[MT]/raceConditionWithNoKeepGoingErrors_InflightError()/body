@@ -43,7 +43,7 @@
     }
   }
 );
-  graph=new NotifyingInMemoryGraph(new Listener(){
+  setGraphForTesting(new NotifyingInMemoryGraph(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (key.equals(errorKey) && type == EventType.SET_VALUE && order == Order.AFTER) {
         errorCommitted.countDown();
@@ -51,11 +51,12 @@
       }
     }
   }
-);
-  EvaluationResult<StringValue> result=eval(false,ImmutableList.of(errorKey,otherErrorKey));
+));
+  EvaluationResult<StringValue> result=tester.eval(false,errorKey,otherErrorKey);
   assertTrue(result.hasError());
   assertEquals(errorKey,result.getError().getRootCauseOfException());
-  assertNull(graph.get(otherErrorKey));
+  assertNull(tester.driver.getExistingErrorForTesting(otherErrorKey));
+  assertNull(tester.driver.getExistingValueForTesting(otherErrorKey));
   assertNull(nonNullValueMessage.get(),nonNullValueMessage.get());
   assertEquals(numOtherInvocations.get(),1);
   assertNull(bogusInvocationMessage.get(),bogusInvocationMessage.get());

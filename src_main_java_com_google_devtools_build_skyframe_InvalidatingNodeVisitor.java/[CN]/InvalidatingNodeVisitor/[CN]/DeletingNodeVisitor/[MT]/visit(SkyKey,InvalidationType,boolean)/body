@@ -16,21 +16,15 @@
         for (        SkyKey reverseDep : entry.getReverseDeps()) {
           visit(reverseDep,InvalidationType.DELETED,!MUST_EXIST);
         }
-      }
-      if (entry.isDone()) {
-        if (traverseGraph) {
-          for (          SkyKey directDep : entry.getDirectDeps()) {
-            NodeEntry dep=graph.get(directDep);
-            if (dep != null) {
-              dep.removeReverseDep(key);
-            }
+        Iterable<SkyKey> directDeps=entry.isDone() ? entry.getDirectDeps() : entry.getTemporaryDirectDeps();
+        for (        SkyKey directDep : directDeps) {
+          NodeEntry dep=graph.get(directDep);
+          if (dep != null) {
+            dep.removeReverseDep(key);
           }
         }
-        informInvalidationReceiver(key,EvaluationProgressReceiver.InvalidationState.DELETED);
       }
-      if (traverseGraph) {
-        entry.getReverseDeps();
-      }
+      informInvalidationReceiver(key,EvaluationProgressReceiver.InvalidationState.DELETED);
       graph.remove(key);
       dirtyKeyTracker.notDirty(key);
       pendingVisitations.remove(invalidationPair);
