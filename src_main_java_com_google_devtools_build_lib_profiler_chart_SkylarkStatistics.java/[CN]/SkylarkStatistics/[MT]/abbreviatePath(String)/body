@@ -1,0 +1,32 @@
+{
+  String[] elements;
+  int lowestAbbreviateIndex;
+  String root;
+  String separator=StandardSystemProperty.FILE_SEPARATOR.value();
+  if (location.contains(separator)) {
+    elements=location.split(separator);
+    lowestAbbreviateIndex=1;
+    root=location.substring(0,location.indexOf(separator) + 1);
+  }
+ else {
+    elements=location.split("\\.");
+    lowestAbbreviateIndex=0;
+    root="";
+    separator=".";
+  }
+  String last=elements[elements.length - 1];
+  int remaining=NUM_LOCATION_CHARS_UNABBREVIATED - last.length();
+  for (int index=elements.length - 2; index >= lowestAbbreviateIndex; index--) {
+    String element=elements[index];
+    if (remaining > 0) {
+      int length=Math.min(remaining,element.length());
+      element=element.substring(0,length);
+      remaining-=length;
+    }
+ else {
+      element=element.substring(0,Math.min(2,element.length()));
+    }
+    elements[index]=element;
+  }
+  return root + Joiner.on(separator).join(Arrays.asList(elements).subList(1,elements.length));
+}
