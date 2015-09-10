@@ -1,14 +1,11 @@
 {
   if (isSingleReverseDep(container)) {
-    if (getReverseDepsObject(container).equals(reverseDep)) {
-      overwriteReverseDepsList(container,ImmutableList.<SkyKey>of());
-    }
+    Preconditions.checkState(getReverseDepsObject(container).equals(reverseDep),"toRemove: %s container: %s",reverseDep,container);
+    overwriteReverseDepsList(container,ImmutableList.<SkyKey>of());
     return;
   }
   @SuppressWarnings("unchecked") List<SkyKey> reverseDepsAsList=(List<SkyKey>)getReverseDepsObject(container);
-  if (reverseDepsAsList.isEmpty()) {
-    return;
-  }
+  Preconditions.checkState(!reverseDepsAsList.isEmpty(),"toRemove: %s container: %s",reverseDep,container);
   List<SkyKey> reverseDepsToRemove=getReverseDepsToRemove(container);
   if (reverseDepsToRemove == null) {
     reverseDepsToRemove=Lists.newArrayListWithExpectedSize(1);
