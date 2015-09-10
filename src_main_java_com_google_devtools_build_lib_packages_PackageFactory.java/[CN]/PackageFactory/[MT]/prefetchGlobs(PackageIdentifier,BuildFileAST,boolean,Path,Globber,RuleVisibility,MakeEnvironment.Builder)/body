@@ -2,13 +2,19 @@
   if (wasPreprocessed) {
     return;
   }
-  Environment pkgEnv=new Environment();
-  pkgEnv.setLoadingPhase();
-  Package.LegacyBuilder pkgBuilder=new Package.LegacyBuilder(packageId,ruleClassProvider.getRunfilesPrefix());
-  pkgBuilder.setFilename(buildFilePath).setMakeEnv(pkgMakeEnv).setDefaultVisibility(defaultVisibility).setDefaultVisibilitySet(false);
-  PackageContext context=new PackageContext(pkgBuilder,globber,NullEventHandler.INSTANCE);
-  buildPkgEnv(pkgEnv,context,ruleFactory);
-  pkgEnv.update("glob",newGlobFunction.apply(context,true));
-  pkgEnv.remove("FilesetEntry");
-  buildFileAST.exec(pkgEnv,NullEventHandler.INSTANCE);
-}
+  try (Mutability mutability=Mutability.create("prefetchGlobs for %s",packageId)){
+    Environment pkgEnv=Environment.builder(mutability).setGlobals(Environment.BUILD).setEventHandler(NullEventHandler.INSTANCE).setLoadingPhase().build();
+    Package.LegacyBuilder pkgBuilder=new Package.LegacyBuilder(packageId,ruleClassProvider.getRunfilesPrefix());
+    pkgBuilder.setFilename(buildFilePath).setMakeEnv(pkgMakeEnv).setDefaultVisibility(defaultVisibility).setDefaultVisibilitySet(false);
+    PackageContext context=new PackageContext(pkgBuilder,globber,NullEventHandler.INSTANCE);
+    buildPkgEnv(pkgEnv,context,ruleFactory);
+    try {
+      pkgEnv.update("glob",newGlobFunction.apply(context,true));
+      pkgEnv.update("FilesetEntry",Runtime.NONE);
+    }
+ catch (    EvalException e) {
+      throw new AssertionError(e);
+    }
+    buildFileAST.exec(pkgEnv,NullEventHandler.INSTANCE);
+  }
+ }

@@ -1,10 +1,20 @@
 {
+  Preconditions.checkState(isGlobal());
   if (!importedExtensions.containsKey(extension)) {
-    throw new LoadFailedException(extension.toString());
+    throw new LoadFailedException(extension);
   }
-  Object value=importedExtensions.get(extension).lookup(nameInLoadedFile);
-  if (!isSkylark()) {
+  Extension ext=importedExtensions.get(extension);
+  if (!ext.containsKey(nameInLoadedFile)) {
+    throw new NoSuchVariableException(nameInLoadedFile);
+  }
+  Object value=ext.get(nameInLoadedFile);
+  if (!isSkylark) {
     value=SkylarkType.convertFromSkylark(value);
   }
-  update(symbol.getName(),value);
+  try {
+    update(symbol.getName(),value);
+  }
+ catch (  EvalException e) {
+    throw new LoadFailedException(extension);
+  }
 }

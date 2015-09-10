@@ -1,21 +1,31 @@
 {
-  ImmutableList<String> names=signature.getSignature().getNames();
-  int i=0;
-  for (  String name : names) {
-    env.update(name,arguments[i++]);
+  if (!env.mutability().isMutable()) {
+    throw new EvalException(getLocation(),"Trying to call in frozen environment");
+  }
+  if (env.getStackTrace().contains(this)) {
+    throw new EvalException(getLocation(),String.format("Recursion was detected when calling '%s' from '%s'",getName(),Iterables.getLast(env.getStackTrace()).getName()));
   }
   Profiler.instance().startTask(ProfilerTask.SKYLARK_USER_FN,getLocationPathAndLine() + "#" + getName());
   Statement lastStatement=null;
   try {
-    for (    Statement stmt : statements) {
-      lastStatement=stmt;
-      stmt.exec(env);
+    env.enterScope(this,ast,definitionGlobals);
+    ImmutableList<String> names=signature.getSignature().getNames();
+    int i=0;
+    for (    String name : names) {
+      env.update(name,arguments[i++]);
     }
+    try {
+      for (      Statement stmt : statements) {
+        lastStatement=stmt;
+        stmt.exec(env);
+      }
+    }
+ catch (    ReturnStatement.ReturnException e) {
+      return e.getValue();
+    }
+    return Runtime.NONE;
   }
- catch (  ReturnStatement.ReturnException e) {
-    return e.getValue();
-  }
-catch (  EvalExceptionWithStackTrace ex) {
+ catch (  EvalExceptionWithStackTrace ex) {
     throw ex;
   }
 catch (  EvalException ex) {
@@ -25,6 +35,6 @@ catch (  EvalException ex) {
   }
  finally {
     Profiler.instance().completeTask(ProfilerTask.SKYLARK_USER_FN);
+    env.exitScope();
   }
-  return Runtime.NONE;
 }

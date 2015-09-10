@@ -24,12 +24,23 @@
   }
  else   if (env.isSkylark()) {
     evalArguments(posargs,kwargs,env,null);
+    Class<?> objClass;
+    Object obj;
     if (objValue instanceof Class<?>) {
-      return invokeJavaMethod(null,(Class<?>)objValue,func.getName(),posargs.build(),!kwargs.isEmpty());
+      obj=null;
+      objClass=(Class<?>)objValue;
     }
  else {
-      return invokeJavaMethod(objValue,objValue.getClass(),func.getName(),posargs.build(),!kwargs.isEmpty());
+      obj=objValue;
+      objClass=objValue.getClass();
     }
+    String name=func.getName();
+    ImmutableList<Object> args=posargs.build();
+    MethodDescriptor method=findJavaMethod(objClass,name,args);
+    if (!kwargs.isEmpty()) {
+      throw new EvalException(func.getLocation(),String.format("Keyword arguments are not allowed when calling a java method" + "\nwhile calling method '%s' for type %s",name,EvalUtils.getDataTypeNameFromClass(objClass)));
+    }
+    return callMethod(method,name,obj,args.toArray(),getLocation());
   }
  else {
     throw new EvalException(getLocation(),String.format("%s is not defined on object of type '%s'",functionName(),EvalUtils.getDataTypeName(objValue)));

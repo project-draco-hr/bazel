@@ -1,0 +1,28 @@
+{
+  if (env == null) {
+    return args;
+  }
+  boolean hasName=args.containsKey("generator_name");
+  boolean hasFunc=args.containsKey("generator_function");
+  if (hasName || hasFunc) {
+    return args;
+  }
+  Pair<FuncallExpression,BaseFunction> topCall=env.getTopCall();
+  if (topCall == null || !(topCall.second instanceof UserDefinedFunction)) {
+    return args;
+  }
+  FuncallExpression generator=topCall.first;
+  BaseFunction function=topCall.second;
+  String name=generator.getNameArg();
+  ImmutableMap.Builder<String,Object> builder=ImmutableMap.builder();
+  builder.putAll(args);
+  builder.put("generator_name",(name == null) ? args.get("name") : name);
+  builder.put("generator_function",function.getName());
+  builder.put("generator_location",Location.printPathAndLine(generator.getLocation()));
+  try {
+    return builder.build();
+  }
+ catch (  IllegalArgumentException ex) {
+    return args;
+  }
+}
