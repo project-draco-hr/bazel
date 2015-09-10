@@ -3,6 +3,9 @@
   ObjcProvider.Builder objcProvider=new ObjcProvider.Builder().addAll(IMPORTED_LIBRARY,extraImportLibraries).addAll(BUNDLE_FILE,bundleImports).addAll(BUNDLE_IMPORT_DIR,uniqueContainers(BundleableFile.toArtifacts(bundleImports),BUNDLE_CONTAINER_TYPE)).addAll(SDK_FRAMEWORK,extraSdkFrameworks).addAll(WEAK_SDK_FRAMEWORK,extraWeakSdkFrameworks).addAll(SDK_DYLIB,extraSdkDylibs).addAll(FRAMEWORK_FILE,frameworkImports).addAll(FRAMEWORK_DIR,uniqueContainers(frameworkImports,FRAMEWORK_CONTAINER_TYPE)).addAll(INCLUDE,userHeaderSearchPaths).addAll(DEFINE,defines).addTransitiveAndPropagate(depObjcProviders).addTransitiveWithoutPropagating(directDepObjcProviders);
   for (  CppCompilationContext headerProvider : depCcHeaderProviders) {
     objcProvider.addTransitiveAndPropagate(HEADER,headerProvider.getDeclaredIncludeSrcs());
+    objcProvider.addAll(INCLUDE,headerProvider.getIncludeDirs());
+    objcProvider.addAll(INCLUDE_SYSTEM,headerProvider.getSystemIncludeDirs());
+    objcProvider.addAll(DEFINE,headerProvider.getDefines());
   }
   for (  CcLinkParamsProvider linkProvider : depCcLinkProviders) {
     objcProvider.addTransitiveAndPropagate(CC_LIBRARY,linkProvider.getCcLinkParams(true,false).getLibraries());
