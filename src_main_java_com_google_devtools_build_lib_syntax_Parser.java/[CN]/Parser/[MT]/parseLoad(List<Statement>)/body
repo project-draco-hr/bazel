@@ -4,9 +4,7 @@
     expect(TokenKind.STRING);
     return;
   }
-  Token pathToken=token;
-  String path=(String)token.value;
-  nextToken();
+  StringLiteral path=parseStringLiteral();
   expect(TokenKind.COMMA);
   Map<Identifier,String> symbols=new HashMap<>();
   parseLoadSymbol(symbols);
@@ -23,7 +21,7 @@
     stmt.validatePath();
   }
  catch (  EvalException e) {
-    syntaxError(pathToken,e.getMessage());
+    reportError(path.getLocation(),e.getMessage());
   }
   list.add(setLocation(stmt,start,token.left));
 }

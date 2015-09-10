@@ -1,0 +1,11 @@
+{
+  Preconditions.checkState(token.kind == TokenKind.STRING);
+  int end=token.right;
+  char quoteChar=lexer.charAt(token.left);
+  StringLiteral literal=setLocation(new StringLiteral((String)token.value,quoteChar),token.left,end);
+  nextToken();
+  if (token.kind == TokenKind.STRING) {
+    reportError(lexer.createLocation(end,token.left),"Implicit string concatenation is forbidden, use the + operator");
+  }
+  return literal;
+}
