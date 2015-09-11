@@ -1,6 +1,6 @@
 {
   Collection<SkyKey> files=getSkyKeysForFileFragments(fileIdentifiers);
-  Collection<SkyKey> current=graph.getDoneValues(files).keySet();
+  Collection<SkyKey> current=graph.getSuccessfulValues(files).keySet();
   Set<SkyKey> resultKeys=CompactHashSet.create();
   while (!current.isEmpty()) {
     Collection<Iterable<SkyKey>> reverseDeps=graph.getReverseDeps(current).values();
@@ -14,10 +14,7 @@
       }
     }
   }
-  Map<SkyKey,SkyValue> packageValues=graph.getDoneValues(resultKeys);
-  if (packageValues.size() != resultKeys.size()) {
-    throw new IllegalStateException("Missing values: " + Sets.difference(resultKeys,packageValues.keySet()));
-  }
+  Map<SkyKey,SkyValue> packageValues=graph.getSuccessfulValues(resultKeys);
   ImmutableSet.Builder<Target> result=ImmutableSet.builder();
   for (  SkyValue value : packageValues.values()) {
     result.add(((PackageValue)value).getPackage().getBuildFile());
