@@ -6,7 +6,6 @@
     throw new EvalException(getLocation(),String.format("Recursion was detected when calling '%s' from '%s'",getName(),Iterables.getLast(env.getStackTrace()).getName()));
   }
   Profiler.instance().startTask(ProfilerTask.SKYLARK_USER_FN,getLocationPathAndLine() + "#" + getName());
-  Statement lastStatement=null;
   try {
     env.enterScope(this,ast,definitionGlobals);
     ImmutableList<String> names=signature.getSignature().getNames();
@@ -16,7 +15,6 @@
     }
     try {
       for (      Statement stmt : statements) {
-        lastStatement=stmt;
         stmt.exec(env);
       }
     }
@@ -25,15 +23,7 @@
     }
     return Runtime.NONE;
   }
- catch (  EvalExceptionWithStackTrace ex) {
-    throw ex;
-  }
-catch (  EvalException ex) {
-    EvalExceptionWithStackTrace real=new EvalExceptionWithStackTrace(ex,lastStatement.getLocation());
-    real.registerStatement(lastStatement);
-    throw real;
-  }
- finally {
+  finally {
     Profiler.instance().completeTask(ProfilerTask.SKYLARK_USER_FN);
     env.exitScope();
   }
