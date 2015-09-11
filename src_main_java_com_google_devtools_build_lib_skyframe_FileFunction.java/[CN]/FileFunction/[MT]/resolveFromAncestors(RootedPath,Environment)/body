@@ -11,6 +11,9 @@
     PathFragment baseName=new PathFragment(relativePath.getBaseName());
     RootedPath parentRealRootedPath=parentFileValue.realRootedPath();
     realRootedPath=RootedPath.toRootedPath(parentRealRootedPath.getRoot(),parentRealRootedPath.getRelativePath().getRelative(baseName));
+    if (!parentFileValue.exists()) {
+      return Pair.of(realRootedPath,FileStateValue.NONEXISTENT_FILE_STATE_NODE);
+    }
   }
   FileStateValue realFileStateValue=(FileStateValue)env.getValue(FileStateValue.key(realRootedPath));
   if (realFileStateValue == null) {
@@ -18,7 +21,7 @@
   }
   if (realFileStateValue.getType() != FileStateValue.Type.NONEXISTENT && parentFileValue != null && !parentFileValue.isDirectory()) {
     String type=realFileStateValue.getType().toString().toLowerCase();
-    String message=type + " " + rootedPath.asPath()+ " exists but its parent "+ "directory "+ parentFileValue.realRootedPath().asPath()+ " doesn't exist.";
+    String message=type + " " + rootedPath.asPath()+ " exists but its parent "+ "path "+ parentFileValue.realRootedPath().asPath()+ " isn't an existing directory.";
     throw new FileFunctionException(new InconsistentFilesystemException(message),Transience.TRANSIENT);
   }
   return Pair.of(realRootedPath,realFileStateValue);
