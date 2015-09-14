@@ -1,0 +1,17 @@
+{
+  final List<String> idents=new ArrayList<>();
+  final List<String> params=new ArrayList<>();
+class IdentVisitor extends SyntaxTreeVisitor {
+    @Override public void visit(    Identifier node){
+      idents.add(node.getName());
+    }
+    @Override public void visit(    Parameter<?,?> node){
+      params.add(node.toString());
+    }
+  }
+  BuildFileAST ast=parse("a = b","def c(p1, p2=4, **p3):","  for d in e: f(g)","  return h + i.j()");
+  IdentVisitor visitor=new IdentVisitor();
+  ast.accept(visitor);
+  assertThat(idents).containsExactly("a","b","c","d","e","f","g","h","i","j").inOrder();
+  assertThat(params).containsExactly("p1","p2=4","**p3").inOrder();
+}
