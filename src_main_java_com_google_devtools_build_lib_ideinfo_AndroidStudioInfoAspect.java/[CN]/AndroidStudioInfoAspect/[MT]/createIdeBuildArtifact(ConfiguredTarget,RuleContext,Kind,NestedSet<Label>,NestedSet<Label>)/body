@@ -6,10 +6,12 @@
   outputBuilder.setLabel(base.getLabel().toString());
   outputBuilder.setBuildFile(ruleContext.getRule().getPackage().getBuildFile().getPath().toString());
   outputBuilder.setKind(ruleKind);
-  if (ruleKind == RuleIdeInfo.Kind.JAVA_LIBRARY) {
+  outputBuilder.addAllDependencies(transform(directDependencies,LABEL_TO_STRING));
+  outputBuilder.addAllTransitiveDependencies(transform(transitiveDependencies,LABEL_TO_STRING));
+  if (ruleKind == Kind.JAVA_LIBRARY) {
     outputBuilder.setJavaRuleIdeInfo(makeJavaRuleIdeInfo(base));
   }
- else   if (ruleKind == RuleIdeInfo.Kind.ANDROID_SDK) {
+ else   if (ruleKind == Kind.ANDROID_SDK) {
     outputBuilder.setAndroidSdkRuleInfo(makeAndroidSdkRuleInfo(ruleContext,base.getProvider(AndroidSdkProvider.class)));
   }
   final RuleIdeInfo ruleIdeInfo=outputBuilder.build();

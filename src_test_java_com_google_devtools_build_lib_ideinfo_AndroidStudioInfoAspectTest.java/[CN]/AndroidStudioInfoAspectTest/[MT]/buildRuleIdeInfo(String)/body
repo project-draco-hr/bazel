@@ -1,0 +1,16 @@
+{
+  AnalysisResult analysisResult=update(ImmutableList.of(target),ImmutableList.of(AndroidStudioInfoAspect.NAME),false,LOADING_PHASE_THREADS,true,new EventBus());
+  Collection<AspectValue> aspects=analysisResult.getAspects();
+  assertThat(aspects.size()).isEqualTo(1);
+  AspectValue value=aspects.iterator().next();
+  assertThat(value.getAspect().getName()).isEqualTo(AndroidStudioInfoAspect.NAME);
+  AndroidStudioInfoFilesProvider provider=value.getAspect().getProvider(AndroidStudioInfoFilesProvider.class);
+  Iterable<Artifact> artifacts=provider.getIdeBuildFiles();
+  ImmutableMap.Builder<String,RuleIdeInfo> builder=ImmutableMap.builder();
+  for (  Artifact artifact : artifacts) {
+    BinaryFileWriteAction generatingAction=(BinaryFileWriteAction)getGeneratingAction(artifact);
+    RuleIdeInfo ruleIdeInfo=RuleIdeInfo.parseFrom(generatingAction.getSource().openStream());
+    builder.put(ruleIdeInfo.getLabel(),ruleIdeInfo);
+  }
+  return builder.build();
+}
