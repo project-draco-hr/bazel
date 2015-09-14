@@ -1,44 +1,31 @@
 {
+  Executor executor=actionExecutionContext.getExecutor();
+  if (executor.reportsSubcommands()) {
+    executor.reportSubcommand(Label.print(spawn.getOwner().getLabel()) + " [" + spawn.getResourceOwner().prettyPrint()+ "]",spawn.asShellCommand(executor.getExecRoot()));
+  }
   if (!incrementalHeuristic.shouldUseWorkers()) {
-    SpawnActionContext context=actionExecutionContext.getExecutor().getSpawnActionContext("");
-    if (context != this) {
-      context.exec(spawn,actionExecutionContext);
-      return;
-    }
+    standaloneStrategy.exec(spawn,actionExecutionContext);
+    return;
+  }
+  if (!Iterables.getLast(spawn.getArguments()).startsWith("@")) {
+    standaloneStrategy.exec(spawn,actionExecutionContext);
+    return;
   }
   String paramFile=Iterables.getLast(spawn.getArguments());
-  if (!Iterables.getLast(spawn.getArguments()).startsWith("@")) {
-    throw new IllegalStateException("Must have parameter file as last arg, got args: " + spawn.getArguments());
-  }
   FileOutErr outErr=actionExecutionContext.getFileOutErr();
   ImmutableList<String> args=ImmutableList.<String>builder().addAll(spawn.getArguments().subList(0,spawn.getArguments().size() - 1)).add("--persistent_worker").build();
   ImmutableMap<String,String> env=spawn.getEnvironment();
   Path workDir=actionExecutionContext.getExecutor().getExecRoot();
-  WorkerKey key=new WorkerKey(args,env,workDir);
+  WorkerKey key=new WorkerKey(args,env,workDir,spawn.getMnemonic());
   try {
-    Worker worker=workers.borrowObject(key);
-    try {
-      WorkRequest.newBuilder().addArguments(paramFile).build().writeDelimitedTo(worker.getOutputStream());
-      worker.getOutputStream().flush();
-      WorkResponse response=WorkResponse.parseDelimitedFrom(worker.getInputStream());
-      if (response == null) {
-        throw new UserExecException("Worker process did not return a correct WorkResponse. This is probably caused by a " + "bug in the worker, writing unexpected other data to stdout.");
-      }
-      String trimmedOutput=response.getOutput().trim();
-      if (!trimmedOutput.isEmpty()) {
-        outErr.getErrorStream().write(trimmedOutput.getBytes());
-      }
-      if (response.getExitCode() != 0) {
-        throw new UserExecException(String.format("Worker process failed with exit code: %d.",response.getExitCode()));
-      }
-    }
-  finally {
-      if (worker != null) {
-        workers.returnObject(key,worker);
-      }
+    WorkResponse response=execInWorker(executor.getEventHandler(),paramFile,key,maxRetries);
+    outErr.getErrorStream().write(response.getOutputBytes().toByteArray());
+    if (response.getExitCode() != 0) {
+      throw new UserExecException(String.format("Worker process failed with exit code: %d.",response.getExitCode()));
     }
   }
  catch (  Exception e) {
-    throw new UserExecException(e.getMessage(),e);
+    String message=CommandFailureUtils.describeCommandFailure(verboseFailures,spawn.getArguments(),env,workDir.getPathString());
+    throw new UserExecException(message,e);
   }
 }

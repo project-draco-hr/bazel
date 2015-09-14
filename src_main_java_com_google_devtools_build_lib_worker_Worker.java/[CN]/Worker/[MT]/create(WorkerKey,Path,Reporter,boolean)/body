@@ -1,0 +1,20 @@
+{
+  Preconditions.checkNotNull(key);
+  Preconditions.checkNotNull(logDir);
+  int workerId=pidCounter.getAndIncrement();
+  Path logFile=logDir.getRelative("worker-" + workerId + "-"+ key.getMnemonic()+ ".log");
+  ProcessBuilder processBuilder=new ProcessBuilder(key.getArgs().toArray(new String[0])).directory(key.getWorkDir().getPathFile()).redirectError(Redirect.appendTo(logFile.getPathFile()));
+  processBuilder.environment().putAll(key.getEnv());
+  final Process process=processBuilder.start();
+  Thread shutdownHook=new Thread(){
+    @Override public void run(){
+      process.destroy();
+    }
+  }
+;
+  Runtime.getRuntime().addShutdownHook(shutdownHook);
+  if (verbose) {
+    reporter.handle(Event.info("Created new " + key.getMnemonic() + " worker (id "+ workerId+ "), logging to "+ logFile));
+  }
+  return new Worker(process,shutdownHook,workerId);
+}
