@@ -1,15 +1,15 @@
 {
   if (env == null) {
-    return args;
+    return new AttributesAndLocation(args,location);
   }
   boolean hasName=args.containsKey("generator_name");
   boolean hasFunc=args.containsKey("generator_function");
   if (hasName || hasFunc) {
-    return args;
+    return new AttributesAndLocation(args,location);
   }
   Pair<FuncallExpression,BaseFunction> topCall=env.getTopCall();
   if (topCall == null || !(topCall.second instanceof UserDefinedFunction)) {
-    return args;
+    return new AttributesAndLocation(args,location);
   }
   FuncallExpression generator=topCall.first;
   BaseFunction function=topCall.second;
@@ -19,10 +19,13 @@
   builder.put("generator_name",(name == null) ? args.get("name") : name);
   builder.put("generator_function",function.getName());
   builder.put("generator_location",Location.printPathAndLine(generator.getLocation()));
+  if (generator.getLocation() != null) {
+    location=generator.getLocation();
+  }
   try {
-    return builder.build();
+    return new AttributesAndLocation(builder.build(),location);
   }
  catch (  IllegalArgumentException ex) {
-    return args;
+    return new AttributesAndLocation(args,location);
   }
 }
