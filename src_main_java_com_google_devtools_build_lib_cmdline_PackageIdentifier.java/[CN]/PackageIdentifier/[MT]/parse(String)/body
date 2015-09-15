@@ -2,9 +2,12 @@
   String repo;
   String packageName;
   int packageStartPos=input.indexOf("//");
-  if (packageStartPos > 0) {
+  if (input.startsWith("@") && packageStartPos > 0) {
     repo=input.substring(0,packageStartPos);
     packageName=input.substring(packageStartPos + 2);
+  }
+ else   if (input.startsWith("@")) {
+    throw new LabelSyntaxException("invalid package name '" + input + "'");
   }
  else   if (packageStartPos == 0) {
     repo=PackageIdentifier.DEFAULT_REPOSITORY;
@@ -16,11 +19,11 @@
   }
   String error=RepositoryName.validate(repo);
   if (error != null) {
-    throw new TargetParsingException(error);
+    throw new LabelSyntaxException(error);
   }
   error=LabelValidator.validatePackageName(packageName);
   if (error != null) {
-    throw new TargetParsingException(error);
+    throw new LabelSyntaxException(error);
   }
   return new PackageIdentifier(repo,new PathFragment(packageName));
 }

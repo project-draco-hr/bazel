@@ -1,11 +1,14 @@
 {
-  String error=LabelValidator.validatePackageName(packageName);
-  if (error != null) {
-    error="invalid package name '" + packageName + "': "+ error;
-    if (packageName.endsWith("/" + name)) {
+  String error=null;
+  try {
+    return PackageIdentifier.parse(packageIdentifier);
+  }
+ catch (  LabelSyntaxException e) {
+    error=e.getMessage();
+    error="invalid package name '" + packageIdentifier + "': "+ error;
+    if (packageIdentifier.endsWith("/" + name)) {
       error+=" (perhaps you meant \":" + name + "\"?)";
     }
-    throw new SyntaxException(error);
+    throw new LabelSyntaxException(error);
   }
-  return new PathFragment(packageName);
 }
