@@ -1,0 +1,18 @@
+{
+  this.env=env;
+  env.getEventBus().register(this);
+  if (workers == null) {
+    Path logDir=env.getRuntime().getOutputBase().getRelative("worker-logs");
+    try {
+      logDir.createDirectory();
+    }
+ catch (    IOException e) {
+      env.getReporter().handle(Event.error("Could not create directory for worker logs: " + logDir));
+    }
+    GenericKeyedObjectPoolConfig config=new GenericKeyedObjectPoolConfig();
+    config.setTimeBetweenEvictionRunsMillis(10 * 1000);
+    workers=new WorkerPool(new WorkerFactory(),config);
+    workers.setReporter(env.getReporter());
+    workers.setLogDirectory(logDir);
+  }
+}

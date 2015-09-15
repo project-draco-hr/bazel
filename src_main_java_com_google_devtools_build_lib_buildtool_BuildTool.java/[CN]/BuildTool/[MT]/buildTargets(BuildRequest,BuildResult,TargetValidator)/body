@@ -6,9 +6,9 @@
   LoadingResult loadingResult=null;
   BuildConfigurationCollection configurations=null;
   try {
-    getEventBus().post(new BuildStartingEvent(runtime.getOutputFileSystem(),request));
+    env.getEventBus().post(new BuildStartingEvent(runtime.getOutputFileSystem(),request));
     LOG.info("Build identifier: " + request.getId());
-    executionTool=new ExecutionTool(runtime,request);
+    executionTool=new ExecutionTool(env,request);
     if (needsExecutionPhase(request.getBuildOptions())) {
       executionTool.init();
     }
@@ -19,11 +19,11 @@
         throw new InvalidConfigurationException("The experimental setting to select multiple CPUs is only supported for 'build' and " + "'test' right now!");
       }
     }
-    configurations=getConfigurations(buildOptions,request.getMultiCpus(),request.getViewOptions().keepGoing);
-    getEventBus().post(new ConfigurationsCreatedEvent(configurations));
+    configurations=runtime.getSkyframeExecutor().createConfigurations(runtime.getConfigurationFactory(),buildOptions,runtime.getDirectories(),request.getMultiCpus(),request.getViewOptions().keepGoing);
+    env.getEventBus().post(new ConfigurationsCreatedEvent(configurations));
     runtime.throwPendingException();
     if (configurations.getTargetConfigurations().size() == 1) {
-      getEventBus().post(new MakeEnvironmentEvent(configurations.getTargetConfigurations().get(0).getMakeEnvironment()));
+      env.getEventBus().post(new MakeEnvironmentEvent(configurations.getTargetConfigurations().get(0).getMakeEnvironment()));
     }
     LOG.info("Configurations created");
     AnalysisResult analysisResult=runAnalysisPhase(request,loadingResult,configurations);
@@ -33,7 +33,7 @@
     reportTargets(analysisResult);
     if (needsExecutionPhase(request.getBuildOptions())) {
       runtime.getSkyframeExecutor().injectTopLevelContext(request.getTopLevelArtifactContext());
-      executionTool.executeBuild(request.getId(),analysisResult,result,runtime.getSkyframeExecutor(),configurations,transformPackageRoots(loadingResult.getPackageRoots()));
+      executionTool.executeBuild(request.getId(),analysisResult,result,configurations,transformPackageRoots(loadingResult.getPackageRoots()));
     }
     String delayedErrorMsg=analysisResult.getError();
     if (delayedErrorMsg != null) {
@@ -52,7 +52,7 @@
     if (executionTool != null) {
       executionTool.shutdown();
     }
-    getEventBus().post(new BuildInfoEvent(runtime.getworkspaceStatusActionFactory().createDummyWorkspaceStatus()));
+    env.getEventBus().post(new BuildInfoEvent(runtime.getworkspaceStatusActionFactory().createDummyWorkspaceStatus()));
   }
   if (loadingResult != null && loadingResult.hasTargetPatternError()) {
     throw new BuildFailedException("execution phase successful, but there were errors " + "parsing the target pattern");

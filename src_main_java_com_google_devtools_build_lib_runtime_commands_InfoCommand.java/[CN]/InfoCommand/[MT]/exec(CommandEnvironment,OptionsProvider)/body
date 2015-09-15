@@ -1,0 +1,85 @@
+{
+  final BlazeRuntime runtime=env.getRuntime();
+  env.getReporter().switchToAnsiAllowingHandler();
+  Options infoOptions=optionsProvider.getOptions(Options.class);
+  OutErr outErr=env.getReporter().getOutErr();
+  Supplier<BuildConfiguration> configurationSupplier=new Supplier<BuildConfiguration>(){
+    private BuildConfiguration configuration;
+    @Override public BuildConfiguration get(){
+      if (configuration != null) {
+        return configuration;
+      }
+      try {
+        runtime.setupPackageCache(optionsProvider.getOptions(PackageCacheOptions.class),runtime.getDefaultsPackageContent(optionsProvider));
+        configuration=runtime.getConfigurations(optionsProvider).getTargetConfigurations().get(0);
+        return configuration;
+      }
+ catch (      InvalidConfigurationException e) {
+        env.getReporter().handle(Event.error(e.getMessage()));
+        throw new ExitCausingRuntimeException(ExitCode.COMMAND_LINE_ERROR);
+      }
+catch (      AbruptExitException e) {
+        throw new ExitCausingRuntimeException("unknown error: " + e.getMessage(),e.getExitCode());
+      }
+catch (      InterruptedException e) {
+        env.getReporter().handle(Event.error("interrupted"));
+        throw new ExitCausingRuntimeException(ExitCode.INTERRUPTED);
+      }
+    }
+  }
+;
+  Map<String,BlazeModule.InfoItem> items=getInfoItemMap(runtime,optionsProvider);
+  try {
+    if (infoOptions.showMakeEnvironment) {
+      Map<String,String> makeEnv=configurationSupplier.get().getMakeEnvironment();
+      for (      Map.Entry<String,String> entry : makeEnv.entrySet()) {
+        BlazeModule.InfoItem item=new MakeInfoItem(entry.getKey(),entry.getValue());
+        items.put(item.getName(),item);
+      }
+    }
+    List<String> residue=optionsProvider.getResidue();
+    if (residue.size() > 1) {
+      env.getReporter().handle(Event.error("at most one key may be specified"));
+      return ExitCode.COMMAND_LINE_ERROR;
+    }
+    String key=residue.size() == 1 ? residue.get(0) : null;
+    if (key != null) {
+      byte[] value;
+      if (items.containsKey(key)) {
+        value=items.get(key).get(configurationSupplier);
+      }
+ else {
+        env.getReporter().handle(Event.error("unknown key: '" + key + "'"));
+        return ExitCode.COMMAND_LINE_ERROR;
+      }
+      try {
+        outErr.getOutputStream().write(value);
+        outErr.getOutputStream().flush();
+      }
+ catch (      IOException e) {
+        env.getReporter().handle(Event.error("Cannot write info block: " + e.getMessage()));
+        return ExitCode.ANALYSIS_FAILURE;
+      }
+    }
+ else {
+      configurationSupplier.get();
+      for (      BlazeModule.InfoItem infoItem : items.values()) {
+        if (infoItem.isHidden()) {
+          continue;
+        }
+        outErr.getOutputStream().write((infoItem.getName() + ": ").getBytes(StandardCharsets.UTF_8));
+        outErr.getOutputStream().write(infoItem.get(configurationSupplier));
+      }
+    }
+  }
+ catch (  AbruptExitException e) {
+    return e.getExitCode();
+  }
+catch (  ExitCausingRuntimeException e) {
+    return e.getExitCode();
+  }
+catch (  IOException e) {
+    return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
+  }
+  return ExitCode.SUCCESS;
+}

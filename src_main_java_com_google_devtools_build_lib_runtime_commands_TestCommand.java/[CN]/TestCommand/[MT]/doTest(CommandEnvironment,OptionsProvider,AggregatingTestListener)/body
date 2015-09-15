@@ -1,0 +1,22 @@
+{
+  BlazeRuntime runtime=env.getRuntime();
+  List<String> targets=ProjectFileSupport.getTargets(runtime,options);
+  BuildRequest request=BuildRequest.create(getClass().getAnnotation(Command.class).name(),options,runtime.getStartupOptionsProvider(),targets,env.getReporter().getOutErr(),runtime.getCommandId(),runtime.getCommandStartTime());
+  request.setRunTests();
+  BuildResult buildResult=new BuildTool(env).processRequest(request,null);
+  Collection<ConfiguredTarget> testTargets=buildResult.getTestTargets();
+  if (buildResult.getSuccessfulTargets() == null) {
+    env.getReporter().handle(Event.error("Couldn't start the build. Unable to run tests"));
+    return buildResult.getSuccess() ? ExitCode.PARSING_FAILURE : buildResult.getExitCondition();
+  }
+  if (testTargets.isEmpty()) {
+    env.getReporter().handle(Event.error(null,"No test targets were found, yet testing was requested"));
+    return buildResult.getSuccess() ? ExitCode.NO_TESTS_FOUND : buildResult.getExitCondition();
+  }
+  boolean buildSuccess=buildResult.getSuccess();
+  boolean testSuccess=analyzeTestResults(testTargets,testListener,options);
+  if (testSuccess && !buildSuccess) {
+    printer.printLn(AnsiTerminalPrinter.Mode.ERROR + "One or more non-test targets failed to build.\n" + AnsiTerminalPrinter.Mode.DEFAULT);
+  }
+  return buildSuccess ? (testSuccess ? ExitCode.SUCCESS : ExitCode.TESTS_FAILED) : buildResult.getExitCondition();
+}

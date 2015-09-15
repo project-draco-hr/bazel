@@ -1,0 +1,27 @@
+{
+  OutputStream out=null;
+  boolean recordFullProfilerData=false;
+  ProfiledTaskKinds profiledTasks=ProfiledTaskKinds.NONE;
+  try {
+    if (options.profilePath != null) {
+      Path profilePath=getWorkspace().getRelative(options.profilePath);
+      recordFullProfilerData=options.recordFullProfilerData;
+      out=new BufferedOutputStream(profilePath.getOutputStream(),1024 * 1024);
+      env.getReporter().handle(Event.info("Writing profile data to '" + profilePath + "'"));
+      profiledTasks=ProfiledTaskKinds.ALL;
+    }
+ else     if (options.alwaysProfileSlowOperations) {
+      recordFullProfilerData=false;
+      out=null;
+      profiledTasks=ProfiledTaskKinds.SLOWEST;
+    }
+    if (profiledTasks != ProfiledTaskKinds.NONE) {
+      Profiler.instance().start(profiledTasks,out,"Blaze profile for " + getOutputBase() + " at "+ new Date()+ ", build ID: "+ buildID,recordFullProfilerData,clock,execStartTimeNanos);
+      return true;
+    }
+  }
+ catch (  IOException e) {
+    env.getReporter().handle(Event.error("Error while creating profile file: " + e.getMessage()));
+  }
+  return false;
+}

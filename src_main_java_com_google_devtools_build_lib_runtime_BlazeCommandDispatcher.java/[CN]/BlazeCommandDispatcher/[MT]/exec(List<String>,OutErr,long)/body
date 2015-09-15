@@ -2,7 +2,7 @@
   long execStartTimeNanos=runtime.getClock().nanoTime();
   runtime.recordCommandStartTime(firstContactTime);
   runtime.getTimestampGranularityMonitor().setCommandStartTime();
-  runtime.initEventBus();
+  CommandEnvironment env=runtime.initCommand();
   if (args.isEmpty()) {
     args=HELP_COMMAND;
   }
@@ -19,7 +19,7 @@
   AbruptExitException exitCausingException=null;
   for (  BlazeModule module : runtime.getBlazeModules()) {
     try {
-      module.beforeCommand(runtime,commandAnnotation);
+      module.beforeCommand(runtime,commandAnnotation,env);
     }
  catch (    AbruptExitException e) {
       outErr.printErrLn(e.getMessage());
@@ -74,7 +74,7 @@
   PrintStream savedOut=System.out;
   PrintStream savedErr=System.err;
   EventHandler handler=createEventHandler(outErr,eventHandlerOptions);
-  Reporter reporter=runtime.getReporter();
+  Reporter reporter=env.getReporter();
   reporter.addHandler(handler);
   EventHandler ansiAllowingHandler=null;
   if (!eventHandlerOptions.useColor()) {
@@ -94,8 +94,8 @@
       }
     }
     try {
-      runtime.beforeCommand(commandAnnotation,optionsParser,commonOptions,execStartTimeNanos);
-      command.editOptions(runtime,optionsParser);
+      runtime.beforeCommand(commandAnnotation,env,optionsParser,commonOptions,execStartTimeNanos);
+      command.editOptions(env,optionsParser);
     }
  catch (    AbruptExitException e) {
       reporter.handle(Event.error(e.getMessage()));
@@ -104,8 +104,8 @@
     for (    String warning : optionsParser.getWarnings()) {
       reporter.handle(Event.warn(warning));
     }
-    ExitCode outcome=command.exec(runtime,optionsParser);
-    outcome=runtime.precompleteCommand(outcome);
+    ExitCode outcome=command.exec(env,optionsParser);
+    outcome=runtime.precompleteCommand(env,outcome);
     numericExitCode=outcome.getNumericExitCode();
     return numericExitCode;
   }
@@ -120,7 +120,7 @@ catch (  Throwable e) {
     throw new ShutdownBlazeServerException(numericExitCode,e);
   }
  finally {
-    runtime.afterCommand(numericExitCode);
+    runtime.afterCommand(env,numericExitCode);
     Flushables.flushQuietly(outErr.getOutputStream());
     Flushables.flushQuietly(outErr.getErrorStream());
     System.setOut(savedOut);

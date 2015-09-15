@@ -1,0 +1,36 @@
+{
+  BlazeRuntime runtime=env.getRuntime();
+  if (runtime.getOutputService() != null) {
+    runtime.getOutputService().clean();
+  }
+  if (cleanOptions.expunge) {
+    LOG.info("Expunging...");
+    FileSystemUtils.deleteTreesBelow(outputBase);
+    FileSystemUtils.deleteTree(outputBase);
+  }
+ else   if (cleanOptions.expunge_async) {
+    LOG.info("Expunging asynchronously...");
+    String tempBaseName=outputBase.getBaseName() + "_tmp_" + ProcessUtils.getpid();
+    Path tempOutputBase=outputBase.getParentDirectory().getChild(tempBaseName);
+    outputBase.renameTo(tempOutputBase);
+    env.getReporter().handle(Event.info(null,"Output base moved to " + tempOutputBase + " for deletion"));
+    String command=String.format("exec >&- 2>&- <&- && (/usr/bin/setsid /bin/rm -rf %s &)&",ShellEscaper.escapeString(tempOutputBase.getPathString()));
+    LOG.info("Executing shell commmand " + ShellEscaper.escapeString(command));
+    new CommandBuilder().addArg(command).useShell(true).setWorkingDir(tempOutputBase.getParentDirectory()).build().execute();
+  }
+ else {
+    LOG.info("Output cleaning...");
+    runtime.clearCaches();
+    for (    String directory : new String[]{BlazeDirectories.RELATIVE_OUTPUT_PATH,runtime.getWorkspaceName()}) {
+      Path child=outputBase.getChild(directory);
+      if (child.exists()) {
+        LOG.finest("Cleaning " + child);
+        FileSystemUtils.deleteTreesBelow(child);
+      }
+    }
+  }
+  OutputDirectoryLinksUtils.removeOutputDirectoryLinks(runtime.getWorkspaceName(),runtime.getWorkspace(),runtime.getReporter(),symlinkPrefix);
+  if (cleanOptions.expunge || cleanOptions.expunge_async) {
+    throw new ShutdownBlazeServerException(0);
+  }
+}

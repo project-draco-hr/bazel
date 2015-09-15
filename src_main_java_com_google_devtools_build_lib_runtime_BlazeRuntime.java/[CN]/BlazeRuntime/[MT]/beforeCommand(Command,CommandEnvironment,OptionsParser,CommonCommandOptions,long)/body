@@ -1,0 +1,70 @@
+{
+  commandStartTime-=options.startupTime;
+  env.getEventBus().post(new GotOptionsEvent(startupOptionsProvider,optionsParser));
+  throwPendingException();
+  outputService=null;
+  BlazeModule outputModule=null;
+  for (  BlazeModule module : blazeModules) {
+    OutputService moduleService=module.getOutputService();
+    if (moduleService != null) {
+      if (outputService != null) {
+        throw new IllegalStateException(String.format("More than one module (%s and %s) returns an output service",module.getClass(),outputModule.getClass()));
+      }
+      outputService=moduleService;
+      outputModule=module;
+    }
+  }
+  skyframeExecutor.setBatchStatter(outputService == null ? null : outputService.getBatchStatter());
+  outputFileSystem=determineOutputFileSystem();
+  Path workspace=getWorkspace();
+  if (inWorkspace()) {
+    workingDirectory=workspace.getRelative(options.clientCwd);
+  }
+ else {
+    workspace=FileSystemUtils.getWorkingDirectory(directories.getFileSystem());
+    workingDirectory=workspace;
+  }
+  updateClientEnv(options.clientEnv,options.ignoreClientEnv);
+  loadingPhaseRunner.updatePatternEvaluator(workingDirectory.relativeTo(workspace));
+  skyframeExecutor.setActive(false);
+  skyframeExecutor.decideKeepIncrementalState(startupOptionsProvider.getOptions(BlazeServerStartupOptions.class).batch,optionsParser.getOptions(BuildView.Options.class));
+  long startupTimeNanos=options.startupTime * 1000000L;
+  if (initProfiler(env,options,this.getCommandId(),execStartTimeNanos - startupTimeNanos)) {
+    Profiler profiler=Profiler.instance();
+    profiler.logSimpleTaskDuration(execStartTimeNanos - startupTimeNanos,0,ProfilerTask.PHASE,ProfilePhase.LAUNCH.description);
+    profiler.logSimpleTaskDuration(execStartTimeNanos,0,ProfilerTask.PHASE,ProfilePhase.INIT.description);
+  }
+  if (options.memoryProfilePath != null) {
+    Path memoryProfilePath=getWorkingDirectory().getRelative(options.memoryProfilePath);
+    try {
+      MemoryProfiler.instance().start(memoryProfilePath.getOutputStream());
+    }
+ catch (    IOException e) {
+      env.getReporter().handle(Event.error("Error while creating memory profile file: " + e.getMessage()));
+    }
+  }
+  if (command.builds()) {
+    Map<String,String> testEnv=new TreeMap<>();
+    for (    Map.Entry<String,String> entry : optionsParser.getOptions(BuildConfiguration.Options.class).testEnvironment) {
+      testEnv.put(entry.getKey(),entry.getValue());
+    }
+    try {
+      for (      Map.Entry<String,String> entry : testEnv.entrySet()) {
+        if (entry.getValue() == null) {
+          String clientValue=clientEnv.get(entry.getKey());
+          if (clientValue != null) {
+            optionsParser.parse(OptionPriority.SOFTWARE_REQUIREMENT,"test environment variable from client environment",ImmutableList.of("--test_env=" + entry.getKey() + "="+ clientEnv.get(entry.getKey())));
+          }
+        }
+      }
+    }
+ catch (    OptionsParsingException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+  for (  BlazeModule module : blazeModules) {
+    module.handleOptions(optionsParser);
+  }
+  env.getEventBus().post(new CommandStartEvent(command.name(),commandId,clientEnv,workingDirectory));
+  storedExitCode.set(ExitCode.RESERVED.getNumericExitCode());
+}

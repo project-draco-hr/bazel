@@ -1,0 +1,149 @@
+{
+  BlazeRuntime runtime=env.getRuntime();
+  RunOptions runOptions=options.getOptions(RunOptions.class);
+  List<String> targetAndArgs=options.getResidue();
+  if (targetAndArgs.isEmpty()) {
+    env.getReporter().handle(Event.error("Must specify a target to run"));
+    return ExitCode.COMMAND_LINE_ERROR;
+  }
+  String targetString=targetAndArgs.get(0);
+  List<String> runTargetArgs=targetAndArgs.subList(1,targetAndArgs.size());
+  RunUnder runUnder=options.getOptions(BuildConfiguration.Options.class).runUnder;
+  OutErr outErr=env.getReporter().getOutErr();
+  List<String> targets=(runUnder != null) && (runUnder.getLabel() != null) ? ImmutableList.of(targetString,runUnder.getLabel().toString()) : ImmutableList.of(targetString);
+  BuildRequest request=BuildRequest.create(this.getClass().getAnnotation(Command.class).name(),options,runtime.getStartupOptionsProvider(),targets,outErr,runtime.getCommandId(),runtime.getCommandStartTime());
+  currentRunUnder=runUnder;
+  BuildResult result;
+  try {
+    result=processRequest(env,request);
+  }
+  finally {
+    currentRunUnder=null;
+  }
+  if (!result.getSuccess()) {
+    env.getReporter().handle(Event.error("Build failed. Not running target"));
+    return result.getExitCondition();
+  }
+  Collection<ConfiguredTarget> targetsBuilt=result.getSuccessfulTargets();
+  ConfiguredTarget targetToRun=null;
+  ConfiguredTarget runUnderTarget=null;
+  if (targetsBuilt != null) {
+    int maxTargets=runUnder != null && runUnder.getLabel() != null ? 2 : 1;
+    if (targetsBuilt.size() > maxTargets) {
+      env.getReporter().handle(Event.error(SINGLE_TARGET_MESSAGE));
+      return ExitCode.COMMAND_LINE_ERROR;
+    }
+    for (    ConfiguredTarget target : targetsBuilt) {
+      ExitCode targetValidation=fullyValidateTarget(runtime,target);
+      if (targetValidation != ExitCode.SUCCESS) {
+        return targetValidation;
+      }
+      if (runUnder != null && target.getLabel().equals(runUnder.getLabel())) {
+        if (runUnderTarget != null) {
+          env.getReporter().handle(Event.error(null,"Can't identify the run_under target from multiple options?"));
+          return ExitCode.COMMAND_LINE_ERROR;
+        }
+        runUnderTarget=target;
+      }
+ else       if (targetToRun == null) {
+        targetToRun=target;
+      }
+ else {
+        env.getReporter().handle(Event.error(SINGLE_TARGET_MESSAGE));
+        return ExitCode.COMMAND_LINE_ERROR;
+      }
+    }
+  }
+  if ((targetToRun == null) && (runUnderTarget != null)) {
+    targetToRun=runUnderTarget;
+  }
+  if (targetToRun == null) {
+    env.getReporter().handle(Event.error(NO_TARGET_MESSAGE));
+    return ExitCode.COMMAND_LINE_ERROR;
+  }
+  Path executablePath=Preconditions.checkNotNull(targetToRun.getProvider(FilesToRunProvider.class).getExecutable().getPath());
+  BuildConfiguration configuration=targetToRun.getConfiguration();
+  if (configuration == null) {
+    configuration=runtime.getView().getConfigurationCollection().getTargetConfigurations().get(0);
+  }
+  Path workingDir;
+  try {
+    workingDir=ensureRunfilesBuilt(runtime,targetToRun);
+  }
+ catch (  CommandException e) {
+    env.getReporter().handle(Event.error("Error creating runfiles: " + e.getMessage()));
+    return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
+  }
+  List<String> args=runTargetArgs;
+  FilesToRunProvider provider=targetToRun.getProvider(FilesToRunProvider.class);
+  RunfilesSupport runfilesSupport=provider == null ? null : provider.getRunfilesSupport();
+  if (runfilesSupport != null && runfilesSupport.getArgs() != null) {
+    List<String> targetArgs=runfilesSupport.getArgs();
+    if (!targetArgs.isEmpty()) {
+      args=Lists.newArrayListWithCapacity(targetArgs.size() + runTargetArgs.size());
+      args.addAll(targetArgs);
+      args.addAll(runTargetArgs);
+    }
+  }
+  PathFragment prettyExecutablePath=OutputDirectoryLinksUtils.getPrettyPath(executablePath,runtime.getWorkspaceName(),runtime.getWorkspace(),options.getOptions(BuildRequestOptions.class).symlinkPrefix);
+  List<String> cmdLine=new ArrayList<>();
+  if (runOptions.scriptPath == null) {
+    cmdLine.add(runtime.getDirectories().getExecRoot().getRelative(runtime.getBinTools().getExecPath(PROCESS_WRAPPER)).getPathString());
+    cmdLine.add("-1");
+    cmdLine.add("15");
+    cmdLine.add("-");
+    cmdLine.add("-");
+  }
+  List<String> prettyCmdLine=new ArrayList<>();
+  if (runUnder != null) {
+    String runUnderValue=runUnder.getValue();
+    if (runUnderTarget != null) {
+      runUnderValue=runUnderTarget.getProvider(FilesToRunProvider.class).getExecutable().getPath().getPathString();
+      List<String> opts=runUnder.getOptions();
+      if (!opts.isEmpty()) {
+        runUnderValue+=" " + ShellEscaper.escapeJoinAll(opts);
+      }
+    }
+    cmdLine.add(configuration.getShExecutable().getPathString());
+    cmdLine.add("-c");
+    cmdLine.add(runUnderValue + " " + executablePath.getPathString()+ " "+ ShellEscaper.escapeJoinAll(args));
+    prettyCmdLine.add(configuration.getShExecutable().getPathString());
+    prettyCmdLine.add("-c");
+    prettyCmdLine.add(runUnderValue + " " + prettyExecutablePath.getPathString()+ " "+ ShellEscaper.escapeJoinAll(args));
+  }
+ else {
+    cmdLine.add(executablePath.getPathString());
+    cmdLine.addAll(args);
+    prettyCmdLine.add(prettyExecutablePath.getPathString());
+    prettyCmdLine.addAll(args);
+  }
+  outErr.printErrLn("");
+  if (runOptions.scriptPath != null) {
+    String unisolatedCommand=CommandFailureUtils.describeCommand(CommandDescriptionForm.COMPLETE_UNISOLATED,cmdLine,null,workingDir.getPathString());
+    if (writeScript(runtime,runOptions.scriptPath,unisolatedCommand)) {
+      return ExitCode.SUCCESS;
+    }
+ else {
+      return ExitCode.RUN_FAILURE;
+    }
+  }
+  env.getReporter().handle(Event.info(null,"Running command line: " + ShellEscaper.escapeJoinAll(prettyCmdLine)));
+  com.google.devtools.build.lib.shell.Command command=new CommandBuilder().addArgs(cmdLine).setEnv(runtime.getClientEnv()).setWorkingDir(workingDir).build();
+  try {
+    env.getReporter().switchToAnsiAllowingHandler();
+    command.execute(com.google.devtools.build.lib.shell.Command.NO_INPUT,com.google.devtools.build.lib.shell.Command.NO_OBSERVER,outErr.getOutputStream(),outErr.getErrorStream(),true).getTerminationStatus().getExitCode();
+    return ExitCode.SUCCESS;
+  }
+ catch (  BadExitStatusException e) {
+    String message="Non-zero return code '" + e.getResult().getTerminationStatus().getExitCode() + "' from command: "+ e.getMessage();
+    env.getReporter().handle(Event.error(message));
+    return ExitCode.RUN_FAILURE;
+  }
+catch (  AbnormalTerminationException e) {
+    return ExitCode.INTERRUPTED;
+  }
+catch (  CommandException e) {
+    env.getReporter().handle(Event.error("Error running program: " + e.getMessage()));
+    return ExitCode.RUN_FAILURE;
+  }
+}

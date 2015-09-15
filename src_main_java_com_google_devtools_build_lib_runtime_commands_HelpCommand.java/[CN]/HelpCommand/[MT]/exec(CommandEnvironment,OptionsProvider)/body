@@ -1,0 +1,49 @@
+{
+  BlazeRuntime runtime=env.getRuntime();
+  OutErr outErr=env.getReporter().getOutErr();
+  Options helpOptions=options.getOptions(Options.class);
+  if (options.getResidue().isEmpty()) {
+    emitBlazeVersionInfo(outErr);
+    emitGenericHelp(runtime,outErr);
+    return ExitCode.SUCCESS;
+  }
+  if (options.getResidue().size() != 1) {
+    env.getReporter().handle(Event.error("You must specify exactly one command"));
+    return ExitCode.COMMAND_LINE_ERROR;
+  }
+  String helpSubject=options.getResidue().get(0);
+  if (helpSubject.equals("startup_options")) {
+    emitBlazeVersionInfo(outErr);
+    emitStartupOptions(outErr,helpOptions.helpVerbosity,runtime,getOptionCategories(runtime));
+    return ExitCode.SUCCESS;
+  }
+ else   if (helpSubject.equals("target-syntax")) {
+    emitBlazeVersionInfo(outErr);
+    emitTargetSyntaxHelp(outErr,getOptionCategories(runtime));
+    return ExitCode.SUCCESS;
+  }
+ else   if (helpSubject.equals("info-keys")) {
+    emitInfoKeysHelp(runtime,outErr);
+    return ExitCode.SUCCESS;
+  }
+ else   if (helpSubject.equals("completion")) {
+    emitCompletionHelp(runtime,outErr);
+    return ExitCode.SUCCESS;
+  }
+  BlazeCommand command=runtime.getCommandMap().get(helpSubject);
+  if (command == null) {
+    ConfiguredRuleClassProvider provider=runtime.getRuleClassProvider();
+    RuleClass ruleClass=provider.getRuleClassMap().get(helpSubject);
+    if (ruleClass != null && ruleClass.isDocumented()) {
+      outErr.printOut(BlazeRuleHelpPrinter.getRuleDoc(helpSubject,provider));
+      return ExitCode.SUCCESS;
+    }
+ else {
+      env.getReporter().handle(Event.error(null,"'" + helpSubject + "' is neither a command nor a build rule"));
+      return ExitCode.COMMAND_LINE_ERROR;
+    }
+  }
+  emitBlazeVersionInfo(outErr);
+  outErr.printOut(BlazeCommandUtils.getUsage(command.getClass(),getOptionCategories(runtime),helpOptions.helpVerbosity,runtime.getBlazeModules(),runtime.getRuleClassProvider()));
+  return ExitCode.SUCCESS;
+}
