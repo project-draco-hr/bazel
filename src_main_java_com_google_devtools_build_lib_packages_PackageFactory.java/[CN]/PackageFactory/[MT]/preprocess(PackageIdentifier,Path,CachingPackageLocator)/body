@@ -1,15 +1,9 @@
 {
   ParserInputSource inputSource;
-  try {
-    inputSource=ParserInputSource.create(buildFile);
-  }
- catch (  IOException e) {
-    List<Event> events=ImmutableList.of(Event.error(Location.fromFile(buildFile),e.getMessage()));
-    return Preprocessor.Result.transientError(buildFile.asFragment(),events);
-  }
+  inputSource=ParserInputSource.create(buildFile);
   Globber globber=createLegacyGlobber(buildFile.getParentDirectory(),packageId,locator);
   try {
-    return preprocess(packageId,buildFile,inputSource,globber);
+    return preprocess(packageId,inputSource,globber);
   }
   finally {
     globber.onCompletion();
