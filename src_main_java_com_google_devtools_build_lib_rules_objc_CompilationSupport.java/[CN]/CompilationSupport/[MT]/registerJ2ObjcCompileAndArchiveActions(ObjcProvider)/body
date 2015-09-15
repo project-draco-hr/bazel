@@ -11,7 +11,14 @@
       J2ObjcSource sourceToCompile=j2ObjcSource.getSourceType() == SourceType.JAVA && stripJ2ObjcDeadCode ? j2ObjcSource.toPrunedSource(ruleContext) : j2ObjcSource;
       IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.j2objcIntermediateArtifacts(ruleContext,sourceToCompile);
       CompilationArtifacts compilationArtifact=new CompilationArtifacts.Builder().addNonArcSrcs(sourceToCompile.getObjcSrcs()).setIntermediateArtifacts(intermediateArtifacts).setPchFile(Optional.<Artifact>absent()).build();
-      registerCompileAndArchiveActions(compilationArtifact,intermediateArtifacts,objcProvider,ruleContext.getConfiguration().isCodeCoverageEnabled());
+      Optional<CppModuleMap> moduleMap;
+      if (ObjcRuleClasses.objcConfiguration(ruleContext).moduleMapsEnabled()) {
+        moduleMap=Optional.of(ObjcRuleClasses.intermediateArtifacts(ruleContext).moduleMap());
+      }
+ else {
+        moduleMap=Optional.<CppModuleMap>absent();
+      }
+      registerCompileAndArchiveActions(compilationArtifact,intermediateArtifacts,objcProvider,moduleMap,ruleContext.getConfiguration().isCodeCoverageEnabled());
     }
   }
   return this;

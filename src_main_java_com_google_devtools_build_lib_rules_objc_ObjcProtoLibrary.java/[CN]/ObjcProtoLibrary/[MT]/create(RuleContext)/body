@@ -38,7 +38,7 @@
     searchPathEntriesBuilder.add(generatedProtoDir).addAll(Iterables.transform(protoGeneratedHeaders,PARENT_PATHFRAGMENT));
   }
   ImmutableSet<PathFragment> searchPathEntries=searchPathEntriesBuilder.build();
-  ObjcCommon common=new ObjcCommon.Builder(ruleContext).setCompilationArtifacts(compilationArtifacts).addUserHeaderSearchPaths(searchPathEntries).addDepObjcProviders(ruleContext.getPrerequisites(ObjcProtoLibraryRule.LIBPROTOBUF_ATTR,Mode.TARGET,ObjcProvider.class)).setIntermediateArtifacts(intermediateArtifacts).build();
+  ObjcCommon common=new ObjcCommon.Builder(ruleContext).setCompilationArtifacts(compilationArtifacts).addUserHeaderSearchPaths(searchPathEntries).addDepObjcProviders(ruleContext.getPrerequisites(ObjcProtoLibraryRule.LIBPROTOBUF_ATTR,Mode.TARGET,ObjcProvider.class)).setIntermediateArtifacts(intermediateArtifacts).setHasModuleMap().build();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().addAll(common.getCompiledArchive().asSet()).addAll(protoGeneratedSources).addAll(protoGeneratedHeaders);
   ObjcConfiguration configuration=ObjcRuleClasses.objcConfiguration(ruleContext);
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder().addUserHeaderSearchPaths(searchPathEntries).addCopts(configuration.getCopts()).addHeaders(protoGeneratedHeaders).setCompilationArtifacts(common.getCompilationArtifacts().get());

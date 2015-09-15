@@ -58,6 +58,11 @@
       objcProvider.add(FORCE_LOAD_FOR_XCODEGEN,"$(WORKSPACE_ROOT)/" + archive.getExecPath().getSafePathString());
     }
   }
+  if (hasModuleMap && ObjcRuleClasses.objcConfiguration(context).moduleMapsEnabled()) {
+    CppModuleMap moduleMap=intermediateArtifacts.moduleMap();
+    objcProvider.add(MODULE_MAP,moduleMap.getArtifact());
+    objcProvider.add(TOP_LEVEL_MODULE_MAP,moduleMap);
+  }
   objcProvider.addAll(LINKED_BINARY,linkedBinary.asSet()).addAll(BREAKPAD_FILE,breakpadFile.asSet());
   return new ObjcCommon(objcProvider.build(),compilationArtifacts);
 }

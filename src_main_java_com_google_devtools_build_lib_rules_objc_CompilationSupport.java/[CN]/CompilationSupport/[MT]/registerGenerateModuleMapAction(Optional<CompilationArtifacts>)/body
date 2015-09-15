@@ -1,0 +1,14 @@
+{
+  if (ObjcRuleClasses.objcConfiguration(ruleContext).moduleMapsEnabled()) {
+    Iterable<Artifact> publicHeaders=attributes.hdrs();
+    Iterable<Artifact> privateHeaders=ImmutableList.<Artifact>of();
+    if (compilationArtifacts.isPresent()) {
+      CompilationArtifacts artifacts=compilationArtifacts.get();
+      publicHeaders=Iterables.concat(publicHeaders,artifacts.getAdditionalHdrs());
+      privateHeaders=Iterables.concat(privateHeaders,artifacts.getPrivateHdrs());
+    }
+    CppModuleMap moduleMap=ObjcRuleClasses.intermediateArtifacts(ruleContext).moduleMap();
+    registerGenerateModuleMapAction(moduleMap,publicHeaders,privateHeaders);
+  }
+  return this;
+}

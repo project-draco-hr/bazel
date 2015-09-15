@@ -21,5 +21,12 @@
   }
   Artifact dotdFile=intermediateArtifacts.dotdFile(sourceFile);
   commandLine.add(IosSdkCommands.compileFlagsForClang(objcConfiguration)).add(IosSdkCommands.commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration)).add(objcConfiguration.getCoptsForCompilationMode()).addBeforeEachPath("-iquote",ObjcCommon.userHeaderSearchPaths(ruleContext.getConfiguration())).addBeforeEachExecPath("-include",compilationArtifacts.getPchFile().asSet()).addBeforeEachPath("-I",objcProvider.get(INCLUDE)).addBeforeEachPath("-isystem",objcProvider.get(INCLUDE_SYSTEM)).add(otherFlags).addFormatEach("-D%s",objcProvider.get(DEFINE)).add(coverageFlags.build()).add(objcConfiguration.getCopts()).add(attributes.copts()).add(attributes.optionsCopts()).addExecPath("-c",sourceFile).addExecPath("-o",objFile).add("-MD").addExecPath("-MF",dotdFile);
-  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("ObjcCompile").setExecutable(CLANG).setCommandLine(commandLine.build()).addInput(sourceFile).addInputs(additionalInputs.build()).addOutput(objFile).addOutputs(gcnoFiles.build()).addOutput(dotdFile).addTransitiveInputs(objcProvider.get(HEADER)).addInputs(compilationArtifacts.getPrivateHdrs()).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(compilationArtifacts.getPchFile().asSet()).build(ruleContext));
+  if (moduleMap.isPresent()) {
+    commandLine.add(attributes.enableModules() ? "-fmodules" : "-fmodule-maps").add("-iquote").add(moduleMap.get().getArtifact().getExecPath().getParentDirectory().toString()).add("-fmodule-name=" + moduleMap.get().getName());
+    if (attributes.enableModules()) {
+      String cachePath=ruleContext.getConfiguration().getGenfilesFragment() + "/_objc_module_cache";
+      commandLine.add("-fmodules-cache-path=" + cachePath);
+    }
+  }
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("ObjcCompile").setExecutable(CLANG).setCommandLine(commandLine.build()).addInput(sourceFile).addInputs(additionalInputs.build()).addOutput(objFile).addOutputs(gcnoFiles.build()).addOutput(dotdFile).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addInputs(compilationArtifacts.getPrivateHdrs()).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(compilationArtifacts.getPchFile().asSet()).build(ruleContext));
 }
