@@ -1,0 +1,18 @@
+{
+  Collection<Artifact> sourceJarsForJarFiles=provider.getSourceJarsForJarFiles();
+  Artifact sourceJar;
+  if (sourceJarsForJarFiles.size() > 0) {
+    sourceJar=sourceJarsForJarFiles.iterator().next();
+  }
+ else {
+    sourceJar=null;
+  }
+  for (  Artifact artifact : provider.getJarFiles()) {
+    LibraryArtifact.Builder libraryBuilder=LibraryArtifact.newBuilder();
+    libraryBuilder.setJar(makeArtifactLocation(artifact));
+    if (sourceJar != null) {
+      libraryBuilder.setSourceJar(makeArtifactLocation(sourceJar));
+    }
+    builder.addJars(libraryBuilder.build());
+  }
+}

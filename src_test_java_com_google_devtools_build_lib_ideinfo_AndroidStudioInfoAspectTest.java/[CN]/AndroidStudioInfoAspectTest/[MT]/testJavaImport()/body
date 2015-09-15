@@ -1,0 +1,11 @@
+{
+  scratch.file("com/google/example/BUILD","java_import(","   name = \"imp\",","   jars = [\"a.jar\", \"b.jar\"],","   srcjar = \"impsrc.jar\",",")","java_library(","   name = \"lib\",","   srcs = [\"Lib.java\"],","   deps = [\":imp\"],",")");
+  Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:lib");
+  final RuleIdeInfo libInfo=getRuleInfoAndVerifyLabel("//com/google/example:lib",ruleIdeInfos);
+  RuleIdeInfo impInfo=getRuleInfoAndVerifyLabel("//com/google/example:imp",ruleIdeInfos);
+  assertThat(impInfo.getKind()).isEqualTo(Kind.JAVA_IMPORT);
+  assertThat(libInfo.getDependenciesList()).containsExactly("//com/google/example:imp");
+  JavaRuleIdeInfo javaRuleIdeInfo=impInfo.getJavaRuleIdeInfo();
+  assertThat(javaRuleIdeInfo).isNotNull();
+  assertThat(transform(javaRuleIdeInfo.getJarsList(),LIBRARY_ARTIFACT_TO_STRING)).containsExactly("<jar:com/google/example/a.jar><source:com/google/example/impsrc.jar>","<jar:com/google/example/b.jar><source:com/google/example/impsrc.jar>");
+}
