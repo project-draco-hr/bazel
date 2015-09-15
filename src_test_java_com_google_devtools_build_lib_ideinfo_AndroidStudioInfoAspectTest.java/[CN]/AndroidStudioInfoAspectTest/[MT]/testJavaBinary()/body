@@ -1,0 +1,10 @@
+{
+  scratch.file("com/google/example/BUILD","java_library(","   name = \"foobar\",","   srcs = [\"FooBar.java\"],",")","java_binary(","   name = \"foobar-exe\",","   main_class = \"MyMainClass\",","   srcs = [\"FooBarMain.java\"],","   deps = [\":foobar\"],",")");
+  String target="//com/google/example:foobar-exe";
+  Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo(target);
+  RuleIdeInfo binaryInfo=getRuleInfoAndVerifyLabel(target,ruleIdeInfos);
+  assertThat(binaryInfo.getKind()).isEqualTo(Kind.JAVA_BINARY);
+  assertThat(relativePathsForSourcesOf(binaryInfo)).containsExactly("com/google/example/FooBarMain.java");
+  assertThat(binaryInfo.getDependenciesList()).containsExactly("//com/google/example:foobar");
+  assertThat(transform(binaryInfo.getJavaRuleIdeInfo().getJarsList(),LIBRARY_ARTIFACT_TO_STRING)).containsExactly("<jar:com/google/example/foobar-exe.jar><source:com/google/example/foobar-exe-src.jar>");
+}
