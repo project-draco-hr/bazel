@@ -1,0 +1,44 @@
+{
+  ThreadPoolExecutor executor=new ThreadPoolExecutor(2,2,0,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>());
+  QueueVisitorWithoutCriticalError visitor=new QueueVisitorWithoutCriticalError(executor);
+  final CountDownLatch latch=new CountDownLatch(1);
+  final AtomicBoolean sleepFinished=new AtomicBoolean(false);
+  final AtomicBoolean sleepInterrupted=new AtomicBoolean(false);
+  final Error error=new Error("bad!");
+  Runnable errorRunnable=new Runnable(){
+    @Override public void run(){
+      try {
+        latch.await(TestUtils.WAIT_TIMEOUT_MILLISECONDS,TimeUnit.MILLISECONDS);
+      }
+ catch (      InterruptedException expected) {
+      }
+      throw error;
+    }
+  }
+;
+  Runnable sleepRunnable=new Runnable(){
+    @Override public void run(){
+      latch.countDown();
+      try {
+        Thread.sleep(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+        sleepFinished.set(true);
+      }
+ catch (      InterruptedException unexpected) {
+        sleepInterrupted.set(true);
+      }
+    }
+  }
+;
+  visitor.enqueue(errorRunnable);
+  visitor.enqueue(sleepRunnable);
+  Error thrownError=null;
+  try {
+    visitor.work(true);
+  }
+ catch (  Error e) {
+    thrownError=e;
+  }
+  assertTrue(sleepInterrupted.get());
+  assertFalse(sleepFinished.get());
+  assertEquals(error,thrownError);
+}
