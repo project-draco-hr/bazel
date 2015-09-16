@@ -12,10 +12,8 @@
     clear();
   }
   skyframeAnalysisWasDiscarded=false;
-  ImmutableMap<PackageIdentifier,Path> packageRoots=loadingResult.getPackageRoots();
   this.configurations=configurations;
   skyframeBuildView.setTopLevelHostConfiguration(this.configurations.getHostConfiguration());
-  setArtifactRoots(packageRoots);
   List<TargetAndConfiguration> nodes=nodesForTargets(targets);
   List<ConfiguredTargetKey> targetSpecs=Lists.transform(nodes,new Function<TargetAndConfiguration,ConfiguredTargetKey>(){
     @Override public ConfiguredTargetKey apply(    TargetAndConfiguration node){
@@ -35,11 +33,15 @@
       throw new ViewCreationFailedException("Aspect '" + aspect + "' is unknown");
     }
   }
+  if (loadingEnabled) {
+    setArtifactRoots(loadingResult.getPackageRoots());
+  }
   prepareToBuild(new SkyframePackageRootResolver(skyframeExecutor));
   skyframeExecutor.injectWorkspaceStatusData();
   SkyframeAnalysisResult skyframeAnalysisResult;
   try {
     skyframeAnalysisResult=skyframeBuildView.configureTargets(targetSpecs,aspectKeys,eventBus,viewOptions.keepGoing);
+    setArtifactRoots(skyframeAnalysisResult.getPackageRoots());
   }
   finally {
     skyframeBuildView.clearInvalidatedConfiguredTargets();
@@ -52,7 +54,7 @@
     eventHandler.handle(Event.info(msg));
     LOG.info(msg);
   }
-  AnalysisResult result=createResult(loadingResult,topLevelOptions,viewOptions,skyframeAnalysisResult.getConfiguredTargets(),skyframeAnalysisResult.getAspects(),skyframeAnalysisResult.getWalkableGraph(),analysisSuccessful);
+  AnalysisResult result=createResult(loadingResult,topLevelOptions,viewOptions,skyframeAnalysisResult.getConfiguredTargets(),skyframeAnalysisResult.getAspects(),skyframeAnalysisResult.getWalkableGraph(),skyframeAnalysisResult.getPackageRoots(),analysisSuccessful);
   LOG.info("Finished analysis");
   return result;
 }

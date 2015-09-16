@@ -44,8 +44,15 @@
     callback.notifyTargets(targets.getTargets());
   }
   maybeReportDeprecation(eventHandler,targets.getTargets());
-  BaseLoadingResult result=doLoadingPhase(eventHandler,eventBus,targets.getTargets(),labelsToLoadUnconditionally,keepGoing,options.loadingPhaseThreads);
-  LoadingResult loadingResult=new LoadingResult(targets.hasError(),!result.isSuccesful(),result.getTargets(),testsToRun,collectPackageRoots(pkgLoader.getErrorFreeVisitedPackages()));
-  freeMemoryAfterLoading(callback,pkgLoader.getVisitedPackageNames());
-  return loadingResult;
+  BaseLoadingResult result;
+  if (enableLoading) {
+    result=doLoadingPhase(eventHandler,eventBus,targets.getTargets(),labelsToLoadUnconditionally,keepGoing,options.loadingPhaseThreads);
+    LoadingResult loadingResult=new LoadingResult(targets.hasError(),!result.isSuccesful(),result.getTargets(),testsToRun,collectPackageRoots(pkgLoader.getErrorFreeVisitedPackages()));
+    freeMemoryAfterLoading(callback,pkgLoader.getVisitedPackageNames());
+    return loadingResult;
+  }
+ else {
+    result=doSimpleLoadingPhase(eventHandler,eventBus,targets.getTargets(),keepGoing);
+    return new LoadingResult(targets.hasError(),!result.isSuccesful(),result.getTargets(),testsToRun,collectPackageRoots(new ArrayList<Package>()));
+  }
 }

@@ -9,12 +9,14 @@
   }
   ImmutableMap<Action,ConflictException> badActions=skyframeExecutor.findArtifactConflicts();
   Collection<AspectValue> goodAspects=Lists.newArrayListWithCapacity(values.size());
+  NestedSetBuilder<Package> packages=NestedSetBuilder.stableOrder();
   for (  AspectKey aspectKey : aspectKeys) {
     AspectValue value=(AspectValue)result.get(AspectValue.key(aspectKey));
     if (value == null) {
       continue;
     }
     goodAspects.add(value);
+    packages.addTransitive(value.getTransitivePackages());
   }
   Collection<ConfiguredTarget> goodCts=Lists.newArrayListWithCapacity(values.size());
   for (  ConfiguredTargetKey value : values) {
@@ -23,10 +25,11 @@
       continue;
     }
     goodCts.add(ctValue.getConfiguredTarget());
+    packages.addTransitive(ctValue.getTransitivePackages());
   }
   if (!result.hasError() && badActions.isEmpty()) {
     setDeserializedArtifactOwners();
-    return new SkyframeAnalysisResult(ImmutableList.copyOf(goodCts),result.getWalkableGraph(),ImmutableList.copyOf(goodAspects));
+    return new SkyframeAnalysisResult(ImmutableList.copyOf(goodCts),result.getWalkableGraph(),ImmutableList.copyOf(goodAspects),LoadingPhaseRunner.collectPackageRoots(packages.build().toCollection()));
   }
   if (!keepGoing) {
     for (    Map.Entry<Action,ConflictException> bad : badActions.entrySet()) {
@@ -107,5 +110,5 @@ catch (    ArtifactPrefixConflictException apce) {
     }
   }
   setDeserializedArtifactOwners();
-  return new SkyframeAnalysisResult(ImmutableList.copyOf(goodCts),result.getWalkableGraph(),ImmutableList.copyOf(goodAspects));
+  return new SkyframeAnalysisResult(ImmutableList.copyOf(goodCts),result.getWalkableGraph(),ImmutableList.copyOf(goodAspects),LoadingPhaseRunner.collectPackageRoots(packages.build().toCollection()));
 }
