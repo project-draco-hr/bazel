@@ -1,0 +1,44 @@
+{
+  String repository=skyKey.argument().toString();
+  ExternalPackage externalPackage=RepositoryFunction.getExternalPackage(env);
+  Rule repositoryRule=externalPackage.getRule(repository);
+  boolean foundRepoRule=repositoryRule != null && repositoryRule.getRuleClass().equals(MavenServerRule.NAME);
+  if (!foundRepoRule) {
+    if (repository.equals(MavenServerValue.DEFAULT_ID)) {
+      return new MavenServerValue();
+    }
+    throw new RepositoryFunctionException(new IOException("Could not find maven repository " + repository),Transience.TRANSIENT);
+  }
+  AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(repositoryRule);
+  String serverName=repositoryRule.getName();
+  String url=mapper.get("url",Type.STRING);
+  if (!mapper.has("settings_file",Type.STRING) || mapper.get("settings_file",Type.STRING).isEmpty()) {
+    return new MavenServerValue(serverName,url,new Server());
+  }
+  PathFragment settingsFilePath=new PathFragment(mapper.get("settings_file",Type.STRING));
+  RootedPath settingsPath=RootedPath.toRootedPath(getWorkspace().getRelative(settingsFilePath),PathFragment.EMPTY_FRAGMENT);
+  FileValue settingsFile=(FileValue)env.getValue(FileValue.key(settingsPath));
+  if (settingsFile == null) {
+    return null;
+  }
+  if (!settingsFile.exists()) {
+    throw new RepositoryFunctionException(new IOException("Could not find settings file " + settingsPath),Transience.TRANSIENT);
+  }
+  DefaultSettingsBuildingRequest request=new DefaultSettingsBuildingRequest();
+  request.setUserSettingsFile(new File(settingsFile.realRootedPath().asPath().toString()));
+  DefaultSettingsBuilder builder=(new DefaultSettingsBuilderFactory()).newInstance();
+  SettingsBuildingResult result;
+  try {
+    result=builder.build(request);
+  }
+ catch (  SettingsBuildingException e) {
+    throw new RepositoryFunctionException(new IOException("Error parsing settings file " + settingsFile + ": "+ e.getMessage()),Transience.TRANSIENT);
+  }
+  if (!result.getProblems().isEmpty()) {
+    throw new RepositoryFunctionException(new IOException("Errors interpreting settings file: " + Arrays.toString(result.getProblems().toArray())),Transience.PERSISTENT);
+  }
+  Settings settings=result.getEffectiveSettings();
+  Server server=settings.getServer(mapper.getName());
+  server=server == null ? new Server() : server;
+  return new MavenServerValue(serverName,url,server);
+}

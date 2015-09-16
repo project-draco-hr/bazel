@@ -1,16 +1,8 @@
 {
-  SkyKey packageKey=PackageValue.key(ExternalPackage.PACKAGE_IDENTIFIER);
-  PackageValue packageValue;
-  try {
-    packageValue=(PackageValue)env.getValueOrThrow(packageKey,NoSuchPackageException.class);
-  }
- catch (  NoSuchPackageException e) {
-    throw new RepositoryFunctionException(new BuildFileNotFoundException(ExternalPackage.PACKAGE_IDENTIFIER,"Could not load //external package"),Transience.PERSISTENT);
-  }
-  if (packageValue == null) {
+  ExternalPackage externalPackage=getExternalPackage(env);
+  if (externalPackage == null) {
     return null;
   }
-  ExternalPackage externalPackage=(ExternalPackage)packageValue.getPackage();
   Rule rule=externalPackage.getRepositoryInfo(repositoryName);
   if (rule == null) {
     throw new RepositoryFunctionException(new BuildFileContainsErrorsException(ExternalPackage.PACKAGE_IDENTIFIER,"The repository named '" + repositoryName + "' could not be resolved"),Transience.PERSISTENT);

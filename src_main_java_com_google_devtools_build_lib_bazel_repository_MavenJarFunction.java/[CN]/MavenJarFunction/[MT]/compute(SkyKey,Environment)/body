@@ -4,7 +4,27 @@
   if (rule == null) {
     return null;
   }
+  String url;
   AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(rule);
-  MavenDownloader downloader=createMavenDownloader(mapper);
+  boolean hasRepository=mapper.has("repository",Type.STRING) && !mapper.get("repository",Type.STRING).isEmpty();
+  boolean hasServer=mapper.has("server",Type.STRING) && !mapper.get("server",Type.STRING).isEmpty();
+  if (hasRepository && hasServer) {
+    throw new RepositoryFunctionException(new EvalException(Location.fromFile(getWorkspace().getRelative("WORKSPACE")),rule + " specifies both " + "'repository' and 'server', which are mutually exclusive options"),Transience.PERSISTENT);
+  }
+ else   if (hasRepository) {
+    url=mapper.get("repository",Type.STRING);
+  }
+ else {
+    String serverName=DEFAULT_SERVER;
+    if (mapper.has("server",Type.STRING) && !mapper.get("server",Type.STRING).isEmpty()) {
+      serverName=mapper.get("server",Type.STRING);
+    }
+    MavenServerValue mavenServerValue=(MavenServerValue)env.getValue(MavenServerValue.key(serverName));
+    if (mavenServerValue == null) {
+      return null;
+    }
+    url=mavenServerValue.getUrl();
+  }
+  MavenDownloader downloader=createMavenDownloader(mapper,url);
   return createOutputTree(downloader,env);
 }

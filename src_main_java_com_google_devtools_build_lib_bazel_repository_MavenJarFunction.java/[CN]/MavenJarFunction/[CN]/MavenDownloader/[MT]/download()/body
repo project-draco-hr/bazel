@@ -2,6 +2,7 @@
   MavenConnector connector=new MavenConnector(outputDirectory.getPathString());
   RepositorySystem system=connector.newRepositorySystem();
   RepositorySystemSession session=connector.newRepositorySystemSession(system);
+  RemoteRepository repository=new RemoteRepository.Builder(name,"default",url).build();
   ArtifactRequest artifactRequest=new ArtifactRequest();
   Artifact artifact;
   try {
@@ -11,7 +12,7 @@
     throw new IOException(e.getMessage());
   }
   artifactRequest.setArtifact(artifact);
-  artifactRequest.setRepositories(repositories);
+  artifactRequest.setRepositories(ImmutableList.of(repository));
   try {
     ArtifactResult artifactResult=system.resolveArtifact(session,artifactRequest);
     artifact=artifactResult.getArtifact();
