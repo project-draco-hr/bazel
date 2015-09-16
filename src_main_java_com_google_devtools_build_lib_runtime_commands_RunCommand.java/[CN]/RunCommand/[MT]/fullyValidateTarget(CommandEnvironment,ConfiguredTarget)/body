@@ -1,0 +1,25 @@
+{
+  String targetError=validateTarget(target.getTarget());
+  if (targetError != null) {
+    env.getReporter().handle(Event.error(targetError));
+    return ExitCode.COMMAND_LINE_ERROR;
+  }
+  Artifact executable=target.getProvider(FilesToRunProvider.class).getExecutable();
+  if (executable == null) {
+    env.getReporter().handle(Event.error(notExecutableError(target.getTarget())));
+    return ExitCode.COMMAND_LINE_ERROR;
+  }
+  Preconditions.checkState(executable != null,"Could not find executable for target %s",target);
+  Path executablePath=executable.getPath();
+  try {
+    if (!executablePath.exists() || !executablePath.isExecutable()) {
+      env.getReporter().handle(Event.error(null,"Non-existent or non-executable " + executablePath));
+      return ExitCode.BLAZE_INTERNAL_ERROR;
+    }
+  }
+ catch (  IOException e) {
+    env.getReporter().handle(Event.error("Error checking " + executablePath.getPathString() + ": "+ e.getMessage()));
+    return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
+  }
+  return ExitCode.SUCCESS;
+}

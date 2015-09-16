@@ -21,17 +21,17 @@
     for (    String name : options.getResidue()) {
       Path profileFile=runtime.getWorkingDirectory().getRelative(name);
       try {
-        ProfileInfo info=ProfileInfo.loadProfileVerbosely(profileFile,getInfoListener(runtime));
+        ProfileInfo info=ProfileInfo.loadProfileVerbosely(profileFile,getInfoListener(env));
         if (opts.dumpMode != null) {
-          dumpProfile(runtime,info,out,opts.dumpMode);
+          dumpProfile(env,info,out,opts.dumpMode);
         }
  else         if (opts.html) {
           Path htmlFile=profileFile.getParentDirectory().getChild(profileFile.getBaseName() + ".html");
           env.getReporter().handle(Event.info("Creating HTML output in " + htmlFile));
-          HtmlCreator.createHtml(info,htmlFile,getStatistics(runtime,info,opts),opts.htmlDetails,opts.htmlPixelsPerSecond);
+          HtmlCreator.createHtml(info,htmlFile,getStatistics(env,info,opts),opts.htmlDetails,opts.htmlPixelsPerSecond);
         }
  else {
-          createText(runtime,info,out,opts);
+          createText(env,info,out,opts);
         }
       }
  catch (      IOException e) {
