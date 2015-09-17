@@ -1,11 +1,8 @@
 {
   Preconditions.checkNotNull(buildRequest);
   Preconditions.checkNotNull(env);
-  if (sandboxingSupported == null) {
-    sandboxingSupported=NamespaceSandboxRunner.isSupported(runtime);
-  }
-  if (sandboxingSupported) {
-    return ImmutableList.<ActionContextProvider>of(new SandboxActionContextProvider(runtime,buildRequest,backgroundWorkers));
+  if (isSandboxingSupported(env.getRuntime())) {
+    return ImmutableList.<ActionContextProvider>of(new SandboxActionContextProvider(env,buildRequest,backgroundWorkers));
   }
   if (!buildRequest.getOptions(SandboxOptions.class).ignoreUnsupportedSandboxing && OS.getCurrent() == OS.LINUX) {
     env.getReporter().handle(Event.warn(SANDBOX_NOT_SUPPORTED_MESSAGE));

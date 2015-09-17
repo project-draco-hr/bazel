@@ -25,7 +25,7 @@
     workingDirectory=workspace;
   }
   loadingPhaseRunner.updatePatternEvaluator(workingDirectory.relativeTo(workspace));
-  updateClientEnv(options.clientEnv,options.ignoreClientEnv);
+  env.updateClientEnv(options.clientEnv,options.ignoreClientEnv);
   skyframeExecutor.setActive(false);
   skyframeExecutor.decideKeepIncrementalState(startupOptionsProvider.getOptions(BlazeServerStartupOptions.class).batch,optionsParser.getOptions(BuildView.Options.class));
   long startupTimeNanos=options.startupTime * 1000000L;
@@ -51,9 +51,9 @@
     try {
       for (      Map.Entry<String,String> entry : testEnv.entrySet()) {
         if (entry.getValue() == null) {
-          String clientValue=clientEnv.get(entry.getKey());
+          String clientValue=env.getClientEnv().get(entry.getKey());
           if (clientValue != null) {
-            optionsParser.parse(OptionPriority.SOFTWARE_REQUIREMENT,"test environment variable from client environment",ImmutableList.of("--test_env=" + entry.getKey() + "="+ clientEnv.get(entry.getKey())));
+            optionsParser.parse(OptionPriority.SOFTWARE_REQUIREMENT,"test environment variable from client environment",ImmutableList.of("--test_env=" + entry.getKey() + "="+ env.getClientEnv().get(entry.getKey())));
           }
         }
       }
@@ -65,6 +65,6 @@
   for (  BlazeModule module : blazeModules) {
     module.handleOptions(optionsParser);
   }
-  env.getEventBus().post(new CommandStartEvent(command.name(),commandId,clientEnv,workingDirectory));
+  env.getEventBus().post(new CommandStartEvent(command.name(),commandId,env.getClientEnv(),workingDirectory));
   storedExitCode.set(ExitCode.RESERVED.getNumericExitCode());
 }
