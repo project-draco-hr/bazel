@@ -1,14 +1,17 @@
 {
-  if (o instanceof Map<?,?> || o instanceof BaseFunction) {
-    return false;
-  }
- else   if (o instanceof List<?>) {
-    return isTuple((List<?>)o);
-  }
- else   if (o instanceof SkylarkValue) {
+  if (o instanceof SkylarkValue) {
     return ((SkylarkValue)o).isImmutable();
   }
- else {
-    return true;
+  if (!(o instanceof List<?>)) {
+    return isImmutable(o.getClass());
   }
+  if (!isTuple((List<?>)o)) {
+    return false;
+  }
+  for (  Object item : (List<?>)o) {
+    if (!isImmutable(item)) {
+      return false;
+    }
+  }
+  return true;
 }

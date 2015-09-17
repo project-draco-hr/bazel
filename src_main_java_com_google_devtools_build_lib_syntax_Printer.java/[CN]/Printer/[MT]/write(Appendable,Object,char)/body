@@ -2,14 +2,14 @@
   if (o == null) {
     throw new NullPointerException();
   }
+ else   if (o instanceof SkylarkValue) {
+    ((SkylarkValue)o).write(buffer,quotationMark);
+  }
  else   if (o instanceof String) {
     writeString(buffer,(String)o,quotationMark);
   }
  else   if (o instanceof Integer || o instanceof Double) {
     append(buffer,o.toString());
-  }
- else   if (o == Runtime.NONE) {
-    append(buffer,"None");
   }
  else   if (o == Boolean.TRUE) {
     append(buffer,"True");
@@ -19,11 +19,7 @@
   }
  else   if (o instanceof List<?>) {
     List<?> seq=(List<?>)o;
-    printList(buffer,seq,EvalUtils.isImmutable(seq),quotationMark);
-  }
- else   if (o instanceof SkylarkList) {
-    SkylarkList list=(SkylarkList)o;
-    printList(buffer,list.toList(),list.isTuple(),quotationMark);
+    printList(buffer,seq,EvalUtils.isTuple(seq),quotationMark);
   }
  else   if (o instanceof Map<?,?>) {
     Map<?,?> dict=(Map<?,?>)o;
@@ -35,28 +31,11 @@
     append(buffer,": ");
     write(buffer,entry.getValue(),quotationMark);
   }
- else   if (o instanceof SkylarkNestedSet) {
-    SkylarkNestedSet set=(SkylarkNestedSet)o;
-    append(buffer,"set(");
-    printList(buffer,set,"[",", ","]",null,quotationMark);
-    Order order=set.getOrder();
-    if (order != Order.STABLE_ORDER) {
-      append(buffer,", order = \"" + order.getName() + "\"");
-    }
-    append(buffer,")");
-  }
- else   if (o instanceof BaseFunction) {
-    BaseFunction func=(BaseFunction)o;
-    append(buffer,"<function " + func.getName() + ">");
-  }
- else   if (o instanceof Label) {
-    write(buffer,o.toString(),quotationMark);
-  }
  else   if (o instanceof PathFragment) {
     append(buffer,((PathFragment)o).getPathString());
   }
- else   if (o instanceof SkylarkValue) {
-    ((SkylarkValue)o).write(buffer,quotationMark);
+ else   if (o instanceof Class<?>) {
+    append(buffer,EvalUtils.getDataTypeNameFromClass((Class<?>)o));
   }
  else {
     append(buffer,o.toString());
