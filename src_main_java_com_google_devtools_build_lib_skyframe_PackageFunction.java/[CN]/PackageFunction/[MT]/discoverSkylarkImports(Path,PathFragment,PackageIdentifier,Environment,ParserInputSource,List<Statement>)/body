@@ -1,12 +1,18 @@
 {
   StoredEventHandler eventHandler=new StoredEventHandler();
-  BuildFileAST buildFileAST=BuildFileAST.parseBuildFile(inputSource,preludeStatements,eventHandler,false);
+  BuildFileAST buildFileAST=BuildFileAST.parseBuildFile(inputSource,preludeStatements,eventHandler,null,false);
   SkylarkImportResult importResult;
+  boolean includeRepositoriesFetched;
   if (eventHandler.hasErrors()) {
     importResult=new SkylarkImportResult(ImmutableMap.<PathFragment,Extension>of(),ImmutableList.<Label>of());
+    includeRepositoriesFetched=true;
   }
  else {
     importResult=fetchImportsFromBuildFile(buildFilePath,buildFileFragment,packageId,buildFileAST,env);
+    includeRepositoriesFetched=fetchIncludeRepositoryDeps(env,buildFileAST);
+  }
+  if (!includeRepositoriesFetched) {
+    return null;
   }
   return importResult;
 }
