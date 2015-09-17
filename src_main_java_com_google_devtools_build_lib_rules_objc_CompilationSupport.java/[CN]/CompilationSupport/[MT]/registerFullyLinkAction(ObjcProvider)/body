@@ -1,0 +1,6 @@
+{
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  Artifact archive=ruleContext.getImplicitOutputArtifact(FULLY_LINKED_LIB);
+  ImmutableList<Artifact> ccLibraries=ccLibraries(objcProvider);
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("ObjcLink").setExecutable(ObjcRuleClasses.LIBTOOL).setCommandLine(new CustomCommandLine.Builder().add("-static").add("-arch_only").add(objcConfiguration.getIosCpu()).add("-syslibroot").add(IosSdkCommands.sdkDir(objcConfiguration)).add("-o").add(archive.getExecPathString()).addExecPaths(objcProvider.get(LIBRARY)).addExecPaths(objcProvider.get(IMPORTED_LIBRARY)).addExecPaths(ccLibraries).build()).addInputs(ccLibraries).addTransitiveInputs(objcProvider.get(LIBRARY)).addTransitiveInputs(objcProvider.get(IMPORTED_LIBRARY)).addOutput(archive).build(ruleContext));
+}
