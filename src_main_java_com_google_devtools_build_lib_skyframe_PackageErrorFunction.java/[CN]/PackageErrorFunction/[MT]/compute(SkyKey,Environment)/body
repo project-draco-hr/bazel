@@ -1,0 +1,12 @@
+{
+  PackageIdentifier packageIdentifier=(PackageIdentifier)skyKey.argument();
+  try {
+    SkyKey packageKey=PackageValue.key(packageIdentifier);
+    Package pkg=((PackageValue)env.getValueOrThrow(packageKey,NoSuchPackageException.class)).getPackage();
+    Preconditions.checkState(pkg.containsErrors(),skyKey);
+    throw new PackageErrorFunctionException(new BuildFileContainsErrorsException(packageIdentifier),Transience.PERSISTENT);
+  }
+ catch (  NoSuchPackageException e) {
+    throw new IllegalStateException("Function should not have been called on package with exception",e);
+  }
+}

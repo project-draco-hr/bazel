@@ -13,9 +13,13 @@
     if (packageValue == null) {
       return ValuesMissing.INSTANCE;
     }
+    Package pkg=packageValue.getPackage();
+    if (pkg.containsErrors()) {
+      throw new BuildFileContainsErrorsException(label.getPackageIdentifier());
+    }
     packageLoadedSuccessfully=true;
     try {
-      target=packageValue.getPackage().getTarget(label.getName());
+      target=pkg.getTarget(label.getName());
     }
  catch (    NoSuchTargetException unexpected) {
       throw new IllegalStateException(unexpected);
@@ -25,17 +29,8 @@
     if (!e.hasTarget()) {
       throw e;
     }
-    Package pkg;
-    try {
-      PackageValue packageValue=(PackageValue)env.getValueOrThrow(packageKey,NoSuchPackageException.class);
-      if (packageValue == null) {
-        return ValuesMissing.INSTANCE;
-      }
-      throw new IllegalStateException("Expected bad package: " + label.getPackageIdentifier());
-    }
- catch (    NoSuchPackageException nsp) {
-      pkg=Preconditions.checkNotNull(nsp.getPackage(),label.getPackageIdentifier());
-    }
+    PackageValue packageValue=(PackageValue)Preconditions.checkNotNull(env.getValue(packageKey),label);
+    Package pkg=packageValue.getPackage();
     try {
       target=pkg.getTarget(label.getName());
     }

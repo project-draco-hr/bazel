@@ -5,8 +5,12 @@
     for (    Entry<Attribute,Label> entry : transitions.entries()) {
       SkyKey packageKey=PackageValue.key(entry.getValue().getPackageIdentifier());
       try {
-        PackageValue pkgValue=(PackageValue)env.getValueOrThrow(packageKey,NoSuchThingException.class);
+        PackageValue pkgValue=(PackageValue)env.getValueOrThrow(packageKey,NoSuchPackageException.class);
         if (pkgValue == null) {
+          continue;
+        }
+        Package pkg=pkgValue.getPackage();
+        if (pkg.containsErrors()) {
           continue;
         }
         Collection<Label> labels=AspectDefinition.visitAspectsIfRequired(target,entry.getKey(),pkgValue.getPackage().getTarget(entry.getValue().getName())).values();

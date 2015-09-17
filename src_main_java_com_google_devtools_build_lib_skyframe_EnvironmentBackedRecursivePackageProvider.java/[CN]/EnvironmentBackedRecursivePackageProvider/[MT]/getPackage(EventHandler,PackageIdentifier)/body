@@ -1,18 +1,18 @@
 {
   SkyKey pkgKey=PackageValue.key(packageName);
-  Package pkg;
-  try {
-    PackageValue pkgValue=(PackageValue)env.getValueOrThrow(pkgKey,NoSuchPackageException.class);
-    if (pkgValue == null) {
+  PackageValue pkgValue=(PackageValue)env.getValueOrThrow(pkgKey,NoSuchPackageException.class);
+  if (pkgValue == null) {
+    throw new MissingDepException();
+  }
+  Package pkg=pkgValue.getPackage();
+  if (pkg.containsErrors()) {
+    try {
+      env.getValueOrThrow(PackageErrorFunction.key(packageName),BuildFileContainsErrorsException.class);
+      Preconditions.checkState(env.valuesMissing(),"Should have thrown for %s",packageName);
       throw new MissingDepException();
     }
-    pkg=pkgValue.getPackage();
-  }
- catch (  NoSuchPackageException e) {
-    pkg=e.getPackage();
-    if (pkg == null) {
-      throw e;
+ catch (    BuildFileContainsErrorsException e) {
     }
   }
-  return pkg;
+  return pkgValue.getPackage();
 }

@@ -31,11 +31,15 @@ default :
 if (packageId.equals(ExternalPackage.PACKAGE_IDENTIFIER)) {
 return getExternalPackage(env,packageLookupValue.getRoot());
 }
-PackageValue externalPackage=(PackageValue)env.getValue(PackageValue.key(ExternalPackage.PACKAGE_IDENTIFIER));
+SkyKey externalPackageKey=PackageValue.key(ExternalPackage.PACKAGE_IDENTIFIER);
+PackageValue externalPackage=(PackageValue)env.getValue(externalPackageKey);
 if (externalPackage == null) {
 return null;
 }
 Package externalPkg=externalPackage.getPackage();
+if (externalPkg.containsErrors()) {
+throw new PackageFunctionException(new BuildFileContainsErrorsException(ExternalPackage.PACKAGE_IDENTIFIER),Transience.PERSISTENT);
+}
 PathFragment buildFileFragment=packageNameFragment.getChild("BUILD");
 RootedPath buildFileRootedPath=RootedPath.toRootedPath(packageLookupValue.getRoot(),buildFileFragment);
 FileValue buildFileValue;
@@ -101,11 +105,10 @@ return null;
 }
 Collection<Pair<String,Boolean>> globPatterns=legacyPkgBuilder.getGlobPatterns();
 Map<Label,Path> subincludes=legacyPkgBuilder.getSubincludes();
-Package pkg=legacyPkgBuilder.finishBuild();
-Event.replayEventsOn(env.getListener(),pkg.getEvents());
+Event.replayEventsOn(env.getListener(),legacyPkgBuilder.getEvents());
 boolean packageShouldBeConsideredInError;
 try {
-packageShouldBeConsideredInError=markDependenciesAndPropagateInconsistentFilesystemExceptions(pkg,env,globPatterns,subincludes);
+packageShouldBeConsideredInError=markDependenciesAndPropagateInconsistentFilesystemExceptions(env,globPatterns,subincludes,packageId,legacyPkgBuilder.containsErrors());
 }
  catch (InternalInconsistentFilesystemException e) {
 packageFunctionCache.invalidate(packageId);
@@ -114,9 +117,10 @@ throw new PackageFunctionException(e,e.isTransient() ? Transience.TRANSIENT : Tr
 if (env.valuesMissing()) {
 return null;
 }
-packageFunctionCache.invalidate(packageId);
 if (packageShouldBeConsideredInError) {
-throw new PackageFunctionException(new BuildFileContainsErrorsException(pkg,"Package '" + packageName + "' contains errors"),pkg.containsTemporaryErrors() ? Transience.TRANSIENT : Transience.PERSISTENT);
+legacyPkgBuilder.setContainsErrors();
 }
+Package pkg=legacyPkgBuilder.finishBuild();
+packageFunctionCache.invalidate(packageId);
 return new PackageValue(pkg);
 }

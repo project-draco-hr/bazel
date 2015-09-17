@@ -13,7 +13,8 @@
   ImmutableMap.Builder<PackageIdentifier,Package> packageMapBuilder=ImmutableMap.builder();
   for (  PackageIdentifier pkgId : packageNames.build()) {
     PackageValue pkg=(PackageValue)env.getValue(PackageValue.key(pkgId));
-    Preconditions.checkState(pkg != null,"package %s not preloaded",pkgId);
+    Preconditions.checkNotNull(pkg,"package %s not preloaded",pkgId);
+    Preconditions.checkState(!pkg.getPackage().containsErrors(),pkgId);
     packageMapBuilder.put(pkg.getPackage().getPackageIdentifier(),pkg.getPackage());
   }
   return Pair.of(packageMapBuilder.build(),validTargets.build().toSet());

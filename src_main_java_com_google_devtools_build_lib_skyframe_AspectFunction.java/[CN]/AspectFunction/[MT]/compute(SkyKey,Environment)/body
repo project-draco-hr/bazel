@@ -7,9 +7,13 @@
   if (packageValue == null) {
     return null;
   }
+  Package pkg=packageValue.getPackage();
+  if (pkg.containsErrors()) {
+    throw new AspectFunctionException(skyKey,new BuildFileContainsErrorsException(key.getLabel().getPackageIdentifier()));
+  }
   Target target;
   try {
-    target=packageValue.getPackage().getTarget(key.getLabel().getName());
+    target=pkg.getTarget(key.getLabel().getName());
   }
  catch (  NoSuchTargetException e) {
     throw new AspectFunctionException(skyKey,e);

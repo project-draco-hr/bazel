@@ -31,7 +31,7 @@ synchronized (this) {
 synchronized (this) {
     for (    Map.Entry<SkyKey,ValueOrException<NoSuchPackageException>> entry : env.getValuesOrThrow(packageKeys,NoSuchPackageException.class).entrySet()) {
       PackageIdentifier pkgName=(PackageIdentifier)entry.getKey().argument();
-      Package pkg=null;
+      Package pkg;
       try {
         PackageValue packageValue=(PackageValue)entry.getValue().get();
         if (packageValue == null) {
@@ -41,12 +41,7 @@ synchronized (this) {
         pkg=packageValue.getPackage();
       }
  catch (      NoSuchPackageException nspe) {
-        if (nspe.getPackage() != null) {
-          pkg=nspe.getPackage();
-        }
- else {
-          continue;
-        }
+        continue;
       }
       Preconditions.checkNotNull(pkg,pkgName);
       packages.put(pkgName,pkg);

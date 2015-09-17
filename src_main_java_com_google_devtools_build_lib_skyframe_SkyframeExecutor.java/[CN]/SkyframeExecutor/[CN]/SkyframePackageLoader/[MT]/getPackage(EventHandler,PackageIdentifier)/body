@@ -2,8 +2,8 @@
 synchronized (valueLookupLock) {
     SkyKey key=PackageValue.key(pkgName);
     EvaluationResult<PackageValue> result=buildDriver.evaluate(ImmutableList.of(key),true,DEFAULT_THREAD_COUNT,eventHandler);
-    if (result.hasError()) {
-      ErrorInfo error=result.getError();
+    ErrorInfo error=result.getError(key);
+    if (error != null) {
       if (!Iterables.isEmpty(error.getCycleInfo())) {
         reportCycles(result.getError().getCycleInfo(),key);
         throw new BuildFileContainsErrorsException(pkgName,"Cycle encountered while loading package " + pkgName);

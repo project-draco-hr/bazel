@@ -17,7 +17,10 @@
   Map<SkyKey,SkyValue> packageValues=graph.getSuccessfulValues(resultKeys);
   ImmutableSet.Builder<Target> result=ImmutableSet.builder();
   for (  SkyValue value : packageValues.values()) {
-    result.add(((PackageValue)value).getPackage().getBuildFile());
+    Package pkg=((PackageValue)value).getPackage();
+    if (!pkg.containsErrors()) {
+      result.add(pkg.getBuildFile());
+    }
   }
   return result.build();
 }
