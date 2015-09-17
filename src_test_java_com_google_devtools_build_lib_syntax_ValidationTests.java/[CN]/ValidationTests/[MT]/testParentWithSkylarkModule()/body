@@ -1,12 +1,13 @@
 {
-  Class<?> emptyListClass=SkylarkList.EMPTY_LIST.getClass();
-  Class<?> simpleListClass=SkylarkList.list(Arrays.<Integer>asList(1,2,3),SkylarkType.INT).getClass();
-  Class<?> tupleClass=SkylarkList.tuple(Arrays.<Object>asList(1,"a","b")).getClass();
-  assertThat(SkylarkList.class.isAnnotationPresent(SkylarkModule.class)).isTrue();
-  assertThat(EvalUtils.getParentWithSkylarkModule(SkylarkList.class)).isEqualTo(SkylarkList.class);
-  assertThat(EvalUtils.getParentWithSkylarkModule(emptyListClass)).isEqualTo(SkylarkList.class);
-  assertThat(EvalUtils.getParentWithSkylarkModule(simpleListClass)).isEqualTo(SkylarkList.class);
-  assertThat(EvalUtils.getParentWithSkylarkModule(tupleClass)).isEqualTo(SkylarkList.class);
+  Class<?> emptyTupleClass=Tuple.EMPTY.getClass();
+  Class<?> tupleClass=Tuple.of(1,"a","b").getClass();
+  Class<?> mutableListClass=new MutableList(Tuple.of(1,2,3),env).getClass();
+  assertThat(mutableListClass).isEqualTo(MutableList.class);
+  assertThat(MutableList.class.isAnnotationPresent(SkylarkModule.class)).isTrue();
+  assertThat(EvalUtils.getParentWithSkylarkModule(MutableList.class)).isEqualTo(MutableList.class);
+  assertThat(EvalUtils.getParentWithSkylarkModule(emptyTupleClass)).isEqualTo(Tuple.class);
+  assertThat(EvalUtils.getParentWithSkylarkModule(tupleClass)).isEqualTo(Tuple.class);
+  assertThat(EvalUtils.getParentWithSkylarkModule(tupleClass)).isEqualTo(Tuple.class);
   assertThat(ClassObject.class.isAnnotationPresent(SkylarkModule.class)).isFalse();
   assertThat(ClassObject.SkylarkClassObject.class.isAnnotationPresent(SkylarkModule.class)).isTrue();
   assertThat(EvalUtils.getParentWithSkylarkModule(ClassObject.SkylarkClassObject.class) == ClassObject.SkylarkClassObject.class).isTrue();

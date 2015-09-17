@@ -19,7 +19,7 @@
   Object rval=rhs.eval(env);
 switch (operator) {
 case PLUS:
-    return plus(lval,rval);
+    return plus(lval,rval,env);
 case PIPE:
   if (lval instanceof SkylarkNestedSet) {
     return new SkylarkNestedSet((SkylarkNestedSet)lval,rval,getLocation());
@@ -73,11 +73,8 @@ if (EvalUtils.isTuple(rlist)) {
 return Printer.formatToString(pattern,rlist);
 }
 }
-if (rval instanceof SkylarkList) {
-SkylarkList rlist=(SkylarkList)rval;
-if (rlist.isTuple()) {
-return Printer.formatToString(pattern,rlist.toList());
-}
+if (rval instanceof Tuple) {
+return Printer.formatToString(pattern,((Tuple)rval).getList());
 }
 return Printer.formatToString(pattern,Collections.singletonList(rval));
 }

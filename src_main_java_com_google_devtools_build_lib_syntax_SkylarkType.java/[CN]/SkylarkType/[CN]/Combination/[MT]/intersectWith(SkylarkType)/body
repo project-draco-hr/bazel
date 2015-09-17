@@ -2,13 +2,23 @@
   if (genericType.equals(other)) {
     return this;
   }
- else   if (other instanceof Combination && genericType.equals(((Combination)other).getGenericType()) && argType.includes(((Combination)other).getArgType())) {
-    return other;
+  if (other instanceof Combination) {
+    SkylarkType generic=genericType.intersectWith(((Combination)other).getGenericType());
+    if (generic == BOTTOM) {
+      return BOTTOM;
+    }
+    SkylarkType arg=intersection(argType,((Combination)other).getArgType());
+    if (arg == BOTTOM) {
+      return BOTTOM;
+    }
+    return Combination.of(generic,arg);
   }
- else   if ((LIST.equals(other) || SET.equals(other)) && genericType.equals(other)) {
-    return this;
+  if (other instanceof Simple) {
+    SkylarkType generic=genericType.intersectWith(other);
+    if (generic == BOTTOM) {
+      return BOTTOM;
+    }
+    return SkylarkType.of(generic,getArgType());
   }
- else {
-    return BOTTOM;
-  }
+  return BOTTOM;
 }

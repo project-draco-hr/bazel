@@ -1,0 +1,40 @@
+{
+  try {
+    Method method=methodDescriptor.getMethod();
+    if (obj == null && !Modifier.isStatic(method.getModifiers())) {
+      throw new EvalException(loc,"Method '" + methodName + "' is not static");
+    }
+    method.setAccessible(true);
+    Object result=method.invoke(obj,args);
+    if (method.getReturnType().equals(Void.TYPE)) {
+      return Runtime.NONE;
+    }
+    if (result == null) {
+      if (methodDescriptor.getAnnotation().allowReturnNones()) {
+        return Runtime.NONE;
+      }
+ else {
+        throw new EvalException(loc,"Method invocation returned None, please contact Skylark developers: " + methodName + Printer.listString(ImmutableList.copyOf(args),"(",", ",")",null));
+      }
+    }
+    result=SkylarkType.convertToSkylark(result,method,env);
+    if (result != null && !EvalUtils.isSkylarkAcceptable(result.getClass())) {
+      throw new EvalException(loc,Printer.format("Method '%s' returns an object of invalid type %r",methodName,result.getClass()));
+    }
+    return result;
+  }
+ catch (  IllegalAccessException e) {
+    throw new EvalException(loc,"Method invocation failed: " + e);
+  }
+catch (  InvocationTargetException e) {
+    if (e.getCause() instanceof FuncallException) {
+      throw new EvalException(loc,e.getCause().getMessage());
+    }
+ else     if (e.getCause() != null) {
+      throw new EvalExceptionWithJavaCause(loc,e.getCause());
+    }
+ else {
+      throw new EvalException(loc,"Method invocation failed: " + e);
+    }
+  }
+}
