@@ -6,14 +6,14 @@
   }
   NestedSetBuilder<Artifact> instrumentedFilesBuilder=NestedSetBuilder.stableOrder();
   NestedSetBuilder<Artifact> metadataFilesBuilder=NestedSetBuilder.stableOrder();
-  NestedSetBuilder<Artifact> baselineCoverageArtifactsBuilder=NestedSetBuilder.stableOrder();
+  NestedSetBuilder<Artifact> baselineCoverageInstrumentedFilesBuilder=NestedSetBuilder.stableOrder();
   Iterable<TransitiveInfoCollection> prereqs=getAllPrerequisites(ruleContext,spec);
   for (  TransitiveInfoCollection dep : prereqs) {
     InstrumentedFilesProvider provider=dep.getProvider(InstrumentedFilesProvider.class);
     if (provider != null) {
       instrumentedFilesBuilder.addTransitive(provider.getInstrumentedFiles());
       metadataFilesBuilder.addTransitive(provider.getInstrumentationMetadataFiles());
-      baselineCoverageArtifactsBuilder.addTransitive(provider.getBaselineCoverageArtifacts());
+      baselineCoverageInstrumentedFilesBuilder.addTransitive(provider.getBaselineCoverageInstrumentedFiles());
     }
   }
   NestedSet<Artifact> localSources=NestedSetBuilder.emptySet(Order.STABLE_ORDER);
@@ -32,11 +32,13 @@
     localSources=localSourcesBuilder.build();
   }
   instrumentedFilesBuilder.addTransitive(localSources);
+  if (withBaselineCoverage) {
+    baselineCoverageInstrumentedFilesBuilder.addTransitive(localSources);
+  }
   if (localMetadataCollector != null) {
     localMetadataCollector.collectMetadataArtifacts(rootFiles,ruleContext.getAnalysisEnvironment(),metadataFilesBuilder);
   }
-  if (withBaselineCoverage) {
-    baselineCoverageArtifactsBuilder.addTransitive(BaselineCoverageAction.getBaselineCoverageArtifacts(ruleContext,localSources));
-  }
-  return new InstrumentedFilesProviderImpl(instrumentedFilesBuilder.build(),metadataFilesBuilder.build(),baselineCoverageArtifactsBuilder.build(),ImmutableMap.<String,String>of());
+  NestedSet<Artifact> baselineCoverageFiles=baselineCoverageInstrumentedFilesBuilder.build();
+  NestedSet<Artifact> baselineCoverageArtifacts=BaselineCoverageAction.create(ruleContext,baselineCoverageFiles);
+  return new InstrumentedFilesProviderImpl(instrumentedFilesBuilder.build(),metadataFilesBuilder.build(),baselineCoverageFiles,baselineCoverageArtifacts,ImmutableMap.<String,String>of());
 }
