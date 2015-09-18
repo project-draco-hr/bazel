@@ -5,15 +5,15 @@
   Target fromTarget=loadedPackageProvider.getLoadedTarget(from);
   if (fromTarget instanceof Rule) {
     Rule rule=(Rule)fromTarget;
-    if (rule.getRuleClassObject().hasAttr("srcs",Type.LABEL_LIST)) {
-      for (      List<Label> labelsForConfiguration : AggregatingAttributeMapper.of(rule).visitAttribute("srcs",Type.LABEL_LIST)) {
+    if (rule.getRuleClassObject().hasAttr("srcs",BuildType.LABEL_LIST)) {
+      for (      List<Label> labelsForConfiguration : AggregatingAttributeMapper.of(rule).visitAttribute("srcs",BuildType.LABEL_LIST)) {
         for (        Label label : labelsForConfiguration) {
           collectTransitiveClosure(loadedPackageProvider,reachableLabels,label);
         }
       }
     }
     if (rule.getRuleClass().equals("bind")) {
-      Label actual=AggregatingAttributeMapper.of(rule).get("actual",Type.LABEL);
+      Label actual=AggregatingAttributeMapper.of(rule).get("actual",BuildType.LABEL);
       if (actual != null) {
         collectTransitiveClosure(loadedPackageProvider,reachableLabels,actual);
       }

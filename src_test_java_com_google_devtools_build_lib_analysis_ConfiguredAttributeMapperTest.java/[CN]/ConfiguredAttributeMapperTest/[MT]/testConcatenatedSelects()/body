@@ -1,5 +1,5 @@
 {
   scratch.file("hello/BUILD","config_setting(name = 'a', values = {'define': 'foo=a'})","config_setting(name = 'b', values = {'define': 'foo=b'})","config_setting(name = 'c', values = {'define': 'bar=c'})","config_setting(name = 'd', values = {'define': 'bar=d'})","genrule(","    name = 'gen',","    srcs = select({':a': ['a.in'], ':b': ['b.in']})","         + select({':c': ['c.in'], ':d': ['d.in']}),","    outs = ['out'],","    cmd = 'nothing',",")");
   useConfiguration("--define","foo=a","--define","bar=d");
-  assertSameContents(ImmutableList.of(Label.parseAbsolute("//hello:a.in"),Label.parseAbsolute("//hello:d.in")),getMapper("//hello:gen").get("srcs",Type.LABEL_LIST));
+  assertSameContents(ImmutableList.of(Label.parseAbsolute("//hello:a.in"),Label.parseAbsolute("//hello:d.in")),getMapper("//hello:gen").get("srcs",BuildType.LABEL_LIST));
 }

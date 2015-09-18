@@ -1,0 +1,22 @@
+{
+  if (selectors.isEmpty()) {
+    valuesBuilder.add(Preconditions.checkNotNull(currentValueSoFar));
+  }
+ else {
+    Selector<T> firstSelector=selectors.get(0);
+    List<Selector<T>> remainingSelectors=selectors.subList(1,selectors.size());
+    Map<Label,T> firstSelectorEntries=firstSelector.getEntries();
+    Label boundKey=boundSelectorPaths.getChosenKey(firstSelectorEntries.keySet());
+    if (boundKey != null) {
+      T boundValue=firstSelectorEntries.get(boundKey);
+      visitConfigurableAttribute(remainingSelectors,boundSelectorPaths,type,currentValueSoFar == null ? boundValue : type.concat(ImmutableList.of(currentValueSoFar,boundValue)),valuesBuilder);
+    }
+ else {
+      for (      Map.Entry<Label,T> selectorBranch : firstSelectorEntries.entrySet()) {
+        boundSelectorPaths.bind(firstSelectorEntries.keySet(),selectorBranch.getKey());
+        visitConfigurableAttribute(remainingSelectors,boundSelectorPaths,type,currentValueSoFar == null ? selectorBranch.getValue() : type.concat(ImmutableList.of(currentValueSoFar,selectorBranch.getValue())),valuesBuilder);
+        boundSelectorPaths.unbind(firstSelectorEntries.keySet());
+      }
+    }
+  }
+}

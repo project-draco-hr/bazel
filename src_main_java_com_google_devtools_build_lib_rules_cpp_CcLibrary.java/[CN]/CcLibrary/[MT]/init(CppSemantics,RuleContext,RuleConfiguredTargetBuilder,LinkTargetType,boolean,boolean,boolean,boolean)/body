@@ -27,11 +27,11 @@
       }
     }
   }
-  if (ruleContext.getRule().isAttrDefined("srcs",Type.LABEL_LIST)) {
+  if (ruleContext.getRule().isAttrDefined("srcs",BuildType.LABEL_LIST)) {
     helper.addPrivateHeaders(FileType.filter(ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list(),CppFileTypes.CPP_HEADER));
     ruleContext.checkSrcsSamePackage(true);
   }
-  if (ruleContext.getRule().isAttrDefined("textual_hdrs",Type.LABEL_LIST)) {
+  if (ruleContext.getRule().isAttrDefined("textual_hdrs",BuildType.LABEL_LIST)) {
     helper.addPublicTextualHeaders(ruleContext.getPrerequisiteArtifacts("textual_hdrs",Mode.TARGET).list());
   }
   if (common.getLinkopts().contains("-static")) {
@@ -39,7 +39,7 @@
   }
   helper.setCreateDynamicLibrary(createDynamicLibrary);
   helper.setDynamicLibrary(soImplArtifact);
-  if (!createDynamicLibrary && ruleContext.attributes().isConfigurable("srcs",Type.LABEL_LIST)) {
+  if (!createDynamicLibrary && ruleContext.attributes().isConfigurable("srcs",BuildType.LABEL_LIST)) {
     Artifact solibArtifact=CppHelper.getLinkedArtifact(ruleContext,LinkTargetType.DYNAMIC_LIBRARY);
     ruleContext.registerAction(new FailAction(ruleContext.getActionOwner(),ImmutableList.of(solibArtifact),"configurable \"srcs\" triggers an implicit .so output " + "even though there are no sources to compile in this configuration"));
   }

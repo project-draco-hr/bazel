@@ -1,0 +1,31 @@
+{
+  ConfigMatchingProvider matchingCondition=null;
+  Set<Label> conditionLabels=new LinkedHashSet<>();
+  T matchingValue=null;
+  for (  Map.Entry<Label,T> entry : selector.getEntries().entrySet()) {
+    Label selectorKey=entry.getKey();
+    if (BuildType.Selector.isReservedLabel(selectorKey)) {
+      continue;
+    }
+    ConfigMatchingProvider curCondition=Verify.verifyNotNull(configConditions.get(selectorKey));
+    conditionLabels.add(curCondition.label());
+    if (curCondition.matches()) {
+      if (matchingCondition == null || curCondition.refines(matchingCondition)) {
+        matchingCondition=curCondition;
+        matchingValue=entry.getValue();
+      }
+ else       if (matchingCondition.refines(curCondition)) {
+      }
+ else {
+        throw new EvalException(rule.getAttributeLocation(attributeName),"Both " + matchingCondition.label() + " and "+ curCondition.label()+ " match configurable attribute \""+ attributeName+ "\" in "+ getLabel()+ ". Multiple matches are not allowed unless one is a specialization of the other");
+      }
+    }
+  }
+  if (matchingCondition == null) {
+    if (!selector.hasDefault()) {
+      throw new EvalException(rule.getAttributeLocation(attributeName),"Configurable attribute \"" + attributeName + "\" doesn't match this "+ "configuration (would a default condition help?).\nConditions checked:\n "+ Joiner.on("\n ").join(conditionLabels));
+    }
+    matchingValue=selector.getDefault();
+  }
+  return matchingValue;
+}

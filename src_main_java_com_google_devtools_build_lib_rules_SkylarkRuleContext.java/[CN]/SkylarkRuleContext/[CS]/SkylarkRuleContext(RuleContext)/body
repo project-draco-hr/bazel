@@ -17,7 +17,7 @@
   for (  Attribute a : ruleContext.getRule().getAttributes()) {
     String attrName=a.getName();
     Type<?> type=a.getType();
-    if (type != Type.OUTPUT && type != Type.OUTPUT_LIST) {
+    if (type != BuildType.OUTPUT && type != BuildType.OUTPUT_LIST) {
       continue;
     }
     ImmutableList.Builder<Artifact> artifactsBuilder=ImmutableList.builder();
@@ -27,7 +27,7 @@
       artifactLabelMapBuilder.put(artifact,outputFile.getLabel());
     }
     ImmutableList<Artifact> artifacts=artifactsBuilder.build();
-    if (type == Type.OUTPUT) {
+    if (type == BuildType.OUTPUT) {
       if (artifacts.size() == 1) {
         addOutput(outputsBuilder,attrName,Iterables.getOnlyElement(artifacts));
       }
@@ -35,7 +35,7 @@
         addOutput(outputsBuilder,attrName,Runtime.NONE);
       }
     }
- else     if (type == Type.OUTPUT_LIST) {
+ else     if (type == BuildType.OUTPUT_LIST) {
       addOutput(outputsBuilder,attrName,new MutableList(artifacts));
     }
  else {
@@ -52,7 +52,7 @@
   for (  Attribute a : ruleContext.getRule().getAttributes()) {
     Type<?> type=a.getType();
     Object val=ruleContext.attributes().get(a.getName(),type);
-    if (type != Type.LABEL && type != Type.LABEL_LIST) {
+    if (type != BuildType.LABEL && type != BuildType.LABEL_LIST) {
       attrBuilder.put(a.getPublicName(),val == null ? Runtime.NONE : SkylarkType.convertToSkylark(val,null));
       continue;
     }
@@ -80,7 +80,7 @@
     }
     filesBuilder.put(skyname,ruleContext.getPrerequisiteArtifacts(a.getName(),mode).list());
     List<?> allPrereq=ruleContext.getPrerequisites(a.getName(),mode);
-    if (type == Type.LABEL) {
+    if (type == BuildType.LABEL) {
       Object prereq=ruleContext.getPrerequisite(a.getName(),mode);
       if (prereq == null) {
         prereq=Runtime.NONE;
