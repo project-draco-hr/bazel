@@ -7,8 +7,7 @@
   NestedSetBuilder<Artifact> instrumentedFilesBuilder=NestedSetBuilder.stableOrder();
   NestedSetBuilder<Artifact> metadataFilesBuilder=NestedSetBuilder.stableOrder();
   NestedSetBuilder<Artifact> baselineCoverageInstrumentedFilesBuilder=NestedSetBuilder.stableOrder();
-  Iterable<TransitiveInfoCollection> prereqs=getAllPrerequisites(ruleContext,spec);
-  for (  TransitiveInfoCollection dep : prereqs) {
+  for (  TransitiveInfoCollection dep : getAllPrerequisites(ruleContext,spec.dependencyAttributes)) {
     InstrumentedFilesProvider provider=dep.getProvider(InstrumentedFilesProvider.class);
     if (provider != null) {
       instrumentedFilesBuilder.addTransitive(provider.getInstrumentedFiles());
@@ -19,8 +18,8 @@
   NestedSet<Artifact> localSources=NestedSetBuilder.emptySet(Order.STABLE_ORDER);
   if (shouldIncludeLocalSources(ruleContext)) {
     NestedSetBuilder<Artifact> localSourcesBuilder=NestedSetBuilder.stableOrder();
-    for (    TransitiveInfoCollection dep : prereqs) {
-      if (dep.getProvider(InstrumentedFilesProvider.class) != null) {
+    for (    TransitiveInfoCollection dep : getAllPrerequisites(ruleContext,spec.sourceAttributes)) {
+      if (!spec.splitLists && dep.getProvider(InstrumentedFilesProvider.class) != null) {
         continue;
       }
       for (      Artifact artifact : dep.getProvider(FileProvider.class).getFilesToBuild()) {
