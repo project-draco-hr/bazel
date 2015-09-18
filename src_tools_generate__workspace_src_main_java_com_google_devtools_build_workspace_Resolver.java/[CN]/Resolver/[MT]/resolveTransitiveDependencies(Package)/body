@@ -1,0 +1,50 @@
+{
+  Location location=Location.fromFile(externalPackage.getFilename());
+  for (  Target target : externalPackage.getTargets()) {
+    if (target.getTargetKind().startsWith("bind") || target.getTargetKind().startsWith("source ")) {
+      continue;
+    }
+ else     if (target.getTargetKind().startsWith("maven_jar ")) {
+      PackageIdentifier.RepositoryName repositoryName;
+      try {
+        repositoryName=PackageIdentifier.RepositoryName.create("@" + target.getName());
+      }
+ catch (      LabelSyntaxException e) {
+        handler.handle(Event.error(location,"Invalid repository name for " + target + ": "+ e.getMessage()));
+        return;
+      }
+      com.google.devtools.build.lib.packages.Rule workspaceRule=externalPackage.getRule(repositoryName.strippedName());
+      DefaultModelResolver modelResolver=resolver.getModelResolver();
+      AttributeMap attributeMap=AggregatingAttributeMapper.of(workspaceRule);
+      Rule rule;
+      try {
+        if (attributeMap.has("artifact",Type.STRING) && !attributeMap.get("artifact",Type.STRING).isEmpty()) {
+          rule=new Rule(attributeMap.get("artifact",Type.STRING));
+        }
+ else {
+          rule=new Rule(attributeMap.get("group_id",Type.STRING) + ":" + attributeMap.get("artifact_id",Type.STRING)+ ":"+ attributeMap.get("version",Type.STRING));
+        }
+        if (attributeMap.has("repository",Type.STRING) && !attributeMap.get("repository",Type.STRING).isEmpty()) {
+          modelResolver.addUserRepository(attributeMap.get("repository",Type.STRING));
+          rule.setRepository(attributeMap.get("repository",Type.STRING),handler);
+        }
+      }
+ catch (      Rule.InvalidRuleException e) {
+        handler.handle(Event.error(location,"Couldn't get attribute: " + e.getMessage()));
+        return;
+      }
+      ModelSource modelSource;
+      try {
+        modelSource=modelResolver.resolveModel(rule.groupId(),rule.artifactId(),rule.version());
+      }
+ catch (      UnresolvableModelException e) {
+        handler.handle(Event.error("Could not resolve model for " + target + ": "+ e.getMessage()));
+        continue;
+      }
+      resolver.resolveEffectiveModel(modelSource);
+    }
+ else {
+      handler.handle(Event.warn(location,"Cannot fetch transitive dependencies for " + target + " yet, skipping"));
+    }
+  }
+}

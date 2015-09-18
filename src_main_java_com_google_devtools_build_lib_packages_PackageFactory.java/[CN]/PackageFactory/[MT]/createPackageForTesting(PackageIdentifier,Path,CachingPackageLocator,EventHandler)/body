@@ -1,23 +1,4 @@
 {
-  String error=LabelValidator.validatePackageName(packageId.getPackageFragment().getPathString());
-  if (error != null) {
-    throw new BuildFileNotFoundException(packageId,"illegal package name: '" + packageId + "' ("+ error+ ")");
-  }
-  ParserInputSource inputSource=maybeGetParserInputSource(buildFile,eventHandler);
-  if (inputSource == null) {
-    throw new BuildFileContainsErrorsException(packageId,"IOException occured");
-  }
-  Globber globber=createLegacyGlobber(buildFile.getParentDirectory(),packageId,locator);
-  Preprocessor.Result preprocessingResult;
-  try {
-    preprocessingResult=preprocess(packageId,inputSource,globber);
-  }
- catch (  IOException e) {
-    eventHandler.handle(Event.error(Location.fromFile(buildFile),"preprocessing failed: " + e.getMessage()));
-    throw new BuildFileContainsErrorsException(packageId,"preprocessing failed",e);
-  }
-  ExternalPackage externalPkg=new ExternalPackage.Builder(buildFile.getRelative("WORKSPACE"),ruleClassProvider.getRunfilesPrefix()).build();
-  Package result=createPackageFromPreprocessingResult(externalPkg,packageId,buildFile,preprocessingResult,preprocessingResult.events,ImmutableList.<Statement>of(),ImmutableMap.<PathFragment,Extension>of(),ImmutableList.<Label>of(),locator,ConstantRuleVisibility.PUBLIC,globber).build();
-  Event.replayEventsOn(eventHandler,result.getEvents());
-  return result;
+  Package externalPkg=Package.newExternalPackageBuilder(buildFile.getRelative("WORKSPACE"),"TESTING").build();
+  return createPackageForTesting(packageId,externalPkg,buildFile,locator,eventHandler);
 }
