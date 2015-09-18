@@ -1,0 +1,6 @@
+{
+  String genDir=ruleContext.getConfiguration().getGenfilesDirectory().getExecPathString();
+  Artifact compiler=ruleContext.getPrerequisiteArtifact("$protoc_darwin",Mode.HOST);
+  Artifact j2objcPlugin=ruleContext.getPrerequisiteArtifact("$j2objc_plugin",Mode.HOST);
+  ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("TranslatingJ2ObjcProtos").addInput(compiler).addInput(j2objcPlugin).addInputs(ruleContext.getPrerequisiteArtifacts("$protoc_support_darwin",Mode.HOST).list()).addInputs(protoSources).addTransitiveInputs(transitiveProtoSources).addOutputs(j2ObjcSource.getObjcSrcs()).addOutputs(j2ObjcSource.getObjcHdrs()).addOutputs(headerMappingFiles).addOutputs(classMappingFiles).setExecutable(new PathFragment("/usr/bin/python")).setCommandLine(new CustomCommandLine.Builder().add(compiler.getPath().toString()).add("-w").add(compiler.getRoot().getPath().toString()).add("--generate-j2objc").add("--generator-param=file_dir_mapping").add("--generator-param=generate_class_mappings").add("--j2objc-plugin=" + j2objcPlugin.getExecPathString()).add("--output-dir=" + genDir).addExecPaths(protoSources).build()).setExecutionInfo(ImmutableMap.of(ExecutionRequirements.REQUIRES_DARWIN,"")).build(ruleContext));
+}
