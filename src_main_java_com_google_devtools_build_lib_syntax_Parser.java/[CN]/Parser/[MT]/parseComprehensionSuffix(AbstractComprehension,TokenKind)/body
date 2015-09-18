@@ -1,0 +1,24 @@
+{
+  while (true) {
+    if (token.kind == TokenKind.FOR) {
+      nextToken();
+      Expression loopVar=parseForLoopVariables();
+      expect(TokenKind.IN);
+      Expression listExpression=parseNonTupleExpression(0);
+      comprehension.addFor(loopVar,listExpression);
+    }
+ else     if (token.kind == TokenKind.IF) {
+      nextToken();
+      comprehension.addIf(parseExpression());
+    }
+ else     if (token.kind == closingBracket) {
+      nextToken();
+      return comprehension;
+    }
+ else {
+      syntaxError(token,"expected '" + closingBracket.getPrettyName() + "', 'for' or 'if'");
+      syncPast(LIST_TERMINATOR_SET);
+      return makeErrorExpression(token.left,token.right);
+    }
+  }
+}

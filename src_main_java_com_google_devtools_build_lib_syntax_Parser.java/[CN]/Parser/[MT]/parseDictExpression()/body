@@ -9,12 +9,8 @@
   }
   DictionaryEntryLiteral entry=parseDictEntry();
   if (token.kind == TokenKind.FOR) {
-    nextToken();
-    Expression loopVar=parseForLoopVariables();
-    expect(TokenKind.IN);
-    Expression listExpression=parseExpression();
-    expect(TokenKind.RBRACE);
-    return setLocation(new DictComprehension(entry.getKey(),entry.getValue(),loopVar,listExpression),start,token.right);
+    Expression result=parseComprehensionSuffix(new DictComprehension(entry.getKey(),entry.getValue()),TokenKind.RBRACE);
+    return setLocation(result,start,token.right);
   }
   List<DictionaryEntryLiteral> entries=new ArrayList<>();
   entries.add(entry);
