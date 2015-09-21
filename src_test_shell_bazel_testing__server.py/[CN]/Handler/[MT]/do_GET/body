@@ -1,0 +1,20 @@
+def do_GET(self):
+    if (auth is None):
+        self.do_HEAD()
+        self.serve_file()
+        return
+    foo_bar = base64.b64encode('foo:bar')
+    if (self.headers.getheader('Authorization') is None):
+        self.do_AUTHHEAD()
+        self.wfile.write('Login required.')
+    elif (self.headers.getheader('Authorization') == ('Basic %s' % foo_bar)):
+        self.do_HEAD()
+        try:
+            self.wfile.write(self.headers.getheader('Authorization'))
+            self.serve_file()
+        except IOError:
+            self.wfile.write('Authorized.')
+    else:
+        self.do_AUTHHEAD()
+        self.wfile.write(self.headers.getheader('Authorization'))
+        self.wfile.write('not authenticated')

@@ -1,0 +1,26 @@
+'An HTTP server to use for external repository integration tests.'
+import base64
+from BaseHTTPServer import BaseHTTPRequestHandler
+import getopt
+import os
+import SocketServer
+import sys
+auth = None
+if (__name__ == '__main__'):
+    try:
+        (opts, args) = getopt.getopt(sys.argv[1:], 'p:a:', ['port=', 'auth='])
+    except getopt.GetoptError:
+        print 'Error parsing args'
+        sys.exit(1)
+    port = 12345
+    for (o, a) in opts:
+        if (o in ('-p', '--port')):
+            port = int(a)
+        if (o in ('-a', '--auth')):
+            auth = a
+    httpd = SocketServer.TCPServer(('', port), Handler)
+    try:
+        print ('Serving forever on %d.' % port)
+        httpd.serve_forever()
+    except:
+        print 'Goodbye.'
