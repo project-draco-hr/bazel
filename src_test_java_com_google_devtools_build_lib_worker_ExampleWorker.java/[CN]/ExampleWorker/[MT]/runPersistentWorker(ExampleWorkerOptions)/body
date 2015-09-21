@@ -24,8 +24,19 @@
         System.setOut(originalStdOut);
         System.setErr(originalStdErr);
       }
-      WorkResponse.newBuilder().setOutput(baos.toString()).setExitCode(exitCode).build().writeDelimitedTo(System.out);
+      if (poisoned) {
+        System.out.println("I'm a poisoned worker and this is not a protobuf.");
+      }
+ else {
+        WorkResponse.newBuilder().setOutput(baos.toString()).setExitCode(exitCode).build().writeDelimitedTo(System.out);
+      }
       System.out.flush();
+      if (workerOptions.exitAfter > 0 && workUnitCounter > workerOptions.exitAfter) {
+        return;
+      }
+      if (workerOptions.poisonAfter > 0 && workUnitCounter > workerOptions.poisonAfter) {
+        poisoned=true;
+      }
     }
   finally {
       System.gc();
