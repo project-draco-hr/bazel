@@ -10,7 +10,13 @@
       env.getReporter().handle(Event.error("Could not create directory for worker logs: " + logDir));
     }
     GenericKeyedObjectPoolConfig config=new GenericKeyedObjectPoolConfig();
-    config.setTimeBetweenEvictionRunsMillis(10 * 1000);
+    config.setLifo(true);
+    config.setTimeBetweenEvictionRunsMillis(5 * 1000);
+    config.setTestOnBorrow(true);
+    config.setTestOnCreate(true);
+    config.setTestOnReturn(true);
+    config.setTestWhileIdle(true);
+    config.setMaxTotal(-1);
     workers=new WorkerPool(new WorkerFactory(),config);
     workers.setReporter(env.getReporter());
     workers.setLogDirectory(logDir);
