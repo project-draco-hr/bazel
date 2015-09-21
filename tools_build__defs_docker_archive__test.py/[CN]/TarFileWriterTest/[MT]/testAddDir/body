@@ -1,0 +1,12 @@
+def testAddDir(self):
+    content = [{'name': '.', }, {'name': './a', }, {'name': './a/b', 'data': 'ab', }, {'name': './a/c', }, {'name': './a/c/d', 'data': 'acd', }]
+    tempdir = os.path.join(os.environ['TEST_TMPDIR'], 'test_dir')
+    for c in content:
+        if ('data' in c):
+            p = os.path.join(tempdir, c['name'][2:])
+            os.makedirs(os.path.dirname(p))
+            with open(p, 'w') as f:
+                f.write(c['data'])
+    with archive.TarFileWriter(self.tempfile) as f:
+        f.add_dir('./', tempdir)
+    self.assertTarFileContent(self.tempfile, content)

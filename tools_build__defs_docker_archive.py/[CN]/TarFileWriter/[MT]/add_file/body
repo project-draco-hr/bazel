@@ -1,5 +1,8 @@
 def add_file(self, name, kind=tarfile.REGTYPE, content=None, link=None, file_content=None, uid=0, gid=0, uname='', gname='', mtime=0, mode=None):
     'Add a file to the current tar.\n\n    Args:\n      name: the name of the file to add.\n      kind: the type of the file to add, see tarfile.*TYPE.\n      content: a textual content to put in the file.\n      link: if the file is a link, the destination of the link.\n      file_content: file to read the content from. Provide either this\n          one or `content` to specifies a content for the file.\n      uid: owner user identifier.\n      gid: owner group identifier.\n      uname: owner user names.\n      gname: owner group names.\n      mtime: modification time to put in the archive.\n      mode: unix permission mode of the file, default 0644 (0755).\n    '
+    if (file_content and os.path.isdir(file_content)):
+        self.add_dir(name, file_content, uid, gid, uname, gname, mtime, mode)
+        return
     if ((not name.startswith('.')) and (not name.startswith('/'))):
         name = ('./' + name)
     tarinfo = tarfile.TarInfo(name)

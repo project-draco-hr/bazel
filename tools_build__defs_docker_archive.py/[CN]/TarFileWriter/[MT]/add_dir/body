@@ -1,0 +1,18 @@
+def add_dir(self, name, path, uid=0, gid=0, uname='', gname='', mtime=0, mode=None, depth=100):
+    'Recursively add a directory.\n\n    Args:\n      name: the destination path of the directory to add.\n      path: the path of the directory to add.\n      uid: owner user identifier.\n      gid: owner group identifier.\n      uname: owner user names.\n      gname: owner group names.\n      mtime: modification time to put in the archive.\n      mode: unix permission mode of the file, default 0644 (0755).\n      depth: maximum depth to recurse in to avoid infinite loops\n             with cyclic mounts.\n\n    Raises:\n      TarFileWriter.Error: when the recursion depth has exceeded the\n                           `depth` argument.\n    '
+    if ((not name.startswith('.')) and (not name.startswith('/'))):
+        name = ('./' + name)
+    if os.path.isdir(path):
+        if (name[(-1)] == '/'):
+            name = name[:(-1)]
+        self.add_file((name + '/'), tarfile.DIRTYPE, uid=uid, gid=gid, uname=uname, gname=gname, mtime=mtime, mode=mode)
+        if (depth <= 0):
+            raise self.Error('Recursion depth exceeded, probably in an infinite directory loop.')
+        filelist = os.listdir(path)
+        filelist.sort()
+        for f in filelist:
+            new_name = os.path.join(name, f)
+            new_path = os.path.join(path, f)
+            self.add_dir(new_name, new_path, uid, gid, uname, gname, mtime, mode, (depth - 1))
+    else:
+        self.add_file(name, tarfile.REGTYPE, file_content=path, uid=uid, gid=gid, uname=uname, gname=gname, mtime=mtime, mode=mode)
