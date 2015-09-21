@@ -1,0 +1,39 @@
+{
+  PathFragment importPath=loadStmt.getImportPath();
+  PackageIdentifier pkgIdForImport;
+  String targetNameForImport;
+  if (loadStmt.isAbsolute()) {
+    PathFragment relativeImportPath=importPath.toRelative();
+    PackageIdentifier pkgToLookUp=PackageIdentifier.createInDefaultRepo(relativeImportPath.getParentDirectory());
+    ContainingPackageLookupValue containingPackageLookupValue=null;
+    try {
+      containingPackageLookupValue=(ContainingPackageLookupValue)env.getValueOrThrow(ContainingPackageLookupValue.key(pkgToLookUp),BuildFileNotFoundException.class,InconsistentFilesystemException.class);
+    }
+ catch (    BuildFileNotFoundException e) {
+      throw new SkylarkImportFailedException(e);
+    }
+catch (    InconsistentFilesystemException e) {
+      throw new SkylarkImportFailedException(e);
+    }
+    if (containingPackageLookupValue == null) {
+      return null;
+    }
+    if (!containingPackageLookupValue.hasContainingPackage()) {
+      throw SkylarkImportFailedException.noBuildFile(importPath);
+    }
+    pkgIdForImport=containingPackageLookupValue.getContainingPackageName();
+    PathFragment containingPkgPath=pkgIdForImport.getPackageFragment();
+    targetNameForImport=relativeImportPath.relativeTo(containingPkgPath).toString();
+  }
+ else {
+    pkgIdForImport=containingFileLabel.getPackageIdentifier();
+    PathFragment containingDir=(new PathFragment(containingFileLabel.getName())).getParentDirectory();
+    targetNameForImport=importPath.getRelative(containingDir).toString();
+  }
+  try {
+    return Label.create(pkgIdForImport,targetNameForImport);
+  }
+ catch (  LabelSyntaxException e) {
+    throw new IllegalStateException(e);
+  }
+}
