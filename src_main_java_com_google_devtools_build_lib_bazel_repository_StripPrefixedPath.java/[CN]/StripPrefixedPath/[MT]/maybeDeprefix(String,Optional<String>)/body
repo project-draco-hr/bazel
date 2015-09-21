@@ -1,0 +1,20 @@
+{
+  boolean found=false;
+  PathFragment entryPath=new PathFragment(entry);
+  if (!prefix.isPresent()) {
+    return new StripPrefixedPath(entryPath,false,false);
+  }
+  PathFragment prefixPath=new PathFragment(prefix.get());
+  boolean skip=false;
+  if (entryPath.startsWith(prefixPath)) {
+    found=true;
+    entryPath=entryPath.relativeTo(prefixPath);
+    if (entryPath.getPathString().isEmpty()) {
+      skip=true;
+    }
+  }
+ else {
+    skip=true;
+  }
+  return new StripPrefixedPath(entryPath,found,skip);
+}
