@@ -1,0 +1,29 @@
+{
+  if (args.size() == 1 && args.get(0).startsWith("@")) {
+    args=Files.readAllLines(Paths.get(args.get(0).substring(1)),UTF_8);
+  }
+  OptionsParser parser=OptionsParser.newOptionsParser(ExampleWorkOptions.class);
+  parser.setAllowResidue(true);
+  parser.parse(args);
+  ExampleWorkOptions workOptions=parser.getOptions(ExampleWorkOptions.class);
+  List<String> residue=parser.getResidue();
+  List<String> outputs=new ArrayList(residue.size());
+  for (  String arg : residue) {
+    String output=arg;
+    if (workOptions.uppercase) {
+      output=output.toUpperCase();
+    }
+    outputs.add(output);
+  }
+  String outputStr=Joiner.on(' ').join(outputs);
+  if (workOptions.outputFile.isEmpty()) {
+    System.err.println("ExampleWorker: Writing to stdout!");
+    System.out.println(outputStr);
+  }
+ else {
+    System.err.println("ExampleWorker: Writing to file " + workOptions.outputFile);
+    try (PrintStream outputFile=new PrintStream(workOptions.outputFile)){
+      outputFile.println(outputStr);
+    }
+   }
+}
