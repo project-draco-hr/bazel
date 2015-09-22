@@ -1,0 +1,24 @@
+{
+  reporter.removeHandler(failFastHandler);
+  Object result=evalRuleContextCode(ruleContext,statements);
+  String first=null;
+  int count=0;
+  try {
+    for (    Event evt : eventCollector) {
+      if (evt.getMessage().startsWith(errorMsg)) {
+        return;
+      }
+      ++count;
+      first=evt.getMessage();
+    }
+    if (count == 0) {
+      fail(String.format("checkReportedErrorStartsWith(): There was no error; the result is '%s'",result));
+    }
+ else {
+      fail(String.format("Found %d error(s), but none with the expected message '%s'. First error: '%s'",count,errorMsg,first));
+    }
+  }
+  finally {
+    eventCollector.clear();
+  }
+}

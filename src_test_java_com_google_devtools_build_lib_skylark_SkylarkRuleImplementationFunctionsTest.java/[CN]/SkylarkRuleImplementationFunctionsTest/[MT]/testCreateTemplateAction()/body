@@ -1,0 +1,9 @@
+{
+  SkylarkRuleContext ruleContext=createRuleContext("//foo:foo");
+  TemplateExpansionAction action=(TemplateExpansionAction)evalRuleContextCode(ruleContext,"ruleContext.template_action(","  template = ruleContext.files.srcs[0],","  output = ruleContext.files.srcs[1],","  substitutions = {'a': 'b'},","  executable = False)");
+  assertEquals("foo/a.txt",Iterables.getOnlyElement(action.getInputs()).getExecPathString());
+  assertEquals("foo/b.img",Iterables.getOnlyElement(action.getOutputs()).getExecPathString());
+  assertEquals("a",Iterables.getOnlyElement(action.getSubstitutions()).getKey());
+  assertEquals("b",Iterables.getOnlyElement(action.getSubstitutions()).getValue());
+  assertFalse(action.makeExecutable());
+}

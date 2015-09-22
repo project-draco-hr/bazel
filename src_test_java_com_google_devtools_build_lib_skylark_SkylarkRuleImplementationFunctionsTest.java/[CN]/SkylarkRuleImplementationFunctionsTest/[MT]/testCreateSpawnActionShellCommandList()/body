@@ -1,0 +1,6 @@
+{
+  SkylarkRuleContext ruleContext=createRuleContext("//foo:foo");
+  evalRuleContextCode(ruleContext,"ruleContext.action(","  inputs = ruleContext.files.srcs,","  outputs = ruleContext.files.srcs,","  mnemonic = 'DummyMnemonic',","  command = ['dummy_command', '--arg1', '--arg2'],","  progress_message = 'dummy_message')");
+  SpawnAction action=(SpawnAction)Iterables.getOnlyElement(ruleContext.getRuleContext().getAnalysisEnvironment().getRegisteredActions());
+  assertThat(action.getArguments()).containsExactly("dummy_command","--arg1","--arg2").inOrder();
+}

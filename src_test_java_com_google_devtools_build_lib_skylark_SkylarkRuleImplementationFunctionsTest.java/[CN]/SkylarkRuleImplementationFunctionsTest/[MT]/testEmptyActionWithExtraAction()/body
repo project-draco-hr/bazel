@@ -1,0 +1,5 @@
+{
+  scratch.file("test/empty.bzl","def _impl(ctx):","  ctx.empty_action(","      inputs = ctx.files.srcs,","      mnemonic = 'EA',","  )","empty_action_rule = rule(","    implementation = _impl,","    attrs = {","       \"srcs\": attr.label_list(allow_files=True),","    }",")");
+  scratch.file("test/BUILD","load('/test/empty', 'empty_action_rule')","empty_action_rule(name = 'my_empty_action',","                srcs = ['foo.in', 'other_foo.in'])","action_listener(name = 'listener',","                mnemonics = ['EA'],","                extra_actions = [':extra'])","extra_action(name = 'extra',","             cmd='')");
+  getPseudoActionViaExtraAction("//test:my_empty_action","//test:listener");
+}

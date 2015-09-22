@@ -1,0 +1,10 @@
+{
+  SkylarkRuleContext ruleContext=createRuleContext("//foo:bar");
+  runExpansion(ruleContext,"location :jl","[blaze]*-out/.*/bin/foo/libjl.jar");
+  runExpansion(ruleContext,"locations :jl","[blaze]*-out/.*/bin/foo/libjl.jar");
+  runExpansion(ruleContext,"location //foo:jl","[blaze]*-out/.*/bin/foo/libjl.jar");
+  checkReportedErrorStartsWith(ruleContext,"in genrule rule //foo:bar: label '//foo:gl' " + "in $(location) expression expands to more than one file, please use $(locations " + "//foo:gl) instead.","ruleContext.expand_location('$(location :gl)')");
+  runExpansion(ruleContext,"locations :gl","[blaze]*-out/.*/bin/foo/gl.a [blaze]*-out/.*/bin/foo/gl.gcgox");
+  runExpansion(ruleContext,"location","\\$\\(location\\)");
+  checkReportedErrorStartsWith(ruleContext,"in genrule rule //foo:bar: label '//foo:abc' in $(locations) expression " + "is not a declared prerequisite of this rule","ruleContext.expand_location('$(locations :abc)')");
+}

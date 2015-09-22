@@ -1,0 +1,8 @@
+{
+  SkylarkRuleContext ruleContext=createRuleContext("//foo:foo");
+  evalRuleContextCode(ruleContext,"ruleContext.action(","  inputs = ruleContext.files.srcs,","  outputs = ruleContext.files.srcs,","  arguments = ['--a','--b'],","  executable = ruleContext.files.tools[0])");
+  SpawnAction action=(SpawnAction)Iterables.getOnlyElement(ruleContext.getRuleContext().getAnalysisEnvironment().getRegisteredActions());
+  assertArtifactFilenames(action.getInputs(),"a.txt","b.img","t.exe");
+  assertArtifactFilenames(action.getOutputs(),"a.txt","b.img");
+  assertContainsSublist(action.getArguments(),"foo/t.exe","--a","--b");
+}
