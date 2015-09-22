@@ -18,9 +18,10 @@
   assertThat(entry.getNextDirtyDirectDeps()).containsExactly(dep).inOrder();
   addTemporaryDirectDep(entry,dep);
   entry.signalDep(new IntVersion(1L));
-  assertEquals(NodeEntry.DirtyState.REBUILDING,entry.getDirtyState());
+  assertEquals(NodeEntry.DirtyState.NEEDS_REBUILDING,entry.getDirtyState());
   assertThat(entry.getTemporaryDirectDeps()).containsExactly(dep);
   ReifiedSkyFunctionException exception=new ReifiedSkyFunctionException(new GenericFunctionException(new SomeErrorException("oops"),Transience.PERSISTENT),key("cause"));
+  assertThat(entry.markRebuildingAndGetAllRemainingDirtyDirectDeps()).isEmpty();
   setValue(entry,new IntegerValue(5),new ErrorInfo(exception),1L);
   assertTrue(entry.isDone());
   assertEquals("Version increments when setValue changes",new IntVersion(1),entry.getVersion());

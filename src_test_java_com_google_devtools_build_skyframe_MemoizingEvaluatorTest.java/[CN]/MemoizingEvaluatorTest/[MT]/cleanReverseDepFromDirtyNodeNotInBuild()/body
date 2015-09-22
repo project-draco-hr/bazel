@@ -1,0 +1,43 @@
+{
+  final SkyKey topKey=GraphTester.skyKey("top");
+  SkyKey inactiveKey=GraphTester.skyKey("inactive");
+  final Thread mainThread=Thread.currentThread();
+  final AtomicBoolean shouldInterrupt=new AtomicBoolean(false);
+  NotifyingInMemoryGraph graph=new NotifyingInMemoryGraph(new Listener(){
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+      if (shouldInterrupt.get() && key.equals(topKey) && type == EventType.IS_READY && order == Order.BEFORE) {
+        mainThread.interrupt();
+        shouldInterrupt.set(false);
+        try {
+          Thread.sleep(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+        }
+ catch (        InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+  }
+);
+  setGraphForTesting(graph);
+  tester.getOrCreate(topKey).addDependency(inactiveKey).setComputedValue(COPY);
+  StringValue val=new StringValue("inactive");
+  tester.set(inactiveKey,val);
+  assertThat(tester.evalAndGet(true,topKey)).isEqualTo(val);
+  shouldInterrupt.set(true);
+  tester.getOrCreate(inactiveKey,true);
+  tester.getOrCreate(topKey,true);
+  tester.invalidate();
+  try {
+    tester.eval(false,topKey);
+    fail();
+  }
+ catch (  InterruptedException e) {
+  }
+  assertThat(graph.get(inactiveKey)).isNotNull();
+  assertThat(graph.get(inactiveKey).isDirty()).isTrue();
+  assertThat(tester.evalAndGet(true,inactiveKey)).isEqualTo(val);
+  assertThat(graph.get(topKey)).isNull();
+  tester.getOrCreate(inactiveKey,true);
+  tester.invalidate();
+  assertThat(tester.evalAndGet(true,inactiveKey)).isEqualTo(val);
+}

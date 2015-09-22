@@ -1,0 +1,17 @@
+{
+  Preconditions.checkState(!entry.isDone(),"%s %s",skyKey,entry);
+  NodeEntry depEntry=graph.createIfAbsent(child);
+  DependencyState dependencyState=dirtyParent ? depEntry.checkIfDoneForDirtyReverseDep(skyKey) : depEntry.addReverseDepAndCheckIfDone(skyKey);
+switch (dependencyState) {
+case DONE:
+    if (entry.signalDep(depEntry.getVersion())) {
+      visitor.enqueueEvaluation(skyKey);
+    }
+  break;
+case ALREADY_EVALUATING:
+break;
+case NEEDS_SCHEDULING:
+visitor.enqueueEvaluation(child);
+break;
+}
+}

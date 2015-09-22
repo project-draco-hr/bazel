@@ -16,9 +16,10 @@
   assertTrue(entry.isReady());
   SkyKey parent=key("parent");
   entry.addReverseDepAndCheckIfDone(parent);
-  assertEquals(NodeEntry.DirtyState.REBUILDING,entry.getDirtyState());
+  assertEquals(NodeEntry.DirtyState.NEEDS_REBUILDING,entry.getDirtyState());
   assertTrue(entry.isReady());
   assertThat(entry.getTemporaryDirectDeps()).isEmpty();
+  assertThat(entry.markRebuildingAndGetAllRemainingDirtyDirectDeps()).containsExactly(dep);
   assertThat(setValue(entry,new SkyValue(){
   }
 ,null,1L)).containsExactly(parent);

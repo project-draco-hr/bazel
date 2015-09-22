@@ -1,0 +1,33 @@
+{
+  SkyKey topKey=GraphTester.skyKey("top");
+  final SkyKey midKey=GraphTester.skyKey("mid");
+  final SkyKey changedKey=GraphTester.skyKey("changed");
+  tester.getOrCreate(changedKey).setConstantValue(new StringValue("first"));
+  tester.getOrCreate(topKey).addDependency(midKey).setComputedValue(CONCATENATE);
+  tester.getOrCreate(midKey).addDependency(changedKey).setComputedValue(CONCATENATE);
+  final CountDownLatch changedKeyStarted=new CountDownLatch(1);
+  final CountDownLatch changedKeyCanFinish=new CountDownLatch(1);
+  final AtomicBoolean controlTiming=new AtomicBoolean(false);
+  setGraphForTesting(new NotifyingInMemoryGraph(new Listener(){
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+      if (!controlTiming.get()) {
+        return;
+      }
+      if (key.equals(midKey) && type == EventType.CHECK_IF_DONE && order == Order.BEFORE) {
+        TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(changedKeyStarted,"changed key didn't start");
+      }
+ else       if (key.equals(changedKey) && type == EventType.REMOVE_REVERSE_DEP && order == Order.AFTER && midKey.equals(context)) {
+        changedKeyCanFinish.countDown();
+      }
+    }
+  }
+));
+  assertThat(tester.evalAndGet(false,topKey)).isEqualTo(new StringValue("first"));
+  tester.getOrCreate(changedKey,true).setConstantValue(null).setBuilder(new ChainedFunction(changedKeyStarted,changedKeyCanFinish,null,false,new StringValue("second"),ImmutableList.<SkyKey>of()));
+  tester.getOrCreate(midKey,true);
+  tester.invalidate();
+  SkyKey newTopKey=GraphTester.skyKey("newTop");
+  tester.getOrCreate(newTopKey).addDependency(changedKey).setComputedValue(CONCATENATE);
+  controlTiming.set(true);
+  tester.eval(false,newTopKey,topKey);
+}

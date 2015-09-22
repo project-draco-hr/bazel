@@ -1,11 +1,7 @@
 {
   NodeEntry errorTransienceEntry=graph.createIfAbsent(ErrorTransienceValue.key());
-  DependencyState triState=errorTransienceEntry.addReverseDepAndCheckIfDone(null);
-  Preconditions.checkState(triState != DependencyState.ADDED_DEP,"%s %s",errorTransienceEntry,triState);
-  if (triState != DependencyState.DONE) {
-    errorTransienceEntry.setValue(new ErrorTransienceValue(),graphVersion);
-    dirtyKeyTracker.notDirty(ErrorTransienceValue.key());
-    Preconditions.checkState(errorTransienceEntry.addReverseDepAndCheckIfDone(null) != DependencyState.ADDED_DEP,errorTransienceEntry);
+  if (!errorTransienceEntry.isDone()) {
+    injectValue(ErrorTransienceValue.key(),new ErrorTransienceValue(),graphVersion,graph,dirtyKeyTracker);
   }
   for (  SkyKey skyKey : skyKeys) {
     NodeEntry entry=graph.createIfAbsent(skyKey);
@@ -16,7 +12,7 @@ case NEEDS_SCHEDULING:
 case DONE:
   informProgressReceiverThatValueIsDone(skyKey);
 break;
-case ADDED_DEP:
+case ALREADY_EVALUATING:
 break;
 default :
 throw new IllegalStateException(entry + " for " + skyKey+ " in unknown state");

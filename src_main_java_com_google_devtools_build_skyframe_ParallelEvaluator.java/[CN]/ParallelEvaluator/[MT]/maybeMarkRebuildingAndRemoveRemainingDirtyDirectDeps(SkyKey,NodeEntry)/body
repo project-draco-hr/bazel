@@ -1,0 +1,10 @@
+{
+  if (entry.isDirty() && entry.getDirtyState() != DirtyState.REBUILDING) {
+    Collection<SkyKey> depsToRemove=entry.markRebuildingAndGetAllRemainingDirtyDirectDeps();
+    Map<SkyKey,NodeEntry> depsToClearFrom=graph.getBatch(depsToRemove);
+    Preconditions.checkState(depsToRemove.size() == depsToClearFrom.size(),"%s %s: %s %s",key,entry,depsToRemove,depsToClearFrom);
+    for (    NodeEntry depEntry : depsToClearFrom.values()) {
+      depEntry.removeReverseDep(key);
+    }
+  }
+}

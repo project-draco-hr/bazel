@@ -16,11 +16,18 @@
         for (        SkyKey reverseDep : entry.getReverseDeps()) {
           visit(reverseDep,InvalidationType.DELETED,!MUST_EXIST);
         }
-        Iterable<SkyKey> directDeps=entry.isDone() ? entry.getDirectDeps() : entry.getTemporaryDirectDeps();
-        for (        SkyKey directDep : directDeps) {
-          NodeEntry dep=graph.get(directDep);
+        Set<SkyKey> signalingDeps=entry.isDone() ? ImmutableSet.<SkyKey>of() : entry.getTemporaryDirectDeps();
+        Iterable<SkyKey> directDeps=entry.isDone() ? entry.getDirectDeps() : entry.getAllDirectDepsForIncompleteNode();
+        Map<SkyKey,NodeEntry> depMap=graph.getBatch(directDeps);
+        for (        Map.Entry<SkyKey,NodeEntry> directDepEntry : depMap.entrySet()) {
+          NodeEntry dep=directDepEntry.getValue();
           if (dep != null) {
-            dep.removeReverseDep(key);
+            if (dep.isDone() || !signalingDeps.contains(directDepEntry.getKey())) {
+              dep.removeReverseDep(key);
+            }
+ else {
+              dep.removeInProgressReverseDep(key);
+            }
           }
         }
       }

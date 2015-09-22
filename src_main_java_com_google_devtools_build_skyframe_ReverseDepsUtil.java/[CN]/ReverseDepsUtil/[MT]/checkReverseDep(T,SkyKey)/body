@@ -1,0 +1,19 @@
+{
+  Object reverseDepsObject=getReverseDepsObject(container);
+  if (isSingleReverseDep(container)) {
+    Preconditions.checkState(reverseDepsObject.equals(reverseDep),"%s %s %s",reverseDep,reverseDepsObject,container);
+    return;
+  }
+  List<SkyKey> asList=(List<SkyKey>)reverseDepsObject;
+  if (asList.size() < MAYBE_CHECK_THRESHOLD) {
+    Preconditions.checkState(asList.contains(reverseDep),"%s not in %s for %s",reverseDep,asList,container);
+  }
+ else {
+    List<SkyKey> reverseDepsToCheck=getReverseDepsToCheck(container);
+    if (reverseDepsToCheck == null) {
+      reverseDepsToCheck=new ArrayList<>();
+      setReverseDepsToCheck(container,reverseDepsToCheck);
+    }
+    reverseDepsToCheck.add(reverseDep);
+  }
+}

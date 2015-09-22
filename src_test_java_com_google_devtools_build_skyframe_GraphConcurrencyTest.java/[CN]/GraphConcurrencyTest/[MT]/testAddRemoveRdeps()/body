@@ -2,12 +2,12 @@
   SkyKey key=key("foo");
   final NodeEntry entry=graph.createIfAbsent(key);
   int numThreads=50;
-  int numKeys=100;
+  int numKeys=numThreads;
   final int chunkSize=40;
-  final int numIterations=chunkSize * 3;
-  final CountDownLatch countDownLatch1=new CountDownLatch(1);
-  final CountDownLatch countDownLatch2=new CountDownLatch(Math.min(numThreads,numKeys));
-  final CountDownLatch countDownLatch3=new CountDownLatch(1);
+  final int numIterations=chunkSize * 2;
+  final CountDownLatch waitForStart=new CountDownLatch(1);
+  final CountDownLatch waitForAddedRdep=new CountDownLatch(numThreads);
+  final CountDownLatch waitForSetValue=new CountDownLatch(1);
   ExecutorService pool=Executors.newFixedThreadPool(numThreads);
   assertEquals(DependencyState.NEEDS_SCHEDULING,entry.addReverseDepAndCheckIfDone(key("rdep")));
   for (int i=0; i < numKeys; i++) {
@@ -15,36 +15,33 @@
     Runnable r=new Runnable(){
       @Override public void run(){
         try {
-          countDownLatch1.await();
-          for (int k=1; k <= numIterations; k++) {
-            if (k == chunkSize) {
-              countDownLatch2.countDown();
-            }
-            entry.addReverseDepAndCheckIfDone(key("rdep" + j));
-            entry.removeReverseDep(key("rdep" + j));
-            if (k == chunkSize * 2) {
-              countDownLatch3.await();
-            }
+          waitForStart.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS);
+          for (int k=1; k < chunkSize; k++) {
+            assertThat(entry.addReverseDepAndCheckIfDone(key("rdep" + j))).isNotEqualTo(DependencyState.DONE);
+            entry.removeInProgressReverseDep(key("rdep" + j));
+            assertThat(entry.getInProgressReverseDeps()).doesNotContain(key("rdep" + j));
           }
-          entry.addReverseDepAndCheckIfDone(key("rdep" + j));
+          assertThat(entry.addReverseDepAndCheckIfDone(key("rdep" + j))).isNotEqualTo(DependencyState.DONE);
+          waitForAddedRdep.countDown();
+          waitForSetValue.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS);
         }
  catch (        InterruptedException e) {
           fail("Test failed: " + e.toString());
+        }
+        for (int k=chunkSize; k <= numIterations; k++) {
+          entry.removeReverseDep(key("rdep" + j));
+          entry.addReverseDepAndCheckIfDone(key("rdep" + j));
+          entry.getReverseDeps();
         }
       }
     }
 ;
     pool.execute(wrapper.wrap(r));
   }
-  countDownLatch1.countDown();
-  try {
-    countDownLatch2.await();
-  }
- catch (  InterruptedException e) {
-    fail("Test failed: " + e.toString());
-  }
+  waitForStart.countDown();
+  waitForAddedRdep.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS);
   entry.setValue(new StringValue("foo1"),startingVersion);
-  countDownLatch3.countDown();
+  waitForSetValue.countDown();
   entry.removeReverseDep(key("rdep"));
   wrapper.waitForTasksAndMaybeThrow();
   assertFalse(ExecutorUtil.interruptibleShutdown(pool));
@@ -54,6 +51,7 @@
   NodeEntry sameEntry=Preconditions.checkNotNull(graph.get(key));
   sameEntry.markDirty(true);
   startEvaluation(sameEntry);
+  sameEntry.markRebuildingAndGetAllRemainingDirtyDirectDeps();
   sameEntry.setValue(new StringValue("foo2"),startingVersion.next());
   assertEquals(new StringValue("foo2"),graph.get(key).getValue());
   assertEquals(numKeys,Iterables.size(graph.get(key).getReverseDeps()));

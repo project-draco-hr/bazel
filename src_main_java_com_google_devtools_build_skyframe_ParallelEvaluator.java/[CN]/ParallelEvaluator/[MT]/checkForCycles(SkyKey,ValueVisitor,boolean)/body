@@ -23,6 +23,7 @@
  else       if (!entry.isReady()) {
         removeIncompleteChildrenForCycle(key,entry,entry.getTemporaryDirectDeps());
       }
+      maybeMarkRebuildingAndRemoveRemainingDirtyDirectDeps(key,entry);
       Set<SkyKey> directDeps=entry.getTemporaryDirectDeps();
       List<ErrorInfo> errorDeps=getChildrenErrorsForCycle(directDeps);
       Preconditions.checkState(!errorDeps.isEmpty(),"Value %s was not successfully evaluated, but had no child errors. ValueEntry: %s",key,entry);
@@ -43,6 +44,7 @@
       Iterable<SkyKey> cycle=graphPath.subList(cycleStart,graphPath.size());
       if (entry.isDirty() && entry.getDirtyState() == NodeEntry.DirtyState.CHECK_DEPENDENCIES) {
         entry.signalDep();
+        maybeMarkRebuildingAndRemoveRemainingDirtyDirectDeps(key,entry);
       }
       if (keepGoing) {
         SkyKey cycleChild=selectCycleChild(key,graphPath,cycleStart);

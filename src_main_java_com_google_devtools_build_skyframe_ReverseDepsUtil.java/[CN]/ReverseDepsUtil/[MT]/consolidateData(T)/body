@@ -1,0 +1,40 @@
+{
+  Object reverseDeps=getReverseDepsObject(container);
+  List<SkyKey> reverseDepsToRemove=getReverseDepsToRemove(container);
+  List<SkyKey> reverseDepsToCheck=getReverseDepsToCheck(container);
+  if (reverseDepsToRemove == null && reverseDepsToCheck == null) {
+    return;
+  }
+  Preconditions.checkState(!isSingleReverseDep(container),"We do not delay removals/checks for single lists: %s %s %s",container,reverseDepsToRemove,reverseDepsToCheck);
+  @SuppressWarnings("unchecked") List<SkyKey> reverseDepsAsList=(List<SkyKey>)reverseDeps;
+  Preconditions.checkState(!reverseDepsAsList.isEmpty(),"Could not do delayed removal/check for %s elements from %s.\n" + "Reverse deps to check: %s. Container: %s",reverseDepsToRemove,reverseDeps,reverseDepsToCheck,container);
+  if (reverseDepsToRemove == null) {
+    Set<SkyKey> reverseDepsAsSet=new HashSet<>(reverseDepsAsList);
+    Preconditions.checkState(reverseDepsAsSet.containsAll(reverseDepsToCheck),"%s %s",reverseDepsToCheck,container);
+    setDataToConsolidate(container,null);
+    return;
+  }
+  Set<SkyKey> toRemove=Sets.newHashSet(reverseDepsToRemove);
+  int expectedRemovals=toRemove.size();
+  Preconditions.checkState(expectedRemovals == reverseDepsToRemove.size(),"A reverse dependency tried to remove itself twice: %s. %s",reverseDepsToRemove,container);
+  Set<SkyKey> toCheck=reverseDepsToCheck == null ? new HashSet<SkyKey>() : new HashSet<>(reverseDepsToCheck);
+  List<SkyKey> newReverseDeps=Lists.newArrayListWithExpectedSize(Math.max(0,reverseDepsAsList.size() - expectedRemovals));
+  for (  SkyKey reverseDep : reverseDepsAsList) {
+    toCheck.remove(reverseDep);
+    if (!toRemove.contains(reverseDep)) {
+      newReverseDeps.add(reverseDep);
+    }
+  }
+  Preconditions.checkState(newReverseDeps.size() == reverseDepsAsList.size() - expectedRemovals,"Could not remove some elements from %s.\nReverse deps to remove: %s. %s",reverseDeps,toRemove,container);
+  Preconditions.checkState(toCheck.isEmpty(),"%s %s",toCheck,container);
+  if (newReverseDeps.isEmpty()) {
+    overwriteReverseDepsList(container,ImmutableList.<SkyKey>of());
+  }
+ else   if (newReverseDeps.size() == 1) {
+    overwriteReverseDepsWithObject(container,newReverseDeps.get(0));
+  }
+ else {
+    overwriteReverseDepsList(container,newReverseDeps);
+  }
+  setDataToConsolidate(container,null);
+}

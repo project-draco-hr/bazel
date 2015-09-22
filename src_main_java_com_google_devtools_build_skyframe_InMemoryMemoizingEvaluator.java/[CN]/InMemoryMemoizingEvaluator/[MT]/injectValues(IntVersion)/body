@@ -3,18 +3,7 @@
     return;
   }
   for (  Entry<SkyKey,SkyValue> entry : valuesToInject.entrySet()) {
-    SkyKey key=entry.getKey();
-    SkyValue value=entry.getValue();
-    Preconditions.checkState(value != null,key);
-    NodeEntry prevEntry=graph.createIfAbsent(key);
-    if (prevEntry.isDirty()) {
-      Preconditions.checkState(prevEntry.getTemporaryDirectDeps().isEmpty(),key);
-      DependencyState newState=prevEntry.addReverseDepAndCheckIfDone(null);
-      Preconditions.checkState(newState == DependencyState.NEEDS_SCHEDULING,key);
-      Preconditions.checkState(prevEntry.noDepsLastBuild(),"existing entry for %s has deps: %s",key,prevEntry);
-    }
-    prevEntry.setValue(value,version);
-    dirtyKeyTracker.notDirty(key);
+    ParallelEvaluator.injectValue(entry.getKey(),entry.getValue(),version,graph,dirtyKeyTracker);
   }
   valuesToInject=new HashMap<>();
 }

@@ -1,4 +1,10 @@
 {
   assertKeepEdges();
-  return REVERSE_DEPS_UTIL.getReverseDeps(this);
+  Iterable<SkyKey> reverseDeps=REVERSE_DEPS_UTIL.getReverseDeps(this);
+  if (isDone()) {
+    return reverseDeps;
+  }
+ else {
+    return Iterables.concat(reverseDeps,buildingState.getReverseDepsToSignal());
+  }
 }
