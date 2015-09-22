@@ -1,13 +1,13 @@
 {
-  Label fileLabel=(Label)skyKey.argument();
-  PathFragment importPath=fileLabel.toPathFragment();
+  PackageIdentifier arg=(PackageIdentifier)skyKey.argument();
+  PathFragment file=arg.getPackageFragment();
   ASTFileLookupValue astLookupValue=null;
   try {
-    SkyKey astLookupKey=ASTFileLookupValue.key(fileLabel);
+    SkyKey astLookupKey=ASTFileLookupValue.key(arg);
     astLookupValue=(ASTFileLookupValue)env.getValueOrThrow(astLookupKey,ErrorReadingSkylarkExtensionException.class,InconsistentFilesystemException.class);
   }
  catch (  ErrorReadingSkylarkExtensionException e) {
-    throw new SkylarkImportLookupFunctionException(SkylarkImportFailedException.errorReadingFile(importPath,e.getMessage()));
+    throw new SkylarkImportLookupFunctionException(SkylarkImportFailedException.errorReadingFile(file,e.getMessage()));
   }
 catch (  InconsistentFilesystemException e) {
     throw new SkylarkImportLookupFunctionException(e,Transience.PERSISTENT);
@@ -15,36 +15,35 @@ catch (  InconsistentFilesystemException e) {
   if (astLookupValue == null) {
     return null;
   }
-  if (!astLookupValue.lookupSuccessful()) {
-    throw new SkylarkImportLookupFunctionException(SkylarkImportFailedException.noFile(astLookupValue.getErrorMsg()));
+  if (astLookupValue.getAST() == null) {
+    throw new SkylarkImportLookupFunctionException(SkylarkImportFailedException.noFile(file));
   }
   Map<PathFragment,Extension> importMap=new HashMap<>();
   ImmutableList.Builder<SkylarkFileDependency> fileDependencies=ImmutableList.builder();
   BuildFileAST ast=astLookupValue.getAST();
-  for (  LoadStatement loadStmt : ast.getImports()) {
+  for (  Map.Entry<Location,PathFragment> entry : ast.getImports().entrySet()) {
     try {
-      Label importLabel=findLabelForLoadStatement(loadStmt,fileLabel,env);
-      if (importLabel == null) {
-        return null;
-      }
-      SkyKey importsLookupKey=SkylarkImportLookupValue.key(importLabel);
+      PathFragment importFile=entry.getValue();
+      RepositoryName repository=entry.getKey().getPath().endsWith(ruleClassProvider.getPreludePath()) ? PackageIdentifier.DEFAULT_REPOSITORY_NAME : arg.getRepository();
+      SkyKey importsLookupKey=SkylarkImportLookupValue.key(repository,file,importFile);
       SkylarkImportLookupValue importsLookupValue;
-      importsLookupValue=(SkylarkImportLookupValue)env.getValue(importsLookupKey);
+      importsLookupValue=(SkylarkImportLookupValue)env.getValueOrThrow(importsLookupKey,ASTLookupInputException.class);
       if (importsLookupValue != null) {
-        importMap.put(loadStmt.getImportPath(),importsLookupValue.getEnvironmentExtension());
+        importMap.put(importFile,importsLookupValue.getEnvironmentExtension());
         fileDependencies.add(importsLookupValue.getDependency());
       }
     }
- catch (    SkylarkImportFailedException e) {
-      throw new SkylarkImportLookupFunctionException(e);
+ catch (    ASTLookupInputException e) {
+      throw new SkylarkImportLookupFunctionException(e,Transience.PERSISTENT);
     }
   }
+  Label label=pathFragmentToLabel(arg.getRepository(),file,env);
   if (env.valuesMissing()) {
     return null;
   }
   if (ast.containsErrors()) {
-    throw new SkylarkImportLookupFunctionException(SkylarkImportFailedException.skylarkErrors(importPath));
+    throw new SkylarkImportLookupFunctionException(SkylarkImportFailedException.skylarkErrors(file));
   }
-  Extension extension=createExtension(ast,importPath,importMap,env);
-  return new SkylarkImportLookupValue(extension,new SkylarkFileDependency(fileLabel,fileDependencies.build()));
+  Extension extension=createExtension(ast,file,importMap,env);
+  return new SkylarkImportLookupValue(extension,new SkylarkFileDependency(label,fileDependencies.build()));
 }

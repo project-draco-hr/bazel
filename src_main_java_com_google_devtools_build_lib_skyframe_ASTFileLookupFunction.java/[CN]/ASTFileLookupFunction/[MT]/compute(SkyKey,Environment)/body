@@ -1,46 +1,25 @@
 {
-  Label fileLabel=(Label)skyKey.argument();
-  PathFragment filePathFragment=fileLabel.toPathFragment();
-  SkyKey pkgSkyKey=PackageLookupValue.key(fileLabel.getPackageIdentifier());
-  PackageLookupValue pkgLookupValue=null;
-  pkgLookupValue=(PackageLookupValue)env.getValue(pkgSkyKey);
-  if (pkgLookupValue == null) {
+  PackageIdentifier key=(PackageIdentifier)skyKey.argument();
+  PathFragment astFilePathFragment=key.getPackageFragment();
+  FileLookupResult lookupResult=getASTFile(env,key);
+  if (lookupResult == null) {
     return null;
   }
-  if (!pkgLookupValue.packageExists()) {
-    return ASTFileLookupValue.forBadPackage(fileLabel,pkgLookupValue.getErrorMsg());
-  }
-  Path packageRoot=pkgLookupValue.getRoot();
-  RootedPath rootedPath=RootedPath.toRootedPath(packageRoot,filePathFragment);
-  SkyKey fileSkyKey=FileValue.key(rootedPath);
-  FileValue fileValue=null;
-  try {
-    fileValue=(FileValue)env.getValueOrThrow(fileSkyKey,IOException.class,FileSymlinkException.class,InconsistentFilesystemException.class);
-  }
- catch (  IOException|FileSymlinkException e) {
-    throw new ASTLookupFunctionException(new ErrorReadingSkylarkExtensionException(e.getMessage()),Transience.PERSISTENT);
-  }
-catch (  InconsistentFilesystemException e) {
-    throw new ASTLookupFunctionException(e,Transience.PERSISTENT);
-  }
-  if (fileValue == null) {
-    return null;
-  }
-  if (!fileValue.isFile()) {
-    return ASTFileLookupValue.forBadFile(fileLabel);
+  if (!lookupResult.lookupSuccessful()) {
+    return ASTFileLookupValue.noFile();
   }
   BuildFileAST ast=null;
-  Path path=rootedPath.asPath();
-  boolean parseAsSkylark=filePathFragment.getPathString().endsWith(".bzl");
+  Path path=lookupResult.rootedPath().asPath();
+  long fileSize=lookupResult.fileSize();
+  boolean parseAsSkylark=astFilePathFragment.getPathString().endsWith(".bzl");
   try {
-    long astFileSize=fileValue.getSize();
     if (parseAsSkylark) {
       try (Mutability mutability=Mutability.create("validate")){
-        ast=BuildFileAST.parseSkylarkFile(path,astFileSize,env.getListener(),new ValidationEnvironment(ruleClassProvider.createSkylarkRuleClassEnvironment(mutability,env.getListener(),null,null).setupDynamic(Runtime.PKG_NAME,Runtime.NONE)));
+        ast=BuildFileAST.parseSkylarkFile(path,fileSize,env.getListener(),new ValidationEnvironment(ruleClassProvider.createSkylarkRuleClassEnvironment(mutability,env.getListener(),null,null).setupDynamic(Runtime.PKG_NAME,Runtime.NONE)));
       }
      }
  else {
-      ast=BuildFileAST.parseBuildFile(path,astFileSize,env.getListener(),false);
+      ast=BuildFileAST.parseBuildFile(path,fileSize,env.getListener(),false);
     }
   }
  catch (  IOException e) {

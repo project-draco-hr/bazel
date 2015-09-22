@@ -1,0 +1,34 @@
+{
+  ImmutableMap<Location,PathFragment> imports=buildFileAST.getImports();
+  Map<PathFragment,Extension> importMap=new HashMap<>();
+  ImmutableList.Builder<SkylarkFileDependency> fileDependencies=ImmutableList.builder();
+  try {
+    for (    Map.Entry<Location,PathFragment> entry : imports.entrySet()) {
+      PathFragment importFile=entry.getValue();
+      RepositoryName repository=entry.getKey().getPath().endsWith(preludePath) ? PackageIdentifier.DEFAULT_REPOSITORY_NAME : packageId.getRepository();
+      SkyKey importsLookupKey=SkylarkImportLookupValue.key(repository,buildFileFragment,importFile);
+      SkylarkImportLookupValue importLookupValue=(SkylarkImportLookupValue)env.getValueOrThrow(importsLookupKey,SkylarkImportFailedException.class,InconsistentFilesystemException.class,ASTLookupInputException.class,BuildFileNotFoundException.class);
+      if (importLookupValue != null) {
+        importMap.put(importFile,importLookupValue.getEnvironmentExtension());
+        fileDependencies.add(importLookupValue.getDependency());
+      }
+    }
+  }
+ catch (  SkylarkImportFailedException e) {
+    env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
+    throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.PERSISTENT);
+  }
+catch (  InconsistentFilesystemException e) {
+    throw new PackageFunctionException(new InternalInconsistentFilesystemException(packageId,e),Transience.PERSISTENT);
+  }
+catch (  ASTLookupInputException e) {
+    throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.PERSISTENT);
+  }
+catch (  BuildFileNotFoundException e) {
+    throw new PackageFunctionException(e,Transience.PERSISTENT);
+  }
+  if (env.valuesMissing()) {
+    return null;
+  }
+  return new SkylarkImportResult(importMap,transitiveClosureOfLabels(fileDependencies.build()));
+}

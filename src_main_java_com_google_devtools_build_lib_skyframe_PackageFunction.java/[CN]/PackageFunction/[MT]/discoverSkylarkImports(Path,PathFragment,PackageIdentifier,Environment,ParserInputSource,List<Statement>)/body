@@ -1,0 +1,12 @@
+{
+  StoredEventHandler eventHandler=new StoredEventHandler();
+  BuildFileAST buildFileAST=BuildFileAST.parseBuildFile(inputSource,preludeStatements,eventHandler,false);
+  SkylarkImportResult importResult;
+  if (eventHandler.hasErrors()) {
+    importResult=new SkylarkImportResult(ImmutableMap.<PathFragment,Extension>of(),ImmutableList.<Label>of());
+  }
+ else {
+    importResult=fetchImportsFromBuildFile(buildFilePath,buildFileFragment,packageId,buildFileAST,env);
+  }
+  return importResult;
+}
