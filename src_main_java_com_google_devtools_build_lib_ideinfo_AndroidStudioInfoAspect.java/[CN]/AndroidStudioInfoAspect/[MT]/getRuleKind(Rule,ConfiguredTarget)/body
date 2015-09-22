@@ -1,23 +1,25 @@
 {
-  RuleIdeInfo.Kind kind;
-  String ruleClassName=rule.getRuleClassObject().getName();
-  if ("java_library".equals(ruleClassName)) {
-    kind=RuleIdeInfo.Kind.JAVA_LIBRARY;
-  }
- else   if ("java_import".equals(ruleClassName)) {
-    kind=Kind.JAVA_IMPORT;
-  }
- else   if ("java_test".equals(ruleClassName)) {
-    kind=Kind.JAVA_TEST;
-  }
- else   if ("java_binary".equals(ruleClassName)) {
-    kind=Kind.JAVA_BINARY;
-  }
- else   if (base.getProvider(AndroidSdkProvider.class) != null) {
-    kind=RuleIdeInfo.Kind.ANDROID_SDK;
-  }
+switch (rule.getRuleClassObject().getName()) {
+case "java_library":
+    return Kind.JAVA_LIBRARY;
+case "java_import":
+  return Kind.JAVA_IMPORT;
+case "java_test":
+return Kind.JAVA_TEST;
+case "java_binary":
+return Kind.JAVA_BINARY;
+case "android_library":
+return Kind.ANDROID_LIBRARY;
+case "android_binary":
+return Kind.ANDROID_BINARY;
+default :
+{
+if (base.getProvider(AndroidSdkProvider.class) != null) {
+return RuleIdeInfo.Kind.ANDROID_SDK;
+}
  else {
-    kind=RuleIdeInfo.Kind.UNRECOGNIZED;
-  }
-  return kind;
+return RuleIdeInfo.Kind.UNRECOGNIZED;
+}
+}
+}
 }

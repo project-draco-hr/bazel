@@ -1,0 +1,27 @@
+{
+  if (needle.equals(PathFragment.EMPTY_FRAGMENT)) {
+    return haystack;
+  }
+  int[] overlap=new int[needle.segmentCount() + 1];
+  overlap[0]=-1;
+  for (int i=0, j=-1; i < needle.segmentCount(); j++, i++, overlap[i]=j) {
+    while (j >= 0 && !needle.getSegment(i).equals(needle.getSegment(j))) {
+      j=overlap[j];
+    }
+  }
+  int found=-1;
+  for (int i=0, j=0; i < haystack.segmentCount(); i++) {
+    while (j >= 0 && !haystack.getSegment(i).equals(needle.getSegment(j))) {
+      j=overlap[j];
+    }
+    j++;
+    if (j == needle.segmentCount()) {
+      found=i + 1;
+      j=j - 1;
+    }
+  }
+  if (found != -1) {
+    return haystack.subFragment(0,found);
+  }
+  throw new IllegalArgumentException(String.format("%s was not found in %s",needle,haystack));
+}

@@ -1,0 +1,15 @@
+{
+  if (ruleContext.attributes().isAttributeValueExplicitlySpecified("custom_package")) {
+    return ruleContext.attributes().get("custom_package",Type.STRING);
+  }
+ else {
+    PathFragment nameFragment=ruleContext.getRule().getPackage().getNameFragment();
+    String packageName=JavaUtil.getJavaFullClassname(nameFragment);
+    if (packageName != null) {
+      return packageName;
+    }
+ else {
+      return nameFragment.getPathString().replace('/','.');
+    }
+  }
+}

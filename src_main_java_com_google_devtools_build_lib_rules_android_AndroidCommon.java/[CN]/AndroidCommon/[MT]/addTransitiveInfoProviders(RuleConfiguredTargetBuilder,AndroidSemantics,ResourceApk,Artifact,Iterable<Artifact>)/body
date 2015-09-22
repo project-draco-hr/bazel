@@ -1,0 +1,9 @@
+{
+  if (!idls.isEmpty()) {
+    generateAndroidIdlActions(ruleContext,idls,transitiveIdlImportData,translatedIdlSources);
+  }
+  Runfiles runfiles=new Runfiles.Builder(ruleContext.getWorkspaceName()).addRunfiles(ruleContext,RunfilesProvider.DEFAULT_RUNFILES).build();
+  javaCommon.addTransitiveInfoProviders(builder,filesToBuild,classJar);
+  builder.add(JavaRuleOutputJarsProvider.class,new JavaRuleOutputJarsProvider(classJar,srcJar,genJar,gensrcJar));
+  return builder.setFilesToBuild(filesToBuild).add(JavaRuntimeJarProvider.class,new JavaRuntimeJarProvider(javaCommon.getJavaCompilationArtifacts().getRuntimeJars())).add(RunfilesProvider.class,RunfilesProvider.simple(runfiles)).add(AndroidResourcesProvider.class,new AndroidResourcesProvider(ruleContext.getLabel(),transitiveResources)).add(AndroidIdeInfoProvider.class,createAndroidIdeInfoProvider(ruleContext,androidSemantics,resourceApk,zipAlignedApk,apksUnderTest)).add(AndroidIdlProvider.class,transitiveIdlImportData).add(JavaCompilationArgsProvider.class,new JavaCompilationArgsProvider(javaCompilationArgs,recursiveJavaCompilationArgs,compileTimeDependencyArtifacts,NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER))).add(JackLibraryProvider.class,asNeverLink ? jackCompilationHelper.compileAsNeverlinkLibrary() : jackCompilationHelper.compileAsLibrary()).addOutputGroup(OutputGroupProvider.HIDDEN_TOP_LEVEL,collectHiddenTopLevelArtifacts(ruleContext)).addOutputGroup(JavaSemantics.SOURCE_JARS_OUTPUT_GROUP,transitiveSourceJars).addOutputGroup(JavaSemantics.GENERATED_JARS_OUTPUT_GROUP,genJar);
+}

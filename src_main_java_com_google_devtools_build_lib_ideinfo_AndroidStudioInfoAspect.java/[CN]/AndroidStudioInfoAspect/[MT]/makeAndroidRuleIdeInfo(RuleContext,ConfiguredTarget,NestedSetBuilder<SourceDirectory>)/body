@@ -1,0 +1,27 @@
+{
+  AndroidRuleIdeInfo.Builder builder=AndroidRuleIdeInfo.newBuilder();
+  AndroidIdeInfoProvider provider=base.getProvider(AndroidIdeInfoProvider.class);
+  if (provider.getSignedApk() != null) {
+    builder.setApk(makeArtifactLocation(provider.getSignedApk()));
+  }
+  if (provider.getManifest() != null) {
+    builder.setManifest(makeArtifactLocation(provider.getManifest()));
+  }
+  if (provider.getGeneratedManifest() != null) {
+    builder.setGeneratedManifest(makeArtifactLocation(provider.getGeneratedManifest()));
+  }
+  for (  Artifact artifact : provider.getApksUnderTest()) {
+    builder.addDependencyApk(makeArtifactLocation(artifact));
+  }
+  for (  SourceDirectory resourceDir : provider.getResourceDirs()) {
+    ArtifactLocation artifactLocation=makeArtifactLocation(resourceDir);
+    builder.addResources(artifactLocation);
+    transitiveResourcesBuilder.add(resourceDir);
+  }
+  builder.setJavaPackage(AndroidCommon.getJavaPackage(ruleContext));
+  NestedSet<SourceDirectory> transitiveResources=transitiveResourcesBuilder.build();
+  for (  SourceDirectory transitiveResource : transitiveResources) {
+    builder.addTransitiveResources(makeArtifactLocation(transitiveResource));
+  }
+  return Pair.of(builder.build(),transitiveResources);
+}

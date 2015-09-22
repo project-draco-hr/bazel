@@ -54,22 +54,13 @@
     aar=null;
     ApplicationManifest applicationManifest=ApplicationManifest.generatedManifest(ruleContext);
     Artifact apk=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK);
-    String javaPackage;
-    if (apk.getExecPath().getFirstSegment(ImmutableSet.of("java","javatests")) != PathFragment.INVALID_SEGMENT) {
-      javaPackage=JavaUtil.getJavaPackageName(apk.getExecPath());
-    }
- else {
-      javaPackage=apk.getRootRelativePath().getPathString().replace('/','.');
-    }
-    if (ruleContext.attributes().isAttributeValueExplicitlySpecified("custom_package")) {
-      javaPackage=ruleContext.attributes().get("custom_package",Type.STRING);
-    }
+    String javaPackage=AndroidCommon.getJavaPackage(ruleContext);
     ResourceContainer resourceContainer=new ResourceContainer(ruleContext.getLabel(),javaPackage,null,false,apk,applicationManifest.getManifest(),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_JAVA_SOURCE_JAR),ImmutableList.<Artifact>of(),ImmutableList.<Artifact>of(),ImmutableList.<PathFragment>of(),ImmutableList.<PathFragment>of(),ruleContext.attributes().get("exports_manifest",Type.BOOLEAN),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),null);
     primaryResources=new AndroidResourcesProcessorBuilder(ruleContext).setApkOut(apk).setRTxtOut(resourceContainer.getRTxt()).setSourceJarOut(resourceContainer.getJavaSourceJar()).setJavaPackage(resourceContainer.getJavaPackage()).withPrimary(resourceContainer).withDependencies(transitiveResources).setDebug(ruleContext.getConfiguration().getCompilationMode() != CompilationMode.OPT).setWorkingDirectory(ruleContext.getUniqueDirectory("_resources")).build(ruleContext);
   }
   new AarGeneratorBuilder(ruleContext).withPrimary(primaryResources).withManifest(primaryResources.getManifest()).withRtxt(primaryResources.getRTxt()).withClasses(classesJar).setAAROut(aarOut).build(ruleContext);
   RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
-  androidCommon.addTransitiveInfoProviders(builder);
-  androidSemantics.addTransitiveInfoProviders(builder,ruleContext,javaCommon,androidCommon,null,definesLocalResources ? resourceApk : null,null,ImmutableList.<Artifact>of());
-  return builder.add(AndroidNativeLibraryProvider.class,new AndroidNativeLibraryProvider(transitiveNativeLibraries)).addSkylarkTransitiveInfo(JavaSkylarkApiProvider.NAME,new JavaSkylarkApiProvider()).add(JavaNeverlinkInfoProvider.class,new JavaNeverlinkInfoProvider(androidCommon.isNeverLink())).add(JavaSourceJarsProvider.class,androidCommon.getJavaSourceJarsProvider()).add(AndroidCcLinkParamsProvider.class,new AndroidCcLinkParamsProvider(androidCommon.getCcLinkParamsStore())).add(ProguardSpecProvider.class,new ProguardSpecProvider(transitiveProguardConfigs)).addOutputGroup(OutputGroupProvider.HIDDEN_TOP_LEVEL,transitiveProguardConfigs).add(AndroidLibraryAarProvider.class,new AndroidLibraryAarProvider(aar,transitiveAars.build())).build();
+  androidCommon.addTransitiveInfoProviders(builder,androidSemantics,definesLocalResources ? resourceApk : null,null,ImmutableList.<Artifact>of());
+  androidSemantics.addTransitiveInfoProviders(builder,ruleContext,javaCommon,androidCommon,null);
+  return builder.add(AndroidNativeLibraryProvider.class,new AndroidNativeLibraryProvider(transitiveNativeLibraries)).addSkylarkTransitiveInfo(JavaSkylarkApiProvider.NAME,new JavaSkylarkApiProvider()).add(JavaNeverlinkInfoProvider.class,new JavaNeverlinkInfoProvider(androidCommon.isNeverLink())).add(JavaRuleOutputJarsProvider.class,new JavaRuleOutputJarsProvider(classesJar,androidCommon.getGensrcJar(),androidCommon.getGenJar(),androidCommon.getGensrcJar())).add(JavaSourceInfoProvider.class,JavaSourceInfoProvider.fromJavaTargetAttributes(javaTargetAttributes,javaSemantics)).add(JavaSourceJarsProvider.class,androidCommon.getJavaSourceJarsProvider()).add(AndroidCcLinkParamsProvider.class,new AndroidCcLinkParamsProvider(androidCommon.getCcLinkParamsStore())).add(ProguardSpecProvider.class,new ProguardSpecProvider(transitiveProguardConfigs)).addOutputGroup(OutputGroupProvider.HIDDEN_TOP_LEVEL,transitiveProguardConfigs).add(AndroidLibraryAarProvider.class,new AndroidLibraryAarProvider(aar,transitiveAars.build())).build();
 }

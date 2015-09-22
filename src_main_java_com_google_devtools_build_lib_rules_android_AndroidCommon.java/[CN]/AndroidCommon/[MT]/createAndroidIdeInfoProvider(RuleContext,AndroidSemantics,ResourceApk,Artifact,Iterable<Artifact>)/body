@@ -1,0 +1,13 @@
+{
+  AndroidIdeInfoProvider.Builder ideInfoProviderBuilder=new AndroidIdeInfoProvider.Builder().addIdlParcelables(getIdlParcelables(ruleContext)).addIdlSrcs(getIdlSrcs(ruleContext)).addAllApksUnderTest(apksUnderTest);
+  if (zipAlignedApk != null) {
+    ideInfoProviderBuilder.setApk(zipAlignedApk);
+  }
+  if (LocalResourceContainer.definesAndroidResources(ruleContext.attributes())) {
+    ideInfoProviderBuilder.addResourceSources(resourceApk.getPrimaryResource().getArtifacts(ResourceType.RESOURCES)).addAssetSources(resourceApk.getPrimaryResource().getArtifacts(ResourceType.ASSETS),getAssetDir(ruleContext)).setGeneratedManifest(resourceApk.getPrimaryResource().getManifest()).setManifest(ruleContext.getPrerequisiteArtifact("manifest",Mode.TARGET));
+  }
+ else {
+    semantics.addNonLocalResources(ruleContext,resourceApk,ideInfoProviderBuilder);
+  }
+  return ideInfoProviderBuilder.build();
+}
