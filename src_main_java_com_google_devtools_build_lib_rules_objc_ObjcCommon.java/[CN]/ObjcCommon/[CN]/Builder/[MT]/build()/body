@@ -23,16 +23,6 @@
   for (  CompilationArtifacts artifacts : compilationArtifacts.asSet()) {
     Iterable<Artifact> allSources=Iterables.concat(artifacts.getSrcs(),artifacts.getNonArcSrcs());
     objcProvider.addAll(HEADER,artifacts.getAdditionalHdrs()).addAll(LIBRARY,artifacts.getArchive().asSet()).addAll(SOURCE,allSources);
-    BuildConfiguration configuration=context.getConfiguration();
-    RegexFilter filter=configuration.getInstrumentationFilter();
-    if (configuration.isCodeCoverageEnabled() && filter.isIncluded(context.getLabel().toString())) {
-      for (      Artifact source : allSources) {
-        if (ObjcRuleClasses.isInstrumentable(source)) {
-          objcProvider.add(INSTRUMENTED_SOURCE,source);
-          objcProvider.add(GCNO,intermediateArtifacts.gcnoFile(source));
-        }
-      }
-    }
     boolean usesCpp=false;
     boolean usesSwift=false;
     for (    Artifact sourceFile : Iterables.concat(artifacts.getSrcs(),artifacts.getNonArcSrcs())) {

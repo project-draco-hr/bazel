@@ -1,0 +1,11 @@
+{
+  ImmutableList.Builder<Artifact> oFiles=ImmutableList.builder();
+  if (common.getCompilationArtifacts().isPresent()) {
+    CompilationArtifacts artifacts=common.getCompilationArtifacts().get();
+    IntermediateArtifacts intermediateArtifacts=intermediateArtifacts(ruleContext);
+    for (    Artifact artifact : Iterables.concat(artifacts.getSrcs(),artifacts.getNonArcSrcs())) {
+      oFiles.add(intermediateArtifacts.objFile(artifact));
+    }
+  }
+  return InstrumentedFilesCollector.collect(ruleContext,INSTRUMENTATION_SPEC,new ObjcCoverageMetadataCollector(),oFiles.build(),!TargetUtils.isTestRule(ruleContext.getTarget()));
+}
