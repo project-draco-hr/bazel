@@ -1,15 +1,13 @@
 {
   Aspect.Builder builder=new Builder(NAME);
-  NestedSetBuilder<Label> transitiveDependenciesBuilder=NestedSetBuilder.stableOrder();
+  AndroidStudioInfoFilesProvider.Builder providerBuilder=new AndroidStudioInfoFilesProvider.Builder();
   NestedSetBuilder<Label> dependenciesBuilder=NestedSetBuilder.stableOrder();
-  NestedSetBuilder<SourceDirectory> transitiveResourcesBuilder=NestedSetBuilder.stableOrder();
-  NestedSetBuilder<Artifact> ideBuildFilesBuilder=NestedSetBuilder.stableOrder();
   if (ruleContext.attributes().has("deps",BuildType.LABEL_LIST)) {
     Iterable<AndroidStudioInfoFilesProvider> androidStudioInfoFilesProviders=ruleContext.getPrerequisites("deps",Mode.TARGET,AndroidStudioInfoFilesProvider.class);
     for (    AndroidStudioInfoFilesProvider depProvider : androidStudioInfoFilesProviders) {
-      ideBuildFilesBuilder.addTransitive(depProvider.getIdeBuildFiles());
-      transitiveDependenciesBuilder.addTransitive(depProvider.getTransitiveDependencies());
-      transitiveResourcesBuilder.addTransitive(depProvider.getTransitiveResources());
+      providerBuilder.ideBuildFilesBuilder().addTransitive(depProvider.getIdeBuildFiles());
+      providerBuilder.transitiveDependenciesBuilder().addTransitive(depProvider.getTransitiveDependencies());
+      providerBuilder.transitiveResourcesBuilder().addTransitive(depProvider.getTransitiveResources());
     }
     List<? extends TransitiveInfoCollection> deps=ruleContext.getPrerequisites("deps",Mode.TARGET);
     for (    TransitiveInfoCollection dep : deps) {
@@ -21,19 +19,16 @@
     }
   }
   NestedSet<Label> directDependencies=dependenciesBuilder.build();
-  transitiveDependenciesBuilder.addTransitive(directDependencies);
-  NestedSet<Label> transitiveDependencies=transitiveDependenciesBuilder.build();
+  providerBuilder.transitiveDependenciesBuilder().addTransitive(directDependencies);
   RuleIdeInfo.Kind ruleKind=getRuleKind(ruleContext.getRule(),base);
-  NestedSet<SourceDirectory> transitiveResources;
+  AndroidStudioInfoFilesProvider provider;
   if (ruleKind != RuleIdeInfo.Kind.UNRECOGNIZED) {
-    Pair<Artifact,NestedSet<SourceDirectory>> ideBuildFile=createIdeBuildArtifact(base,ruleContext,ruleKind,directDependencies,transitiveDependencies,transitiveResourcesBuilder);
-    ideBuildFilesBuilder.add(ideBuildFile.first);
-    transitiveResources=ideBuildFile.second;
+    provider=createIdeBuildArtifact(base,ruleContext,ruleKind,directDependencies,providerBuilder);
   }
  else {
-    transitiveResources=transitiveResourcesBuilder.build();
+    provider=providerBuilder.build();
   }
-  NestedSet<Artifact> ideBuildFiles=ideBuildFilesBuilder.build();
-  builder.addOutputGroup(IDE_BUILD,ideBuildFiles).addProvider(AndroidStudioInfoFilesProvider.class,new AndroidStudioInfoFilesProvider(ideBuildFiles,transitiveDependencies,transitiveResources));
+  NestedSet<Artifact> ideBuildFiles=provider.getIdeBuildFiles();
+  builder.addOutputGroup(IDE_BUILD,ideBuildFiles).addProvider(AndroidStudioInfoFilesProvider.class,provider);
   return builder.build();
 }

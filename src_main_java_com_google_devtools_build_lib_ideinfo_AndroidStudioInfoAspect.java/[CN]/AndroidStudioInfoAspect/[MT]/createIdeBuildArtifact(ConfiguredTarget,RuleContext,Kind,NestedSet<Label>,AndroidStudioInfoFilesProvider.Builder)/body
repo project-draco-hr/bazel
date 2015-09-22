@@ -2,29 +2,25 @@
   PathFragment ideBuildFilePath=getOutputFilePath(base,ruleContext);
   Root genfilesDirectory=ruleContext.getConfiguration().getGenfilesDirectory();
   Artifact ideBuildFile=ruleContext.getAnalysisEnvironment().getDerivedArtifact(ideBuildFilePath,genfilesDirectory);
+  providerBuilder.ideBuildFilesBuilder().add(ideBuildFile);
   RuleIdeInfo.Builder outputBuilder=RuleIdeInfo.newBuilder();
   outputBuilder.setLabel(base.getLabel().toString());
   outputBuilder.setBuildFile(ruleContext.getRule().getPackage().getBuildFile().getPath().toString());
   outputBuilder.setKind(ruleKind);
-  outputBuilder.addAllDependencies(transform(directDependencies,LABEL_TO_STRING));
-  outputBuilder.addAllTransitiveDependencies(transform(transitiveDependencies,LABEL_TO_STRING));
-  NestedSet<SourceDirectory> transitiveResources=null;
   if (ruleKind == Kind.JAVA_LIBRARY || ruleKind == Kind.JAVA_IMPORT || ruleKind == Kind.JAVA_TEST || ruleKind == Kind.JAVA_BINARY) {
     outputBuilder.setJavaRuleIdeInfo(makeJavaRuleIdeInfo(base));
   }
  else   if (ruleKind == Kind.ANDROID_LIBRARY || ruleKind == Kind.ANDROID_BINARY) {
     outputBuilder.setJavaRuleIdeInfo(makeJavaRuleIdeInfo(base));
-    Pair<AndroidRuleIdeInfo,NestedSet<SourceDirectory>> androidRuleIdeInfo=makeAndroidRuleIdeInfo(ruleContext,base,transitiveResourcesBuilder);
-    outputBuilder.setAndroidRuleIdeInfo(androidRuleIdeInfo.first);
-    transitiveResources=androidRuleIdeInfo.second;
+    outputBuilder.setAndroidRuleIdeInfo(makeAndroidRuleIdeInfo(ruleContext,base,providerBuilder));
   }
  else   if (ruleKind == Kind.ANDROID_SDK) {
     outputBuilder.setAndroidSdkRuleInfo(makeAndroidSdkRuleInfo(ruleContext,base.getProvider(AndroidSdkProvider.class)));
   }
-  if (transitiveResources == null) {
-    transitiveResources=transitiveResourcesBuilder.build();
-  }
+  AndroidStudioInfoFilesProvider provider=providerBuilder.build();
+  outputBuilder.addAllDependencies(transform(directDependencies,LABEL_TO_STRING));
+  outputBuilder.addAllTransitiveDependencies(transform(provider.getTransitiveDependencies(),LABEL_TO_STRING));
   final RuleIdeInfo ruleIdeInfo=outputBuilder.build();
   ruleContext.registerAction(makeProtoWriteAction(ruleContext.getActionOwner(),ruleIdeInfo,ideBuildFile));
-  return Pair.of(ideBuildFile,transitiveResources);
+  return provider;
 }

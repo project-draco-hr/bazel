@@ -16,12 +16,12 @@
   for (  SourceDirectory resourceDir : provider.getResourceDirs()) {
     ArtifactLocation artifactLocation=makeArtifactLocation(resourceDir);
     builder.addResources(artifactLocation);
-    transitiveResourcesBuilder.add(resourceDir);
+    providerBuilder.transitiveResourcesBuilder().add(resourceDir);
   }
   builder.setJavaPackage(AndroidCommon.getJavaPackage(ruleContext));
-  NestedSet<SourceDirectory> transitiveResources=transitiveResourcesBuilder.build();
+  NestedSet<SourceDirectory> transitiveResources=providerBuilder.getTransitiveResources();
   for (  SourceDirectory transitiveResource : transitiveResources) {
     builder.addTransitiveResources(makeArtifactLocation(transitiveResource));
   }
-  return Pair.of(builder.build(),transitiveResources);
+  return builder.build();
 }
