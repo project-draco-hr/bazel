@@ -1,9 +1,9 @@
 def testMultipleDevicesError(self):
     errors = ['more than one device and emulator', 'more than one device', 'more than one emulator']
     for error in errors:
-        self._mock_adb.SetError(255, '', error)
+        self._mock_adb.SetError(1, '', error)
         try:
             self._CallIncrementalInstall(incremental=True)
             self.fail('Should have quit if there were multiple devices.')
-        except SystemExit:
-            pass
+        except SystemExit as e:
+            self.assertTrue(('Try specifying a device serial' in str(e)))

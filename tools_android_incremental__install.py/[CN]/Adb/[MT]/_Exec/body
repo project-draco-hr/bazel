@@ -18,6 +18,8 @@ def _Exec(self, adb_args):
         raise DeviceUnauthorizedError()
     elif MultipleDevicesError.CheckError(stderr):
         raise MultipleDevicesError(re.sub('^error: ', '', stderr))
+    elif ('INSTALL_FAILED_OLDER_SDK' in stdout):
+        raise OldSdkException()
     if (adb.returncode != 0):
         raise AdbError(args, adb.returncode, stdout, stderr)
     return (adb.returncode, stdout, stderr, args)

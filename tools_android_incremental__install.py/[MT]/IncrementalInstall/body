@@ -35,7 +35,9 @@ def IncrementalInstall(adb_path, execroot, stub_datafile, output_marker, adb_job
         except DeviceUnauthorizedError:
             sys.exit('Error: Device unauthorized. Please check the confirmation dialog on your device.')
         except MultipleDevicesError as e:
-            sys.exit(((('Error: ' + e.message) + '\nTry specifying a device serial with ') + '"blaze mobile-install --adb_arg=-s --adb_arg=$ANDROID_SERIAL"'))
+            sys.exit((('Error: ' + e.message) + '\nTry specifying a device serial with "blaze mobile-install --adb_arg=-s --adb_arg=$ANDROID_SERIAL"'))
+        except OldSdkException as e:
+            sys.exit("Error: The device does not support the API level specified in the application's manifest. Check minSdkVersion in AndroidManifest.xml")
         except TimestampException as e:
             sys.exit(('Error:\n%s' % e.message))
         except AdbError as e:

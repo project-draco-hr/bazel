@@ -1,0 +1,9 @@
+def testSdkTooOld(self):
+    self._mock_adb.SetError(0, 'INSTALL_FAILED_OLDER_SDK', '', for_arg='install')
+    self._CreateZip()
+    self._CreateLocalManifest('zip1 zp1 ip1 0')
+    try:
+        self._CallIncrementalInstall(incremental=False)
+        self.fail('Should have quit if the SDK is too old.')
+    except SystemExit as e:
+        self.assertTrue(('minSdkVersion' in str(e)))
