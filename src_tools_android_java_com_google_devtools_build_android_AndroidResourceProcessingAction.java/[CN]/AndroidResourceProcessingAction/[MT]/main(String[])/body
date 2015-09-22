@@ -14,6 +14,11 @@
     expandedOut.toFile().deleteOnExit();
     Path deduplicatedOut=Files.createTempDirectory("tmp-deduplicated");
     deduplicatedOut.toFile().deleteOnExit();
+    Path generatedSources=null;
+    if (options.srcJarOutput != null || options.rOutput != null || options.symbolsTxtOut != null) {
+      generatedSources=Files.createTempDirectory("generated_resources");
+      generatedSources.toFile().deleteOnExit();
+    }
     LOGGER.fine(String.format("Setup finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     final ImmutableList<DirectoryModifier> modifiers=ImmutableList.of(new PackedResourceTarExpander(expandedOut,working),new FileDeDuplicator(Hashing.murmur3_128(),deduplicatedOut,working));
     final AndroidBuilder builder=sdkTools.createAndroidBuilder();
@@ -23,16 +28,16 @@
     final Path densityManifest=fileSystem.getPath("manifest-filtered/AndroidManifest.xml");
     final DensityFilteredAndroidData filteredData=mergedData.filter(new DensitySpecificResourceFilter(options.densities,filteredResources,working),new DensitySpecificManifestProcessor(options.densities,densityManifest));
     LOGGER.fine(String.format("Density filtering finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
-    resourceProcessor.processResources(builder,options.packageType,options.debug,options.packageForR,new FlagAaptOptions(),options.resourceConfigs,options.applicationId,options.versionCode,options.versionName,filteredData,options.data,working.resolve("manifest"),options.generatedSourcePath,options.packagePath,options.proguardOutput);
+    resourceProcessor.processResources(builder,options.packageType,options.debug,options.packageForR,new FlagAaptOptions(),options.resourceConfigs,options.applicationId,options.versionCode,options.versionName,filteredData,options.data,working.resolve("manifest"),generatedSources,options.packagePath,options.proguardOutput);
     LOGGER.fine(String.format("appt finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     if (options.srcJarOutput != null) {
-      resourceProcessor.createSrcJar(options.generatedSourcePath,options.srcJarOutput);
+      resourceProcessor.createSrcJar(generatedSources,options.srcJarOutput);
     }
     if (options.rOutput != null) {
-      resourceProcessor.copyRToOutput(options.generatedSourcePath,options.rOutput);
+      resourceProcessor.copyRToOutput(generatedSources,options.rOutput);
     }
     if (options.symbolsTxtOut != null) {
-      resourceProcessor.copyRToOutput(options.generatedSourcePath,options.symbolsTxtOut);
+      resourceProcessor.copyRToOutput(generatedSources,options.symbolsTxtOut);
     }
     LOGGER.fine(String.format("Packaging finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
   }
