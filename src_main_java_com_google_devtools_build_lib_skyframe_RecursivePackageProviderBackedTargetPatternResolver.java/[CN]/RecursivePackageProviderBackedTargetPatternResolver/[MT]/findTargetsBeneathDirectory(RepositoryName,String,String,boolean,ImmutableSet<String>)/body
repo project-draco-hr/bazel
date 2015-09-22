@@ -1,0 +1,27 @@
+{
+  FilteringPolicy actualPolicy=rulesOnly ? FilteringPolicies.and(FilteringPolicies.RULES_ONLY,policy) : policy;
+  ImmutableSet<PathFragment> excludedPathFragments=TargetPatternResolverUtil.getPathFragments(excludedSubdirectories);
+  PathFragment pathFragment=TargetPatternResolverUtil.getPathFragment(directory);
+  ResolvedTargets.Builder<Target> targetBuilder=ResolvedTargets.builder();
+  for (  Path root : pkgPath.getPathEntries()) {
+    RootedPath rootedPath=RootedPath.toRootedPath(root,pathFragment);
+    Iterable<PathFragment> packagesUnderDirectory=recursivePackageProvider.getPackagesUnderDirectory(repository,rootedPath,excludedPathFragments);
+    for (    PathFragment pkg : packagesUnderDirectory) {
+      targetBuilder.merge(getTargetsInPackage(originalPattern,pkg,FilteringPolicies.NO_FILTER));
+    }
+  }
+  if (targetBuilder.isEmpty()) {
+    throw new TargetParsingException("no targets found beneath '" + pathFragment + "'");
+  }
+  ResolvedTargets<Target> prefilteredTargets=targetBuilder.build();
+  ResolvedTargets.Builder<Target> filteredBuilder=ResolvedTargets.builder();
+  if (prefilteredTargets.hasError()) {
+    filteredBuilder.setError();
+  }
+  for (  Target target : prefilteredTargets.getTargets()) {
+    if (actualPolicy.shouldRetain(target,false)) {
+      filteredBuilder.add(target);
+    }
+  }
+  return filteredBuilder.build();
+}

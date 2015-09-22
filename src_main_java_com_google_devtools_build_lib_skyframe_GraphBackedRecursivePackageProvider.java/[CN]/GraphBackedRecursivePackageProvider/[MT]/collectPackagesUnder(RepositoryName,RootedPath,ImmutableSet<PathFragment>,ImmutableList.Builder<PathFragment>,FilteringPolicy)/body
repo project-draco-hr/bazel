@@ -1,0 +1,18 @@
+{
+  SkyKey key=PrepareDepsOfTargetsUnderDirectoryValue.key(repository,directory,excludedSubdirectories,policy);
+  if (!graph.exists(key)) {
+    return;
+  }
+  PrepareDepsOfTargetsUnderDirectoryValue prepDepsValue=(PrepareDepsOfTargetsUnderDirectoryValue)Preconditions.checkNotNull(graph.getValue(key));
+  if (prepDepsValue.isDirectoryPackage()) {
+    builder.add(directory.getRelativePath());
+  }
+  ImmutableMap<RootedPath,Boolean> subdirectoryTransitivelyContainsPackages=prepDepsValue.getSubdirectoryTransitivelyContainsPackages();
+  for (  RootedPath subdirectory : subdirectoryTransitivelyContainsPackages.keySet()) {
+    if (subdirectoryTransitivelyContainsPackages.get(subdirectory)) {
+      PathFragment subdirectoryRelativePath=subdirectory.getRelativePath();
+      ImmutableSet<PathFragment> excludedSubdirectoriesBeneathThisSubdirectory=PathFragment.filterPathsStartingWith(excludedSubdirectories,subdirectoryRelativePath);
+      collectPackagesUnder(repository,subdirectory,excludedSubdirectoriesBeneathThisSubdirectory,builder,policy);
+    }
+  }
+}

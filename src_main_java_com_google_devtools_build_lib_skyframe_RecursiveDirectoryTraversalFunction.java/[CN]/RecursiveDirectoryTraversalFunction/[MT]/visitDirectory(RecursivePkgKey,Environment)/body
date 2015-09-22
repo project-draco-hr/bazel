@@ -20,7 +20,7 @@
   if (fileValue.isSymlink()) {
     return getEmptyReturn();
   }
-  PackageIdentifier packageId=PackageIdentifier.createInDefaultRepo(rootRelativePath.getPathString());
+  PackageIdentifier packageId=new PackageIdentifier(recursivePkgKey.getRepository(),rootRelativePath);
   PackageLookupValue pkgLookupValue;
   try {
     pkgLookupValue=(PackageLookupValue)env.getValueOrThrow(PackageLookupValue.key(packageId),NoSuchPackageException.class,InconsistentFilesystemException.class);
@@ -87,7 +87,7 @@ catch (  FileSymlinkException e) {
     }
     ImmutableSet<PathFragment> excludedSubdirectoriesBeneathThisSubdirectory=PathFragment.filterPathsStartingWith(excludedPaths,subdirectory);
     RootedPath subdirectoryRootedPath=RootedPath.toRootedPath(root,subdirectory);
-    childDeps.add(getSkyKeyForSubdirectory(subdirectoryRootedPath,excludedSubdirectoriesBeneathThisSubdirectory));
+    childDeps.add(getSkyKeyForSubdirectory(recursivePkgKey.getRepository(),subdirectoryRootedPath,excludedSubdirectoriesBeneathThisSubdirectory));
     if (env.valuesMissing()) {
       return null;
     }
