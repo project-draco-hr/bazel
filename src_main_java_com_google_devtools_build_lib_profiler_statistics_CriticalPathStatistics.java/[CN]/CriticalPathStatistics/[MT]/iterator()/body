@@ -1,0 +1,27 @@
+{
+  return new Iterator<Pair<String,Double>>(){
+    Iterator<Long> durations=criticalPathDurations.iterator();
+    Iterator<Pair<String,EnumSet<ProfilerTask>>> filters=FILTERS.iterator();
+    boolean overheadFilter=true;
+    @Override public boolean hasNext(){
+      return durations.hasNext();
+    }
+    @Override public Pair<String,Double> next(){
+      long duration=durations.next();
+      String description=filters.next().first;
+      double relativeDuration;
+      if (overheadFilter) {
+        overheadFilter=false;
+        relativeDuration=(double)duration / totalPath.cumulativeDuration;
+      }
+ else {
+        relativeDuration=(double)(optimalPath.cumulativeDuration - duration) / optimalPath.cumulativeDuration;
+      }
+      return Pair.of(description,relativeDuration);
+    }
+    @Override public void remove(){
+      throw new UnsupportedOperationException();
+    }
+  }
+;
+}

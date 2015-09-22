@@ -1,0 +1,32 @@
+{
+  if (vfsStatsLimit == 0 || stats.isEmpty()) {
+    return;
+  }
+  lnElement("h4","VFS path statistics:");
+  lnOpen("table","class","phase-statistics");
+  lnOpen("tr");
+  element("td","Type");
+  element("td","Frequency");
+  element("td","Duration");
+  element("td","class","left","Path");
+  close();
+  for (  ProfilerTask type : stats) {
+    int numPrinted=0;
+    for (    Entry<Stat,String> stat : stats.getSortedStatistics(type)) {
+      lnOpen("tr");
+      if (vfsStatsLimit != -1 && numPrinted++ == vfsStatsLimit) {
+        open("td","class","center","colspan","4");
+        printf("... %d more ...",stats.getStatisticsCount(type) - vfsStatsLimit);
+        close();
+        close();
+        break;
+      }
+      element("td",type.name());
+      element("td",stat.getKey().count);
+      element("td",TimeUtilities.prettyTime(stat.getKey().duration));
+      element("td","class","left",stat.getValue());
+      close();
+    }
+  }
+  lnClose();
+}

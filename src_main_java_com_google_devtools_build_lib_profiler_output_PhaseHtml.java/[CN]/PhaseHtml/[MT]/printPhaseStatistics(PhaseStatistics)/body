@@ -1,0 +1,33 @@
+{
+  lnOpen("div","class","phase-statistics");
+  lnElement("h3",String.format("%s Phase Information",StringUtil.capitalize(phaseStat.getProfilePhase().nick)));
+  lnOpen("table","class","phase-statistics");
+  lnOpen("tr");
+  open("td","class","left","colspan","3");
+  printf("Total %s phase time",phaseStat.getProfilePhase().nick);
+  close();
+  element("td",TimeUtilities.prettyTime(phaseStat.getPhaseDurationNanos()));
+  lnClose();
+  if (!phaseStat.isEmpty()) {
+    lnOpen("tr");
+    element("td","class","left","colspan","4","Total time (across all threads) spent on:");
+    close();
+    lnOpen("tr");
+    element("td","Type");
+    element("td","Total");
+    element("td","Count");
+    element("td","Average");
+    close();
+    for (    ProfilerTask taskType : phaseStat) {
+      lnOpen("tr","class","phase-task-statistics");
+      element("td",taskType);
+      element("td",prettyPercentage(phaseStat.getTotalRelativeDuration(taskType)));
+      element("td",phaseStat.getCount(taskType));
+      element("td",TimeUtilities.prettyTime(phaseStat.getMeanDuration(taskType)));
+      close();
+    }
+  }
+  lnClose();
+  printVfsStatistics(phaseStat.getVfsStatistics());
+  lnClose();
+}

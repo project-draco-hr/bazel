@@ -1,0 +1,21 @@
+{
+  totalPath=info.getCriticalPath(FILTER_NONE);
+  info.analyzeCriticalPath(FILTER_NONE,totalPath);
+  optimalPath=info.getCriticalPath(DEFAULT_FILTER);
+  info.analyzeCriticalPath(DEFAULT_FILTER,optimalPath);
+  if (totalPath.isComponent()) {
+    this.workerWaitTime=0;
+    this.mainThreadWaitTime=0;
+    criticalPathDurations=Collections.emptyList();
+    return;
+  }
+  long workerWaitTime=0;
+  long mainThreadWaitTime=0;
+  for (CriticalPathEntry entry=totalPath; entry != null; entry=entry.next) {
+    workerWaitTime+=info.getActionWaitTime(entry.task);
+    mainThreadWaitTime+=info.getActionQueueTime(entry.task);
+  }
+  this.workerWaitTime=workerWaitTime;
+  this.mainThreadWaitTime=mainThreadWaitTime;
+  criticalPathDurations=getCriticalPathDurations(info);
+}

@@ -4,17 +4,6 @@
   if (!opts.vfsStats) {
     opts.vfsStatsLimit=0;
   }
-  currentPathMapping=new Function<String,String>(){
-    @Override public String apply(    String input){
-      if (runtime.getWorkspaceName().isEmpty()) {
-        return input;
-      }
- else {
-        return input.substring(input.lastIndexOf("/" + runtime.getWorkspaceName()) + 1);
-      }
-    }
-  }
-;
   PrintStream out=new PrintStream(env.getReporter().getOutErr().getOutputStream());
   try {
     env.getReporter().handle(Event.warn(null,"This information is intended for consumption by Blaze developers" + " only, and may change at any time.  Script against it at your own risk"));
@@ -22,16 +11,23 @@
       Path profileFile=runtime.getWorkingDirectory().getRelative(name);
       try {
         ProfileInfo info=ProfileInfo.loadProfileVerbosely(profileFile,getInfoListener(env));
+        ProfileInfo.aggregateProfile(info,getInfoListener(env));
+        PhaseSummaryStatistics phaseSummaryStatistics=new PhaseSummaryStatistics(info);
+        EnumMap<ProfilePhase,PhaseStatistics> phaseStatistics=new EnumMap<>(ProfilePhase.class);
+        for (        ProfilePhase phase : ProfilePhase.values()) {
+          phaseStatistics.put(phase,new PhaseStatistics(phase,info,runtime.getWorkspaceName()));
+        }
         if (opts.dumpMode != null) {
           dumpProfile(env,info,out,opts.dumpMode);
         }
  else         if (opts.html) {
           Path htmlFile=profileFile.getParentDirectory().getChild(profileFile.getBaseName() + ".html");
           env.getReporter().handle(Event.info("Creating HTML output in " + htmlFile));
-          HtmlCreator.createHtml(info,htmlFile,getStatistics(env,info,opts),opts.htmlDetails,opts.htmlPixelsPerSecond);
+          HtmlCreator.create(info,htmlFile,phaseSummaryStatistics,phaseStatistics,opts.htmlDetails,opts.htmlPixelsPerSecond,opts.vfsStatsLimit);
         }
  else {
-          createText(env,info,out,opts);
+          CriticalPathStatistics critPathStats=new CriticalPathStatistics(info);
+          new PhaseText(out,phaseSummaryStatistics,phaseStatistics,critPathStats,info.getMissingActionsCount(),opts.vfsStatsLimit).print();
         }
       }
  catch (      IOException e) {

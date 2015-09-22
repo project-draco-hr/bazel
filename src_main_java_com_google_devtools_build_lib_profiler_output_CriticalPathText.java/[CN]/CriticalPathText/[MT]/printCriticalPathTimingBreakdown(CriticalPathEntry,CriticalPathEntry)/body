@@ -1,0 +1,16 @@
+{
+  lnPrint(totalPath.task.type);
+  lnPrintf(TWO_COLUMN_FORMAT,"Worker thread scheduling delays",TimeUtilities.prettyTime(criticalPathStats.getWorkerWaitTime()));
+  lnPrintf(TWO_COLUMN_FORMAT,"Main thread scheduling delays",TimeUtilities.prettyTime(criticalPathStats.getMainThreadWaitTime()));
+  printLn();
+  lnPrint("Critical path time:");
+  long totalTime=totalPath.cumulativeDuration;
+  lnPrintf("%-37s %10s (%s of execution time)","Actual time",TimeUtilities.prettyTime(totalTime),prettyPercentage((double)totalTime / executionTime));
+  long optimalTime=optimalPath.cumulativeDuration;
+  lnPrintf("%-37s %10s (%s of execution time)","Time excluding scheduling delays",TimeUtilities.prettyTime(optimalTime),prettyPercentage((double)optimalTime / executionTime));
+  printLn();
+  lnPrint("Time related to:");
+  for (  Pair<String,Double> relativePathDuration : criticalPathStats) {
+    lnPrintf(TWO_COLUMN_FORMAT,relativePathDuration.first,prettyPercentage(relativePathDuration.second));
+  }
+}
