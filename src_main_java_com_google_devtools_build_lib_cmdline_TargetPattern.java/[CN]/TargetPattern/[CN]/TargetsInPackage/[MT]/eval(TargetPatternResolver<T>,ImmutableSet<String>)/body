@@ -6,5 +6,12 @@
       return targets;
     }
   }
-  return resolver.getTargetsInPackage(getOriginalPattern(),removeSuffix(pattern,suffix),rulesOnly);
+  String packageName=removeSuffix(pattern,suffix);
+  try {
+    PackageIdentifier.parse(packageName);
+  }
+ catch (  LabelSyntaxException e) {
+    throw new TargetParsingException("Invalid package name '" + packageName + "': "+ e.getMessage());
+  }
+  return resolver.getTargetsInPackage(getOriginalPattern(),PackageIdentifier.createInDefaultRepo(packageName),rulesOnly);
 }
