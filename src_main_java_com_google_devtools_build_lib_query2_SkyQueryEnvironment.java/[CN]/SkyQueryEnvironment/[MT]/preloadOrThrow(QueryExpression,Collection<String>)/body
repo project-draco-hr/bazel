@@ -1,12 +1,17 @@
 {
   GraphBackedRecursivePackageProvider provider=new GraphBackedRecursivePackageProvider(graph,universeTargetPatternKeys);
   Map<String,Set<Target>> result=Maps.newHashMapWithExpectedSize(patterns.size());
+  Map<String,SkyKey> keys=new HashMap<>(patterns.size());
   for (  String pattern : patterns) {
-    SkyKey patternKey=TargetPatternValue.key(pattern,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,parserPrefix);
-    TargetPatternValue.TargetPatternKey targetPatternKey=((TargetPatternValue.TargetPatternKey)patternKey.argument());
+    keys.put(pattern,TargetPatternValue.key(pattern,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,parserPrefix));
+  }
+  Map<SkyKey,SkyValue> existingPatterns=graph.getSuccessfulValues(keys.values());
+  Map<String,Set<Target>> patternsWithTargetsToFilter=new HashMap<>();
+  for (  String pattern : patterns) {
+    SkyKey patternKey=keys.get(pattern);
     TargetParsingException targetParsingException=null;
-    if (graph.exists(patternKey)) {
-      TargetPatternValue value=(TargetPatternValue)graph.getValue(patternKey);
+    if (existingPatterns.containsKey(patternKey)) {
+      TargetPatternValue value=(TargetPatternValue)existingPatterns.get(patternKey);
       if (value != null) {
         result.put(pattern,ImmutableSet.copyOf(makeTargetsFromLabels(value.getTargets().getTargets())));
       }
@@ -15,10 +20,11 @@
       }
     }
  else {
+      TargetPatternValue.TargetPatternKey targetPatternKey=((TargetPatternValue.TargetPatternKey)patternKey.argument());
       RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,eventHandler,targetPatternKey.getPolicy(),pkgPath);
       TargetPattern parsedPattern=targetPatternKey.getParsedPattern();
       try {
-        result.put(pattern,filterTargetsNotInGraph(parsedPattern.eval(resolver).getTargets()));
+        patternsWithTargetsToFilter.put(pattern,parsedPattern.eval(resolver).getTargets());
       }
  catch (      TargetParsingException e) {
         targetParsingException=e;
@@ -36,6 +42,10 @@ catch (      InterruptedException e) {
         result.put(pattern,ImmutableSet.<Target>of());
       }
     }
+  }
+  Set<Target> targetsInGraph=filterTargetsNotInGraph(ImmutableSet.copyOf(Iterables.concat(patternsWithTargetsToFilter.values())));
+  for (  Entry<String,Set<Target>> pattern : patternsWithTargetsToFilter.entrySet()) {
+    result.put(pattern.getKey(),Sets.intersection(pattern.getValue(),targetsInGraph));
   }
   return result;
 }
