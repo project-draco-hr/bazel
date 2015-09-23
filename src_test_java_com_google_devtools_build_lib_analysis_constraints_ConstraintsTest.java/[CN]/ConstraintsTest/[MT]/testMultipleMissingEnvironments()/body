@@ -1,7 +1,7 @@
 {
-  new EnvironmentGroupMaker("foo_env").setEnvironments("a","b","c").setDefaults("a").make();
-  scratch.file("hello/BUILD",getDependencyRule(),getDependingRule(compatibleWith("//foo_env:b","//foo_env:c")));
+  new EnvironmentGroupMaker("buildenv/foo").setEnvironments("a","b","c").setDefaults("a").make();
+  scratch.file("hello/BUILD",getDependencyRule(),getDependingRule(compatibleWith("//buildenv/foo:b","//buildenv/foo:c")));
   reporter.removeHandler(failFastHandler);
   assertNull(getConfiguredTarget("//hello:main"));
-  assertContainsEvent("dependency //hello:dep doesn't support expected environments: //foo_env:b, //foo_env:c");
+  assertContainsEvent("dependency //hello:dep doesn't support expected environments: " + "//buildenv/foo:b, //buildenv/foo:c");
 }

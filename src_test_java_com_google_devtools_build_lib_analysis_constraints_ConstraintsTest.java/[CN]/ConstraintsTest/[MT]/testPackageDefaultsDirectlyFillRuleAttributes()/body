@@ -1,7 +1,7 @@
 {
-  new EnvironmentGroupMaker("foo_env").setEnvironments("a","b").setDefaults().make();
-  scratch.file("hello/BUILD","package(default_restricted_to = ['//foo_env:b'])",getDependencyRule(compatibleWith("//foo_env:a")));
+  new EnvironmentGroupMaker("buildenv/foo").setEnvironments("a","b").setDefaults().make();
+  scratch.file("hello/BUILD","package(default_restricted_to = ['//buildenv/foo:b'])",getDependencyRule(compatibleWith("//buildenv/foo:a")));
   reporter.removeHandler(failFastHandler);
   assertNull(getConfiguredTarget("//hello:dep"));
-  assertContainsEvent("//foo_env:a and //foo_env:b belong to the same environment group. They " + "should be declared together either here or in restricted_to");
+  assertContainsEvent("//buildenv/foo:a and //buildenv/foo:b belong to the same " + "environment group. They should be declared together either here or in restricted_to");
 }
