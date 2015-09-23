@@ -1,10 +1,10 @@
 {
-  BuildConfiguration targetConfiguration=configurationFactory.getConfiguration(loadedPackageProvider,buildOptions,false,cache);
+  BuildConfiguration targetConfiguration=configurationFactory.getConfiguration(packageProvider,buildOptions,false,cache);
   if (targetConfiguration == null) {
     return null;
   }
   BuildConfiguration dataConfiguration=targetConfiguration;
-  BuildConfiguration hostConfiguration=getHostConfigurationFromRequest(configurationFactory,loadedPackageProvider,dataConfiguration,buildOptions,cache);
+  BuildConfiguration hostConfiguration=getHostConfigurationFromRequest(configurationFactory,packageProvider,dataConfiguration,buildOptions,cache);
   if (hostConfiguration == null) {
     return null;
   }
@@ -15,18 +15,18 @@
       throw new InvalidConfigurationException("dynamic configurations don't yet support split transitions");
     }
     for (    BuildOptions splitOptions : splitOptionsList) {
-      BuildConfiguration splitConfig=configurationFactory.getConfiguration(loadedPackageProvider,splitOptions,false,cache);
+      BuildConfiguration splitConfig=configurationFactory.getConfiguration(packageProvider,splitOptions,false,cache);
       splitTransitionsTable.put(transition,splitConfig);
     }
   }
-  if (loadedPackageProvider.valuesMissing()) {
+  if (packageProvider.valuesMissing()) {
     return null;
   }
   Set<Label> reachableLabels=new HashSet<>();
   if (performSanityCheck) {
     for (    Label label : buildOptions.getAllLabels().values()) {
       try {
-        collectTransitiveClosure(loadedPackageProvider,reachableLabels,label);
+        collectTransitiveClosure(packageProvider,reachableLabels,label);
       }
  catch (      NoSuchThingException e) {
         throw new IllegalStateException(e);
