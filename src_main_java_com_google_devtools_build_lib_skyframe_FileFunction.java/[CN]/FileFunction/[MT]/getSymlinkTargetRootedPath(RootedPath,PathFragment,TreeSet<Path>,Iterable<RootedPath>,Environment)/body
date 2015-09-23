@@ -26,13 +26,13 @@
     SkyKey uniquenessKey;
     FileSymlinkException fse;
     if (symlinkTargetPath.equals(existingFloorPath)) {
-      Pair<ImmutableList<RootedPath>,ImmutableList<RootedPath>> pathAndChain=splitIntoPathAndChain(symlinkTargetRootedPath.asPath(),symlinkChain);
+      Pair<ImmutableList<RootedPath>,ImmutableList<RootedPath>> pathAndChain=CycleUtils.splitIntoPathAndChain(isPathPredicate(symlinkTargetRootedPath.asPath()),symlinkChain);
       FileSymlinkCycleException fsce=new FileSymlinkCycleException(pathAndChain.getFirst(),pathAndChain.getSecond());
       uniquenessKey=FileSymlinkCycleUniquenessValue.key(fsce.getCycle());
       fse=fsce;
     }
  else {
-      Pair<ImmutableList<RootedPath>,ImmutableList<RootedPath>> pathAndChain=splitIntoPathAndChain(existingFloorPath,ImmutableList.copyOf(Iterables.concat(symlinkChain,ImmutableList.of(symlinkTargetRootedPath))));
+      Pair<ImmutableList<RootedPath>,ImmutableList<RootedPath>> pathAndChain=CycleUtils.splitIntoPathAndChain(isPathPredicate(existingFloorPath),ImmutableList.copyOf(Iterables.concat(symlinkChain,ImmutableList.of(symlinkTargetRootedPath))));
       uniquenessKey=FileSymlinkInfiniteExpansionUniquenessValue.key(pathAndChain.getSecond());
       fse=new FileSymlinkInfiniteExpansionException(pathAndChain.getFirst(),pathAndChain.getSecond());
     }

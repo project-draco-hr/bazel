@@ -1,0 +1,79 @@
+{
+  PackageIdentifier arg=(PackageIdentifier)skyKey.argument();
+  PathFragment file=arg.getPackageFragment();
+  ASTFileLookupValue astLookupValue=null;
+  try {
+    SkyKey astLookupKey=ASTFileLookupValue.key(arg);
+    astLookupValue=(ASTFileLookupValue)env.getValueOrThrow(astLookupKey,ErrorReadingSkylarkExtensionException.class,InconsistentFilesystemException.class);
+  }
+ catch (  ErrorReadingSkylarkExtensionException e) {
+    throw new SkylarkImportLookupFunctionException(SkylarkImportFailedException.errorReadingFile(file,e.getMessage()));
+  }
+catch (  InconsistentFilesystemException e) {
+    throw new SkylarkImportLookupFunctionException(e,Transience.PERSISTENT);
+  }
+  if (astLookupValue == null) {
+    return null;
+  }
+  if (astLookupValue.getAST() == null) {
+    throw new SkylarkImportLookupFunctionException(SkylarkImportFailedException.noFile(file));
+  }
+  BuildFileAST ast=astLookupValue.getAST();
+  if (ast.containsErrors()) {
+    throw new SkylarkImportLookupFunctionException(SkylarkImportFailedException.skylarkErrors(file));
+  }
+  Label label=pathFragmentToLabel(arg.getRepository(),file,env);
+  if (label == null) {
+    Preconditions.checkState(env.valuesMissing(),"null label with no missing %s",file);
+    return null;
+  }
+  Map<Location,PathFragment> astImports=ast.getImports();
+  Map<PathFragment,Extension> importMap=Maps.newHashMapWithExpectedSize(astImports.size());
+  ImmutableList.Builder<SkylarkFileDependency> fileDependencies=ImmutableList.builder();
+  Map<SkyKey,PathFragment> skylarkImports=Maps.newHashMapWithExpectedSize(astImports.size());
+  for (  Map.Entry<Location,PathFragment> entry : ast.getImports().entrySet()) {
+    try {
+      skylarkImports.put(PackageFunction.getImportKey(entry,ruleClassProvider.getPreludePath(),file,arg),entry.getValue());
+    }
+ catch (    ASTLookupInputException e) {
+      throw new SkylarkImportLookupFunctionException(e,Transience.PERSISTENT);
+    }
+  }
+  Map<SkyKey,SkyValue> skylarkImportMap;
+  boolean valuesMissing=false;
+  if (visitedKeysForCycle == null) {
+    skylarkImportMap=env.getValues(skylarkImports.keySet());
+    valuesMissing=env.valuesMissing();
+  }
+ else {
+    if (!visitedKeysForCycle.add(skyKey)) {
+      ImmutableList<SkyKey> cycle=CycleUtils.splitIntoPathAndChain(Predicates.equalTo(skyKey),visitedKeysForCycle).second;
+      if (env.getValue(SkylarkImportUniqueCycleValue.key(cycle)) == null) {
+        return null;
+      }
+      throw new SkylarkImportLookupFunctionException(new SkylarkImportFailedException("Skylark import cycle"));
+    }
+    skylarkImportMap=Maps.newHashMapWithExpectedSize(astImports.size());
+    for (    SkyKey skylarkImport : skylarkImports.keySet()) {
+      SkyValue skyValue=this.computeWithInlineCalls(skylarkImport,env,visitedKeysForCycle);
+      if (skyValue == null) {
+        Preconditions.checkState(env.valuesMissing(),"no skylark import value for %s",skylarkImport);
+        valuesMissing=true;
+      }
+ else {
+        skylarkImportMap.put(skylarkImport,skyValue);
+      }
+    }
+    visitedKeysForCycle.remove(skyKey);
+  }
+  if (valuesMissing) {
+    return null;
+  }
+  for (  Map.Entry<SkyKey,SkyValue> entry : skylarkImportMap.entrySet()) {
+    SkylarkImportLookupValue importLookupValue=(SkylarkImportLookupValue)entry.getValue();
+    importMap.put(skylarkImports.get(entry.getKey()),importLookupValue.getEnvironmentExtension());
+    fileDependencies.add(importLookupValue.getDependency());
+  }
+  Extension extension=createExtension(ast,file,importMap,env);
+  return new SkylarkImportLookupValue(extension,new SkylarkFileDependency(label,fileDependencies.build()));
+}
