@@ -85,7 +85,6 @@
   helper.createSourceJarAction(semantics,ImmutableList.<Artifact>of(),transitiveSourceJars.toCollection(),ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_DEPLOY_SOURCE_JAR));
   RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
   semantics.addProviders(ruleContext,common,jvmFlags,classJar,srcJar,genClassJar,genSourceJar,ImmutableMap.<Artifact,Artifact>of(),helper,filesBuilder,builder);
-  builder.add(JavaRuleOutputJarsProvider.class,new JavaRuleOutputJarsProvider(classJar,srcJar,genClassJar,genSourceJar));
   NestedSet<Artifact> filesToBuild=filesBuilder.build();
   collectDefaultRunfiles(runfilesBuilder,ruleContext,common,filesToBuild,launcher,dynamicRuntimeActionInputs);
   Runfiles defaultRunfiles=runfilesBuilder.build();
@@ -105,5 +104,5 @@
   }
   common.addTransitiveInfoProviders(builder,filesToBuild,classJar);
   common.addGenJarsProvider(builder,genClassJar,genSourceJar);
-  return builder.setFilesToBuild(filesToBuild).add(RunfilesProvider.class,runfilesProvider).setRunfilesSupport(runfilesSupport,executable).add(JavaRuntimeClasspathProvider.class,new JavaRuntimeClasspathProvider(common.getRuntimeClasspath())).add(JavaSourceInfoProvider.class,JavaSourceInfoProvider.fromJavaTargetAttributes(attributes,semantics)).add(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(transitiveSourceJars,srcJars)).addOutputGroup(JavaSemantics.SOURCE_JARS_OUTPUT_GROUP,transitiveSourceJars).build();
+  return builder.setFilesToBuild(filesToBuild).add(JavaRuleOutputJarsProvider.class,new JavaRuleOutputJarsProvider(classJar,srcJar)).add(RunfilesProvider.class,runfilesProvider).setRunfilesSupport(runfilesSupport,executable).add(JavaRuntimeClasspathProvider.class,new JavaRuntimeClasspathProvider(common.getRuntimeClasspath())).add(JavaSourceInfoProvider.class,JavaSourceInfoProvider.fromJavaTargetAttributes(attributes,semantics)).add(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(transitiveSourceJars,srcJars)).addOutputGroup(JavaSemantics.SOURCE_JARS_OUTPUT_GROUP,transitiveSourceJars).build();
 }
