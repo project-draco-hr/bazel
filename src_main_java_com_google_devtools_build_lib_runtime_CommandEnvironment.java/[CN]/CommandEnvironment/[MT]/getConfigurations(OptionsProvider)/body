@@ -1,8 +1,8 @@
 {
   BuildOptions buildOptions=runtime.createBuildOptions(optionsProvider);
   boolean keepGoing=optionsProvider.getOptions(BuildView.Options.class).keepGoing;
-  LoadedPackageProvider loadedPackageProvider=runtime.getLoadingPhaseRunner().loadForConfigurations(reporter,ImmutableSet.copyOf(buildOptions.getAllLabels().values()),keepGoing);
-  if (loadedPackageProvider == null) {
+  boolean loadingSuccessful=runtime.getLoadingPhaseRunner().loadForConfigurations(reporter,ImmutableSet.copyOf(buildOptions.getAllLabels().values()),keepGoing);
+  if (!loadingSuccessful) {
     throw new InvalidConfigurationException("Configuration creation failed");
   }
   return getSkyframeExecutor().createConfigurations(runtime.getConfigurationFactory(),buildOptions,runtime.getDirectories(),ImmutableSet.<String>of(),keepGoing);
