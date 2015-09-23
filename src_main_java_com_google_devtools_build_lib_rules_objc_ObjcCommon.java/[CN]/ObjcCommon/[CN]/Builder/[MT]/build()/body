@@ -8,7 +8,8 @@
     objcProvider.addAll(DEFINE,headerProvider.getDefines());
   }
   for (  CcLinkParamsProvider linkProvider : depCcLinkProviders) {
-    objcProvider.addTransitiveAndPropagate(CC_LIBRARY,linkProvider.getCcLinkParams(true,false).getLibraries());
+    CcLinkParams params=linkProvider.getCcLinkParams(true,false);
+    objcProvider.addAll(LINKOPT,params.flattenedLinkopts()).addTransitiveAndPropagate(CC_LIBRARY,params.getLibraries());
   }
   if (compilationAttributes.isPresent()) {
     CompilationAttributes attributes=compilationAttributes.get();
