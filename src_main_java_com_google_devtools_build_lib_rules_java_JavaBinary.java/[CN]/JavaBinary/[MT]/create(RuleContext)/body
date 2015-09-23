@@ -66,10 +66,10 @@
   javaArtifactsBuilder.addRuntimeJars(attributes.getJarFiles());
   Artifact outputDepsProto=helper.createOutputDepsProtoArtifact(classJar,javaArtifactsBuilder);
   common.setJavaCompilationArtifacts(javaArtifactsBuilder.build());
-  Artifact gensrcJar=helper.createGensrcJar(classJar);
+  Artifact genSourceJar=helper.createGensrcJar(classJar);
   Artifact manifestProtoOutput=helper.createManifestProtoOutput(classJar);
-  helper.createCompileAction(classJar,manifestProtoOutput,gensrcJar,outputDepsProto,instrumentationMetadata);
-  helper.createSourceJarAction(srcJar,gensrcJar);
+  helper.createCompileAction(classJar,manifestProtoOutput,genSourceJar,outputDepsProto,instrumentationMetadata);
+  helper.createSourceJarAction(srcJar,genSourceJar);
   Artifact genClassJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_GEN_JAR);
   helper.createGenJarAction(classJar,manifestProtoOutput,genClassJar);
   common.setClassPathFragment(new ClasspathConfiguredFragment(common.getJavaCompilationArtifacts(),attributes,false));
@@ -84,8 +84,8 @@
   NestedSet<Artifact> transitiveSourceJars=collectTransitiveSourceJars(common,srcJar);
   helper.createSourceJarAction(semantics,ImmutableList.<Artifact>of(),transitiveSourceJars.toCollection(),ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_DEPLOY_SOURCE_JAR));
   RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
-  semantics.addProviders(ruleContext,common,jvmFlags,classJar,srcJar,genClassJar,gensrcJar,ImmutableMap.<Artifact,Artifact>of(),helper,filesBuilder,builder);
-  builder.add(JavaRuleOutputJarsProvider.class,new JavaRuleOutputJarsProvider(classJar,srcJar,genClassJar,gensrcJar));
+  semantics.addProviders(ruleContext,common,jvmFlags,classJar,srcJar,genClassJar,genSourceJar,ImmutableMap.<Artifact,Artifact>of(),helper,filesBuilder,builder);
+  builder.add(JavaRuleOutputJarsProvider.class,new JavaRuleOutputJarsProvider(classJar,srcJar,genClassJar,genSourceJar));
   NestedSet<Artifact> filesToBuild=filesBuilder.build();
   collectDefaultRunfiles(runfilesBuilder,ruleContext,common,filesToBuild,launcher,dynamicRuntimeActionInputs);
   Runfiles defaultRunfiles=runfilesBuilder.build();
@@ -104,5 +104,6 @@
     ruleContext.registerAction(new FileWriteAction(ruleContext.getActionOwner(),unstrippedDeployJar,"",false));
   }
   common.addTransitiveInfoProviders(builder,filesToBuild,classJar);
-  return builder.setFilesToBuild(filesToBuild).add(RunfilesProvider.class,runfilesProvider).setRunfilesSupport(runfilesSupport,executable).add(JavaRuntimeClasspathProvider.class,new JavaRuntimeClasspathProvider(common.getRuntimeClasspath())).add(JavaSourceInfoProvider.class,JavaSourceInfoProvider.fromJavaTargetAttributes(attributes,semantics)).add(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(transitiveSourceJars,srcJars)).addOutputGroup(JavaSemantics.SOURCE_JARS_OUTPUT_GROUP,transitiveSourceJars).addOutputGroup(JavaSemantics.GENERATED_JARS_OUTPUT_GROUP,genClassJar).build();
+  common.addGenJarsProvider(builder,genClassJar,genSourceJar);
+  return builder.setFilesToBuild(filesToBuild).add(RunfilesProvider.class,runfilesProvider).setRunfilesSupport(runfilesSupport,executable).add(JavaRuntimeClasspathProvider.class,new JavaRuntimeClasspathProvider(common.getRuntimeClasspath())).add(JavaSourceInfoProvider.class,JavaSourceInfoProvider.fromJavaTargetAttributes(attributes,semantics)).add(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(transitiveSourceJars,srcJars)).addOutputGroup(JavaSemantics.SOURCE_JARS_OUTPUT_GROUP,transitiveSourceJars).build();
 }

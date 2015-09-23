@@ -1,0 +1,15 @@
+{
+  NestedSetBuilder<Artifact> classJarsBuilder=NestedSetBuilder.stableOrder();
+  NestedSetBuilder<Artifact> sourceJarsBuilder=NestedSetBuilder.stableOrder();
+  if (genClassJar != null) {
+    classJarsBuilder.add(genClassJar);
+  }
+  if (genSourceJar != null) {
+    sourceJarsBuilder.add(genSourceJar);
+  }
+  for (  JavaGenJarsProvider dep : getDependencies(JavaGenJarsProvider.class)) {
+    classJarsBuilder.addTransitive(dep.getTransitiveGenClassJars());
+    sourceJarsBuilder.addTransitive(dep.getTransitiveGenSourceJars());
+  }
+  return new JavaGenJarsProvider(usesAnnotationProcessing,genClassJar,genSourceJar,classJarsBuilder.build(),sourceJarsBuilder.build());
+}

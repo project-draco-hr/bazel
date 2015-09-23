@@ -34,13 +34,13 @@
     jar=classJar;
   }
   filesBuilder.add(classJar);
-  Artifact gensrcJar=helper.createGensrcJar(classJar);
+  Artifact genSourceJar=helper.createGensrcJar(classJar);
   Artifact manifestProtoOutput=helper.createManifestProtoOutput(classJar);
   Artifact genClassJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_LIBRARY_GEN_JAR);
   helper.createGenJarAction(classJar,manifestProtoOutput,genClassJar);
   Artifact outputDepsProto=helper.createOutputDepsProtoArtifact(classJar,javaArtifactsBuilder);
-  helper.createCompileActionWithInstrumentation(classJar,manifestProtoOutput,gensrcJar,outputDepsProto,javaArtifactsBuilder);
-  helper.createSourceJarAction(srcJar,gensrcJar);
+  helper.createCompileActionWithInstrumentation(classJar,manifestProtoOutput,genSourceJar,outputDepsProto,javaArtifactsBuilder);
+  helper.createSourceJarAction(srcJar,genSourceJar);
   if ((attributes.hasSourceFiles() || attributes.hasSourceJars()) && jar != null) {
     helper.createCompileTimeJarAction(jar,outputDepsProto,javaArtifactsBuilder);
   }
@@ -92,11 +92,12 @@
     runfiles=runfilesBuilder.build();
   }
   RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
-  semantics.addProviders(ruleContext,common,ImmutableList.<String>of(),classJar,srcJar,genClassJar,gensrcJar,ImmutableMap.<Artifact,Artifact>of(),helper,filesBuilder,builder);
-  builder.add(JavaRuleOutputJarsProvider.class,new JavaRuleOutputJarsProvider(classJar,srcJar,genClassJar,gensrcJar));
+  semantics.addProviders(ruleContext,common,ImmutableList.<String>of(),classJar,srcJar,genClassJar,genSourceJar,ImmutableMap.<Artifact,Artifact>of(),helper,filesBuilder,builder);
+  builder.add(JavaRuleOutputJarsProvider.class,new JavaRuleOutputJarsProvider(classJar,srcJar,genClassJar,genSourceJar));
   NestedSet<Artifact> filesToBuild=filesBuilder.build();
   common.addTransitiveInfoProviders(builder,filesToBuild,classJar);
-  builder.add(JavaRuntimeJarProvider.class,new JavaRuntimeJarProvider(common.getJavaCompilationArtifacts().getRuntimeJars())).add(RunfilesProvider.class,RunfilesProvider.simple(runfiles)).setFilesToBuild(filesToBuild).addSkylarkTransitiveInfo(JavaSkylarkApiProvider.NAME,new JavaSkylarkApiProvider()).add(JavaNeverlinkInfoProvider.class,new JavaNeverlinkInfoProvider(neverLink)).add(CppCompilationContext.class,transitiveCppDeps).add(JavaCompilationArgsProvider.class,new JavaCompilationArgsProvider(javaCompilationArgs,recursiveJavaCompilationArgs,compileTimeJavaDepArtifacts,runTimeJavaDepArtifacts)).add(CcLinkParamsProvider.class,new CcLinkParamsProvider(ccLinkParamsStore)).add(JavaNativeLibraryProvider.class,new JavaNativeLibraryProvider(transitiveJavaNativeLibraries)).add(JavaSourceInfoProvider.class,JavaSourceInfoProvider.fromJavaTargetAttributes(attributes,semantics)).add(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(transitiveSourceJars,ImmutableList.of(srcJar))).add(JavaPluginInfoProvider.class,new JavaPluginInfoProvider(exportedProcessorClasses,exportedProcessorClasspath)).addOutputGroup(JavaSemantics.SOURCE_JARS_OUTPUT_GROUP,transitiveSourceJars).addOutputGroup(JavaSemantics.GENERATED_JARS_OUTPUT_GROUP,genClassJar);
+  common.addGenJarsProvider(builder,genClassJar,genSourceJar);
+  builder.add(JavaRuntimeJarProvider.class,new JavaRuntimeJarProvider(common.getJavaCompilationArtifacts().getRuntimeJars())).add(RunfilesProvider.class,RunfilesProvider.simple(runfiles)).setFilesToBuild(filesToBuild).addSkylarkTransitiveInfo(JavaSkylarkApiProvider.NAME,new JavaSkylarkApiProvider()).add(JavaNeverlinkInfoProvider.class,new JavaNeverlinkInfoProvider(neverLink)).add(CppCompilationContext.class,transitiveCppDeps).add(JavaCompilationArgsProvider.class,new JavaCompilationArgsProvider(javaCompilationArgs,recursiveJavaCompilationArgs,compileTimeJavaDepArtifacts,runTimeJavaDepArtifacts)).add(CcLinkParamsProvider.class,new CcLinkParamsProvider(ccLinkParamsStore)).add(JavaNativeLibraryProvider.class,new JavaNativeLibraryProvider(transitiveJavaNativeLibraries)).add(JavaSourceInfoProvider.class,JavaSourceInfoProvider.fromJavaTargetAttributes(attributes,semantics)).add(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(transitiveSourceJars,ImmutableList.of(srcJar))).add(JavaPluginInfoProvider.class,new JavaPluginInfoProvider(exportedProcessorClasses,exportedProcessorClasspath)).addOutputGroup(JavaSemantics.SOURCE_JARS_OUTPUT_GROUP,transitiveSourceJars);
   if (ruleContext.hasErrors()) {
     return null;
   }
