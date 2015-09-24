@@ -16,7 +16,9 @@
         builder.put(depKey,ValueOrExceptionUtils.ofNull());
         continue;
       }
-      Preconditions.checkState(!directDeps.contains(depKey),"%s %s %s",skyKey,depKey,value);
+      if (directDeps.contains(depKey)) {
+        throw new IllegalStateException("Undone key " + depKey + " was already in deps of "+ skyKey+ "( dep: "+ graph.get(depKey)+ ", parent: "+ graph.get(skyKey));
+      }
       addDep(depKey);
       valuesMissing=true;
       builder.put(depKey,ValueOrExceptionUtils.ofNull());
