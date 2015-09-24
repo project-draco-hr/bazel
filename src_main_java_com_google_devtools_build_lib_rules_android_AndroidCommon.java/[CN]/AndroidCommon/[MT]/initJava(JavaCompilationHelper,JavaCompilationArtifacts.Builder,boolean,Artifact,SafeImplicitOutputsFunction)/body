@@ -20,12 +20,10 @@
     jar=classJar;
   }
   filesBuilder.add(classJar);
+  genSourceJar=helper.createGensrcJar(classJar);
   Artifact manifestProtoOutput=helper.createManifestProtoOutput(classJar);
-  if (helper.usesAnnotationProcessing()) {
-    genClassJar=helper.createGenJar(classJar);
-    genSourceJar=helper.createGensrcJar(classJar);
-    helper.createGenJarAction(classJar,manifestProtoOutput,genClassJar);
-  }
+  genClassJar=ruleContext.getImplicitOutputArtifact(genClassJarImplicitOutput);
+  helper.createGenJarAction(classJar,manifestProtoOutput,genClassJar);
   srcJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_SOURCE_JAR);
   helper.createSourceJarAction(srcJar,genSourceJar);
   NestedSetBuilder<Artifact> compileTimeDependenciesBuilder=NestedSetBuilder.stableOrder();
