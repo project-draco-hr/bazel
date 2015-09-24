@@ -35,11 +35,11 @@
   if (loadingEnabled) {
     setArtifactRoots(loadingResult.getPackageRoots(),configurations);
   }
-  prepareToBuild(configurations,new SkyframePackageRootResolver(skyframeExecutor));
+  prepareToBuild(configurations,new SkyframePackageRootResolver(skyframeExecutor,eventHandler));
   skyframeExecutor.injectWorkspaceStatusData();
   SkyframeAnalysisResult skyframeAnalysisResult;
   try {
-    skyframeAnalysisResult=skyframeBuildView.configureTargets(targetSpecs,aspectKeys,eventBus,viewOptions.keepGoing);
+    skyframeAnalysisResult=skyframeBuildView.configureTargets(eventHandler,targetSpecs,aspectKeys,eventBus,viewOptions.keepGoing);
     setArtifactRoots(skyframeAnalysisResult.getPackageRoots(),configurations);
   }
   finally {
@@ -53,7 +53,7 @@
     eventHandler.handle(Event.info(msg));
     LOG.info(msg);
   }
-  AnalysisResult result=createResult(loadingResult,topLevelOptions,viewOptions,skyframeAnalysisResult.getConfiguredTargets(),skyframeAnalysisResult.getAspects(),skyframeAnalysisResult.getWalkableGraph(),skyframeAnalysisResult.getPackageRoots(),analysisSuccessful);
+  AnalysisResult result=createResult(eventHandler,loadingResult,topLevelOptions,viewOptions,skyframeAnalysisResult.getConfiguredTargets(),skyframeAnalysisResult.getAspects(),skyframeAnalysisResult.getWalkableGraph(),skyframeAnalysisResult.getPackageRoots(),analysisSuccessful);
   LOG.info("Finished analysis");
   return result;
 }

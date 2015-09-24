@@ -1,0 +1,34 @@
+{
+  skyframeExecutor.prepareExecution(checkOutputFiles,lastExecutionTimeRange);
+  skyframeExecutor.setFileCache(fileCache);
+  ExecutionProgressReceiver executionProgressReceiver=new ExecutionProgressReceiver(Preconditions.checkNotNull(builtTargets),countTestActions(exclusiveTests),skyframeExecutor.getEventBus());
+  ResourceManager.instance().setEventBus(skyframeExecutor.getEventBus());
+  boolean success=false;
+  EvaluationResult<?> result;
+  ActionExecutionStatusReporter statusReporter=ActionExecutionStatusReporter.create(eventHandler,executor,skyframeExecutor.getEventBus());
+  AtomicBoolean isBuildingExclusiveArtifacts=new AtomicBoolean(false);
+  ActionExecutionInactivityWatchdog watchdog=new ActionExecutionInactivityWatchdog(executionProgressReceiver.createInactivityMonitor(statusReporter),executionProgressReceiver.createInactivityReporter(statusReporter,isBuildingExclusiveArtifacts),progressReportInterval);
+  skyframeExecutor.setActionExecutionProgressReportingObjects(executionProgressReceiver,executionProgressReceiver,statusReporter);
+  watchdog.start();
+  try {
+    result=skyframeExecutor.buildArtifacts(executor,artifacts,targetsToBuild,aspects,parallelTests,false,keepGoing,explain,numJobs,actionCacheChecker,executionProgressReceiver);
+    success=processResult(result,keepGoing,skyframeExecutor);
+    Preconditions.checkState(!success || result.keyNames().size() == (artifacts.size() + targetsToBuild.size() + aspects.size()+ parallelTests.size()),"Build reported as successful but not all artifacts and targets built: %s, %s",result,artifacts);
+    isBuildingExclusiveArtifacts.set(true);
+    for (    ConfiguredTarget exclusiveTest : exclusiveTests) {
+      result=skyframeExecutor.buildArtifacts(executor,ImmutableSet.<Artifact>of(),targetsToBuild,aspects,ImmutableSet.of(exclusiveTest),true,keepGoing,explain,numJobs,actionCacheChecker,null);
+      boolean exclusiveSuccess=processResult(result,keepGoing,skyframeExecutor);
+      Preconditions.checkState(!exclusiveSuccess || !result.keyNames().isEmpty(),"Build reported as successful but test %s not executed: %s",exclusiveTest,result);
+      success&=exclusiveSuccess;
+    }
+  }
+  finally {
+    watchdog.stop();
+    ResourceManager.instance().unsetEventBus();
+    skyframeExecutor.setActionExecutionProgressReportingObjects(null,null,null);
+    statusReporter.unregisterFromEventBus();
+  }
+  if (!success) {
+    throw new BuildFailedException();
+  }
+}

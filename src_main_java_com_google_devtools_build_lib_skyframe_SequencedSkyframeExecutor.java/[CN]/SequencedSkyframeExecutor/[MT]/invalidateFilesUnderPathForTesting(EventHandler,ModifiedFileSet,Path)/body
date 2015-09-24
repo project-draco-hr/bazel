@@ -1,0 +1,17 @@
+{
+  if (lastAnalysisDiscarded) {
+    dropConfiguredTargetsNow(eventHandler);
+    lastAnalysisDiscarded=false;
+  }
+  Differencer.Diff diff;
+  if (modifiedFileSet.treatEverythingAsModified()) {
+    diff=new FilesystemValueChecker(memoizingEvaluator,tsgm,null).getDirtyKeys(new BasicFilesystemDirtinessChecker());
+  }
+ else {
+    diff=getDiff(modifiedFileSet.modifiedSourceFiles(),pathEntry);
+  }
+  syscalls.set(newPerBuildSyscallCache());
+  recordingDiffer.invalidate(diff.changedKeysWithoutNewValues());
+  recordingDiffer.inject(diff.changedKeysWithNewValues());
+  invalidateTransientErrors();
+}
