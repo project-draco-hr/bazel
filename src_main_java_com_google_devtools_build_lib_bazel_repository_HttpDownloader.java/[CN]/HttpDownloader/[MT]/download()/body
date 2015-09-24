@@ -16,20 +16,15 @@
   }
  catch (  IOException e) {
   }
-  int currentBytes;
-  final AtomicInteger totalBytes=new AtomicInteger(0);
+  AtomicInteger totalBytes=new AtomicInteger(0);
   final ScheduledFuture<?> loggerHandle=getLoggerHandle(totalBytes);
   try (OutputStream outputStream=destination.getOutputStream()){
-    ReadableByteChannel rbc=getChannel(url);
-    WritableByteChannel obc=Channels.newChannel(outputStream);
-    ByteBuffer byteBuffer=ByteBuffer.allocate(BUFFER_SIZE);
-    while ((currentBytes=rbc.read(byteBuffer)) > 0) {
-      totalBytes.addAndGet(currentBytes);
-      byteBuffer.flip();
-      while (byteBuffer.hasRemaining()) {
-        obc.write(byteBuffer);
-      }
-      byteBuffer.flip();
+    InputStream in=getInputStream(url);
+    int read;
+    byte[] buf=new byte[BUFFER_SIZE];
+    while ((read=in.read(buf)) > 0) {
+      totalBytes.addAndGet(read);
+      outputStream.write(buf,0,read);
     }
   }
  catch (  IOException e) {
