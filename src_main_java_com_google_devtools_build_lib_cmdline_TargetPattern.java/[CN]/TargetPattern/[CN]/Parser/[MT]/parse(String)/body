@@ -1,13 +1,18 @@
 {
   String originalPattern=pattern;
   final boolean includesRepo=pattern.startsWith("@");
-  String repoName="";
+  RepositoryName repository=PackageIdentifier.DEFAULT_REPOSITORY_NAME;
   if (includesRepo) {
     int pkgStart=pattern.indexOf("//");
     if (pkgStart < 0) {
       throw new TargetParsingException("Couldn't find package in target " + pattern);
     }
-    repoName=pattern.substring(0,pkgStart);
+    try {
+      repository=RepositoryName.create(pattern.substring(0,pkgStart));
+    }
+ catch (    LabelSyntaxException e) {
+      throw new TargetParsingException(e.getMessage());
+    }
     pattern=pattern.substring(pkgStart);
   }
   final boolean isAbsolute=pattern.startsWith("//");
@@ -40,14 +45,28 @@
     }
   }
   if (ALL_RULES_IN_SUFFIXES.contains(targetPart)) {
-    return new TargetsInPackage(originalPattern,pattern,":" + targetPart,isAbsolute,true,true);
+    PackageIdentifier packageIdentifier;
+    try {
+      packageIdentifier=PackageIdentifier.parse(repository.getName() + "//" + packagePart);
+    }
+ catch (    LabelSyntaxException e) {
+      throw new TargetParsingException("Invalid package name '" + packagePart + "': "+ e.getMessage());
+    }
+    return new TargetsInPackage(originalPattern,packageIdentifier,targetPart,isAbsolute,true,true);
   }
   if (ALL_TARGETS_IN_SUFFIXES.contains(targetPart)) {
-    return new TargetsInPackage(originalPattern,pattern,":" + targetPart,isAbsolute,false,true);
+    PackageIdentifier packageIdentifier;
+    try {
+      packageIdentifier=PackageIdentifier.parse(repository.getName() + "//" + packagePart);
+    }
+ catch (    LabelSyntaxException e) {
+      throw new TargetParsingException("Invalid package name '" + packagePart + "': "+ e.getMessage());
+    }
+    return new TargetsInPackage(originalPattern,packageIdentifier,targetPart,isAbsolute,false,true);
   }
   if (includesRepo || isAbsolute || pattern.contains(":")) {
     PackageAndTarget packageAndTarget;
-    String fullLabel=repoName + "//" + pattern;
+    String fullLabel=repository.getName() + "//" + pattern;
     try {
       packageAndTarget=LabelValidator.validateAbsoluteLabel(fullLabel);
     }

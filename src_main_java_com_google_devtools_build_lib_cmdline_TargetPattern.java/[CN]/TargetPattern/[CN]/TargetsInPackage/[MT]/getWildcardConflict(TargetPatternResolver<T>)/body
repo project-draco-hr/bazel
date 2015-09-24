@@ -2,12 +2,19 @@
   if (!isAbsolute) {
     return null;
   }
-  T target=resolver.getTargetOrNull("//" + pattern);
+  T target;
+  Label label;
+  try {
+    label=Label.create(packageIdentifier,suffix);
+    target=resolver.getTargetOrNull(label);
+  }
+ catch (  LabelSyntaxException e) {
+    return null;
+  }
   if (target != null) {
-    String name=pattern.lastIndexOf(':') != -1 ? pattern.substring(pattern.lastIndexOf(':') + 1) : pattern.substring(pattern.lastIndexOf('/') + 1);
-    resolver.warn(String.format("The Blaze target pattern '%s' is ambiguous: '%s' is " + "both a wildcard, and the name of an existing %s; " + "using the latter interpretation","//" + pattern,":" + name,resolver.getTargetKind(target)));
+    resolver.warn(String.format("The target pattern '%s' is ambiguous: '%s' is " + "both a wildcard, and the name of an existing %s; " + "using the latter interpretation",getOriginalPattern(),":" + suffix,resolver.getTargetKind(target)));
     try {
-      return resolver.getExplicitTarget("//" + pattern);
+      return resolver.getExplicitTarget(label);
     }
  catch (    TargetParsingException e) {
       throw new IllegalStateException("getTargetOrNull() returned non-null, so target should exist",e);
