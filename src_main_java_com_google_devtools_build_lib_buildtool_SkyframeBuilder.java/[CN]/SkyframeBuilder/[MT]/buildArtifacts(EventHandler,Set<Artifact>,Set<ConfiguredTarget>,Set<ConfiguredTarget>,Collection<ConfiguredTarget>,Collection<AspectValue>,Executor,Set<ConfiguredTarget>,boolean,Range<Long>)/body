@@ -11,12 +11,12 @@
   skyframeExecutor.setActionExecutionProgressReportingObjects(executionProgressReceiver,executionProgressReceiver,statusReporter);
   watchdog.start();
   try {
-    result=skyframeExecutor.buildArtifacts(executor,artifacts,targetsToBuild,aspects,parallelTests,false,keepGoing,explain,numJobs,actionCacheChecker,executionProgressReceiver);
+    result=skyframeExecutor.buildArtifacts(eventHandler,executor,artifacts,targetsToBuild,aspects,parallelTests,false,keepGoing,explain,numJobs,actionCacheChecker,executionProgressReceiver);
     success=processResult(result,keepGoing,skyframeExecutor);
     Preconditions.checkState(!success || result.keyNames().size() == (artifacts.size() + targetsToBuild.size() + aspects.size()+ parallelTests.size()),"Build reported as successful but not all artifacts and targets built: %s, %s",result,artifacts);
     isBuildingExclusiveArtifacts.set(true);
     for (    ConfiguredTarget exclusiveTest : exclusiveTests) {
-      result=skyframeExecutor.buildArtifacts(executor,ImmutableSet.<Artifact>of(),targetsToBuild,aspects,ImmutableSet.of(exclusiveTest),true,keepGoing,explain,numJobs,actionCacheChecker,null);
+      result=skyframeExecutor.buildArtifacts(eventHandler,executor,ImmutableSet.<Artifact>of(),targetsToBuild,aspects,ImmutableSet.of(exclusiveTest),true,keepGoing,explain,numJobs,actionCacheChecker,null);
       boolean exclusiveSuccess=processResult(result,keepGoing,skyframeExecutor);
       Preconditions.checkState(!exclusiveSuccess || !result.keyNames().isEmpty(),"Build reported as successful but test %s not executed: %s",exclusiveTest,result);
       success&=exclusiveSuccess;
