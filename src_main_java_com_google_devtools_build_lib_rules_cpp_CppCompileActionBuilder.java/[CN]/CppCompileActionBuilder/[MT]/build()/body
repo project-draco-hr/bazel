@@ -1,7 +1,9 @@
 {
   NestedSetBuilder<Artifact> realMandatoryInputsBuilder=NestedSetBuilder.compileOrder();
   realMandatoryInputsBuilder.addTransitive(mandatoryInputsBuilder.build());
-  if (tempOutputFile == null && configuration != null && !configuration.getFragment(CppConfiguration.class).shouldScanIncludes()) {
+  String filename=sourceFile.getFilename();
+  boolean shouldScanIncludes=!CppFileTypes.ASSEMBLER.matches(filename) && configuration != null && configuration.getFragment(CppConfiguration.class).shouldScanIncludes();
+  if (tempOutputFile == null && !shouldScanIncludes) {
     realMandatoryInputsBuilder.addTransitive(context.getDeclaredIncludeSrcs());
   }
   realMandatoryInputsBuilder.addTransitive(context.getAdditionalInputs());
@@ -9,10 +11,10 @@
   realMandatoryInputsBuilder.add(sourceFile);
   boolean fake=tempOutputFile != null;
   if (fake) {
-    return new FakeCppCompileAction(owner,ImmutableList.copyOf(features),featureConfiguration,variables,sourceFile,sourceLabel,realMandatoryInputsBuilder.build(),outputFile,tempOutputFile,dotdFile,configuration,cppConfiguration,context,actionContext,ImmutableList.copyOf(copts),ImmutableList.copyOf(pluginOpts),getNocoptPredicate(nocopts),extraSystemIncludePrefixes,fdoBuildStamp,ruleContext,usePic);
+    return new FakeCppCompileAction(owner,ImmutableList.copyOf(features),featureConfiguration,variables,sourceFile,shouldScanIncludes,sourceLabel,realMandatoryInputsBuilder.build(),outputFile,tempOutputFile,dotdFile,configuration,cppConfiguration,context,actionContext,ImmutableList.copyOf(copts),ImmutableList.copyOf(pluginOpts),getNocoptPredicate(nocopts),extraSystemIncludePrefixes,fdoBuildStamp,ruleContext,usePic);
   }
  else {
     NestedSet<Artifact> realMandatoryInputs=realMandatoryInputsBuilder.build();
-    return new CppCompileAction(owner,ImmutableList.copyOf(features),featureConfiguration,variables,sourceFile,sourceLabel,realMandatoryInputs,outputFile,dotdFile,gcnoFile,getDwoFile(ruleContext,outputFile,cppConfiguration),optionalSourceFile,configuration,cppConfiguration,context,actionContext,ImmutableList.copyOf(copts),ImmutableList.copyOf(pluginOpts),getNocoptPredicate(nocopts),extraSystemIncludePrefixes,fdoBuildStamp,includeResolver,getLipoScannables(realMandatoryInputs),actionClassId,usePic,ruleContext);
+    return new CppCompileAction(owner,ImmutableList.copyOf(features),featureConfiguration,variables,sourceFile,shouldScanIncludes,sourceLabel,realMandatoryInputs,outputFile,dotdFile,gcnoFile,getDwoFile(ruleContext,outputFile,cppConfiguration),optionalSourceFile,configuration,cppConfiguration,context,actionContext,ImmutableList.copyOf(copts),ImmutableList.copyOf(pluginOpts),getNocoptPredicate(nocopts),extraSystemIncludePrefixes,fdoBuildStamp,includeResolver,getLipoScannables(realMandatoryInputs),actionClassId,usePic,ruleContext);
   }
 }
