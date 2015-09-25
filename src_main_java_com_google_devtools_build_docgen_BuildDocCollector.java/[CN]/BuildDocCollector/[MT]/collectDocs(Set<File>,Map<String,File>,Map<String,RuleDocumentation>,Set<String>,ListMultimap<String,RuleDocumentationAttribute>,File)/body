@@ -8,11 +8,13 @@
       sfr.readDocsFromComments();
       for (      RuleDocumentation d : sfr.getRuleDocEntries()) {
         String ruleName=d.getRuleName();
-        if (ruleDocEntries.containsKey(ruleName) && !ruleClassFiles.get(ruleName).equals(inputPath)) {
-          System.err.printf("WARNING: '%s' from '%s' overrides value already in map from '%s'\n",d.getRuleName(),inputPath,ruleClassFiles.get(ruleName));
+        if (!blackList.contains(ruleName)) {
+          if (ruleDocEntries.containsKey(ruleName) && !ruleClassFiles.get(ruleName).equals(inputPath)) {
+            System.err.printf("WARNING: '%s' from '%s' overrides value already in map from '%s'\n",d.getRuleName(),inputPath,ruleClassFiles.get(ruleName));
+          }
+          ruleClassFiles.put(ruleName,inputPath);
+          ruleDocEntries.put(ruleName,d);
         }
-        ruleClassFiles.put(ruleName,inputPath);
-        ruleDocEntries.put(ruleName,d);
       }
       if (attributeDocEntries != null) {
         attributeDocEntries.putAll(sfr.getAttributeDocEntries());
@@ -21,7 +23,7 @@
   }
  else   if (inputPath.isDirectory()) {
     for (    File childPath : inputPath.listFiles()) {
-      collectDocs(processedFiles,ruleClassFiles,ruleDocEntries,attributeDocEntries,childPath);
+      collectDocs(processedFiles,ruleClassFiles,ruleDocEntries,blackList,attributeDocEntries,childPath);
     }
   }
   processedFiles.add(inputPath);
