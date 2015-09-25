@@ -35,7 +35,10 @@
   ruleContext.registerAction(new WriteAdbArgsAction(ruleContext.getActionOwner(),argsArtifact));
   createInstallAction(ruleContext,false,fullDeployMarker,argsArtifact,incrementalDexManifest,incrementalResourceApk.getArtifact(),incrementalApk,nativeLibs,stubData);
   createInstallAction(ruleContext,true,incrementalDeployMarker,argsArtifact,incrementalDexManifest,incrementalResourceApk.getArtifact(),incrementalApk,nativeLibs,stubData);
-  NestedSetBuilder<Artifact> splitApkSetBuilder=NestedSetBuilder.stableOrder();
+  NestedSetBuilder<Artifact> splitApkSetBuilder=NestedSetBuilder.compileOrder();
+  Artifact resourceSplitApk=getDxArtifact(ruleContext,"android_resources.apk");
+  ruleContext.registerAction(new ApkActionBuilder(ruleContext,androidSemantics).resourceApk(splitResourceApk.getArtifact()).sign(true).message("Generating split Android resource apk").build(resourceSplitApk));
+  splitApkSetBuilder.add(resourceSplitApk);
   for (int i=0; i < dexingOutput.shardDexZips.size(); i++) {
     String splitName="dex" + (i + 1);
     Artifact splitApkResources=createSplitApkResources(ruleContext,applicationManifest,splitName,true);
@@ -51,9 +54,6 @@
   Artifact javaSplitApk=getDxArtifact(ruleContext,"java_resources.apk");
   ruleContext.registerAction(new ApkActionBuilder(ruleContext,androidSemantics).resourceApk(javaSplitApkResources).javaResourceZip(dexingOutput.javaResourceJar).sign(true).message("Generating split Java resource apk").build(javaSplitApk));
   splitApkSetBuilder.add(javaSplitApk);
-  Artifact resourceSplitApk=getDxArtifact(ruleContext,"android_resources.apk");
-  ruleContext.registerAction(new ApkActionBuilder(ruleContext,androidSemantics).resourceApk(splitResourceApk.getArtifact()).sign(true).message("Generating split Android resource apk").build(resourceSplitApk));
-  splitApkSetBuilder.add(resourceSplitApk);
   Artifact splitMainApkResources=getDxArtifact(ruleContext,"split_main.ap_");
   ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("AndroidStripResources").setProgressMessage("Stripping resources from split main apk").setExecutable(ruleContext.getExecutablePrerequisite("$strip_resources",Mode.HOST)).addArgument("--input_resource_apk").addInputArgument(resourceApk.getArtifact()).addArgument("--output_resource_apk").addOutputArgument(splitMainApkResources).build(ruleContext));
   NestedSet<Artifact> splitApks=splitApkSetBuilder.build();
