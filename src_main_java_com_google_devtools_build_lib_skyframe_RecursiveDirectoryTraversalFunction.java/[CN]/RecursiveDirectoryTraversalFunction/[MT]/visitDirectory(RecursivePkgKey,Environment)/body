@@ -32,9 +32,6 @@
     return null;
   }
   TVisitor visitor=getInitialVisitor();
-  if (env.valuesMissing()) {
-    return null;
-  }
   if (pkgLookupValue.packageExists()) {
     if (pkgLookupValue.getRoot().equals(root)) {
       Package pkg=null;
@@ -88,17 +85,10 @@ catch (  FileSymlinkException e) {
     ImmutableSet<PathFragment> excludedSubdirectoriesBeneathThisSubdirectory=PathFragment.filterPathsStartingWith(excludedPaths,subdirectory);
     RootedPath subdirectoryRootedPath=RootedPath.toRootedPath(root,subdirectory);
     childDeps.add(getSkyKeyForSubdirectory(recursivePkgKey.getRepository(),subdirectoryRootedPath,excludedSubdirectoriesBeneathThisSubdirectory));
-    if (env.valuesMissing()) {
-      return null;
-    }
   }
   Map<SkyKey,SkyValue> subdirectorySkyValues=env.getValues(childDeps);
   if (env.valuesMissing()) {
     return null;
   }
-  TReturn aggregation=aggregateWithSubdirectorySkyValues(visitor,subdirectorySkyValues);
-  if (env.valuesMissing()) {
-    return null;
-  }
-  return aggregation;
+  return aggregateWithSubdirectorySkyValues(visitor,subdirectorySkyValues);
 }
