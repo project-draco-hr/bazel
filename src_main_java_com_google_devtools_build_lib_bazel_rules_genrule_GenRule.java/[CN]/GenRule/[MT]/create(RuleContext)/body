@@ -18,7 +18,7 @@
     return null;
   }
   String baseCommand=commandHelper.resolveCommandAndExpandLabels(ruleContext.attributes().get("heuristic_label_expansion",Type.BOOLEAN),false);
-  String command=GENRULE_SETUP_CMD + baseCommand;
+  String command=String.format("source %s; %s",ruleContext.getPrerequisiteArtifact("$genrule_setup",Mode.HOST).getExecPath(),baseCommand);
   command=resolveCommand(ruleContext,command,resolvedSrcs,filesToBuild);
   String message=ruleContext.attributes().get("message",Type.STRING);
   if (message.isEmpty()) {
