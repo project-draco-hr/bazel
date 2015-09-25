@@ -1,0 +1,5 @@
+{
+  scratch.file("test/BUILD","load('/test/macros', 'macro_native_rule', 'macro_skylark_rule', 'skylark_rule')","macro_native_rule(name = 'm_native',","  deps = [':jlib'])","macro_skylark_rule(name = 'm_skylark',","  deps = [':jlib'])","java_library(name = 'jlib',","  srcs = ['bla.java'])","cc_library(name = 'cclib',","  deps = [':jlib'])","skylark_rule(name = 'skyrule',","  deps = [':jlib'])");
+  scratch.file("test/macros.bzl","def _impl(ctx):","  return","skylark_rule = rule(","  implementation = _impl,","  attrs = {","    'deps': attr.label_list(providers = ['some_provider'], allow_files=True)","  }",")","def macro_native_rule(name, deps): ","  native.cc_library(name = name, deps = deps)","def macro_skylark_rule(name, deps):","  skylark_rule(name = name, deps = deps)");
+  reporter.removeHandler(failFastHandler);
+}
