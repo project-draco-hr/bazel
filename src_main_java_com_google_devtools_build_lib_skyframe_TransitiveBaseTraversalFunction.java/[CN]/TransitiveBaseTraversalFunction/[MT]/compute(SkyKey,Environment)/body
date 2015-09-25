@@ -18,14 +18,12 @@ catch (  NoSuchPackageException e) {
   TargetAndErrorIfAny targetAndErrorIfAny=(TargetAndErrorIfAny)loadTargetResults;
   TProcessedTargets processedTargets=processTarget(label,targetAndErrorIfAny);
   Iterable<SkyKey> labelDepKeys=getLabelDepKeys(targetAndErrorIfAny.getTarget());
-  Iterable<SkyKey> labelAspectKeys=getConservativeLabelAspectKeys(targetAndErrorIfAny.getTarget());
-  Iterable<SkyKey> depAndAspectKeys=Iterables.concat(labelDepKeys,labelAspectKeys);
-  Set<Entry<SkyKey,ValueOrException2<NoSuchPackageException,NoSuchTargetException>>> depsAndAspectEntries=env.getValuesOrThrow(depAndAspectKeys,NoSuchPackageException.class,NoSuchTargetException.class).entrySet();
-  processDeps(processedTargets,env.getListener(),targetAndErrorIfAny,depsAndAspectEntries);
+  Map<SkyKey,ValueOrException2<NoSuchPackageException,NoSuchTargetException>> depMap=env.getValuesOrThrow(labelDepKeys,NoSuchPackageException.class,NoSuchTargetException.class);
+  processDeps(processedTargets,env.getListener(),targetAndErrorIfAny,depMap.entrySet());
   if (env.valuesMissing()) {
     return null;
   }
-  labelAspectKeys=getStrictLabelAspectKeys(targetAndErrorIfAny.getTarget(),env);
+  Iterable<SkyKey> labelAspectKeys=getStrictLabelAspectKeys(targetAndErrorIfAny.getTarget(),depMap,env);
   Set<Entry<SkyKey,ValueOrException2<NoSuchPackageException,NoSuchTargetException>>> labelAspectEntries=env.getValuesOrThrow(labelAspectKeys,NoSuchPackageException.class,NoSuchTargetException.class).entrySet();
   processDeps(processedTargets,env.getListener(),targetAndErrorIfAny,labelAspectEntries);
   if (env.valuesMissing()) {

@@ -1,0 +1,18 @@
+{
+  SkyKey packageKey=PackageValue.key(toLabel.getPackageIdentifier());
+  try {
+    PackageValue pkgValue=(PackageValue)env.getValueOrThrow(packageKey,NoSuchPackageException.class);
+    if (pkgValue == null) {
+      return ImmutableList.of();
+    }
+    Package pkg=pkgValue.getPackage();
+    if (pkg.containsErrors()) {
+      return ImmutableList.of();
+    }
+    Target dependedTarget=pkgValue.getPackage().getTarget(toLabel.getName());
+    return AspectDefinition.visitAspectsIfRequired(fromTarget,attr,dependedTarget).values();
+  }
+ catch (  NoSuchThingException e) {
+    return ImmutableList.of();
+  }
+}

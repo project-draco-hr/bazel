@@ -2,14 +2,7 @@
   if (!(from instanceof Rule) || !(to instanceof Rule)) {
     return ImmutableMultimap.of();
   }
-  LinkedHashMultimap<Attribute,Label> result=LinkedHashMultimap.create();
   RuleClass ruleClass=((Rule)to).getRuleClassObject();
-  for (  Class<? extends AspectFactory<?,?,?>> candidateClass : attribute.getAspects()) {
-    AspectFactory<?,?,?> candidate=AspectFactory.Util.create(candidateClass);
-    if (!ruleClass.getAdvertisedProviders().containsAll(candidate.getDefinition().getRequiredProviders())) {
-      continue;
-    }
-    addAllAttributesOfAspect((Rule)from,result,candidate.getDefinition(),Rule.ALL_DEPS);
-  }
-  return ImmutableMultimap.copyOf(result);
+  ImmutableSet<Class<?>> providers=ruleClass.getAdvertisedProviders();
+  return visitAspectsIfRequired(from,attribute,toStringSet(providers));
 }
