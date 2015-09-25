@@ -44,15 +44,10 @@
     callback.notifyTargets(targets.getTargets());
   }
   maybeReportDeprecation(eventHandler,targets.getTargets());
-  BaseLoadingResult result;
   if (enableLoading) {
-    result=doLoadingPhase(eventHandler,eventBus,targets.getTargets(),labelsToLoadUnconditionally,keepGoing,options.loadingPhaseThreads);
-    LoadingResult loadingResult=new LoadingResult(targets.hasError(),!result.isSuccesful(),result.getTargets(),testsToRun,collectPackageRoots(pkgLoader.getErrorFreeVisitedPackages()));
-    freeMemoryAfterLoading(callback,pkgLoader.getVisitedPackageNames());
-    return loadingResult;
+    return doLoadingPhase(eventHandler,eventBus,targets,testsToRun,labelsToLoadUnconditionally,keepGoing,options.loadingPhaseThreads,callback);
   }
  else {
-    result=doSimpleLoadingPhase(eventHandler,eventBus,targets.getTargets(),keepGoing);
-    return new LoadingResult(targets.hasError(),!result.isSuccesful(),result.getTargets(),testsToRun,collectPackageRoots(new ArrayList<Package>()));
+    return doSimpleLoadingPhase(eventHandler,eventBus,targets,testsToRun,keepGoing);
   }
 }

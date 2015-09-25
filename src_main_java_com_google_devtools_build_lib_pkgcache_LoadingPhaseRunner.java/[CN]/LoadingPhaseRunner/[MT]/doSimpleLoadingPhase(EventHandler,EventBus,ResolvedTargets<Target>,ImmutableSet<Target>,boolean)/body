@@ -1,6 +1,7 @@
 {
   Stopwatch timer=preLoadingLogging(eventHandler);
-  BaseLoadingResult expandedResult;
+  ImmutableSet<Target> targetsToLoad=targets.getTargets();
+  ResolvedTargets<Target> expandedResult;
   try {
     expandedResult=expandTestSuites(eventHandler,targetsToLoad,keepGoing);
   }
@@ -8,5 +9,5 @@
     throw new LoadingFailedException("Loading failed; build aborted",e);
   }
   postLoadingLogging(eventBus,targetsToLoad,expandedResult.getTargets(),timer);
-  return new BaseLoadingResult(expandedResult.getTargets(),expandedResult.isSuccesful());
+  return new LoadingResult(targets.hasError(),expandedResult.hasError(),expandedResult.getTargets(),testsToRun,ImmutableMap.<PackageIdentifier,Path>of());
 }
