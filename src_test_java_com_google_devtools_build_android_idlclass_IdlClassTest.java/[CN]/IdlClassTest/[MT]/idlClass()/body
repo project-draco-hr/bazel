@@ -1,0 +1,29 @@
+{
+  File classJar=tempFolder.newFile("lib.jar");
+  File manifestProto=tempFolder.newFile("lib.manifest");
+  File tempDir=tempFolder.newFolder("temp_files");
+  File outputClassJar=tempFolder.newFile("lib-idl.jar");
+  File outputSourceJar=tempFolder.newFile("lib-idl-src.jar");
+  List<String> classes=Arrays.asList("Baz.class","Baz$0.class","Baz$1.class","c/g/Foo.class","c/g/Foo$0.class","c/g/Foo$Inner.class","c/g/Foo$Inner$InnerMost.class","c/g/Bar.class","c/g/Bar2.class","c/g/Bar$Inner.class","c/g/Bar2$Inner.class");
+  try (OutputStream os=new FileOutputStream(classJar);ZipOutputStream zos=new ZipOutputStream(os)){
+    for (    String path : classes) {
+      zos.putNextEntry(new ZipEntry(path));
+    }
+  }
+   tempFolder.newFolder("c");
+  tempFolder.newFolder("c/g");
+  tempFolder.newFolder("wrong");
+  tempFolder.newFolder("wrong/source");
+  tempFolder.newFolder("wrong/source/dir");
+  for (  String file : Arrays.asList("c/g/Foo.java","c/g/Bar.java","wrong/source/dir/Baz.java")) {
+    tempFolder.newFile(file);
+  }
+  try (OutputStream os=new FileOutputStream(manifestProto)){
+    MANIFEST.writeTo(os);
+  }
+   IdlClass.main(new String[]{"--manifest_proto",manifestProto.toString(),"--class_jar",classJar.toString(),"--output_class_jar",outputClassJar.toString(),"--output_source_jar",outputSourceJar.toString(),"--temp_dir",tempDir.toString(),"--idl_source_base_dir",tempFolder.getRoot().getPath(),"c/g/Bar.java","wrong/source/dir/Baz.java"});
+  List<String> classJarEntries=getJarEntries(outputClassJar);
+  assertThat(classJarEntries).containsExactly("c/g/Bar.class","c/g/Bar$Inner.class","c/g/Bar2.class","c/g/Bar2$Inner.class","Baz.class","Baz$0.class","Baz$1.class");
+  List<String> sourceJarEntries=getJarEntries(outputSourceJar);
+  assertThat(sourceJarEntries).containsExactly("c/g/Bar.java","Baz.java");
+}

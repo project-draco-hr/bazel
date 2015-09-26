@@ -1,0 +1,22 @@
+{
+  ImmutableSet<String> prefixes=getIdlPrefixes(manifest,idlSources);
+  try (JarFile jar=new JarFile(classJar.toFile())){
+    Enumeration<JarEntry> entries=jar.entries();
+    while (entries.hasMoreElements()) {
+      JarEntry entry=entries.nextElement();
+      String name=entry.getName();
+      if (!name.endsWith(".class")) {
+        continue;
+      }
+      String prefix=name.substring(0,name.length() - ".class".length());
+      int idx=prefix.indexOf('$');
+      if (idx > 0) {
+        prefix=prefix.substring(0,idx);
+      }
+      if (prefixes.contains(prefix)) {
+        Files.createDirectories(tempDir.resolve(name).getParent());
+        Files.copy(jar.getInputStream(entry),tempDir.resolve(name));
+      }
+    }
+  }
+ }

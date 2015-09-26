@@ -1,0 +1,17 @@
+{
+  OptionsParser optionsParser=OptionsParser.newOptionsParser(IdlClassOptions.class);
+  optionsParser.parseAndExitUponError(args);
+  IdlClassOptions options=optionsParser.getOptions(IdlClassOptions.class);
+  Preconditions.checkNotNull(options.manifestProto);
+  Preconditions.checkNotNull(options.classJar);
+  Preconditions.checkNotNull(options.outputClassJar);
+  Preconditions.checkNotNull(options.outputSourceJar);
+  Preconditions.checkNotNull(options.tempDir);
+  List<Path> idlSources=Lists.newArrayList();
+  for (  String idlSource : optionsParser.getResidue()) {
+    idlSources.add(Paths.get(idlSource));
+  }
+  Manifest manifest=readManifest(options.manifestProto);
+  writeClassJar(options,idlSources,manifest);
+  writeSourceJar(options,idlSources,manifest);
+}

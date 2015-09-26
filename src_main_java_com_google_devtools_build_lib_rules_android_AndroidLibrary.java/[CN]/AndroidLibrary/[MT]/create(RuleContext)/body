@@ -6,12 +6,10 @@
   }
   List<? extends TransitiveInfoCollection> deps=ruleContext.getPrerequisites("deps",Mode.TARGET);
   checkResourceInlining(ruleContext);
-  checkIdlRootImport(ruleContext);
   NestedSet<AndroidResourcesProvider.ResourceContainer> transitiveResources=AndroidCommon.getTransitiveResourceContainers(ruleContext,true);
   NestedSetBuilder<Aar> transitiveAars=collectTransitiveAars(ruleContext);
   NestedSet<LinkerInput> transitiveNativeLibraries=AndroidCommon.collectTransitiveNativeLibraries(deps);
   NestedSet<Artifact> transitiveProguardConfigs=collectTransitiveProguardConfigs(ruleContext);
-  AndroidIdlProvider transitiveIdlImportData=collectTransitiveIdlImports(ruleContext);
   JavaCommon javaCommon=new JavaCommon(ruleContext,javaSemantics);
   AndroidCommon androidCommon=new AndroidCommon(ruleContext,javaCommon);
   boolean definesLocalResources=LocalResourceContainer.definesAndroidResources(ruleContext.attributes());
@@ -31,7 +29,7 @@
  else {
     resourceApk=ResourceApk.fromTransitiveResources(transitiveResources);
   }
-  JavaTargetAttributes javaTargetAttributes=androidCommon.init(javaSemantics,androidSemantics,resourceApk,transitiveIdlImportData,false,true);
+  JavaTargetAttributes javaTargetAttributes=androidCommon.init(javaSemantics,androidSemantics,resourceApk,false,true);
   if (javaTargetAttributes == null) {
     return null;
   }

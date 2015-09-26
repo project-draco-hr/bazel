@@ -1,0 +1,17 @@
+{
+  Path tempDir=options.tempDir.resolve("sourcejar");
+  Path idlSourceBaseDir=options.idlSourceBaseDir;
+  for (  Path path : idlSources) {
+    for (    CompilationUnit unit : manifest.getCompilationUnitList()) {
+      if (unit.getPath().equals(path.toString())) {
+        String pkg=unit.getPkg();
+        Path source=idlSourceBaseDir != null ? idlSourceBaseDir.resolve(path) : path;
+        Path target=tempDir.resolve(pkg.replace('.','/')).resolve(path.getFileName());
+        Files.createDirectories(target.getParent());
+        Files.copy(source,target);
+        break;
+      }
+    }
+  }
+  writeOutputJar(options.outputSourceJar,tempDir);
+}
