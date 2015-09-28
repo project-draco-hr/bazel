@@ -1,0 +1,13 @@
+def _TestInvalidConfig(self, invalid_args, config):
+    tmpdir = os.environ['TEST_TMPDIR']
+    input_path = os.path.join(tmpdir, 'proguard_whitelister_test_input.cfg')
+    with open(input_path, 'w') as f:
+        f.write(config)
+    output_path = os.path.join(tmpdir, 'proguard_whitelister_test_output.cfg')
+    validator = self._CreateValidator(input_path, output_path)
+    try:
+        validator.ValidateAndWriteOutput()
+        self.fail()
+    except RuntimeError as e:
+        for invalid_arg in invalid_args:
+            self.assertTrue((invalid_arg in str(e)))
