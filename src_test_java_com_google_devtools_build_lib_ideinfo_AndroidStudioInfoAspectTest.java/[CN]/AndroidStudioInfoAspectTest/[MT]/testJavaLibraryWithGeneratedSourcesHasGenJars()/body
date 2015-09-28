@@ -1,0 +1,7 @@
+{
+  scratch.file("java/com/google/example/BUILD","java_library(","  name = 'test',","  plugins = [':plugin']",")","java_plugin(","  name = 'plugin',","  processor_class = 'com.google.example.Plugin',","  deps = ['plugin_lib'],",")","java_library(","  name = 'plugin_lib',","  srcs = ['Plugin.java'],",")");
+  String target="//java/com/google/example:test";
+  Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo(target);
+  RuleIdeInfo ruleIdeInfo=getRuleInfoAndVerifyLabel(target,ruleIdeInfos);
+  assertThat(transform(ruleIdeInfo.getJavaRuleIdeInfo().getGeneratedJarsList(),LIBRARY_ARTIFACT_TO_STRING)).containsExactly("<jar:java/com/google/example/libtest-gen.jar>" + "<source:java/com/google/example/libtest-gensrc.jar>");
+}
