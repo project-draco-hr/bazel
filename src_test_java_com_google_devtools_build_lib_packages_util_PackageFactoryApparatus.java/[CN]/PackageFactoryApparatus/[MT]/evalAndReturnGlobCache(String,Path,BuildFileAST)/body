@@ -1,10 +1,10 @@
 {
   PackageIdentifier packageId=PackageIdentifier.createInDefaultRepo(packageName);
-  GlobCache globCache=new GlobCache(buildFile.getParentDirectory(),packageId,locator,null,TestUtils.getPool());
+  GlobCache globCache=new GlobCache(buildFile.getParentDirectory(),packageId,getPackageLocator(),null,TestUtils.getPool());
   LegacyGlobber globber=new LegacyGlobber(globCache);
   Package externalPkg=Package.newExternalPackageBuilder(buildFile.getParentDirectory().getRelative("WORKSPACE"),"TESTING").build();
   LegacyBuilder resultBuilder=factory.evaluateBuildFile(externalPkg,packageId,buildFileAST,buildFile,globber,ImmutableList.<Event>of(),ConstantRuleVisibility.PUBLIC,false,new MakeEnvironment.Builder(),ImmutableMap.<PathFragment,Extension>of(),ImmutableList.<Label>of());
   Package result=resultBuilder.build();
-  Event.replayEventsOn(reporter,result.getEvents());
+  Event.replayEventsOn(eventHandler,result.getEvents());
   return Pair.of(result,globCache);
 }
