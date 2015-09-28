@@ -1,0 +1,12 @@
+{
+  Exception exception=new IOException("ehhhhh");
+  SkyKey causeOfException=new SkyKey(SkyFunctionName.create("CAUSE"),1234);
+  DummySkyFunctionException dummyException=new DummySkyFunctionException(exception,true,false);
+  ErrorInfo errorInfo=ErrorInfo.fromException(new ReifiedSkyFunctionException(dummyException,causeOfException));
+  assertThat(errorInfo.getRootCauses()).containsExactly(causeOfException);
+  assertThat(errorInfo.getException()).isSameAs(exception);
+  assertThat(errorInfo.getRootCauseOfException()).isSameAs(causeOfException);
+  assertThat(errorInfo.getCycleInfo()).isEmpty();
+  assertThat(errorInfo.isTransient()).isTrue();
+  assertThat(errorInfo.isCatastrophic()).isFalse();
+}

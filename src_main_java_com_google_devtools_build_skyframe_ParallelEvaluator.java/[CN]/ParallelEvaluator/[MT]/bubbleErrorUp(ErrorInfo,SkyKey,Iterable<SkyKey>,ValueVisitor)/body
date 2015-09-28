@@ -57,8 +57,8 @@ factory.compute(parent,env);
  catch (SkyFunctionException builderException) {
 ReifiedSkyFunctionException reifiedBuilderException=new ReifiedSkyFunctionException(builderException,parent);
 if (reifiedBuilderException.getRootCauseSkyKey().equals(parent)) {
-error=new ErrorInfo(reifiedBuilderException);
-bubbleErrorInfo.put(errorKey,ValueWithMetadata.error(new ErrorInfo(errorKey,ImmutableSet.of(error)),env.buildEvents(true)));
+error=ErrorInfo.fromException(reifiedBuilderException);
+bubbleErrorInfo.put(errorKey,ValueWithMetadata.error(ErrorInfo.fromChildErrors(errorKey,ImmutableSet.of(error)),env.buildEvents(true)));
 continue;
 }
 }
@@ -67,7 +67,7 @@ catch (InterruptedException interruptedException) {
  finally {
 Thread.interrupted();
 }
-bubbleErrorInfo.put(errorKey,ValueWithMetadata.error(new ErrorInfo(errorKey,ImmutableSet.of(error)),env.buildEvents(true)));
+bubbleErrorInfo.put(errorKey,ValueWithMetadata.error(ErrorInfo.fromChildErrors(errorKey,ImmutableSet.of(error)),env.buildEvents(true)));
 }
 if (externalInterrupt) {
 Thread.currentThread().interrupt();

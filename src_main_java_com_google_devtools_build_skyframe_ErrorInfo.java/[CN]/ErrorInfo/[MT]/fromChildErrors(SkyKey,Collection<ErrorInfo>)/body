@@ -1,0 +1,19 @@
+{
+  Preconditions.checkNotNull(currentValue,"currentValue must not be null");
+  Preconditions.checkState(!childErrors.isEmpty(),"childErrors may not be empty");
+  NestedSetBuilder<SkyKey> rootCausesBuilder=NestedSetBuilder.stableOrder();
+  ImmutableList.Builder<CycleInfo> cycleBuilder=ImmutableList.builder();
+  Exception firstException=null;
+  SkyKey firstChildKey=null;
+  boolean isCatastrophic=false;
+  for (  ErrorInfo child : childErrors) {
+    if (firstException == null) {
+      firstException=child.getException();
+      firstChildKey=child.getRootCauseOfException();
+    }
+    rootCausesBuilder.addTransitive(child.rootCauses);
+    cycleBuilder.addAll(CycleInfo.prepareCycles(currentValue,child.cycles));
+    isCatastrophic|=child.isCatastrophic();
+  }
+  return new ErrorInfo(rootCausesBuilder.build(),firstException,firstChildKey,cycleBuilder.build(),false,isCatastrophic);
+}
