@@ -1,0 +1,17 @@
+{
+  String limit=Strings.repeat("x",Printer.CRITICAL_LIST_ELEMENTS_STRING_LENGTH);
+  String half=Strings.repeat("x",Printer.CRITICAL_LIST_ELEMENTS_STRING_LENGTH / 2);
+  List<String> list=Arrays.asList(limit + limit);
+  assertThat(Printer.str(list)).isEqualTo("[\"" + limit + "...\"]");
+  LinkedList<List<String>> nestedList=new LinkedList<>();
+  nestedList.add(list);
+  assertThat(Printer.str(nestedList)).isEqualTo("[[\"" + limit + "...\"]]");
+  assertThat(Printer.str(Arrays.asList(half,Arrays.asList(limit)))).isEqualTo("[\"" + half + "\", [\""+ half+ "...\"]]");
+  assertThat(Printer.str(Arrays.asList(limit + "x"))).isEqualTo("[\"" + limit + "...\"]");
+  assertThat(Printer.str(Arrays.asList(limit))).isEqualTo("[\"" + limit + "\"]");
+  assertThat(Printer.str(Arrays.asList(half,half))).isEqualTo("[\"" + half + "\", \""+ half+ "\"]");
+  assertThat(Printer.str(Arrays.asList(limit,limit))).isEqualTo("[\"" + limit + "\", \"...\"]");
+  String limitMinusOne=limit.substring(0,limit.length() - 1);
+  assertThat(Printer.str(Arrays.asList(limitMinusOne,limit))).isEqualTo("[\"" + limitMinusOne + "\", \"x...\"]");
+  assertThat(Printer.str(Arrays.asList(limit,limit,limit))).isEqualTo("[\"" + limit + "\", <2 more arguments>]");
+}
