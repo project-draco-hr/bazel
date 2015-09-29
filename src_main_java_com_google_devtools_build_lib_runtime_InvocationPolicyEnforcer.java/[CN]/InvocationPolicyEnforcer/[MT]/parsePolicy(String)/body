@@ -1,0 +1,18 @@
+{
+  if (policy == null || policy.isEmpty()) {
+    return null;
+  }
+  try {
+    try {
+      return InvocationPolicy.parseFrom(BaseEncoding.base64().decode(CharMatcher.WHITESPACE.removeFrom(policy)));
+    }
+ catch (    IllegalArgumentException e) {
+      InvocationPolicy.Builder builder=InvocationPolicy.newBuilder();
+      TextFormat.merge(policy,builder);
+      return builder.build();
+    }
+  }
+ catch (  InvalidProtocolBufferException|TextFormat.ParseException e) {
+    throw new OptionsParsingException("Malformed value of --invocation_policy: " + policy,e);
+  }
+}

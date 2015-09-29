@@ -1,0 +1,24 @@
+{
+  SetValue setValue=flagPolicy.getSetValue();
+  if (setValue.getFlagValueCount() == 0) {
+    throw new OptionsParsingException(String.format("SetValue operation from invocation policy for flag '%s' does not have a value",flagName));
+  }
+  if (setValue.getFlagValueCount() > 1 && !optionDescription.getAllowMultiple()) {
+    throw new OptionsParsingException(String.format("SetValue operation from invocation policy sets multiple values for flag '%s' which " + "does not allow multiple values",flagName));
+  }
+  if (setValue.getOverridable() && valueDescription != null) {
+    LOG.info(String.format("Keeping value '%s' from source '%s' for flag '%s' " + "because the invocation policy specifying the value(s) '%s' is overridable",valueDescription.getValue(),valueDescription.getSource(),flagName,setValue.getFlagValueList()));
+  }
+ else {
+    parser.clearValue(flagName);
+    for (    String flagValue : setValue.getFlagValueList()) {
+      if (valueDescription == null) {
+        LOG.info(String.format("Setting value for flag '%s' from invocation " + "policy to '%s', overriding the default value '%s'",flagName,flagValue,optionDescription.getDefaultValue()));
+      }
+ else {
+        LOG.info(String.format("Setting value for flag '%s' from invocation " + "policy to '%s', overriding value '%s' from '%s'",flagName,flagValue,valueDescription.getValue(),valueDescription.getSource()));
+      }
+      setFlagValue(parser,flagName,flagValue,sourceFunction);
+    }
+  }
+}

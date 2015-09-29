@@ -5,6 +5,7 @@
   Map<Character,Field> abbrevToFieldBuilder=Maps.newHashMap();
   Map<Field,Object> optionDefaultsBuilder=Maps.newHashMap();
   Map<Field,Converter<?>> convertersBuilder=Maps.newHashMap();
+  Map<Field,Boolean> allowMultipleBuilder=Maps.newHashMap();
   for (  Class<? extends OptionsBase> parsedOptionsClass : classes) {
     try {
       Constructor<? extends OptionsBase> constructor=parsedOptionsClass.getConstructor(new Class[0]);
@@ -78,7 +79,8 @@
       }
       optionDefaultsBuilder.put(field,retrieveDefaultFromAnnotation(field));
       convertersBuilder.put(field,OptionsParserImpl.findConverter(field));
+      allowMultipleBuilder.put(field,annotation.allowMultiple());
     }
   }
-  return new OptionsData(constructorBuilder,nameToFieldBuilder,abbrevToFieldBuilder,allOptionsFieldsBuilder,optionDefaultsBuilder,convertersBuilder);
+  return new OptionsData(constructorBuilder,nameToFieldBuilder,abbrevToFieldBuilder,allOptionsFieldsBuilder,optionDefaultsBuilder,convertersBuilder,allowMultipleBuilder);
 }

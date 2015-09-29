@@ -1,0 +1,45 @@
+{
+  if (invocationPolicy == null) {
+    return;
+  }
+  if (invocationPolicy.getFlagPoliciesCount() == 0) {
+    LOG.warning("InvocationPolicy contains no flag policies.");
+  }
+  Function<Object,String> sourceFunction=Functions.constant("Invocation policy");
+  for (  FlagPolicy flagPolicy : invocationPolicy.getFlagPoliciesList()) {
+    String flagName=flagPolicy.getFlagName();
+    if (!flagPolicy.getCommandsList().isEmpty() && !flagPolicy.getCommandsList().contains(command)) {
+      LOG.info(String.format("Skipping flag policy for flag '%s' because it " + "applies only to commands %s and the current command is '%s'",flagName,flagPolicy.getCommandsList(),command));
+      continue;
+    }
+    OptionValueDescription valueDescription;
+    try {
+      valueDescription=parser.getOptionValueDescription(flagName);
+    }
+ catch (    IllegalArgumentException e) {
+      LOG.info(String.format("Flag '%s' specified by invocation policy does not exist",flagName));
+      continue;
+    }
+    OptionDescription optionDescription=parser.getOptionDescription(flagName);
+    Verify.verifyNotNull(optionDescription);
+switch (flagPolicy.getOperationCase()) {
+case SET_VALUE:
+      applySetValueOperation(parser,sourceFunction,flagPolicy,flagName,valueDescription,optionDescription);
+    break;
+case USE_DEFAULT:
+  applyUseDefaultOperation(parser,flagName);
+break;
+case ALLOW_VALUES:
+applyAllowValuesOperation(parser,sourceFunction,flagPolicy,flagName,valueDescription,optionDescription);
+break;
+case DISALLOW_VALUES:
+applyDisallowValuesOperation(parser,sourceFunction,flagPolicy,flagName,valueDescription,optionDescription);
+break;
+case OPERATION_NOT_SET:
+throw new OptionsParsingException(String.format("Flag policy for flag '%s' does not " + "have an operation",flagName));
+default :
+LOG.warning(String.format("Unknown operation '%s' from invocation policy for flag '%s'",flagPolicy.getOperationCase(),flagName));
+break;
+}
+}
+}
