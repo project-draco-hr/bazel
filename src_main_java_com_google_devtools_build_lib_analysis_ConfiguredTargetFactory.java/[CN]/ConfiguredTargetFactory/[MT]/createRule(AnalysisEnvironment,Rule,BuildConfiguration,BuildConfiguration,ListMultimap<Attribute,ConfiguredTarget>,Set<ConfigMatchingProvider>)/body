@@ -3,11 +3,12 @@
   if (ruleContext.hasErrors()) {
     return null;
   }
-  if (!rule.getRuleClassObject().getRequiredConfigurationFragments().isEmpty()) {
-    MissingFragmentPolicy missingFragmentPolicy=rule.getRuleClassObject().missingFragmentPolicy();
-    if (missingFragmentPolicy != MissingFragmentPolicy.IGNORE && !configuration.hasAllFragments(rule.getRuleClassObject().getRequiredConfigurationFragments())) {
+  ConfigurationFragmentPolicy configurationFragmentPolicy=rule.getRuleClassObject().getConfigurationFragmentPolicy();
+  if (!configurationFragmentPolicy.getRequiredConfigurationFragments().isEmpty()) {
+    MissingFragmentPolicy missingFragmentPolicy=configurationFragmentPolicy.getMissingFragmentPolicy();
+    if (missingFragmentPolicy != MissingFragmentPolicy.IGNORE && !configuration.hasAllFragments(configurationFragmentPolicy.getRequiredConfigurationFragments())) {
       if (missingFragmentPolicy == MissingFragmentPolicy.FAIL_ANALYSIS) {
-        ruleContext.ruleError(missingFragmentError(ruleContext));
+        ruleContext.ruleError(missingFragmentError(ruleContext,configurationFragmentPolicy));
         return null;
       }
       return createFailConfiguredTarget(ruleContext);
