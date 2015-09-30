@@ -2,21 +2,24 @@
   Aspect.Builder builder=new Builder(NAME);
   AndroidStudioInfoFilesProvider.Builder providerBuilder=new AndroidStudioInfoFilesProvider.Builder();
   NestedSetBuilder<Label> dependenciesBuilder=NestedSetBuilder.stableOrder();
+  ImmutableList.Builder<TransitiveInfoCollection> prerequisitesBuilder=ImmutableList.builder();
   if (ruleContext.attributes().has("deps",BuildType.LABEL_LIST)) {
-    Iterable<AndroidStudioInfoFilesProvider> androidStudioInfoFilesProviders=ruleContext.getPrerequisites("deps",Mode.TARGET,AndroidStudioInfoFilesProvider.class);
-    for (    AndroidStudioInfoFilesProvider depProvider : androidStudioInfoFilesProviders) {
-      providerBuilder.ideBuildFilesBuilder().addTransitive(depProvider.getIdeBuildFiles());
-      providerBuilder.transitiveDependenciesBuilder().addTransitive(depProvider.getTransitiveDependencies());
-      providerBuilder.transitiveResourcesBuilder().addTransitive(depProvider.getTransitiveResources());
-    }
-    List<? extends TransitiveInfoCollection> deps=ruleContext.getPrerequisites("deps",Mode.TARGET);
-    for (    TransitiveInfoCollection dep : deps) {
-      dependenciesBuilder.add(dep.getLabel());
-    }
-    Iterable<JavaExportsProvider> javaExportsProviders=ruleContext.getPrerequisites("deps",Mode.TARGET,JavaExportsProvider.class);
-    for (    JavaExportsProvider javaExportsProvider : javaExportsProviders) {
-      dependenciesBuilder.addTransitive(javaExportsProvider.getTransitiveExports());
-    }
+    prerequisitesBuilder.addAll(ruleContext.getPrerequisites("deps",Mode.TARGET));
+  }
+  if (ruleContext.attributes().has("exports",BuildType.LABEL_LIST)) {
+    prerequisitesBuilder.addAll(ruleContext.getPrerequisites("exports",Mode.TARGET));
+  }
+  List<TransitiveInfoCollection> prerequisites=prerequisitesBuilder.build();
+  for (  AndroidStudioInfoFilesProvider depProvider : AnalysisUtils.getProviders(prerequisites,AndroidStudioInfoFilesProvider.class)) {
+    providerBuilder.ideBuildFilesBuilder().addTransitive(depProvider.getIdeBuildFiles());
+    providerBuilder.transitiveDependenciesBuilder().addTransitive(depProvider.getTransitiveDependencies());
+    providerBuilder.transitiveResourcesBuilder().addTransitive(depProvider.getTransitiveResources());
+  }
+  for (  TransitiveInfoCollection dep : prerequisites) {
+    dependenciesBuilder.add(dep.getLabel());
+  }
+  for (  JavaExportsProvider javaExportsProvider : AnalysisUtils.getProviders(prerequisites,JavaExportsProvider.class)) {
+    dependenciesBuilder.addTransitive(javaExportsProvider.getTransitiveExports());
   }
   NestedSet<Label> directDependencies=dependenciesBuilder.build();
   providerBuilder.transitiveDependenciesBuilder().addTransitive(directDependencies);
