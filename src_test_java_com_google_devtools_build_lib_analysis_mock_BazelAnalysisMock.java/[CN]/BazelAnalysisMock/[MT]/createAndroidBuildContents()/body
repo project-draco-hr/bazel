@@ -1,0 +1,24 @@
+{
+  RuleClass androidSdkRuleClass=TestRuleClassProvider.getRuleClassProvider().getRuleClassMap().get("android_sdk");
+  List<Attribute> attrs=androidSdkRuleClass.getAttributes();
+  Builder<String> androidBuildContents=ImmutableList.builder();
+  androidBuildContents.add("android_sdk(").add("    name = 'sdk',").add("    android_jack = ':empty',").add("    jack = ':fail',").add("    jill = ':fail',").add("    resource_extractor = ':fail',");
+  for (  Attribute attr : attrs) {
+    if (attr.getType() == LABEL && attr.isMandatory() && !attr.getName().startsWith(":")) {
+      androidBuildContents.add("    " + attr.getName() + " = ':"+ attr.getName()+ "',");
+    }
+  }
+  androidBuildContents.add(")").add("sh_binary(name = 'aar_generator', srcs = ['empty.sh'])").add("sh_binary(name = 'resources_processor', srcs = ['empty.sh'])").add("android_library(name = 'incremental_stub_application')").add("android_library(name = 'incremental_split_stub_application')").add("sh_binary(name = 'stubify_manifest', srcs = ['empty.sh'])").add("sh_binary(name = 'merge_dexzips', srcs = ['empty.sh'])").add("sh_binary(name = 'merge_manifests', srcs = ['empty.sh'])").add("sh_binary(name = 'build_split_manifest', srcs = ['empty.sh'])").add("filegroup(name = 'debug_keystore', srcs = ['fake.file'])").add("sh_binary(name = 'shuffle_jars', srcs = ['empty.sh'])").add("sh_binary(name = 'strip_resources', srcs = ['empty.sh'])").add("sh_binary(name = 'build_incremental_dexmanifest', srcs = ['empty.sh'])").add("sh_binary(name = 'incremental_install', srcs = ['empty.sh'])");
+  for (  Attribute attr : attrs) {
+    if (attr.getType() == LABEL && attr.isMandatory() && !attr.getName().startsWith(":")) {
+      if (attr.isExecutable()) {
+        androidBuildContents.add("sh_binary(name = '" + attr.getName() + "',").add("          srcs = ['empty.sh'],").add(")");
+      }
+ else {
+        androidBuildContents.add("filegroup(name = '" + attr.getName() + "',").add("          srcs = ['fake.file'])");
+      }
+    }
+  }
+  androidBuildContents.add("java_binary(name = 'IdlClass',").add("            srcs = [ 'idlclass.jar' ],").add("            main_class = 'com.google.devtools.build.android.idlclass.IdlClass')");
+  return androidBuildContents.build();
+}
