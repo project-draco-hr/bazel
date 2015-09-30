@@ -5,7 +5,8 @@ def add_dir(self, name, path, uid=0, gid=0, uname='', gname='', mtime=0, mode=No
     if os.path.isdir(path):
         if (name[(-1)] == '/'):
             name = name[:(-1)]
-        self.add_file((name + '/'), tarfile.DIRTYPE, uid=uid, gid=gid, uname=uname, gname=gname, mtime=mtime, mode=mode)
+        dirmode = ((mode | ((292 & mode) >> 2)) if mode else mode)
+        self.add_file((name + '/'), tarfile.DIRTYPE, uid=uid, gid=gid, uname=uname, gname=gname, mtime=mtime, mode=dirmode)
         if (depth <= 0):
             raise self.Error('Recursion depth exceeded, probably in an infinite directory loop.')
         filelist = os.listdir(path)
