@@ -1,6 +1,12 @@
 {
   DashOptions options=optionsProvider.getOptions(DashOptions.class);
-  sender=(options == null || !options.useDash) ? new NoOpSender() : new Sender(options.url,env,executorService);
+  try {
+    sender=(options == null || !options.useDash) ? new NoOpSender() : new Sender(options.url,options.secret,env,executorService);
+  }
+ catch (  SenderException e) {
+    env.getReporter().handle(e.toEvent());
+    sender=new NoOpSender();
+  }
   if (optionsBuildData != null) {
     sender.send("options",optionsBuildData);
   }

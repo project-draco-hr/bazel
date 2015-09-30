@@ -1,18 +1,11 @@
 {
   executorService.submit(new Runnable(){
     @Override public void run(){
-      HttpClient httpClient=new DefaultHttpClient();
-      HttpPost httppost=new HttpPost(url + "/" + suffix+ "/"+ buildId);
-      httppost.setHeader(HttpHeaders.CONTENT_TYPE,"application/x-protobuf");
-      httppost.setEntity(new ByteArrayEntity(message.toByteArray()));
       try {
-        httpClient.execute(httppost);
+        sendMessage(suffix,new ByteArrayEntity(message.toByteArray()));
       }
- catch (      IOException|IllegalStateException e) {
-        reporter.getOutErr().printErrLn("Error sending results to " + url + ": "+ e.getMessage());
-      }
-catch (      Exception e) {
-        reporter.getOutErr().printErrLn("Unknown error sending results to " + url + ": "+ e.getMessage());
+ catch (      SenderException ex) {
+        reporter.handle(ex.toEvent());
       }
     }
   }

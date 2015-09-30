@@ -1,0 +1,19 @@
+{
+  this.reporter=env.getReporter();
+  this.secret=readSecret(secret,reporter);
+  try {
+    this.url=new URL(url);
+    if (!this.secret.isEmpty()) {
+      if (!(this.url.getProtocol().equals("https") || this.url.getHost().equals("localhost") || this.url.getHost().matches("^127.0.0.[0-9]+$"))) {
+        reporter.handle(Event.warn("Using authentication over unsecure channel, " + "consider using HTTPS."));
+      }
+    }
+  }
+ catch (  MalformedURLException e) {
+    throw new SenderException("Invalid server url " + url,e);
+  }
+  this.buildId=env.getCommandId().toString();
+  this.executorService=executorService;
+  sendMessage("test",null);
+  reporter.handle(Event.info("Results are being streamed to " + url + "/result/"+ buildId));
+}

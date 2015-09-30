@@ -1,0 +1,18 @@
+{
+  if (secretFile.isEmpty()) {
+    return "";
+  }
+  Path secretPath=new File(secretFile).toPath();
+  if (!Files.isReadable(secretPath)) {
+    throw new SenderException("Secret file " + secretFile + " doesn't exists or is unreadable");
+  }
+  try {
+    if (Files.getPosixFilePermissions(secretPath).contains(PosixFilePermission.OTHERS_READ) || Files.getPosixFilePermissions(secretPath).contains(PosixFilePermission.GROUP_READ)) {
+      reporter.handle(Event.warn("Secret file " + secretFile + " is readable by non-owner. "+ "It is recommended to set its permission to 0600 (read-write only by the owner)."));
+    }
+    return new String(Files.readAllBytes(secretPath),StandardCharsets.UTF_8).trim();
+  }
+ catch (  IOException e) {
+    throw new SenderException("Invalid secret file " + secretFile,e);
+  }
+}

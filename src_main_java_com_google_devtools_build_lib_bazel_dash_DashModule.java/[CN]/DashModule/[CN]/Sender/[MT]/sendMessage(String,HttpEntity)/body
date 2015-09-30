@@ -1,0 +1,21 @@
+{
+  HttpClient httpClient=new DefaultHttpClient();
+  HttpPost httppost=new HttpPost(url + "/" + suffix+ "/"+ buildId);
+  if (message != null) {
+    httppost.setHeader(HttpHeaders.CONTENT_TYPE,"application/x-protobuf");
+    httppost.setEntity(message);
+  }
+  if (!secret.isEmpty()) {
+    httppost.setHeader(DASH_SECRET_HEADER,secret);
+  }
+  StatusLine status;
+  try {
+    status=httpClient.execute(httppost).getStatusLine();
+  }
+ catch (  IOException e) {
+    throw new SenderException("Error sending results to " + url,e);
+  }
+  if (status.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
+    throw new SenderException("Permission denied while sending results to " + url + ". Did you specified --dash_secret?");
+  }
+}
