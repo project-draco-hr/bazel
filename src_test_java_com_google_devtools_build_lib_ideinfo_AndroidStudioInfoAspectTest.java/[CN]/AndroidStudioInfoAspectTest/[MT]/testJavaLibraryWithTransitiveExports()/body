@@ -1,12 +1,11 @@
 {
   scratch.file("com/google/example/BUILD","java_library(","    name = 'simple',","    srcs = ['simple/Simple.java']",")","java_library(","    name = 'complex',","    srcs = ['complex/Complex.java'],","    exports = [':simple'],",")","java_library(","    name = 'extracomplex',","    srcs = ['extracomplex/ExtraComplex.java'],","    exports = [':complex'],",")","java_library(","    name = 'megacomplex',","    srcs = ['megacomplex/MegaComplex.java'],","    deps = [':extracomplex'],",")");
-  String target="//com/google/example:megacomplex";
-  Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo(target);
+  Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:megacomplex");
   assertThat(ruleIdeInfos.size()).isEqualTo(4);
   getRuleInfoAndVerifyLabel("//com/google/example:simple",ruleIdeInfos);
   getRuleInfoAndVerifyLabel("//com/google/example:complex",ruleIdeInfos);
   getRuleInfoAndVerifyLabel("//com/google/example:extracomplex",ruleIdeInfos);
-  RuleIdeInfo megaComplexRuleIdeInfo=getRuleInfoAndVerifyLabel(target,ruleIdeInfos);
+  RuleIdeInfo megaComplexRuleIdeInfo=getRuleInfoAndVerifyLabel("//com/google/example:megacomplex",ruleIdeInfos);
   assertThat(relativePathsForSourcesOf(megaComplexRuleIdeInfo)).containsExactly("com/google/example/megacomplex/MegaComplex.java");
   assertThat(megaComplexRuleIdeInfo.getDependenciesList()).containsExactly("//com/google/example:extracomplex","//com/google/example:complex","//com/google/example:simple");
   assertThat(megaComplexRuleIdeInfo.getTransitiveDependenciesList()).containsExactly("//com/google/example:extracomplex","//com/google/example:complex","//com/google/example:simple");

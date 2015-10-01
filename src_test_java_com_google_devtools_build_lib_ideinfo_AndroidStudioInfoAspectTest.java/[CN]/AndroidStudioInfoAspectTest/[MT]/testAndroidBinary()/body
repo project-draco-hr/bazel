@@ -1,8 +1,7 @@
 {
   scratch.file("com/google/example/BUILD","android_library(","  name = 'l1',","  manifest = 'Manifesto.xml',","  custom_package = 'com.google.example',","  resource_files = ['r1/values/a.xml'],",")","android_binary(","  name = 'b',","  srcs = ['Main.java'],","  deps = [':l1'],","  manifest = 'Abracadabra.xml',","  custom_package = 'com.google.example',","  resource_files = ['res/drawable/a.png', 'res/drawable/b.png'],",")");
-  String target="//com/google/example:b";
-  Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo(target);
-  RuleIdeInfo ruleInfo=getRuleInfoAndVerifyLabel(target,ruleIdeInfos);
+  Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:b");
+  RuleIdeInfo ruleInfo=getRuleInfoAndVerifyLabel("//com/google/example:b",ruleIdeInfos);
   assertThat(ruleInfo.getKind()).isEqualTo(Kind.ANDROID_BINARY);
   assertThat(relativePathsForSourcesOf(ruleInfo)).containsExactly("com/google/example/Main.java");
   assertThat(transform(ruleInfo.getJavaRuleIdeInfo().getJarsList(),LIBRARY_ARTIFACT_TO_STRING)).containsExactly(jarString("com/google/example","libb.jar","libb-ijar.jar","libb-src.jar"));
