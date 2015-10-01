@@ -8,7 +8,21 @@
     objcProvider.addAll(DEFINE,headerProvider.getDefines());
   }
   for (  CcLinkParamsProvider linkProvider : depCcLinkProviders) {
-    objcProvider.addTransitiveAndPropagate(CC_LIBRARY,linkProvider.getCcLinkParams(true,false).getLibraries());
+    CcLinkParams params=linkProvider.getCcLinkParams(true,false);
+    ImmutableList<String> linkOpts=params.flattenedLinkopts();
+    ImmutableSet.Builder<SdkFramework> frameworkLinkOpts=new ImmutableSet.Builder<>();
+    ImmutableList.Builder<String> nonFrameworkLinkOpts=new ImmutableList.Builder<>();
+    for (UnmodifiableIterator<String> iterator=linkOpts.iterator(); iterator.hasNext(); ) {
+      String arg=iterator.next();
+      if (arg.equals("-framework") && iterator.hasNext()) {
+        String framework=iterator.next();
+        frameworkLinkOpts.add(new SdkFramework(framework));
+      }
+ else {
+        nonFrameworkLinkOpts.add(arg);
+      }
+    }
+    objcProvider.addAll(SDK_FRAMEWORK,frameworkLinkOpts.build()).addAll(LINKOPT,nonFrameworkLinkOpts.build()).addTransitiveAndPropagate(CC_LIBRARY,params.getLibraries());
   }
   if (compilationAttributes.isPresent()) {
     CompilationAttributes attributes=compilationAttributes.get();
