@@ -1,0 +1,25 @@
+'A simple cross-platform helper to create a dummy debian package.'
+from StringIO import StringIO
+import sys
+import tarfile
+if (__name__ == '__main__'):
+    tar = StringIO()
+    with tarfile.open('data.tar', mode='w', fileobj=tar) as f:
+        tarinfo = tarfile.TarInfo('usr/')
+        tarinfo.type = tarfile.DIRTYPE
+        f.addfile(tarinfo)
+        tarinfo = tarfile.TarInfo('usr/titi')
+        f.addfile(tarinfo, fileobj=StringIO('toto\n'))
+    data = tar.getvalue()
+    tar.close()
+    tar = StringIO()
+    with tarfile.open('control.tar', mode='w', fileobj=tar) as f:
+        tarinfo = tarfile.TarInfo('control')
+        f.addfile(tarinfo, fileobj=StringIO('\n'.join(['Package: testDescription: Just a dummy test'])))
+    control = tar.getvalue()
+    tar.close()
+    with open(sys.argv[1], 'w') as f:
+        f.write('!<arch>\n')
+        AddArFileEntry(f, 'debian-binary', '2.0')
+        AddArFileEntry(f, 'control.tar', control)
+        AddArFileEntry(f, 'data.tar', data)
