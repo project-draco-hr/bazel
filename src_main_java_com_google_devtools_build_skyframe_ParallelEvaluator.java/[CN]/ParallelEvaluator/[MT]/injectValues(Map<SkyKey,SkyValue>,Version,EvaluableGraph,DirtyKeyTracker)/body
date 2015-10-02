@@ -1,0 +1,17 @@
+{
+  Map<SkyKey,NodeEntry> prevNodeEntries=graph.createIfAbsentBatch(injectionMap.keySet());
+  for (  Map.Entry<SkyKey,SkyValue> injectionEntry : injectionMap.entrySet()) {
+    SkyKey key=injectionEntry.getKey();
+    SkyValue value=injectionEntry.getValue();
+    NodeEntry prevEntry=prevNodeEntries.get(key);
+    DependencyState newState=prevEntry.addReverseDepAndCheckIfDone(null);
+    Preconditions.checkState(newState != DependencyState.ALREADY_EVALUATING,"%s %s",key,prevEntry);
+    if (prevEntry.isDirty()) {
+      Preconditions.checkState(newState == DependencyState.NEEDS_SCHEDULING,"%s %s",key,prevEntry);
+      Preconditions.checkState(prevEntry.noDepsLastBuild(),"existing entry for %s has deps: %s",key,prevEntry);
+      Preconditions.checkState(prevEntry.markRebuildingAndGetAllRemainingDirtyDirectDeps().isEmpty(),"%s %s",key,prevEntry);
+    }
+    prevEntry.setValue(value,version);
+    dirtyKeyTracker.notDirty(key);
+  }
+}

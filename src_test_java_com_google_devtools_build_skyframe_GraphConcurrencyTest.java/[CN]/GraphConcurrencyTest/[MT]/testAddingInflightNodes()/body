@@ -7,28 +7,41 @@
   final Set<SkyKey> valuesSet=Sets.newConcurrentHashSet();
   for (int i=0; i < 10; i++) {
     for (int j=0; j < numKeys; j++) {
-      final int keyNum=j;
-      final SkyKey key=key("foo" + keyNum);
-      Runnable r=new Runnable(){
-        public void run(){
-          NodeEntry entry;
-          try (KeyedLocker.AutoUnlocker unlocker=locker.lock(key)){
-            entry=graph.get(key);
-            if (entry == null) {
-              assertTrue(nodeCreated.add(key));
+      for (int k=j + 1; k < numKeys; k++) {
+        final int keyNum1=j;
+        final int keyNum2=k;
+        final SkyKey key1=key("foo" + keyNum1);
+        final SkyKey key2=key("foo" + keyNum2);
+        final Iterable<SkyKey> keys=ImmutableList.of(key1,key2);
+        Runnable r=new Runnable(){
+          public void run(){
+            Map<SkyKey,NodeEntry> entries;
+            try (KeyedLocker.AutoUnlocker unlocker1=locker.lock(key1)){
+              try (KeyedLocker.AutoUnlocker unlocker2=locker.lock(key2)){
+                for (                SkyKey key : keys) {
+                  NodeEntry entry=graph.get(key);
+                  if (entry == null) {
+                    assertTrue(nodeCreated.add(key));
+                  }
+                }
+                entries=graph.createIfAbsentBatch(keys);
+              }
+             }
+             for (            Integer keyNum : ImmutableList.of(keyNum1,keyNum2)) {
+              SkyKey key=key("foo" + keyNum);
+              NodeEntry entry=entries.get(key);
+              if (startEvaluation(entry).equals(DependencyState.NEEDS_SCHEDULING)) {
+                assertTrue(valuesSet.add(key));
+                entry.setValue(new StringValue("bar" + keyNum),startingVersion);
+                assertThat(entry.isDone()).isTrue();
+              }
             }
-            entry=graph.createIfAbsent(key);
+            graph.createIfAbsentBatch(keys);
           }
-           if (startEvaluation(entry).equals(DependencyState.NEEDS_SCHEDULING)) {
-            assertTrue(valuesSet.add(key));
-            entry.setValue(new StringValue("bar" + keyNum),startingVersion);
-            assertThat(entry.isDone()).isTrue();
-          }
-          graph.createIfAbsent(key);
         }
-      }
 ;
-      pool.execute(wrapper.wrap(r));
+        pool.execute(wrapper.wrap(r));
+      }
     }
   }
   wrapper.waitForTasksAndMaybeThrow();

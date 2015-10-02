@@ -31,8 +31,10 @@ if (!keepGoing) {
   }
 }
 state.addTemporaryDirectDeps(GroupedListHelper.create(directDepsToCheck));
-for (SkyKey directDep : directDepsToCheck) {
-enqueueChild(skyKey,state,directDep,true);
+for (Map.Entry<SkyKey,NodeEntry> e : graph.createIfAbsentBatch(directDepsToCheck).entrySet()) {
+SkyKey directDep=e.getKey();
+NodeEntry directDepEntry=e.getValue();
+enqueueChild(skyKey,state,directDep,directDepEntry,true);
 }
 return DirtyOutcome.ALREADY_PROCESSED;
 case VERIFIED_CLEAN:

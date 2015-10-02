@@ -1,10 +1,12 @@
 {
-  NodeEntry errorTransienceEntry=graph.createIfAbsent(ErrorTransienceValue.key());
+  SkyKey errorTransienceKey=ErrorTransienceValue.key();
+  NodeEntry errorTransienceEntry=Iterables.getOnlyElement(graph.createIfAbsentBatch(ImmutableList.of(errorTransienceKey)).values());
   if (!errorTransienceEntry.isDone()) {
-    injectValue(ErrorTransienceValue.key(),new ErrorTransienceValue(),graphVersion,graph,dirtyKeyTracker);
+    injectValues(ImmutableMap.of(errorTransienceKey,(SkyValue)new ErrorTransienceValue()),graphVersion,graph,dirtyKeyTracker);
   }
-  for (  SkyKey skyKey : skyKeys) {
-    NodeEntry entry=graph.createIfAbsent(skyKey);
+  for (  Map.Entry<SkyKey,NodeEntry> e : graph.createIfAbsentBatch(skyKeys).entrySet()) {
+    SkyKey skyKey=e.getKey();
+    NodeEntry entry=e.getValue();
 switch (entry.addReverseDepAndCheckIfDone(null)) {
 case NEEDS_SCHEDULING:
       visitor.enqueueEvaluation(skyKey);
