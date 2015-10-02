@@ -1,17 +1,18 @@
 {
   PathFragment ideBuildFilePath=getOutputFilePath(base,ruleContext);
   Root genfilesDirectory=ruleContext.getConfiguration().getGenfilesDirectory();
-  Artifact ideBuildFile=ruleContext.getAnalysisEnvironment().getDerivedArtifact(ideBuildFilePath,genfilesDirectory);
-  providerBuilder.ideBuildFilesBuilder().add(ideBuildFile);
+  Artifact ideInfoFile=ruleContext.getAnalysisEnvironment().getDerivedArtifact(ideBuildFilePath,genfilesDirectory);
+  providerBuilder.ideInfoFilesBuilder().add(ideInfoFile);
+  NestedSetBuilder<Artifact> ideResolveArtifacts=providerBuilder.ideResolveFilesBuilder();
   RuleIdeInfo.Builder outputBuilder=RuleIdeInfo.newBuilder();
   outputBuilder.setLabel(base.getLabel().toString());
   outputBuilder.setBuildFile(ruleContext.getRule().getPackage().getBuildFile().getPath().toString());
   outputBuilder.setKind(ruleKind);
   if (ruleKind == Kind.JAVA_LIBRARY || ruleKind == Kind.JAVA_IMPORT || ruleKind == Kind.JAVA_TEST || ruleKind == Kind.JAVA_BINARY || ruleKind == Kind.ANDROID_LIBRARY || ruleKind == Kind.ANDROID_BINARY || ruleKind == Kind.ANDROID_TEST || ruleKind == Kind.ANDROID_ROBOELECTRIC_TEST) {
-    outputBuilder.setJavaRuleIdeInfo(makeJavaRuleIdeInfo(base));
+    outputBuilder.setJavaRuleIdeInfo(makeJavaRuleIdeInfo(base,ideResolveArtifacts));
   }
   if (ruleKind == Kind.ANDROID_LIBRARY || ruleKind == Kind.ANDROID_BINARY || ruleKind == Kind.ANDROID_TEST) {
-    outputBuilder.setAndroidRuleIdeInfo(makeAndroidRuleIdeInfo(ruleContext,base,providerBuilder));
+    outputBuilder.setAndroidRuleIdeInfo(makeAndroidRuleIdeInfo(ruleContext,base,ideResolveArtifacts,providerBuilder));
   }
   if (ruleKind == Kind.ANDROID_SDK) {
     outputBuilder.setAndroidSdkRuleInfo(makeAndroidSdkRuleInfo(ruleContext,base.getProvider(AndroidSdkProvider.class)));
@@ -21,6 +22,6 @@
   outputBuilder.addAllTransitiveDependencies(transform(provider.getTransitiveDependencies(),LABEL_TO_STRING));
   outputBuilder.addAllTags(base.getTarget().getAssociatedRule().getRuleTags());
   final RuleIdeInfo ruleIdeInfo=outputBuilder.build();
-  ruleContext.registerAction(makeProtoWriteAction(ruleContext.getActionOwner(),ruleIdeInfo,ideBuildFile));
+  ruleContext.registerAction(makeProtoWriteAction(ruleContext.getActionOwner(),ruleIdeInfo,ideInfoFile));
   return provider;
 }

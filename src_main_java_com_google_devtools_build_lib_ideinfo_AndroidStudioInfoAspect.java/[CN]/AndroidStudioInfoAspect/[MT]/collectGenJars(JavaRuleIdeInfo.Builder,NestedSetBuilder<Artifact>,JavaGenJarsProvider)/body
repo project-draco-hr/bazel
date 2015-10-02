@@ -1,0 +1,18 @@
+{
+  LibraryArtifact.Builder genjarsBuilder=LibraryArtifact.newBuilder();
+  if (genJarsProvider.usesAnnotationProcessing()) {
+    Artifact genClassJar=genJarsProvider.getGenClassJar();
+    if (genClassJar != null) {
+      genjarsBuilder.setJar(makeArtifactLocation(genClassJar));
+      ideResolveArtifacts.add(genClassJar);
+    }
+    Artifact gensrcJar=genJarsProvider.getGenSourceJar();
+    if (gensrcJar != null) {
+      genjarsBuilder.setSourceJar(makeArtifactLocation(gensrcJar));
+      ideResolveArtifacts.add(gensrcJar);
+    }
+    if (genjarsBuilder.hasJar()) {
+      builder.addGeneratedJars(genjarsBuilder.build());
+    }
+  }
+}

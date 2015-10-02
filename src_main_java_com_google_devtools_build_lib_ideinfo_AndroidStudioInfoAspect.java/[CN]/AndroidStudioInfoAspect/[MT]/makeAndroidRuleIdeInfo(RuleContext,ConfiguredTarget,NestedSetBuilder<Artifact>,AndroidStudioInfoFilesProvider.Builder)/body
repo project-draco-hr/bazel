@@ -1,0 +1,46 @@
+{
+  AndroidRuleIdeInfo.Builder builder=AndroidRuleIdeInfo.newBuilder();
+  AndroidIdeInfoProvider provider=base.getProvider(AndroidIdeInfoProvider.class);
+  if (provider.getSignedApk() != null) {
+    builder.setApk(makeArtifactLocation(provider.getSignedApk()));
+  }
+  Artifact manifest=provider.getManifest();
+  if (manifest != null) {
+    builder.setManifest(makeArtifactLocation(manifest));
+    if (!manifest.isSourceArtifact()) {
+      ideResolveArtifacts.add(manifest);
+    }
+  }
+  for (  Artifact artifact : provider.getApksUnderTest()) {
+    builder.addDependencyApk(makeArtifactLocation(artifact));
+  }
+  for (  SourceDirectory resourceDir : provider.getResourceDirs()) {
+    ArtifactLocation artifactLocation=makeArtifactLocation(resourceDir);
+    builder.addResources(artifactLocation);
+    providerBuilder.transitiveResourcesBuilder().add(resourceDir);
+  }
+  builder.setJavaPackage(AndroidCommon.getJavaPackage(ruleContext));
+  NestedSet<SourceDirectory> transitiveResources=providerBuilder.getTransitiveResources();
+  for (  SourceDirectory transitiveResource : transitiveResources) {
+    builder.addTransitiveResources(makeArtifactLocation(transitiveResource));
+  }
+  boolean hasIdlSources=!provider.getIdlSrcs().isEmpty();
+  builder.setHasIdlSources(hasIdlSources);
+  if (hasIdlSources) {
+    LibraryArtifact.Builder jarBuilder=LibraryArtifact.newBuilder();
+    Artifact idlClassJar=provider.getIdlClassJar();
+    if (idlClassJar != null) {
+      jarBuilder.setJar(makeArtifactLocation(idlClassJar));
+      ideResolveArtifacts.add(idlClassJar);
+    }
+    Artifact idlSourceJar=provider.getIdlSourceJar();
+    if (idlSourceJar != null) {
+      jarBuilder.setSourceJar(makeArtifactLocation(idlSourceJar));
+      ideResolveArtifacts.add(idlSourceJar);
+    }
+    if (idlClassJar != null) {
+      builder.setIdlJar(jarBuilder.build());
+    }
+  }
+  return builder.build();
+}

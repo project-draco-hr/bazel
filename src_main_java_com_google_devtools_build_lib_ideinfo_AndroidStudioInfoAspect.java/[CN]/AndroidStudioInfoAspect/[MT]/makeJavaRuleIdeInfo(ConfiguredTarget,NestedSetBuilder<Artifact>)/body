@@ -1,0 +1,22 @@
+{
+  JavaRuleIdeInfo.Builder builder=JavaRuleIdeInfo.newBuilder();
+  JavaRuleOutputJarsProvider outputJarsProvider=base.getProvider(JavaRuleOutputJarsProvider.class);
+  if (outputJarsProvider != null) {
+    collectJarsFromOutputJarsProvider(builder,ideResolveArtifacts,outputJarsProvider);
+  }
+ else {
+    JavaSourceInfoProvider provider=base.getProvider(JavaSourceInfoProvider.class);
+    if (provider != null) {
+      collectJarsFromSourceInfoProvider(builder,ideResolveArtifacts,provider);
+    }
+  }
+  JavaGenJarsProvider genJarsProvider=base.getProvider(JavaGenJarsProvider.class);
+  if (genJarsProvider != null) {
+    collectGenJars(builder,ideResolveArtifacts,genJarsProvider);
+  }
+  Collection<Artifact> sourceFiles=getSources(base);
+  for (  Artifact sourceFile : sourceFiles) {
+    builder.addSources(makeArtifactLocation(sourceFile));
+  }
+  return builder.build();
+}

@@ -1,7 +1,7 @@
 {
-  scratch.file("java/com/google/example/BUILD","java_library(","  name = 'test',","  plugins = [':plugin']",")","java_plugin(","  name = 'plugin',","  processor_class = 'com.google.example.Plugin',","  deps = ['plugin_lib'],",")","java_library(","  name = 'plugin_lib',","  srcs = ['Plugin.java'],",")");
+  scratch.file("java/com/google/example/BUILD","java_library(","  name = 'test',","  srcs = ['Test.java'],","  plugins = [':plugin']",")","java_plugin(","  name = 'plugin',","  processor_class = 'com.google.example.Plugin',","  deps = ['plugin_lib'],",")","java_library(","  name = 'plugin_lib',","  srcs = ['Plugin.java'],",")");
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//java/com/google/example:test");
   RuleIdeInfo ruleIdeInfo=getRuleInfoAndVerifyLabel("//java/com/google/example:test",ruleIdeInfos);
   assertThat(transform(ruleIdeInfo.getJavaRuleIdeInfo().getGeneratedJarsList(),LIBRARY_ARTIFACT_TO_STRING)).containsExactly(jarString("java/com/google/example","libtest-gen.jar",null,"libtest-gensrc.jar"));
-  assertThat(relativePathsForSourcesOf(ruleIdeInfo)).isEmpty();
+  assertThat(getIdeResolveFiles()).containsExactly("java/com/google/example/libtest.jar","java/com/google/example/libtest-ijar.jar","java/com/google/example/libtest-src.jar","java/com/google/example/libtest-gen.jar","java/com/google/example/libtest-gensrc.jar");
 }
