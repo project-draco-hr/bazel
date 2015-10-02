@@ -4,14 +4,17 @@
   if (!opts.vfsStats) {
     opts.vfsStatsLimit=0;
   }
-  PrintStream out=new PrintStream(env.getReporter().getOutErr().getOutputStream());
-  try {
+  try (PrintStream out=new PrintStream(env.getReporter().getOutErr().getOutputStream())){
     env.getReporter().handle(Event.warn(null,"This information is intended for consumption by Blaze developers" + " only, and may change at any time.  Script against it at your own risk"));
     for (    String name : options.getResidue()) {
       Path profileFile=runtime.getWorkingDirectory().getRelative(name);
       try {
         ProfileInfo info=ProfileInfo.loadProfileVerbosely(profileFile,getInfoListener(env));
         ProfileInfo.aggregateProfile(info,getInfoListener(env));
+        if (opts.taskTree != null) {
+          printTaskTree(out,name,info,opts.taskTree,opts.taskTreeThreshold);
+          continue;
+        }
         PhaseSummaryStatistics phaseSummaryStatistics=new PhaseSummaryStatistics(info);
         EnumMap<ProfilePhase,PhaseStatistics> phaseStatistics=new EnumMap<>(ProfilePhase.class);
         for (        ProfilePhase phase : ProfilePhase.values()) {
@@ -35,8 +38,5 @@
       }
     }
   }
-  finally {
-    out.flush();
-  }
-  return ExitCode.SUCCESS;
+   return ExitCode.SUCCESS;
 }

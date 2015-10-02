@@ -1,0 +1,35 @@
+{
+  if (durationNanos < durationThresholdNanos) {
+    return false;
+  }
+  out.printf("%s%6d %s",indent,id,type);
+  out.printf(" (%5.3f ms) ",durationNanos / 1000000.0);
+  out.print(getDescription());
+  out.print(" [");
+  ImmutableList<Task> sortedSubTasks=TASK_DURATION_ORDERING.reverse().immutableSortedCopy(Iterables.filter(Arrays.asList(subtasks),new Predicate<Task>(){
+    @Override public boolean apply(    Task task){
+      return task.durationNanos >= durationThresholdNanos;
+    }
+  }
+));
+  String sep="";
+  for (  Task task : sortedSubTasks) {
+    out.print(sep);
+    out.println();
+    task.printTaskTree(out,indent + "  ",durationThresholdNanos);
+    sep=",";
+  }
+  if (!sortedSubTasks.isEmpty()) {
+    out.println();
+    out.print(indent);
+  }
+  int skipped=subtasks.length - sortedSubTasks.size();
+  if (skipped > 0) {
+    out.printf("%d subtree(s) omitted",skipped);
+  }
+  out.print("]");
+  if (indent.equals("")) {
+    out.println();
+  }
+  return true;
+}
