@@ -79,6 +79,9 @@
       }
       targetBuildConfigMap.put(name,value);
     }
+    if (!Equaling.of(ProductType.STATIC_LIBRARY,productType(targetControl))) {
+      targetBuildConfigMap.put("LIBRARY_SEARCH_PATHS",librarySearchPaths(targetControl.getImportedLibraryList()));
+    }
     String targetName=targetControl.getName();
     String targetNameInLowerCase=targetName.toLowerCase();
     if (usedTargetNames.contains(targetNameInLowerCase)) {
@@ -117,8 +120,15 @@
   }
   Iterables.addAll(project.getMainGroup().getChildren(),processedProjectFiles);
   for (  TargetInfo targetInfo : targetInfoByLabel.values()) {
-    for (    DependencyControl dependency : targetInfo.control.getDependencyList()) {
+    TargetControl targetControl=targetInfo.control;
+    for (    DependencyControl dependency : targetControl.getDependencyList()) {
       targetInfo.addDependencyInfo(dependency,targetInfoByLabel);
+    }
+    if (!Equaling.of(ProductType.STATIC_LIBRARY,productType(targetControl))) {
+      for (      String importedLibrary : targetControl.getImportedLibraryList()) {
+        FileReference fileReference=FileReference.of(importedLibrary,SourceTree.GROUP).withExplicitFileType(FILE_TYPE_ARCHIVE_LIBRARY);
+        targetInfo.frameworksPhase.getFiles().add(pbxBuildFiles.getStandalone(fileReference));
+      }
     }
   }
   return project;
