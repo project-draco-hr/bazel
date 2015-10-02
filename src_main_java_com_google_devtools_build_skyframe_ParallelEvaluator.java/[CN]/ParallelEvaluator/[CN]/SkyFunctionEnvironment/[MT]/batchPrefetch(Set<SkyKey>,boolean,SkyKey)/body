@@ -3,7 +3,10 @@
   if (batchMap.size() != keys.size()) {
     throw new IllegalStateException("Missing keys for " + keyForDebugging + ": "+ Sets.difference(keys,batchMap.keySet()));
   }
-  for (  Map.Entry<SkyKey,NodeEntry> entry : batchMap.entrySet()) {
-    Preconditions.checkState(entry.getValue().isDone(),"%s had not done %s",keyForDebugging,entry);
+  if (assertDone) {
+    for (    Map.Entry<SkyKey,NodeEntry> entry : batchMap.entrySet()) {
+      Preconditions.checkState(entry.getValue().isDone(),"%s had not done %s",keyForDebugging,entry);
+    }
   }
+  return batchMap;
 }
