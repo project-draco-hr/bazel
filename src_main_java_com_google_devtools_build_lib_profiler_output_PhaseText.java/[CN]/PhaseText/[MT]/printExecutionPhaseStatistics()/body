@@ -18,13 +18,18 @@
   printLn();
   lnPrintf(TWO_COLUMN_FORMAT,"Action dependency map creation",TimeUtilities.prettyTime(graphTime));
   lnPrintf(TWO_COLUMN_FORMAT,"Actual execution time",TimeUtilities.prettyTime(execTime));
-  CriticalPathText criticalPaths=new CriticalPathText(out,criticalPathStatistics,execTime);
-  criticalPaths.printTimingBreakdown();
-  printLn();
+  CriticalPathText criticalPaths=null;
+  if (criticalPathStatistics.isPresent()) {
+    criticalPaths=new CriticalPathText(out,criticalPathStatistics.get(),execTime);
+    criticalPaths.printTimingBreakdown();
+    printLn();
+  }
   printTimingDistribution(execPhase);
   printLn();
-  criticalPaths.printCriticalPaths();
-  printLn();
+  if (criticalPathStatistics.isPresent()) {
+    criticalPaths.printCriticalPaths();
+    printLn();
+  }
   if (missingActionsCount > 0) {
     lnPrint(missingActionsCount);
     print(" action(s) are present in the" + " action graph but missing instrumentation data. Most likely the profile file" + " has been created during a failed or aborted build.");
