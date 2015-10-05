@@ -1,0 +1,25 @@
+{
+  String buildFileTemplate=getTemplate("android_ndk_build_file_template.txt");
+  String ccToolchainSuiteTemplate=getTemplate("android_ndk_cc_toolchain_suite_template.txt");
+  String ccToolchainTemplate=getTemplate("android_ndk_cc_toolchain_template.txt");
+  String stlFilegroupTemplate=getTemplate("android_ndk_stl_filegroup_template.txt");
+  StringBuilder ccToolchainSuites=new StringBuilder();
+  StringBuilder ccToolchainRules=new StringBuilder();
+  StringBuilder stlFilegroups=new StringBuilder();
+  for (  CrosstoolStlPair crosstoolStlPair : crosstools) {
+    CrosstoolRelease crosstool=crosstoolStlPair.crosstoolRelease;
+    StringBuilder toolchainMap=new StringBuilder();
+    for (    DefaultCpuToolchain defaultToolchain : crosstool.getDefaultToolchainList()) {
+      toolchainMap.append(String.format("      \"%s\": \":%s\",\n",defaultToolchain.getCpu(),defaultToolchain.getToolchainIdentifier()));
+    }
+    String toolchainName=createToolchainName(crosstoolStlPair.stlImpl.getName());
+    ccToolchainSuites.append(ccToolchainSuiteTemplate.replace("%toolchainName%",toolchainName).replace("%toolchainMap%",toolchainMap.toString().trim()).replace("%crosstoolReleaseProto%",crosstool.toString()));
+    for (    CToolchain toolchain : crosstool.getToolchainList()) {
+      ccToolchainRules.append(createCcToolchainRule(ccToolchainTemplate,toolchain));
+    }
+    for (    Map.Entry<String,String> entry : crosstoolStlPair.stlImpl.getFilegroupNamesAndFilegroupFileGlobPatterns().entrySet()) {
+      stlFilegroups.append(stlFilegroupTemplate.replace("%name%",entry.getKey()).replace("%fileGlobPattern%",entry.getValue()));
+    }
+  }
+  return buildFileTemplate.replace("%ruleName%",ruleName).replace("%ccToolchainSuites%",ccToolchainSuites).replace("%ccToolchainRules%",ccToolchainRules).replace("%stlFilegroups%",stlFilegroups);
+}

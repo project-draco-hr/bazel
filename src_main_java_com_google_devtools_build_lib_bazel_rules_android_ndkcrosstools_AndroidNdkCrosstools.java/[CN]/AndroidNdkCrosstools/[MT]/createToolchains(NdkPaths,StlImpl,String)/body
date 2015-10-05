@@ -1,0 +1,13 @@
+{
+  List<CToolchain.Builder> toolchainBuilders=new ArrayList<>();
+  toolchainBuilders.addAll(new ArmCrosstools(ndkPaths,stlImpl).createCrosstools());
+  toolchainBuilders.addAll(new MipsCrosstools(ndkPaths,stlImpl).createCrosstools());
+  toolchainBuilders.addAll(new X86Crosstools(ndkPaths,stlImpl).createCrosstools());
+  ImmutableList.Builder<CToolchain> toolchains=new ImmutableList.Builder<>();
+  for (  CToolchain.Builder toolchainBuilder : toolchainBuilders) {
+    toolchainBuilder.setHostSystemName(hostPlatform).setTargetLibc("local").setAbiVersion(toolchainBuilder.getTargetCpu()).setAbiLibcVersion("local");
+    toolchainBuilder.addCxxBuiltinIncludeDirectory("%sysroot%/usr/include");
+    toolchains.add(toolchainBuilder.build());
+  }
+  return toolchains.build();
+}
