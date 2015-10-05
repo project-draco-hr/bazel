@@ -1,0 +1,59 @@
+{
+  String tmpVar=category + dataVar;
+  lnPrintf("var statsDiv = document.getElementById('%s_function_stats');",category);
+  if (taskStatistics.isEmpty()) {
+    lnPrint("statsDiv.innerHTML = '<i>No relevant function calls to display. Some minor" + " builtin functions may have been ignored because their names could not be used" + " as variables in JavaScript.</i>'");
+  }
+ else {
+    lnPrintf("var %s = new google.visualization.DataTable();",tmpVar);
+    lnPrintf("%s.addColumn('string', 'Location');",tmpVar);
+    lnPrintf("%s.addColumn('string', 'Function');",tmpVar);
+    lnPrintf("%s.addColumn('number', 'count');",tmpVar);
+    lnPrintf("%s.addColumn('number', 'min');",tmpVar);
+    lnPrintf("%s.addColumn('number', 'mean');",tmpVar);
+    lnPrintf("%s.addColumn('number', 'mean self');",tmpVar);
+    lnPrintf("%s.addColumn('number', 'median');",tmpVar);
+    lnPrintf("%s.addColumn('number', 'median self');",tmpVar);
+    lnPrintf("%s.addColumn('number', 'max');",tmpVar);
+    lnPrintf("%s.addColumn('number', 'max self');",tmpVar);
+    lnPrintf("%s.addColumn('number', 'std dev');",tmpVar);
+    lnPrintf("%s.addColumn('number', 'self');",tmpVar);
+    lnPrintf("%s.addColumn('number', 'self (%%)');",tmpVar);
+    lnPrintf("%s.addColumn('number', 'total');",tmpVar);
+    lnPrintf("%s.addColumn('number', 'relative (%%)');",tmpVar);
+    lnPrintf("%s.addRows([",tmpVar);
+    down();
+    for (    Entry<String,TasksStatistics> entry : taskStatistics.entrySet()) {
+      String function=entry.getKey();
+      TasksStatistics stats=entry.getValue();
+      TasksStatistics selfStats=taskSelfStatistics.get(function);
+      double relativeTotal=(double)stats.totalNanos / totalNanos;
+      double relativeSelf=(double)selfStats.totalNanos / stats.totalNanos;
+      String[] split=stats.name.split("#");
+      String location=split[0];
+      String name=split[1];
+      lnPrintf("[{v:'%s', f:'%s'}, ",location,abbreviatePath(location));
+      printf("'%s', ",name);
+      printf("%d, ",stats.count);
+      printf("%.3f, ",stats.minimumMillis());
+      printf("%.3f, ",stats.meanMillis());
+      printf("%.3f, ",selfStats.meanMillis());
+      printf("%.3f, ",stats.medianMillis());
+      printf("%.3f, ",selfStats.medianMillis());
+      printf("%.3f, ",stats.maximumMillis());
+      printf("%.3f, ",selfStats.maximumMillis());
+      printf("%.3f, ",stats.standardDeviationMillis);
+      printf("%.3f, ",selfStats.totalMillis());
+      printf("{v:%.4f, f:'%.3f %%'}, ",relativeSelf,relativeSelf * 100);
+      printf("%.3f,",stats.totalMillis());
+      printf("{v:%.4f, f:'%.3f %%'},",relativeTotal,relativeTotal * 100);
+      printf("],");
+    }
+    lnPrint("]);");
+    up();
+    lnPrintf("%s.%s = %s;",dataVar,category,tmpVar);
+    lnPrintf("%s.%s = new google.visualization.Table(statsDiv);",tableVar,category);
+    lnPrintf("google.visualization.events.addListener(%s.%s, 'select', selectHandler('%s'));",tableVar,category,category);
+    lnPrintf("%s.%s.draw(%s.%s, {showRowNumber: true, width: '100%%', height: '100%%'});",tableVar,category,dataVar,category);
+  }
+}

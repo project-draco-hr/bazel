@@ -1,21 +1,7 @@
 {
-  tasks=ProfileInfo.TASK_DURATION_ORDERING.immutableSortedCopy(tasks);
-  int count=tasks.size();
-  long min=tasks.get(0).durationNanos;
-  long max=tasks.get(count - 1).durationNanos;
-  int midIndex=count / 2;
-  double median=tasks.size() % 2 == 0 ? (tasks.get(midIndex).durationNanos + tasks.get(midIndex - 1).durationNanos) / 2.0 : tasks.get(midIndex).durationNanos;
-  long sum=0L;
-  long self=0L;
-  double sumOfSquaredShiftedMillis=0L;
-  final long shift=min;
+  LongArrayList durations=new LongArrayList(tasks.size());
   for (  Task task : tasks) {
-    sum+=task.durationNanos;
-    self+=task.durationNanos - task.getInheritedDuration();
-    double taskDurationShiftMillis=toMilliSeconds(task.durationNanos - shift);
-    sumOfSquaredShiftedMillis+=taskDurationShiftMillis * taskDurationShiftMillis;
+    durations.add(task.durationNanos);
   }
-  double sumShiftedMillis=toMilliSeconds(sum - count * shift);
-  double standardDeviation=Math.sqrt((sumOfSquaredShiftedMillis - (sumShiftedMillis * sumShiftedMillis) / count) / count);
-  return new TasksStatistics(name,count,min,max,median,standardDeviation,sum,self);
+  return create(name,durations);
 }

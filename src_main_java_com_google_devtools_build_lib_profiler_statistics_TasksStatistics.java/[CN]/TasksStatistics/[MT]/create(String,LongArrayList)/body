@@ -1,0 +1,19 @@
+{
+  durations.sort();
+  int count=durations.size();
+  long min=durations.get(0);
+  long max=durations.get(count - 1);
+  int midIndex=count / 2;
+  double median=count % 2 == 0 ? (durations.get(midIndex) + durations.get(midIndex - 1)) / 2.0 : durations.get(midIndex);
+  long sum=0L;
+  double sumOfSquaredShiftedMillis=0L;
+  final long shift=min;
+  for (int index=0; index < count; index++) {
+    sum+=durations.get(index);
+    double taskDurationShiftMillis=toMilliSeconds(durations.get(index) - shift);
+    sumOfSquaredShiftedMillis+=taskDurationShiftMillis * taskDurationShiftMillis;
+  }
+  double sumShiftedMillis=toMilliSeconds(sum - count * shift);
+  double standardDeviation=Math.sqrt((sumOfSquaredShiftedMillis - (sumShiftedMillis * sumShiftedMillis) / count) / count);
+  return new TasksStatistics(name,count,min,max,median,standardDeviation,sum);
+}
