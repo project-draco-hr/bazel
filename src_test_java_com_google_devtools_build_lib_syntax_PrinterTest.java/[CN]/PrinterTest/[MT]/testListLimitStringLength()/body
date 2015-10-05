@@ -1,0 +1,21 @@
+{
+  int lengthDivisibleByTwo=Printer.SUGGESTED_CRITICAL_LIST_ELEMENTS_STRING_LENGTH;
+  if (lengthDivisibleByTwo % 2 == 1) {
+    ++lengthDivisibleByTwo;
+  }
+  String limit=Strings.repeat("x",lengthDivisibleByTwo);
+  String half=Strings.repeat("x",lengthDivisibleByTwo / 2);
+  List<String> list=Arrays.asList(limit + limit);
+  assertThat(printListWithLimit(list)).isEqualTo("[\"" + limit + "...\"]");
+  LinkedList<List<String>> nestedList=new LinkedList<>();
+  nestedList.add(list);
+  assertThat(printListWithLimit(nestedList)).isEqualTo("[[\"" + limit + "...\"]]");
+  assertThat(printListWithLimit(Arrays.asList(half,Arrays.asList(limit)))).isEqualTo("[\"" + half + "\", [\""+ half+ "...\"]]");
+  assertThat(printListWithLimit(Arrays.asList(limit + "x"))).isEqualTo("[\"" + limit + "...\"]");
+  assertThat(printListWithLimit(Arrays.asList(limit))).isEqualTo("[\"" + limit + "\"]");
+  assertThat(printListWithLimit(Arrays.asList(half,half))).isEqualTo("[\"" + half + "\", \""+ half+ "\"]");
+  assertThat(printListWithLimit(Arrays.asList(limit,limit))).isEqualTo("[\"" + limit + "\", \"...\"]");
+  String limitMinusOne=limit.substring(0,limit.length() - 1);
+  assertThat(printListWithLimit(Arrays.asList(limitMinusOne,limit))).isEqualTo("[\"" + limitMinusOne + "\", \"x...\"]");
+  assertThat(printListWithLimit(Arrays.asList(limit,limit,limit))).isEqualTo("[\"" + limit + "\", <2 more arguments>]");
+}

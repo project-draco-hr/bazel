@@ -1,0 +1,26 @@
+{
+  boolean printSeparator=false;
+  boolean skipArgs=false;
+  int items=Iterables.size(list);
+  int len=0;
+  int itemsToPrint=(items - maxItemsToPrint == 1) ? items : maxItemsToPrint;
+  appendable.enforceLimit();
+  for (  Object o : list) {
+    if (len == itemsToPrint || (appendable.hasHitLimit() && len < items - 1)) {
+      skipArgs=true;
+      break;
+    }
+    if (printSeparator) {
+      append(appendable,separator);
+    }
+    write(appendable,o,quotationMark);
+    printSeparator=true;
+    len++;
+  }
+  appendable.ignoreLimit();
+  if (skipArgs) {
+    append(appendable,separator);
+    append(appendable,String.format("<%d more arguments>",items - len));
+  }
+  return len;
+}
