@@ -53,7 +53,10 @@
       state.discoveredInputs=metadataFoundDuringActionExecution.keySet();
     }
  else {
-      Preconditions.checkState(!env.valuesMissing(),"%s %s %s",action,metadataFoundDuringActionExecution,state);
+      if (env.valuesMissing()) {
+        Set<Artifact> missingArtifacts=Maps.filterValues(metadataFoundDuringActionExecution,Predicates.isNull()).keySet();
+        throw new IllegalStateException("Missing artifacts: " + missingArtifacts + ", "+ state+ action);
+      }
       Set<FileArtifactValue> knownMetadata=ImmutableSet.copyOf(state.inputArtifactData.values());
       ImmutableSet.Builder<Artifact> discoveredInputBuilder=ImmutableSet.<Artifact>builder().addAll(state.discoveredInputs);
       for (      Map.Entry<Artifact,FileArtifactValue> entry : metadataFoundDuringActionExecution.entrySet()) {
