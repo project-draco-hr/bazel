@@ -1,0 +1,21 @@
+{
+  try (PrintStream out=new PrintStream(new BufferedOutputStream(htmlFile.getOutputStream()))){
+    PhaseHtml phaseHtml=new PhaseHtml(out,phaseSummaryStats,statistics,vfsStatsLimit);
+    Optional<SkylarkHtml> skylarkStats=Optional.absent();
+    Optional<Chart> chart=Optional.absent();
+    if (detailed) {
+      skylarkStats=Optional.of(new SkylarkHtml(out,new SkylarkStatistics(info),generateHistograms));
+    }
+    if (generateChart) {
+      ChartCreator chartCreator;
+      if (detailed) {
+        chartCreator=new DetailedChartCreator(info);
+      }
+ else {
+        chartCreator=new AggregatingChartCreator(info);
+      }
+      chart=Optional.of(chartCreator.create());
+    }
+    new HtmlCreator(out,info.comment,chart,skylarkStats,htmlPixelsPerSecond,phaseHtml).print();
+  }
+ }
