@@ -1,0 +1,14 @@
+{
+  NestedSetBuilder<Artifact> specsBuilder=NestedSetBuilder.naiveLinkOrder();
+  for (  Entry<Mode,String> attribute : DEPENDENCY_ATTRIBUTES.entries()) {
+    specsBuilder.addTransitive(collectProguardSpecsFromAttribute(attribute.getValue(),attribute.getKey()));
+  }
+  Collection<Artifact> localSpecs=collectLocalProguardSpecs();
+  if (!localSpecs.isEmpty()) {
+    FilesToRunProvider proguardWhitelister=ruleContext.getExecutablePrerequisite("$proguard_whitelister",Mode.HOST);
+    for (    Artifact specToValidate : localSpecs) {
+      specsBuilder.add(validateProguardSpec(proguardWhitelister,specToValidate));
+    }
+  }
+  return specsBuilder.build();
+}

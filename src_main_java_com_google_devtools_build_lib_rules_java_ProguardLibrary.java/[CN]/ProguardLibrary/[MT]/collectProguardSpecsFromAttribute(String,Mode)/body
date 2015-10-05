@@ -1,0 +1,10 @@
+{
+  if (!ruleContext.getRule().isAttrDefined(attribute,BuildType.LABEL_LIST)) {
+    return NestedSetBuilder.emptySet(Order.NAIVE_LINK_ORDER);
+  }
+  NestedSetBuilder<Artifact> dependencySpecsBuilder=NestedSetBuilder.naiveLinkOrder();
+  for (  ProguardSpecProvider provider : ruleContext.getPrerequisites(attribute,mode,ProguardSpecProvider.class)) {
+    dependencySpecsBuilder.addTransitive(provider.getTransitiveProguardSpecs());
+  }
+  return dependencySpecsBuilder.build();
+}
