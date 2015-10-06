@@ -7,7 +7,7 @@
     coverageFlags.addAll(CLANG_COVERAGE_FLAGS);
     gcnoFiles.add(intermediateArtifacts.gcnoFile(sourceFile));
   }
-  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder();
+  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder().add(CLANG);
   if (ObjcRuleClasses.CPP_SOURCES.matches(sourceFile.getExecPath())) {
     commandLine.add("-stdlib=libc++");
   }
@@ -28,5 +28,5 @@
       commandLine.add("-fmodules-cache-path=" + cachePath);
     }
   }
-  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("ObjcCompile").setExecutable(CLANG).setCommandLine(commandLine.build()).addInput(sourceFile).addInputs(additionalInputs.build()).addOutput(objFile).addOutputs(gcnoFiles.build()).addOutput(dotdFile).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addInputs(compilationArtifacts.getPrivateHdrs()).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(compilationArtifacts.getPchFile().asSet()).build(ruleContext));
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("ObjcCompile").setExecutable(XCRUN).setCommandLine(commandLine.build()).addInput(sourceFile).addInputs(additionalInputs.build()).addOutput(objFile).addOutputs(gcnoFiles.build()).addOutput(dotdFile).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addInputs(compilationArtifacts.getPrivateHdrs()).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(compilationArtifacts.getPchFile().asSet()).build(ruleContext));
 }

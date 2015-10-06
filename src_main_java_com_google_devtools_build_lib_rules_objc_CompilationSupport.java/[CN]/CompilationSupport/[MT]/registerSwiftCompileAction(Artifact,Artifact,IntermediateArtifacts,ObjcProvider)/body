@@ -7,7 +7,7 @@
     }
   }
   ImmutableSet<Artifact> otherSwiftSources=otherSwiftSourcesBuilder.build();
-  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder().add("-frontend").add("-emit-object").add("-target").add(IosSdkCommands.swiftTarget(objcConfiguration)).add("-sdk").add(IosSdkCommands.sdkDir(objcConfiguration)).add("-enable-objc-interop");
+  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder().add(SWIFT).add("-frontend").add("-emit-object").add("-target").add(IosSdkCommands.swiftTarget(objcConfiguration)).add("-sdk").add(IosSdkCommands.sdkDir(objcConfiguration)).add("-enable-objc-interop");
   if (objcConfiguration.generateDebugSymbols()) {
     commandLine.add("-g");
   }
@@ -22,5 +22,5 @@
     PathFragment moduleMapPath=intermediateArtifacts.moduleMap().getArtifact().getExecPath();
     commandLine.add("-I").add(moduleMapPath.getParentDirectory().toString());
   }
-  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("SwiftCompile").setExecutable(SWIFT).setCommandLine(commandLine.build()).addInput(sourceFile).addInputs(otherSwiftSources).addInputs(inputHeaders.build()).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addOutput(objFile).addOutput(intermediateArtifacts.swiftModuleFile(sourceFile)).build(ruleContext));
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("SwiftCompile").setExecutable(XCRUN).setCommandLine(commandLine.build()).addInput(sourceFile).addInputs(otherSwiftSources).addInputs(inputHeaders.build()).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addOutput(objFile).addOutput(intermediateArtifacts.swiftModuleFile(sourceFile)).build(ruleContext));
 }
