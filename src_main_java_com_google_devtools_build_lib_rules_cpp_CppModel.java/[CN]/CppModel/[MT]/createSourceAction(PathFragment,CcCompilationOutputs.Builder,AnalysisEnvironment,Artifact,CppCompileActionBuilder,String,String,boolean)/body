@@ -27,6 +27,9 @@
       env.registerAction(picAction);
       if (addObject) {
         result.addPicObjectFile(picAction.getOutputFile());
+        if (featureConfiguration.isEnabled(CppRuleClasses.THIN_LTO) && CppFileTypes.LTO_SOURCE.matches(sourceArtifact.getFilename())) {
+          result.addLTOBitcodeFile(picAction.getOutputFile());
+        }
       }
       if (picAction.getDwoFile() != null) {
         result.addPicDwoFile(picAction.getDwoFile());
@@ -51,6 +54,9 @@
       Artifact objectFile=compileAction.getOutputFile();
       if (addObject) {
         result.addObjectFile(objectFile);
+        if (featureConfiguration.isEnabled(CppRuleClasses.THIN_LTO) && CppFileTypes.LTO_SOURCE.matches(sourceArtifact.getFilename())) {
+          result.addLTOBitcodeFile(objectFile);
+        }
       }
       if (compileAction.getDwoFile() != null) {
         result.addDwoFile(compileAction.getDwoFile());

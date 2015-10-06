@@ -8,8 +8,8 @@
   final Iterable<Artifact> filteredNonLibraryArtifacts=filterLinkerInputArtifacts(LinkerInputs.toLibraryArtifacts(nonLibraries));
   final Iterable<LinkerInput> linkerInputs=IterablesChain.<LinkerInput>builder().add(ImmutableList.copyOf(filterLinkerInputs(nonLibraries))).add(ImmutableIterable.from(Link.mergeInputsCmdLine(uniqueLibraries,needWholeArchive,cppConfiguration.archiveType()))).build();
   final ImmutableSet<String> features=(ruleContext == null) ? ImmutableSet.<String>of() : ruleContext.getFeatures();
-  final LibraryToLink outputLibrary=LinkerInputs.newInputLibrary(output,filteredNonLibraryArtifacts);
-  final LibraryToLink interfaceOutputLibrary=(interfaceOutput == null) ? null : LinkerInputs.newInputLibrary(interfaceOutput,filteredNonLibraryArtifacts);
+  final LibraryToLink outputLibrary=LinkerInputs.newInputLibrary(output,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
+  final LibraryToLink interfaceOutputLibrary=(interfaceOutput == null) ? null : LinkerInputs.newInputLibrary(interfaceOutput,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
   final ImmutableMap<Artifact,Artifact> linkstampMap=mapLinkstampsToOutputs(linkstamps,ruleContext,output,linkArtifactFactory);
   PathFragment ltoOutputRootPrefix=null;
   if (isLTOIndexing && allLTOArtifacts == null) {
@@ -51,14 +51,26 @@
     dependencyInputsBuilder.addTransitive(compilationInputs.build());
   }
   Iterable<Artifact> expandedInputs=LinkerInputs.toLibraryArtifacts(Link.mergeInputsDependencies(uniqueLibraries,needWholeArchive,cppConfiguration.archiveType()));
+  Iterable<Artifact> expandedNonLibraryInputs=LinkerInputs.toLibraryArtifacts(nonLibraries);
   if (!isLTOIndexing && allLTOArtifacts != null) {
-    List<Artifact> renamed=new ArrayList<>();
+    Map<Artifact,Artifact> ltoMapping=new HashMap<>();
     for (    LTOBackendArtifacts a : allLTOArtifacts) {
-      renamed.add(a.getObjectFile());
+      ltoMapping.put(a.getBitcodeFile(),a.getObjectFile());
     }
-    expandedInputs=renamed;
+    List<Artifact> renamedInputs=new ArrayList<>();
+    for (    Artifact a : expandedInputs) {
+      Artifact renamed=ltoMapping.get(a);
+      renamedInputs.add(renamed == null ? a : renamed);
+    }
+    expandedInputs=renamedInputs;
+    List<Artifact> renamedNonLibraryInputs=new ArrayList<>();
+    for (    Artifact a : expandedNonLibraryInputs) {
+      Artifact renamed=ltoMapping.get(a);
+      renamedNonLibraryInputs.add(renamed == null ? a : renamed);
+    }
+    expandedNonLibraryInputs=renamedNonLibraryInputs;
   }
-  IterablesChain.Builder<Artifact> inputsBuilder=IterablesChain.<Artifact>builder().add(ImmutableList.copyOf(LinkerInputs.toLibraryArtifacts(nonLibraries))).add(dependencyInputsBuilder.build()).add(ImmutableIterable.from(expandedInputs));
+  IterablesChain.Builder<Artifact> inputsBuilder=IterablesChain.<Artifact>builder().add(ImmutableList.copyOf(expandedNonLibraryInputs)).add(dependencyInputsBuilder.build()).add(ImmutableIterable.from(expandedInputs));
   if (linkCommandLine.getParamFile() != null) {
     inputsBuilder.add(ImmutableList.of(linkCommandLine.getParamFile()));
     Action parameterFileWriteAction=new ParameterFileWriteAction(getOwner(),paramFile,linkCommandLine.paramCmdLine(),ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1);

@@ -1,7 +1,15 @@
 {
+  Set<Artifact> compiled=new LinkedHashSet<>();
+  for (  LibraryToLink lib : uniqueLibraries) {
+    Iterables.addAll(compiled,lib.getLTOBitcodeFiles());
+  }
   NestedSetBuilder<Artifact> bitcodeBuilder=NestedSetBuilder.stableOrder();
   for (  LibraryToLink lib : uniqueLibraries) {
-    bitcodeBuilder.addAll(lib.getObjectFiles());
+    for (    Artifact a : lib.getObjectFiles()) {
+      if (compiled.contains(a)) {
+        bitcodeBuilder.add(a);
+      }
+    }
   }
   for (  LinkerInput input : nonLibraries) {
     if (CppFileTypes.OBJECT_FILE.matches(input.getArtifact().getExecPath()) || CppFileTypes.PIC_OBJECT_FILE.matches(input.getArtifact().getExecPath())) {

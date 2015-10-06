@@ -1,13 +1,14 @@
 {
   CppLinkAction.Builder builder=new CppLinkAction.Builder(context,binary).setCrosstoolInputs(CppHelper.getToolchain(context).getLink()).addNonLibraryInputs(compilationPrerequisites);
   boolean usePic=CppHelper.usePic(context,!isLinkShared(context));
-  Iterable<Artifact> compiledObjectFiles=compilationOutputs.getObjectFiles(usePic);
+  Iterable<Artifact> objectFiles=compilationOutputs.getObjectFiles(usePic);
   if (fake) {
-    builder.addFakeNonLibraryInputs(compiledObjectFiles);
+    builder.addFakeNonLibraryInputs(objectFiles);
   }
  else {
-    builder.addNonLibraryInputs(compiledObjectFiles);
+    builder.addNonLibraryInputs(objectFiles);
   }
+  builder.addLTOBitcodeFiles(compilationOutputs.getLtoBitcodeFiles());
   builder.addNonLibraryInputs(common.getLinkerScripts());
   for (  Artifact library : precompiledFiles.getLibraries()) {
     if (SHARED_LIBRARY_FILETYPES.matches(library.getFilename())) {
