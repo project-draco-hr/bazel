@@ -1,0 +1,12 @@
+{
+  PathFragment rootRelativePath=resource.getRootRelativePath();
+  if (!ruleContext.attributes().has("resource_strip_prefix",Type.STRING) || !ruleContext.attributes().isAttributeValueExplicitlySpecified("resource_strip_prefix")) {
+    return semantics.getDefaultJavaResourcePath(rootRelativePath);
+  }
+  PathFragment prefix=new PathFragment(ruleContext.attributes().get("resource_strip_prefix",Type.STRING));
+  if (!rootRelativePath.startsWith(prefix)) {
+    ruleContext.attributeError("resource_strip_prefix",String.format("Resource file '%s' is not under the specified prefix to strip",rootRelativePath));
+    return rootRelativePath;
+  }
+  return rootRelativePath.relativeTo(prefix);
+}

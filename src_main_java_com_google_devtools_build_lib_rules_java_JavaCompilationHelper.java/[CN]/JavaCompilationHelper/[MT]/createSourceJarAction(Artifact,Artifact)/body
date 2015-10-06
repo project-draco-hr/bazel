@@ -4,5 +4,9 @@
   if (gensrcJar != null) {
     resourceJars.add(gensrcJar);
   }
-  createSourceJarAction(semantics,attributes.getSourceFiles(),resourceJars,outputJar);
+  Map<PathFragment,Artifact> resources=new LinkedHashMap<>();
+  for (  Artifact sourceFile : attributes.getSourceFiles()) {
+    resources.put(semantics.getDefaultJavaResourcePath(sourceFile.getRootRelativePath()),sourceFile);
+  }
+  createSourceJarAction(resources,resourceJars,outputJar);
 }
