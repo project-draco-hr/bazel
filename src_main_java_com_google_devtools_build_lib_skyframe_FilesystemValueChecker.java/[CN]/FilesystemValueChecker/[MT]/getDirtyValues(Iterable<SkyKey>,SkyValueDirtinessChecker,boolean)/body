@@ -14,17 +14,18 @@
 ;
   try (AutoProfiler prof=AutoProfiler.create(elapsedTimeReceiver)){
     for (    final SkyKey key : values) {
+      numKeysScanned.incrementAndGet();
+      if (!checker.applies(key)) {
+        continue;
+      }
       final SkyValue value=valuesSupplier.get().get(key);
       executor.execute(wrapper.wrap(new Runnable(){
         @Override public void run(){
           if (value != null || checkMissingValues) {
-            numKeysScanned.incrementAndGet();
-            DirtyResult result=checker.maybeCheck(key,value,tsgm);
-            if (result != null) {
-              numKeysChecked.incrementAndGet();
-              if (result.isDirty()) {
-                batchResult.add(key,value,result.getNewValue());
-              }
+            numKeysChecked.incrementAndGet();
+            DirtyResult result=checker.check(key,value,tsgm);
+            if (result.isDirty()) {
+              batchResult.add(key,value,result.getNewValue());
             }
           }
         }
