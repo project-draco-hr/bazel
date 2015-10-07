@@ -1,7 +1,8 @@
 {
   PathFragment objcFileRootRelativePath=ruleContext.getUniqueDirectory("_j2objc");
-  PathFragment objcFilePath=ruleContext.getConfiguration().getBinFragment().getRelative(objcFileRootRelativePath);
+  PathFragment objcFileRootExecPath=ruleContext.getConfiguration().getBinFragment().getRelative(objcFileRootRelativePath);
   Iterable<Artifact> objcSrcs=getOutputObjcFiles(ruleContext,javaInputSourceFiles,objcFileRootRelativePath,".m");
   Iterable<Artifact> objcHdrs=getOutputObjcFiles(ruleContext,javaInputSourceFiles,objcFileRootRelativePath,".h");
-  return new J2ObjcSource(ruleContext.getRule().getLabel(),objcSrcs,objcHdrs,objcFilePath,SourceType.JAVA);
+  Iterable<PathFragment> headerSearchPaths=J2ObjcLibrary.j2objcSourceHeaderSearchPaths(ruleContext,objcFileRootExecPath,javaInputSourceFiles);
+  return new J2ObjcSource(ruleContext.getRule().getLabel(),objcSrcs,objcHdrs,objcFileRootExecPath,SourceType.JAVA,headerSearchPaths);
 }

@@ -4,20 +4,18 @@
     return null;
   }
   J2ObjcSrcsProvider j2ObjcSrcsProvider=new J2ObjcSrcsProvider.Builder().addTransitiveJ2ObjcSrcs(ruleContext).addEntryClasses(ruleContext.attributes().get("entry_classes",Type.STRING_LIST)).build();
-  ObjcProvider.Builder objcProviderBuilder=new ObjcProvider.Builder().addTransitiveAndPropagate(ruleContext.getPrerequisite("$jre_emul_lib",Mode.TARGET,ObjcProvider.class)).addTransitiveAndPropagate(ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProvider.class));
+  ObjcProvider.Builder objcProviderBuilder=new ObjcProvider.Builder().addJ2ObjcTransitiveAndPropagate(ruleContext.getPrerequisite("$jre_emul_lib",Mode.TARGET,ObjcProvider.class)).addJ2ObjcTransitiveAndPropagate(ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProvider.class));
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addDependencies(xcodeProviderBuilder,new Attribute("$jre_emul_lib",Mode.TARGET)).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET));
   if (j2ObjcSrcsProvider.hasProtos()) {
-    objcProviderBuilder.addTransitiveAndPropagate(ruleContext.getPrerequisite("$protobuf_lib",Mode.TARGET,ObjcProvider.class));
+    objcProviderBuilder.addJ2ObjcTransitiveAndPropagate(ruleContext.getPrerequisite("$protobuf_lib",Mode.TARGET,ObjcProvider.class));
     xcodeSupport.addDependencies(xcodeProviderBuilder,new Attribute("$protobuf_lib",Mode.TARGET));
   }
   for (  J2ObjcSource j2objcSource : j2ObjcSrcsProvider.getSrcs()) {
-    PathFragment genDirHeaderSearchPath=new PathFragment(j2objcSource.getObjcFilePath(),ruleContext.getConfiguration().getGenfilesFragment());
-    objcProviderBuilder.addAll(ObjcProvider.HEADER,j2objcSource.getObjcHdrs());
-    objcProviderBuilder.add(ObjcProvider.INCLUDE,j2objcSource.getObjcFilePath());
-    objcProviderBuilder.add(ObjcProvider.INCLUDE,genDirHeaderSearchPath);
+    objcProviderBuilder.addJ2ObjcAll(ObjcProvider.HEADER,j2objcSource.getObjcHdrs());
+    objcProviderBuilder.addJ2ObjcAll(ObjcProvider.INCLUDE,j2objcSource.getHeaderSearchPaths());
     xcodeProviderBuilder.addHeaders(j2objcSource.getObjcHdrs());
-    xcodeProviderBuilder.addUserHeaderSearchPaths(ImmutableList.of(j2objcSource.getObjcFilePath(),genDirHeaderSearchPath));
+    xcodeProviderBuilder.addUserHeaderSearchPaths(j2objcSource.getHeaderSearchPaths());
   }
   if (ObjcRuleClasses.objcConfiguration(ruleContext).moduleMapsEnabled()) {
     configureModuleMap(ruleContext,objcProviderBuilder,j2ObjcSrcsProvider);
