@@ -1,0 +1,18 @@
+{
+  for (  Map.Entry<?,?> entry : labelDict.entrySet()) {
+    Object key=entry.getKey();
+    if (!(key instanceof Label)) {
+      throw new EvalException(loc,Printer.format("invalid key %r in 'label_dict'",key));
+    }
+    Object val=entry.getValue();
+    if (!(val instanceof Iterable)) {
+      throw new EvalException(loc,Printer.format("invalid value %r in 'label_dict'",val));
+    }
+    for (    Object file : (Iterable)val) {
+      if (!(file instanceof Artifact)) {
+        throw new EvalException(loc,Printer.format("invalid value %r in 'label_dict'",val));
+      }
+    }
+  }
+  return (Map<Label,Iterable<Artifact>>)labelDict;
+}
