@@ -10,9 +10,15 @@
       Path profileFile=runtime.getWorkingDirectory().getRelative(name);
       try {
         ProfileInfo info=ProfileInfo.loadProfileVerbosely(profileFile,getInfoListener(env));
-        ProfileInfo.aggregateProfile(info,getInfoListener(env));
+        if (opts.dumpMode == null || !opts.dumpMode.contains("unsorted")) {
+          ProfileInfo.aggregateProfile(info,getInfoListener(env));
+        }
         if (opts.taskTree != null) {
           printTaskTree(out,name,info,opts.taskTree,opts.taskTreeThreshold);
+          continue;
+        }
+        if (opts.dumpMode != null) {
+          dumpProfile(info,out,opts.dumpMode);
           continue;
         }
         PhaseSummaryStatistics phaseSummaryStatistics=new PhaseSummaryStatistics(info);
@@ -20,10 +26,7 @@
         for (        ProfilePhase phase : ProfilePhase.values()) {
           phaseStatistics.put(phase,new PhaseStatistics(phase,info,runtime.getWorkspaceName()));
         }
-        if (opts.dumpMode != null) {
-          dumpProfile(env,info,out,opts.dumpMode);
-        }
- else         if (opts.html) {
+        if (opts.html) {
           Path htmlFile=profileFile.getParentDirectory().getChild(profileFile.getBaseName() + ".html");
           env.getReporter().handle(Event.info("Creating HTML output in " + htmlFile));
           HtmlCreator.create(info,htmlFile,phaseSummaryStatistics,phaseStatistics,opts.htmlDetails,opts.htmlPixelsPerSecond,opts.vfsStatsLimit,opts.chart,opts.htmlHistograms);
