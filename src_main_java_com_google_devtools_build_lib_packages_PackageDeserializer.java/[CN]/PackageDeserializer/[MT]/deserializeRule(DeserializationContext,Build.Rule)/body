@@ -2,14 +2,28 @@
   Location ruleLocation=EmptyLocation.INSTANCE;
   RuleClass ruleClass=packageDeserializationEnvironment.getRuleClass(rulePb,ruleLocation);
   Map<String,ParsedAttributeValue> attributeValues=new HashMap<>();
+  AttributesToDeserialize attrToDeserialize=packageDeserializationEnvironment.attributesToDeserialize();
+  Hasher hasher=Hashing.md5().newHasher();
   for (  Build.Attribute attrPb : rulePb.getAttributeList()) {
     Type<?> type=ruleClass.getAttributeByName(attrPb.getName()).getType();
     attributeValues.put(attrPb.getName(),deserializeAttribute(type,attrPb));
+    if (attrToDeserialize.addSyntheticAttributeHash) {
+      hasher.putBytes(attrPb.toByteArray());
+    }
   }
+  AttributeContainerWithoutLocation attributeContainer=new AttributeContainerWithoutLocation(ruleClass,hasher.hash());
   Label ruleLabel=deserializeLabel(rulePb.getName());
   try {
-    Rule rule=createRuleWithParsedAttributeValues(ruleClass,ruleLabel,context.packageBuilder,ruleLocation,attributeValues,NullEventHandler.INSTANCE,new AttributeContainerWithoutLocation(ruleClass));
+    Rule rule=createRuleWithParsedAttributeValues(ruleClass,ruleLabel,context.packageBuilder,ruleLocation,attributeValues,NullEventHandler.INSTANCE,attributeContainer);
     context.packageBuilder.addRule(rule);
+    if (attrToDeserialize != DESERIALIZE_ALL_ATTRS) {
+      for (      String attrName : attributeValues.keySet()) {
+        Attribute attribute=ruleClass.getAttributeByName(attrName);
+        if (!(attrToDeserialize.shouldKeepAttributeWithName.apply(attrName) || BuildType.isLabelType(attribute.getType()))) {
+          attributeContainer.clearIfNotLabel(attrName);
+        }
+      }
+    }
     Preconditions.checkState(!rule.containsErrors());
   }
  catch (  NameConflictException|LabelSyntaxException e) {
