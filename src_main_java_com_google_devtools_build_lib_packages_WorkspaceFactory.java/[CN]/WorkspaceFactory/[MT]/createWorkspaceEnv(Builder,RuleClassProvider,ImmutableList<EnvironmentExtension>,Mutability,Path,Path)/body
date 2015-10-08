@@ -7,12 +7,18 @@
       workspaceEnv.update(ruleClass,ruleFunction);
     }
     if (installDir != null) {
-      workspaceEnv.update("__embedded_dir__",installDir);
+      workspaceEnv.update("__embedded_dir__",installDir.getPathString());
+    }
+    if (workspaceDir != null) {
+      workspaceEnv.update("__workspace_dir__",workspaceDir.getPathString());
     }
     File jreDirectory=new File(System.getProperty("java.home"));
     workspaceEnv.update("DEFAULT_SERVER_JAVABASE",jreDirectory.getParentFile().toString());
     workspaceEnv.update("bind",newBindFunction(ruleFactory,builder));
     workspaceEnv.update("workspace",newWorkspaceNameFunction(builder));
+    for (    EnvironmentExtension extension : environmentExtensions) {
+      extension.updateWorkspace(workspaceEnv);
+    }
     return workspaceEnv;
   }
  catch (  EvalException e) {

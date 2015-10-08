@@ -3,8 +3,11 @@
   this.handler=handler;
   ConfiguredRuleClassProvider.Builder ruleClassBuilder=new ConfiguredRuleClassProvider.Builder();
   List<BlazeModule> blazeModules=BlazeRuntime.createModules(BazelMain.BAZEL_MODULES);
+  ImmutableList.Builder<EnvironmentExtension> environmentExtensions=ImmutableList.builder();
   for (  BlazeModule blazeModule : blazeModules) {
     blazeModule.initializeRuleClasses(ruleClassBuilder);
+    environmentExtensions.add(blazeModule.getPackageEnvironmentExtension());
   }
   this.ruleClassProvider=ruleClassBuilder.build();
+  this.environmentExtensions=environmentExtensions.build();
 }

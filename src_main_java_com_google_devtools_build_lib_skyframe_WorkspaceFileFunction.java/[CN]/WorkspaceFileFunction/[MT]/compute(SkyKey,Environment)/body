@@ -7,7 +7,7 @@
   Path repoWorkspace=workspaceRoot.getRoot().getRelative(workspaceRoot.getRelativePath());
   Builder builder=com.google.devtools.build.lib.packages.Package.newExternalPackageBuilder(repoWorkspace,packageFactory.getRuleClassProvider().getRunfilesPrefix());
   try (Mutability mutability=Mutability.create("workspace %s",repoWorkspace)){
-    WorkspaceFactory parser=new WorkspaceFactory(builder,packageFactory.getRuleClassProvider(),mutability,installDir.getPathString());
+    WorkspaceFactory parser=new WorkspaceFactory(builder,packageFactory.getRuleClassProvider(),packageFactory.getEnvironmentExtensions(),mutability,directories.getEmbeddedBinariesRoot(),directories.getWorkspace());
     parser.parse(ParserInputSource.create(ruleClassProvider.getDefaultWorkspaceFile(),new PathFragment("DEFAULT.WORKSPACE")));
     if (!workspaceFileValue.exists()) {
       return new PackageValue(builder.build());
