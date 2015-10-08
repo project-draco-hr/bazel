@@ -1,9 +1,8 @@
 {
   try {
-    return labelCache.get(labelName);
+    return LABEL_INTERNER.intern(Label.parseAbsolute(labelName));
   }
- catch (  ExecutionException e) {
-    Throwables.propagateIfInstanceOf(e.getCause(),PackageDeserializationException.class);
-    throw new IllegalStateException("Failed to decode label: " + labelName,e);
+ catch (  LabelSyntaxException e) {
+    throw new PackageDeserializationException("Invalid label '" + labelName + "':"+ e.getMessage(),e);
   }
 }
