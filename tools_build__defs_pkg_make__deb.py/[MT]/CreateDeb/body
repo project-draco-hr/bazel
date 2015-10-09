@@ -1,0 +1,30 @@
+def CreateDeb(output, data, preinst=None, postinst=None, prerm=None, postrm=None, **kwargs):
+    'Create a full debian package.'
+    extrafiles = {}
+    if preinst:
+        extrafiles['preinst'] = preinst
+    if postinst:
+        extrafiles['postinst'] = postinst
+    if prerm:
+        extrafiles['prerm'] = prerm
+    if postrm:
+        extrafiles['postrm'] = postrm
+    control = CreateDebControl(extrafiles=extrafiles, **kwargs)
+    with open(output, 'w') as f:
+        f.write('!<arch>\n')
+        AddArFileEntry(f, 'debian-binary', '2.0\n')
+        AddArFileEntry(f, 'control.tar.gz', control)
+        ext = os.path.basename(data).split('.')[(-2):]
+        if (len(ext) < 2):
+            ext = 'tar'
+        elif (ext[1] == 'tgz'):
+            ext = 'tar.gz'
+        elif (ext[1] == 'tar.bzip2'):
+            ext = 'tar.bz2'
+        else:
+            ext = '.'.join(ext)
+            if (ext not in ['tar.bz2', 'tar.gz', 'tar.xz', 'tar.lzma']):
+                ext = 'tar'
+        with open(data, 'r') as datafile:
+            data = datafile.read()
+        AddArFileEntry(f, ('data.' + ext), data)

@@ -1,0 +1,13 @@
+def MakeGflags():
+    for field in DEBIAN_FIELDS:
+        fieldname = field[0].replace('-', '_').lower()
+        msg = ('The value for the %s content header entry.' % field[0])
+        if (len(field) > 3):
+            if (type(field[3]) is list):
+                gflags.DEFINE_multistring(fieldname, field[3], msg)
+            else:
+                gflags.DEFINE_string(fieldname, field[3], msg)
+        else:
+            gflags.DEFINE_string(fieldname, None, msg)
+        if field[1]:
+            gflags.MarkFlagAsRequired(fieldname)

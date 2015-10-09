@@ -1,0 +1,20 @@
+'A simple cross-platform helper to create a debian package.'
+import os.path
+from StringIO import StringIO
+import sys
+import tarfile
+import textwrap
+from third_party.py import gflags
+DEBIAN_FIELDS = [('Package', True, False), ('Version', True, False), ('Section', False, False, 'contrib/devel'), ('Priority', False, False, 'optional'), ('Architecture', True, False, 'all'), ('Depends', False, True, []), ('Recommends', False, True, []), ('Suggests', False, True, []), ('Enhances', False, True, []), ('Pre-Depends', False, True, []), ('Installed-Size', False, False), ('Maintainer', True, False), ('Description', True, True), ('Homepage', False, False), ('Built-Using', False, False, 'Bazel')]
+gflags.DEFINE_string('output', None, 'The output file, mandatory')
+gflags.MarkFlagAsRequired('output')
+gflags.DEFINE_string('data', None, 'Path to the data tarball, mandatory')
+gflags.MarkFlagAsRequired('data')
+gflags.DEFINE_string('preinst', None, 'The preinst script (prefix with @ to provide a path).')
+gflags.DEFINE_string('postinst', None, 'The postinst script (prefix with @ to provide a path).')
+gflags.DEFINE_string('prerm', None, 'The prerm script (prefix with @ to provide a path).')
+gflags.DEFINE_string('postrm', None, 'The postrm script (prefix with @ to provide a path).')
+if (__name__ == '__main__'):
+    MakeGflags()
+    FLAGS = gflags.FLAGS
+    main(FLAGS(sys.argv))

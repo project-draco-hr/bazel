@@ -1,0 +1,27 @@
+def main(unused_argv):
+    default_mode = None
+    if FLAGS.mode:
+        default_mode = int(FLAGS.mode, 8)
+    mode_map = {}
+    if FLAGS.modes:
+        for filemode in FLAGS.modes:
+            (f, mode) = filemode.split('=', 1)
+            if (f[0] == '/'):
+                f = f[1:]
+            mode_map[f] = int(mode, 8)
+    with TarFile(FLAGS.output, FLAGS.directory, FLAGS.compression) as output:
+        for f in FLAGS.file:
+            (inf, tof) = f.split('=', 1)
+            mode = default_mode
+            if ((tof[0] == '/') and (tof[1:] in mode_map)):
+                mode = mode_map[tof[1:]]
+            elif (tof in mode_map):
+                mode = mode_map[tof]
+            output.add_file(inf, tof, mode)
+        for tar in FLAGS.tar:
+            output.add_tar(tar)
+        for deb in FLAGS.deb:
+            output.add_deb(deb)
+        for link in FLAGS.link:
+            l = link.split(':', 1)
+            output.add_link(l[0], l[1])

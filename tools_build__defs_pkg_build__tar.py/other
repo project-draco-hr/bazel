@@ -1,0 +1,22 @@
+'This tool build tar files from a list of inputs.'
+import os
+import os.path
+import sys
+import tarfile
+import tempfile
+from tools.build_defs.pkg import archive
+from third_party.py import gflags
+gflags.DEFINE_string('output', None, 'The output file, mandatory')
+gflags.MarkFlagAsRequired('output')
+gflags.DEFINE_multistring('file', [], 'A file to add to the layer')
+gflags.DEFINE_string('mode', None, 'Force the mode on the added files (in octal).')
+gflags.DEFINE_multistring('tar', [], 'A tar file to add to the layer')
+gflags.DEFINE_multistring('deb', [], 'A debian package to add to the layer')
+gflags.DEFINE_multistring('link', [], 'Add a symlink a inside the layer ponting to b if a:b is specified')
+gflags.RegisterValidator('link', (lambda l: all(((value.find(':') > 0) for value in l))), message='--link value should contains a : separator')
+gflags.DEFINE_string('directory', None, 'Directory in which to store the file inside the layer')
+gflags.DEFINE_string('compression', None, 'Compression (`gz` or `bz2`), default is none.')
+gflags.DEFINE_multistring('modes', None, 'Specific mode to apply to specific file (from the file argument), e.g., path/to/file=0455.')
+FLAGS = gflags.FLAGS
+if (__name__ == '__main__'):
+    main(FLAGS(sys.argv))
