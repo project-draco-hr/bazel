@@ -40,9 +40,11 @@ Package externalPkg=externalPackage.getPackage();
 if (externalPkg.containsErrors()) {
 throw new PackageFunctionException(new BuildFileContainsErrorsException(Package.EXTERNAL_PACKAGE_IDENTIFIER),Transience.PERSISTENT);
 }
+boolean isDefaultsPackage=packageNameFragment.equals(DEFAULTS_PACKAGE_NAME) && packageId.getRepository().isDefault();
 PathFragment buildFileFragment=packageNameFragment.getChild("BUILD");
 RootedPath buildFileRootedPath=RootedPath.toRootedPath(packageLookupValue.getRoot(),buildFileFragment);
-FileValue buildFileValue;
+FileValue buildFileValue=null;
+if (!isDefaultsPackage) {
 try {
 buildFileValue=(FileValue)env.getValueOrThrow(FileValue.key(buildFileRootedPath),IOException.class,FileSymlinkException.class,InconsistentFilesystemException.class);
 }
@@ -53,9 +55,10 @@ if (buildFileValue == null) {
 return null;
 }
 Preconditions.checkState(buildFileValue.exists(),"Package lookup succeeded but BUILD file doesn't exist");
+}
 Path buildFilePath=buildFileRootedPath.asPath();
 String replacementContents=null;
-if (packageName.equals(DEFAULTS_PACKAGE_NAME) && packageId.getRepository().isDefault()) {
+if (isDefaultsPackage) {
 replacementContents=PrecomputedValue.DEFAULTS_PACKAGE_CONTENTS.get(env);
 if (replacementContents == null) {
 return null;
@@ -78,15 +81,20 @@ return null;
 }
 List<Statement> preludeStatements=astLookupValue.getAST() == null ? ImmutableList.<Statement>of() : astLookupValue.getAST().getStatements();
 ParserInputSource inputSource;
+if (replacementContents != null) {
+inputSource=ParserInputSource.create(replacementContents,buildFileFragment);
+}
+ else {
 try {
 if (showLoadingProgress.get() && packageFunctionCache.getIfPresent(packageId) == null) {
-env.getListener().handle(Event.progress("Loading package: " + packageName));
+  env.getListener().handle(Event.progress("Loading package: " + packageName));
 }
 inputSource=ParserInputSource.create(buildFilePath,buildFileValue.getSize());
 }
  catch (IOException e) {
 env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
 throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.TRANSIENT);
+}
 }
 Package.LegacyBuilder legacyPkgBuilder=loadPackage(externalPkg,inputSource,replacementContents,packageId,buildFilePath,buildFileFragment,defaultVisibility,preludeStatements,env);
 if (legacyPkgBuilder == null) {
