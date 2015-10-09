@@ -1,0 +1,15 @@
+{
+  for (  Task task : taskList) {
+    collectVfsEntries(workSpaceName,Arrays.asList(task.subtasks));
+    if (!task.type.name().startsWith("VFS_")) {
+      continue;
+    }
+    String path=pathMapping(workSpaceName,task.getDescription());
+    Stat stat=statistics.get(task.type,path);
+    if (stat == null) {
+      stat=new Stat(path);
+      statistics.put(task.type,path,stat);
+    }
+    stat.add(task.durationNanos);
+  }
+}

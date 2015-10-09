@@ -1,0 +1,18 @@
+{
+  Preconditions.checkArgument(phase == other.phase,"Should not combine statistics from different phases");
+  if (other.wasExecuted) {
+    if (vfsStatistics != null && other.vfsStatistics != null) {
+      vfsStatistics.add(other.vfsStatistics);
+    }
+    wasExecuted=true;
+    phaseDurationNanos+=other.phaseDurationNanos;
+    totalDurationNanos+=other.totalDurationNanos;
+    for (    ProfilerTask type : other) {
+      long otherCount=other.getCount(type);
+      long otherDuration=other.getTotalDurationNanos(type);
+      add(taskCounts,type,otherCount);
+      add(taskDurations,type,otherDuration);
+    }
+    count++;
+  }
+}

@@ -1,6 +1,8 @@
 {
-  if (wasExecuted(taskType)) {
-    return (double)aggregateTaskStatistics.get(taskType).totalTime / totalDurationNanos;
+  Long duration=taskDurations.get(taskType);
+  if (duration == null || duration == 0) {
+    return 0;
   }
-  return 0;
+  Preconditions.checkState(totalDurationNanos != 0,"Profiler tasks of type %s have non-zero duration %s in phase %s but the phase itself has" + " zero duration. Most likely the profile file is broken.",taskType,duration,phase);
+  return (double)duration / totalDurationNanos;
 }

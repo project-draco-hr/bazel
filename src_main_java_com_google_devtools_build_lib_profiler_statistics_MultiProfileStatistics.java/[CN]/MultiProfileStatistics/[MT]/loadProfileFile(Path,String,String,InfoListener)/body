@@ -1,0 +1,30 @@
+{
+  ProfileInfo info;
+  Path profileFile=workingDirectory.getRelative(file);
+  try {
+    info=ProfileInfo.loadProfileVerbosely(profileFile,listener);
+    ProfileInfo.aggregateProfile(info,listener);
+  }
+ catch (  IOException e) {
+    listener.warn("Ignoring file " + file + " - cannot load: "+ e.getMessage());
+    return;
+  }
+  summaryStatistics.addProfileInfo(info);
+  EnumMap<ProfilePhase,PhaseStatistics> fileStatistics=new EnumMap<>(ProfilePhase.class);
+  filePhaseStatistics.put(profileFile,fileStatistics);
+  for (  ProfilePhase phase : ProfilePhase.values()) {
+    PhaseStatistics filePhaseStat=new PhaseStatistics(phase,info,workSpaceName,generateVfsStatistics);
+    fileStatistics.put(phase,filePhaseStat);
+    PhaseStatistics summaryPhaseStats;
+    if (summaryPhaseStatistics.containsKey(phase)) {
+      summaryPhaseStats=summaryPhaseStatistics.get(phase);
+    }
+ else {
+      summaryPhaseStats=new PhaseStatistics(phase,generateVfsStatistics);
+      summaryPhaseStatistics.put(phase,summaryPhaseStats);
+    }
+    summaryPhaseStats.add(filePhaseStat);
+  }
+  skylarkStatistics.addProfileInfo(info);
+  missingActionsCount+=info.getMissingActionsCount();
+}

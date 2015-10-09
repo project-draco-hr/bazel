@@ -1,0 +1,27 @@
+{
+  Task phaseTask=info.getPhaseTask(phase);
+  if (phaseTask != null) {
+    if (vfsStatistics != null) {
+      vfsStatistics.addProfileInfo(workSpaceName,info);
+    }
+    wasExecuted=true;
+    long infoPhaseDuration=info.getPhaseDuration(phaseTask);
+    phaseDurationNanos+=infoPhaseDuration;
+    List<Task> taskList=info.getTasksForPhase(phaseTask);
+    long duration=infoPhaseDuration;
+    for (    Task task : taskList) {
+      if (task.threadId != phaseTask.threadId) {
+        duration+=task.durationNanos;
+      }
+    }
+    totalDurationNanos+=duration;
+    for (    ProfilerTask type : ProfilerTask.values()) {
+      AggregateAttr attr=info.getStatsForType(type,taskList);
+      long totalTime=Math.max(0,attr.totalTime);
+      long count=Math.max(0,attr.count);
+      add(taskCounts,type,count);
+      add(taskDurations,type,totalTime);
+    }
+    count++;
+  }
+}

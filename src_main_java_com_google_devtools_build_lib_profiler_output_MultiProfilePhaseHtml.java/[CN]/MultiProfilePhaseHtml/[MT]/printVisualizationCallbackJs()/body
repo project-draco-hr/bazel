@@ -1,0 +1,38 @@
+{
+  lnPrint("var multiData;");
+  lnPrint("var statsDiv;");
+  lnPrint("var profileTable;");
+  for (  ProfilePhase phase : statistics.getSummaryStatistics()) {
+    lnPrintf("statsDiv = document.getElementById('profile_file_stats_%s');",phase.nick);
+    lnPrint("multiData = new google.visualization.DataTable();");
+    lnPrint("multiData.addColumn('string', 'File');");
+    lnPrint("multiData.addColumn('number', 'total');");
+    PhaseStatistics summaryPhaseStatistics=statistics.getSummaryPhaseStatistics(phase);
+    for (    ProfilerTask taskType : summaryPhaseStatistics) {
+      lnPrintf("multiData.addColumn('number', '%s %%');",taskType.name());
+    }
+    lnPrint("multiData.addRows([");
+    down();
+    for (    Path file : statistics) {
+      EnumMap<ProfilePhase,PhaseStatistics> phases=statistics.getPhaseStatistics(file);
+      PhaseStatistics phaseStatistics=phases.get(phase);
+      lnPrintf("['%s', ",file);
+      long phaseDuration=phaseStatistics.getPhaseDurationNanos();
+      printf("{v:%d, f:'%s'}, ",phaseDuration,TimeUtilities.prettyTime(phaseDuration));
+      for (      ProfilerTask taskType : summaryPhaseStatistics) {
+        if (phaseStatistics.wasExecuted(taskType)) {
+          double relative=phaseStatistics.getTotalRelativeDuration(taskType);
+          printf("{v:%.4f, f:'%.3f %%'}, ",relative,relative * 100);
+        }
+ else {
+          print("0, ");
+        }
+      }
+      print("],");
+    }
+    lnPrint("]);");
+    up();
+    lnPrint("profileTable = new google.visualization.Table(statsDiv);");
+    lnPrint("profileTable.draw(multiData, {showRowNumber: true, width: '100%%'});");
+  }
+}
