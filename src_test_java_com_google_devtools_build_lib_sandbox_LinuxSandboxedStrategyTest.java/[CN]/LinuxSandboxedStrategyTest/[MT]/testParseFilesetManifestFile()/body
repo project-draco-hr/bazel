@@ -1,0 +1,10 @@
+{
+  Path targetDir=workspaceDir.getRelative("fileset");
+  targetDir.createDirectory();
+  Path testFile=workspaceDir.getRelative("testfile");
+  FileSystemUtils.createEmptyFile(testFile);
+  Path manifestFile=workspaceDir.getRelative("MANIFEST");
+  FileSystemUtils.writeContent(manifestFile,Charset.defaultCharset(),String.format("workspace/x/testfile %s\n0\n",testFile.getPathString()));
+  Map mounts=LinuxSandboxedStrategy.parseManifestFile(targetDir,manifestFile.getPathFile(),true,"workspace");
+  assertThat(userFriendlyMap(mounts)).isEqualTo(userFriendlyMap(ImmutableMap.of(fileSystem.getPath("/fileset/x/testfile"),testFile)));
+}
