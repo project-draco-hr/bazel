@@ -1,9 +1,8 @@
 {
-  PackageIdentifier arg=(PackageIdentifier)skyKey.argument();
-  PathFragment file=arg.getPackageFragment();
+  PathFragment file=pkgId.getPackageFragment();
   ASTFileLookupValue astLookupValue=null;
   try {
-    SkyKey astLookupKey=ASTFileLookupValue.key(arg);
+    SkyKey astLookupKey=ASTFileLookupValue.key(pkgId);
     astLookupValue=(ASTFileLookupValue)env.getValueOrThrow(astLookupKey,ErrorReadingSkylarkExtensionException.class,InconsistentFilesystemException.class);
   }
  catch (  ErrorReadingSkylarkExtensionException e) {
@@ -22,7 +21,7 @@ catch (  InconsistentFilesystemException e) {
   if (ast.containsErrors()) {
     throw new SkylarkImportLookupFunctionException(SkylarkImportFailedException.skylarkErrors(file));
   }
-  Label label=pathFragmentToLabel(arg.getRepository(),file,env);
+  Label label=pathFragmentToLabel(pkgId.getRepository(),file,env);
   if (label == null) {
     Preconditions.checkState(env.valuesMissing(),"null label with no missing %s",file);
     return null;
@@ -33,7 +32,7 @@ catch (  InconsistentFilesystemException e) {
   Map<SkyKey,PathFragment> skylarkImports=Maps.newHashMapWithExpectedSize(astImports.size());
   for (  Map.Entry<Location,PathFragment> entry : ast.getImports().entrySet()) {
     try {
-      skylarkImports.put(PackageFunction.getImportKey(entry,ruleClassProvider.getPreludePath(),file,arg),entry.getValue());
+      skylarkImports.put(PackageFunction.getImportKey(entry,ruleClassProvider.getPreludePath(),file,pkgId),entry.getValue());
     }
  catch (    ASTLookupInputException e) {
       throw new SkylarkImportLookupFunctionException(e,Transience.PERSISTENT);
@@ -41,13 +40,13 @@ catch (  InconsistentFilesystemException e) {
   }
   Map<SkyKey,SkyValue> skylarkImportMap;
   boolean valuesMissing=false;
-  if (visitedKeysForCycle == null) {
+  if (visited == null) {
     skylarkImportMap=env.getValues(skylarkImports.keySet());
     valuesMissing=env.valuesMissing();
   }
  else {
-    if (!visitedKeysForCycle.add(skyKey)) {
-      ImmutableList<SkyKey> cycle=CycleUtils.splitIntoPathAndChain(Predicates.equalTo(skyKey),visitedKeysForCycle).second;
+    if (!visited.add(pkgId)) {
+      ImmutableList<PackageIdentifier> cycle=CycleUtils.splitIntoPathAndChain(Predicates.equalTo(pkgId),visited).second;
       if (env.getValue(SkylarkImportUniqueCycleValue.key(cycle)) == null) {
         return null;
       }
@@ -55,7 +54,7 @@ catch (  InconsistentFilesystemException e) {
     }
     skylarkImportMap=Maps.newHashMapWithExpectedSize(astImports.size());
     for (    SkyKey skylarkImport : skylarkImports.keySet()) {
-      SkyValue skyValue=this.computeWithInlineCalls(skylarkImport,env,visitedKeysForCycle);
+      SkyValue skyValue=this.computeWithInlineCallsInternal((PackageIdentifier)skylarkImport.argument(),env,visited);
       if (skyValue == null) {
         Preconditions.checkState(env.valuesMissing(),"no skylark import value for %s",skylarkImport);
         valuesMissing=true;
@@ -64,7 +63,7 @@ catch (  InconsistentFilesystemException e) {
         skylarkImportMap.put(skylarkImport,skyValue);
       }
     }
-    visitedKeysForCycle.remove(skyKey);
+    visited.remove(pkgId);
   }
   if (valuesMissing) {
     return null;

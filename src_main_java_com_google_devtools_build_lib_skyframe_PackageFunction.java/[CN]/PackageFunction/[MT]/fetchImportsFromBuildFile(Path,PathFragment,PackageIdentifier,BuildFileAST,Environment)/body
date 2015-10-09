@@ -10,9 +10,8 @@
       SkyKey importKey=getImportKeyAndMaybeThrowException(entry,preludePath,buildFileFragment,packageId);
       skylarkImports.put(importKey,entry.getValue());
       ValueOrException4<SkylarkImportFailedException,InconsistentFilesystemException,ASTLookupInputException,BuildFileNotFoundException> lookupResult;
-      Set<SkyKey> visitedKeysForCycle=new LinkedHashSet<>();
       try {
-        SkyValue value=skylarkImportLookupFunctionForInlining.computeWithInlineCalls(importKey,env,visitedKeysForCycle);
+        SkyValue value=skylarkImportLookupFunctionForInlining.computeWithInlineCalls(importKey,env);
         if (value == null) {
           Preconditions.checkState(env.valuesMissing(),importKey);
           lookupResult=ValueOrExceptionUtils.ofNullValue();
