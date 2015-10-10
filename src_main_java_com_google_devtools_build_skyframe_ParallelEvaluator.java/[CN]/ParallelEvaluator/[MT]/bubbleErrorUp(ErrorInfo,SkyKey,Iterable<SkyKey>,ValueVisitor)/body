@@ -54,15 +54,16 @@ externalInterrupt=externalInterrupt || Thread.currentThread().isInterrupted();
 try {
 factory.compute(parent,env);
 }
- catch (SkyFunctionException builderException) {
+ catch (InterruptedException interruptedException) {
+}
+catch (SkyFunctionException builderException) {
+Thread.interrupted();
 ReifiedSkyFunctionException reifiedBuilderException=new ReifiedSkyFunctionException(builderException,parent);
 if (reifiedBuilderException.getRootCauseSkyKey().equals(parent)) {
 error=ErrorInfo.fromException(reifiedBuilderException);
 bubbleErrorInfo.put(errorKey,ValueWithMetadata.error(ErrorInfo.fromChildErrors(errorKey,ImmutableSet.of(error)),env.buildEvents(true)));
 continue;
 }
-}
-catch (InterruptedException interruptedException) {
 }
  finally {
 Thread.interrupted();
