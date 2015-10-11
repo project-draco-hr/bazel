@@ -4,13 +4,14 @@
   if (!events.isEmpty()) {
     eventBuilder.add(new TaggedEvents(getTagFromKey(),events));
   }
-  for (  SkyKey dep : graph.get(skyKey).getTemporaryDirectDeps()) {
-    ValueWithMetadata value=getValueMaybeFromError(dep,bubbleErrorInfo);
-    if (value != null) {
-      eventBuilder.addTransitive(value.getTransitiveEvents());
+  if (storedEventFilter.storeEvents()) {
+    Set<SkyKey> depKeys=graph.get(skyKey).getTemporaryDirectDeps();
+    Map<SkyKey,ValueWithMetadata> deps=getValuesMaybeFromError(depKeys,bubbleErrorInfo);
+    if (!missingChildren && depKeys.size() != deps.size()) {
+      throw new IllegalStateException("Missing keys for " + skyKey + ": "+ Sets.difference(depKeys,deps.keySet())+ ", "+ graph.get(skyKey));
     }
- else {
-      Preconditions.checkState(missingChildren,"",dep,skyKey);
+    for (    ValueWithMetadata value : deps.values()) {
+      eventBuilder.addTransitive(value.getTransitiveEvents());
     }
   }
   return eventBuilder.build();
