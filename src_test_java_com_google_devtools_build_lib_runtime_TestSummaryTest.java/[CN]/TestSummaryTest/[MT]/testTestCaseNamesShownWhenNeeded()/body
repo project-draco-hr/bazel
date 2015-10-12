@@ -1,0 +1,14 @@
+{
+  TestCase detailPassed=newDetail("strawberry",TestCase.Status.PASSED,1000L);
+  TestCase detailFailed=newDetail("orange",TestCase.Status.FAILED,1500L);
+  TestSummary summaryPassed=createTestSummaryWithDetails(BlazeTestStatus.PASSED,Arrays.asList(detailPassed));
+  TestSummary summaryFailed=createTestSummaryWithDetails(BlazeTestStatus.FAILED,Arrays.asList(detailPassed,detailFailed));
+  assertEquals(BlazeTestStatus.FAILED,summaryFailed.getStatus());
+  AnsiTerminalPrinter printerPassed=Mockito.mock(AnsiTerminalPrinter.class);
+  TestSummaryPrinter.print(summaryPassed,printerPassed,true,true);
+  verify(printerPassed).print(contains("//package:name"));
+  AnsiTerminalPrinter printerFailed=Mockito.mock(AnsiTerminalPrinter.class);
+  TestSummaryPrinter.print(summaryFailed,printerFailed,true,true);
+  verify(printerFailed).print(contains("//package:name"));
+  verify(printerFailed).print(find("FAILED.*orange *\\(1\\.5"));
+}

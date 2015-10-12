@@ -1,0 +1,10 @@
+{
+  InvocationPolicy.Builder invocationPolicyBuilder=InvocationPolicy.newBuilder();
+  invocationPolicyBuilder.addFlagPoliciesBuilder().setFlagName("test_multiple_string").getSetValueBuilder().addFlagValue("policy value 1").addFlagValue("policy value 2");
+  InvocationPolicyEnforcer enforcer=createOptionsPolicyEnforcer(invocationPolicyBuilder);
+  TestOptions testOptions=getTestOptions();
+  assertThat(testOptions.testMultipleString).isEmpty();
+  enforcer.enforce(parser,"build");
+  testOptions=getTestOptions();
+  assertThat(testOptions.testMultipleString).containsExactly("policy value 1","policy value 2").inOrder();
+}

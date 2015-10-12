@@ -1,0 +1,12 @@
+{
+  InvocationPolicy.Builder invocationPolicyBuilder=InvocationPolicy.newBuilder();
+  invocationPolicyBuilder.addFlagPoliciesBuilder().setFlagName("i_do_not_exist").getSetValueBuilder().addFlagValue("policy value 1");
+  invocationPolicyBuilder.addFlagPoliciesBuilder().setFlagName("test_string").getSetValueBuilder().addFlagValue("policy value 2");
+  InvocationPolicyEnforcer enforcer=createOptionsPolicyEnforcer(invocationPolicyBuilder);
+  parser.parse("--test_string=user value");
+  TestOptions testOptions=getTestOptions();
+  assertEquals("user value",testOptions.testString);
+  enforcer.enforce(parser,"test");
+  testOptions=getTestOptions();
+  assertEquals("policy value 2",testOptions.testString);
+}

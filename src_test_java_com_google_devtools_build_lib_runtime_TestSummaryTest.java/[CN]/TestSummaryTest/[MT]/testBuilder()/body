@@ -1,0 +1,24 @@
+{
+  TestSummary summary=basicBuilder.build();
+  TestSummary sameSummary=basicBuilder.build();
+  assertSame(summary,sameSummary);
+  basicBuilder.addTestTimes(ImmutableList.of(40L));
+  TestSummary summaryCopy=basicBuilder.build();
+  assertEquals(summary.getTarget(),summaryCopy.getTarget());
+  assertEquals(summary.getStatus(),summaryCopy.getStatus());
+  assertEquals(summary.numCached(),summaryCopy.numCached());
+  assertNotSame(summary,summaryCopy);
+  assertEquals(0,summary.totalRuns());
+  assertEquals(1,summaryCopy.totalRuns());
+  basicBuilder.addTestTimes(ImmutableList.of(60L));
+  TestSummary fiftyCached=basicBuilder.setNumCached(50).build();
+  assertEquals(summary.getStatus(),fiftyCached.getStatus());
+  assertEquals(50,fiftyCached.numCached());
+  assertEquals(2,fiftyCached.totalRuns());
+  TestSummary sixtyCached=basicBuilder.setNumCached(60).build();
+  assertEquals(60,sixtyCached.numCached());
+  assertEquals(50,fiftyCached.numCached());
+  TestSummary failedCacheTemplate=TestSummary.newBuilderFromExisting(fiftyCached).setStatus(BlazeTestStatus.FAILED).build();
+  assertEquals(50,failedCacheTemplate.numCached());
+  assertEquals(BlazeTestStatus.FAILED,failedCacheTemplate.getStatus());
+}

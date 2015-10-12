@@ -1,0 +1,10 @@
+{
+  InvocationPolicy policyProto=invocationPolicyBuilder.build();
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  policyProto.writeTo(out);
+  String policyBase64=BaseEncoding.base64().encode(out.toByteArray());
+  OptionsParser startupOptionsParser=OptionsParser.newOptionsParser(BlazeServerStartupOptions.class);
+  String policyOption="--invocation_policy=" + policyBase64;
+  startupOptionsParser.parse(policyOption);
+  return InvocationPolicyEnforcer.create(startupOptionsParser);
+}

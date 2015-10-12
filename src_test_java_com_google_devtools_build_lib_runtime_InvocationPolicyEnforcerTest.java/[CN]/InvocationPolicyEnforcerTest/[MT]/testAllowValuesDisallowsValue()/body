@@ -1,0 +1,14 @@
+{
+  InvocationPolicy.Builder invocationPolicyBuilder=InvocationPolicy.newBuilder();
+  invocationPolicyBuilder.addFlagPoliciesBuilder().setFlagName("test_string").getAllowValuesBuilder().addAllowedValues(STRING_FLAG_DEFAULT).addAllowedValues("bar");
+  InvocationPolicyEnforcer enforcer=createOptionsPolicyEnforcer(invocationPolicyBuilder);
+  parser.parse("--test_string=foo");
+  TestOptions testOptions=getTestOptions();
+  assertEquals("foo",testOptions.testString);
+  try {
+    enforcer.enforce(parser,"build");
+    fail();
+  }
+ catch (  OptionsParsingException e) {
+  }
+}

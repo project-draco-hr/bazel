@@ -1,0 +1,11 @@
+{
+  InvocationPolicy.Builder invocationPolicyBuilder=InvocationPolicy.newBuilder();
+  invocationPolicyBuilder.addFlagPoliciesBuilder().setFlagName("test_string").getDisallowValuesBuilder().addDisallowedValues("foo").addDisallowedValues("bar");
+  InvocationPolicyEnforcer enforcer=createOptionsPolicyEnforcer(invocationPolicyBuilder);
+  parser.parse("--test_string=baz");
+  TestOptions testOptions=getTestOptions();
+  assertEquals("baz",testOptions.testString);
+  enforcer.enforce(parser,"build");
+  testOptions=getTestOptions();
+  assertEquals("baz",testOptions.testString);
+}

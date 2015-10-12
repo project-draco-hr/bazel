@@ -1,0 +1,9 @@
+{
+  TestCase rootCase=TestCase.newBuilder().setName("tests").setRunDurationMillis(5000L).addChild(newDetail("apple",TestCase.Status.FAILED,1000L)).addChild(newDetail("banana",TestCase.Status.PASSED,1000L)).addChild(newDetail("cherry",TestCase.Status.ERROR,1000L)).build();
+  TestSummary summary=getTemplateBuilder().collectFailedTests(rootCase).setStatus(BlazeTestStatus.FAILED).build();
+  AnsiTerminalPrinter printer=Mockito.mock(AnsiTerminalPrinter.class);
+  TestSummaryPrinter.print(summary,printer,true,true);
+  verify(printer).print(contains("//package:name"));
+  verify(printer).print(find("FAILED.*apple"));
+  verify(printer).print(find("ERROR.*cherry"));
+}

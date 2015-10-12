@@ -1,0 +1,18 @@
+{
+  TestCase[] details={newDetail("apple",TestCase.Status.FAILED,1000L),newDetail("banana",TestCase.Status.FAILED,1000L),newDetail("cranberry",TestCase.Status.FAILED,1000L)};
+  int[][] permutations={{0,1,2},{0,2,1},{1,0,2},{1,2,0},{2,0,1},{2,1,0}};
+  for (  int[] permutation : permutations) {
+    List<TestCase> permutatedDetails=new ArrayList<>();
+    for (    int element : permutation) {
+      permutatedDetails.add(details[element]);
+    }
+    TestSummary summary=createTestSummaryWithDetails(BlazeTestStatus.FAILED,permutatedDetails);
+    AnsiTerminalPrinter printer=Mockito.mock(AnsiTerminalPrinter.class);
+    TestSummaryPrinter.print(summary,printer,true,true);
+    InOrder order=Mockito.inOrder(printer);
+    order.verify(printer).print(contains("//package:name"));
+    order.verify(printer).print(find("FAILED.*apple"));
+    order.verify(printer).print(find("FAILED.*banana"));
+    order.verify(printer).print(find("FAILED.*cranberry"));
+  }
+}

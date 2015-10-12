@@ -1,0 +1,14 @@
+{
+  InvocationPolicy.Builder invocationPolicyBuilder=InvocationPolicy.newBuilder();
+  invocationPolicyBuilder.addFlagPoliciesBuilder().setFlagName("test_multiple_string").getAllowValuesBuilder().addAllowedValues("foo").addAllowedValues("bar");
+  InvocationPolicyEnforcer enforcer=createOptionsPolicyEnforcer(invocationPolicyBuilder);
+  parser.parse("--test_multiple_string=baz","--test_multiple_string=bar");
+  TestOptions testOptions=getTestOptions();
+  assertThat(testOptions.testMultipleString).containsExactly("baz","bar").inOrder();
+  try {
+    enforcer.enforce(parser,"build");
+    fail();
+  }
+ catch (  OptionsParsingException e) {
+  }
+}
