@@ -1,0 +1,20 @@
+{
+  TopLevelArtifactContext context=request.getTopLevelArtifactContext();
+  Collection<ConfiguredTarget> targetsToPrint=filterTargetsToPrint(configuredTargets);
+  Collection<AspectValue> aspectsToPrint=filterAspectsToPrint(aspects);
+  NestedSetBuilder<Artifact> artifactsBuilder=NestedSetBuilder.stableOrder();
+  for (  ConfiguredTarget target : targetsToPrint) {
+    artifactsBuilder.addTransitive(TopLevelArtifactHelper.getAllArtifactsToBuild(target,context).getImportantArtifacts());
+  }
+  for (  AspectValue aspect : aspectsToPrint) {
+    artifactsBuilder.addTransitive(TopLevelArtifactHelper.getAllArtifactsToBuild(aspect,context).getImportantArtifacts());
+  }
+  OutErr outErr=request.getOutErr();
+  outErr.printErrLn("Build artifacts:");
+  NestedSet<Artifact> artifacts=artifactsBuilder.build();
+  for (  Artifact artifact : artifacts) {
+    if (!artifact.isSourceArtifact()) {
+      outErr.printErrLn(">>>" + artifact.getPath());
+    }
+  }
+}

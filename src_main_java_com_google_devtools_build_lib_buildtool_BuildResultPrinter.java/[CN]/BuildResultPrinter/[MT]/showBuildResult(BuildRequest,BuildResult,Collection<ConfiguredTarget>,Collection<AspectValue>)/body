@@ -1,48 +1,34 @@
 {
+  Collection<ConfiguredTarget> targetsToPrint=filterTargetsToPrint(configuredTargets);
+  Collection<AspectValue> aspectsToPrint=filterAspectsToPrint(aspects);
   Collection<ConfiguredTarget> succeeded=new ArrayList<>();
   Collection<ConfiguredTarget> failed=new ArrayList<>();
-  for (  ConfiguredTarget target : configuredTargets) {
-    if (target instanceof InputFileConfiguredTarget) {
-      continue;
-    }
-    if (target.getTarget() instanceof Rule) {
-      Rule rule=(Rule)target.getTarget();
-      if (rule.getRuleClass().contains("$")) {
-        continue;
-      }
-    }
-    if (target instanceof OutputFileConfiguredTarget) {
-      TransitiveInfoCollection generatingRule=env.getView().getGeneratingRule((OutputFileConfiguredTarget)target);
-      if (CollectionUtils.containsAll(generatingRule.getProvider(FileProvider.class).getFilesToBuild(),target.getProvider(FileProvider.class).getFilesToBuild()) && configuredTargets.contains(generatingRule)) {
-        continue;
-      }
-    }
+  for (  ConfiguredTarget target : targetsToPrint) {
     Collection<ConfiguredTarget> successfulTargets=result.getSuccessfulTargets();
     (successfulTargets.contains(target) ? succeeded : failed).add(target);
   }
-  if (succeeded.size() + failed.size() + aspects.size() > request.getBuildOptions().maxResultTargets) {
+  if (succeeded.size() + failed.size() + aspectsToPrint.size() > request.getBuildOptions().maxResultTargets) {
     return;
   }
   OutErr outErr=request.getOutErr();
-  ArtifactFormatter formatter=request.getBuildOptions().detailedResult ? new DetailedArtifactFormatter() : new BriefArtifactFormatter();
   TopLevelArtifactContext context=request.getTopLevelArtifactContext();
   for (  ConfiguredTarget target : succeeded) {
     Label label=target.getLabel();
     boolean headerFlag=true;
     for (    Artifact artifact : TopLevelArtifactHelper.getAllArtifactsToBuild(target,context).getImportantArtifacts()) {
-      if (formatter.shouldPrint(artifact)) {
+      if (shouldPrint(artifact)) {
         if (headerFlag) {
           outErr.printErr("Target " + label + " up-to-date:\n");
           headerFlag=false;
         }
-        outErr.printErrLn(formatter.format(artifact));
+        outErr.printErrLn(formatArtifactForShowResults(artifact,request));
       }
     }
     if (headerFlag) {
       outErr.printErr("Target " + label + " up-to-date (nothing to build)\n");
     }
   }
-  for (  AspectValue aspect : aspects) {
+  for (  AspectValue aspect : aspectsToPrint) {
     Label label=aspect.getLabel();
     String aspectName=aspect.getAspect().getName();
     boolean headerFlag=true;
@@ -52,8 +38,8 @@
         outErr.printErr("Aspect " + aspectName + " of "+ label+ " up-to-date:\n");
         headerFlag=false;
       }
-      if (formatter.shouldPrint(importantArtifact)) {
-        outErr.printErrLn(formatter.format(importantArtifact));
+      if (shouldPrint(importantArtifact)) {
+        outErr.printErrLn(formatArtifactForShowResults(importantArtifact,request));
       }
     }
     if (headerFlag) {
@@ -66,7 +52,7 @@
     if (topLevelProvider != null) {
       for (      Artifact temp : topLevelProvider.getOutputGroup(OutputGroupProvider.TEMP_FILES)) {
         if (temp.getPath().exists()) {
-          outErr.printErrLn("  See temp at " + OutputDirectoryLinksUtils.getPrettyPath(temp.getPath(),runtime.getWorkspaceName(),getWorkspace(),request.getSymlinkPrefix()));
+          outErr.printErrLn("  See temp at " + OutputDirectoryLinksUtils.getPrettyPath(temp.getPath(),runtime.getWorkspaceName(),runtime.getWorkspace(),request.getSymlinkPrefix()));
         }
       }
     }

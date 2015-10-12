@@ -67,8 +67,15 @@
     }
     try (AutoProfiler p=AutoProfiler.profiled("Show results",ProfilerTask.INFO)){
       determineSuccessfulTargets(buildResult,configuredTargets,builtTargets,timer);
-      showBuildResult(request,buildResult,configuredTargets,analysisResult.getAspects());
+      BuildResultPrinter buildResultPrinter=new BuildResultPrinter(env);
+      buildResultPrinter.showBuildResult(request,buildResult,configuredTargets,analysisResult.getAspects());
       Preconditions.checkNotNull(buildResult.getSuccessfulTargets());
+    }
+     try (AutoProfiler p=AutoProfiler.profiled("Show artifacts",ProfilerTask.INFO)){
+      if (request.getBuildOptions().showArtifacts) {
+        BuildResultPrinter buildResultPrinter=new BuildResultPrinter(env);
+        buildResultPrinter.showArtifacts(request,configuredTargets,analysisResult.getAspects());
+      }
     }
      if (explanationHandler != null) {
       uninstallExplanationHandler(explanationHandler);
