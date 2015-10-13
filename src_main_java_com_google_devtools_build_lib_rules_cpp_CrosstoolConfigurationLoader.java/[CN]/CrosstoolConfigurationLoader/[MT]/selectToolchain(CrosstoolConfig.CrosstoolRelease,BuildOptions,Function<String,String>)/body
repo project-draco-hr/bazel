@@ -38,6 +38,13 @@ selectedIdentifier=selector.getToolchainIdentifier();
 break;
 }
 }
+if (selectedIdentifier == null) {
+StringBuilder cpuBuilder=new StringBuilder();
+for (CrosstoolConfig.DefaultCpuToolchain selector : release.getDefaultToolchainList()) {
+cpuBuilder.append("  ").append(selector.getCpu()).append(",\n");
+}
+throw new InvalidConfigurationException("No toolchain found for cpu '" + desiredCpu + "'. Valid cpus are: [\n"+ cpuBuilder+ "]");
+}
 checkToolChain(selectedIdentifier,desiredCpu);
 for (CrosstoolConfig.CToolchain toolchain : release.getToolchainList()) {
 if (toolchain.getToolchainIdentifier().equals(selectedIdentifier)) {
