@@ -79,9 +79,6 @@
       }
       targetBuildConfigMap.put(name,value);
     }
-    if (!Equaling.of(ProductType.STATIC_LIBRARY,productType(targetControl))) {
-      targetBuildConfigMap.put("LIBRARY_SEARCH_PATHS",librarySearchPaths(targetControl.getImportedLibraryList()));
-    }
     String targetName=targetControl.getName();
     String targetNameInLowerCase=targetName.toLowerCase();
     if (usedTargetNames.contains(targetNameInLowerCase)) {
@@ -124,11 +121,17 @@
     for (    DependencyControl dependency : targetControl.getDependencyList()) {
       targetInfo.addDependencyInfo(dependency,targetInfoByLabel);
     }
-    if (!Equaling.of(ProductType.STATIC_LIBRARY,productType(targetControl))) {
+    if (!Equaling.of(ProductType.STATIC_LIBRARY,productType(targetControl)) && !targetControl.getImportedLibraryList().isEmpty()) {
+      PBXShellScriptBuildPhase scriptBuildPhase=new PBXShellScriptBuildPhase();
+      scriptBuildPhase.setShellScript("for ((i=0; i < ${SCRIPT_INPUT_FILE_COUNT}; i++)) do\n" + "  INPUT_FILE=\"SCRIPT_INPUT_FILE_${i}\"\n" + "  OUTPUT_FILE=\"SCRIPT_OUTPUT_FILE_${i}\"\n"+ "  cp -v -f \"${!INPUT_FILE}\" \"${!OUTPUT_FILE}\"\n"+ "done");
       for (      String importedLibrary : targetControl.getImportedLibraryList()) {
-        FileReference fileReference=FileReference.of(importedLibrary,SourceTree.GROUP).withExplicitFileType(FILE_TYPE_ARCHIVE_LIBRARY);
+        String uniqueImportedLibrary=uniqueImportedLibraryName(importedLibrary);
+        scriptBuildPhase.getInputPaths().add("$(WORKSPACE_ROOT)/" + importedLibrary);
+        scriptBuildPhase.getOutputPaths().add("$(BUILT_PRODUCTS_DIR)/" + uniqueImportedLibrary);
+        FileReference fileReference=FileReference.of(uniqueImportedLibrary,SourceTree.BUILT_PRODUCTS_DIR).withExplicitFileType(FILE_TYPE_ARCHIVE_LIBRARY);
         targetInfo.frameworksPhase.getFiles().add(pbxBuildFiles.getStandalone(fileReference));
       }
+      targetInfo.nativeTarget.getBuildPhases().add(scriptBuildPhase);
     }
   }
   return project;
