@@ -1,0 +1,42 @@
+{
+  lnOpen("table");
+  lnOpen("tr");
+  element("td","colspan","4",String.format("%s (%s):",title,TimeUtilities.prettyTime(path.cumulativeDuration)));
+  close();
+  lnOpen("tr");
+  boolean pathIsComponent=path.isComponent();
+  element("th","Id");
+  element("th","Time");
+  element("th","Share");
+  if (!pathIsComponent) {
+    element("th","Critical");
+  }
+  element("th","Description");
+  close();
+  long totalPathTime=path.cumulativeDuration;
+  for (  CriticalPathEntry pathEntry : criticalPathStats.getMiddlemanFilteredPath(path)) {
+    String desc=pathEntry.task.getDescription().replace(':',' ');
+    lnOpen("tr");
+    element("td",pathEntry.task.id);
+    element("td","style","text-align: right",TimeUtilities.prettyTime(pathEntry.duration).replace(" ","&nbsp;"));
+    element("td",prettyPercentage((double)pathEntry.duration / totalPathTime));
+    if (!pathIsComponent) {
+      element("td",prettyPercentage((double)pathEntry.getCriticalTime() / totalPathTime));
+    }
+    element("td",desc);
+    close();
+  }
+  MiddleManStatistics middleMan=MiddleManStatistics.create(path);
+  if (middleMan.count > 0) {
+    lnOpen("tr");
+    element("td");
+    element("td",TimeUtilities.prettyTime(middleMan.duration));
+    element("td",prettyPercentage((double)middleMan.duration / totalPathTime));
+    if (!pathIsComponent) {
+      element("td",prettyPercentage((double)middleMan.criticalTime / totalPathTime));
+    }
+    element("td",String.format("[%d middleman actions]",middleMan.count));
+    close();
+  }
+  lnClose();
+}

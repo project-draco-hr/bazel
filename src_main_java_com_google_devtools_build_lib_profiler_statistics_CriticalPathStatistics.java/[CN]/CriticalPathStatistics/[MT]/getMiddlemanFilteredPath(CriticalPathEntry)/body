@@ -1,0 +1,25 @@
+{
+  return new Iterable<CriticalPathEntry>(){
+    @Override public Iterator<CriticalPathEntry> iterator(){
+      return new Iterator<CriticalPathEntry>(){
+        private CriticalPathEntry nextEntry=path;
+        @Override public boolean hasNext(){
+          return nextEntry != null;
+        }
+        @Override public CriticalPathEntry next(){
+          CriticalPathEntry current=nextEntry;
+          do {
+            nextEntry=nextEntry.next;
+          }
+ while (nextEntry != null && (nextEntry.task.isFake() || isMiddleMan(nextEntry.task)));
+          return current;
+        }
+        @Override public void remove(){
+          throw new UnsupportedOperationException();
+        }
+      }
+;
+    }
+  }
+;
+}

@@ -1,0 +1,37 @@
+{
+  lnOpen("tr");
+  element("td","colspan","4",totalPath.task.type);
+  close();
+  lnOpen("tr");
+  element("td","colspan","3","Worker thread scheduling delays");
+  element("td",TimeUtilities.prettyTime(criticalPathStats.getWorkerWaitTime()));
+  close();
+  lnOpen("tr");
+  element("td","colspan","3","Main thread scheduling delays");
+  element("td",TimeUtilities.prettyTime(criticalPathStats.getMainThreadWaitTime()));
+  close();
+  lnOpen("tr");
+  element("td","colspan","4","Critical path time:");
+  close();
+  long totalTime=totalPath.cumulativeDuration;
+  lnOpen("tr");
+  element("td","Actual time");
+  element("td",TimeUtilities.prettyTime(totalTime));
+  element("td",String.format("(%s of execution time)",prettyPercentage((double)totalTime / executionTime)));
+  close();
+  long optimalTime=optimalPath.cumulativeDuration;
+  element("td","colspan","2","Time excluding scheduling delays");
+  element("td",TimeUtilities.prettyTime(optimalTime));
+  element("td",String.format("(%s of execution time)",prettyPercentage((double)optimalTime / executionTime)));
+  close();
+  lnElement("tr");
+  lnOpen("tr");
+  element("td","colspan","4","Time related to:");
+  close();
+  for (  Pair<String,Double> relativePathDuration : criticalPathStats) {
+    lnOpen("tr");
+    element("td","colspan","3",relativePathDuration.first);
+    element("td",prettyPercentage(relativePathDuration.second));
+    close();
+  }
+}

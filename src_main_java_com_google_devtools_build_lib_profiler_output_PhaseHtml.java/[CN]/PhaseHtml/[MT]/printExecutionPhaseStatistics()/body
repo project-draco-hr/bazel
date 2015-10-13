@@ -1,0 +1,34 @@
+{
+  PhaseStatistics execPhase=phaseStatistics.get(ProfilePhase.EXECUTE);
+  if (execPhase == null || !execPhase.wasExecuted()) {
+    return;
+  }
+  printPhaseHead(execPhase);
+  for (  PhaseStatistics phaseStat : Arrays.asList(phaseStatistics.get(ProfilePhase.PREPARE),execPhase,phaseStatistics.get(ProfilePhase.FINISH))) {
+    if (phaseStat.wasExecuted()) {
+      printTwoColumnStatistic(String.format("Total %s time",phaseStat.getProfilePhase().nick),phaseStat.getPhaseDurationNanos());
+    }
+  }
+  long graphTime=execPhase.getTotalDurationNanos(ProfilerTask.ACTION_GRAPH);
+  long execTime=execPhase.getPhaseDurationNanos() - graphTime;
+  printTwoColumnStatistic("Action dependency map creation",graphTime);
+  printTwoColumnStatistic("Actual execution time",execTime);
+  CriticalPathHtml criticalPaths=null;
+  if (criticalPathStatistics.isPresent()) {
+    criticalPaths=new CriticalPathHtml(out,criticalPathStatistics.get(),execTime);
+    criticalPaths.printTimingBreakdown();
+  }
+  printTimingDistribution(execPhase);
+  lnClose();
+  if (criticalPathStatistics.isPresent()) {
+    criticalPaths.printCriticalPaths();
+  }
+  if (missingActionsCount.isPresent() && missingActionsCount.get() > 0) {
+    lnOpen("p");
+    lnPrint(missingActionsCount.get());
+    print(" action(s) are present in the" + " action graph but missing instrumentation data. Most likely the profile file" + " has been created during a failed or aborted build.");
+    lnClose();
+  }
+  printVfsStatistics(execPhase.getVfsStatistics());
+  lnClose();
+}
