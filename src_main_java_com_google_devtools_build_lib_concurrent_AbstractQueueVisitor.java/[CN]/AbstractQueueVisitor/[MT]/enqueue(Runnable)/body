@@ -2,6 +2,8 @@
   if (concurrent) {
     AtomicBoolean ranTask=new AtomicBoolean(false);
     try {
+      long tasks=remainingTasks.incrementAndGet();
+      Preconditions.checkState(tasks > 0,"Incrementing remaining tasks counter resulted in impossible non-positive number %s",tasks);
       pool.execute(wrapRunnable(runnable,ranTask));
     }
  catch (    Throwable e) {
