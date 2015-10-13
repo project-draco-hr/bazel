@@ -17,9 +17,6 @@
   if (!fileValue.isDirectory()) {
     return getEmptyReturn();
   }
-  if (fileValue.isSymlink()) {
-    return getEmptyReturn();
-  }
   PackageIdentifier packageId=PackageIdentifier.create(recursivePkgKey.getRepository(),rootRelativePath);
   PackageLookupValue pkgLookupValue;
   try {
@@ -71,7 +68,7 @@ catch (  FileSymlinkException e) {
   }
   List<SkyKey> childDeps=Lists.newArrayList();
   for (  Dirent dirent : dirValue.getDirents()) {
-    if (dirent.getType() != Type.DIRECTORY) {
+    if (dirent.getType() != Type.DIRECTORY && dirent.getType() != Type.SYMLINK) {
       continue;
     }
     String basename=dirent.getName();
