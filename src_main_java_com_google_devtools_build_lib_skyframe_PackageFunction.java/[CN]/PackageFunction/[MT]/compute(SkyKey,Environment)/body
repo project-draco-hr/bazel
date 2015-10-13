@@ -1,7 +1,6 @@
 {
   PackageIdentifier packageId=(PackageIdentifier)key.argument();
   PathFragment packageNameFragment=packageId.getPackageFragment();
-  String packageName=packageNameFragment.getPathString();
   SkyKey packageLookupKey=PackageLookupValue.key(packageId);
   PackageLookupValue packageLookupValue;
   try {
@@ -80,23 +79,7 @@ if (astLookupValue == null) {
 return null;
 }
 List<Statement> preludeStatements=astLookupValue.getAST() == null ? ImmutableList.<Statement>of() : astLookupValue.getAST().getStatements();
-ParserInputSource inputSource;
-if (replacementContents != null) {
-inputSource=ParserInputSource.create(replacementContents,buildFileFragment);
-}
- else {
-try {
-if (showLoadingProgress.get() && packageFunctionCache.getIfPresent(packageId) == null) {
-  env.getListener().handle(Event.progress("Loading package: " + packageName));
-}
-inputSource=ParserInputSource.create(buildFilePath,buildFileValue.getSize());
-}
- catch (IOException e) {
-env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
-throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.TRANSIENT);
-}
-}
-Package.LegacyBuilder legacyPkgBuilder=loadPackage(externalPkg,inputSource,replacementContents,packageId,buildFilePath,buildFileFragment,defaultVisibility,preludeStatements,env);
+Package.LegacyBuilder legacyPkgBuilder=loadPackage(externalPkg,replacementContents,packageId,buildFilePath,buildFileValue,buildFileFragment,defaultVisibility,preludeStatements,env);
 if (legacyPkgBuilder == null) {
 return null;
 }

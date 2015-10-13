@@ -1,5 +1,4 @@
 {
-  ParserInputSource replacementSource=replacementContents == null ? null : ParserInputSource.create(replacementContents,buildFilePath.asFragment());
   Package.LegacyBuilder pkgBuilder=packageFunctionCache.getIfPresent(packageId);
   if (pkgBuilder == null) {
     profiler.startTask(ProfilerTask.CREATE_PACKAGE,packageId.toString());
@@ -7,12 +6,30 @@
       Globber globber=packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
       Preprocessor.Result preprocessingResult=preprocessCache.getIfPresent(packageId);
       if (preprocessingResult == null) {
-        try {
-          preprocessingResult=replacementSource == null ? packageFactory.preprocess(packageId,inputSource,globber) : Preprocessor.Result.noPreprocessing(replacementSource);
+        if (showLoadingProgress.get()) {
+          env.getListener().handle(Event.progress("Loading package: " + packageId));
         }
- catch (        IOException e) {
-          env.getListener().handle(Event.error(Location.fromFile(buildFilePath),"preprocessing failed: " + e.getMessage()));
-          throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,"preprocessing failed",e),Transience.TRANSIENT);
+        ParserInputSource inputSource;
+        if (replacementContents == null) {
+          long buildFileSize=Preconditions.checkNotNull(buildFileValue,packageId).getSize();
+          try {
+            inputSource=ParserInputSource.create(buildFilePath,buildFileSize);
+          }
+ catch (          IOException e) {
+            env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
+            throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.TRANSIENT);
+          }
+          try {
+            preprocessingResult=packageFactory.preprocess(packageId,inputSource,globber);
+          }
+ catch (          IOException e) {
+            env.getListener().handle(Event.error(Location.fromFile(buildFilePath),"preprocessing failed: " + e.getMessage()));
+            throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,"preprocessing failed",e),Transience.TRANSIENT);
+          }
+        }
+ else {
+          ParserInputSource replacementSource=ParserInputSource.create(replacementContents,buildFilePath.asFragment());
+          preprocessingResult=Preprocessor.Result.noPreprocessing(replacementSource);
         }
         preprocessCache.put(packageId,preprocessingResult);
       }
