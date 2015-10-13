@@ -1,0 +1,18 @@
+{
+  String fullStlName=stl;
+  if (gccVersion != null) {
+    fullStlName+="-" + gccVersion;
+  }
+  String filegroupNameTemplate="%stl%-%targetCpu%-%type%-runtime-libraries";
+  String filegroupName=filegroupNameTemplate.replace("%stl%",fullStlName).replace("%targetCpu%",targetCpu).replace("%type%",type.name);
+  if (stl.equals("gnu-libstdcpp")) {
+    stl="gnu-libstdc++";
+  }
+  if (stl.equals("libcpp")) {
+    stl="llvm-libc++";
+  }
+  String glob=NdkPaths.createStlRuntimeLibsGlob(stl,gccVersion,targetCpu,type.fileExtension);
+  String previousValue=fileGroupNameToFileGlobs.put(filegroupName,glob);
+  Verify.verify(previousValue == null || previousValue.equals(glob),"STL filegroup glob being replaced with a different glob:\nname: %s\n%s\n%s",filegroupName,glob,previousValue);
+  return filegroupName;
+}

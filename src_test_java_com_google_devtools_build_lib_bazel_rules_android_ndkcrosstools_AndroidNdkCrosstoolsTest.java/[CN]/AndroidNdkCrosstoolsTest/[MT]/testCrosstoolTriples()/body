@@ -1,0 +1,26 @@
+{
+  StringBuilder errorBuilder=new StringBuilder();
+  for (  CrosstoolRelease crosstool : CROSSTOOL_RELEASES) {
+    ImmutableMultimap.Builder<String,CToolchain> triples=ImmutableMultimap.builder();
+    for (    CToolchain toolchain : crosstool.getToolchainList()) {
+      String triple="(" + Joiner.on(", ").join(toolchain.getTargetCpu(),toolchain.getCompiler(),toolchain.getTargetLibc()) + ")";
+      triples.put(triple,toolchain);
+    }
+    for (    Entry<String,Collection<CToolchain>> entry : triples.build().asMap().entrySet()) {
+      if (entry.getValue().size() > 1) {
+        errorBuilder.append(entry.getKey() + ": " + Joiner.on(", ").join(Collections2.transform(entry.getValue(),new Function<CToolchain,String>(){
+          @Override public String apply(          CToolchain toolchain){
+            return toolchain.getToolchainIdentifier();
+          }
+        }
+)));
+        errorBuilder.append("\n");
+      }
+    }
+    errorBuilder.append("\n");
+  }
+  String error=errorBuilder.toString().trim();
+  if (!error.isEmpty()) {
+    fail("Toolchains contain duplicate (cpu, compiler, glibc) triples:\n" + error);
+  }
+}
