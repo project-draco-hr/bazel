@@ -1,0 +1,40 @@
+{
+  List<SkyKey> patternSkyKeys=new ArrayList<>();
+  for (  TargetPatternSkyKeyOrException keyOrException : TargetPatternValue.keys(targetPatterns,FilteringPolicies.FILTER_MANUAL,"")) {
+    try {
+      patternSkyKeys.add(keyOrException.getSkyKey());
+    }
+ catch (    TargetParsingException e) {
+    }
+  }
+  Map<SkyKey,ValueOrException<TargetParsingException>> resolvedPatterns=env.getValuesOrThrow(patternSkyKeys,TargetParsingException.class);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  ResolvedTargets.Builder<Target> builder=ResolvedTargets.builder();
+  for (  SkyKey key : patternSkyKeys) {
+    TargetPatternKey pattern=(TargetPatternKey)key.argument();
+    TargetPatternValue value;
+    try {
+      value=(TargetPatternValue)resolvedPatterns.get(key).get();
+    }
+ catch (    TargetParsingException e) {
+      String rawPattern=pattern.getPattern();
+      String errorMessage=e.getMessage();
+      env.getListener().handle(Event.error("Skipping '" + rawPattern + "': "+ errorMessage));
+      builder.setError();
+      continue;
+    }
+    ResolvedTargets<Target> asTargets=TestSuiteExpansionFunction.labelsToTargets(env,value.getTargets().getTargets(),value.getTargets().hasError());
+    if (pattern.isNegative()) {
+      builder.filter(Predicates.not(Predicates.in(asTargets.getTargets())));
+    }
+ else {
+      builder.merge(asTargets);
+    }
+  }
+  if (compileOneDependency) {
+    throw new UnsupportedOperationException();
+  }
+  return builder.build();
+}

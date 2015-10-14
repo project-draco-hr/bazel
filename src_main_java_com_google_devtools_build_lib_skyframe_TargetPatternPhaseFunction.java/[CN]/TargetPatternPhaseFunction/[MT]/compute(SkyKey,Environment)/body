@@ -1,0 +1,47 @@
+{
+  TargetPatternList options=(TargetPatternList)key.argument();
+  ResolvedTargets<Target> targets=getTargetsToBuild(env,options.getTargetPatterns(),options.getCompileOneDependency());
+  ResolvedTargets<Target> testTargets=null;
+  if (options.getDetermineTests() || options.getBuildTestsOnly()) {
+    testTargets=determineTests(env,options.getTargetPatterns(),options.getTestFilter());
+    Preconditions.checkState(env.valuesMissing() || (testTargets != null));
+  }
+  if (env.valuesMissing()) {
+    return null;
+  }
+  ImmutableSet<Target> filteredTargets=targets.getFilteredTargets();
+  ImmutableSet<Target> testsToRun=null;
+  ImmutableSet<Target> testFilteredTargets=ImmutableSet.of();
+  if (testTargets != null) {
+    if (testTargets.getTargets().isEmpty() && !testTargets.getFilteredTargets().isEmpty()) {
+      env.getListener().handle(Event.warn("All specified test targets were excluded by filters"));
+    }
+    if (options.getBuildTestsOnly()) {
+      Set<Target> allFilteredTargets=new HashSet<>();
+      allFilteredTargets.addAll(targets.getTargets());
+      allFilteredTargets.addAll(targets.getFilteredTargets());
+      allFilteredTargets.removeAll(testTargets.getTargets());
+      allFilteredTargets.addAll(testTargets.getFilteredTargets());
+      testFilteredTargets=ImmutableSet.copyOf(allFilteredTargets);
+      filteredTargets=ImmutableSet.of();
+      targets=ResolvedTargets.<Target>builder().merge(testTargets).mergeError(targets.hasError()).build();
+      if (options.getDetermineTests()) {
+        testsToRun=testTargets.getTargets();
+      }
+    }
+ else {
+      testsToRun=testTargets.getTargets();
+      targets=ResolvedTargets.<Target>builder().merge(targets).addAll(testsToRun).mergeError(testTargets.hasError()).build();
+    }
+    if (testsToRun != null) {
+      if (!targets.getTargets().containsAll(testsToRun)) {
+        throw new IllegalStateException(String.format("Internal consistency check failed; some targets are scheduled for test execution " + "but not for building (%s)",Sets.difference(testsToRun,targets.getTargets())));
+      }
+    }
+  }
+  if (targets.hasError()) {
+    env.getListener().handle(Event.warn("Target pattern parsing failed."));
+  }
+  LoadingPhaseRunner.maybeReportDeprecation(env.getListener(),targets.getTargets());
+  return new TargetPatternPhaseValue(targets.getTargets(),testsToRun,targets.hasError(),filteredTargets,testFilteredTargets);
+}

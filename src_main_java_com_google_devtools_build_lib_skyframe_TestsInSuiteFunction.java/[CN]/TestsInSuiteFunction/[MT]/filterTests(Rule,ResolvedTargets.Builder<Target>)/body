@@ -1,0 +1,16 @@
+{
+  List<String> tagsAttribute=NonconfigurableAttributeMapper.of(testSuite).get("tags",Type.STRING_LIST);
+  Pair<Collection<String>,Collection<String>> tagLists=TestTargetUtils.sortTagsBySense(tagsAttribute);
+  final Collection<String> positiveTags=tagLists.first;
+  final Collection<String> negativeTags=tagLists.second;
+  tests.filter(new Predicate<Target>(){
+    @Override public boolean apply(    @Nullable Target input){
+      Rule test=(Rule)input;
+      AttributeMap nonConfigurableAttributes=NonconfigurableAttributeMapper.of(test);
+      List<String> testTags=new ArrayList<>(nonConfigurableAttributes.get("tags",Type.STRING_LIST));
+      testTags.add(nonConfigurableAttributes.get("size",Type.STRING));
+      return includeTest(testTags,positiveTags,negativeTags);
+    }
+  }
+);
+}

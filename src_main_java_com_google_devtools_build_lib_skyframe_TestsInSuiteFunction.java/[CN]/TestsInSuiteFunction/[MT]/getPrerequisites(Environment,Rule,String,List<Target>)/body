@@ -1,0 +1,36 @@
+{
+  List<Label> labels=NonconfigurableAttributeMapper.of(testSuite).get(attrName,BuildType.LABEL_LIST);
+  Set<PackageIdentifier> pkgIdentifiers=new LinkedHashSet<>();
+  for (  Label label : labels) {
+    pkgIdentifiers.add(label.getPackageIdentifier());
+  }
+  Map<SkyKey,ValueOrException<BuildFileNotFoundException>> packages=env.getValuesOrThrow(PackageValue.keys(pkgIdentifiers),BuildFileNotFoundException.class);
+  if (env.valuesMissing()) {
+    return false;
+  }
+  boolean hasError=false;
+  Map<PackageIdentifier,Package> packageMap=new HashMap<>();
+  for (  Entry<SkyKey,ValueOrException<BuildFileNotFoundException>> entry : packages.entrySet()) {
+    try {
+      packageMap.put((PackageIdentifier)entry.getKey().argument(),((PackageValue)entry.getValue().get()).getPackage());
+    }
+ catch (    BuildFileNotFoundException e) {
+      env.getListener().handle(Event.error(e.getMessage()));
+      hasError=true;
+    }
+  }
+  for (  Label label : labels) {
+    Package pkg=packageMap.get(label.getPackageIdentifier());
+    if (pkg == null) {
+      continue;
+    }
+    try {
+      targets.add(pkg.getTarget(label.getName()));
+    }
+ catch (    NoSuchTargetException e) {
+      env.getListener().handle(Event.error(e.getMessage()));
+      hasError=true;
+    }
+  }
+  return hasError;
+}

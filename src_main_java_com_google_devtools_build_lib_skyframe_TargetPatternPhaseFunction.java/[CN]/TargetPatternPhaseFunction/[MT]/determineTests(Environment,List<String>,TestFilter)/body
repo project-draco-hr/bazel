@@ -1,0 +1,53 @@
+{
+  List<SkyKey> patternSkyKeys=new ArrayList<>();
+  for (  TargetPatternSkyKeyOrException keyOrException : TargetPatternValue.keys(targetPatterns,FilteringPolicies.FILTER_TESTS,"")) {
+    try {
+      patternSkyKeys.add(keyOrException.getSkyKey());
+    }
+ catch (    TargetParsingException e) {
+    }
+  }
+  Map<SkyKey,ValueOrException<TargetParsingException>> resolvedPatterns=env.getValuesOrThrow(patternSkyKeys,TargetParsingException.class);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  List<SkyKey> expandedSuiteKeys=new ArrayList<>();
+  for (  SkyKey key : patternSkyKeys) {
+    TargetPatternValue value;
+    try {
+      value=(TargetPatternValue)resolvedPatterns.get(key).get();
+    }
+ catch (    TargetParsingException e) {
+      continue;
+    }
+    expandedSuiteKeys.add(TestSuiteExpansionValue.key(value.getTargets().getTargets()));
+  }
+  Map<SkyKey,SkyValue> expandedSuites=env.getValues(expandedSuiteKeys);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  ResolvedTargets.Builder<Target> testTargetsBuilder=ResolvedTargets.builder();
+  for (  SkyKey key : patternSkyKeys) {
+    TargetPatternKey pattern=(TargetPatternKey)key.argument();
+    TargetPatternValue value;
+    try {
+      value=(TargetPatternValue)resolvedPatterns.get(key).get();
+    }
+ catch (    TargetParsingException e) {
+      continue;
+    }
+    TestSuiteExpansionValue expandedSuitesValue=(TestSuiteExpansionValue)expandedSuites.get(TestSuiteExpansionValue.key(value.getTargets().getTargets()));
+    if (pattern.isNegative()) {
+      ResolvedTargets<Target> negativeTargets=expandedSuitesValue.getTargets();
+      testTargetsBuilder.filter(Predicates.not(Predicates.in(negativeTargets.getTargets())));
+      testTargetsBuilder.mergeError(negativeTargets.hasError());
+    }
+ else {
+      ResolvedTargets<Target> positiveTargets=expandedSuitesValue.getTargets();
+      testTargetsBuilder.addAll(positiveTargets.getTargets());
+      testTargetsBuilder.mergeError(positiveTargets.hasError());
+    }
+  }
+  testTargetsBuilder.filter(testFilter);
+  return testTargetsBuilder.build();
+}

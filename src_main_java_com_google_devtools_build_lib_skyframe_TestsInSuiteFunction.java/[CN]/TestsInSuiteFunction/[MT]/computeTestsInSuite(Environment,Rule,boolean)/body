@@ -1,0 +1,32 @@
+{
+  ResolvedTargets.Builder<Target> builder=ResolvedTargets.builder();
+  List<Target> testsAndSuites=new ArrayList<>();
+  builder.mergeError(getPrerequisites(env,testSuite,"tests",testsAndSuites));
+  if (testSuite.getRuleClassObject().hasAttr("suites",BuildType.LABEL_LIST)) {
+    builder.mergeError(getPrerequisites(env,testSuite,"suites",testsAndSuites));
+  }
+  for (  Target test : testsAndSuites) {
+    if (TargetUtils.isTestRule(test)) {
+      builder.add(test);
+    }
+ else     if (strict && !TargetUtils.isTestSuiteRule(test)) {
+      env.getListener().handle(Event.error(testSuite.getLocation(),"in test_suite rule '" + testSuite.getLabel() + "': expecting a test or a test_suite rule but '"+ test.getLabel()+ "' is not one."));
+      builder.setError();
+    }
+  }
+  List<Target> implicitTests=new ArrayList<>();
+  builder.mergeError(getPrerequisites(env,testSuite,"$implicit_tests",implicitTests));
+  for (  Target target : implicitTests) {
+    if (TargetUtils.isTestRule(target)) {
+      builder.add(target);
+    }
+  }
+  filterTests(testSuite,builder);
+  for (  Target suite : testsAndSuites) {
+    if (TargetUtils.isTestSuiteRule(suite)) {
+      TestsInSuiteValue value=(TestsInSuiteValue)env.getValue(TestsInSuiteValue.key(suite,strict));
+      builder.merge(value.getTargets());
+    }
+  }
+  return builder.build();
+}

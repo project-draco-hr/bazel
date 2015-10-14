@@ -1,0 +1,34 @@
+{
+  TestSuiteExpansion expansion=(TestSuiteExpansion)key.argument();
+  ResolvedTargets<Target> targets=labelsToTargets(env,expansion.getTargets(),false);
+  List<SkyKey> testsInSuitesKeys=new ArrayList<>();
+  for (  Target target : targets.getTargets()) {
+    if (TargetUtils.isTestSuiteRule(target)) {
+      testsInSuitesKeys.add(TestsInSuiteValue.key(target,true));
+    }
+  }
+  Map<SkyKey,SkyValue> testsInSuites=env.getValues(testsInSuitesKeys);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  ResolvedTargets.Builder<Target> result=ResolvedTargets.builder();
+  result.mergeError(targets.hasError());
+  for (  Target target : targets.getTargets()) {
+    if (TargetUtils.isTestRule(target)) {
+      result.add(target);
+    }
+ else     if (TargetUtils.isTestSuiteRule(target)) {
+      TestsInSuiteValue value=(TestsInSuiteValue)testsInSuites.get(TestsInSuiteValue.key(target,true));
+      if (value != null) {
+        result.merge(value.getTargets());
+      }
+    }
+ else {
+      result.add(target);
+    }
+  }
+  if (env.valuesMissing()) {
+    return null;
+  }
+  return new TestSuiteExpansionValue(result.build());
+}

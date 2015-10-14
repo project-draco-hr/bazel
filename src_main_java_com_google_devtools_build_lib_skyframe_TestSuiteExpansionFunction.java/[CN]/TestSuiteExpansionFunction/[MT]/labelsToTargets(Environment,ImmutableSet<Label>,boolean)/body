@@ -1,0 +1,29 @@
+{
+  Set<PackageIdentifier> pkgIdentifiers=new LinkedHashSet<>();
+  for (  Label label : labels) {
+    pkgIdentifiers.add(label.getPackageIdentifier());
+  }
+  Map<SkyKey,SkyValue> packages=env.getValues(PackageValue.keys(pkgIdentifiers));
+  if (env.valuesMissing()) {
+    return null;
+  }
+  ResolvedTargets.Builder<Target> builder=ResolvedTargets.builder();
+  builder.mergeError(hasError);
+  Map<PackageIdentifier,Package> packageMap=new HashMap<>();
+  for (  Entry<SkyKey,SkyValue> entry : packages.entrySet()) {
+    packageMap.put((PackageIdentifier)entry.getKey().argument(),((PackageValue)entry.getValue()).getPackage());
+  }
+  for (  Label label : labels) {
+    Package pkg=packageMap.get(label.getPackageIdentifier());
+    if (pkg == null) {
+      continue;
+    }
+    try {
+      builder.add(pkg.getTarget(label.getName()));
+    }
+ catch (    NoSuchTargetException e) {
+      builder.setError();
+    }
+  }
+  return builder.build();
+}
