@@ -37,11 +37,18 @@
   }
   if (packagePart.endsWith("/...")) {
     String realPackagePart=removeSuffix(packagePart,"/...");
+    PackageIdentifier packageIdentifier;
+    try {
+      packageIdentifier=PackageIdentifier.parse("//" + realPackagePart);
+    }
+ catch (    LabelSyntaxException e) {
+      throw new TargetParsingException("Invalid package name '" + realPackagePart + "': "+ e.getMessage());
+    }
     if (targetPart.isEmpty() || ALL_RULES_IN_SUFFIXES.contains(targetPart)) {
-      return new TargetsBelowDirectory(originalPattern,relativeDirectory,realPackagePart,true);
+      return new TargetsBelowDirectory(originalPattern,relativeDirectory,packageIdentifier,true);
     }
  else     if (ALL_TARGETS_IN_SUFFIXES.contains(targetPart)) {
-      return new TargetsBelowDirectory(originalPattern,relativeDirectory,realPackagePart,false);
+      return new TargetsBelowDirectory(originalPattern,relativeDirectory,packageIdentifier,false);
     }
   }
   if (ALL_RULES_IN_SUFFIXES.contains(targetPart)) {
@@ -65,25 +72,28 @@
     return new TargetsInPackage(originalPattern,relativeDirectory,packageIdentifier,targetPart,isAbsolute,false,true);
   }
   if (includesRepo || isAbsolute || pattern.contains(":")) {
-    PackageAndTarget packageAndTarget;
+    PackageIdentifier packageIdentifier;
     String fullLabel=repository.getName() + "//" + pattern;
     try {
-      packageAndTarget=LabelValidator.validateAbsoluteLabel(fullLabel);
+      PackageAndTarget packageAndTarget=LabelValidator.validateAbsoluteLabel(fullLabel);
+      packageIdentifier=PackageIdentifier.create(repository,new PathFragment(packageAndTarget.getPackageName()));
     }
  catch (    BadLabelException e) {
       String error="invalid target format '" + originalPattern + "': "+ e.getMessage();
       throw new TargetParsingException(error);
     }
-    return new SingleTarget(fullLabel,packageAndTarget.getPackageName(),originalPattern,relativeDirectory);
+    return new SingleTarget(fullLabel,packageIdentifier,originalPattern,relativeDirectory);
   }
   int slashIndex=pattern.indexOf('/');
   String packageName=pattern;
   if (slashIndex > 0) {
     packageName=pattern.substring(0,slashIndex);
   }
-  String errorMessage=LabelValidator.validatePackageName(packageName);
-  if (errorMessage != null) {
-    throw new TargetParsingException("Bad target pattern '" + originalPattern + "': "+ errorMessage);
+  try {
+    PackageIdentifier.parse("//" + packageName);
+  }
+ catch (  LabelSyntaxException e) {
+    throw new TargetParsingException("Bad target pattern '" + originalPattern + "': "+ e.getMessage());
   }
   return new InterpretPathAsTarget(pattern,originalPattern,relativeDirectory);
 }
