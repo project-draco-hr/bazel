@@ -2,7 +2,18 @@
   FilteringPolicy policy=rulesOnly ? FilteringPolicies.RULES_ONLY : FilteringPolicies.NO_FILTER;
   ImmutableSet<PathFragment> excludedPathFragments=TargetPatternResolverUtil.getPathFragments(excludedSubdirectories);
   PathFragment pathFragment=TargetPatternResolverUtil.getPathFragment(directory);
-  for (  Path root : pkgPath.getPathEntries()) {
+  List<Path> roots=new ArrayList<>();
+  if (repository.isDefault()) {
+    roots.addAll(pkgPath.getPathEntries());
+  }
+ else {
+    RepositoryValue repositoryValue=(RepositoryValue)env.getValue(RepositoryValue.key(repository));
+    if (repositoryValue == null) {
+      throw new MissingDepException();
+    }
+    roots.add(repositoryValue.getPath());
+  }
+  for (  Path root : roots) {
     RootedPath rootedPath=RootedPath.toRootedPath(root,pathFragment);
     SkyValue token=env.getValue(PrepareDepsOfTargetsUnderDirectoryValue.key(repository,rootedPath,excludedPathFragments,policy));
     if (token == null) {

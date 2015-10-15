@@ -1,0 +1,27 @@
+{
+  PathPackageLocator packageLocator=PrecomputedValue.PATH_PACKAGE_LOCATOR.get(env);
+  if (packageLocator == null) {
+    throw new MissingDepException();
+  }
+  List<Path> roots=new ArrayList<>();
+  if (repository.isDefault()) {
+    roots.addAll(packageLocator.getPathEntries());
+  }
+ else {
+    RepositoryValue repositoryValue=(RepositoryValue)env.getValue(RepositoryValue.key(repository));
+    if (repositoryValue == null) {
+      throw new MissingDepException();
+    }
+    roots.add(repositoryValue.getPath());
+  }
+  NestedSetBuilder<String> packageNames=NestedSetBuilder.stableOrder();
+  for (  Path root : roots) {
+    PathFragment.checkAllPathsAreUnder(excludedSubdirectories,directory);
+    RecursivePkgValue lookup=(RecursivePkgValue)env.getValue(RecursivePkgValue.key(repository,RootedPath.toRootedPath(root,directory),excludedSubdirectories));
+    if (lookup == null) {
+      throw new MissingDepException();
+    }
+    packageNames.addTransitive(lookup.getPackages());
+  }
+  return Iterables.transform(packageNames.build(),PathFragment.TO_PATH_FRAGMENT);
+}

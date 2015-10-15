@@ -3,12 +3,9 @@
   ImmutableSet<PathFragment> excludedPathFragments=TargetPatternResolverUtil.getPathFragments(excludedSubdirectories);
   PathFragment pathFragment=TargetPatternResolverUtil.getPathFragment(directory);
   ResolvedTargets.Builder<Target> targetBuilder=ResolvedTargets.builder();
-  for (  Path root : pkgPath.getPathEntries()) {
-    RootedPath rootedPath=RootedPath.toRootedPath(root,pathFragment);
-    Iterable<PathFragment> packagesUnderDirectory=recursivePackageProvider.getPackagesUnderDirectory(repository,rootedPath,excludedPathFragments);
-    for (    PathFragment pkg : packagesUnderDirectory) {
-      targetBuilder.merge(getTargetsInPackage(originalPattern,PackageIdentifier.createInDefaultRepo(pkg),FilteringPolicies.NO_FILTER));
-    }
+  Iterable<PathFragment> packagesUnderDirectory=recursivePackageProvider.getPackagesUnderDirectory(repository,pathFragment,excludedPathFragments);
+  for (  PathFragment pkg : packagesUnderDirectory) {
+    targetBuilder.merge(getTargetsInPackage(originalPattern,PackageIdentifier.create(repository,pkg),FilteringPolicies.NO_FILTER));
   }
   if (targetBuilder.isEmpty()) {
     throw new TargetParsingException("no targets found beneath '" + pathFragment + "'");

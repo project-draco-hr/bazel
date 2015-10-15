@@ -1,0 +1,31 @@
+{
+  PathFragment.checkAllPathsAreUnder(excludedSubdirectories,directory);
+  FilteringPolicy filteringPolicy=null;
+  for (  TargetPatternKey patternKey : universeTargetPatternKeys) {
+    TargetPattern pattern=patternKey.getParsedPattern();
+    boolean isTBD=pattern.getType().equals(Type.TARGETS_BELOW_DIRECTORY);
+    PackageIdentifier packageIdentifier=PackageIdentifier.create(repository,directory);
+    if (isTBD && pattern.containsBelowDirectory(packageIdentifier)) {
+      filteringPolicy=pattern.getRulesOnly() ? FilteringPolicies.RULES_ONLY : FilteringPolicies.NO_FILTER;
+      break;
+    }
+  }
+  List<Path> roots=new ArrayList<>();
+  if (repository.isDefault()) {
+    roots.addAll(pkgPath.getPathEntries());
+  }
+ else {
+    RepositoryValue repositoryValue=(RepositoryValue)graph.getValue(RepositoryValue.key(repository));
+    if (repositoryValue == null) {
+      return ImmutableList.of();
+    }
+    roots.add(repositoryValue.getPath());
+  }
+  ImmutableList.Builder<PathFragment> builder=ImmutableList.builder();
+  if (filteringPolicy != null) {
+    for (    Path root : roots) {
+      collectPackagesUnder(repository,RootedPath.toRootedPath(root,directory),excludedSubdirectories,builder,filteringPolicy);
+    }
+  }
+  return builder.build();
+}
