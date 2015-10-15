@@ -1,21 +1,6 @@
 {
-  StoredEventHandler localReporter=new StoredEventHandler();
-  LOG.fine("Starting to parse " + packageId);
-  BuildFileAST buildFileAST=BuildFileAST.parseBuildFile(preprocessingResult.result,preludeStatements,localReporter,false);
-  LOG.fine("Finished parsing of " + packageId);
-  MakeEnvironment.Builder makeEnv=new MakeEnvironment.Builder();
-  if (platformSetRegexps != null) {
-    makeEnv.setPlatformSetRegexps(platformSetRegexps);
-  }
-  try {
-    prefetchGlobs(packageId,buildFileAST,preprocessingResult.preprocessed,buildFile,globber,defaultVisibility,makeEnv);
-    return evaluateBuildFile(externalPkg,packageId,buildFileAST,buildFile,globber,Iterables.concat(preprocessingEvents,localReporter.getEvents()),defaultVisibility,preprocessingResult.containsErrors,makeEnv,imports,skylarkFileDependencies);
-  }
- catch (  InterruptedException e) {
-    globber.onInterrupt();
-    throw e;
-  }
- finally {
-    globber.onCompletion();
-  }
+  StoredEventHandler localReporterForParsing=new StoredEventHandler();
+  BuildFileAST buildFileAST=parseBuildFile(packageId,preprocessingResult.result,preludeStatements,localReporterForParsing);
+  AstAfterPreprocessing astAfterPreprocessing=new AstAfterPreprocessing(preprocessingResult,buildFileAST,localReporterForParsing);
+  return createPackageFromPreprocessingAst(externalPkg,packageId,buildFile,astAfterPreprocessing,imports,skylarkFileDependencies,defaultVisibility,globber);
 }

@@ -4,14 +4,15 @@
     profiler.startTask(ProfilerTask.CREATE_PACKAGE,packageId.toString());
     try {
       Globber globber=packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
-      Preprocessor.Result preprocessingResult=preprocessCache.getIfPresent(packageId);
-      if (preprocessingResult == null) {
+      AstAfterPreprocessing astAfterPreprocessing=astCache.getIfPresent(packageId);
+      if (astAfterPreprocessing == null) {
         if (showLoadingProgress.get()) {
           env.getListener().handle(Event.progress("Loading package: " + packageId));
         }
-        ParserInputSource inputSource;
+        Preprocessor.Result preprocessingResult;
         if (replacementContents == null) {
           long buildFileSize=Preconditions.checkNotNull(buildFileValue,packageId).getSize();
+          ParserInputSource inputSource;
           try {
             inputSource=ParserInputSource.create(buildFilePath,buildFileSize);
           }
@@ -31,21 +32,24 @@
           ParserInputSource replacementSource=ParserInputSource.create(replacementContents,buildFilePath.asFragment());
           preprocessingResult=Preprocessor.Result.noPreprocessing(replacementSource);
         }
-        preprocessCache.put(packageId,preprocessingResult);
+        StoredEventHandler astParsingEventHandler=new StoredEventHandler();
+        BuildFileAST ast=PackageFactory.parseBuildFile(packageId,preprocessingResult.result,preludeStatements,astParsingEventHandler);
+        astAfterPreprocessing=new AstAfterPreprocessing(preprocessingResult,ast,astParsingEventHandler);
+        astCache.put(packageId,astAfterPreprocessing);
       }
       SkylarkImportResult importResult;
       try {
-        importResult=discoverSkylarkImports(buildFilePath,buildFileFragment,packageId,env,preprocessingResult.result,preludeStatements);
+        importResult=discoverSkylarkImports(buildFilePath,buildFileFragment,packageId,astAfterPreprocessing,env);
       }
  catch (      PackageFunctionException|InterruptedException e) {
-        preprocessCache.invalidate(packageId);
+        astCache.invalidate(packageId);
         throw e;
       }
       if (importResult == null) {
         return null;
       }
-      preprocessCache.invalidate(packageId);
-      pkgBuilder=packageFactory.createPackageFromPreprocessingResult(externalPkg,packageId,buildFilePath,preprocessingResult,preprocessingResult.events,preludeStatements,importResult.importMap,importResult.fileDependencies,packageLocator,defaultVisibility,globber);
+      astCache.invalidate(packageId);
+      pkgBuilder=packageFactory.createPackageFromPreprocessingAst(externalPkg,packageId,buildFilePath,astAfterPreprocessing,importResult.importMap,importResult.fileDependencies,defaultVisibility,globber);
       numPackagesLoaded.incrementAndGet();
       packageFunctionCache.put(packageId,pkgBuilder);
     }
