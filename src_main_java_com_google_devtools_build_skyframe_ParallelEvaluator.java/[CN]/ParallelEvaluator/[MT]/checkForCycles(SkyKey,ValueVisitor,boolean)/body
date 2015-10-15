@@ -6,7 +6,7 @@
   toVisit.push(root);
   while (!toVisit.isEmpty()) {
     SkyKey key=toVisit.pop();
-    NodeEntry entry=graph.get(key);
+    NodeEntry entry;
     if (key == CHILDREN_FINISHED) {
       key=graphPath.remove(graphPath.size() - 1);
       entry=Preconditions.checkNotNull(graph.get(key),key);
@@ -30,6 +30,9 @@
       SkyFunctionEnvironment env=new SkyFunctionEnvironment(key,directDeps,visitor);
       env.setError(ErrorInfo.fromChildErrors(key,errorDeps));
       env.commit(false);
+    }
+ else {
+      entry=graph.get(key);
     }
     Preconditions.checkNotNull(entry,key);
     if (entry.isDone()) {
