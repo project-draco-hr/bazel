@@ -1,4 +1,5 @@
 {
+  Set<String> knownConfigs=new HashSet<>();
   for (  String commandToParse : getCommandNamesToParse(commandAnnotation)) {
     for (    Pair<String,ListMultimap<String,String>> entry : optionsMap) {
       List<String> allOptions=new ArrayList<>();
@@ -7,13 +8,17 @@
       }
  else {
         for (        String config : configs) {
-          allOptions.addAll(entry.second.get(commandToParse + ":" + config));
+          Collection<String> values=entry.second.get(commandToParse + ":" + config);
+          if (!values.isEmpty()) {
+            allOptions.addAll(values);
+            knownConfigs.add(config);
+          }
         }
       }
       processOptionList(optionsParser,commandToParse,commandAnnotation.name(),rcfileNotes,entry.first,allOptions);
-      if (allOptions.isEmpty()) {
-        continue;
-      }
     }
+  }
+  if (unknownConfigs != null && configs != null && configs.size() > knownConfigs.size()) {
+    Iterables.addAll(unknownConfigs,Iterables.filter(configs,Predicates.not(Predicates.in(knownConfigs))));
   }
 }

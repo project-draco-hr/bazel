@@ -14,14 +14,18 @@
   optionsParser.parseWithSourceFunction(OptionPriority.COMMAND_LINE,commandOptionSourceFunction,cmdLineAfterCommand);
   CommonCommandOptions rcFileOptions=optionsParser.getOptions(CommonCommandOptions.class);
   List<Pair<String,ListMultimap<String,String>>> optionsMap=getOptionsMap(outErr,rcFileOptions.rcSource,rcFileOptions.optionsOverrides,runtime.getCommandMap().keySet());
-  parseOptionsForCommand(rcfileNotes,commandAnnotation,optionsParser,optionsMap,null);
+  parseOptionsForCommand(rcfileNotes,commandAnnotation,optionsParser,optionsMap,null,null);
   List<String> configsLoaded=ImmutableList.of();
+  Set<String> unknownConfigs=new LinkedHashSet<>();
   CommonCommandOptions commonOptions=optionsParser.getOptions(CommonCommandOptions.class);
   while (!commonOptions.configs.equals(configsLoaded)) {
     Set<String> missingConfigs=new LinkedHashSet<>(commonOptions.configs);
     missingConfigs.removeAll(configsLoaded);
-    parseOptionsForCommand(rcfileNotes,commandAnnotation,optionsParser,optionsMap,missingConfigs);
+    parseOptionsForCommand(rcfileNotes,commandAnnotation,optionsParser,optionsMap,missingConfigs,unknownConfigs);
     configsLoaded=commonOptions.configs;
     commonOptions=optionsParser.getOptions(CommonCommandOptions.class);
+  }
+  if (!unknownConfigs.isEmpty()) {
+    outErr.printErrLn("WARNING: Config values are not defined in any .rc file: " + Joiner.on(", ").join(unknownConfigs));
   }
 }
