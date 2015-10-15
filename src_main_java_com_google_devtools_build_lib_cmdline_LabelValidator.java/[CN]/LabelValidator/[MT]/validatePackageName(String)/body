@@ -6,20 +6,28 @@
   if (packageName.charAt(0) == '/') {
     return "package names may not start with '/'";
   }
-  if (packageName.lastIndexOf('.') != -1) {
-    return PACKAGE_NAME_ERROR;
-  }
-  for (int i=len - 1; i >= 0; --i) {
-    char c=packageName.charAt(i);
-    if ((c < 'a' || c > 'z') && c != '/' && c != '_' && c != '-' && (c < '0' || c > '9') && (c < 'A' || c > 'Z')) {
+  boolean nonDot=false;
+  int lastSlash=len;
+  for (int i=len - 1; i >= -1; --i) {
+    char c=(i >= 0) ? packageName.charAt(i) : '/';
+    if ((c < 'a' || c > 'z') && c != '/' && c != '_' && c != '-' && c != '.' && (c < '0' || c > '9') && (c < 'A' || c > 'Z')) {
       return PACKAGE_NAME_ERROR;
     }
-  }
-  if (packageName.contains("//")) {
-    return "package names may not contain '//' path separators";
-  }
-  if (packageName.endsWith("/")) {
-    return "package names may not end with '/'";
+    if (c == '/') {
+      if (lastSlash == i + 1) {
+        return lastSlash == len ? "package names may not end with '/'" : "package names may not contain '//' path separators";
+      }
+      if (!nonDot) {
+        return PACKAGE_NAME_DOT_ERROR;
+      }
+      nonDot=false;
+      lastSlash=i;
+    }
+ else {
+      if (c != '.') {
+        nonDot=true;
+      }
+    }
   }
   return null;
 }
