@@ -9,7 +9,8 @@
   JavaCommon javaCommon=new JavaCommon(ruleContext,javaSemantics,deps,deps,deps);
   AndroidCommon androidCommon=new AndroidCommon(ruleContext,javaCommon,true,true);
   try {
-    RuleConfiguredTargetBuilder builder=init(ruleContext,filesBuilder,AndroidCommon.getTransitiveResourceContainers(ruleContext,true),javaCommon,androidCommon,javaSemantics,androidSemantics,ImmutableList.<String>of("deps"));
+    ResourceDependencies resourceDeps=LocalResourceContainer.definesAndroidResources(ruleContext.attributes()) ? ResourceDependencies.fromRuleDeps(ruleContext) : ResourceDependencies.fromRuleResourceAndDeps(ruleContext);
+    RuleConfiguredTargetBuilder builder=init(ruleContext,filesBuilder,resourceDeps,javaCommon,androidCommon,javaSemantics,androidSemantics,ImmutableList.<String>of("deps"));
     if (builder == null) {
       return null;
     }
