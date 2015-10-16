@@ -1,0 +1,13 @@
+{
+  scratch.file("test/deflist.bzl","l1 = [1, 2]","l2 = l1","l1.extend([3, 4])","if l2 != [1, 2, 3, 4]: fail('l2=%r' % (l2,))");
+  scratch.file("test/uselist.bzl","load('deflist', 'l1')","print('loading uselist, l1=%r' % (l1,))","l3 = l1 + [5, 6]","if l3 != [1, 2, 3, 4, 5, 6]: fail('l3=%r' % (l3,))");
+  scratch.file("test/abuselist.bzl","load('deflist', 'l1')","l4 = []","print('loading abuselist, l1=%r' % (l1,))","l1.append(5)","fail('l1=%r' % (l1,))");
+  scratch.file("test/BUILD","load('uselist', 'l3')","load('abuselist', 'l4')","genrule(name='foo', outs=['one'], cmd='echo 1 > $@')");
+  try {
+    getConfiguredTarget("//test:foo");
+    fail("An Exception was expected, but nothing was thrown.");
+  }
+ catch (  AssertionFailedError ex) {
+    assertThat(ex).hasMessage("ERROR /workspace/test/abuselist.bzl:4:1: trying to mutate a frozen object");
+  }
+}

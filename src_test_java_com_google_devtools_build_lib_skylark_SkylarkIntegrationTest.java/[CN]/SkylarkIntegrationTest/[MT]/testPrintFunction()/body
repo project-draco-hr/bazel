@@ -1,0 +1,6 @@
+{
+  scratch.file("test/skylark/extension.bzl","def impl(ctx):","  print('analysis phase hello')","","print('loading phase hello')","r = rule(implementation = impl)");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'r')","","r(name='r')");
+  getConfiguredTarget("//test/skylark:r");
+  assertContainsEventsInOrder("loading phase hello","analysis phase hello");
+}

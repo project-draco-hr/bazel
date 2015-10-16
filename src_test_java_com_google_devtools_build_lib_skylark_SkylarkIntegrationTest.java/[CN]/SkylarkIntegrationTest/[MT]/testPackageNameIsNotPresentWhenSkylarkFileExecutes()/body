@@ -1,0 +1,12 @@
+{
+  scratch.file("test/skylark/extension.bzl","def extension_func():","  if not PACKAGE_NAME:","    fail(\"name 'PACKAGE_NAME' is not defined\")","  return PACKAGE_NAME","v = extension_func()");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'v')","","genrule(name='a', cmd='echo hi >$@', outs=['a.txt'])");
+  reporter.removeHandler(failFastHandler);
+  try {
+    getTarget("//test/skylark:a");
+    fail();
+  }
+ catch (  BuildFileContainsErrorsException e) {
+    assertContainsEvent("name 'PACKAGE_NAME' is not defined");
+  }
+}

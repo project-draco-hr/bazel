@@ -1,0 +1,6 @@
+{
+  scratch.file("test/skylark/extension.bzl","def custom_rule_impl(ctx):","  if ctx.attr._attr1 != None: fail('should be None')","  f = set(ctx.attr._attr2)","  return struct(runfiles = ctx.runfiles(), files = f)","","def attr_value(attr_map, cfg):","  return None","","custom_rule = rule(implementation = custom_rule_impl,","  attrs = {'_attr1': attr.label(default=attr_value),","           '_attr2': attr.label_list(default=attr_value)})");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'custom_rule')","","custom_rule(name = 'cr')");
+  ConfiguredTarget target=getConfiguredTarget("//test/skylark:cr");
+  assertThat(ActionsTestUtil.baseArtifactNames(target.getProvider(FileProvider.class).getFilesToBuild())).isEmpty();
+}

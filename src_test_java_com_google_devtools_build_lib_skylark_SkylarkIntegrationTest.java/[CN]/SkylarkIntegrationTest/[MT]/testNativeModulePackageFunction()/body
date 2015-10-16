@@ -1,0 +1,7 @@
+{
+  scratch.file("test/skylark/BUILD");
+  scratch.file("test/skylark/extension.bzl","def extension_func():","  native.package(features = ['foo'])");
+  scratch.file("test/project/BUILD","load('/test/skylark/extension', 'extension_func')","","extension_func()","genrule(name = 'a', cmd = '', outs = ['b'])");
+  Package pkg=getConfiguredTarget("//test/project:a").getTarget().getPackage();
+  assertEquals(Iterables.getOnlyElement(pkg.getFeatures()),"foo");
+}

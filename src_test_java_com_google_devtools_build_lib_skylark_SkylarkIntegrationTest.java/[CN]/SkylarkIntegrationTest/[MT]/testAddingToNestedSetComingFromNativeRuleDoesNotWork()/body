@@ -1,0 +1,4 @@
+{
+  scratch.file("test/skylark/extension.bzl","def custom_rule_impl(ctx):","  ctx.attr.deps[0].files + ctx.attr.deps[1].files","","custom_rule = rule(implementation = custom_rule_impl,","  attrs = {'deps': attr.label_list()})","","def macro(name):","  native.genrule(name = name + '1', cmd = 'echo hi >$@', outs = [name + '1.txt'])","  native.genrule(name = name + '2', cmd = 'echo hi >$@', outs = [name + '2.txt'])","  custom_rule(name = name, deps = [':' + name + '1', ':' + name + '2'])");
+  checkError("test/skylark","cr","Cannot add more elements to this set. Sets created in " + "native rules cannot be left side operands of the + operator.","load('/test/skylark/extension', 'macro')","","macro(name = 'cr')");
+}

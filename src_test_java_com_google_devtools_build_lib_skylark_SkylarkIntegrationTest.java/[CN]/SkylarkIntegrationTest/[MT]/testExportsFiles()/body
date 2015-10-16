@@ -1,0 +1,7 @@
+{
+  scratch.file("test/skylark/a.txt");
+  scratch.file("test/skylark/extension.bzl","def macro():","  native.exports_files(['a.txt'], visibility = ['//visibility:private'])");
+  scratch.file("test/skylark/BUILD","load('extension', 'macro')","macro()");
+  InputFile target=(InputFile)getTarget("//test/skylark:a.txt");
+  assertThat(target.getVisibility().getDeclaredLabels()).containsExactly(Label.parseAbsolute("//visibility:private"));
+}

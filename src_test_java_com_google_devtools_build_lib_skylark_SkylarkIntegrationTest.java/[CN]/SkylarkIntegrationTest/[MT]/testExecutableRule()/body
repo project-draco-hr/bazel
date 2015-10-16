@@ -1,0 +1,9 @@
+{
+  scratch.file("test/skylark/extension.bzl","def rule_impl(ctx):","  executable = ctx.outputs.executable","  ctx.file_action(","    output = executable,","    executable = True,","    content = 'echo Hello')","  default_runfiles = ctx.runfiles([executable])","  return struct(runfiles = default_runfiles)","","custom_rule = rule(implementation = rule_impl, executable = True)");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'custom_rule')","","custom_rule(name = 'cr')");
+  ConfiguredTarget target=getConfiguredTarget("//test/skylark:cr");
+  FilesToRunProvider provider=target.getProvider(FilesToRunProvider.class);
+  assertNotNull(provider.getRunfilesSupport());
+  assertNotNull(provider.getExecutable());
+  assertSame(provider.getExecutable(),provider.getRunfilesSupport().getExecutable());
+}

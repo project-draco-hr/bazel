@@ -1,0 +1,6 @@
+{
+  scratch.file("test/skylark/extension.bzl","def impl(ctx):","  return struct(p = ctx.attr.stringdict['a'])","r = rule(implementation=impl, attrs={'stringdict': attr.string_dict()})");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'r')","","r(name='r1', stringdict={'a': 'b'})");
+  ConfiguredTarget target=getConfiguredTarget("//test/skylark:r1");
+  assertEquals("b",target.get("p"));
+}

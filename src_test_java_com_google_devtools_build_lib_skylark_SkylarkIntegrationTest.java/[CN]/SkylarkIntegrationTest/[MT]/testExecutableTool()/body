@@ -1,0 +1,12 @@
+{
+  scratch.file("test/skylark/tool.bzl","def rule_impl(ctx):","  executable = ctx.outputs.executable","  ctx.file_action(","    output = executable,","    executable = True,","    content = 'echo Hello')","","tool_rule = rule(implementation = rule_impl, executable = True)");
+  scratch.file("test/skylark/main.bzl","def rule_impl(ctx):","  ctx.action(","    outputs = [ctx.outputs.out],","    executable = ctx.executable.tool,","    arguments = ['--flag'])","","main_rule = rule(implementation = rule_impl,","    outputs = {'out': '%{name}.sh'},","    attrs = {'tool': attr.label(executable = True)})");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/main', 'main_rule')","load('/test/skylark/tool', 'tool_rule')","","tool_rule(name = 'mytool')","main_rule(name = 'myrule', tool = ':mytool')");
+  ConfiguredTarget tool=getConfiguredTarget("//test/skylark:mytool");
+  assertThat(baseArtifactNames(getRunfilesSupport(tool).getRunfiles().getAllArtifacts())).contains("mytool");
+  ConfiguredTarget target=getConfiguredTarget("//test/skylark:myrule");
+  SpawnAction action=(SpawnAction)getGeneratingAction(Iterables.getOnlyElement(getFilesToBuild(target)));
+  MoreAsserts.assertEndsWith("test/skylark/mytool",action.getArguments().get(0));
+  assertThat(baseArtifactNames(action.getInputs())).contains("test_Sskylark_Smytool-runfiles");
+  assertTrue(ActionsTestUtil.getFirstArtifactEndingWith(action.getInputs(),"test_Sskylark_Smytool-runfiles").isMiddlemanArtifact());
+}

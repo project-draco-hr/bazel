@@ -1,0 +1,9 @@
+{
+  scratch.file("test/pkg1/BUILD");
+  scratch.file("test/pkg2/BUILD");
+  scratch.file("test/skylark/extension.bzl","def macro(name):","  native.package_group(name = 'default_pg', packages = ['//test/pkg2'])","  native.package_group(name = name,","                       packages = ['//test/pkg1'], includes = [':default_pg'])");
+  scratch.file("test/skylark/BUILD","load('extension', 'macro')","macro('my_pg')");
+  PackageGroup target=(PackageGroup)getTarget("//test/skylark:my_pg");
+  assertThat(target.getContainedPackages()).containsExactly("test/pkg1");
+  assertThat(target.getIncludes()).containsExactly(Label.parseAbsolute("//test/skylark:default_pg"));
+}

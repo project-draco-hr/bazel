@@ -1,0 +1,11 @@
+{
+  scratch.file("test/skylark/file.txt","");
+  scratch.file("test/skylark/extension.bzl","def impl(ctx):","  lbl = ctx.attr.a.label if ctx.attr.a else None","  if hasattr(ctx.file, 'a'):","    return struct(f=ctx.file.a, l=lbl)","  else:","    return struct(l=lbl)","","r = rule(implementation=impl,","    attrs={'a': attr.label(allow_files=True, single_file=True)})");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'r')","","r(name='r1', a='file.txt')","r(name='r2')");
+  ConfiguredTarget target1=getConfiguredTarget("//test/skylark:r1");
+  assertEquals("file.txt",((Label)target1.get("l")).getName());
+  assertEquals("file.txt",((Artifact)target1.get("f")).getFilename());
+  ConfiguredTarget target2=getConfiguredTarget("//test/skylark:r2");
+  assertEquals(Runtime.NONE,target2.get("l"));
+  assertEquals(Runtime.NONE,target2.get("f"));
+}

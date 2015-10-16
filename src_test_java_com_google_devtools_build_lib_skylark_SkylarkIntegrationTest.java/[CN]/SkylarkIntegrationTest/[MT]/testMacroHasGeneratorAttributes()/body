@@ -1,0 +1,20 @@
+{
+  scratch.file("test/skylark/extension.bzl","def _impl(ctx):","  print('This rule does nothing')","","empty = rule(implementation = _impl)","no_macro = rule(implementation = _impl)","","def macro(name, visibility=None):","  empty(name = name, visibility=visibility)","def native_macro(name):","  native.cc_library(name = name + '_suffix')");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', macro_rule = 'macro', no_macro_rule = 'no_macro',","  native_macro_rule = 'native_macro')","macro_rule(name = 'macro_target')","no_macro_rule(name = 'no_macro_target')","native_macro_rule(name = 'native_macro_target')","cc_binary(name = 'cc_target', deps = ['cc_dep'])","cc_library(name = 'cc_dep')");
+  AttributeContainer withMacro=getContainerForTarget("macro_target");
+  assertThat(withMacro.getAttr("generator_name")).isEqualTo("macro_target");
+  assertThat(withMacro.getAttr("generator_function")).isEqualTo("macro");
+  assertThat(withMacro.getAttr("generator_location")).isEqualTo("test/skylark/BUILD:3");
+  AttributeContainer noMacro=getContainerForTarget("no_macro_target");
+  assertThat(noMacro.getAttr("generator_name")).isEqualTo("");
+  assertThat(noMacro.getAttr("generator_function")).isEqualTo("");
+  assertThat(noMacro.getAttr("generator_location")).isEqualTo("");
+  AttributeContainer nativeMacro=getContainerForTarget("native_macro_target_suffix");
+  assertThat(nativeMacro.getAttr("generator_name")).isEqualTo("native_macro_target");
+  assertThat(nativeMacro.getAttr("generator_function")).isEqualTo("native_macro");
+  assertThat(nativeMacro.getAttr("generator_location")).isEqualTo("test/skylark/BUILD:5");
+  AttributeContainer ccTarget=getContainerForTarget("cc_target");
+  assertThat(ccTarget.getAttr("generator_name")).isEqualTo("");
+  assertThat(ccTarget.getAttr("generator_function")).isEqualTo("");
+  assertThat(ccTarget.getAttr("generator_location")).isEqualTo("");
+}

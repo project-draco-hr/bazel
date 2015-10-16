@@ -1,0 +1,9 @@
+{
+  writeConfigFile();
+  scratch.file("test/skylark/extension.bzl","def custom_rule_impl(ctx):","  return struct(provider = ctx.attr.a)","","custom_rule = rule(implementation = custom_rule_impl,","  attrs = {'a': attr.string()})");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'custom_rule')","","custom_rule(name = 'cr', a = select({'//conditions:a' : 'x', '//conditions:b' : 'y'}))");
+  useConfiguration("--test_arg=a");
+  assertEquals("x",getConfiguredTarget("//test/skylark:cr").get("provider"));
+  useConfiguration("--test_arg=b");
+  assertEquals("y",getConfiguredTarget("//test/skylark:cr").get("provider"));
+}

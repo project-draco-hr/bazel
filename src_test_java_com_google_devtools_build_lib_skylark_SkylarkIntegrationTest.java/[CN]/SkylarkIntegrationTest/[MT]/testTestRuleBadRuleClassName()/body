@@ -1,0 +1,12 @@
+{
+  scratch.file("test/skylark/extension.bzl","def rule_impl(ctx):","  return None","","custom_rule = rule(implementation = rule_impl, test = True)");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'custom_rule')","","custom_rule(name = 'cr')");
+  reporter.removeHandler(failFastHandler);
+  try {
+    getTarget("//test/skylark:cr");
+    fail();
+  }
+ catch (  Exception e) {
+    assertContainsEvent("Invalid rule class name 'custom_rule', test rule class names must " + "end with '_test' and other rule classes must not");
+  }
+}

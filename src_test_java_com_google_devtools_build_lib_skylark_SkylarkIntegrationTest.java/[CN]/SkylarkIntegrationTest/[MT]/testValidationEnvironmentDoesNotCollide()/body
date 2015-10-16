@@ -1,0 +1,9 @@
+{
+  scratch.file("test/skylark/extension1.bzl","some_variable = 'a'");
+  scratch.file("test/skylark/extension2.bzl","some_variable = 1");
+  scratch.file("test/skylark/rule1.bzl","load('/test/skylark/extension1', 'some_variable')","def custom_rule_impl(ctx):","  return None","","def attr_value(attr_map, cfg):","  return attr_map.bad_attr","","custom_rule1 = rule(implementation = custom_rule_impl)");
+  scratch.file("test/skylark/rule2.bzl","load('/test/skylark/extension2', 'some_variable')","def custom_rule_impl(ctx):","  return None","","def attr_value(attr_map, cfg):","  return attr_map.bad_attr","","custom_rule2 = rule(implementation = custom_rule_impl)");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/rule1', 'custom_rule1')","load('/test/skylark/rule2', 'custom_rule2')","","custom_rule1(name = 'cr1')","custom_rule2(name = 'cr2')");
+  getConfiguredTarget("//test/skylark:cr1");
+  getConfiguredTarget("//test/skylark:cr2");
+}

@@ -1,0 +1,7 @@
+{
+  scratch.file("test/skylark/extension.bzl","def extension_func(l):","  l = l + ['c']","  for i in l:","    native.genrule(name = i, cmd = 'echo hi >@', outs = [i + '.txt'])");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'extension_func')","","extension_func(['a', 'b'])");
+  getConfiguredTarget("//test/skylark:a");
+  getConfiguredTarget("//test/skylark:b");
+  getConfiguredTarget("//test/skylark:c");
+}

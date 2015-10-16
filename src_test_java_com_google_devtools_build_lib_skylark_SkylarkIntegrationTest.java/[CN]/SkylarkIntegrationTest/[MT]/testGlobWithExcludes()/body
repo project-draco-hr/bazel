@@ -1,0 +1,11 @@
+{
+  scratch.file("test/project/a.dat","");
+  scratch.file("test/project/b.dat","");
+  scratch.file("test/skylark/BUILD");
+  scratch.file("test/skylark/extension.bzl","def extension_func(name, includes, excludes):","  native.genrule(name = name,","    srcs = native.glob(includes, excludes),","    outs = [name + '.txt'],","    cmd = 'echo $(SRCS) hello >@')");
+  scratch.file("test/project/BUILD","load('/test/skylark/extension', 'extension_func')","","extension_func(name = 'rule1', includes = ['*.dat'], excludes = ['b.dat'])");
+  ConfiguredTarget target=getConfiguredTarget("//test/project:rule1");
+  Action action=getGeneratingAction(Iterables.getOnlyElement(getFilesToBuild(target)));
+  assertThat(baseArtifactNames(action.getInputs())).contains("a.dat");
+  assertThat(baseArtifactNames(action.getInputs())).containsNoneIn(ImmutableList.of("b.dat"));
+}

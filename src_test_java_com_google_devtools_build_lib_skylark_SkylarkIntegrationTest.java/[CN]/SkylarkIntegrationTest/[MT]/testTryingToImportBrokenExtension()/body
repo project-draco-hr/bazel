@@ -1,0 +1,13 @@
+{
+  scratch.file("test/ext.bzl","var = 2","var = 3");
+  scratch.file("test/BUILD","load('/test/ext', 'var')","","custom_rule_test(name = 'cr')");
+  reporter.removeHandler(failFastHandler);
+  try {
+    getTarget("//test:cr");
+    fail();
+  }
+ catch (  BuildFileContainsErrorsException e) {
+    assertContainsEvent("Variable var is read only");
+    assertContainsEvent("Extension 'test/ext.bzl' has errors");
+  }
+}

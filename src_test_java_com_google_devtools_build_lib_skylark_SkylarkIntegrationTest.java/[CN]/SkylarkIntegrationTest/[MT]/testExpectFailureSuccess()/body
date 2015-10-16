@@ -1,0 +1,6 @@
+{
+  scratch.file("test/skylark/extension.bzl","def custom_rule_impl(ctx):","  fail('kaputt')","","custom_rule = rule(implementation = custom_rule_impl)");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'custom_rule')","","custom_rule(name = 'cr1', expect_failure = 'kaputt*')","custom_rule(name = 'cr2', expect_failure = 'k.*t*')");
+  getConfiguredTarget("//test/skylark:cr1");
+  getConfiguredTarget("//test/skylark:cr2");
+}

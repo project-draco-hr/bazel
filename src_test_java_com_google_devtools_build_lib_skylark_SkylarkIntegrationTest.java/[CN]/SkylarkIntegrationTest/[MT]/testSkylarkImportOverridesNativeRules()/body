@@ -1,0 +1,6 @@
+{
+  scratch.file("test/skylark/extension.bzl","def custom_rule_impl(ctx):","  return struct(custom_provider = 'a')","","genrule = rule(implementation = custom_rule_impl)");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'genrule')","","genrule(name = 'cr')");
+  ConfiguredTarget target=getConfiguredTarget("//test/skylark:cr");
+  assertEquals("a",target.get("custom_provider"));
+}

@@ -1,0 +1,7 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("test/skylark/extension.bzl","def _impl(ctx):","  _impl(ctx)","empty = rule(implementation = _impl)");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'empty')","empty(name = 'test_target')");
+  getConfiguredTarget("//test/skylark:test_target");
+  assertContainsEvent("Recursion was detected when calling '_impl' from '_impl'");
+}

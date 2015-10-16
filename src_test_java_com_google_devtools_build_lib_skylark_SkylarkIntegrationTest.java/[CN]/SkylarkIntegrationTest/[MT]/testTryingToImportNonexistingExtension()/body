@@ -1,0 +1,11 @@
+{
+  scratch.file("test/BUILD","load('/test/skylark/non_existing_extension', 'custom_rule_test')","","custom_rule_test(name = 'cr')");
+  reporter.removeHandler(failFastHandler);
+  try {
+    getTarget("//test:cr");
+    fail();
+  }
+ catch (  BuildFileContainsErrorsException e) {
+    assertContainsEvent("Extension file not found: 'test/skylark/non_existing_extension.bzl'");
+  }
+}

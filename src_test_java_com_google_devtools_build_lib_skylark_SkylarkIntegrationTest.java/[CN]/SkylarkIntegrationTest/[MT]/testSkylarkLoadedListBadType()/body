@@ -1,0 +1,11 @@
+{
+  scratch.file("test/skylark/extension.bzl","l1 = ['a']");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'l1')","","m = l1 + ('b',)","genrule(name = ''.join(m), cmd = 'echo hi >@', outs = ['a.txt'])");
+  try {
+    getConfiguredTarget("//test/skylark:ab");
+    fail();
+  }
+ catch (  AssertionFailedError ex) {
+    assertThat(ex.getMessage()).contains("can only concatenate List (not \"Tuple\") to List");
+  }
+}

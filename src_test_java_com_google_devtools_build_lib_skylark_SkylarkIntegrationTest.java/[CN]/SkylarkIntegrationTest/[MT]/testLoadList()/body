@@ -1,0 +1,8 @@
+{
+  scratch.file("test/skylark/extension.bzl","li = [('abc', '11'), ('def', '22')]");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'li')","[cc_library(name = lm[0]) for lm in li]");
+  ConfiguredTarget target=getConfiguredTarget("//test/skylark:abc");
+  assertThat(target.getLabel().toString()).isEqualTo("//test/skylark:abc");
+  target=getConfiguredTarget("//test/skylark:def");
+  assertThat(target.getLabel().toString()).isEqualTo("//test/skylark:def");
+}

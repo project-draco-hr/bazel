@@ -1,0 +1,7 @@
+{
+  scratch.file("test/skylark/extension.bzl","def extension_func(name):","  native.genrule(","    name = name, cmd = 'echo ' + PACKAGE_NAME + ' >@', outs = [name + '.txt'])");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'extension_func')","","extension_func('a')");
+  SpawnAction action=(SpawnAction)getGeneratingAction(Iterables.getOnlyElement(getFilesToBuild(getConfiguredTarget("//test/skylark:a"))));
+  String cmd=action.getArguments().get(2);
+  assertThat(cmd).contains("echo test/skylark >@");
+}

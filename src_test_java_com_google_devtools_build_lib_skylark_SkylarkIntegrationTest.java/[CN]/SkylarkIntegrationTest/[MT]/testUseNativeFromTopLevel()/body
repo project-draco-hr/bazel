@@ -1,0 +1,12 @@
+{
+  scratch.file("test/skylark/extension.bzl","native.cc_library(name = 'cr2')","a = 0");
+  scratch.file("test/skylark/BUILD","cc_library(name = 'cr')","load('/test/skylark/extension', 'a')");
+  reporter.removeHandler(failFastHandler);
+  try {
+    getTarget("//test/skylark:cr");
+    fail();
+  }
+ catch (  BuildFileContainsErrorsException e) {
+    assertContainsEvent("The native module cannot be accessed from here");
+  }
+}

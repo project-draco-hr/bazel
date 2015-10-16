@@ -1,0 +1,6 @@
+{
+  scratch.file("test/skylark/extension.bzl","def macro():","  print('macro hello')");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'macro')","","macro()","genrule(name = 'r', outs = ['r.txt'], cmd = 'echo hi >@')");
+  getConfiguredTarget("//test/skylark:r");
+  assertContainsEventsInOrder("macro hello");
+}

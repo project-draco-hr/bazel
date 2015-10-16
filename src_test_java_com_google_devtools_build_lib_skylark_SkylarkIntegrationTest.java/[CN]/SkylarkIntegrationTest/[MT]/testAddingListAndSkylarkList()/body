@@ -1,0 +1,7 @@
+{
+  scratch.file("test/skylark/extension.bzl","def macro(n, input_dict):","  d = ' '.join(input_dict['list'] + ['2'])","  native.genrule(name = n, cmd = 'echo %s >@' % d, outs = [n + '.txt'])");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'macro')","","macro(n = 'a', input_dict = {'list': ['1']})");
+  SpawnAction action=(SpawnAction)getGeneratingAction(Iterables.getOnlyElement(getFilesToBuild(getConfiguredTarget("//test/skylark:a"))));
+  String cmd=action.getArguments().get(2);
+  assertThat(cmd).contains("echo 1 2 >@");
+}

@@ -1,0 +1,11 @@
+{
+  scratch.file("run/file/test/secret_script.sh","#!/bin/bash");
+  scratch.file("run/file/test/important_data","secret");
+  scratch.file("run/file/test/useless_data","useless!");
+  scratch.file("run/file/test/myrule.bzl","def _impl(ctx):","  ctx.action(command = '%s > %s' % (ctx.executable.script.path, ctx.outputs.out.path), ","  inputs = [ctx.executable.script], ","  outputs = [ctx.outputs.out])","my_rule = rule(implementation = _impl, ","  attrs = {","    'script' : attr.label(allow_files=True,executable=True,cfg=HOST_CFG),","    'junk' : attr.label(allow_files=True,executable=True),","  }","  ,","  outputs = {'out': '%{name}_out'}  ",")");
+  scratch.file("run/file/test/BUILD","load('/run/file/test/myrule', 'my_rule')","","sh_binary(","  name = 'important_binary', ","  srcs = ['secret_script.sh'],","  data = ['important_data'],",")","sh_binary(","  name = 'useless_binary', ","  srcs = ['secret_script.sh'],","  data = ['useless_data'],",")","my_rule(","  name = 'main',","  script = ':important_binary',","  junk = ':useless_binary',",")");
+  Iterable<String> runfiles=extractDataRunfiles(getConfiguredTarget("//run/file/test:main"));
+  assertThat(runfiles).contains("run/file/test/secret_script.sh");
+  assertThat(runfiles).contains("run/file/test/important_data");
+  assertThat(runfiles).doesNotContain("run/file/test/useless_data");
+}
