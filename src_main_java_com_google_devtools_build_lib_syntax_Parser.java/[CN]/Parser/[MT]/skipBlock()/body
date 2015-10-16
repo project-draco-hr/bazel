@@ -3,7 +3,8 @@
   Token blockToken=token;
   syncTo(EnumSet.of(TokenKind.COLON,TokenKind.EOF));
   if (parsingMode != PYTHON) {
-    reportError(lexer.createLocation(start,token.right),"syntax error at '" + blockToken + "': This is not supported in BUILD files. "+ "Move the block to a .bzl file and load it");
+    String msg=ILLEGAL_BLOCK_KEYWORDS.containsKey(blockToken.kind) ? String.format("%ss are not supported.",ILLEGAL_BLOCK_KEYWORDS.get(blockToken.kind)) : "This is not supported in BUILD files. Move the block to a .bzl file and load it";
+    reportError(lexer.createLocation(start,token.right),String.format("syntax error at '%s': %s",blockToken,msg));
   }
   expect(TokenKind.COLON);
   skipSuite();
