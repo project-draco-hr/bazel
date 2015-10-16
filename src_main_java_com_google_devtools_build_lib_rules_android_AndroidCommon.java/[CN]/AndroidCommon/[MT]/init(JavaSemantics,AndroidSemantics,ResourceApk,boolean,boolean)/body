@@ -2,10 +2,10 @@
   classJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_CLASS_JAR);
   idlHelper=new AndroidIdlHelper(ruleContext,classJar);
   ImmutableList.Builder<Artifact> extraSourcesBuilder=ImmutableList.<Artifact>builder().addAll(resourceApk.isLegacy() || resourceApk.getResourceJavaSrcJar() == null ? ImmutableList.<Artifact>of() : ImmutableList.of(resourceApk.getResourceJavaSrcJar())).addAll(idlHelper.getIdlGeneratedJavaSources());
-  JavaTargetAttributes.Builder attributes=init(androidSemantics,resourceApk.getTransitiveResources(),extraSourcesBuilder.build());
+  JavaTargetAttributes.Builder attributes=init(androidSemantics,extraSourcesBuilder.build());
   JavaCompilationArtifacts.Builder artifactsBuilder=new JavaCompilationArtifacts.Builder();
   if (resourceApk.isLegacy()) {
-    compileResources(javaSemantics,artifactsBuilder,attributes,resourceApk.getTransitiveResources(),resourceApk.getPrimaryResource());
+    compileResources(javaSemantics,artifactsBuilder,attributes,resourceApk.getResourceDependencies(),resourceApk.getPrimaryResource());
   }
   JavaCompilationHelper helper=initAttributes(attributes,javaSemantics);
   if (ruleContext.hasErrors()) {
