@@ -2,7 +2,7 @@
   SkyframeBuildView view=buildViewProvider.getSkyframeBuildView();
   NestedSetBuilder<Package> transitivePackages=NestedSetBuilder.stableOrder();
   AspectKey key=(AspectKey)skyKey.argument();
-  ConfiguredAspectFactory aspectFactory=(ConfiguredAspectFactory)AspectFactory.Util.create(key.getAspect());
+  ConfiguredAspectFactory aspectFactory=aspectFactoryCreator.createAspectFactory(skyKey,env);
   PackageValue packageValue=(PackageValue)env.getValue(PackageValue.key(key.getLabel().getPackageIdentifier()));
   if (packageValue == null) {
     return null;
@@ -40,7 +40,7 @@
       return null;
     }
     ListMultimap<Attribute,ConfiguredTarget> depValueMap=ConfiguredTargetFunction.computeDependencies(env,resolver,ctgValue,aspectFactory.getDefinition(),key.getParameters(),configConditions,ruleClassProvider,view.getHostConfiguration(ctgValue.getConfiguration()),transitivePackages);
-    return createAspect(env,key,associatedTarget,configConditions,depValueMap,transitivePackages);
+    return createAspect(env,key,aspectFactory,associatedTarget,configConditions,depValueMap,transitivePackages);
   }
  catch (  DependencyEvaluationException e) {
     throw new AspectFunctionException(e.getRootCauseSkyKey(),e.getCause());
