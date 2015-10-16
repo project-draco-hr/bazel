@@ -1,8 +1,8 @@
 {
-  PathFragment ideBuildFilePath=getOutputFilePath(base,ruleContext);
-  Root genfilesDirectory=ruleContext.getConfiguration().getGenfilesDirectory();
-  Artifact ideInfoFile=ruleContext.getAnalysisEnvironment().getDerivedArtifact(ideBuildFilePath,genfilesDirectory);
+  Artifact ideInfoFile=ideInfoArtifact(base,ruleContext,ASWB_BUILD_SUFFIX);
+  Artifact ideInfoTextFile=ideInfoArtifact(base,ruleContext,ASWB_BUILD_TEXT_SUFFIX);
   providerBuilder.ideInfoFilesBuilder().add(ideInfoFile);
+  providerBuilder.ideInfoTextFilesBuilder().add(ideInfoTextFile);
   NestedSetBuilder<Artifact> ideResolveArtifacts=providerBuilder.ideResolveFilesBuilder();
   RuleIdeInfo.Builder outputBuilder=RuleIdeInfo.newBuilder();
   outputBuilder.setLabel(base.getLabel().toString());
@@ -23,5 +23,6 @@
   outputBuilder.addAllTags(base.getTarget().getAssociatedRule().getRuleTags());
   final RuleIdeInfo ruleIdeInfo=outputBuilder.build();
   ruleContext.registerAction(makeProtoWriteAction(ruleContext.getActionOwner(),ruleIdeInfo,ideInfoFile));
+  ruleContext.registerAction(makeProtoTextWriteAction(ruleContext.getActionOwner(),ruleIdeInfo,ideInfoTextFile));
   return provider;
 }
