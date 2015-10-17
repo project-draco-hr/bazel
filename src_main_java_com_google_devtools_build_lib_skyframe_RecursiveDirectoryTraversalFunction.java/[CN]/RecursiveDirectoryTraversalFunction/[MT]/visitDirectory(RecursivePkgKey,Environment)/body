@@ -18,15 +18,21 @@
     return getEmptyReturn();
   }
   PackageIdentifier packageId=PackageIdentifier.create(recursivePkgKey.getRepository(),rootRelativePath);
+  SkyKey pkgLookupKey=PackageLookupValue.key(packageId);
+  SkyKey dirListingKey=DirectoryListingValue.key(rootedPath);
+  Map<SkyKey,ValueOrException4<NoSuchPackageException,InconsistentFilesystemException,FileSymlinkException,IOException>> pkgLookupAndDirectoryListingDeps=env.getValuesOrThrow(ImmutableList.of(pkgLookupKey,dirListingKey),NoSuchPackageException.class,InconsistentFilesystemException.class,FileSymlinkException.class,IOException.class);
+  if (env.valuesMissing()) {
+    return null;
+  }
   PackageLookupValue pkgLookupValue;
   try {
-    pkgLookupValue=(PackageLookupValue)env.getValueOrThrow(PackageLookupValue.key(packageId),NoSuchPackageException.class,InconsistentFilesystemException.class);
+    pkgLookupValue=(PackageLookupValue)Preconditions.checkNotNull(pkgLookupAndDirectoryListingDeps.get(pkgLookupKey).get(),"%s %s",recursivePkgKey,pkgLookupKey);
   }
  catch (  NoSuchPackageException|InconsistentFilesystemException e) {
     return reportErrorAndReturn("Failed to load package",e,rootRelativePath,env.getListener());
   }
-  if (pkgLookupValue == null) {
-    return null;
+catch (  IOException|FileSymlinkException e) {
+    throw new IllegalStateException(e);
   }
   TVisitor visitor=getInitialVisitor();
   if (pkgLookupValue.packageExists()) {
@@ -53,9 +59,9 @@
       }
     }
   }
-  DirectoryListingValue dirValue;
+  DirectoryListingValue dirListingValue;
   try {
-    dirValue=(DirectoryListingValue)env.getValueOrThrow(DirectoryListingValue.key(rootedPath),InconsistentFilesystemException.class,IOException.class,FileSymlinkException.class);
+    dirListingValue=(DirectoryListingValue)Preconditions.checkNotNull(pkgLookupAndDirectoryListingDeps.get(dirListingKey).get(),"%s %s",recursivePkgKey,dirListingKey);
   }
  catch (  InconsistentFilesystemException|IOException e) {
     return reportErrorAndReturn("Failed to list directory contents",e,rootRelativePath,env.getListener());
@@ -63,11 +69,11 @@
 catch (  FileSymlinkException e) {
     throw new IllegalStateException("Symlink cycle found after not being found for \"" + rootedPath + "\"");
   }
-  if (dirValue == null) {
-    return null;
+catch (  NoSuchPackageException e) {
+    throw new IllegalStateException(e);
   }
   List<SkyKey> childDeps=Lists.newArrayList();
-  for (  Dirent dirent : dirValue.getDirents()) {
+  for (  Dirent dirent : dirListingValue.getDirents()) {
     if (dirent.getType() != Type.DIRECTORY && dirent.getType() != Type.SYMLINK) {
       continue;
     }

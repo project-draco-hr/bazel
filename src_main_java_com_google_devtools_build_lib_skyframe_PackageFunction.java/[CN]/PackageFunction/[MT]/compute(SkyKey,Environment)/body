@@ -87,12 +87,8 @@ handleLabelsCrossingSubpackagesAndPropagateInconsistentFilesystemExceptions(pack
 packageFunctionCache.invalidate(packageId);
 throw new PackageFunctionException(e,e.isTransient() ? Transience.TRANSIENT : Transience.PERSISTENT);
 }
-if (env.valuesMissing()) {
-return null;
-}
 Collection<Pair<String,Boolean>> globPatterns=legacyPkgBuilder.getGlobPatterns();
 Map<Label,Path> subincludes=legacyPkgBuilder.getSubincludes();
-Event.replayEventsOn(env.getListener(),legacyPkgBuilder.getEvents());
 boolean packageShouldBeConsideredInError;
 try {
 packageShouldBeConsideredInError=markDependenciesAndPropagateInconsistentFilesystemExceptions(env,globPatterns,subincludes,packageId,legacyPkgBuilder.containsErrors());
@@ -104,6 +100,7 @@ throw new PackageFunctionException(e,e.isTransient() ? Transience.TRANSIENT : Tr
 if (env.valuesMissing()) {
 return null;
 }
+Event.replayEventsOn(env.getListener(),legacyPkgBuilder.getEvents());
 if (packageShouldBeConsideredInError) {
 legacyPkgBuilder.setContainsErrors();
 }
