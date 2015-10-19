@@ -11,8 +11,8 @@
   if (env.valuesMissing()) {
     return null;
   }
-  ResolvedTargets.Builder<Target> result=ResolvedTargets.builder();
-  result.mergeError(targets.hasError());
+  Set<Target> result=new LinkedHashSet<>();
+  boolean hasError=targets.hasError();
   for (  Target target : targets.getTargets()) {
     if (TargetUtils.isTestRule(target)) {
       result.add(target);
@@ -20,7 +20,8 @@
  else     if (TargetUtils.isTestSuiteRule(target)) {
       TestsInSuiteValue value=(TestsInSuiteValue)testsInSuites.get(TestsInSuiteValue.key(target,true));
       if (value != null) {
-        result.merge(value.getTargets());
+        result.addAll(value.getTargets().getTargets());
+        hasError|=value.getTargets().hasError();
       }
     }
  else {
@@ -30,5 +31,5 @@
   if (env.valuesMissing()) {
     return null;
   }
-  return new TestSuiteExpansionValue(result.build());
+  return new TestSuiteExpansionValue(new ResolvedTargets<Target>(result,hasError));
 }
