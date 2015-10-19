@@ -1,6 +1,0 @@
-{
-  scratch.file("test/skylark/helper.bzl","some_constant = set(['a'])","def some_func():","  return set(['b'])","def helper_func():","  return some_constant + some_func()");
-  scratch.file("test/skylark/implementation.bzl","load('/test/skylark/helper', 'helper_func')","def custom_rule_impl(ctx):","  return struct(","    p = helper_func())","custom_rule = rule(implementation = custom_rule_impl)");
-  scratch.file("test/skylark/BUILD","load('/test/skylark/implementation', 'custom_rule')","custom_rule(name = 'cr')");
-  assertEquals(ImmutableList.of("b","a"),((SkylarkNestedSet)getConfiguredTarget("//test/skylark:cr").get("p")).toCollection());
-}

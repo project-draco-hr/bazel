@@ -1,7 +1,0 @@
-{
-  scratch.file("test/skylark/extension.bzl","def impl(ctx):","  ctx.file_action(ctx.outputs.o, '')","  f = ctx.info_file","  f = ctx.outputs.o","  l1 = [ctx.info_file, ctx.outputs.o]","  l2 = [ctx.outputs.o, ctx.info_file]","  s1 = set([ctx.info_file]) + [ctx.outputs.o]","  s2 = set([ctx.outputs.o]) + [ctx.info_file]","  return struct(","     info=ctx.info_file, version=ctx.version_file)","","r = rule(implementation=impl, outputs={'o': '%{name}.txt'})");
-  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'r')","","r(name='r')");
-  ConfiguredTarget target=getConfiguredTarget("//test/skylark:r");
-  assertEquals("build-info.txt",((Artifact)target.get("info")).getFilename());
-  assertEquals("build-changelist.txt",((Artifact)target.get("version")).getFilename());
-}

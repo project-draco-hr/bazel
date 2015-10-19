@@ -1,9 +1,0 @@
-{
-  scratch.file("test/BUILD");
-  scratch.file("test/project/data1.dat","");
-  scratch.file("test/skylark/extension.bzl","def extension_func(name, srcs):","  native.genrule(name = name,","    srcs = srcs,","    outs = [name + '.txt'],","    cmd = 'echo $(SRCS) hello >@')");
-  scratch.file("test/project/BUILD","load('/test/skylark/extension', 'extension_func')","","extension_func(name = 'rule1', srcs = glob(['*.dat']))");
-  ConfiguredTarget target=getConfiguredTarget("//test/project:rule1");
-  Action action=getGeneratingAction(Iterables.getOnlyElement(getFilesToBuild(target)));
-  assertThat(baseArtifactNames(action.getInputs())).contains("data1.dat");
-}

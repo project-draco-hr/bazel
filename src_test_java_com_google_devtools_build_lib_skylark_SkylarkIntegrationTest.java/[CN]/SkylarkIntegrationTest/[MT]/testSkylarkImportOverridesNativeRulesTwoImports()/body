@@ -1,9 +1,0 @@
-{
-  scratch.file("test/skylark/extension1.bzl","def custom_rule_impl(ctx):","  return struct(custom_provider = 'a')","","genrule = rule(implementation = custom_rule_impl)");
-  scratch.file("test/skylark/extension2.bzl","def custom_rule_impl(ctx):","  return struct(custom_provider = 'b')","","genrule = rule(implementation = custom_rule_impl)");
-  scratch.file("test/skylark/BUILD","load('/test/skylark/extension1', 'genrule')","first_genrule = genrule","load('/test/skylark/extension2', 'genrule')","","first_genrule(name = 'cr1')","genrule(name = 'cr2')");
-  ConfiguredTarget target1=getConfiguredTarget("//test/skylark:cr1");
-  assertEquals("a",target1.get("custom_provider"));
-  ConfiguredTarget target2=getConfiguredTarget("//test/skylark:cr2");
-  assertEquals("b",target2.get("custom_provider"));
-}
