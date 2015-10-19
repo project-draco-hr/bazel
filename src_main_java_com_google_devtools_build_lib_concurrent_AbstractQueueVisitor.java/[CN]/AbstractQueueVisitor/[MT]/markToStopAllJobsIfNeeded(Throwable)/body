@@ -1,8 +1,20 @@
 {
-  if (isCriticalErrorInternal(e) && !jobsMustBeStopped) {
-    jobsMustBeStopped=true;
+  boolean critical=false;
+switch (classifyErrorInternal(e)) {
+case CRITICAL_AND_LOG:
+    critical=true;
+  LOG.log(Level.WARNING,"Found critical error in queue visitor",e);
+break;
+case CRITICAL:
+critical=true;
+break;
+default :
+break;
+}
+if (critical && !jobsMustBeStopped) {
+jobsMustBeStopped=true;
 synchronized (zeroRemainingTasks) {
-      zeroRemainingTasks.notify();
-    }
-  }
+zeroRemainingTasks.notify();
+}
+}
 }
