@@ -14,30 +14,14 @@
 );
   List<AspectKey> aspectKeys=new ArrayList<>();
   for (  String aspect : aspects) {
-    int delimiterPosition=aspect.indexOf('%');
-    if (delimiterPosition >= 0) {
-      PackageIdentifier bzlFile;
-      try {
-        bzlFile=PackageIdentifier.create(PackageIdentifier.DEFAULT_REPOSITORY,new PathFragment(aspect.substring(0,delimiterPosition)));
-      }
- catch (      LabelSyntaxException e) {
-        throw new ViewCreationFailedException("Error",e);
-      }
-      String skylarkFunctionName=aspect.substring(delimiterPosition + 1);
+    @SuppressWarnings("unchecked") final Class<? extends ConfiguredAspectFactory> aspectFactoryClass=(Class<? extends ConfiguredAspectFactory>)ruleClassProvider.getAspectFactoryMap().get(aspect);
+    if (aspectFactoryClass != null) {
       for (      ConfiguredTargetKey targetSpec : targetSpecs) {
-        aspectKeys.add(AspectValue.createSkylarkAspectKey(targetSpec.getLabel(),targetSpec.getConfiguration(),bzlFile,skylarkFunctionName));
+        aspectKeys.add(AspectValue.createAspectKey(targetSpec.getLabel(),targetSpec.getConfiguration(),aspectFactoryClass));
       }
     }
  else {
-      @SuppressWarnings("unchecked") final Class<? extends ConfiguredAspectFactory> aspectFactoryClass=(Class<? extends ConfiguredAspectFactory>)ruleClassProvider.getAspectFactoryMap().get(aspect);
-      if (aspectFactoryClass != null) {
-        for (        ConfiguredTargetKey targetSpec : targetSpecs) {
-          aspectKeys.add(AspectValue.createAspectKey(targetSpec.getLabel(),targetSpec.getConfiguration(),aspectFactoryClass));
-        }
-      }
- else {
-        throw new ViewCreationFailedException("Aspect '" + aspect + "' is unknown");
-      }
+      throw new ViewCreationFailedException("Aspect '" + aspect + "' is unknown");
     }
   }
   if (loadingEnabled) {

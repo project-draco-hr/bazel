@@ -2,17 +2,23 @@
   super(base.getTarget(),base.getConfiguration());
   Set<Class<? extends TransitiveInfoProvider>> providers=new HashSet<>();
   providers.addAll(base.providers.keySet());
-  List<OutputGroupProvider> outputGroupProviders=getAllProviders(base,aspects,OutputGroupProvider.class);
-  OutputGroupProvider mergedOutputGroupProvider=OutputGroupProvider.merge(outputGroupProviders);
-  List<SkylarkProviders> skylarkProviders=getAllProviders(base,aspects,SkylarkProviders.class);
-  SkylarkProviders mergedSkylarkProviders=SkylarkProviders.merge(skylarkProviders);
+  OutputGroupProvider baseOutputGroupProvider=base.getProvider(OutputGroupProvider.class);
+  List<OutputGroupProvider> outputGroupProviders=new ArrayList<>();
+  if (baseOutputGroupProvider != null) {
+    outputGroupProviders.add(baseOutputGroupProvider);
+  }
+  for (  Aspect aspect : aspects) {
+    final OutputGroupProvider aspectProvider=aspect.getProvider(OutputGroupProvider.class);
+    if (aspectProvider == null) {
+      continue;
+    }
+    outputGroupProviders.add(aspectProvider);
+  }
+  OutputGroupProvider outputGroupProvider=OutputGroupProvider.merge(outputGroupProviders);
   for (  Aspect aspect : aspects) {
     for (    TransitiveInfoProvider aspectProvider : aspect) {
       Class<? extends TransitiveInfoProvider> aClass=aspectProvider.getClass();
       if (OutputGroupProvider.class.equals(aClass)) {
-        continue;
-      }
-      if (SkylarkProviders.class.equals(aClass)) {
         continue;
       }
       if (!providers.add(aClass)) {
@@ -20,7 +26,7 @@
       }
     }
   }
-  if (base.getProvider(OutputGroupProvider.class) == mergedOutputGroupProvider && base.getProvider(SkylarkProviders.class) == mergedSkylarkProviders) {
+  if (baseOutputGroupProvider == outputGroupProvider) {
     this.providers=base.providers;
   }
  else {
@@ -29,17 +35,9 @@
       if (OutputGroupProvider.class.equals(aClass)) {
         continue;
       }
-      if (SkylarkProviders.class.equals(aClass)) {
-        continue;
-      }
       builder.put(aClass,base.providers.get(aClass));
     }
-    if (mergedOutputGroupProvider != null) {
-      builder.put(OutputGroupProvider.class,mergedOutputGroupProvider);
-    }
-    if (mergedSkylarkProviders != null) {
-      builder.put(SkylarkProviders.class,skylarkProviders);
-    }
+    builder.put(OutputGroupProvider.class,outputGroupProvider);
     this.providers=builder.build();
   }
   this.mandatoryStampFiles=base.mandatoryStampFiles;
