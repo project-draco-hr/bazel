@@ -1,0 +1,18 @@
+{
+  File rulesDir=new File(from);
+  if (rulesDir.exists() && rulesDir.isDirectory()) {
+    for (    String fileName : rulesDir.list()) {
+      File file=new File(from + "/" + fileName);
+      if (file.isFile() && fileName.endsWith(".bzl")) {
+        String context=Files.toString(file,Charset.defaultCharset());
+        Path path=scratch.resolve(to + "/" + fileName);
+        if (path.exists()) {
+          scratch.overwriteFile(path.getPathString(),context);
+        }
+ else {
+          scratch.file(path.getPathString(),context);
+        }
+      }
+    }
+  }
+}

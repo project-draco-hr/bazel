@@ -1,0 +1,7 @@
+{
+  super.setUp();
+  SkylarkUtil.setup(scratch);
+  scratch.file("test/BUILD","load('/rules/java_rules_skylark', 'java_library')","java_library(name = 'giraffe',","    srcs = ['Giraffe.java'],",")","java_library(name = 'safari',","    srcs = ['Safari.java'],","    deps = ['//external:long-horse'],",")");
+  scratch.overwriteFile("tools/jdk/BUILD","package(default_visibility = ['//visibility:public'])","filegroup(name = 'java', srcs = ['bin/java'])","filegroup(name = 'jar', srcs = ['bin/jar'])","filegroup(name = 'javac', srcs = ['bin/javac'])","filegroup(name = 'jdk')");
+  scratch.overwriteFile("WORKSPACE","bind(","    name = 'long-horse',","    actual = '//test:giraffe',",")");
+}
