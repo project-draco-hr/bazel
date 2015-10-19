@@ -1,68 +1,88 @@
 {
   List<Artifact> outs=new ArrayList<>();
-  CustomCommandLine.Builder builder=new CustomCommandLine.Builder();
-  builder.addExecPath("--aapt",sdk.getAapt().getExecutable());
-  NestedSetBuilder<Artifact> inputs=NestedSetBuilder.naiveLinkOrder();
-  inputs.addAll(ruleContext.getExecutablePrerequisite("$android_resources_processor",Mode.HOST).getRunfilesSupport().getRunfilesArtifactsWithoutMiddlemen());
-  builder.addExecPath("--annotationJar",sdk.getAnnotationsJar());
-  inputs.add(sdk.getAnnotationsJar());
-  builder.addExecPath("--androidJar",sdk.getAndroidJar());
-  inputs.add(sdk.getAndroidJar());
-  builder.add("--primaryData").add(RESOURCE_CONTAINER_TO_ARG.apply(primary));
-  inputs.addTransitive(RESOURCE_CONTAINER_TO_ARTIFACTS.apply(primary));
-  if (dependencies != null) {
-    builder.addJoinStrings("--data",",",Iterables.transform(dependencies.getTransitiveResources(),RESOURCE_DEP_TO_ARG));
-    builder.addJoinStrings("--directData",",",Iterables.transform(dependencies.getDirectResources(),RESOURCE_DEP_TO_ARG));
-    inputs.addTransitive(NestedSetBuilder.wrap(Order.NAIVE_LINK_ORDER,FluentIterable.from(dependencies.getResources()).transformAndConcat(RESOURCE_DEP_TO_ARTIFACTS)));
+  List<Artifact> ins=new ArrayList<>();
+  List<String> args=new ArrayList<>();
+  args.add("--aapt");
+  args.add(sdk.getAapt().getExecutable().getExecPathString());
+  Iterables.addAll(ins,ruleContext.getExecutablePrerequisite("$android_resources_processor",Mode.HOST).getRunfilesSupport().getRunfilesArtifactsWithoutMiddlemen());
+  args.add("--annotationJar");
+  args.add(sdk.getAnnotationsJar().getExecPathString());
+  ins.add(sdk.getAnnotationsJar());
+  args.add("--androidJar");
+  args.add(sdk.getAndroidJar().getExecPathString());
+  ins.add(sdk.getAndroidJar());
+  args.add("--primaryData");
+  addPrimaryResourceContainer(ins,args,primary);
+  if (!dependencies.isEmpty()) {
+    args.add("--data");
+    List<String> data=new ArrayList<>();
+    for (    ResourceContainer container : dependencies) {
+      addResourceContainer(ins,data,container);
+    }
+    args.add(Joiner.on(",").join(data));
   }
   if (rTxtOut != null) {
-    builder.addExecPath("--rOutput",rTxtOut);
+    args.add("--rOutput");
+    args.add(rTxtOut.getExecPathString());
     outs.add(rTxtOut);
-    builder.add("--packageType").add("LIBRARY");
+    args.add("--packageType");
+    args.add("LIBRARY");
   }
   if (symbolsTxt != null) {
-    builder.addExecPath("--symbolsTxtOut",symbolsTxt);
+    args.add("--symbolsTxtOut");
+    args.add(symbolsTxt.getExecPathString());
     outs.add(symbolsTxt);
   }
   if (sourceJarOut != null) {
-    builder.addExecPath("--srcJarOutput",sourceJarOut);
+    args.add("--srcJarOutput");
+    args.add(sourceJarOut.getExecPathString());
     outs.add(sourceJarOut);
   }
   if (proguardOut != null) {
-    builder.addExecPath("--proguardOutput",proguardOut);
+    args.add("--proguardOutput");
+    args.add(proguardOut.getExecPathString());
     outs.add(proguardOut);
   }
   if (apkOut != null) {
-    builder.addExecPath("--packagePath",apkOut);
+    args.add("--packagePath");
+    args.add(apkOut.getExecPathString());
     outs.add(apkOut);
   }
   if (!resourceConfigs.isEmpty()) {
-    builder.addJoinStrings("--resourceConfigs",",",resourceConfigs);
+    args.add("--resourceConfigs");
+    args.add(Joiner.on(',').join(resourceConfigs));
   }
   if (!densities.isEmpty()) {
-    builder.addJoinStrings("--densities","'",densities);
+    args.add("--densities");
+    args.add(Joiner.on(',').join(densities));
   }
   if (!uncompressedExtensions.isEmpty()) {
-    builder.addJoinStrings("--uncompressedExtensions",",",uncompressedExtensions);
+    args.add("--uncompressedExtensions");
+    args.add(Joiner.on(',').join(uncompressedExtensions));
   }
   if (!assetsToIgnore.isEmpty()) {
-    builder.addJoinStrings("--assetsToIgnore",",",assetsToIgnore);
+    args.add("--assetsToIgnore");
+    args.add(Joiner.on(',').join(assetsToIgnore));
   }
   if (debug) {
-    builder.add("--debug");
+    args.add("--debug");
   }
   if (versionCode != null) {
-    builder.add("--versionCode").add(versionCode);
+    args.add("--versionCode");
+    args.add(versionCode);
   }
   if (versionName != null) {
-    builder.add("--versionName").add(versionName);
+    args.add("--versionName");
+    args.add(versionName);
   }
   if (applicationId != null) {
-    builder.add("--applicationId").add(applicationId);
+    args.add("--applicationId");
+    args.add(applicationId);
   }
   if (!Strings.isNullOrEmpty(customJavaPackage)) {
-    builder.add("--packageForR").add(customJavaPackage);
+    args.add("--packageForR");
+    args.add(customJavaPackage);
   }
-  ruleContext.registerAction(this.spawnActionBuilder.addTool(sdk.getAapt()).addTransitiveInputs(inputs.build()).addOutputs(ImmutableList.<Artifact>copyOf(outs)).setCommandLine(builder.build()).setExecutable(ruleContext.getExecutablePrerequisite("$android_resources_processor",Mode.HOST)).setProgressMessage("Processing resources").setMnemonic("AndroidAapt").build(context));
+  ruleContext.registerAction(this.spawnActionBuilder.addTool(sdk.getAapt()).addInputs(ImmutableList.<Artifact>copyOf(ins)).addOutputs(ImmutableList.<Artifact>copyOf(outs)).addArguments(ImmutableList.<String>copyOf(args)).setExecutable(ruleContext.getExecutablePrerequisite("$android_resources_processor",Mode.HOST)).setProgressMessage("Processing resources").setMnemonic("AndroidAapt").build(context));
   return new ResourceContainer(primary.getLabel(),primary.getJavaPackage(),primary.getRenameManifestPackage(),primary.getConstantsInlined(),apkOut != null ? apkOut : primary.getApk(),primary.getManifest(),sourceJarOut,primary.getArtifacts(ResourceType.ASSETS),primary.getArtifacts(ResourceType.RESOURCES),primary.getRoots(ResourceType.ASSETS),primary.getRoots(ResourceType.RESOURCES),primary.isManifestExported(),rTxtOut,symbolsTxt);
 }

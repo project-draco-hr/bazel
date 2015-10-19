@@ -1,5 +1,7 @@
 {
-  ResourceContainer resourceContainer=Iterables.getOnlyElement(AndroidCommon.getAndroidResources(ruleContext).getDirectAndroidResources());
+  ResourceContainer resourceContainer=Iterables.getOnlyElement(AndroidCommon.getAndroidResources(ruleContext).getTransitiveAndroidResources());
+  NestedSet<ResourceContainer> resourceContainers=NestedSetBuilder.emptySet(Order.NAIVE_LINK_ORDER);
+  NestedSet<ResourceContainer> transitiveResources=NestedSetBuilder.<ResourceContainer>naiveLinkOrder().addAll(resourceContainers).add(resourceContainer).build();
   new AndroidAaptActionHelper(ruleContext,resourceContainer.getManifest(),Lists.newArrayList(resourceContainer)).createGenerateProguardAction(proguardCfg);
-  return new ResourceApk(resourceContainer.getApk(),null,ResourceDependencies.empty(),resourceContainer,manifest,proguardCfg,false);
+  return new ResourceApk(resourceContainer.getApk(),null,transitiveResources,resourceContainer,manifest,proguardCfg,false);
 }
