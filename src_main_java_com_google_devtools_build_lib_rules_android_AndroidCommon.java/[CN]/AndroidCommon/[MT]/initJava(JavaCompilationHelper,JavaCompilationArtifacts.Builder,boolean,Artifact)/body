@@ -43,8 +43,11 @@
   transitiveNeverlinkLibraries=collectTransitiveNeverlinkLibraries(ruleContext,javaCommon.getDependencies(),javaCommon.getJavaCompilationArtifacts().getRuntimeJars());
   topLevelSourceJars=ImmutableList.of(srcJar);
   transitiveSourceJars=javaCommon.collectTransitiveSourceJars(srcJar);
+  boolean hasSources=attributes.hasSourceFiles() || attributes.hasSourceJars();
+  if (!hasSources) {
+    this.transitiveJavaPluginInfoProvider=JavaPluginInfoProvider.merge(javaCommon.getPluginInfoProvidersForAttribute("deps",Mode.TARGET));
+  }
   if (collectJavaCompilationArgs) {
-    boolean hasSources=attributes.hasSourceFiles() || attributes.hasSourceJars();
     this.javaCompilationArgs=collectJavaCompilationArgs(ruleContext,exportDeps,asNeverLink,hasSources);
     this.recursiveJavaCompilationArgs=collectJavaCompilationArgs(ruleContext,true,asNeverLink,true);
   }
