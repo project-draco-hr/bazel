@@ -1,0 +1,14 @@
+{
+  FileValue buildFileValue;
+  try {
+    buildFileValue=(FileValue)env.getValueOrThrow(FileValue.key(buildFileRootedPath),IOException.class,FileSymlinkException.class,InconsistentFilesystemException.class);
+  }
+ catch (  IOException|FileSymlinkException|InconsistentFilesystemException e) {
+    throw new IllegalStateException("Package lookup succeeded but encountered error when " + "getting FileValue for BUILD file directly.",e);
+  }
+  if (buildFileValue == null) {
+    return null;
+  }
+  Preconditions.checkState(buildFileValue.exists(),"Package lookup succeeded but BUILD file doesn't exist");
+  return buildFileValue;
+}

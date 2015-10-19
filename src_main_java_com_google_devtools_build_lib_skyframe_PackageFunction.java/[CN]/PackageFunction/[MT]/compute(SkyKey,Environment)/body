@@ -41,19 +41,15 @@ throw new PackageFunctionException(new BuildFileContainsErrorsException(Package.
 PathFragment buildFileFragment=packageNameFragment.getChild("BUILD");
 RootedPath buildFileRootedPath=RootedPath.toRootedPath(packageLookupValue.getRoot(),buildFileFragment);
 FileValue buildFileValue=null;
-try {
-buildFileValue=(FileValue)env.getValueOrThrow(FileValue.key(buildFileRootedPath),IOException.class,FileSymlinkException.class,InconsistentFilesystemException.class);
-}
- catch (IOException|FileSymlinkException|InconsistentFilesystemException e) {
-throw new IllegalStateException("Package lookup succeeded but encountered error when " + "getting FileValue for BUILD file directly.",e);
-}
+Path buildFilePath=buildFileRootedPath.asPath();
+String replacementContents=null;
+if (!isDefaultsPackage(packageId)) {
+buildFileValue=getBuildFileValue(env,buildFileRootedPath);
 if (buildFileValue == null) {
 return null;
 }
-Preconditions.checkState(buildFileValue.exists(),"Package lookup succeeded but BUILD file doesn't exist");
-Path buildFilePath=buildFileRootedPath.asPath();
-String replacementContents=null;
-if (packageId.getPackageFragment().equals(DEFAULTS_PACKAGE_NAME) && packageId.getRepository().isDefault()) {
+}
+ else {
 replacementContents=PrecomputedValue.DEFAULTS_PACKAGE_CONTENTS.get(env);
 if (replacementContents == null) {
 return null;
