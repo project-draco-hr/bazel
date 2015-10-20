@@ -13,7 +13,7 @@
         throw new RepositoryFunctionException(e,Transience.TRANSIENT);
       }
     }
-    git=Git.cloneRepository().setURI(descriptor.remote).setDirectory(descriptor.directory.getPathFile()).setCloneSubmodules(false).setNoCheckout(true).setProgressMonitor(new GitProgressMonitor("Cloning " + descriptor.remote,reporter)).call();
+    git=Git.cloneRepository().setURI(descriptor.remote).setCredentialsProvider(new NetRCCredentialsProvider()).setDirectory(descriptor.directory.getPathFile()).setCloneSubmodules(false).setNoCheckout(true).setProgressMonitor(new GitProgressMonitor("Cloning " + descriptor.remote,reporter)).call();
     git.checkout().setCreateBranch(true).setName("bazel-checkout").setStartPoint(descriptor.checkout).call();
     if (descriptor.initSubmodules && !git.submoduleInit().call().isEmpty()) {
       git.submoduleUpdate().setProgressMonitor(new GitProgressMonitor("Cloning submodules for " + descriptor.remote,reporter)).call();
