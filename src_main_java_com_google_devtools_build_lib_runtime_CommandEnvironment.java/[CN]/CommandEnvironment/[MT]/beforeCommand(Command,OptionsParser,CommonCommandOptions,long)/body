@@ -14,6 +14,45 @@
       outputModule=module;
     }
   }
-  getSkyframeExecutor().setBatchStatter(outputService == null ? null : outputService.getBatchStatter());
-  runtime.beforeCommand(command,this,optionsParser,options,execStartTimeNanos);
+  SkyframeExecutor skyframeExecutor=getSkyframeExecutor();
+  skyframeExecutor.setBatchStatter(outputService == null ? null : outputService.getBatchStatter());
+  this.outputFileSystem=determineOutputFileSystem();
+  Path workspace=runtime.getWorkspace();
+  Path workingDirectory;
+  if (runtime.inWorkspace()) {
+    workingDirectory=workspace.getRelative(options.clientCwd);
+  }
+ else {
+    workspace=FileSystemUtils.getWorkingDirectory(runtime.getDirectories().getFileSystem());
+    workingDirectory=workspace;
+  }
+  loadingPhaseRunner.updatePatternEvaluator(workingDirectory.relativeTo(workspace));
+  this.workingDirectory=workingDirectory;
+  updateClientEnv(options.clientEnv,options.ignoreClientEnv);
+  skyframeExecutor.setActive(false);
+  skyframeExecutor.decideKeepIncrementalState(runtime.getStartupOptionsProvider().getOptions(BlazeServerStartupOptions.class).batch,optionsParser.getOptions(BuildView.Options.class));
+  runtime.beforeCommand(this,options,execStartTimeNanos);
+  if (command.builds()) {
+    Map<String,String> testEnv=new TreeMap<>();
+    for (    Map.Entry<String,String> entry : optionsParser.getOptions(BuildConfiguration.Options.class).testEnvironment) {
+      testEnv.put(entry.getKey(),entry.getValue());
+    }
+    try {
+      for (      Map.Entry<String,String> entry : testEnv.entrySet()) {
+        if (entry.getValue() == null) {
+          String clientValue=clientEnv.get(entry.getKey());
+          if (clientValue != null) {
+            optionsParser.parse(OptionPriority.SOFTWARE_REQUIREMENT,"test environment variable from client environment",ImmutableList.of("--test_env=" + entry.getKey() + "="+ clientEnv.get(entry.getKey())));
+          }
+        }
+      }
+    }
+ catch (    OptionsParsingException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+  for (  BlazeModule module : runtime.getBlazeModules()) {
+    module.handleOptions(optionsParser);
+  }
+  eventBus.post(new CommandStartEvent(command.name(),commandId,getClientEnv(),workingDirectory));
 }

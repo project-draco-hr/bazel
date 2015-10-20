@@ -1,0 +1,18 @@
+{
+  long startupTimeNanos=options.startupTime * 1000000L;
+  if (initProfiler(env,options,env.getCommandId(),execStartTimeNanos - startupTimeNanos)) {
+    Profiler profiler=Profiler.instance();
+    profiler.logSimpleTaskDuration(execStartTimeNanos - startupTimeNanos,0,ProfilerTask.PHASE,ProfilePhase.LAUNCH.description);
+    profiler.logSimpleTaskDuration(execStartTimeNanos,0,ProfilerTask.PHASE,ProfilePhase.INIT.description);
+  }
+  if (options.memoryProfilePath != null) {
+    Path memoryProfilePath=env.getWorkingDirectory().getRelative(options.memoryProfilePath);
+    try {
+      MemoryProfiler.instance().start(memoryProfilePath.getOutputStream());
+    }
+ catch (    IOException e) {
+      env.getReporter().handle(Event.error("Error while creating memory profile file: " + e.getMessage()));
+    }
+  }
+  storedExitCode.set(ExitCode.RESERVED.getNumericExitCode());
+}
