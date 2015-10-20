@@ -1,0 +1,24 @@
+{
+  ImmutableList.Builder<String> duplicates=new ImmutableList.Builder<>();
+  for (  Argument.Passed arg : args) {
+    Object value=arg.getValue().eval(env);
+    if (arg.isPositional()) {
+      posargs.add(value);
+    }
+ else     if (arg.isStar()) {
+      if (value instanceof Iterable) {
+        posargs.addAll((Iterable<Object>)value);
+      }
+    }
+ else     if (arg.isStarStar()) {
+      addKeywordArgs(kwargs,value,duplicates);
+    }
+ else {
+      addKeywordArg(kwargs,arg.getName(),value,duplicates);
+    }
+  }
+  List<String> dups=duplicates.build();
+  if (!dups.isEmpty()) {
+    throw new EvalException(getLocation(),"duplicate keyword" + (dups.size() > 1 ? "s" : "") + " '"+ Joiner.on("', '").join(dups)+ "' in call to "+ func);
+  }
+}

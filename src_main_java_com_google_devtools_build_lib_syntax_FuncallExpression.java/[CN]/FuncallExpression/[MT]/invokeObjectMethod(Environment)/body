@@ -7,8 +7,8 @@
     if (!isNamespace(objValue.getClass())) {
       posargs.add(objValue);
     }
-    evalArguments(posargs,kwargs,env,function);
-    return convertFromSkylark(function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env),env);
+    evalArguments(posargs,kwargs,env);
+    return function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env);
   }
  else   if (objValue instanceof ClassObject) {
     Object fieldValue=((ClassObject)objValue).getValue(func.getName());
@@ -19,11 +19,11 @@
       throw new EvalException(getLocation(),String.format("struct field '%s' is not a function",func.getName()));
     }
     function=(BaseFunction)fieldValue;
-    evalArguments(posargs,kwargs,env,function);
-    return convertFromSkylark(function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env),env);
+    evalArguments(posargs,kwargs,env);
+    return function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env);
   }
  else   if (env.isSkylark()) {
-    evalArguments(posargs,kwargs,env,null);
+    evalArguments(posargs,kwargs,env);
     Class<?> objClass;
     Object obj;
     if (objValue instanceof Class<?>) {
