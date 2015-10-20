@@ -17,6 +17,7 @@
   skyframeExecutor.setBatchStatter(outputService == null ? null : outputService.getBatchStatter());
   env.setOutputFileSystem(determineOutputFileSystem());
   Path workspace=getWorkspace();
+  Path workingDirectory;
   if (inWorkspace()) {
     workingDirectory=workspace.getRelative(options.clientCwd);
   }
@@ -25,6 +26,7 @@
     workingDirectory=workspace;
   }
   env.getLoadingPhaseRunner().updatePatternEvaluator(workingDirectory.relativeTo(workspace));
+  env.setWorkingDirectory(workingDirectory);
   env.updateClientEnv(options.clientEnv,options.ignoreClientEnv);
   skyframeExecutor.setActive(false);
   skyframeExecutor.decideKeepIncrementalState(startupOptionsProvider.getOptions(BlazeServerStartupOptions.class).batch,optionsParser.getOptions(BuildView.Options.class));
@@ -35,7 +37,7 @@
     profiler.logSimpleTaskDuration(execStartTimeNanos,0,ProfilerTask.PHASE,ProfilePhase.INIT.description);
   }
   if (options.memoryProfilePath != null) {
-    Path memoryProfilePath=getWorkingDirectory().getRelative(options.memoryProfilePath);
+    Path memoryProfilePath=env.getWorkingDirectory().getRelative(options.memoryProfilePath);
     try {
       MemoryProfiler.instance().start(memoryProfilePath.getOutputStream());
     }
