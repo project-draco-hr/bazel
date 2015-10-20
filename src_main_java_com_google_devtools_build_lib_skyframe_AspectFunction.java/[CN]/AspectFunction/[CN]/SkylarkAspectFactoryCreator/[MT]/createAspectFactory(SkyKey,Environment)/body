@@ -1,0 +1,20 @@
+{
+  SkylarkAspectKey skylarkAspectKey=(SkylarkAspectKey)skyKey.argument();
+  SkyKey importFileKey;
+  try {
+    importFileKey=SkylarkImportLookupValue.key(skylarkAspectKey.getExtensionFile());
+  }
+ catch (  ASTLookupInputException e) {
+    throw new AspectFunctionException(skyKey,e);
+  }
+  SkylarkImportLookupValue skylarkImportLookupValue=(SkylarkImportLookupValue)env.getValue(importFileKey);
+  if (skylarkImportLookupValue == null) {
+    return null;
+  }
+  Object skylarkValue=skylarkImportLookupValue.getEnvironmentExtension().get(skylarkAspectKey.getSkylarkValueName());
+  if (!(skylarkValue instanceof SkylarkAspect)) {
+    throw new AspectFunctionException(new ConversionException(skylarkAspectKey.getSkylarkValueName() + " from " + skylarkAspectKey.getExtensionFile().toString()+ " is not an aspect"));
+  }
+  SkylarkAspect skylarkAspect=(SkylarkAspect)skylarkValue;
+  return new SkylarkAspectFactory(skylarkAspectKey.getSkylarkValueName(),skylarkAspect);
+}

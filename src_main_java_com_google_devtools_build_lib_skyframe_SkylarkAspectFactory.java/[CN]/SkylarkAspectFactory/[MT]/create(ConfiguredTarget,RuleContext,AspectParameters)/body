@@ -1,0 +1,30 @@
+{
+  try (Mutability mutability=Mutability.create("aspect")){
+    SkylarkRuleContext skylarkRuleContext;
+    try {
+      skylarkRuleContext=new SkylarkRuleContext(ruleContext);
+    }
+ catch (    EvalException e) {
+      ruleContext.ruleError(e.getMessage());
+      return null;
+    }
+    Environment env=Environment.builder(mutability).setSkylark().setGlobals(aspectFunction.getFuncallEnv().getGlobals()).setEventHandler(ruleContext.getAnalysisEnvironment().getEventHandler()).build();
+    Object aspect;
+    try {
+      aspect=aspectFunction.getImplementation().call(ImmutableList.<Object>of(base,skylarkRuleContext),ImmutableMap.<String,Object>of(),null,env);
+    }
+ catch (    EvalException e) {
+      ruleContext.ruleError(e.getMessage());
+      return null;
+    }
+    Aspect.Builder builder=new Aspect.Builder(name);
+    if (aspect instanceof SkylarkClassObject) {
+      SkylarkClassObject struct=(SkylarkClassObject)aspect;
+      Location loc=struct.getCreationLoc();
+      for (      String key : struct.getKeys()) {
+        builder.addSkylarkTransitiveInfo(key,struct.getValue(key),loc);
+      }
+    }
+    return builder.build();
+  }
+ }
