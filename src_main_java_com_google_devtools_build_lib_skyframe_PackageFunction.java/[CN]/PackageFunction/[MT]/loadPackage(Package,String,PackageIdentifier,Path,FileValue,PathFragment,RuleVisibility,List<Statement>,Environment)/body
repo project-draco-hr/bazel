@@ -12,16 +12,16 @@
         Preprocessor.Result preprocessingResult;
         if (replacementContents == null) {
           Preconditions.checkNotNull(buildFileValue,packageId);
-          ParserInputSource inputSource;
+          byte[] buildFileBytes;
           try {
-            inputSource=buildFileValue.isSpecialFile() ? ParserInputSource.create(buildFilePath) : ParserInputSource.create(buildFilePath,buildFileValue.getSize());
+            buildFileBytes=buildFileValue.isSpecialFile() ? FileSystemUtils.readContent(buildFilePath) : FileSystemUtils.readWithKnownFileSize(buildFilePath,buildFileValue.getSize());
           }
  catch (          IOException e) {
             env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
             throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.TRANSIENT);
           }
           try {
-            preprocessingResult=packageFactory.preprocess(packageId,inputSource,globber);
+            preprocessingResult=packageFactory.preprocess(buildFilePath,packageId,buildFileBytes,globber);
           }
  catch (          IOException e) {
             env.getListener().handle(Event.error(Location.fromFile(buildFilePath),"preprocessing failed: " + e.getMessage()));

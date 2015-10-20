@@ -3,20 +3,20 @@
   if (error != null) {
     throw new BuildFileNotFoundException(packageId,"illegal package name: '" + packageId + "' ("+ error+ ")");
   }
-  ParserInputSource inputSource=maybeGetParserInputSource(buildFile,eventHandler);
-  if (inputSource == null) {
+  byte[] buildFileBytes=maybeGetBuildFileBytes(buildFile,eventHandler);
+  if (buildFileBytes == null) {
     throw new BuildFileContainsErrorsException(packageId,"IOException occured");
   }
   Globber globber=createLegacyGlobber(buildFile.getParentDirectory(),packageId,locator);
   Preprocessor.Result preprocessingResult;
   try {
-    preprocessingResult=preprocess(packageId,inputSource,globber);
+    preprocessingResult=preprocess(buildFile,packageId,buildFileBytes,globber);
   }
  catch (  IOException e) {
     eventHandler.handle(Event.error(Location.fromFile(buildFile),"preprocessing failed: " + e.getMessage()));
     throw new BuildFileContainsErrorsException(packageId,"preprocessing failed",e);
   }
-  Package result=createPackageFromPreprocessingResult(externalPkg,packageId,buildFile,preprocessingResult,preprocessingResult.events,ImmutableList.<Statement>of(),ImmutableMap.<PathFragment,Extension>of(),ImmutableList.<Label>of(),locator,ConstantRuleVisibility.PUBLIC,globber).build();
+  Package result=createPackageFromPreprocessingResult(externalPkg,packageId,buildFile,preprocessingResult,ImmutableList.<Statement>of(),ImmutableMap.<PathFragment,Extension>of(),ImmutableList.<Label>of(),ConstantRuleVisibility.PUBLIC,globber).build();
   Event.replayEventsOn(eventHandler,result.getEvents());
   return result;
 }
