@@ -1,0 +1,23 @@
+{
+  Preconditions.checkState(stat.isFile(),path);
+  try {
+    byte[] digest=stat.getDigest();
+    if (digest == null) {
+      digest=path.getFastDigest();
+    }
+    if (digest == null) {
+      long mtime=stat.getLastModifiedTime();
+      if (tsgm != null) {
+        tsgm.notifyDependenceOnFileTime(mtime);
+      }
+      return new RegularFileStateValue(stat.getSize(),stat.getLastModifiedTime(),null,FileContentsProxy.create(mtime,stat.getNodeId()));
+    }
+ else {
+      return new RegularFileStateValue(stat.getSize(),stat.getLastModifiedTime(),digest,null);
+    }
+  }
+ catch (  IOException e) {
+    String errorMessage=e.getMessage() != null ? "error '" + e.getMessage() + "'" : "an error";
+    throw new InconsistentFilesystemException("'stat' said " + path + " is a file but then we "+ "later encountered "+ errorMessage+ " which indicates that "+ path+ " is no "+ "longer a file. Did you delete it during the build?");
+  }
+}

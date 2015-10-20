@@ -11,10 +11,10 @@
         }
         Preprocessor.Result preprocessingResult;
         if (replacementContents == null) {
-          long buildFileSize=Preconditions.checkNotNull(buildFileValue,packageId).getSize();
+          Preconditions.checkNotNull(buildFileValue,packageId);
           ParserInputSource inputSource;
           try {
-            inputSource=ParserInputSource.create(buildFilePath,buildFileSize);
+            inputSource=buildFileValue.isSpecialFile() ? ParserInputSource.create(buildFilePath) : ParserInputSource.create(buildFilePath,buildFileValue.getSize());
           }
  catch (          IOException e) {
             env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));

@@ -3,6 +3,7 @@
     volatile Boolean isFile;
     volatile Boolean isDirectory;
     volatile Boolean isSymbolicLink;
+    volatile Boolean isSpecial;
     volatile long size=-1;
     volatile long mtime=-1;
     @Override public boolean isFile(){
@@ -22,6 +23,12 @@
         isSymbolicLink=FileSystem.this.isSymbolicLink(path);
       }
       return isSymbolicLink;
+    }
+    @Override public boolean isSpecialFile(){
+      if (isSpecial == null) {
+        isSpecial=FileSystem.this.isSpecialFile(path,followSymlinks);
+      }
+      return isSpecial;
     }
     @Override public long getSize() throws IOException {
       if (size == -1) {
