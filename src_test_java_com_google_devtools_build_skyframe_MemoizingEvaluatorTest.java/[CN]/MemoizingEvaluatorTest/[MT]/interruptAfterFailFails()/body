@@ -1,0 +1,19 @@
+{
+  SkyKey failKey=GraphTester.skyKey("fail");
+  SkyKey interruptedKey=GraphTester.skyKey("interrupted");
+  tester.getOrCreate(failKey).setHasError(true);
+  tester.getOrCreate(interruptedKey).setBuilder(new SkyFunction(){
+    @Nullable @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws InterruptedException {
+      Thread.sleep(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+      throw new AssertionError("Shouldn't have slept so long");
+    }
+    @Nullable @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  EvaluationResult<StringValue> result=tester.eval(false,interruptedKey,failKey);
+  assertWithMessage(result.toString()).that(result.hasError()).isTrue();
+  assertWithMessage(result.toString()).that(result.getError(failKey)).isNotNull();
+  assertWithMessage(result.toString()).that(result.getError(interruptedKey)).isNull();
+}

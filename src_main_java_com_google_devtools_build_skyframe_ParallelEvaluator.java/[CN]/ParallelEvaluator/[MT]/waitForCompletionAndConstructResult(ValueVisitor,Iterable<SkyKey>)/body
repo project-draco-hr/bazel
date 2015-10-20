@@ -5,6 +5,10 @@
     visitor.waitForCompletion();
   }
  catch (  final SchedulerException e) {
+    if (!visitor.getCrashes().isEmpty()) {
+      reporter.handle(Event.error("Crashes detected: " + visitor.getCrashes()));
+      throw Iterables.getFirst(visitor.getCrashes(),null);
+    }
     Throwables.propagateIfPossible(e.getCause(),InterruptedException.class);
     if (Thread.interrupted()) {
       throw new InterruptedException();
@@ -19,5 +23,6 @@
       bubbleErrorInfo=ImmutableMap.of(errorKey,ValueWithMetadata.wrapWithMetadata(graph.get(errorKey).getValueMaybeWithMetadata()));
     }
   }
+  Preconditions.checkState(visitor.getCrashes().isEmpty(),visitor.getCrashes());
   return constructResult(visitor,skyKeys,bubbleErrorInfo,catastrophe);
 }

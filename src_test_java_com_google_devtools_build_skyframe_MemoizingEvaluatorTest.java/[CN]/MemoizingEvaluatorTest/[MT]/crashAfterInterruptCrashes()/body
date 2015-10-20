@@ -1,0 +1,27 @@
+{
+  SkyKey failKey=GraphTester.skyKey("fail");
+  SkyKey badInterruptkey=GraphTester.skyKey("bad-interrupt");
+  tester.getOrCreate(failKey).setHasError(true);
+  tester.getOrCreate(badInterruptkey).setBuilder(new SkyFunction(){
+    @Nullable @Override public SkyValue compute(    SkyKey skyKey,    Environment env){
+      try {
+        Thread.sleep(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+        throw new AssertionError("Shouldn't have slept so long");
+      }
+ catch (      InterruptedException e) {
+        throw new RuntimeException("I don't like being woken up!");
+      }
+    }
+    @Nullable @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  try {
+    EvaluationResult<StringValue> unexpectedResult=tester.eval(false,badInterruptkey,failKey);
+    fail(unexpectedResult.toString());
+  }
+ catch (  RuntimeException e) {
+    assertThat(e.getCause()).hasMessage("I don't like being woken up!");
+  }
+}
