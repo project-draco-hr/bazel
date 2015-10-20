@@ -1,3 +1,8 @@
 {
-  return PrerequisiteArtifacts.nestedSet(ruleContext,"plugins",Mode.TARGET);
+  NestedSetBuilder<Artifact> pluginArtifacts=NestedSetBuilder.stableOrder();
+  pluginArtifacts.addTransitive(PrerequisiteArtifacts.nestedSet(ruleContext,"plugins",Mode.TARGET));
+  if (ruleContext.getFragment(ObjcConfiguration.class).runMemleaks()) {
+    pluginArtifacts.addTransitive(PrerequisiteArtifacts.nestedSet(ruleContext,IosTest.MEMLEAKS_PLUGIN,Mode.TARGET));
+  }
+  return pluginArtifacts.build();
 }
