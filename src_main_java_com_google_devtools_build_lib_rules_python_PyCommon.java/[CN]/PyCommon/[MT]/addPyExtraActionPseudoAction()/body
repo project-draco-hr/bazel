@@ -2,10 +2,8 @@
   if (ruleContext.getConfiguration().getActionListeners().isEmpty()) {
     return;
   }
-  Collection<Artifact> sources=ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list();
   NestedSetBuilder<Artifact> depBuilder=NestedSetBuilder.compileOrder();
-  collectTransitivePythonSourcesFromDeps(depBuilder);
+  collectTransitivePythonSourcesFrom(getTargetDeps(),depBuilder);
   NestedSet<Artifact> dependencies=depBuilder.build();
-  PythonInfo info=PythonInfo.newBuilder().addAllSourceFile(Artifact.toExecPaths(sources)).addAllDepFile(Artifact.toExecPaths(dependencies)).build();
-  ruleContext.getAnalysisEnvironment().registerAction(new PyPseudoAction(ruleContext.getActionOwner(),NestedSetBuilder.wrap(Order.STABLE_ORDER,Iterables.concat(sources,dependencies)),ImmutableList.of(PseudoAction.getDummyOutput(ruleContext)),"Python",PythonInfo.pythonInfo,info));
+  ruleContext.registerAction(makePyExtraActionPseudoAction(ruleContext.getActionOwner(),ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list(),dependencies,PseudoAction.getDummyOutput(ruleContext)));
 }
