@@ -1,0 +1,11 @@
+{
+  scratch.file("test/aspect.bzl","def foo():","   return 0","def _impl(target, ctx):","   return struct(x = foo)","","MyAspect = aspect(implementation=_impl)");
+  scratch.file("test/BUILD","java_library(name = 'xxx',)");
+  reporter.removeHandler(failFastHandler);
+  try {
+    update(ImmutableList.of("//test:xxx"),ImmutableList.of("test/aspect.bzl%MyAspect"),false,LOADING_PHASE_THREADS,true,new EventBus());
+  }
+ catch (  ViewCreationFailedException e) {
+  }
+  assertContainsEvent("ERROR /workspace/test/BUILD:1:1: in java_library rule //test:xxx: \n" + "\n" + "\n"+ "/workspace/test/aspect.bzl:4:11: Value of provider 'x' is of an illegal type: function");
+}

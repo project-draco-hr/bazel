@@ -1,0 +1,11 @@
+{
+  scratch.file("test/aspect.bzl","def _impl(target, ctx):","   return 1/0","","MyAspect = aspect(implementation=_impl)");
+  scratch.file("test/BUILD","java_library(name = 'xxx',)");
+  reporter.removeHandler(failFastHandler);
+  try {
+    update(ImmutableList.of("//test:xxx"),ImmutableList.of("test/aspect.bzl%MyAspect"),false,LOADING_PHASE_THREADS,true,new EventBus());
+  }
+ catch (  ViewCreationFailedException e) {
+  }
+  assertContainsEvent("ERROR /workspace/test/BUILD:1:1: in java_library rule //test:xxx: \n" + "Traceback (most recent call last):\n" + "\tFile \"/workspace/test/BUILD\", line 1\n"+ "\t\tMyAspect(...)\n"+ "\tFile \"/workspace/test/aspect.bzl\", line 2, in _impl\n"+ "\t\t1 / 0\n"+ "integer division by zero");
+}
