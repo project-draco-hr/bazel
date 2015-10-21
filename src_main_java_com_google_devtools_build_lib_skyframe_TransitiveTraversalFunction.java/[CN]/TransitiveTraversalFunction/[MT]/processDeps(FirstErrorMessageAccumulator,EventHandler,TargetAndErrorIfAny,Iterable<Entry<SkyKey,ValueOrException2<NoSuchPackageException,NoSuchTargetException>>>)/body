@@ -1,0 +1,19 @@
+{
+  for (  Entry<SkyKey,ValueOrException2<NoSuchPackageException,NoSuchTargetException>> entry : depEntries) {
+    TransitiveTraversalValue transitiveTraversalValue;
+    try {
+      transitiveTraversalValue=(TransitiveTraversalValue)entry.getValue().get();
+      if (transitiveTraversalValue == null) {
+        continue;
+      }
+    }
+ catch (    NoSuchPackageException|NoSuchTargetException e) {
+      accumulator.maybeSet(e.getMessage());
+      continue;
+    }
+    String firstErrorMessage=transitiveTraversalValue.getFirstErrorMessage();
+    if (firstErrorMessage != null) {
+      accumulator.maybeSet(firstErrorMessage);
+    }
+  }
+}
