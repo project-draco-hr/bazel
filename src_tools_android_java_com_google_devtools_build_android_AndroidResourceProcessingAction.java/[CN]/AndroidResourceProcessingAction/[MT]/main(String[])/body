@@ -21,14 +21,15 @@
     }
     LOGGER.fine(String.format("Setup finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     final ImmutableList<DirectoryModifier> modifiers=ImmutableList.of(new PackedResourceTarExpander(expandedOut,working),new FileDeDuplicator(Hashing.murmur3_128(),deduplicatedOut,working));
+    List<DependencyAndroidData> data=ImmutableSet.<DependencyAndroidData>builder().addAll(options.directData).addAll(options.transitiveData).build().asList();
     final AndroidBuilder builder=sdkTools.createAndroidBuilder();
-    final MergedAndroidData mergedData=resourceProcessor.mergeData(options.primaryData,options.data,mergedResources,mergedAssets,modifiers,useAaptCruncher() ? builder.getAaptCruncher() : null,true);
+    final MergedAndroidData mergedData=resourceProcessor.mergeData(options.primaryData,data,mergedResources,mergedAssets,modifiers,useAaptCruncher() ? builder.getAaptCruncher() : null,true);
     LOGGER.fine(String.format("Merging finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     final Path filteredResources=fileSystem.getPath("resources-filtered");
     final Path densityManifest=fileSystem.getPath("manifest-filtered/AndroidManifest.xml");
     final DensityFilteredAndroidData filteredData=mergedData.filter(new DensitySpecificResourceFilter(options.densities,filteredResources,working),new DensitySpecificManifestProcessor(options.densities,densityManifest));
     LOGGER.fine(String.format("Density filtering finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
-    resourceProcessor.processResources(builder,options.packageType,options.debug,options.packageForR,new FlagAaptOptions(),options.resourceConfigs,options.applicationId,options.versionCode,options.versionName,filteredData,options.data,working.resolve("manifest"),generatedSources,options.packagePath,options.proguardOutput);
+    resourceProcessor.processResources(builder,options.packageType,options.debug,options.packageForR,new FlagAaptOptions(),options.resourceConfigs,options.applicationId,options.versionCode,options.versionName,filteredData,data,working.resolve("manifest"),generatedSources,options.packagePath,options.proguardOutput);
     LOGGER.fine(String.format("appt finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     if (options.srcJarOutput != null) {
       resourceProcessor.createSrcJar(generatedSources,options.srcJarOutput);
