@@ -1,0 +1,15 @@
+{
+  Path myPkgPath=scratch.resolve("/foo/workspace/mypkg/BUILD");
+  Package pkg=new Package.Builder(PackageIdentifier.createInDefaultRepo("mypkg"),"TESTING").setFilename(myPkgPath).setMakeEnv(new MakeEnvironment.Builder()).build();
+  for (  String name : ruleFactory.getRuleClassNames()) {
+    RuleClass ruleClass=ruleFactory.getRuleClass(name);
+    Rule rule=new Rule(pkg,pkg.createLabel("myrule"),ruleClass,null,Location.fromFile(myPkgPath),new AttributeContainer(ruleClass));
+    if (TargetUtils.isTestRule(rule)) {
+      assertAttr(ruleClass,"tags",Type.STRING_LIST);
+      assertAttr(ruleClass,"size",Type.STRING);
+      assertAttr(ruleClass,"flaky",Type.BOOLEAN);
+      assertAttr(ruleClass,"shard_count",Type.INTEGER);
+      assertAttr(ruleClass,"local",Type.BOOLEAN);
+    }
+  }
+}

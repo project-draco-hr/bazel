@@ -1,0 +1,14 @@
+{
+  Path myPkgPath=scratch.resolve("/foo/workspace/WORKSPACE");
+  Package.Builder pkgBuilder=new Package.Builder(PackageIdentifier.createInDefaultRepo("mypkg"),"TESTING").setFilename(myPkgPath).setMakeEnv(new MakeEnvironment.Builder());
+  Map<String,Object> attributeValues=new HashMap<>();
+  attributeValues.put("name","foo");
+  attributeValues.put("alwayslink",true);
+  try {
+    RuleFactory.createAndAddRule(pkgBuilder,provider.getRuleClassMap().get("cc_library"),attributeValues,new Reporter(),null,Location.fromFileAndOffsets(myPkgPath.asFragment(),42,42),null);
+    fail();
+  }
+ catch (  RuleFactory.InvalidRuleException e) {
+    assertThat(e.getMessage()).contains("cannot be in the WORKSPACE file");
+  }
+}

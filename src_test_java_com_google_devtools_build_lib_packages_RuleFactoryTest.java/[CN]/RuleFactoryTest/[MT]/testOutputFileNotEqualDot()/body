@@ -1,0 +1,14 @@
+{
+  Path myPkgPath=scratch.resolve("/foo");
+  Package.Builder pkgBuilder=new Package.Builder(PackageIdentifier.createInDefaultRepo("mypkg"),"TESTING").setFilename(myPkgPath).setMakeEnv(new MakeEnvironment.Builder());
+  Map<String,Object> attributeValues=new HashMap<>();
+  attributeValues.put("outs",Lists.newArrayList("."));
+  attributeValues.put("name","some");
+  try {
+    RuleFactory.createAndAddRule(pkgBuilder,provider.getRuleClassMap().get("genrule"),attributeValues,new Reporter(),null,Location.fromFileAndOffsets(myPkgPath.asFragment(),42,42),null);
+    fail();
+  }
+ catch (  RuleFactory.InvalidRuleException e) {
+    assertTrue(e.getMessage(),e.getMessage().contains("output file name can't be equal '.'"));
+  }
+}

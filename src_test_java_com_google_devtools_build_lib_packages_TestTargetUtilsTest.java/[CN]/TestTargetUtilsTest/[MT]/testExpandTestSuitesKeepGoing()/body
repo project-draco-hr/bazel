@@ -1,0 +1,7 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("broken/BUILD","test_suite(name = 'broken', tests = ['//missing:missing_test'])");
+  ResolvedTargets<Target> actual=TestTargetUtils.expandTestSuites(getPackageManager(),reporter,Sets.newHashSet(getTarget("//broken")),false,true);
+  assertTrue(actual.hasError());
+  assertThat(actual.getTargets()).isEmpty();
+}

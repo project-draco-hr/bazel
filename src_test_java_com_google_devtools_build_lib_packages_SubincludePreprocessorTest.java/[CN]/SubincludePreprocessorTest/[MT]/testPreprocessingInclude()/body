@@ -1,0 +1,11 @@
+{
+  ParserInputSource in=createInputSource("subinclude('//foo:bar')");
+  scratch.file("foo/BUILD");
+  scratch.file("foo/bar","genrule('turtle1')","subinclude('//foo:baz')");
+  scratch.file("foo/baz","genrule('turtle2')");
+  String out=assertPreprocessingSucceeds(in);
+  assertContainsRegex("turtle1",out);
+  assertContainsRegex("turtle2",out);
+  assertContainsRegex("mocksubinclude\\('//foo:bar', *'/workspace/foo/bar'\\)",out);
+  assertContainsRegex("mocksubinclude\\('//foo:baz', *'/workspace/foo/baz'\\)",out);
+}

@@ -1,0 +1,37 @@
+{
+  Path myPkgPath=scratch.resolve("/foo/workspace/mypkg/BUILD");
+  Package.Builder pkgBuilder=new Package.Builder(PackageIdentifier.createInDefaultRepo("mypkg"),"TESTING").setFilename(myPkgPath).setMakeEnv(new MakeEnvironment.Builder());
+  Map<String,Object> attributeValues=new HashMap<>();
+  attributeValues.put("name","foo");
+  attributeValues.put("alwayslink",true);
+  Rule rule=RuleFactory.createAndAddRule(pkgBuilder,provider.getRuleClassMap().get("cc_library"),attributeValues,new Reporter(),null,LOCATION_42,null);
+  assertSame(rule,rule.getAssociatedRule());
+  Package pkg=pkgBuilder.build();
+  assertThat(Sets.newHashSet(pkg.getTargets(Rule.class))).hasSize(1);
+  assertEquals(rule,pkg.getTargets(Rule.class).iterator().next());
+  assertSame(rule,pkg.getTarget("foo"));
+  assertEquals(Label.parseAbsolute("//mypkg:foo"),rule.getLabel());
+  assertEquals("foo",rule.getName());
+  assertEquals("cc_library",rule.getRuleClass());
+  assertEquals("cc_library rule",rule.getTargetKind());
+  assertEquals(42,rule.getLocation().getStartOffset());
+  assertNull(rule.getSyntaxTree());
+  assertFalse(rule.containsErrors());
+  AttributeMap attributes=RawAttributeMapper.of(rule);
+  assertTrue(attributes.get("alwayslink",Type.BOOLEAN));
+  try {
+    attributes.get("alwayslink",Type.STRING);
+    fail();
+  }
+ catch (  Exception e) {
+  }
+  try {
+    attributes.get("nosuchattr",Type.STRING);
+    fail();
+  }
+ catch (  Exception e) {
+  }
+  assertFalse(attributes.get("linkstatic",Type.BOOLEAN));
+  assertFalse(attributes.get("testonly",Type.BOOLEAN));
+  assertThat(attributes.get("srcs",BuildType.LABEL_LIST)).isEmpty();
+}

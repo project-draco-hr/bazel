@@ -1,0 +1,10 @@
+{
+  scratch.file("timeouts/BUILD","sh_test(name = 'long_timeout',","          srcs = ['a.sh'],","          size = 'small',","          timeout = 'long')","sh_test(name = 'short_timeout',","          srcs = ['b.sh'],","          size = 'small')","sh_test(name = 'moderate_timeout',","          srcs = ['c.sh'],","          size = 'small',","          timeout = 'moderate')");
+  Target longTest=getTarget("//timeouts:long_timeout");
+  Target shortTest=getTarget("//timeouts:short_timeout");
+  Target moderateTest=getTarget("//timeouts:moderate_timeout");
+  Predicate<Target> timeoutFilter=TestTargetUtils.testTimeoutFilter(EnumSet.of(TestTimeout.SHORT,TestTimeout.LONG));
+  assertTrue(timeoutFilter.apply(longTest));
+  assertTrue(timeoutFilter.apply(shortTest));
+  assertFalse(timeoutFilter.apply(moderateTest));
+}

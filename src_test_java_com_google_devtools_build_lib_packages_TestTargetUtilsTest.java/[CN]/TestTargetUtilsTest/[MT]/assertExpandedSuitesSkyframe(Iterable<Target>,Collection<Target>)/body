@@ -1,0 +1,8 @@
+{
+  ImmutableSet<Label> suiteLabels=ImmutableSet.copyOf(Iterables.transform(suites,TO_LABEL));
+  SkyKey key=TestSuiteExpansionValue.key(suiteLabels);
+  EvaluationResult<TestSuiteExpansionValue> result=getSkyframeExecutor().getDriverForTesting().evaluate(ImmutableList.of(key),false,1,reporter);
+  ResolvedTargets<Target> actual=result.get(key).getTargets();
+  assertFalse(actual.hasError());
+  assertThat(actual.getTargets()).containsExactlyElementsIn(expected);
+}

@@ -1,0 +1,16 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("broken/BUILD","test_suite(name = 'broken', tests = ['//missing:missing_test'])");
+  try {
+    TestTargetUtils.expandTestSuites(new TargetProvider(){
+      @Override public Target getTarget(      EventHandler eventHandler,      Label label) throws InterruptedException {
+        throw new InterruptedException();
+      }
+    }
+,reporter,Sets.newHashSet(getTarget("//broken")),false,true);
+  }
+ catch (  TargetParsingException e) {
+    assertNotNull(e.getMessage());
+  }
+  assertTrue(Thread.currentThread().isInterrupted());
+}

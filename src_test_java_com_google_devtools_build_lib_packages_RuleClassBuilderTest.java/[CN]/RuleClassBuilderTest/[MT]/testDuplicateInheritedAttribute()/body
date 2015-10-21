@@ -1,0 +1,11 @@
+{
+  RuleClass a=new RuleClass.Builder("ruleA",RuleClassType.NORMAL,false).factory(DUMMY_CONFIGURED_TARGET_FACTORY).add(attr("a",STRING).value("A")).add(attr("tags",STRING_LIST)).build();
+  RuleClass b=new RuleClass.Builder("ruleB",RuleClassType.NORMAL,false).factory(DUMMY_CONFIGURED_TARGET_FACTORY).add(attr("a",STRING).value("B")).add(attr("tags",STRING_LIST)).build();
+  try {
+    new RuleClass.Builder("ruleC",RuleClassType.NORMAL,false,a,b).build();
+    fail();
+  }
+ catch (  IllegalArgumentException e) {
+    assertThat(e).hasMessage("Attribute a is inherited multiple times in ruleC ruleclass");
+  }
+}

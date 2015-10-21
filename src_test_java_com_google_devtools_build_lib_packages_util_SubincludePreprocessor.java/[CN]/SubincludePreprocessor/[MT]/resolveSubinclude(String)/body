@@ -1,0 +1,15 @@
+{
+  Label label;
+  try {
+    label=Label.parseAbsolute(labelString);
+  }
+ catch (  LabelSyntaxException e) {
+    throw new IOException("Cannot parse label: '" + labelString + "'");
+  }
+  Path buildFile=packageLocator.getBuildFileForPackage(label.getPackageIdentifier());
+  if (buildFile == null) {
+    return "";
+  }
+  Path subinclude=buildFile.getParentDirectory().getRelative(new PathFragment(label.getName()));
+  return subinclude.getPathString();
+}

@@ -1,0 +1,14 @@
+{
+  RuleClass a=new RuleClass.Builder("rule",RuleClassType.NORMAL,false).factory(DUMMY_CONFIGURED_TARGET_FACTORY).add(attr("a",STRING)).add(attr("b",STRING)).add(attr("tags",STRING_LIST)).build();
+  RuleClass.Builder builder=new RuleClass.Builder("c",RuleClassType.NORMAL,false,a).factory(DUMMY_CONFIGURED_TARGET_FACTORY);
+  RuleClass c=builder.removeAttribute("a").add(attr("a",INTEGER)).removeAttribute("b").build();
+  assertFalse(c.hasAttr("a",STRING));
+  assertTrue(c.hasAttr("a",INTEGER));
+  assertFalse(c.hasAttr("b",STRING));
+  try {
+    builder.removeAttribute("c");
+    fail();
+  }
+ catch (  IllegalStateException e) {
+  }
+}

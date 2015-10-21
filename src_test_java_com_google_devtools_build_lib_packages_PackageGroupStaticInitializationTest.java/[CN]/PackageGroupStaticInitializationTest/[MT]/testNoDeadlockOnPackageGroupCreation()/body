@@ -1,0 +1,33 @@
+{
+  scratch.file("fruits/BUILD","package_group(name = 'mango', packages = ['//...'])");
+  final SynchronousQueue<PackageSpecification> groupQueue=new SynchronousQueue<>();
+  Thread producingThread=new Thread(new Runnable(){
+    @Override public void run(){
+      try {
+        groupQueue.put(PackageSpecification.fromString("//fruits/..."));
+      }
+ catch (      Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
+);
+  Thread consumingThread=new Thread(new Runnable(){
+    @Override public void run(){
+      try {
+        getPackageGroup("fruits","mango");
+        groupQueue.take();
+      }
+ catch (      Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
+);
+  consumingThread.start();
+  producingThread.start();
+  producingThread.join(3000);
+  consumingThread.join(3000);
+  assertFalse(producingThread.isAlive());
+  assertFalse(consumingThread.isAlive());
+}

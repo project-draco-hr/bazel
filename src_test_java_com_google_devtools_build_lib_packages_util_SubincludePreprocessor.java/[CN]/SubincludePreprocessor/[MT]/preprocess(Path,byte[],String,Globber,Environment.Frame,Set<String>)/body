@@ -1,0 +1,26 @@
+{
+  StoredEventHandler eventHandler=new StoredEventHandler();
+  char content[]=FileSystemUtils.convertFromLatin1(buildFileBytes);
+  while (true) {
+    Matcher matcher=SUBINCLUDE_REGEX.matcher(CharBuffer.wrap(content));
+    if (!matcher.find()) {
+      break;
+    }
+    String name=matcher.group(1);
+    String path=resolveSubinclude(name);
+    char subContent[];
+    if (path.isEmpty()) {
+      eventHandler.handle(Event.error(Location.fromFile(buildFilePath),"Cannot find subincluded file \'" + name + "\'"));
+      subContent=new char[0];
+    }
+ else {
+      subContent=FileSystemUtils.readContentAsLatin1(fileSystem.getPath(path));
+    }
+    String mock="\nmocksubinclude('" + name + "', '"+ path+ "')\n";
+    content=Chars.concat(Arrays.copyOf(content,matcher.start()),mock.toCharArray(),subContent,Arrays.copyOfRange(content,matcher.end(),content.length));
+  }
+  if (Chars.indexOf(content,TRANSIENT_ERROR.toCharArray()) >= 0) {
+    throw new IOException("transient error requested in " + buildFilePath.asFragment());
+  }
+  return Preprocessor.Result.success(ParserInputSource.create(content,buildFilePath.asFragment()),eventHandler.hasErrors(),eventHandler.getEvents());
+}
