@@ -28,14 +28,14 @@
       int equalsAt=arg.indexOf('=');
       int nameStartsAt=arg.startsWith("--") ? 2 : 1;
       String name=equalsAt == -1 ? arg.substring(nameStartsAt) : arg.substring(nameStartsAt,equalsAt);
-      if (name.trim().equals("")) {
+      if (name.trim().isEmpty()) {
         throw new OptionsParsingException("Invalid options syntax: " + arg,arg);
       }
       value=equalsAt == -1 ? null : arg.substring(equalsAt + 1);
       field=optionsData.getFieldFromName(name);
       if (field == null && name.startsWith("no")) {
-        String realname=name.substring(name.startsWith("no_") ? 3 : 2);
-        field=optionsData.getFieldFromName(realname);
+        name=name.substring(name.startsWith("no_") ? 3 : 2);
+        field=optionsData.getFieldFromName(name);
         booleanValue=false;
         if (field != null) {
           if (!OptionsParserImpl.isBooleanField(field)) {
@@ -47,6 +47,13 @@
           value="0";
         }
       }
+      if (field != null) {
+        Option option=field.getAnnotation(Option.class);
+        String oldName=option.oldName();
+        if (name.equals(oldName)) {
+          addDeprecationWarning(oldName,"Use --" + option.name() + " instead");
+        }
+      }
     }
  else {
       throw new OptionsParsingException("Invalid options syntax: " + arg,arg);
@@ -54,11 +61,12 @@
     if (field == null) {
       throw new OptionsParsingException("Unrecognized option: " + arg,arg);
     }
+    Option option=field.getAnnotation(Option.class);
     if (value == null) {
       if (OptionsParserImpl.isBooleanField(field)) {
         value=booleanValue ? "1" : "0";
       }
- else       if (field.getType().equals(Void.class)) {
+ else       if (field.getType().equals(Void.class) && !option.wrapperOption()) {
       }
  else       if (pos != args.size() - 1) {
         value=args.get(++pos);
@@ -67,9 +75,20 @@
         throw new OptionsParsingException("Expected value after " + arg);
       }
     }
-    Option option=field.getAnnotation(Option.class);
     final String originalName=option.name();
-    if (implicitDependant == null) {
+    if (option.wrapperOption()) {
+      if (value.startsWith("-")) {
+        List<String> unparsed=parse(priority,Functions.constant("Unwrapped from wrapper option --" + originalName),null,null,ImmutableList.of(value));
+        if (!unparsed.isEmpty()) {
+          throw new OptionsParsingException("Unparsed options remain after unwrapping " + arg + ": "+ Joiner.on(' ').join(unparsed));
+        }
+        continue;
+      }
+ else {
+        throw new OptionsParsingException("Invalid --" + originalName + " value format. "+ "You may have meant --"+ originalName+ "=--"+ value);
+      }
+    }
+    if (implicitDependent == null) {
       unparsedValues.add(new UnparsedOptionValueDescription(originalName,field,value,priority,sourceFunction.apply(originalName),expandedFrom == null));
     }
     if (option.expansion().length > 0) {
@@ -77,7 +96,7 @@
       maybeAddDeprecationWarning(field);
       List<String> unparsed=parse(priority,expansionSourceFunction,null,originalName,ImmutableList.copyOf(option.expansion()));
       if (!unparsed.isEmpty()) {
-        throw new AssertionError("Unparsed options remain after parsing expansion of " + arg + ":"+ Joiner.on(' ').join(unparsed));
+        throw new AssertionError("Unparsed options remain after parsing expansion of " + arg + ": "+ Joiner.on(' ').join(unparsed));
       }
     }
  else {
@@ -90,10 +109,10 @@
         throw new OptionsParsingException("While parsing option " + arg + ": "+ e.getMessage(),e);
       }
       if (!option.allowMultiple()) {
-        setValue(field,originalName,convertedValue,priority,sourceFunction.apply(originalName),implicitDependant,expandedFrom);
+        setValue(field,originalName,convertedValue,priority,sourceFunction.apply(originalName),implicitDependent,expandedFrom);
       }
  else {
-        addListValue(field,convertedValue,priority,sourceFunction.apply(originalName),implicitDependant,expandedFrom);
+        addListValue(field,convertedValue,priority,sourceFunction.apply(originalName),implicitDependent,expandedFrom);
       }
     }
     if (option.implicitRequirements().length > 0) {
@@ -105,7 +124,7 @@
       Function<Object,String> requirementSourceFunction=Functions.<String>constant("implicit requirement of option --" + entry.getKey() + " from "+ sourceFunction.apply(entry.getKey()));
       List<String> unparsed=parse(priority,requirementSourceFunction,entry.getKey(),null,entry.getValue());
       if (!unparsed.isEmpty()) {
-        throw new AssertionError("Unparsed options remain after parsing implicit options:" + Joiner.on(' ').join(unparsed));
+        throw new AssertionError("Unparsed options remain after parsing implicit options: " + Joiner.on(' ').join(unparsed));
       }
     }
   }
