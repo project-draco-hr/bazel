@@ -1,10 +1,24 @@
 {
-  PathFragment dir;
-  for (dir=execPath.getParentDirectory(); dir != null && !dir.equals(baseExecPath); dir=dir.getParentDirectory()) {
-    Root sourceRoot=packageRoots.get(PackageIdentifier.createInDefaultRepo(dir));
+  PathFragment dir=execPath.getParentDirectory();
+  if (dir == null) {
+    return null;
+  }
+  RepositoryName repoName=PackageIdentifier.DEFAULT_REPOSITORY_NAME;
+  if (dir.segmentCount() >= 2 && dir.getSegment(0).equals("external")) {
+    try {
+      repoName=RepositoryName.create("@" + dir.getSegment(1));
+    }
+ catch (    LabelSyntaxException e) {
+      return null;
+    }
+    dir=dir.subFragment(2,dir.segmentCount());
+  }
+  while (dir != null && !dir.equals(baseExecPath)) {
+    Root sourceRoot=packageRoots.get(PackageIdentifier.create(repoName,dir));
     if (sourceRoot != null) {
       return sourceRoot;
     }
+    dir=dir.getParentDirectory();
   }
   return dir != null && dir.equals(baseExecPath) ? baseRoot : null;
 }
