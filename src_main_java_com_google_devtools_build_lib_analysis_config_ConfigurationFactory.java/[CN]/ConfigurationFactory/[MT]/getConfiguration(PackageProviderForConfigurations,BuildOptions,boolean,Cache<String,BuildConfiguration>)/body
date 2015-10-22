@@ -8,7 +8,7 @@
   for (  ConfigurationFragmentFactory factory : configurationFragmentFactories) {
     Class<? extends Fragment> fragmentType=factory.creates();
     Fragment fragment=loadedPackageProvider.getFragment(buildOptions,fragmentType);
-    if (fragment != null && fragments.get(fragment) == null) {
+    if (fragment != null && fragments.get(fragment.getClass()) == null) {
       fragments.put(fragment.getClass(),fragment);
     }
   }
@@ -16,13 +16,6 @@
   if (loadedPackageProvider.valuesMissing()) {
     return null;
   }
-  fragments=ImmutableSortedMap.copyOf(fragments,new Comparator<Class<? extends Fragment>>(){
-    @Override public int compare(    Class<? extends Fragment> o1,    Class<? extends Fragment> o2){
-      return o1.getName().compareTo(o2.getName());
-    }
-  }
-);
-  fragments=ImmutableMap.copyOf(fragments);
   result=new BuildConfiguration(directories,fragments,buildOptions,actionsDisabled);
   cache.put(cacheKey,result);
   return result;
