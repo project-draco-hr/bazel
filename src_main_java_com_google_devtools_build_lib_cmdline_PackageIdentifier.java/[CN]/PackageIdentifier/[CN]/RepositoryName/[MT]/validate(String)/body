@@ -1,3 +1,18 @@
 {
-  return new Lexer(name).lex();
+  if (name.isEmpty()) {
+    return null;
+  }
+  if (!name.startsWith("@")) {
+    return "workspace names must start with '@'";
+  }
+  if (name.equals("@.")) {
+    return "workspace names are not allowed to be '@.'";
+  }
+  if (name.equals("@..")) {
+    return "workspace names are not allowed to be '@..'";
+  }
+  if (!VALID_REPO_NAME.matcher(name).matches()) {
+    return "workspace names may contain only A-Z, a-z, 0-9, '-', '_' and '.'";
+  }
+  return null;
 }

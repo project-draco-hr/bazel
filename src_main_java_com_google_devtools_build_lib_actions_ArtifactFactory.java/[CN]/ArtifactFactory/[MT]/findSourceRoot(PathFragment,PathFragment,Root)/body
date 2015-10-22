@@ -4,14 +4,10 @@
     return null;
   }
   RepositoryName repoName=PackageIdentifier.DEFAULT_REPOSITORY_NAME;
-  if (dir.segmentCount() >= 2 && dir.getSegment(0).equals("external")) {
-    try {
-      repoName=RepositoryName.create("@" + dir.getSegment(1));
-    }
- catch (    LabelSyntaxException e) {
-      return null;
-    }
-    dir=dir.subFragment(2,dir.segmentCount());
+  Pair<RepositoryName,PathFragment> repo=RepositoryName.fromPathFragment(dir);
+  if (repo != null) {
+    repoName=repo.getFirst();
+    dir=repo.getSecond();
   }
   while (dir != null && !dir.equals(baseExecPath)) {
     Root sourceRoot=packageRoots.get(PackageIdentifier.create(repoName,dir));
