@@ -5,8 +5,10 @@
   Target target;
   NoSuchTargetException errorLoadingTarget=null;
   try {
-    TargetMarkerValue targetValue=(TargetMarkerValue)env.getValueOrThrow(targetKey,NoSuchTargetException.class,NoSuchPackageException.class);
-    if (targetValue == null) {
+    TargetMarkerValue targetValue=getTargetMarkerValue(targetKey,env);
+    boolean targetValueMissing=targetValue == null;
+    Preconditions.checkState(targetValueMissing == env.valuesMissing(),targetKey);
+    if (targetValueMissing) {
       return ValuesMissing.INSTANCE;
     }
     PackageValue packageValue=(PackageValue)env.getValueOrThrow(packageKey,NoSuchPackageException.class);

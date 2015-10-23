@@ -1,50 +1,11 @@
 {
-  Label label=(Label)key.argument();
-  PathFragment pkgForLabel=label.getPackageFragment();
-  if (label.getName().contains("/")) {
-    PathFragment containingDirectory=label.toPathFragment().getParentDirectory();
-    ContainingPackageLookupValue containingPackageLookupValue=null;
-    try {
-      PackageIdentifier newPkgId=PackageIdentifier.create(label.getPackageIdentifier().getRepository(),containingDirectory);
-      containingPackageLookupValue=(ContainingPackageLookupValue)env.getValueOrThrow(ContainingPackageLookupValue.key(newPkgId),BuildFileNotFoundException.class,InconsistentFilesystemException.class);
-    }
- catch (    BuildFileNotFoundException e) {
-      throw new TargetMarkerFunctionException(e);
-    }
-catch (    InconsistentFilesystemException e) {
-      throw new TargetMarkerFunctionException(new NoSuchTargetException(label,e.getMessage()));
-    }
-    if (containingPackageLookupValue == null) {
-      return null;
-    }
-    if (!containingPackageLookupValue.hasContainingPackage()) {
-      throw new TargetMarkerFunctionException(new BuildFileNotFoundException(label.getPackageIdentifier(),"BUILD file not found on package path for '" + pkgForLabel.getPathString() + "'"));
-    }
-    if (!containingPackageLookupValue.getContainingPackageName().equals(label.getPackageIdentifier())) {
-      throw new TargetMarkerFunctionException(new NoSuchTargetException(label,String.format("Label '%s' crosses boundary of subpackage '%s'",label,containingPackageLookupValue.getContainingPackageName())));
-    }
-  }
-  SkyKey pkgSkyKey=PackageValue.key(label.getPackageIdentifier());
-  Package pkg;
   try {
-    PackageValue value=(PackageValue)env.getValueOrThrow(pkgSkyKey,NoSuchPackageException.class);
-    if (value == null) {
-      return null;
-    }
-    pkg=value.getPackage();
-  }
- catch (  NoSuchPackageException e) {
-    throw new TargetMarkerFunctionException(e);
-  }
-  Target target;
-  try {
-    target=pkg.getTarget(label.getName());
+    return computeTargetMarkerValue(key,env);
   }
  catch (  NoSuchTargetException e) {
     throw new TargetMarkerFunctionException(e);
   }
-  if (pkg.containsErrors()) {
-    throw new TargetMarkerFunctionException(new NoSuchTargetException(target,new BuildFileContainsErrorsException(label.getPackageIdentifier())));
+catch (  NoSuchPackageException e) {
+    throw new TargetMarkerFunctionException(e);
   }
-  return TargetMarkerValue.TARGET_MARKER_INSTANCE;
 }

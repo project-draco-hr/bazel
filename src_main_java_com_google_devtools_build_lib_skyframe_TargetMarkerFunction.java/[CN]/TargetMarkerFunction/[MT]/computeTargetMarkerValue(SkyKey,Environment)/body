@@ -1,0 +1,35 @@
+{
+  Label label=(Label)key.argument();
+  PathFragment pkgForLabel=label.getPackageFragment();
+  if (label.getName().contains("/")) {
+    PathFragment containingDirectory=label.toPathFragment().getParentDirectory();
+    ContainingPackageLookupValue containingPackageLookupValue;
+    try {
+      PackageIdentifier newPkgId=PackageIdentifier.create(label.getPackageIdentifier().getRepository(),containingDirectory);
+      containingPackageLookupValue=(ContainingPackageLookupValue)env.getValueOrThrow(ContainingPackageLookupValue.key(newPkgId),BuildFileNotFoundException.class,InconsistentFilesystemException.class);
+    }
+ catch (    InconsistentFilesystemException e) {
+      throw new NoSuchTargetException(label,e.getMessage());
+    }
+    if (containingPackageLookupValue == null) {
+      return null;
+    }
+    if (!containingPackageLookupValue.hasContainingPackage()) {
+      throw new BuildFileNotFoundException(label.getPackageIdentifier(),"BUILD file not found on package path for '" + pkgForLabel.getPathString() + "'");
+    }
+    if (!containingPackageLookupValue.getContainingPackageName().equals(label.getPackageIdentifier())) {
+      throw new NoSuchTargetException(label,String.format("Label '%s' crosses boundary of subpackage '%s'",label,containingPackageLookupValue.getContainingPackageName()));
+    }
+  }
+  SkyKey pkgSkyKey=PackageValue.key(label.getPackageIdentifier());
+  PackageValue value=(PackageValue)env.getValueOrThrow(pkgSkyKey,NoSuchPackageException.class);
+  if (value == null) {
+    return null;
+  }
+  Package pkg=value.getPackage();
+  Target target=pkg.getTarget(label.getName());
+  if (pkg.containsErrors()) {
+    throw new NoSuchTargetException(target,new BuildFileContainsErrorsException(label.getPackageIdentifier()));
+  }
+  return TargetMarkerValue.TARGET_MARKER_INSTANCE;
+}
