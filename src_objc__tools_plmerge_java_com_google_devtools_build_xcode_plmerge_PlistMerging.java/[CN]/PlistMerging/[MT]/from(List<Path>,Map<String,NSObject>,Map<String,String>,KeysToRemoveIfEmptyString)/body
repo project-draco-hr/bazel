@@ -14,5 +14,26 @@
       merged.remove(key);
     }
   }
+  Pattern versionPattern=Pattern.compile("[^0-9.]");
+  if (!merged.containsKey(BUNDLE_VERSION_PLIST_KEY)) {
+    merged.put(BUNDLE_VERSION_PLIST_KEY,BUNDLE_VERSION_DEFAULT);
+  }
+ else {
+    NSObject nsVersion=merged.get(BUNDLE_VERSION_PLIST_KEY);
+    String version=(String)nsVersion.toJavaObject();
+    if (version.length() > 18 || versionPattern.matcher(version).find()) {
+      merged.put(BUNDLE_VERSION_PLIST_KEY,BUNDLE_VERSION_DEFAULT);
+    }
+  }
+  if (!merged.containsKey(BUNDLE_SHORT_VERSION_STRING_PLIST_KEY)) {
+    merged.put(BUNDLE_SHORT_VERSION_STRING_PLIST_KEY,BUNDLE_SHORT_VERSION_STRING_DEFAULT);
+  }
+ else {
+    NSObject nsVersion=merged.get(BUNDLE_SHORT_VERSION_STRING_PLIST_KEY);
+    String version=(String)nsVersion.toJavaObject();
+    if (version.length() > 18 || versionPattern.matcher(version).find()) {
+      merged.put(BUNDLE_SHORT_VERSION_STRING_PLIST_KEY,BUNDLE_SHORT_VERSION_STRING_DEFAULT);
+    }
+  }
   return new PlistMerging(merged);
 }
