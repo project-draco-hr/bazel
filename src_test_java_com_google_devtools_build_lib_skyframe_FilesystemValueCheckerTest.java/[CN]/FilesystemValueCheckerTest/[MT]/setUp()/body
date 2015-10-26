@@ -1,0 +1,17 @@
+{
+  super.setUp();
+  ImmutableMap.Builder<SkyFunctionName,SkyFunction> skyFunctions=ImmutableMap.builder();
+  fs=new MockFileSystem();
+  pkgRoot=fs.getPath("/testroot");
+  tsgm=new TimestampGranularityMonitor(BlazeClock.instance());
+  AtomicReference<PathPackageLocator> pkgLocator=new AtomicReference<>(new PathPackageLocator());
+  ExternalFilesHelper externalFilesHelper=new ExternalFilesHelper(pkgLocator);
+  skyFunctions.put(SkyFunctions.FILE_STATE,new FileStateFunction(tsgm,externalFilesHelper));
+  skyFunctions.put(SkyFunctions.FILE,new FileFunction(pkgLocator,tsgm,externalFilesHelper));
+  skyFunctions.put(SkyFunctions.FILE_SYMLINK_CYCLE_UNIQUENESS,new FileSymlinkCycleUniquenessFunction());
+  skyFunctions.put(SkyFunctions.FILE_SYMLINK_INFINITE_EXPANSION_UNIQUENESS,new FileSymlinkInfiniteExpansionUniquenessFunction());
+  differencer=new RecordingDifferencer();
+  evaluator=new InMemoryMemoizingEvaluator(skyFunctions.build(),differencer);
+  driver=new SequentialBuildDriver(evaluator);
+  PrecomputedValue.BUILD_ID.set(differencer,UUID.randomUUID());
+}

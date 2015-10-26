@@ -1,0 +1,14 @@
+{
+  Path fooBarDir=pkgPath.getRelative("foo/bar");
+  fs.stubStat(fooBarDir.getRelative("wiz"),null);
+  RootedPath fooBarDirRootedPath=RootedPath.toRootedPath(root,fooBarDir);
+  SkyValue fooBarDirListingValue=DirectoryListingStateValue.createForTesting(ImmutableList.of(new Dirent("wiz",Dirent.Type.DIRECTORY)));
+  differencer.inject(ImmutableMap.of(DirectoryListingStateValue.key(fooBarDirRootedPath),fooBarDirListingValue));
+  String expectedMessage="/root/workspace/pkg/foo/bar/wiz is no longer an existing directory.";
+  SkyKey skyKey=GlobValue.key(PKG_PATH_ID,"**/wiz",false,PathFragment.EMPTY_FRAGMENT);
+  EvaluationResult<GlobValue> result=driver.evaluate(ImmutableList.of(skyKey),false,SkyframeExecutor.DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  assertTrue(result.hasError());
+  ErrorInfo errorInfo=result.getError(skyKey);
+  assertThat(errorInfo.getException()).isInstanceOf(InconsistentFilesystemException.class);
+  assertThat(errorInfo.getException().getMessage()).contains(expectedMessage);
+}

@@ -1,0 +1,14 @@
+{
+  Artifact artifact=sourceArtifact("foo/bar.txt");
+  RootedPath path=rootedPath(artifact);
+  createFile(path,"hello");
+  TraversalRequest params=fileLikeRoot(artifact,DONT_CROSS);
+  ResolvedFile expected=resolvedFile(path);
+  RecursiveFilesystemTraversalValue v1=traverseAndAssertFiles(params,expected);
+  assertThat(progressReceiver.evaluations).contains(v1);
+  progressReceiver.clear();
+  appendToFile(path,"world");
+  RecursiveFilesystemTraversalValue v2=traverseAndAssertFiles(params,expected);
+  assertThat(progressReceiver.invalidations).contains(rftvSkyKey(params));
+  assertThat(v2).isNotEqualTo(v1);
+}

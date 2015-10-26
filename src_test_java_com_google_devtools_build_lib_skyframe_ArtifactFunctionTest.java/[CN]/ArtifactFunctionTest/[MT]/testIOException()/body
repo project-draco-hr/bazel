@@ -1,0 +1,19 @@
+{
+  fastDigest=false;
+  final IOException exception=new IOException("beep");
+  setupRoot(new CustomInMemoryFs(){
+    @Override public byte[] getMD5Digest(    Path path) throws IOException {
+      throw exception;
+    }
+  }
+);
+  Artifact artifact=createDerivedArtifact("no-read");
+  writeFile(artifact.getPath(),"content");
+  try {
+    create(createDerivedArtifact("no-read"));
+    fail();
+  }
+ catch (  IOException e) {
+    assertSame(exception,e);
+  }
+}

@@ -1,0 +1,18 @@
+{
+  String pattern="foo/bar/wiz/file";
+  assertGlobMatches(pattern,"foo/bar/wiz/file");
+  pkgPath.getRelative("foo/bar/wiz/file").delete();
+  assertGlobMatches(pattern,"foo/bar/wiz/file");
+  if (alwaysUseDirListing()) {
+    differencer.invalidate(ImmutableList.of(FileStateValue.key(RootedPath.toRootedPath(root,pkgPath.getRelative("foo/bar/wiz/file")))));
+    assertGlobMatches(pattern,"foo/bar/wiz/file");
+    differencer.invalidate(ImmutableList.of(DirectoryListingStateValue.key(RootedPath.toRootedPath(root,pkgPath.getRelative("foo/bar/wiz")))));
+    assertGlobMatches(pattern);
+  }
+ else {
+    differencer.invalidate(ImmutableList.of(DirectoryListingStateValue.key(RootedPath.toRootedPath(root,pkgPath.getRelative("foo/bar/wiz")))));
+    assertGlobMatches(pattern,"foo/bar/wiz/file");
+    differencer.invalidate(ImmutableList.of(FileStateValue.key(RootedPath.toRootedPath(root,pkgPath.getRelative("foo/bar/wiz/file")))));
+    assertGlobMatches(pattern);
+  }
+}

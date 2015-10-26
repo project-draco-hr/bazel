@@ -1,0 +1,20 @@
+{
+  Artifact hello=createDerivedArtifact("hello");
+  Button button=createActionButton(emptySet,Sets.newHashSet(hello));
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),hello);
+  assertTrue(button.pressed);
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),hello);
+  assertFalse(button.pressed);
+  BlazeTestUtils.changeModtime(hello.getPath());
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),hello);
+  assertTrue(button.pressed);
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),hello);
+  assertFalse(button.pressed);
+  cache.save();
+  buildArtifacts(persistentBuilder(createCache()),hello);
+  assertFalse(button.pressed);
+}

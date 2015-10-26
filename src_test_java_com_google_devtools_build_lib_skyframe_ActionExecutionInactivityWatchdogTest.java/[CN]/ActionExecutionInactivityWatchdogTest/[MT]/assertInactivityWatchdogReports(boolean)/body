@@ -1,0 +1,78 @@
+{
+  final int[] monitorState=new int[]{0};
+  final Object monitorFinishedIndicator=new Object();
+  final int[] actionCompletions=new int[]{1,0,3,0,0,0,0,2};
+  final int[] waits=new int[]{5,10,3,10,30,60,60,1};
+  final List<String> sleepsAndWaits=new ArrayList<>();
+  InactivityMonitor monitor=new InactivityMonitor(){
+    @Override public int waitForNextCompletion(    int timeoutMilliseconds) throws InterruptedException {
+synchronized (monitorFinishedIndicator) {
+        if (monitorState[0] >= actionCompletions.length) {
+          monitorFinishedIndicator.notify();
+          return 1;
+        }
+ else {
+          int index=monitorState[0];
+          sleepsAndWaits.add("wait:" + waits[index]);
+          ++monitorState[0];
+          return actionCompletions[index];
+        }
+      }
+    }
+    @Override public boolean hasStarted(){
+      return true;
+    }
+    @Override public int getPending(){
+      int index=monitorState[0];
+      if (index >= actionCompletions.length) {
+        return 0;
+      }
+      int result=actionCompletions[index];
+      while (result == 0) {
+        ++index;
+        result=actionCompletions[index];
+      }
+      return result;
+    }
+  }
+;
+  final boolean[] didReportInactivity=new boolean[]{false};
+  InactivityReporter reporter=new InactivityReporter(){
+    @Override public void maybeReportInactivity(){
+      if (shouldReport) {
+        didReportInactivity[0]=true;
+      }
+    }
+  }
+;
+  ActionExecutionInactivityWatchdog.Sleep sleep=new ActionExecutionInactivityWatchdog.Sleep(){
+    @Override public void sleep(    int durationMilliseconds) throws InterruptedException {
+      if (monitorState[0] < actionCompletions.length) {
+        sleepsAndWaits.add("sleep:" + durationMilliseconds);
+      }
+    }
+  }
+;
+  ActionExecutionInactivityWatchdog watchdog=new ActionExecutionInactivityWatchdog(monitor,reporter,0,sleep);
+  try {
+synchronized (monitorFinishedIndicator) {
+      watchdog.start();
+      long startTime=System.currentTimeMillis();
+      boolean done=false;
+      while (!done) {
+        try {
+          monitorFinishedIndicator.wait(5000);
+          done=true;
+          MoreAsserts.assertLessThan("test didn't finish under 5 seconds",5000L,System.currentTimeMillis() - startTime);
+        }
+ catch (        InterruptedException ie) {
+        }
+      }
+    }
+  }
+  finally {
+    watchdog.stop();
+  }
+  assertEquals(shouldReport,didReportInactivity[0]);
+  assertThat(sleepsAndWaits).containsExactly("wait:5","sleep:1000","wait:10","wait:3","sleep:1000","wait:10","wait:30","wait:60","wait:60","wait:1").inOrder();
+}

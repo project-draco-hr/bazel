@@ -1,0 +1,10 @@
+{
+  reporter.removeHandler(failFastHandler);
+  SkyKey targetKey=TargetMarkerValue.key(Label.parseAbsolute(labelName));
+  EvaluationResult<TargetMarkerValue> evaluationResult=SkyframeExecutorTestUtils.evaluate(skyframeExecutor,targetKey,false,reporter);
+  Preconditions.checkState(evaluationResult.hasError());
+  reporter.addHandler(failFastHandler);
+  ErrorInfo errorInfo=evaluationResult.getError(skyKey(labelName));
+  assertEquals(targetKey,Iterables.getOnlyElement(errorInfo.getRootCauses()));
+  return errorInfo.getException();
+}

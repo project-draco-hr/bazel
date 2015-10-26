@@ -1,0 +1,14 @@
+{
+  Map<Artifact,FileValue> artifactData=new HashMap<>();
+  for (  Artifact output : action.getOutputs()) {
+    try {
+      Path path=output.getPath();
+      FileStatusWithDigest stat=forceDigest ? statWithDigest(path,path.statIfFound(Symlinks.NOFOLLOW)) : null;
+      artifactData.put(output,ActionMetadataHandler.fileValueFromArtifact(output,stat,tsgm));
+    }
+ catch (    IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+  return new ActionExecutionValue(artifactData,ImmutableMap.<Artifact,FileArtifactValue>of());
+}

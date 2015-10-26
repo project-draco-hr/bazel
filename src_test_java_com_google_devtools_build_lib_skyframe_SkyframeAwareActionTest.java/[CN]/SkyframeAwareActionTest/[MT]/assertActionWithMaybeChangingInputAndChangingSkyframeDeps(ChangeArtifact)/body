@@ -1,0 +1,17 @@
+{
+  final RootedPath depPath=createSkyframeDepOfAction();
+  final SkyKey skyframeDep=FileStateValue.key(depPath);
+  assertActionExecutions(new ExecutionCountingActionFactory(){
+    @Override public ExecutionCountingAction create(    Artifact input,    Artifact output,    AtomicInteger executionCounter){
+      return new SkyframeAwareExecutionCountingAction(input,output,executionCounter,skyframeDep);
+    }
+  }
+,changeInputFile,new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      appendToFile(depPath.asPath());
+      differencer.invalidate(ImmutableList.of(skyframeDep));
+      return null;
+    }
+  }
+,ExpectActionIs.REEXECUTED);
+}

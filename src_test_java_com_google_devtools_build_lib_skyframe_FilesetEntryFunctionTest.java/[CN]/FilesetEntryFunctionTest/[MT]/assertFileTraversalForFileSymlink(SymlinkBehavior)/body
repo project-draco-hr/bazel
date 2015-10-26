@@ -1,0 +1,16 @@
+{
+  Artifact file=createSourceArtifact("foo/file.real");
+  Artifact symlink=getSourceArtifact("foo/file.sym");
+  symlink.getPath().createSymbolicLink(new PathFragment("file.real"));
+  FilesetTraversalParams params=FilesetTraversalParamsFactory.fileTraversal(label("//foo"),symlink,new PathFragment("output-name"),symlinks,DONT_CROSS);
+switch (symlinks) {
+case COPY:
+    assertSymlinksInOrder(params,symlink("output-name","file.real"));
+  break;
+case DEREFERENCE:
+assertSymlinksInOrder(params,symlink("output-name",file));
+break;
+default :
+throw new IllegalStateException(symlinks.toString());
+}
+}

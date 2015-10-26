@@ -1,0 +1,9 @@
+{
+  Artifact dirArtifact=sourceArtifact("a");
+  RootedPath file=createFile(childOf(dirArtifact,"file.txt"));
+  RootedPath link=rootedPath(sourceArtifact("a/dangling.sym"));
+  PathFragment linkTarget=new PathFragment("non_existent");
+  parentOf(link).asPath().createDirectory();
+  link.asPath().createSymbolicLink(linkTarget);
+  traverseAndAssertFiles(fileLikeRoot(dirArtifact,DONT_CROSS),resolvedFile(file),resolvedDanglingSymlink(link,linkTarget));
+}

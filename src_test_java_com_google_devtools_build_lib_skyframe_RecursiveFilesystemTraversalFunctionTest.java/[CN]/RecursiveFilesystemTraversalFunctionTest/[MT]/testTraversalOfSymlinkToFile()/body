@@ -1,0 +1,21 @@
+{
+  Artifact linkNameArtifact=sourceArtifact("foo/baz/qux.sym");
+  Artifact linkTargetArtifact=sourceArtifact("foo/bar/baz.txt");
+  PathFragment linkValue=new PathFragment("../bar/baz.txt");
+  TraversalRequest traversalRoot=fileLikeRoot(linkNameArtifact,DONT_CROSS);
+  createFile(linkTargetArtifact);
+  scratch.dir(linkNameArtifact.getExecPath().getParentDirectory().getPathString());
+  rootDirectory.getRelative(linkNameArtifact.getExecPath()).createSymbolicLink(linkValue);
+  RootedPath symlinkNamePath=rootedPath(linkNameArtifact);
+  RootedPath symlinkTargetPath=rootedPath(linkTargetArtifact);
+  ResolvedFile expected=resolvedSymlinkToFile(symlinkTargetPath,symlinkNamePath,linkValue);
+  RecursiveFilesystemTraversalValue v1=traverseAndAssertFiles(traversalRoot,expected);
+  assertThat(progressReceiver.invalidations).isEmpty();
+  assertThat(progressReceiver.evaluations).contains(v1);
+  progressReceiver.clear();
+  appendToFile(linkTargetArtifact,"bar");
+  RecursiveFilesystemTraversalValue v2=traverseAndAssertFiles(traversalRoot,expected);
+  assertThat(progressReceiver.invalidations).contains(rftvSkyKey(traversalRoot));
+  assertThat(progressReceiver.evaluations).contains(v2);
+  assertThat(v2).isNotEqualTo(v1);
+}

@@ -1,0 +1,29 @@
+{
+  Artifact pkgDirArtifact=sourceArtifact("pkg1/foo");
+  Artifact subpkgDirArtifact=sourceArtifact("pkg1/foo/subdir/subpkg");
+  RootedPath pkgBuildFile=childOf(pkgDirArtifact,"BUILD");
+  RootedPath subpkgBuildFile=childOf(subpkgDirArtifact,"BUILD");
+  scratch.dir(rootedPath(pkgDirArtifact).asPath().getPathString());
+  scratch.dir(rootedPath(subpkgDirArtifact).asPath().getPathString());
+  createFile(pkgBuildFile);
+  createFile(subpkgBuildFile);
+  TraversalRequest traversalRoot=pkgRoot(parentOf(pkgBuildFile),traverseSubpackages);
+  ResolvedFile expected1=resolvedFile(pkgBuildFile);
+  ResolvedFile expected2=resolvedFile(subpkgBuildFile);
+switch (traverseSubpackages) {
+case CROSS:
+    traverseAndAssertFiles(traversalRoot,expected1,expected2);
+  break;
+case DONT_CROSS:
+traverseAndAssertFiles(traversalRoot,expected1);
+break;
+case REPORT_ERROR:
+SkyKey key=rftvSkyKey(traversalRoot);
+EvaluationResult<SkyValue> result=eval(key);
+assertThat(result.hasError()).isTrue();
+assertThat(result.getError().getException().getMessage()).contains("crosses package boundary into package rooted at");
+break;
+default :
+throw new IllegalStateException(traverseSubpackages.toString());
+}
+}

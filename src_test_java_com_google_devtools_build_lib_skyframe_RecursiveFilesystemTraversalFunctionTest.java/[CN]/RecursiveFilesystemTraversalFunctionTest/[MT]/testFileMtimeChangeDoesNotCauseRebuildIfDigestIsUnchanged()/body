@@ -1,0 +1,15 @@
+{
+  Artifact artifact=sourceArtifact("foo/bar.txt");
+  RootedPath path=rootedPath(artifact);
+  createFile(path,"hello");
+  TraversalRequest params=fileLikeRoot(artifact,DONT_CROSS);
+  ResolvedFile expected=resolvedFile(path);
+  RecursiveFilesystemTraversalValue v1=traverseAndAssertFiles(params,expected);
+  assertThat(progressReceiver.evaluations).contains(v1);
+  progressReceiver.clear();
+  long mtime=path.asPath().getLastModifiedTime();
+  mtime+=1000000L;
+  path.asPath().setLastModifiedTime(mtime);
+  RecursiveFilesystemTraversalValue v2=traverseAndAssertFiles(params,expected);
+  assertThat(v2).isEqualTo(v1);
+}

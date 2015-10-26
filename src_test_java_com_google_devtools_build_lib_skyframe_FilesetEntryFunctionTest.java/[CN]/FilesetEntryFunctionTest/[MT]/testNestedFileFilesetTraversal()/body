@@ -1,0 +1,7 @@
+{
+  Artifact path=getSourceArtifact("foo/bar.file");
+  createFile(path,"blah");
+  FilesetTraversalParams inner=FilesetTraversalParamsFactory.fileTraversal(label("//foo"),path,new PathFragment("inner-out"),SymlinkBehavior.COPY,DONT_CROSS);
+  FilesetTraversalParams outer=FilesetTraversalParamsFactory.nestedTraversal(label("//foo:bar"),inner,new PathFragment("outer-out"),null);
+  assertSymlinksInOrder(outer,symlink("outer-out/inner-out",rootedPath(path)));
+}

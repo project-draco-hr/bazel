@@ -1,0 +1,15 @@
+{
+  TraversalRequest traversalRoot=fileLikeRoot(rootArtifact,DONT_CROSS);
+  RootedPath rootedPath=createFile(rootedPath(rootArtifact),"foo");
+  ResolvedFile expected=resolvedFile(rootedPath);
+  RecursiveFilesystemTraversalValue v1=traverseAndAssertFiles(traversalRoot,expected);
+  assertThat(progressReceiver.invalidations).isEmpty();
+  assertThat(progressReceiver.evaluations).contains(v1);
+  progressReceiver.clear();
+  appendToFile(rootArtifact,"bar");
+  RecursiveFilesystemTraversalValue v2=traverseAndAssertFiles(traversalRoot,expected);
+  assertThat(progressReceiver.invalidations).contains(rftvSkyKey(traversalRoot));
+  assertThat(progressReceiver.evaluations).contains(v2);
+  assertThat(v2).isNotEqualTo(v1);
+  progressReceiver.clear();
+}

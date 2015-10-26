@@ -1,0 +1,13 @@
+{
+  getSkyframeExecutor().preparePackageLoading(new PathPackageLocator(rootDirectory),ConstantRuleVisibility.PUBLIC,true,7,"",UUID.randomUUID());
+  SkyKey pkgLookupKey=PackageValue.key(PackageIdentifier.parse(pkg));
+  EvaluationResult<PackageValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),pkgLookupKey,false,reporter);
+  assertFalse(result.hasError());
+  Collection<Target> targets=result.get(pkgLookupKey).getPackage().getTargets();
+  for (  Target target : targets) {
+    if (target.getName().equals(name)) {
+      return ((Rule)target).getRuleClassObject().getRuleDefinitionEnvironment().getTransitiveContentHashCode();
+    }
+  }
+  throw new IllegalStateException("target not found: " + name);
+}

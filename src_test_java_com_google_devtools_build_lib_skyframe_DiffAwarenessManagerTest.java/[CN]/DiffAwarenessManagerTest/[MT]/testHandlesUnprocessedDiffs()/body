@@ -1,0 +1,24 @@
+{
+  Path pathEntry=root.getRelative("pathEntry");
+  ModifiedFileSet diff1=ModifiedFileSet.builder().modify(new PathFragment("file1")).build();
+  ModifiedFileSet diff2=ModifiedFileSet.builder().modify(new PathFragment("file2")).build();
+  ModifiedFileSet diff3=ModifiedFileSet.builder().modify(new PathFragment("file3")).build();
+  DiffAwarenessStub diffAwareness=new DiffAwarenessStub(ImmutableList.of(diff1,diff2,diff3,DiffAwarenessStub.BROKEN_DIFF));
+  DiffAwarenessFactoryStub factory=new DiffAwarenessFactoryStub();
+  factory.inject(pathEntry,diffAwareness);
+  DiffAwarenessManager manager=new DiffAwarenessManager(ImmutableList.of(factory));
+  ProcessableModifiedFileSet firstProcessableDiff=manager.getDiff(events.reporter(),pathEntry);
+  assertEquals("Expected EVERYTHING_MODIFIED on first call to getDiff",ModifiedFileSet.EVERYTHING_MODIFIED,firstProcessableDiff.getModifiedFileSet());
+  firstProcessableDiff.markProcessed();
+  ProcessableModifiedFileSet processableDiff1=manager.getDiff(events.reporter(),pathEntry);
+  assertEquals(diff1,processableDiff1.getModifiedFileSet());
+  ProcessableModifiedFileSet processableDiff2=manager.getDiff(events.reporter(),pathEntry);
+  assertEquals(ModifiedFileSet.union(diff1,diff2),processableDiff2.getModifiedFileSet());
+  processableDiff2.markProcessed();
+  ProcessableModifiedFileSet processableDiff3=manager.getDiff(events.reporter(),pathEntry);
+  assertEquals(diff3,processableDiff3.getModifiedFileSet());
+  events.assertNoWarningsOrErrors();
+  ProcessableModifiedFileSet processableDiff4=manager.getDiff(events.reporter(),pathEntry);
+  assertEquals(ModifiedFileSet.EVERYTHING_MODIFIED,processableDiff4.getModifiedFileSet());
+  events.assertContainsWarning("error");
+}

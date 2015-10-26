@@ -1,0 +1,20 @@
+{
+  Map<Artifact,FileValue> artifactData=new HashMap<>();
+  Action action=(Action)skyKey.argument();
+  Artifact output=Iterables.getOnlyElement(action.getOutputs());
+  FileArtifactValue value;
+  if (action.getActionType() == MiddlemanType.NORMAL) {
+    try {
+      FileValue fileValue=ActionMetadataHandler.fileValueFromArtifact(output,null,tsgm);
+      artifactData.put(output,fileValue);
+      value=FileArtifactValue.create(output,fileValue);
+    }
+ catch (    IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+ else {
+    value=FileArtifactValue.DEFAULT_MIDDLEMAN;
+  }
+  return new ActionExecutionValue(artifactData,ImmutableMap.of(output,value));
+}

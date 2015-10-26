@@ -1,0 +1,15 @@
+{
+  Artifact directLinkArtifact=sourceArtifact("direct/file.sym");
+  Artifact transitiveLinkArtifact=sourceArtifact("transitive/sym.sym");
+  RootedPath fileA=createFile(rootedPath(sourceArtifact("a/file.a")));
+  RootedPath directLink=rootedPath(directLinkArtifact);
+  RootedPath transitiveLink=rootedPath(transitiveLinkArtifact);
+  PathFragment directLinkPath=new PathFragment("../a/file.a");
+  PathFragment transitiveLinkPath=new PathFragment("../direct/file.sym");
+  parentOf(directLink).asPath().createDirectory();
+  parentOf(transitiveLink).asPath().createDirectory();
+  directLink.asPath().createSymbolicLink(directLinkPath);
+  transitiveLink.asPath().createSymbolicLink(transitiveLinkPath);
+  traverseAndAssertFiles(fileLikeRoot(directLinkArtifact,DONT_CROSS),resolvedSymlinkToFile(fileA,directLink,directLinkPath));
+  traverseAndAssertFiles(fileLikeRoot(transitiveLinkArtifact,DONT_CROSS),resolvedSymlinkToFile(fileA,transitiveLink,transitiveLinkPath));
+}

@@ -1,0 +1,16 @@
+{
+  assertThat(oldView).isInstanceOf(ViewStub.class);
+  assertThat(newView).isInstanceOf(ViewStub.class);
+  ViewStub oldViewStub=(ViewStub)oldView;
+  ViewStub newViewStub=(ViewStub)newView;
+  Preconditions.checkState(newViewStub.sequenceNum >= oldViewStub.sequenceNum);
+  ModifiedFileSet diff=ModifiedFileSet.NOTHING_MODIFIED;
+  for (int num=oldViewStub.sequenceNum; num < newViewStub.sequenceNum; num++) {
+    ModifiedFileSet incrementalDiff=sequentialDiffs.get(num);
+    if (incrementalDiff == BROKEN_DIFF) {
+      throw new BrokenDiffAwarenessException("error in getDiff");
+    }
+    diff=ModifiedFileSet.union(diff,incrementalDiff);
+  }
+  return diff;
+}

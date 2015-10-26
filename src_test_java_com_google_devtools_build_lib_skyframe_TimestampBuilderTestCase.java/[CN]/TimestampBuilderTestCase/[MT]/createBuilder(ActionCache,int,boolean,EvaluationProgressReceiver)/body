@@ -1,0 +1,44 @@
+{
+  AtomicReference<PathPackageLocator> pkgLocator=new AtomicReference<>(new PathPackageLocator());
+  ExternalFilesHelper externalFilesHelper=new ExternalFilesHelper(pkgLocator);
+  differencer=new RecordingDifferencer();
+  ActionExecutionStatusReporter statusReporter=ActionExecutionStatusReporter.create(new StoredEventHandler());
+  final SkyframeActionExecutor skyframeActionExecutor=new SkyframeActionExecutor(ResourceManager.instance(),eventBusRef,new AtomicReference<>(statusReporter));
+  skyframeActionExecutor.setActionLogBufferPathGenerator(new ActionLogBufferPathGenerator(actionOutputBase));
+  final InMemoryMemoizingEvaluator evaluator=new InMemoryMemoizingEvaluator(ImmutableMap.of(SkyFunctions.FILE_STATE,new FileStateFunction(tsgm,externalFilesHelper),SkyFunctions.FILE,new FileFunction(pkgLocator,tsgm,externalFilesHelper),SkyFunctions.ARTIFACT,new ArtifactFunction(Predicates.<PathFragment>alwaysFalse()),SkyFunctions.ACTION_EXECUTION,new ActionExecutionFunction(skyframeActionExecutor,tsgm)),differencer,evaluationProgressReceiver);
+  final SequentialBuildDriver driver=new SequentialBuildDriver(evaluator);
+  PrecomputedValue.BUILD_ID.set(differencer,UUID.randomUUID());
+  return new Builder(){
+    private void setGeneratingActions(){
+      if (evaluator.getExistingValueForTesting(OWNER_KEY) == null) {
+        differencer.inject(ImmutableMap.of(OWNER_KEY,new ActionLookupValue(actions)));
+      }
+    }
+    @Override public void buildArtifacts(    Reporter reporter,    Set<Artifact> artifacts,    Set<ConfiguredTarget> parallelTests,    Set<ConfiguredTarget> exclusiveTests,    Collection<ConfiguredTarget> targetsToBuild,    Collection<AspectValue> aspects,    Executor executor,    Set<ConfiguredTarget> builtTargets,    boolean explain,    Range<Long> lastExecutionTimeRange) throws BuildFailedException, AbruptExitException, InterruptedException, TestExecException {
+      skyframeActionExecutor.prepareForExecution(reporter,executor,keepGoing,false,new ActionCacheChecker(actionCache,null,ALWAYS_EXECUTE_FILTER,false));
+      List<SkyKey> keys=new ArrayList<>();
+      for (      Artifact artifact : artifacts) {
+        keys.add(ArtifactValue.key(artifact,true));
+      }
+      setGeneratingActions();
+      EvaluationResult<SkyValue> result=driver.evaluate(keys,keepGoing,threadCount,reporter);
+      if (result.hasError()) {
+        boolean hasCycles=false;
+        for (        Map.Entry<SkyKey,ErrorInfo> entry : result.errorMap().entrySet()) {
+          Iterable<CycleInfo> cycles=entry.getValue().getCycleInfo();
+          hasCycles|=!Iterables.isEmpty(cycles);
+        }
+        if (hasCycles) {
+          throw new BuildFailedException(CYCLE_MSG);
+        }
+ else         if (result.errorMap().isEmpty() || keepGoing) {
+          throw new BuildFailedException();
+        }
+ else {
+          SkyframeBuilder.rethrow(Preconditions.checkNotNull(result.getError().getException()));
+        }
+      }
+    }
+  }
+;
+}

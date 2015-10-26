@@ -1,0 +1,12 @@
+{
+  Path root=new InMemoryFileSystem().getRootDirectory().getRelative("root");
+  RootedPath p1=RootedPath.toRootedPath(root,new PathFragment("p1"));
+  RootedPath p2=RootedPath.toRootedPath(root,new PathFragment("p2"));
+  RootedPath p3=RootedPath.toRootedPath(root,new PathFragment("p3"));
+  ImmutableList<RootedPath> cycleA1=ImmutableList.of(p1);
+  ImmutableList<RootedPath> cycleB1=ImmutableList.of(p2);
+  ImmutableList<RootedPath> cycleC1=ImmutableList.of(p1,p2,p3);
+  ImmutableList<RootedPath> cycleC2=ImmutableList.of(p2,p3,p1);
+  ImmutableList<RootedPath> cycleC3=ImmutableList.of(p3,p1,p2);
+  new EqualsTester().addEqualityGroup(FileSymlinkCycleUniquenessFunction.key(cycleA1)).addEqualityGroup(FileSymlinkCycleUniquenessFunction.key(cycleB1)).addEqualityGroup(FileSymlinkCycleUniquenessFunction.key(cycleC1),FileSymlinkCycleUniquenessFunction.key(cycleC2),FileSymlinkCycleUniquenessFunction.key(cycleC3)).testEquals();
+}

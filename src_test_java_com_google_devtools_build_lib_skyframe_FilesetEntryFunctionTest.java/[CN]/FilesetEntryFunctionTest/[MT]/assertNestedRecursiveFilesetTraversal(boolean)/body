@@ -1,0 +1,14 @@
+{
+  Artifact dir=getSourceArtifact("foo/dir");
+  RootedPath fileA=createFile(childOf(dir,"file.a"),"hello");
+  RootedPath fileB=createFile(childOf(dir,"file.b"),"hello");
+  RootedPath fileC=createFile(childOf(dir,"sub/file.c"),"world");
+  FilesetTraversalParams inner=FilesetTraversalParamsFactory.recursiveTraversalOfDirectory(label("//foo"),dir,new PathFragment(useInnerDir ? "inner-dir" : ""),null,SymlinkBehavior.COPY,DONT_CROSS);
+  FilesetTraversalParams outer=FilesetTraversalParamsFactory.nestedTraversal(label("//foo"),inner,new PathFragment("outer-dir"),ImmutableSet.<String>of("file.a","sub/file.c"));
+  if (useInnerDir) {
+    assertSymlinksInOrder(outer,symlink("outer-dir/inner-dir/file.a",fileA),symlink("outer-dir/inner-dir/file.b",fileB),symlink("outer-dir/inner-dir/sub/file.c",fileC));
+  }
+ else {
+    assertSymlinksInOrder(outer,symlink("outer-dir/file.b",fileB),symlink("outer-dir/sub/file.c",fileC));
+  }
+}

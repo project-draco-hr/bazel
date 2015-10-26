@@ -1,0 +1,13 @@
+{
+  checkDirtyActions(new BatchStat(){
+    @Override public List<FileStatusWithDigest> batchStat(    boolean useDigest,    boolean includeLinks,    Iterable<PathFragment> paths) throws IOException {
+      List<FileStatusWithDigest> stats=new ArrayList<>();
+      for (      PathFragment pathFrag : paths) {
+        final Path path=fs.getRootDirectory().getRelative(pathFrag);
+        stats.add(statWithDigest(path,path.statIfFound(Symlinks.NOFOLLOW)));
+      }
+      return stats;
+    }
+  }
+,true);
+}

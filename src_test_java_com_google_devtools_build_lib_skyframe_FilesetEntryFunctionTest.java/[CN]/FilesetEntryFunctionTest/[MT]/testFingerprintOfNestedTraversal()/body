@@ -1,0 +1,10 @@
+{
+  FilesetTraversalParams n1=FilesetTraversalParamsFactory.fileTraversal(label("//blah"),getSourceArtifact("blah/file.a"),new PathFragment("output-name"),SymlinkBehavior.COPY,DONT_CROSS);
+  FilesetTraversalParams n2=FilesetTraversalParamsFactory.fileTraversal(label("//blah"),getSourceArtifact("meow/file.b"),new PathFragment("output-name"),SymlinkBehavior.COPY,DONT_CROSS);
+  new FingerprintTester(ImmutableMap.<String,Domain>of("ownerLabel",notPartOfFingerprint("//foo","//bar"),"nested",partOfFingerprint(n1,n2),"destDir",partOfFingerprint("out1","out2"),"excludes",partOfFingerprint(ImmutableSet.<String>of(),ImmutableSet.<String>of("x")))){
+    @SuppressWarnings("unchecked") @Override FilesetTraversalParams create(    Map<String,?> kwArgs) throws Exception {
+      return FilesetTraversalParamsFactory.nestedTraversal(label((String)kwArgs.get("ownerLabel")),(FilesetTraversalParams)kwArgs.get("nested"),new PathFragment((String)kwArgs.get("destDir")),(Set<String>)kwArgs.get("excludes"));
+    }
+  }
+.doTest();
+}

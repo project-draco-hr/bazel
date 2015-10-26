@@ -1,0 +1,13 @@
+{
+  if (changeRequest == ChangeArtifact.DONT_CHANGE) {
+    return;
+  }
+  if (changeRequest.changeMtime()) {
+    file.getPath().setLastModifiedTime(file.getPath().getLastModifiedTime() + 1000000);
+    tsgm.waitForTimestampGranularity(reporter.getOutErr());
+  }
+  if (changeRequest.changeContent()) {
+    appendToFile(file.getPath());
+  }
+  differencer.invalidate(ImmutableList.of(FileStateValue.key(RootedPath.toRootedPath(file.getRoot().getPath(),file.getRootRelativePath()))));
+}

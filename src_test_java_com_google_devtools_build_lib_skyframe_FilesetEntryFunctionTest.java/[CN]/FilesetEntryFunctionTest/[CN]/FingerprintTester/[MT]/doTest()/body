@@ -1,0 +1,15 @@
+{
+  Fingerprint fp=new Fingerprint();
+  create(getDefaultArgs()).fingerprint(fp);
+  String primary=fp.hexDigestAndReset();
+  for (  String argName : domains.keySet()) {
+    create(getKwArgs(argName)).fingerprint(fp);
+    String secondary=fp.hexDigestAndReset();
+    if (domains.get(argName).includedInFingerprint) {
+      assertWithMessage("Argument '" + argName + "' was expected to be included in the"+ " fingerprint, but wasn't").that(primary).isNotEqualTo(secondary);
+    }
+ else {
+      assertWithMessage("Argument '" + argName + "' was expected not to be included in the"+ " fingerprint, but was").that(primary).isEqualTo(secondary);
+    }
+  }
+}

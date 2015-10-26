@@ -1,0 +1,38 @@
+{
+  Artifact linkNameArtifact=sourceArtifact("link/foo.sym");
+  Artifact linkTargetArtifact=sourceArtifact("dir");
+  RootedPath linkName=rootedPath(linkNameArtifact);
+  PathFragment linkValue=new PathFragment("../dir");
+  RootedPath file1=createFile(childOf(linkTargetArtifact,"file.1"));
+  createFile(childOf(linkTargetArtifact,"sub/file.2"));
+  scratch.dir(parentOf(linkName).asPath().getPathString());
+  linkName.asPath().createSymbolicLink(linkValue);
+  TraversalRequest traversalRoot=fileLikeRoot(linkNameArtifact,DONT_CROSS);
+  ResolvedFile expected1=resolvedSymlinkToDir(rootedPath(linkTargetArtifact),linkName,linkValue);
+  ResolvedFile expected2=resolvedFile(childOf(linkNameArtifact,"file.1"));
+  ResolvedFile expected3=resolvedFile(childOf(linkNameArtifact,"sub/file.2"));
+  RecursiveFilesystemTraversalValue v1=traverseAndAssertFiles(traversalRoot,expected1,expected2,expected3);
+  assertThat(progressReceiver.invalidations).isEmpty();
+  assertThat(progressReceiver.evaluations).contains(v1);
+  progressReceiver.clear();
+  createFile(childOf(linkTargetArtifact,"file.3"));
+  invalidateDirectory(linkTargetArtifact);
+  ResolvedFile expected4=resolvedFile(childOf(linkNameArtifact,"file.3"));
+  RecursiveFilesystemTraversalValue v2=traverseAndAssertFiles(traversalRoot,expected1,expected2,expected3,expected4);
+  assertThat(progressReceiver.invalidations).contains(rftvSkyKey(traversalRoot));
+  assertThat(progressReceiver.evaluations).contains(v2);
+  assertThat(v2).isNotEqualTo(v1);
+  progressReceiver.clear();
+  appendToFile(file1,"bar");
+  RecursiveFilesystemTraversalValue v3=traverseAndAssertFiles(traversalRoot,expected1,expected2,expected3,expected4);
+  assertThat(progressReceiver.invalidations).contains(rftvSkyKey(traversalRoot));
+  assertThat(progressReceiver.evaluations).contains(v3);
+  assertThat(v3).isNotEqualTo(v2);
+  progressReceiver.clear();
+  Artifact someFile=sourceArtifact("somewhere/else/a.file");
+  createFile(someFile,"new file");
+  appendToFile(someFile,"not all changes are treated equal");
+  RecursiveFilesystemTraversalValue v4=traverseAndAssertFiles(traversalRoot,expected1,expected2,expected3,expected4);
+  assertThat(v4).isEqualTo(v3);
+  assertThat(progressReceiver.invalidations).doesNotContain(rftvSkyKey(traversalRoot));
+}

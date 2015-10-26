@@ -1,0 +1,13 @@
+{
+  Artifact wantedArtifact=sourceArtifact("foo/bar/baz.txt");
+  Artifact unwantedArtifact=sourceArtifact("foo/boo/baztxt.bak");
+  RootedPath wantedPath=rootedPath(wantedArtifact);
+  createFile(wantedPath,"hello");
+  createFile(unwantedArtifact,"nope");
+  Artifact pkgDirArtifact=sourceArtifact("foo");
+  RootedPath dir=rootedPath(pkgDirArtifact);
+  scratch.dir(dir.asPath().getPathString());
+  TraversalRequest traversalRoot=new TraversalRequest(dir,false,PackageBoundaryMode.REPORT_ERROR,true,null,Pattern.compile(".*\\.txt"));
+  ResolvedFile expected=resolvedFile(wantedPath);
+  traverseAndAssertFiles(traversalRoot,expected);
+}

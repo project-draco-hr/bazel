@@ -1,0 +1,13 @@
+{
+  Artifact artifact=createDerivedArtifact("no-digest");
+  Path path=artifact.getPath();
+  writeFile(path,"hello");
+  FileArtifactValue value=create(artifact);
+  assertArrayEquals(path.getMD5Digest(),value.getDigest());
+  try {
+    value.getModifiedTime();
+    fail("mtime for non-empty file should not be stored.");
+  }
+ catch (  IllegalStateException e) {
+  }
+}

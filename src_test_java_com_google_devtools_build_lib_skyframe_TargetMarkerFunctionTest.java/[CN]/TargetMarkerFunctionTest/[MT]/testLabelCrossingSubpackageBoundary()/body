@@ -1,0 +1,10 @@
+{
+  scratch.file("a/b/c/foo.sh","echo 'FOO'");
+  scratch.file("a/BUILD","sh_library(name = 'foo', srcs = ['b/c/foo.sh'])");
+  String labelName="//a:b/c/foo.sh";
+  scratch.file("a/b/BUILD");
+  ModifiedFileSet subpackageBuildFile=ModifiedFileSet.builder().modify(new PathFragment("a/b/BUILD")).build();
+  skyframeExecutor.invalidateFilesUnderPathForTesting(reporter,subpackageBuildFile,rootDirectory);
+  NoSuchTargetException exn=(NoSuchTargetException)getErrorFromTargetValue(labelName);
+  assertThat(exn.getMessage()).contains("Label '//a:b/c/foo.sh' crosses boundary of subpackage 'a/b'");
+}

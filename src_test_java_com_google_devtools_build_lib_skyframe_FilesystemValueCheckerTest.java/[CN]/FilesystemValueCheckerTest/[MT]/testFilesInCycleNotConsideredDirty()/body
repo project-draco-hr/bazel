@@ -1,0 +1,15 @@
+{
+  Path path1=pkgRoot.getRelative("foo1");
+  Path path2=pkgRoot.getRelative("foo2");
+  Path path3=pkgRoot.getRelative("foo3");
+  FileSystemUtils.ensureSymbolicLink(path1,path2);
+  FileSystemUtils.ensureSymbolicLink(path2,path3);
+  FileSystemUtils.ensureSymbolicLink(path3,path1);
+  SkyKey fileKey1=FileValue.key(RootedPath.toRootedPath(pkgRoot,path1));
+  EvaluationResult<SkyValue> result=driver.evaluate(ImmutableList.of(fileKey1),false,SkyframeExecutor.DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  assertTrue(result.hasError());
+  FilesystemValueChecker checker=new FilesystemValueChecker(evaluator,tsgm,null);
+  Diff diff=getDirtyFilesystemKeys(checker);
+  assertThat(diff.changedKeysWithoutNewValues()).isEmpty();
+  assertThat(diff.changedKeysWithNewValues()).isEmpty();
+}

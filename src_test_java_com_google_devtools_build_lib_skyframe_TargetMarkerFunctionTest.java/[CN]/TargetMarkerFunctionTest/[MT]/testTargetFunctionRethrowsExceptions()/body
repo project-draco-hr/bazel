@@ -1,0 +1,8 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("a/BUILD","sh_library(name = 'b/c')");
+  Path subpackageBuildFile=scratch.file("a/b/BUILD","sh_library(name = 'c')");
+  fs.stubStatIOException(subpackageBuildFile,new IOException("nope"));
+  BuildFileNotFoundException exn=(BuildFileNotFoundException)getErrorFromTargetValue("//a:b/c");
+  assertThat(exn.getMessage()).contains("nope");
+}

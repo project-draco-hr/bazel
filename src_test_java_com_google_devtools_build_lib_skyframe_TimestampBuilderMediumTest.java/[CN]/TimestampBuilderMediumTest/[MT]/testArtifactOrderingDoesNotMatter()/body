@@ -1,0 +1,21 @@
+{
+  Artifact hello=createSourceArtifact("hello");
+  Artifact there=createSourceArtifact("there");
+  FileSystemUtils.createDirectoryAndParents(hello.getPath().getParentDirectory());
+  FileSystemUtils.writeContentAsLatin1(hello.getPath(),"hello");
+  FileSystemUtils.writeContentAsLatin1(there.getPath(),"there");
+  Artifact goodbye=createDerivedArtifact("goodbye");
+  Button button=createActionButton(Sets.newLinkedHashSet(ImmutableList.of(hello,there)),Sets.newHashSet(goodbye));
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),goodbye);
+  assertTrue(button.pressed);
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),goodbye);
+  assertFalse(button.pressed);
+  clearActions();
+  Artifact goodbye2=createDerivedArtifact("goodbye");
+  Button button2=createActionButton(Sets.newLinkedHashSet(ImmutableList.of(there,hello)),Sets.newHashSet(goodbye2));
+  button2.pressed=false;
+  buildArtifacts(persistentBuilder(cache),goodbye);
+  assertFalse(button2.pressed);
+}

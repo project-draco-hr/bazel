@@ -1,0 +1,46 @@
+{
+  Artifact buildFile=createSourceArtifact("foo/BUILD");
+  Artifact subpkgBuildFile=createSourceArtifact("foo/subpkg/BUILD");
+  Artifact subpkgSymlink=getSourceArtifact("foo/subpkg_sym");
+  RootedPath fileA=createFile(siblingOf(buildFile,"file.a"),"blah");
+  RootedPath fileAsym=siblingOf(buildFile,"subdir/file.a.sym");
+  RootedPath fileB=createFile(siblingOf(subpkgBuildFile,"file.b"),"blah");
+  scratch.dir(fileAsym.asPath().getParentDirectory().getPathString());
+  fileAsym.asPath().createSymbolicLink(new PathFragment("../file.a"));
+  subpkgSymlink.getPath().createSymbolicLink(new PathFragment("subpkg"));
+  FilesetOutputSymlink outBuild=symlink("output-name/BUILD",buildFile);
+  FilesetOutputSymlink outA=symlink("output-name/file.a",fileA);
+  FilesetOutputSymlink outAsym=null;
+  FilesetOutputSymlink outSubpkgBuild=symlink("output-name/subpkg/BUILD",subpkgBuildFile);
+  FilesetOutputSymlink outSubpkgB=symlink("output-name/subpkg/file.b",fileB);
+  FilesetOutputSymlink outSubpkgSymBuild;
+switch (symlinks) {
+case COPY:
+    outAsym=symlink("output-name/subdir/file.a.sym","../file.a");
+  outSubpkgSymBuild=symlink("output-name/subpkg_sym","subpkg");
+break;
+case DEREFERENCE:
+outAsym=symlink("output-name/subdir/file.a.sym",fileA);
+outSubpkgSymBuild=symlink("output-name/subpkg_sym",getSourceArtifact("foo/subpkg"));
+break;
+default :
+throw new IllegalStateException(symlinks.toString());
+}
+FilesetTraversalParams params=FilesetTraversalParamsFactory.recursiveTraversalOfPackage(label("//foo"),buildFile,new PathFragment("output-name"),null,symlinks,pkgBoundaryMode);
+switch (pkgBoundaryMode) {
+case CROSS:
+assertSymlinksInOrder(params,outBuild,outA,outSubpkgSymBuild,outAsym,outSubpkgBuild,outSubpkgB);
+break;
+case DONT_CROSS:
+assertSymlinksInOrder(params,outBuild,outA,outAsym);
+break;
+case REPORT_ERROR:
+SkyKey key=FilesetEntryValue.key(params);
+EvaluationResult<SkyValue> result=eval(key);
+assertThat(result.hasError()).isTrue();
+assertThat(result.getError(key).getException().getMessage()).contains("'foo' crosses package boundary into package rooted at foo/subpkg");
+break;
+default :
+throw new IllegalStateException(pkgBoundaryMode.toString());
+}
+}

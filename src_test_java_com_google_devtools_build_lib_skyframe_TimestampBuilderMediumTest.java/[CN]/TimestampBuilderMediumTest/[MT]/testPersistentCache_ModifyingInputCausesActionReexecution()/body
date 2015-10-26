@@ -1,0 +1,22 @@
+{
+  Artifact hello=createSourceArtifact("hello");
+  BlazeTestUtils.makeEmptyFile(hello.getPath());
+  Artifact goodbye=createDerivedArtifact("goodbye");
+  Button button=createActionButton(Sets.newHashSet(hello),Sets.newHashSet(goodbye));
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),goodbye);
+  assertTrue(button.pressed);
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),goodbye);
+  assertFalse(button.pressed);
+  FileSystemUtils.touchFile(hello.getPath());
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),goodbye);
+  assertTrue(button.pressed);
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),goodbye);
+  assertFalse(button.pressed);
+  cache.save();
+  buildArtifacts(persistentBuilder(createCache()),goodbye);
+  assertFalse(button.pressed);
+}

@@ -1,0 +1,15 @@
+{
+  long nodeId=pkgPath.getRelative("BUILD").stat().getNodeId();
+  fs.stubStat(pkgPath,null);
+  RootedPath pkgRootedPath=RootedPath.toRootedPath(root,pkgPath);
+  FileStateValue pkgDirFileStateValue=FileStateValue.create(pkgRootedPath,tsgm);
+  FileValue pkgDirValue=FileValue.value(pkgRootedPath,pkgDirFileStateValue,pkgRootedPath,pkgDirFileStateValue);
+  differencer.inject(ImmutableMap.of(FileValue.key(pkgRootedPath),pkgDirValue));
+  String expectedMessage="Some filesystem operations implied /root/workspace/pkg/BUILD was a " + "regular file with size of 0 and mtime of 0 and nodeId of " + nodeId + " and mtime of 0 "+ "but others made us think it was a nonexistent path";
+  SkyKey skyKey=GlobValue.key(PKG_PATH_ID,"*/foo",false,PathFragment.EMPTY_FRAGMENT);
+  EvaluationResult<GlobValue> result=driver.evaluate(ImmutableList.of(skyKey),false,SkyframeExecutor.DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  assertTrue(result.hasError());
+  ErrorInfo errorInfo=result.getError(skyKey);
+  assertThat(errorInfo.getException()).isInstanceOf(InconsistentFilesystemException.class);
+  assertThat(errorInfo.getException().getMessage()).contains(expectedMessage);
+}

@@ -1,0 +1,20 @@
+{
+  pkgLocator.set(new PathPackageLocator(rootDirectory.getRelative("pp1"),rootDirectory.getRelative("pp2")));
+  PrecomputedValue.PATH_PACKAGE_LOCATOR.set(differencer,pkgLocator.get());
+  Artifact aBuildArtifact=sourceArtifactUnderPackagePath("a/BUILD","pp1");
+  Artifact bBuildArtifact=sourceArtifactUnderPackagePath("a/b/BUILD","pp2");
+  RootedPath pp1aBuild=createFile(rootedPath(aBuildArtifact));
+  RootedPath pp1aFileA=createFile(siblingOf(pp1aBuild,"file.a"));
+  RootedPath pp1bFileFake=createFile(siblingOf(pp1aBuild,"b/file.fake"));
+  RootedPath pp1aSubdirFileB=createFile(siblingOf(pp1aBuild,"subdir/file.b"));
+  RootedPath pp2aBuild=createFile(rootedPath("a/BUILD","pp2"));
+  RootedPath pp2bBuild=createFile(rootedPath(bBuildArtifact));
+  RootedPath pp2bFileA=createFile(siblingOf(pp2bBuild,"file.a"));
+  createFile(siblingOf(pp2aBuild,"subdir.fake/file.fake"));
+  traverseAndAssertFiles(pkgRoot(parentOf(rootedPath(aBuildArtifact)),CROSS),resolvedFile(pp1aBuild),resolvedFile(pp1aFileA),resolvedFile(pp1aSubdirFileB),resolvedFile(pp2bBuild),resolvedFile(pp2bFileA));
+  traverseAndAssertFiles(pkgRoot(parentOf(rootedPath(aBuildArtifact)),DONT_CROSS),resolvedFile(pp1aBuild),resolvedFile(pp1aFileA),resolvedFile(pp1aSubdirFileB));
+  RootedPath pp1aBsym=siblingOf(pp1aFileA,"b.sym");
+  pp1aBsym.asPath().createSymbolicLink(new PathFragment("b"));
+  invalidateDirectory(parentOf(pp1aBsym));
+  traverseAndAssertFiles(pkgRoot(parentOf(rootedPath(aBuildArtifact)),DONT_CROSS),resolvedFile(pp1aBuild),resolvedFile(pp1aFileA),resolvedFile(childOf(pp1aBsym,"file.fake")),resolvedSymlinkToDir(parentOf(pp1bFileFake),pp1aBsym,new PathFragment("b")),resolvedFile(pp1aSubdirFileB));
+}

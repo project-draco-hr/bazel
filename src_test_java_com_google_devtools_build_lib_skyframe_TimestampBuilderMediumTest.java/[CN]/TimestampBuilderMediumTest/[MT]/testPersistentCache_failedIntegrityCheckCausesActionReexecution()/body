@@ -1,0 +1,39 @@
+{
+  Artifact hello=createDerivedArtifact("hello");
+  Button button=createActionButton(emptySet,Sets.newHashSet(hello));
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),hello);
+  assertTrue(button.pressed);
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),hello);
+  assertFalse(button.pressed);
+  BlazeTestUtils.changeModtime(hello.getPath());
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),hello);
+  assertTrue(button.pressed);
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),hello);
+  assertFalse(button.pressed);
+  cache.save();
+  Path indexPath=Iterables.getOnlyElement(UnixGlob.forPath(cacheRoot).addPattern("filename_index*").globInterruptible());
+  Path indexCopy=scratch.resolve("index_copy");
+  FileSystemUtils.copyFile(indexPath,indexCopy);
+  Artifact helloExtra=createDerivedArtifact("hello_extra");
+  Button buttonExtra=createActionButton(emptySet,Sets.newHashSet(helloExtra));
+  buildArtifacts(persistentBuilder(cache),helloExtra);
+  assertTrue(buttonExtra.pressed);
+  cache.save();
+  assertTrue(indexPath.getFileSize() > indexCopy.getFileSize());
+  buildArtifacts(persistentBuilder(createCache()),hello);
+  assertFalse(button.pressed);
+  FileSystemUtils.copyFile(indexCopy,indexPath);
+  try {
+    createCache();
+    fail("Expected IOException");
+  }
+ catch (  IOException e) {
+    assertThat(e.getMessage()).contains("Failed action cache referential integrity check");
+  }
+  buildArtifacts(persistentBuilder(createCache()),hello);
+  assertTrue(button.pressed);
+}

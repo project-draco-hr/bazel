@@ -1,0 +1,39 @@
+{
+class MyAction extends AbstractAction {
+    Object executor=null;
+    public MyAction(    Collection<Artifact> outputs){
+      super(ActionsTestUtil.NULL_ACTION_OWNER,ImmutableList.<Artifact>of(),outputs);
+    }
+    @Override public void execute(    ActionExecutionContext actionExecutionContext) throws ActionExecutionException {
+      this.executor=actionExecutionContext.getExecutor();
+      try {
+        FileSystemUtils.createEmptyFile(getPrimaryOutput().getPath());
+      }
+ catch (      IOException e) {
+        throw new ActionExecutionException("failed: ",e,this,false);
+      }
+    }
+    @Override public ResourceSet estimateResourceConsumption(    Executor executor){
+      return ResourceSet.ZERO;
+    }
+    @Override protected String computeKey(){
+      return "MyAction";
+    }
+    @Override public String describeStrategy(    Executor executor){
+      return "";
+    }
+    @Override public String getMnemonic(){
+      return "MyAction";
+    }
+  }
+  Artifact output=createDerivedArtifact("foo");
+  Set<Artifact> outputs=Sets.newHashSet(output);
+  MyAction action=new MyAction(outputs);
+  registerAction(action);
+  Executor executor=new DummyExecutor(scratch.dir("/"));
+  amnesiacBuilder().buildArtifacts(reporter,outputs,null,null,null,null,executor,null,false,null);
+  assertSame(executor,action.executor);
+  executor=new DummyExecutor(scratch.dir("/"));
+  amnesiacBuilder().buildArtifacts(reporter,outputs,null,null,null,null,executor,null,false,null);
+  assertSame(executor,action.executor);
+}

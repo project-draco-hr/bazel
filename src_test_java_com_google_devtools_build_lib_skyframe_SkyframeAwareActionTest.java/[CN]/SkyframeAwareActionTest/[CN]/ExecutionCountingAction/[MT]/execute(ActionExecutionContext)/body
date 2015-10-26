@@ -1,0 +1,18 @@
+{
+  executionCounter.incrementAndGet();
+  byte[] input=new byte[10];
+  int inputLen=0;
+  try (InputStream in=Iterables.getOnlyElement(getInputs()).getPath().getInputStream()){
+    inputLen=in.read(input);
+  }
+ catch (  IOException e) {
+    throw new ActionExecutionException(e,this,false);
+  }
+  try (OutputStream out=getPrimaryOutput().getPath().getOutputStream()){
+    out.write(input,0,inputLen);
+    out.write('x');
+  }
+ catch (  IOException e) {
+    throw new ActionExecutionException(e,this,false);
+  }
+}

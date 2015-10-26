@@ -1,0 +1,19 @@
+{
+  Artifact goodbye=createDerivedArtifact("goodbye");
+  FileSystemUtils.createDirectoryAndParents(goodbye.getPath().getParentDirectory());
+  FileSystemUtils.writeContentAsLatin1(goodbye.getPath(),"test");
+  Button button=createActionButton(emptySet,Sets.newLinkedHashSet(ImmutableList.of(goodbye)));
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),goodbye);
+  assertTrue(button.pressed);
+  assertThat(cache.get(goodbye.getExecPathString())).isNotNull();
+  clearActions();
+  Artifact hello=createDerivedArtifact("hello");
+  Artifact goodbye2=createDerivedArtifact("goodbye");
+  Button button2=createActionButton(emptySet,Sets.newLinkedHashSet(ImmutableList.of(hello,goodbye2)));
+  button2.pressed=false;
+  buildArtifacts(persistentBuilder(cache),hello,goodbye2);
+  assertTrue(button2.pressed);
+  assertThat(cache.get(hello.getExecPathString())).isNotNull();
+  assertThat(cache.get(goodbye.getExecPathString())).isNull();
+}

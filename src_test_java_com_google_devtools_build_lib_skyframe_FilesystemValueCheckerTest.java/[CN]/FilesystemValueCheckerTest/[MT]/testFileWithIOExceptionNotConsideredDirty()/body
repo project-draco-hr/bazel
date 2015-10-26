@@ -1,0 +1,14 @@
+{
+  Path path=fs.getPath("/testroot/foo");
+  path.getParentDirectory().createDirectory();
+  path.createSymbolicLink(new PathFragment("bar"));
+  fs.readlinkThrowsIoException=true;
+  SkyKey fileKey=FileStateValue.key(RootedPath.toRootedPath(pkgRoot,new PathFragment("foo")));
+  EvaluationResult<SkyValue> result=driver.evaluate(ImmutableList.of(fileKey),false,SkyframeExecutor.DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  assertTrue(result.hasError());
+  fs.readlinkThrowsIoException=false;
+  FilesystemValueChecker checker=new FilesystemValueChecker(evaluator,tsgm,null);
+  Diff diff=getDirtyFilesystemKeys(checker);
+  assertThat(diff.changedKeysWithoutNewValues()).isEmpty();
+  assertThat(diff.changedKeysWithNewValues()).isEmpty();
+}

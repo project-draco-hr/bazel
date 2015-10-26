@@ -1,0 +1,17 @@
+{
+  Path pathEntry=root.getRelative("pathEntry");
+  ModifiedFileSet diff=ModifiedFileSet.NOTHING_MODIFIED;
+  DiffAwarenessStub diffAwareness1=new DiffAwarenessStub(ImmutableList.of(diff));
+  DiffAwarenessStub diffAwareness2=new DiffAwarenessStub(ImmutableList.of(diff));
+  DiffAwarenessFactoryStub factory=new DiffAwarenessFactoryStub();
+  factory.inject(pathEntry,diffAwareness1);
+  DiffAwarenessManager manager=new DiffAwarenessManager(ImmutableList.of(factory));
+  manager.getDiff(events.reporter(),pathEntry);
+  assertFalse("diffAwareness1 shouldn't have been closed yet",diffAwareness1.closed());
+  manager.reset();
+  assertTrue("diffAwareness1 should have been closed by reset",diffAwareness1.closed());
+  factory.inject(pathEntry,diffAwareness2);
+  manager.getDiff(events.reporter(),pathEntry);
+  assertFalse("diffAwareness2 shouldn't have been closed yet",diffAwareness2.closed());
+  events.assertNoWarningsOrErrors();
+}

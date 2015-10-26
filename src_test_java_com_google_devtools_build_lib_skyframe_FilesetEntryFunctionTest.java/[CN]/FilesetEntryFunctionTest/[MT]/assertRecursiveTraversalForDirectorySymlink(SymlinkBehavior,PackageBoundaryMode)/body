@@ -1,0 +1,42 @@
+{
+  Artifact dir=getSourceArtifact("foo/dir_real");
+  Artifact symlink=getSourceArtifact("foo/dir_sym");
+  createFile(childOf(dir,"file.a"),"blah");
+  RootedPath fileAsym=childOf(dir,"subdir/file.a.sym");
+  createFile(childOf(dir,"subpkg/BUILD"),"blah");
+  createFile(childOf(dir,"subpkg/file.b"),"blah");
+  fileAsym.asPath().getParentDirectory().createDirectory();
+  fileAsym.asPath().createSymbolicLink(new PathFragment("../file.a"));
+  symlink.getPath().createSymbolicLink(new PathFragment("dir_real"));
+  FilesetOutputSymlink outA=symlink("output-name/file.a",childOf(symlink,"file.a"));
+  FilesetOutputSymlink outASym=null;
+  FilesetOutputSymlink outBuild=symlink("output-name/subpkg/BUILD",childOf(symlink,"subpkg/BUILD"));
+  FilesetOutputSymlink outB=symlink("output-name/subpkg/file.b",childOf(symlink,"subpkg/file.b"));
+switch (symlinks) {
+case COPY:
+    outASym=symlink("output-name/subdir/file.a.sym","../file.a");
+  break;
+case DEREFERENCE:
+outASym=symlink("output-name/subdir/file.a.sym",childOf(dir,"file.a"));
+break;
+default :
+throw new IllegalStateException(symlinks.toString());
+}
+FilesetTraversalParams params=FilesetTraversalParamsFactory.recursiveTraversalOfDirectory(label("//foo"),symlink,new PathFragment("output-name"),null,symlinks,pkgBoundaryMode);
+switch (pkgBoundaryMode) {
+case CROSS:
+assertSymlinksInOrder(params,outA,outASym,outBuild,outB);
+break;
+case DONT_CROSS:
+assertSymlinksInOrder(params,outA,outASym);
+break;
+case REPORT_ERROR:
+SkyKey key=FilesetEntryValue.key(params);
+EvaluationResult<SkyValue> result=eval(key);
+assertThat(result.hasError()).isTrue();
+assertThat(result.getError(key).getException().getMessage()).contains("'foo/dir_sym' crosses package boundary into package rooted at foo/dir_sym/subpkg");
+break;
+default :
+throw new IllegalStateException(pkgBoundaryMode.toString());
+}
+}

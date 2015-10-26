@@ -1,0 +1,14 @@
+{
+  scratch.file("a/BUILD");
+  scratch.file("a/b/c/BUILD");
+  scratch.file("a/b/d/BUILD");
+  ImmutableSet<PathFragment> excludedPaths=ImmutableSet.of(new PathFragment("a/b/c"));
+  SkyKey key=buildRecursivePkgKey(rootDirectory,new PathFragment("a"),excludedPaths);
+  EvaluationResult<RecursivePkgValue> evaluationResult=getEvaluationResult(key);
+  RecursivePkgValue value=evaluationResult.get(key);
+  assertThat(value.getPackages()).doesNotContain("a/b/c");
+  assertThat(value.getPackages()).contains("a");
+  assertThat(value.getPackages()).contains("a/b/d");
+  WalkableGraph graph=Preconditions.checkNotNull(evaluationResult.getWalkableGraph());
+  assertTrue(graph.exists(buildRecursivePkgKey(rootDirectory,new PathFragment("a/b"),excludedPaths)));
+}

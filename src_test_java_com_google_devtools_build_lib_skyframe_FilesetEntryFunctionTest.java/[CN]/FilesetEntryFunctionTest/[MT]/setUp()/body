@@ -1,0 +1,19 @@
+{
+  super.setUp();
+  pkgLocator=new AtomicReference<>(new PathPackageLocator(rootDirectory));
+  AtomicReference<ImmutableSet<PackageIdentifier>> deletedPackages=new AtomicReference<>(ImmutableSet.<PackageIdentifier>of());
+  ExternalFilesHelper externalFilesHelper=new ExternalFilesHelper(pkgLocator);
+  Map<SkyFunctionName,SkyFunction> skyFunctions=new HashMap<>();
+  skyFunctions.put(SkyFunctions.FILE_STATE,new FileStateFunction(tsgm,externalFilesHelper));
+  skyFunctions.put(SkyFunctions.FILE,new FileFunction(pkgLocator,tsgm,externalFilesHelper));
+  skyFunctions.put(SkyFunctions.DIRECTORY_LISTING,new DirectoryListingFunction());
+  skyFunctions.put(SkyFunctions.DIRECTORY_LISTING_STATE,new DirectoryListingStateFunction(externalFilesHelper));
+  skyFunctions.put(SkyFunctions.RECURSIVE_FILESYSTEM_TRAVERSAL,new RecursiveFilesystemTraversalFunction());
+  skyFunctions.put(SkyFunctions.PACKAGE_LOOKUP,new PackageLookupFunction(deletedPackages));
+  skyFunctions.put(SkyFunctions.FILESET_ENTRY,new FilesetEntryFunction());
+  differencer=new RecordingDifferencer();
+  evaluator=new InMemoryMemoizingEvaluator(skyFunctions,differencer);
+  driver=new SequentialBuildDriver(evaluator);
+  PrecomputedValue.BUILD_ID.set(differencer,UUID.randomUUID());
+  PrecomputedValue.PATH_PACKAGE_LOCATOR.set(differencer,pkgLocator.get());
+}

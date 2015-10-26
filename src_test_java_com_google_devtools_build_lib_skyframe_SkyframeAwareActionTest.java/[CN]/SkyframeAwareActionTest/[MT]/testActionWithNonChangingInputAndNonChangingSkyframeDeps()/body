@@ -1,0 +1,15 @@
+{
+  final SkyKey skyframeDep=FileStateValue.key(createSkyframeDepOfAction());
+  assertActionExecutions(new ExecutionCountingActionFactory(){
+    @Override public ExecutionCountingAction create(    Artifact input,    Artifact output,    AtomicInteger executionCounter){
+      return new SkyframeAwareExecutionCountingAction(input,output,executionCounter,skyframeDep);
+    }
+  }
+,ChangeArtifact.DONT_CHANGE,new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      differencer.invalidate(ImmutableList.of(skyframeDep));
+      return null;
+    }
+  }
+,ExpectActionIs.DIRTIED_BUT_VERIFIED_CLEAN);
+}

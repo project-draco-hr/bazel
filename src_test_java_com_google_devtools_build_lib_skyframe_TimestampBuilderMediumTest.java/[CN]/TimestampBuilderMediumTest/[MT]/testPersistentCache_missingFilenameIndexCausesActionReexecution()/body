@@ -1,0 +1,28 @@
+{
+  Artifact hello=createDerivedArtifact("hello");
+  Button button=createActionButton(emptySet,Sets.newHashSet(hello));
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),hello);
+  assertTrue(button.pressed);
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),hello);
+  assertFalse(button.pressed);
+  BlazeTestUtils.changeModtime(hello.getPath());
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),hello);
+  assertTrue(button.pressed);
+  button.pressed=false;
+  buildArtifacts(persistentBuilder(cache),hello);
+  assertFalse(button.pressed);
+  cache.save();
+  assertTrue(Iterables.getOnlyElement(UnixGlob.forPath(cacheRoot).addPattern("filename_index*").globInterruptible()).delete());
+  try {
+    createCache();
+    fail("Expected IOException");
+  }
+ catch (  IOException e) {
+    assertThat(e).hasMessage("Failed action cache referential integrity check: empty index");
+  }
+  buildArtifacts(persistentBuilder(createCache()),hello);
+  assertTrue(button.pressed);
+}

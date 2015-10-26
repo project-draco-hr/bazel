@@ -1,0 +1,14 @@
+{
+  super.setUp();
+  fs=new CustomInMemoryFs(new ManualClock());
+  root=fs.getRootDirectory().getRelative("root/workspace");
+  pkgPath=root.getRelative(PKG_PATH_ID.getPackageFragment());
+  pkgLocator=new AtomicReference<>(new PathPackageLocator(root));
+  tsgm=new TimestampGranularityMonitor(BlazeClock.instance());
+  differencer=new RecordingDifferencer();
+  evaluator=new InMemoryMemoizingEvaluator(createFunctionMap(),differencer);
+  driver=new SequentialBuildDriver(evaluator);
+  PrecomputedValue.BUILD_ID.set(differencer,UUID.randomUUID());
+  PrecomputedValue.PATH_PACKAGE_LOCATOR.set(differencer,pkgLocator.get());
+  createTestFiles();
+}

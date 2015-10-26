@@ -1,0 +1,41 @@
+{
+  RootedPath wizRootedPath=RootedPath.toRootedPath(root,pkgPath.getRelative("foo/bar/wiz"));
+  RootedPath fileRootedPath=RootedPath.toRootedPath(root,pkgPath.getRelative("foo/bar/wiz/file"));
+  final FileStatus realStat=fileRootedPath.asPath().stat();
+  fs.stubStat(fileRootedPath.asPath(),new FileStatus(){
+    @Override public boolean isFile(){
+      return true;
+    }
+    @Override public boolean isSpecialFile(){
+      return false;
+    }
+    @Override public boolean isDirectory(){
+      return false;
+    }
+    @Override public boolean isSymbolicLink(){
+      return false;
+    }
+    @Override public long getSize() throws IOException {
+      return realStat.getSize();
+    }
+    @Override public long getLastModifiedTime() throws IOException {
+      return realStat.getLastModifiedTime();
+    }
+    @Override public long getLastChangeTime() throws IOException {
+      return realStat.getLastChangeTime();
+    }
+    @Override public long getNodeId() throws IOException {
+      return realStat.getNodeId();
+    }
+  }
+);
+  SkyValue wizDirListingValue=DirectoryListingStateValue.createForTesting(ImmutableList.of(new Dirent("file",Dirent.Type.SYMLINK)));
+  differencer.inject(ImmutableMap.of(DirectoryListingStateValue.key(wizRootedPath),wizDirListingValue));
+  String expectedMessage="readdir and stat disagree about whether " + fileRootedPath.asPath() + " is a symlink";
+  SkyKey skyKey=GlobValue.key(PKG_PATH_ID,"foo/bar/wiz/*",false,PathFragment.EMPTY_FRAGMENT);
+  EvaluationResult<GlobValue> result=driver.evaluate(ImmutableList.of(skyKey),false,SkyframeExecutor.DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  assertTrue(result.hasError());
+  ErrorInfo errorInfo=result.getError(skyKey);
+  assertThat(errorInfo.getException()).isInstanceOf(InconsistentFilesystemException.class);
+  assertThat(errorInfo.getException().getMessage()).contains(expectedMessage);
+}

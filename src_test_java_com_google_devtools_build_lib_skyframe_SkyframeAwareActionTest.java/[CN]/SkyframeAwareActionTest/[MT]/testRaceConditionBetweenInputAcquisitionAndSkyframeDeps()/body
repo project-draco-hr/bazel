@@ -1,0 +1,20 @@
+{
+  Artifact genFile1=createDerivedArtifact("foo/bar/gen1.txt");
+  Artifact genFile2=createDerivedArtifact("gen2.txt");
+  registerAction(new SingleOutputAction(null,genFile1){
+    @Override public void execute(    ActionExecutionContext actionExecutionContext) throws ActionExecutionException, InterruptedException {
+      writeOutput(null,"gen1");
+    }
+  }
+);
+  registerAction(new SingleOutputSkyframeAwareAction(genFile1,genFile2){
+    @Override public void establishSkyframeDependencies(    Environment env) throws ExceptionBase {
+      assertThat(env.valuesMissing()).isFalse();
+    }
+    @Override public void execute(    ActionExecutionContext actionExecutionContext) throws ActionExecutionException, InterruptedException {
+      writeOutput(readInput(),"gen2");
+    }
+  }
+);
+  builder.buildArtifacts(reporter,ImmutableSet.of(genFile2),null,null,null,null,executor,null,false,null);
+}

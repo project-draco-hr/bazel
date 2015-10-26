@@ -1,0 +1,34 @@
+{
+  Artifact actionInput=createSourceArtifact("foo/action-input.txt");
+  Artifact actionOutput=createDerivedArtifact("foo/action-output.txt");
+  AtomicInteger executionCounter=new AtomicInteger(0);
+  scratch.file(actionInput.getPath().getPathString(),"foo");
+  Action action=actionFactory.create(actionInput,actionOutput,executionCounter);
+  registerAction(action);
+  builder.buildArtifacts(reporter,ImmutableSet.of(actionOutput),null,null,null,null,executor,null,false,null);
+  SkyKey actionKey=ActionExecutionValue.key(action);
+  TrackingEvaluationProgressReceiver.EvaluatedEntry evaluatedAction=invalidationReceiver.getEvalutedEntry(actionKey);
+  assertThat(evaluatedAction).isNotNull();
+  SkyValue actionValue=evaluatedAction.value;
+  maybeChangeFile(actionInput,changeActionInput);
+  betweenBuilds.call();
+  invalidationReceiver.reset();
+  builder.buildArtifacts(reporter,ImmutableSet.of(actionOutput),null,null,null,null,executor,null,false,null);
+  if (expectActionIs.dirtied()) {
+    assertThat(invalidationReceiver.wasInvalidated(actionKey)).isTrue();
+    TrackingEvaluationProgressReceiver.EvaluatedEntry newEntry=invalidationReceiver.getEvalutedEntry(actionKey);
+    assertThat(newEntry).isNotNull();
+    if (expectActionIs.actuallyClean()) {
+      assertThat(newEntry.state).isEqualTo(EvaluationState.CLEAN);
+      assertThat(newEntry.value).isEqualTo(actionValue);
+    }
+ else {
+      assertThat(newEntry.state).isEqualTo(EvaluationState.BUILT);
+      assertThat(newEntry.value).isNotEqualTo(actionValue);
+    }
+  }
+ else {
+    assertThat(invalidationReceiver.wasInvalidated(actionKey)).isFalse();
+  }
+  assertThat(executionCounter.get()).isEqualTo(expectActionIs.reexecuted() ? 2 : 1);
+}

@@ -1,0 +1,12 @@
+{
+  Artifact genDir=derivedArtifact("a/b");
+  createFile(rootedPath(sourceArtifact("a/b/c/file.real")));
+  createFile(rootedPath(derivedArtifact("a/b/c/file.fake")));
+  createFile(sourceArtifact("a/b/c/BUILD"));
+  SkyKey key=rftvSkyKey(fileLikeRoot(genDir,CROSS));
+  EvaluationResult<SkyValue> result=eval(key);
+  assertThat(result.hasError()).isTrue();
+  ErrorInfo error=result.getError(key);
+  assertThat(error.isTransient()).isFalse();
+  assertThat(error.getException().getMessage()).contains("Generated directory a/b/c conflicts with package under the same path.");
+}

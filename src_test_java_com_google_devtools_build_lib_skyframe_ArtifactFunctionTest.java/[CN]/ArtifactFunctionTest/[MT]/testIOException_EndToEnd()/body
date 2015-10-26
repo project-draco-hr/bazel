@@ -1,0 +1,19 @@
+{
+  final IOException exception=new IOException("beep");
+  setupRoot(new CustomInMemoryFs(){
+    @Override public FileStatus stat(    Path path,    boolean followSymlinks) throws IOException {
+      if (path.getBaseName().equals("bad")) {
+        throw exception;
+      }
+      return super.stat(path,followSymlinks);
+    }
+  }
+);
+  try {
+    evaluateArtifactValue(createSourceArtifact("bad"));
+    fail();
+  }
+ catch (  MissingInputFileException e) {
+    assertThat(e.getMessage()).contains(exception.getMessage());
+  }
+}

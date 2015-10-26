@@ -1,0 +1,14 @@
+{
+  Collection<SkyKey> values=ImmutableList.of(FileValue.key(RootedPath.toRootedPath(pkgRoot,new PathFragment("foo"))));
+  driver.evaluate(values,false,SkyframeExecutor.DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  FilesystemValueChecker checker=new FilesystemValueChecker(evaluator,tsgm,null);
+  assertEmptyDiff(getDirtyFilesystemKeys(checker));
+  fs.statThrowsRuntimeException=true;
+  try {
+    getDirtyFilesystemKeys(checker);
+    fail();
+  }
+ catch (  RuntimeException e) {
+    assertThat(e).hasMessage("bork");
+  }
+}

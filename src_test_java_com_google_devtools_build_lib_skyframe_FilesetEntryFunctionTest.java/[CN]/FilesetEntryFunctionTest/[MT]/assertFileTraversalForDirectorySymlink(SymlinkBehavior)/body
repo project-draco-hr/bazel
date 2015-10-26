@@ -1,0 +1,18 @@
+{
+  Artifact dir=getSourceArtifact("foo/dir_real");
+  Artifact symlink=getSourceArtifact("foo/dir_sym");
+  createFile(childOf(dir,"file.a"),"hello");
+  createFile(childOf(dir,"sub/file.b"),"world");
+  symlink.getPath().createSymbolicLink(new PathFragment("dir_real"));
+  FilesetTraversalParams params=FilesetTraversalParamsFactory.fileTraversal(label("//foo"),symlink,new PathFragment("output-name"),symlinks,DONT_CROSS);
+switch (symlinks) {
+case COPY:
+    assertSymlinksInOrder(params,symlink("output-name","dir_real"));
+  break;
+case DEREFERENCE:
+assertSymlinksInOrder(params,symlink("output-name",dir));
+break;
+default :
+throw new IllegalStateException(symlinks.toString());
+}
+}
