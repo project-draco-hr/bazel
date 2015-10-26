@@ -1,6 +1,6 @@
 {
   Runfiles runfiles=new Runfiles.Builder(ruleContext.getWorkspaceName()).addRunfiles(ruleContext,RunfilesProvider.DEFAULT_RUNFILES).build();
-  javaCommon.addTransitiveInfoProviders(builder,filesToBuild,classJar);
+  javaCommon.addTransitiveInfoProviders(builder,filesToBuild,classJar,ANDROID_COLLECTION_SPEC);
   javaCommon.addGenJarsProvider(builder,genClassJar,genSourceJar);
   idlHelper.addTransitiveInfoProviders(builder,classJar,manifestProtoOutput);
   return builder.setFilesToBuild(filesToBuild).add(JavaRuleOutputJarsProvider.class,JavaRuleOutputJarsProvider.builder().addOutputJar(classJar,iJar,srcJar).build()).add(JavaRuntimeJarProvider.class,new JavaRuntimeJarProvider(javaCommon.getJavaCompilationArtifacts().getRuntimeJars())).add(RunfilesProvider.class,RunfilesProvider.simple(runfiles)).add(AndroidResourcesProvider.class,resourceApk.toResourceProvider(ruleContext.getLabel())).add(AndroidIdeInfoProvider.class,createAndroidIdeInfoProvider(ruleContext,androidSemantics,idlHelper,resourceApk,zipAlignedApk,apksUnderTest)).add(JavaCompilationArgsProvider.class,new JavaCompilationArgsProvider(javaCompilationArgs,recursiveJavaCompilationArgs,compileTimeDependencyArtifacts,NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER))).add(JackLibraryProvider.class,asNeverLink ? jackCompilationHelper.compileAsNeverlinkLibrary() : jackCompilationHelper.compileAsLibrary()).addOutputGroup(OutputGroupProvider.HIDDEN_TOP_LEVEL,collectHiddenTopLevelArtifacts(ruleContext)).addOutputGroup(JavaSemantics.SOURCE_JARS_OUTPUT_GROUP,transitiveSourceJars);
