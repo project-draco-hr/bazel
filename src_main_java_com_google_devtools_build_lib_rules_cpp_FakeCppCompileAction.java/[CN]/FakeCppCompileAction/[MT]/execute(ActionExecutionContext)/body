@@ -13,13 +13,15 @@
     }
   }
   IncludeScanningContext scanningContext=executor.getContext(IncludeScanningContext.class);
-  updateActionInputs(executor.getExecRoot(),scanningContext.getArtifactResolver(),reply);
+  NestedSet<Artifact> discoveredInputs=discoverInputsFromDotdFiles(executor.getExecRoot(),scanningContext.getArtifactResolver(),reply);
+  reply=null;
   try {
-    validateInclusions(actionExecutionContext.getMiddlemanExpander(),executor.getEventHandler());
+    validateInclusions(discoveredInputs,actionExecutionContext.getMiddlemanExpander(),executor.getEventHandler());
   }
  catch (  ActionExecutionException e) {
     executor.getEventHandler().handle(Event.warn(getOwner().getLocation(),e.getMessage() + ";\n  this warning may eventually become an error"));
   }
+  updateActionInputs(discoveredInputs);
   LOG.info("Generating " + outputFile);
   final String outputPrefix="$TEST_TMPDIR/";
   String argv=Joiner.on(' ').join(Iterables.transform(getArgv(outputFile.getExecPath()),new Function<String,String>(){

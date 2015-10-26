@@ -9,7 +9,11 @@
   }
   ensureCoverageNotesFilesExist();
   IncludeScanningContext scanningContext=executor.getContext(IncludeScanningContext.class);
-  updateActionInputs(executor.getExecRoot(),scanningContext.getArtifactResolver(),reply);
+  NestedSet<Artifact> discoveredInputs=discoverInputsFromDotdFiles(executor.getExecRoot(),scanningContext.getArtifactResolver(),reply);
   reply=null;
-  validateInclusions(actionExecutionContext.getMiddlemanExpander(),executor.getEventHandler());
+  boolean usesStrictHdrsChecks=context.getDeclaredIncludeDirs().isEmpty() && context.getDeclaredIncludeWarnDirs().isEmpty();
+  if (shouldScanIncludes() || !usesStrictHdrsChecks) {
+    updateActionInputs(discoveredInputs);
+  }
+  validateInclusions(discoveredInputs,actionExecutionContext.getMiddlemanExpander(),executor.getEventHandler());
 }
