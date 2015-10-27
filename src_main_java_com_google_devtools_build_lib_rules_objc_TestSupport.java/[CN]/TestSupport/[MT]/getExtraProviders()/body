@@ -1,6 +1,9 @@
 {
+  ObjcConfiguration configuration=ruleContext.getFragment(ObjcConfiguration.class);
+  ImmutableMap.Builder<String,String> envBuilder=ImmutableMap.builder();
+  envBuilder.putAll(configuration.getEnvironmentForDarwin());
   if (ruleContext.getConfiguration().isCodeCoverageEnabled()) {
-    return ImmutableMap.<Class<? extends TransitiveInfoProvider>,TransitiveInfoProvider>of(TestEnvironmentProvider.class,new TestEnvironmentProvider(gcovEnv()));
+    envBuilder.put("COVERAGE_GCOV_PATH",ruleContext.getHostPrerequisiteArtifact(":gcov").getExecPathString());
   }
-  return ImmutableMap.of();
+  return ImmutableMap.<Class<? extends TransitiveInfoProvider>,TransitiveInfoProvider>of(TestEnvironmentProvider.class,new TestEnvironmentProvider(envBuilder.build()));
 }
