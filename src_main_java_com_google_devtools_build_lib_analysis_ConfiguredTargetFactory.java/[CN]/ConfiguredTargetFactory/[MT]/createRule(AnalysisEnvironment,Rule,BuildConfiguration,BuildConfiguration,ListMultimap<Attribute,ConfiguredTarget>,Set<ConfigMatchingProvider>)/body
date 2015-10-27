@@ -4,15 +4,13 @@
     return null;
   }
   ConfigurationFragmentPolicy configurationFragmentPolicy=rule.getRuleClassObject().getConfigurationFragmentPolicy();
-  if (!configurationFragmentPolicy.getRequiredConfigurationFragments().isEmpty()) {
-    MissingFragmentPolicy missingFragmentPolicy=configurationFragmentPolicy.getMissingFragmentPolicy();
-    if (missingFragmentPolicy != MissingFragmentPolicy.IGNORE && !configuration.hasAllFragments(configurationFragmentPolicy.getRequiredConfigurationFragments())) {
-      if (missingFragmentPolicy == MissingFragmentPolicy.FAIL_ANALYSIS) {
-        ruleContext.ruleError(missingFragmentError(ruleContext,configurationFragmentPolicy));
-        return null;
-      }
-      return createFailConfiguredTarget(ruleContext);
+  MissingFragmentPolicy missingFragmentPolicy=configurationFragmentPolicy.getMissingFragmentPolicy();
+  if (missingFragmentPolicy != MissingFragmentPolicy.IGNORE && !configuration.hasAllFragments(configurationFragmentPolicy.getRequiredConfigurationFragments())) {
+    if (missingFragmentPolicy == MissingFragmentPolicy.FAIL_ANALYSIS) {
+      ruleContext.ruleError(missingFragmentError(ruleContext,configurationFragmentPolicy));
+      return null;
     }
+    return createFailConfiguredTarget(ruleContext);
   }
   if (rule.getRuleClassObject().isSkylarkExecutable()) {
     return SkylarkRuleConfiguredTargetBuilder.buildRule(ruleContext,rule.getRuleClassObject().getConfiguredTargetFunction());
