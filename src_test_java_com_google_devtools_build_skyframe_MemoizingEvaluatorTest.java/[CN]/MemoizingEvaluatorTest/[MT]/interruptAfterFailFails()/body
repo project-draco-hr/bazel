@@ -1,9 +1,10 @@
 {
   SkyKey failKey=GraphTester.skyKey("fail");
   SkyKey interruptedKey=GraphTester.skyKey("interrupted");
-  tester.getOrCreate(failKey).setHasError(true);
+  final CountDownLatch interruptStarted=new CountDownLatch(1);
   tester.getOrCreate(interruptedKey).setBuilder(new SkyFunction(){
     @Nullable @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws InterruptedException {
+      interruptStarted.countDown();
       Thread.sleep(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
       throw new AssertionError("Shouldn't have slept so long");
     }
@@ -12,6 +13,7 @@
     }
   }
 );
+  tester.getOrCreate(failKey).setBuilder(new ChainedFunction(null,interruptStarted,null,false,null,ImmutableList.<SkyKey>of()));
   EvaluationResult<StringValue> result=tester.eval(false,interruptedKey,failKey);
   assertWithMessage(result.toString()).that(result.hasError()).isTrue();
   assertWithMessage(result.toString()).that(result.getError(failKey)).isNotNull();
