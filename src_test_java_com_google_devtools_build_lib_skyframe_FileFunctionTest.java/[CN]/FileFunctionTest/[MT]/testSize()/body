@@ -1,0 +1,39 @@
+{
+  Path file=file("file");
+  int fileSize=20;
+  FileSystemUtils.writeContentAsLatin1(file,Strings.repeat("a",fileSize));
+  assertEquals(fileSize,valueForPath(file).getSize());
+  Path dir=directory("directory");
+  file(dir.getChild("child").getPathString());
+  try {
+    valueForPath(dir).getSize();
+    fail();
+  }
+ catch (  IllegalStateException e) {
+  }
+  Path nonexistent=fs.getPath("/root/noexist");
+  try {
+    valueForPath(nonexistent).getSize();
+    fail();
+  }
+ catch (  IllegalStateException e) {
+  }
+  Path symlink=symlink("link","/root/file");
+  assertEquals(fileSize,valueForPath(symlink).getSize());
+  assertTrue(symlink.delete());
+  symlink=symlink("link","/root/directory");
+  try {
+    valueForPath(symlink).getSize();
+    fail();
+  }
+ catch (  IllegalStateException e) {
+  }
+  assertTrue(symlink.delete());
+  symlink=symlink("link","/root/noexist");
+  try {
+    valueForPath(symlink).getSize();
+    fail();
+  }
+ catch (  IllegalStateException e) {
+  }
+}

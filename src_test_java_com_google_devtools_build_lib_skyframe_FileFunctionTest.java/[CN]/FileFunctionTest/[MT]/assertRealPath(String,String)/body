@@ -1,0 +1,10 @@
+{
+  SequentialBuildDriver driver=makeDriver();
+  SkyKey key=skyKey(pathString);
+  EvaluationResult<SkyValue> result=driver.evaluate(ImmutableList.of(key),false,DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  if (result.hasError()) {
+    fail(String.format("Evaluation error for %s: %s",key,result.getError()));
+  }
+  FileValue fileValue=(FileValue)result.get(key);
+  assertEquals(pkgRoot.getRelative(expectedRealPathString).toString(),fileValue.realRootedPath().asPath().toString());
+}

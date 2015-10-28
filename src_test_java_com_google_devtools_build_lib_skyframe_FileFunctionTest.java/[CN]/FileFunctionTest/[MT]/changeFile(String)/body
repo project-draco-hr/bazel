@@ -1,0 +1,15 @@
+{
+  Path fileToChange=path(fileStringToChange);
+  if (fileToChange.exists()) {
+    final byte[] oldContents=FileSystemUtils.readContent(fileToChange);
+    OutputStream outputStream=fileToChange.getOutputStream(true);
+    outputStream.write(new byte[]{(byte)42},0,1);
+    outputStream.close();
+    return Pair.of(ImmutableList.of(fileStringToChange),makeWriteFileContentCallback(fileToChange,oldContents));
+  }
+ else {
+    ImmutableList<String> filesTouched=filesTouchedIfTouched(fileToChange);
+    file(fileStringToChange,"new stuff");
+    return Pair.of(ImmutableList.copyOf(filesTouched),makeDeletePathCallback(fileToChange));
+  }
+}

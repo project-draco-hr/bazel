@@ -1,0 +1,8 @@
+{
+  AtomicReference<PathPackageLocator> pkgLocatorRef=new AtomicReference<>(pkgLocator);
+  ExternalFilesHelper externalFilesHelper=new ExternalFilesHelper(pkgLocatorRef,errorOnExternalFiles);
+  differencer=new RecordingDifferencer();
+  MemoizingEvaluator evaluator=new InMemoryMemoizingEvaluator(ImmutableMap.of(SkyFunctions.FILE_STATE,new FileStateFunction(tsgm,externalFilesHelper),SkyFunctions.FILE_SYMLINK_CYCLE_UNIQUENESS,new FileSymlinkCycleUniquenessFunction(),SkyFunctions.FILE_SYMLINK_INFINITE_EXPANSION_UNIQUENESS,new FileSymlinkInfiniteExpansionUniquenessFunction(),SkyFunctions.FILE,new FileFunction(pkgLocatorRef,tsgm,externalFilesHelper)),differencer);
+  PrecomputedValue.BUILD_ID.set(differencer,UUID.randomUUID());
+  return new SequentialBuildDriver(evaluator);
+}

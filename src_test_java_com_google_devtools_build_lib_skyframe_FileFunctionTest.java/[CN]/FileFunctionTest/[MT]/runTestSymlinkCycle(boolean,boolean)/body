@@ -1,0 +1,36 @@
+{
+  symlink("a","b");
+  symlink("b","c");
+  symlink("c","d");
+  symlink("d","e");
+  symlink("e","c");
+  Map<RootedPath,ImmutableList<RootedPath>> startToCycleMap=ImmutableMap.<RootedPath,ImmutableList<RootedPath>>builder().put(rootedPath("a"),ImmutableList.of(rootedPath("c"),rootedPath("d"),rootedPath("e"))).put(rootedPath("b"),ImmutableList.of(rootedPath("c"),rootedPath("d"),rootedPath("e"))).put(rootedPath("d"),ImmutableList.<RootedPath>of(rootedPath("d"),rootedPath("e"),rootedPath("c"))).put(rootedPath("e"),ImmutableList.<RootedPath>of(rootedPath("e"),rootedPath("c"),rootedPath("d"))).put(rootedPath("a/some/descendant"),ImmutableList.of(rootedPath("c"),rootedPath("d"),rootedPath("e"))).put(rootedPath("b/some/descendant"),ImmutableList.of(rootedPath("c"),rootedPath("d"),rootedPath("e"))).put(rootedPath("d/some/descendant"),ImmutableList.<RootedPath>of(rootedPath("d"),rootedPath("e"),rootedPath("c"))).put(rootedPath("e/some/descendant"),ImmutableList.<RootedPath>of(rootedPath("e"),rootedPath("c"),rootedPath("d"))).build();
+  Map<RootedPath,ImmutableList<RootedPath>> startToPathToCycleMap=ImmutableMap.<RootedPath,ImmutableList<RootedPath>>builder().put(rootedPath("a"),ImmutableList.of(rootedPath("a"),rootedPath("b"))).put(rootedPath("b"),ImmutableList.of(rootedPath("b"))).put(rootedPath("d"),ImmutableList.<RootedPath>of()).put(rootedPath("e"),ImmutableList.<RootedPath>of()).put(rootedPath("a/some/descendant"),ImmutableList.of(rootedPath("a"),rootedPath("b"))).put(rootedPath("b/some/descendant"),ImmutableList.of(rootedPath("b"))).put(rootedPath("d/some/descendant"),ImmutableList.<RootedPath>of()).put(rootedPath("e/some/descendant"),ImmutableList.<RootedPath>of()).build();
+  ImmutableList<SkyKey> keys;
+  if (ancestorCycle && startInCycle) {
+    keys=ImmutableList.of(skyKey("d/some/descendant"),skyKey("e/some/descendant"));
+  }
+ else   if (ancestorCycle && !startInCycle) {
+    keys=ImmutableList.of(skyKey("a/some/descendant"),skyKey("b/some/descendant"));
+  }
+ else   if (!ancestorCycle && startInCycle) {
+    keys=ImmutableList.of(skyKey("d"),skyKey("e"));
+  }
+ else {
+    keys=ImmutableList.of(skyKey("a"),skyKey("b"));
+  }
+  StoredEventHandler eventHandler=new StoredEventHandler();
+  SequentialBuildDriver driver=makeDriver();
+  EvaluationResult<FileValue> result=driver.evaluate(keys,true,DEFAULT_THREAD_COUNT,eventHandler);
+  assertTrue(result.hasError());
+  for (  SkyKey key : keys) {
+    ErrorInfo errorInfo=result.getError(key);
+    assertThat(errorInfo.getCycleInfo()).isEmpty();
+    FileSymlinkCycleException fsce=(FileSymlinkCycleException)errorInfo.getException();
+    RootedPath start=(RootedPath)key.argument();
+    assertThat(fsce.getPathToCycle()).containsExactlyElementsIn(startToPathToCycleMap.get(start)).inOrder();
+    assertThat(fsce.getCycle()).containsExactlyElementsIn(startToCycleMap.get(start)).inOrder();
+  }
+  assertThat(eventHandler.getEvents()).hasSize(1);
+  assertThat(Iterables.getOnlyElement(eventHandler.getEvents()).getMessage()).contains("circular symlinks detected");
+}

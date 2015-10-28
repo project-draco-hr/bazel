@@ -1,0 +1,9 @@
+{
+  SequentialBuildDriver driver=makeDriver();
+  SkyKey key=skyKey(pathString);
+  EvaluationResult<FileValue> result;
+  result=driver.evaluate(ImmutableList.of(key),false,DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  assertTrue("Expected error while evaluating " + pathString + ", got "+ result.get(key),result.hasError());
+  assertTrue(!Iterables.isEmpty(result.getError().getCycleInfo()) || result.getError().getException() != null);
+  return filesSeen(driver.getGraphForTesting());
+}

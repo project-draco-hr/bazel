@@ -1,0 +1,60 @@
+{
+  final AtomicInteger digestCalls=new AtomicInteger(0);
+  int expectedCalls=0;
+  fs=new CustomInMemoryFs(manualClock){
+    @Override protected byte[] getMD5Digest(    Path path) throws IOException {
+      digestCalls.incrementAndGet();
+      return super.getMD5Digest(path);
+    }
+  }
+;
+  pkgRoot=fs.getRootDirectory().getRelative("root");
+  Path file=file("file");
+  FileSystemUtils.writeContentAsLatin1(file,Strings.repeat("a",20));
+  byte[] digest=file.getMD5Digest();
+  expectedCalls++;
+  assertEquals(expectedCalls,digestCalls.get());
+  FileValue value=valueForPath(file);
+  expectedCalls++;
+  assertEquals(expectedCalls,digestCalls.get());
+  assertArrayEquals(digest,value.getDigest());
+  assertEquals(expectedCalls,digestCalls.get());
+  fastMd5=false;
+  digestCalls.set(0);
+  value=valueForPath(file);
+  assertEquals(0,digestCalls.get());
+  assertNull(value.getDigest());
+  assertEquals(0,digestCalls.get());
+  fastMd5=true;
+  Path dir=directory("directory");
+  try {
+    assertNull(valueForPath(dir).getDigest());
+    fail();
+  }
+ catch (  IllegalStateException e) {
+  }
+  assertEquals(0,digestCalls.get());
+  Path nonexistent=fs.getPath("/root/noexist");
+  try {
+    assertNull(valueForPath(nonexistent).getDigest());
+    fail();
+  }
+ catch (  IllegalStateException e) {
+  }
+  assertEquals(0,digestCalls.get());
+  Path symlink=symlink("link","/root/file");
+  value=valueForPath(symlink);
+  assertEquals(1,digestCalls.get());
+  assertArrayEquals(digest,value.getDigest());
+  assertEquals(1,digestCalls.get());
+  digestCalls.set(0);
+  assertTrue(symlink.delete());
+  symlink=symlink("link","/root/directory");
+  try {
+    assertNull(valueForPath(symlink).getDigest());
+    fail();
+  }
+ catch (  IllegalStateException e) {
+  }
+  assertEquals(0,digestCalls.get());
+}

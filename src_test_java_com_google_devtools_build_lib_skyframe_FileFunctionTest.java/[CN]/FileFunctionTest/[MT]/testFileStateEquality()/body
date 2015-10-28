@@ -1,0 +1,20 @@
+{
+  file("a");
+  symlink("b1","a");
+  symlink("b2","a");
+  symlink("b3","zzz");
+  directory("d1");
+  directory("d2");
+  SkyKey file=fileStateSkyKey("a");
+  SkyKey symlink1=fileStateSkyKey("b1");
+  SkyKey symlink2=fileStateSkyKey("b2");
+  SkyKey symlink3=fileStateSkyKey("b3");
+  SkyKey missing1=fileStateSkyKey("c1");
+  SkyKey missing2=fileStateSkyKey("c2");
+  SkyKey directory1=fileStateSkyKey("d1");
+  SkyKey directory2=fileStateSkyKey("d2");
+  ImmutableList<SkyKey> keys=ImmutableList.of(file,symlink1,symlink2,symlink3,missing1,missing2,directory1,directory2);
+  SequentialBuildDriver driver=makeDriver();
+  EvaluationResult<SkyValue> result=driver.evaluate(keys,false,DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  new EqualsTester().addEqualityGroup(result.get(file)).addEqualityGroup(result.get(symlink1),result.get(symlink2)).addEqualityGroup(result.get(symlink3)).addEqualityGroup(result.get(missing1),result.get(missing2)).addEqualityGroup(result.get(directory1),result.get(directory2)).testEquals();
+}

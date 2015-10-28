@@ -1,0 +1,9 @@
+{
+  symlink("a","../outside");
+  file("b");
+  file("../outside");
+  Set<RootedPath> seenFiles=Sets.newHashSet();
+  seenFiles.addAll(getFilesSeenAndAssertValueChangesIfContentsOfFileChanges("b",false,"a"));
+  seenFiles.addAll(getFilesSeenAndAssertValueChangesIfContentsOfFileChanges("../outside",true,"a"));
+  assertThat(seenFiles).containsExactly(rootedPath("a"),rootedPath(""),RootedPath.toRootedPath(fs.getRootDirectory(),PathFragment.EMPTY_FRAGMENT),RootedPath.toRootedPath(fs.getRootDirectory(),new PathFragment("outside")));
+}

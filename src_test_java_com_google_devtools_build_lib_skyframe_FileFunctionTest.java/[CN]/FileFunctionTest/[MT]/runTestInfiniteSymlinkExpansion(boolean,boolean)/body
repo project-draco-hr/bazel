@@ -1,0 +1,58 @@
+{
+  Path otherPath=path("other");
+  RootedPath otherRootedPath=RootedPath.toRootedPath(pkgRoot,otherPath.relativeTo(pkgRoot));
+  Path ancestorPath=path("a");
+  RootedPath ancestorRootedPath=RootedPath.toRootedPath(pkgRoot,ancestorPath.relativeTo(pkgRoot));
+  FileSystemUtils.ensureSymbolicLink(otherPath,ancestorPath);
+  Path intermediatePath=path("inter");
+  RootedPath intermediateRootedPath=RootedPath.toRootedPath(pkgRoot,intermediatePath.relativeTo(pkgRoot));
+  Path descendantPath=path("a/b/c/d/e");
+  RootedPath descendantRootedPath=RootedPath.toRootedPath(pkgRoot,descendantPath.relativeTo(pkgRoot));
+  if (symlinkToAncestor) {
+    FileSystemUtils.ensureSymbolicLink(descendantPath,intermediatePath);
+    if (absoluteSymlink) {
+      FileSystemUtils.ensureSymbolicLink(intermediatePath,ancestorPath);
+    }
+ else {
+      FileSystemUtils.ensureSymbolicLink(intermediatePath,ancestorRootedPath.getRelativePath());
+    }
+  }
+ else {
+    FileSystemUtils.ensureSymbolicLink(ancestorPath,intermediatePath);
+    if (absoluteSymlink) {
+      FileSystemUtils.ensureSymbolicLink(intermediatePath,descendantPath);
+    }
+ else {
+      FileSystemUtils.ensureSymbolicLink(intermediatePath,descendantRootedPath.getRelativePath());
+    }
+  }
+  StoredEventHandler eventHandler=new StoredEventHandler();
+  SequentialBuildDriver driver=makeDriver();
+  SkyKey ancestorPathKey=FileValue.key(ancestorRootedPath);
+  SkyKey descendantPathKey=FileValue.key(descendantRootedPath);
+  SkyKey otherPathKey=FileValue.key(otherRootedPath);
+  ImmutableList<SkyKey> keys;
+  ImmutableList<SkyKey> errorKeys;
+  ImmutableList<RootedPath> expectedChain;
+  if (symlinkToAncestor) {
+    keys=ImmutableList.of(descendantPathKey,otherPathKey);
+    errorKeys=ImmutableList.of(descendantPathKey);
+    expectedChain=ImmutableList.of(descendantRootedPath,intermediateRootedPath,ancestorRootedPath);
+  }
+ else {
+    keys=ImmutableList.of(ancestorPathKey,otherPathKey);
+    errorKeys=keys;
+    expectedChain=ImmutableList.of(ancestorRootedPath,intermediateRootedPath,descendantRootedPath);
+  }
+  EvaluationResult<FileValue> result=driver.evaluate(keys,true,DEFAULT_THREAD_COUNT,eventHandler);
+  assertTrue(result.hasError());
+  for (  SkyKey key : errorKeys) {
+    ErrorInfo errorInfo=result.getError(key);
+    assertThat(errorInfo.getCycleInfo()).isEmpty();
+    FileSymlinkInfiniteExpansionException fsiee=(FileSymlinkInfiniteExpansionException)errorInfo.getException();
+    assertThat(fsiee.getMessage()).contains("Infinite symlink expansion");
+    assertThat(fsiee.getChain()).containsExactlyElementsIn(expectedChain).inOrder();
+  }
+  assertThat(eventHandler.getEvents()).hasSize(1);
+  assertThat(Iterables.getOnlyElement(eventHandler.getEvents()).getMessage()).contains("infinite symlink expansion detected");
+}

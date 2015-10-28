@@ -1,0 +1,15 @@
+{
+  final Path changedPath=path(changedPathString);
+  if (changedPath.isSymbolicLink()) {
+    ImmutableList<String> filesTouched=filesTouchedIfTouched(changedPath);
+    PathFragment oldTarget=changedPath.readSymbolicLink();
+    FileSystemUtils.ensureSymbolicLink(changedPath,oldTarget.getChild("__different_target__"));
+    return Pair.of(filesTouched,makeSymlinkCallback(changedPath,oldTarget));
+  }
+ else   if (isSupposedToBeFile) {
+    return changeFile(changedPathString);
+  }
+ else {
+    return changeDirectory(changedPathString);
+  }
+}

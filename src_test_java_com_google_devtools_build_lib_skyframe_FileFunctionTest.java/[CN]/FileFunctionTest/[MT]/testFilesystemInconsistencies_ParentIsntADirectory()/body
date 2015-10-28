@@ -1,0 +1,39 @@
+{
+  file("a/b");
+  FileStatus inconsistentParentFileStatus=new FileStatus(){
+    @Override public boolean isFile(){
+      return true;
+    }
+    @Override public boolean isSpecialFile(){
+      return false;
+    }
+    @Override public boolean isDirectory(){
+      return false;
+    }
+    @Override public boolean isSymbolicLink(){
+      return false;
+    }
+    @Override public long getSize() throws IOException {
+      return 0;
+    }
+    @Override public long getLastModifiedTime() throws IOException {
+      return 0;
+    }
+    @Override public long getLastChangeTime() throws IOException {
+      return 0;
+    }
+    @Override public long getNodeId() throws IOException {
+      return 0;
+    }
+  }
+;
+  fs.stubStat(path("a"),inconsistentParentFileStatus);
+  fastMd5=false;
+  SequentialBuildDriver driver=makeDriver();
+  SkyKey skyKey=skyKey("a/b");
+  EvaluationResult<FileValue> result=driver.evaluate(ImmutableList.of(skyKey),false,DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  assertTrue(result.hasError());
+  ErrorInfo errorInfo=result.getError(skyKey);
+  assertThat(errorInfo.getException()).isInstanceOf(InconsistentFilesystemException.class);
+  assertThat(errorInfo.getException().getMessage()).contains("file /root/a/b exists but its parent path /root/a isn't an existing directory");
+}

@@ -1,0 +1,27 @@
+{
+  SequentialBuildDriver driver=makeDriver();
+  SkyKey key=skyKey(pathString);
+  EvaluationResult<SkyValue> result;
+  result=driver.evaluate(ImmutableList.of(key),false,DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  if (result.hasError()) {
+    fail(String.format("Evaluation error for %s: %s",key,result.getError()));
+  }
+  SkyValue oldValue=result.get(key);
+  Pair<ImmutableList<String>,Runnable> changeResult=change(changedPathString,isFile);
+  ImmutableList<String> changedPathStrings=changeResult.first;
+  Runnable undoCallback=changeResult.second;
+  differencer.invalidate(Iterables.transform(changedPathStrings,new Function<String,SkyKey>(){
+    @Override public SkyKey apply(    String input){
+      return fileStateSkyKey(input);
+    }
+  }
+));
+  result=driver.evaluate(ImmutableList.of(key),false,DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  if (result.hasError()) {
+    fail(String.format("Evaluation error for %s: %s",key,result.getError()));
+  }
+  SkyValue newValue=result.get(key);
+  assertTrue(String.format("Changing the contents of %s %s should%s change the value for file %s.",isFile ? "file" : "directory",changedPathString,changes ? "" : " not",pathString),changes != newValue.equals(oldValue));
+  undoCallback.run();
+  return filesSeen(driver.getGraphForTesting());
+}

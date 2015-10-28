@@ -1,0 +1,12 @@
+{
+  file("a");
+  fs.stubFastDigestError(path("a"),new IOException("nope"));
+  SequentialBuildDriver driver=makeDriver();
+  SkyKey skyKey=skyKey("a");
+  EvaluationResult<FileValue> result=driver.evaluate(ImmutableList.of(skyKey),false,DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  assertTrue(result.hasError());
+  ErrorInfo errorInfo=result.getError(skyKey);
+  assertThat(errorInfo.getException()).isInstanceOf(InconsistentFilesystemException.class);
+  assertThat(errorInfo.getException().getMessage()).contains("encountered error 'nope'");
+  assertThat(errorInfo.getException().getMessage()).contains("/root/a is no longer a file");
+}

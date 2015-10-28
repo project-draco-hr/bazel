@@ -1,0 +1,21 @@
+{
+  final byte[] digest=new byte[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  createFsAndRoot(new CustomInMemoryFs(manualClock){
+    @Override protected String getFastDigestFunctionType(    Path path){
+      return "magic";
+    }
+    @Override protected byte[] getFastDigest(    Path path) throws IOException {
+      return digest;
+    }
+  }
+);
+  Path p=file("file");
+  p.setLastModifiedTime(0L);
+  FileValue a=valueForPath(p);
+  p.setLastModifiedTime(1L);
+  assertThat(valueForPath(p)).isNotEqualTo(a);
+  p.setLastModifiedTime(0L);
+  assertEquals(a,valueForPath(p));
+  FileSystemUtils.writeContentAsLatin1(p,"content");
+  assertThat(valueForPath(p)).isNotEqualTo(a);
+}

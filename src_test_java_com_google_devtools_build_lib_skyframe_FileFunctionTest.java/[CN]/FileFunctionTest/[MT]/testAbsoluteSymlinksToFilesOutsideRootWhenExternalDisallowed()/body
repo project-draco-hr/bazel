@@ -1,0 +1,9 @@
+{
+  file("/outsideroot");
+  symlink("a","/outsideroot");
+  SequentialBuildDriver driver=makeDriver(true);
+  SkyKey key=skyKey("a");
+  EvaluationResult<SkyValue> result=driver.evaluate(ImmutableList.of(key),false,DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  assertTrue(result.hasError());
+  assertThat(result.getError(key).getException()).isInstanceOf(FileOutsidePackageRootsException.class);
+}
