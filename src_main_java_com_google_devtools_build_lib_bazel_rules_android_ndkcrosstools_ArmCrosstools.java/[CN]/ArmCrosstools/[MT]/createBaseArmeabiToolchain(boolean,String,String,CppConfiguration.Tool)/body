@@ -1,16 +1,15 @@
 {
   String toolchainName="arm-linux-androideabi-" + gccVersion;
   String targetPlatform="arm-linux-androideabi";
-  ImmutableList<ToolPath> toolPaths=ndkPaths.createToolpaths(toolchainName,targetPlatform,excludedTools);
-  ImmutableList<String> toolchainIncludes=ndkPaths.createToolchainIncludePaths(toolchainName,targetPlatform,gccVersion);
-  CToolchain.Builder builder=CToolchain.newBuilder().setTargetSystemName(targetPlatform).setCompiler("gcc-" + gccVersion).addAllToolPath(toolPaths).addAllCxxBuiltinIncludeDirectory(toolchainIncludes).setBuiltinSysroot(ndkPaths.createBuiltinSysroot("arm")).addCompilerFlag(stackProtectorFlag).addCompilerFlag("-fpic").addCompilerFlag("-ffunction-sections").addCompilerFlag("-funwind-tables").addCompilerFlag("-no-canonical-prefixes").addLinkerFlag("-no-canonical-prefixes");
+  CToolchain.Builder toolchain=CToolchain.newBuilder().setTargetSystemName(targetPlatform).setCompiler("gcc-" + gccVersion).addAllToolPath(ndkPaths.createToolpaths(toolchainName,targetPlatform,excludedTools)).setBuiltinSysroot(ndkPaths.createBuiltinSysroot("arm")).addCompilerFlag(stackProtectorFlag).addCompilerFlag("-fpic").addCompilerFlag("-ffunction-sections").addCompilerFlag("-funwind-tables").addCompilerFlag("-no-canonical-prefixes").addLinkerFlag("-no-canonical-prefixes");
   if (thumb) {
-    builder.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.OPT).addCompilerFlag("-mthumb").addCompilerFlag("-Os").addCompilerFlag("-g").addCompilerFlag("-DNDEBUG").addCompilerFlag("-fomit-frame-pointer").addCompilerFlag("-fno-strict-aliasing").addCompilerFlag("-finline-limit=64"));
-    builder.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.DBG).addCompilerFlag("-g").addCompilerFlag("-fno-strict-aliasing").addCompilerFlag("-finline-limit=64").addCompilerFlag("-O0").addCompilerFlag("-UNDEBUG").addCompilerFlag("-marm").addCompilerFlag("-fno-omit-frame-pointer"));
+    toolchain.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.OPT).addCompilerFlag("-mthumb").addCompilerFlag("-Os").addCompilerFlag("-g").addCompilerFlag("-DNDEBUG").addCompilerFlag("-fomit-frame-pointer").addCompilerFlag("-fno-strict-aliasing").addCompilerFlag("-finline-limit=64"));
+    toolchain.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.DBG).addCompilerFlag("-g").addCompilerFlag("-fno-strict-aliasing").addCompilerFlag("-finline-limit=64").addCompilerFlag("-O0").addCompilerFlag("-UNDEBUG").addCompilerFlag("-marm").addCompilerFlag("-fno-omit-frame-pointer"));
   }
  else {
-    builder.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.OPT).addCompilerFlag("-O2").addCompilerFlag("-g").addCompilerFlag("-DNDEBUG").addCompilerFlag("-fomit-frame-pointer").addCompilerFlag("-fstrict-aliasing").addCompilerFlag("-funswitch-loops").addCompilerFlag("-finline-limit=300"));
-    builder.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.DBG).addCompilerFlag("-g").addCompilerFlag("-funswitch-loops").addCompilerFlag("-finline-limit=300").addCompilerFlag("-O0").addCompilerFlag("-UNDEBUG").addCompilerFlag("-fno-omit-frame-pointer").addCompilerFlag("-fno-strict-aliasing"));
+    toolchain.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.OPT).addCompilerFlag("-O2").addCompilerFlag("-g").addCompilerFlag("-DNDEBUG").addCompilerFlag("-fomit-frame-pointer").addCompilerFlag("-fstrict-aliasing").addCompilerFlag("-funswitch-loops").addCompilerFlag("-finline-limit=300"));
+    toolchain.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.DBG).addCompilerFlag("-g").addCompilerFlag("-funswitch-loops").addCompilerFlag("-finline-limit=300").addCompilerFlag("-O0").addCompilerFlag("-UNDEBUG").addCompilerFlag("-fno-omit-frame-pointer").addCompilerFlag("-fno-strict-aliasing"));
   }
-  return builder;
+  ndkPaths.addToolchainIncludePaths(toolchain,toolchainName,targetPlatform,gccVersion);
+  return toolchain;
 }
