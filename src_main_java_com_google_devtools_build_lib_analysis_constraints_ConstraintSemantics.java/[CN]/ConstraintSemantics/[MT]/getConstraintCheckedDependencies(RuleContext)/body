@@ -4,8 +4,10 @@
   for (  String attr : attributes.getAttributeNames()) {
     Attribute attrDef=attributes.getAttributeDefinition(attr);
     Type<?> attrType=attributes.getAttributeType(attr);
-    if ((attrType != BuildType.LABEL && attrType != BuildType.LABEL_LIST) || RuleClass.isConstraintAttribute(attr) || attr.equals("visibility")|| !Rule.NO_IMPLICIT_DEPS.apply(ruleContext.getRule(),attrDef)|| attrDef.getConfigurationTransition() == Attribute.ConfigurationTransition.HOST) {
-      continue;
+    if (!attrDef.checkConstraintsOverride()) {
+      if ((attrType != BuildType.LABEL && attrType != BuildType.LABEL_LIST) || RuleClass.isConstraintAttribute(attr) || attr.equals("visibility")|| !Rule.NO_IMPLICIT_DEPS.apply(ruleContext.getRule(),attrDef)|| attrDef.getConfigurationTransition() == Attribute.ConfigurationTransition.HOST) {
+        continue;
+      }
     }
     for (    TransitiveInfoCollection dep : ruleContext.getPrerequisites(attr,RuleConfiguredTarget.Mode.DONT_CHECK)) {
       if (dep instanceof OutputFileConfiguredTarget) {

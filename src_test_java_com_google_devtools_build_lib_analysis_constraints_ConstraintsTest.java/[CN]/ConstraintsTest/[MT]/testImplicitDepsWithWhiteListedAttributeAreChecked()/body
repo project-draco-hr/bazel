@@ -1,0 +1,7 @@
+{
+  new EnvironmentGroupMaker("buildenv/foo").setEnvironments("a","b").setDefaults("a").make();
+  scratch.file("hello/BUILD","rule_with_enforced_implicit_deps(","    name = 'hi',","    compatible_with = ['//buildenv/foo:b'])");
+  reporter.removeHandler(failFastHandler);
+  assertNull(getConfiguredTarget("//hello:hi"));
+  assertContainsEvent("dependency //helpers:implicit doesn't support expected environment: //buildenv/foo:b");
+}
