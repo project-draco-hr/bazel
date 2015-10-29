@@ -8,15 +8,15 @@
   if (proguardMapping != null) {
     builder.addInput(proguardMapping).addArgument("-applymapping").addArgument(proguardMapping.getExecPathString());
   }
+  builder.addArgument("-outjars").addArgument(proguardOutputJar.getExecPathString());
+  for (  Artifact proguardSpec : proguardSpecs) {
+    builder.addArgument("@" + proguardSpec.getExecPathString());
+  }
   Artifact proguardOutputMap=null;
   if (ruleContext.attributes().get("proguard_generate_mapping",Type.BOOLEAN)) {
     proguardOutputMap=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_PROGUARD_MAP);
     builder.addOutput(proguardOutputMap).addArgument("-printmapping").addArgument(proguardOutputMap.getExecPathString());
     filesBuilder.add(proguardOutputMap);
-  }
-  builder.addArgument("-outjars").addArgument(proguardOutputJar.getExecPathString());
-  for (  Artifact proguardSpec : proguardSpecs) {
-    builder.addArgument("@" + proguardSpec.getExecPathString());
   }
   ruleContext.registerAction(builder.build(ruleContext));
   return new ProguardOutput(proguardOutputJar,proguardOutputMap);
