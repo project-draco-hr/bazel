@@ -1,0 +1,13 @@
+def testAddingDirectoriesForFileManually(self):
+    with archive.TarFileWriter(self.tempfile) as f:
+        f.add_file('d', tarfile.DIRTYPE)
+        f.add_file('d/f')
+        f.add_file('a', tarfile.DIRTYPE)
+        f.add_file('a/b', tarfile.DIRTYPE)
+        f.add_file('a/b', tarfile.DIRTYPE)
+        f.add_file('a/b/', tarfile.DIRTYPE)
+        f.add_file('a/b/c/f')
+        f.add_file('x/y/f')
+        f.add_file('x', tarfile.DIRTYPE)
+    content = [{'name': '.', 'mode': 493, }, {'name': './d', 'mode': 493, }, {'name': './d/f', }, {'name': './a', 'mode': 493, }, {'name': './a/b', 'mode': 493, }, {'name': './a/b/c', 'mode': 493, }, {'name': './a/b/c/f', }, {'name': './x', 'mode': 493, }, {'name': './x/y', 'mode': 493, }, {'name': './x/y/f', }]
+    self.assertTarFileContent(self.tempfile, content)

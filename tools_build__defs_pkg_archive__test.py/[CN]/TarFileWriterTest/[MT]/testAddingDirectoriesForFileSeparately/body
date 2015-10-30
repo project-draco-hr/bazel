@@ -1,0 +1,16 @@
+def testAddingDirectoriesForFileSeparately(self):
+    d_dir = os.path.join(os.environ['TEST_TMPDIR'], 'd_dir')
+    os.makedirs(d_dir)
+    with open(os.path.join(d_dir, 'dir_file'), 'w'):
+        pass
+    a_dir = os.path.join(os.environ['TEST_TMPDIR'], 'a_dir')
+    os.makedirs(a_dir)
+    with open(os.path.join(a_dir, 'dir_file'), 'w'):
+        pass
+    with archive.TarFileWriter(self.tempfile) as f:
+        f.add_dir('d', d_dir)
+        f.add_file('d/f')
+        f.add_dir('a', a_dir)
+        f.add_file('a/b/f')
+    content = [{'name': '.', 'mode': 493, }, {'name': './d', 'mode': 493, }, {'name': './d/dir_file', }, {'name': './d/f', }, {'name': './a', 'mode': 493, }, {'name': './a/dir_file', }, {'name': './a/b', 'mode': 493, }, {'name': './a/b/f', }]
+    self.assertTarFileContent(self.tempfile, content)
