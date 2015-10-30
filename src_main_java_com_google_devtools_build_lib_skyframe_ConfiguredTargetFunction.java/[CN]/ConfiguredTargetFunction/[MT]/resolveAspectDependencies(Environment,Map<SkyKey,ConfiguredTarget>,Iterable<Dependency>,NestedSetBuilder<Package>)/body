@@ -14,7 +14,8 @@
     }
     ConfiguredTarget depConfiguredTarget=configuredTargetMap.get(depKey);
     for (    AspectWithParameters depAspect : dep.getAspects()) {
-      if (!aspectMatchesConfiguredTarget(depConfiguredTarget,depAspect.getAspectClass())) {
+      AspectClass depAspectClass=depAspect.getAspectClass();
+      if (!aspectMatchesConfiguredTarget(depConfiguredTarget,depAspectClass)) {
         continue;
       }
       SkyKey aspectKey=createAspectKey(dep.getLabel(),dep.getConfiguration(),depAspect);
@@ -26,8 +27,7 @@
         throw new IllegalStateException(e);
       }
 catch (      NoSuchThingException e) {
-        AspectFactory<?,?,?> depAspectFactory=AspectFactory.Util.create(depAspect.getAspectClass());
-        throw new AspectCreationException(String.format("Evaluation of aspect %s on %s failed: %s",depAspectFactory.getDefinition().getName(),dep.getLabel(),e.toString()));
+        throw new AspectCreationException(String.format("Evaluation of aspect %s on %s failed: %s",depAspectClass.getDefinition().getName(),dep.getLabel(),e.toString()));
       }
       if (aspectValue == null) {
         return null;

@@ -1,0 +1,23 @@
+{
+  scratch.file("test/aspect.bzl","def _impl(target, ctx):","   s = set([target.label])","   for i in ctx.attr.deps:","       s += i.target_labels","   return struct(target_labels = s)","","MyAspect = aspect(","   implementation=_impl,","   attr_aspects=['deps'],",")");
+  scratch.file("test/BUILD","java_library(","     name = 'yyy',",")","java_library(","     name = 'xxx',","     srcs = ['A.java'],","     deps = [':yyy'],",")");
+  AnalysisResult analysisResult=update(ImmutableList.of("//test:xxx"),ImmutableList.of("test/aspect.bzl%MyAspect"),false,LOADING_PHASE_THREADS,true,new EventBus());
+  assertThat(transform(analysisResult.getTargetsToBuild(),new Function<ConfiguredTarget,String>(){
+    @Nullable @Override public String apply(    ConfiguredTarget configuredTarget){
+      return configuredTarget.getLabel().toString();
+    }
+  }
+)).containsExactly("//test:xxx");
+  AspectValue aspectValue=analysisResult.getAspects().iterator().next();
+  SkylarkProviders skylarkProviders=aspectValue.getAspect().getProvider(SkylarkProviders.class);
+  assertThat(skylarkProviders).isNotNull();
+  Object names=skylarkProviders.getValue("target_labels");
+  assertThat(names).isInstanceOf(SkylarkNestedSet.class);
+  assertThat(transform((SkylarkNestedSet)names,new Function<Object,String>(){
+    @Nullable @Override public String apply(    Object o){
+      assertThat(o).isInstanceOf(Label.class);
+      return o.toString();
+    }
+  }
+)).containsExactly("//test:xxx","//test:yyy");
+}

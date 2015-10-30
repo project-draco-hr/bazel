@@ -2,7 +2,27 @@
   SkyframeBuildView view=buildViewProvider.getSkyframeBuildView();
   NestedSetBuilder<Package> transitivePackages=NestedSetBuilder.stableOrder();
   AspectKey key=(AspectKey)skyKey.argument();
-  ConfiguredAspectFactory aspectFactory=aspectFactoryCreator.createAspectFactory(skyKey,env);
+  ConfiguredAspectFactory aspectFactory;
+  if (key.getAspect() instanceof NativeAspectClass<?>) {
+    aspectFactory=(ConfiguredAspectFactory)((NativeAspectClass<?>)key.getAspect()).newInstance();
+  }
+ else   if (key.getAspect() instanceof SkylarkAspectClass) {
+    SkylarkAspectClass skylarkAspectClass=(SkylarkAspectClass)key.getAspect();
+    SkylarkAspect skylarkAspect;
+    try {
+      skylarkAspect=loadSkylarkAspect(env,skylarkAspectClass.getExtensionFile(),skylarkAspectClass.getExportedName());
+    }
+ catch (    ASTLookupInputException|ConversionException e) {
+      throw new AspectFunctionException(skyKey,e);
+    }
+    if (skylarkAspect == null) {
+      return null;
+    }
+    aspectFactory=new SkylarkAspectFactory(skylarkAspect.getName(),skylarkAspect);
+  }
+ else {
+    throw new IllegalStateException();
+  }
   PackageValue packageValue=(PackageValue)env.getValue(PackageValue.key(key.getLabel().getPackageIdentifier()));
   if (packageValue == null) {
     return null;
@@ -39,7 +59,7 @@
     if (configConditions == null) {
       return null;
     }
-    ListMultimap<Attribute,ConfiguredTarget> depValueMap=ConfiguredTargetFunction.computeDependencies(env,resolver,ctgValue,aspectFactory.getDefinition(),key.getParameters(),configConditions,ruleClassProvider,view.getHostConfiguration(ctgValue.getConfiguration()),transitivePackages);
+    ListMultimap<Attribute,ConfiguredTarget> depValueMap=ConfiguredTargetFunction.computeDependencies(env,resolver,ctgValue,key.getAspect().getDefinition(),key.getParameters(),configConditions,ruleClassProvider,view.getHostConfiguration(ctgValue.getConfiguration()),transitivePackages);
     return createAspect(env,key,aspectFactory,associatedTarget,configConditions,depValueMap,transitivePackages);
   }
  catch (  DependencyEvaluationException e) {

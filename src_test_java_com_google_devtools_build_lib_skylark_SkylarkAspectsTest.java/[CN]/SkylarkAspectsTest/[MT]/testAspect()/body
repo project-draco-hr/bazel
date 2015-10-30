@@ -1,11 +1,17 @@
 {
   scratch.file("test/aspect.bzl","def _impl(target, ctx):","   print('This aspect does nothing')","   return struct()","MyAspect = aspect(implementation=_impl)");
   scratch.file("test/BUILD","java_library(name = 'xxx',)");
-  AnalysisResult analysisResult=update(ImmutableList.of("//test:xxx"),ImmutableList.<String>of("test/aspect.bzl%MyAspect"),false,LOADING_PHASE_THREADS,true,new EventBus());
+  AnalysisResult analysisResult=update(ImmutableList.of("//test:xxx"),ImmutableList.of("test/aspect.bzl%MyAspect"),false,LOADING_PHASE_THREADS,true,new EventBus());
   assertThat(transform(analysisResult.getTargetsToBuild(),new Function<ConfiguredTarget,String>(){
     @Nullable @Override public String apply(    ConfiguredTarget configuredTarget){
       return configuredTarget.getLabel().toString();
     }
   }
 )).containsExactly("//test:xxx");
+  assertThat(transform(analysisResult.getAspects(),new Function<AspectValue,String>(){
+    @Nullable @Override public String apply(    AspectValue aspectValue){
+      return String.format("%s(%s)",aspectValue.getAspect().getName(),aspectValue.getLabel().toString());
+    }
+  }
+)).containsExactly("test/aspect.bzl%MyAspect(//test:xxx)");
 }

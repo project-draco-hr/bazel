@@ -2,10 +2,8 @@
   super(base.getTarget(),base.getConfiguration());
   Set<Class<? extends TransitiveInfoProvider>> providers=new HashSet<>();
   providers.addAll(base.providers.keySet());
-  List<OutputGroupProvider> outputGroupProviders=getAllProviders(base,aspects,OutputGroupProvider.class);
-  OutputGroupProvider mergedOutputGroupProvider=OutputGroupProvider.merge(outputGroupProviders);
-  List<SkylarkProviders> skylarkProviders=getAllProviders(base,aspects,SkylarkProviders.class);
-  SkylarkProviders mergedSkylarkProviders=SkylarkProviders.merge(skylarkProviders);
+  OutputGroupProvider mergedOutputGroupProvider=OutputGroupProvider.merge(getAllProviders(base,aspects,OutputGroupProvider.class));
+  SkylarkProviders mergedSkylarkProviders=SkylarkProviders.merge(getAllProviders(base,aspects,SkylarkProviders.class));
   for (  Aspect aspect : aspects) {
     for (    TransitiveInfoProvider aspectProvider : aspect) {
       Class<? extends TransitiveInfoProvider> aClass=aspectProvider.getClass();
@@ -38,7 +36,7 @@
       builder.put(OutputGroupProvider.class,mergedOutputGroupProvider);
     }
     if (mergedSkylarkProviders != null) {
-      builder.put(SkylarkProviders.class,skylarkProviders);
+      builder.put(SkylarkProviders.class,mergedSkylarkProviders);
     }
     this.providers=builder.build();
   }
