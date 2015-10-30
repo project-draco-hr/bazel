@@ -8,13 +8,13 @@
   Runnable r2=awaitAddAndEnqueueRunnable(interrupt,visitor,null,visitedList,"2",null);
   Runnable ra=awaitAddAndEnqueueRunnable(interrupt,visitor,latchA,visitedList,"a",r1);
   Runnable rb=awaitAddAndEnqueueRunnable(interrupt,visitor,latchB,visitedList,"b",r2);
-  visitor.enqueue(ra);
-  visitor.enqueue(rb);
+  visitor.execute(ra);
+  visitor.execute(rb);
   latchA.await();
   latchB.await();
-  visitor.enqueue(interrupt ? interruptingRunnable(Thread.currentThread()) : throwingRunnable());
+  visitor.execute(interrupt ? interruptingRunnable(Thread.currentThread()) : throwingRunnable());
   try {
-    visitor.work(false);
+    visitor.awaitQuiescence(false);
     fail();
   }
  catch (  Exception e) {

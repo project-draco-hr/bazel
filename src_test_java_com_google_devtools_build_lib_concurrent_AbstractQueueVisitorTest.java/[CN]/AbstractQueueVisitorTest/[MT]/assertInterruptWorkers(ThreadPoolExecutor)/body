@@ -3,7 +3,7 @@
   final CountDownLatch latch2=new CountDownLatch(1);
   final boolean[] workerThreadInterrupted={false};
   ConcreteQueueVisitor visitor=(executor == null) ? new ConcreteQueueVisitor() : new ConcreteQueueVisitor(executor,true);
-  visitor.enqueue(new Runnable(){
+  visitor.execute(new Runnable(){
     @Override public void run(){
       try {
         latch1.countDown();
@@ -18,7 +18,7 @@
   latch1.await();
   Thread.currentThread().interrupt();
   try {
-    visitor.work(true);
+    visitor.awaitQuiescence(true);
     fail();
   }
  catch (  InterruptedException e) {
