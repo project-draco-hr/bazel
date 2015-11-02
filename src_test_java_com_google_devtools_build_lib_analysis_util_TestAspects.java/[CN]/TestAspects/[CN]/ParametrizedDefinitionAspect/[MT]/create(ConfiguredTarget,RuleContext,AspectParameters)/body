@@ -1,0 +1,15 @@
+{
+  StringBuilder information=new StringBuilder("aspect " + ruleContext.getLabel());
+  if (!parameters.isEmpty()) {
+    information.append(" data " + Iterables.getFirst(parameters.getAttribute("baz"),null));
+    information.append(" ");
+  }
+  List<? extends TransitiveInfoCollection> deps=ruleContext.getPrerequisites("$dep",Mode.TARGET);
+  information.append("$dep:[");
+  for (  TransitiveInfoCollection dep : deps) {
+    information.append(" ");
+    information.append(dep.getLabel());
+  }
+  information.append("]");
+  return new Aspect.Builder(getClass().getName()).addProvider(AspectInfo.class,new AspectInfo(collectAspectData(information.toString(),ruleContext))).build();
+}
