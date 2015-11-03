@@ -1,4 +1,5 @@
 {
+  Stopwatch timer=Stopwatch.createStarted();
   SkyKey key=TargetPatternPhaseValue.key(ImmutableList.copyOf(targetPatterns),options.compileOneDependency,options.buildTestsOnly,determineTests,TestFilter.forOptions(options,eventHandler,ruleClassNames));
   EvaluationResult<TargetPatternPhaseValue> evalResult=buildDriver.evaluate(ImmutableList.of(key),keepGoing,10,eventHandler);
   if (evalResult.hasError()) {
@@ -9,7 +10,9 @@
       throw new IllegalStateException("Unexpected Exception type from TargetPatternPhaseValue " + "for '" + targetPatterns + "'' with root causes: "+ Iterables.toString(errorInfo.getRootCauses()),e);
     }
   }
+  long time=timer.stop().elapsed(TimeUnit.MILLISECONDS);
   TargetPatternPhaseValue patternParsingValue=evalResult.get(key);
-  LoadingResult result=new LoadingResult(patternParsingValue.hasError(),patternParsingValue.hasPostExpansionError(),patternParsingValue.getTargets(),patternParsingValue.getTestsToRun(),ImmutableMap.<PackageIdentifier,Path>of());
-  return result;
+  eventBus.post(new TargetParsingCompleteEvent(patternParsingValue.getTargets(),patternParsingValue.getFilteredTargets(),patternParsingValue.getTestFilteredTargets(),time));
+  eventBus.post(new LoadingPhaseCompleteEvent(patternParsingValue.getTargets(),ImmutableSet.<Target>of(),packageManager.getStatistics(),0));
+  return patternParsingValue.toLoadingResult();
 }
