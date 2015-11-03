@@ -3,6 +3,10 @@
     ruleContext.attributeError("main_dex_proguard_specs","The 'main_dex_proguard_specs' " + "attribute is only allowed if 'multidex' is set to 'legacy'");
     return null;
   }
+  if (ruleContext.attributes().isAttributeValueExplicitlySpecified("proguard_apply_mapping") && ruleContext.attributes().get(PROGUARD_SPECS,BuildType.LABEL_LIST).isEmpty()) {
+    ruleContext.attributeError("proguard_apply_mapping","'proguard_apply_mapping' can only be used when 'proguard_specs' is also set");
+    return null;
+  }
   Multimap<String,TransitiveInfoCollection> depsByArchitecture=MultimapBuilder.treeKeys().arrayListValues().build();
   AndroidConfiguration config=ruleContext.getFragment(AndroidConfiguration.class);
   if (config.isFatApk()) {
@@ -61,5 +65,6 @@
     return null;
   }
   Artifact deployJar=createDeployJar(ruleContext,javaSemantics,androidCommon,resourceClasses,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_DEPLOY_JAR));
-  return createAndroidBinary(ruleContext,filesBuilder,deployJar,javaCommon,androidCommon,javaSemantics,androidSemantics,nativeLibs,applicationManifest,resourceApk,incrementalResourceApk,splitResourceApk,resourceClasses,ImmutableList.<Artifact>of(),null);
+  Artifact proguardMapping=ruleContext.getPrerequisiteArtifact("proguard_apply_mapping",Mode.TARGET);
+  return createAndroidBinary(ruleContext,filesBuilder,deployJar,javaCommon,androidCommon,javaSemantics,androidSemantics,nativeLibs,applicationManifest,resourceApk,incrementalResourceApk,splitResourceApk,resourceClasses,ImmutableList.<Artifact>of(),proguardMapping);
 }
