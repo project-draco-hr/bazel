@@ -2,8 +2,15 @@
   CharSequence bufString=CharBuffer.wrap(buffer);
   Matcher m=pattern.matcher(bufString);
   List<SingleHashLine> unorderedTable=new ArrayList<>();
+  Map<String,PathFragment> pathCache=new HashMap<>();
   while (m.find()) {
-    unorderedTable.add(new SingleHashLine(m.start(0) + 1,Integer.valueOf(m.group(1)),defaultPath.getRelative(m.group(2))));
+    String pathString=m.group(2);
+    PathFragment pathFragment=pathCache.get(pathString);
+    if (pathFragment == null) {
+      pathFragment=defaultPath.getRelative(pathString);
+      pathCache.put(pathString,pathFragment);
+    }
+    unorderedTable.add(new SingleHashLine(m.start(0) + 1,Integer.parseInt(m.group(1)),pathFragment));
   }
   this.table=hashOrdering.immutableSortedCopy(unorderedTable);
   this.bufferLength=buffer.length;
