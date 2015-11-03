@@ -1,0 +1,11 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("x/BUILD","sh_library(name = 'x', deps = ['//x:y/z'])","sh_library(name = 'y/z')");
+  scratch.file("x/y/BUILD","sh_library(name = 'z')");
+  assertLabelsVisitedWithErrors(ImmutableSet.of("//x:x"),ImmutableSet.of("//x:x"));
+  assertContainsEvent("Label '//x:y/z' crosses boundary of subpackage 'x/y'");
+  scratch.deleteFile("x/y/BUILD");
+  syncPackages(ModifiedFileSet.builder().modify(new PathFragment("x/y/BUILD")).build());
+  reporter.addHandler(failFastHandler);
+  assertLabelsVisited(ImmutableSet.of("//x:x","//x:y/z"),ImmutableSet.of("//x:x"),!EXPECT_ERROR,!KEEP_GOING);
+}

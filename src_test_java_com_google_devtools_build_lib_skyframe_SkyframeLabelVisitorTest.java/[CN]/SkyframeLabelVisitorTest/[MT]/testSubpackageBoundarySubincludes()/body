@@ -1,0 +1,17 @@
+{
+  preprocessorFactorySupplier.inject(new SubincludePreprocessor(scratch.getFileSystem(),skyframeExecutor.getPackageManager()));
+  skyframeExecutor.preparePackageLoading(new PathPackageLocator(outputBase,ImmutableList.of(rootDirectory)),ConstantRuleVisibility.PRIVATE,true,7,ruleClassProvider.getDefaultsPackageContent(),UUID.randomUUID());
+  this.visitor=skyframeExecutor.pkgLoader();
+  scratch.file("a/BUILD","subinclude('//b:c/d/foo')");
+  scratch.file("b/BUILD","exports_files(['c/d/foo'])");
+  scratch.file("b/c/d/foo","sh_library(name = 'a')");
+  assertLabelsVisited(ImmutableSet.of("//a:a"),ImmutableSet.of("//a:a"),!EXPECT_ERROR,!KEEP_GOING);
+  Path subpackageBuildFile=scratch.file("b/c/BUILD","exports_files(['foo'])");
+  syncPackages(ModifiedFileSet.builder().modify(new PathFragment("b/c/BUILD")).build());
+  reporter.removeHandler(failFastHandler);
+  assertLabelsVisitedWithErrors(ImmutableSet.of("//a:a"),ImmutableSet.of("//a:a"));
+  assertContainsEvent("Label '//b:c/d/foo' crosses boundary of subpackage 'b/c'");
+  subpackageBuildFile.delete();
+  syncPackages(ModifiedFileSet.builder().modify(new PathFragment("b/c/BUILD")).build());
+  assertLabelsVisited(ImmutableSet.of("//a:a"),ImmutableSet.of("//a:a"),!EXPECT_ERROR,!KEEP_GOING);
+}

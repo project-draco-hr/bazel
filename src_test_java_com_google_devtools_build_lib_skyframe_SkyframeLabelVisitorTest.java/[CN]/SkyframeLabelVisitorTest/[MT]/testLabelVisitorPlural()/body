@@ -1,0 +1,7 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("pkg/BUILD","sh_library(name = 'x', deps = ['//nopkg:y', 'z'])","sh_library(name = 'z')","sh_library(name = 'o', deps = ['//nopkg2:o'])");
+  assertLabelsVisitedWithErrors(ImmutableSet.of("//pkg:x","//pkg:z","//pkg:o"),ImmutableSet.of("//pkg:x","//pkg:o"));
+  assertContainsEvent("no such package 'nopkg'");
+  assertContainsEvent("no such package 'nopkg2'");
+}

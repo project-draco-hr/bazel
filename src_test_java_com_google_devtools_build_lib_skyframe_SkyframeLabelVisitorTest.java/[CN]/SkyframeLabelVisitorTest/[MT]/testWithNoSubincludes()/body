@@ -1,0 +1,12 @@
+{
+  preprocessorFactorySupplier.inject(new SubincludePreprocessor(scratch.getFileSystem(),skyframeExecutor.getPackageManager()));
+  skyframeExecutor.preparePackageLoading(new PathPackageLocator(outputBase,ImmutableList.of(rootDirectory)),ConstantRuleVisibility.PRIVATE,true,7,ruleClassProvider.getDefaultsPackageContent(),UUID.randomUUID());
+  this.visitor=skyframeExecutor.pkgLoader();
+  scratch.file("pkg/BUILD","sh_library(name = 'x', deps = ['z'])","sh_library(name = 'z')");
+  assertLabelsVisited(ImmutableSet.of("//pkg:x","//pkg:z"),ImmutableSet.of("//pkg:x"),!EXPECT_ERROR,!KEEP_GOING);
+  assertLabelsVisited(ImmutableSet.of("//pkg:x","//pkg:z"),ImmutableSet.of("//pkg:x"),!EXPECT_ERROR,!KEEP_GOING);
+  scratch.file("hassub/BUILD","subinclude('//sub:sub')");
+  scratch.file("sub/BUILD","exports_files(['sub'])");
+  scratch.file("sub/sub","sh_library(name='zzz')");
+  assertLabelsVisited(ImmutableSet.of("//hassub:zzz"),ImmutableSet.of("//hassub:zzz"),!EXPECT_ERROR,!KEEP_GOING);
+}

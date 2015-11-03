@@ -1,0 +1,12 @@
+{
+  reporter.removeHandler(failFastHandler);
+  Path buildFile=scratch.file("pkg/BUILD","sh_library(name = 'x', deps = ['z', 'z'])","sh_library(name = 'z')");
+  assertLabelsVisited(ImmutableSet.of("//pkg:x"),ImmutableSet.of("//pkg:x"),EXPECT_ERROR,!KEEP_GOING);
+  assertContainsEvent("Label '//pkg:z' is duplicated in the 'deps' attribute of rule 'x'");
+  assertLabelsVisitedWithErrors(ImmutableSet.of("//pkg:x","//pkg:z"),ImmutableSet.of("//pkg:x"));
+  scratch.overwriteFile("pkg/BUILD","sh_library(name = 'x', deps = ['z'])","sh_library(name = 'z')");
+  buildFile.setLastModifiedTime(buildFile.getLastModifiedTime() + 1);
+  syncPackages();
+  assertLabelsVisited(ImmutableSet.of("//pkg:x","//pkg:z"),ImmutableSet.of("//pkg:x"),!EXPECT_ERROR,!KEEP_GOING);
+  assertLabelsVisited(ImmutableSet.of("//pkg:x","//pkg:z"),ImmutableSet.of("//pkg:x"),!EXPECT_ERROR,!KEEP_GOING);
+}

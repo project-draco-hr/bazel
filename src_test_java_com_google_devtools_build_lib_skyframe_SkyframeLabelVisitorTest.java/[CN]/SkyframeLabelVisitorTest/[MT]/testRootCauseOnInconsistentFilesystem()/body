@@ -1,0 +1,38 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("foo/BUILD","sh_library(name = 'foo', deps = ['//bar:baz/fizz'])");
+  Path barBuildFile=scratch.file("bar/BUILD","sh_library(name = 'bar/baz')");
+  Path bazDir=barBuildFile.getParentDirectory().getRelative("baz");
+  scratch.file("bar/baz/BUILD");
+  FileStatus inconsistentParentFileStatus=new FileStatus(){
+    @Override public boolean isFile(){
+      return true;
+    }
+    @Override public boolean isSpecialFile(){
+      return false;
+    }
+    @Override public boolean isDirectory(){
+      return false;
+    }
+    @Override public boolean isSymbolicLink(){
+      return false;
+    }
+    @Override public long getSize() throws IOException {
+      return 0;
+    }
+    @Override public long getLastModifiedTime() throws IOException {
+      return 0;
+    }
+    @Override public long getLastChangeTime() throws IOException {
+      return 0;
+    }
+    @Override public long getNodeId() throws IOException {
+      return 0;
+    }
+  }
+;
+  fs.stubStat(bazDir,inconsistentParentFileStatus);
+  Label fooLabel=Label.parseAbsolute("//foo:foo");
+  getSkyframeExecutor().getPackageManager().newTransitiveLoader().sync(reporter,ImmutableSet.of(getTarget(fooLabel)),ImmutableSet.<Label>of(),true,100,-1);
+  assertContainsEvent("Inconsistent filesystem operations");
+}

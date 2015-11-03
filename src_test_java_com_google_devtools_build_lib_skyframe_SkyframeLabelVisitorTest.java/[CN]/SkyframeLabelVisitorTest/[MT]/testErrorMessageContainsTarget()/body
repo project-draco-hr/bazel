@@ -1,0 +1,6 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("a/BUILD","package_group(name = 'pkgs', includes = ['//not/a/package:pkgs'])","sh_library(name = 'foo', visibility = [':pkgs'])");
+  assertLabelsVisitedWithErrors(ImmutableSet.of("//a:foo","//a:pkgs"),ImmutableSet.of("//a:foo"));
+  assertContainsEvent("in target '//a:pkgs', no such label '//not/a/package:pkgs': no " + "such package 'not/a/package'");
+}

@@ -1,0 +1,21 @@
+{
+  Path path=scratch.file("foo/BUILD","sh_library(name = 'foo')");
+  Path sym1=scratch.resolve(rootDirectory + "/sym1/BUILD");
+  Path sym2=scratch.resolve(rootDirectory + "/sym2/BUILD");
+  Path symlink=scratch.resolve(rootDirectory + "/bar/BUILD");
+  FileSystemUtils.ensureSymbolicLink(symlink,sym1);
+  FileSystemUtils.ensureSymbolicLink(sym1,path);
+  FileSystemUtils.ensureSymbolicLink(sym2,path);
+  scratch.file("unrelated/BUILD","sh_library(name = 'unrelated')");
+  assertLabelsVisited(ImmutableSet.of("//bar:foo"),ImmutableSet.of("//bar:foo"),!EXPECT_ERROR,!KEEP_GOING);
+  assertTrue(sym1.delete());
+  FileSystemUtils.ensureSymbolicLink(sym1,sym2);
+  syncPackages();
+  assertLabelsVisited(ImmutableSet.of("//unrelated:unrelated"),ImmutableSet.of("//unrelated:unrelated"),!EXPECT_ERROR,!KEEP_GOING);
+  assertTrue(sym1.delete());
+  FileSystemUtils.ensureSymbolicLink(sym1,path);
+  assertTrue(symlink.delete());
+  symlink=scratch.file("bar/BUILD","sh_library(name = 'bar')");
+  syncPackages();
+  assertLabelsVisited(ImmutableSet.of("//bar:bar"),ImmutableSet.of("//bar:bar"),!EXPECT_ERROR,!KEEP_GOING);
+}

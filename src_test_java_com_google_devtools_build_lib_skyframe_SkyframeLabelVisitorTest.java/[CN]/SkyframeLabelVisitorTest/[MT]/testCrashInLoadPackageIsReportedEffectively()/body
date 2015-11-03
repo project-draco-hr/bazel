@@ -1,0 +1,22 @@
+{
+  reporter.removeHandler(failFastHandler);
+  reporter.addHandler(new EventHandler(){
+    @Override public void handle(    Event event){
+      if (EventKind.ERRORS.contains(event.getKind())) {
+        throw new NullPointerException("oops");
+      }
+    }
+  }
+);
+  scratch.file("bad/BUILD","this is a bad build file");
+  scratch.file("x/BUILD","sh_library(name='x', ","           deps=['//bad:a', '//bad:b', '//bad:c',","                 '//bad:d', '//bad:e', '//bad:f'])");
+  try {
+    assertLabelsVisitedWithErrors(ImmutableSet.of("//x:x"),ImmutableSet.of("//x"));
+    fail();
+  }
+ catch (  NullPointerException npe) {
+  }
+catch (  RuntimeException re) {
+    assertThat(re.getCause()).isInstanceOf(NullPointerException.class);
+  }
+}

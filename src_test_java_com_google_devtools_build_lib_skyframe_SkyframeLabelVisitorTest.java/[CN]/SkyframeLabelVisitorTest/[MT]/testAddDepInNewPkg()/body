@@ -1,0 +1,10 @@
+{
+  Path buildFile=scratch.file("pkg/BUILD","sh_library(name = 'x', deps = ['z'])","sh_library(name = 'z')");
+  scratch.file("pkg2/BUILD","sh_library(name = 'q')");
+  assertLabelsVisited(ImmutableSet.of("//pkg:x","//pkg:z"),ImmutableSet.of("//pkg:x"),!EXPECT_ERROR,!KEEP_GOING);
+  scratch.overwriteFile("pkg/BUILD","sh_library(name = 'x', deps = ['z', '//pkg2:q'])","sh_library(name = 'z')");
+  buildFile.setLastModifiedTime(buildFile.getLastModifiedTime() + 1);
+  syncPackages();
+  assertLabelsVisited(ImmutableSet.of("//pkg:x","//pkg:z","//pkg2:q"),ImmutableSet.of("//pkg:x"),!EXPECT_ERROR,!KEEP_GOING);
+  assertLabelsVisited(ImmutableSet.of("//pkg:x","//pkg:z","//pkg2:q"),ImmutableSet.of("//pkg:x"),!EXPECT_ERROR,!KEEP_GOING);
+}
