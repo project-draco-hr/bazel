@@ -1,0 +1,15 @@
+{
+  SkyKey key=TargetPatternPhaseValue.key(ImmutableList.copyOf(targetPatterns),options.compileOneDependency,options.buildTestsOnly,determineTests,TestFilter.forOptions(options,eventHandler,ruleClassNames));
+  EvaluationResult<TargetPatternPhaseValue> evalResult=buildDriver.evaluate(ImmutableList.of(key),keepGoing,10,eventHandler);
+  if (evalResult.hasError()) {
+    ErrorInfo errorInfo=evalResult.getError(key);
+    if (errorInfo != null && errorInfo.getException() != null) {
+      Exception e=errorInfo.getException();
+      Throwables.propagateIfInstanceOf(e,TargetParsingException.class);
+      throw new IllegalStateException("Unexpected Exception type from TargetPatternPhaseValue " + "for '" + targetPatterns + "'' with root causes: "+ Iterables.toString(errorInfo.getRootCauses()),e);
+    }
+  }
+  TargetPatternPhaseValue patternParsingValue=evalResult.get(key);
+  LoadingResult result=new LoadingResult(patternParsingValue.hasError(),patternParsingValue.hasPostExpansionError(),patternParsingValue.getTargets(),patternParsingValue.getTestsToRun(),ImmutableMap.<PackageIdentifier,Path>of());
+  return result;
+}
