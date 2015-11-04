@@ -1,0 +1,15 @@
+{
+  CacheBuilder<Object,Object> statCacheBuilder=CacheBuilder.newBuilder();
+  if (maxStats != UNSET) {
+    statCacheBuilder=statCacheBuilder.maximumSize(maxStats);
+  }
+  CacheBuilder<Object,Object> readdirCacheBuilder=CacheBuilder.newBuilder();
+  if (maxReaddirs != UNSET) {
+    readdirCacheBuilder=readdirCacheBuilder.maximumSize(maxStats);
+  }
+  if (concurrencyLevel != UNSET) {
+    statCacheBuilder=statCacheBuilder.concurrencyLevel(concurrencyLevel);
+    readdirCacheBuilder=readdirCacheBuilder.concurrencyLevel(concurrencyLevel);
+  }
+  return new PerBuildSyscallCache(statCacheBuilder.build(newStatLoader()),readdirCacheBuilder.build(newReaddirLoader()));
+}
