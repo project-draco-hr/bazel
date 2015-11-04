@@ -25,7 +25,6 @@
     standaloneStrategy.exec(spawn,actionExecutionContext);
     return;
   }
-  String paramFile=Iterables.getLast(spawn.getArguments());
   FileOutErr outErr=actionExecutionContext.getFileOutErr();
   ImmutableList<String> args=ImmutableList.<String>builder().addAll(spawn.getArguments().subList(0,spawn.getArguments().size() - 1)).add("--persistent_worker").build();
   ImmutableMap<String,String> env=spawn.getEnvironment();
@@ -33,10 +32,12 @@
   try {
     HashCode workerFilesHash=combineActionInputHashes(spawn.getToolFiles(),actionExecutionContext.getActionInputFileCache());
     WorkerKey key=new WorkerKey(args,env,workDir,spawn.getMnemonic(),workerFilesHash);
-    WorkResponse response=execInWorker(executor.getEventHandler(),paramFile,key,maxRetries);
+    WorkRequest.Builder requestBuilder=WorkRequest.newBuilder();
+    expandArgument(requestBuilder,Iterables.getLast(spawn.getArguments()));
+    WorkResponse response=execInWorker(executor.getEventHandler(),key,requestBuilder.build(),maxRetries);
     outErr.getErrorStream().write(response.getOutputBytes().toByteArray());
     if (response.getExitCode() != 0) {
-      throw new UserExecException(String.format("Worker process failed with exit code: %d.",response.getExitCode()));
+      throw new UserExecException(String.format("Worker process sent response with exit code: %d.",response.getExitCode()));
     }
   }
  catch (  Exception e) {
