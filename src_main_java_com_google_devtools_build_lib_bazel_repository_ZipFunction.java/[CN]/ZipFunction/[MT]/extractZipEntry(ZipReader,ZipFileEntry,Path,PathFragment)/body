@@ -11,7 +11,9 @@
   }
  else {
     File outputFile=outputPath.getPathFile();
-    Files.copy(reader.getInputStream(entry),outputFile.toPath(),StandardCopyOption.REPLACE_EXISTING);
-    outputPath.chmod(permissions);
+    try (InputStream input=reader.getInputStream(entry)){
+      Files.copy(input,outputFile.toPath(),StandardCopyOption.REPLACE_EXISTING);
+    }
+     outputPath.chmod(permissions);
   }
 }
