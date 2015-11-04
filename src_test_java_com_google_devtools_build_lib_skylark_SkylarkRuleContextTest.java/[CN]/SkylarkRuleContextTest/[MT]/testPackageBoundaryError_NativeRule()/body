@@ -1,0 +1,7 @@
+{
+  scratch.file("test/BUILD","cc_library(name = 'cclib',","  srcs = ['sub/my_sub_lib.h'])");
+  scratch.file("test/sub/BUILD","cc_library(name = 'my_sub_lib', srcs = ['my_sub_lib.h'])");
+  reporter.removeHandler(failFastHandler);
+  getConfiguredTarget("//test:cclib");
+  assertContainsEvent("ERROR /workspace/test/BUILD:2:10: Label '//test:sub/my_sub_lib.h' crosses boundary of " + "subpackage 'test/sub' (perhaps you meant to put the colon here: " + "'//test/sub:my_sub_lib.h'?)");
+}
