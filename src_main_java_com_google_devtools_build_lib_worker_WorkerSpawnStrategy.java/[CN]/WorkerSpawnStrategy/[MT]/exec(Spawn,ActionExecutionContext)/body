@@ -1,13 +1,27 @@
 {
   Executor executor=actionExecutionContext.getExecutor();
+  EventHandler eventHandler=executor.getEventHandler();
   if (executor.reportsSubcommands()) {
     executor.reportSubcommand(Label.print(spawn.getOwner().getLabel()) + " [" + spawn.getResourceOwner().prettyPrint()+ "]",spawn.asShellCommand(executor.getExecRoot()));
   }
   if (!incrementalHeuristic.shouldUseWorkers()) {
+    if (options.workerVerbose) {
+      eventHandler.handle(Event.info(REASON_HEURISTIC));
+    }
     standaloneStrategy.exec(spawn,actionExecutionContext);
     return;
   }
   if (!Iterables.getLast(spawn.getArguments()).startsWith("@")) {
+    if (options.workerVerbose) {
+      eventHandler.handle(Event.info(REASON_NO_FLAGFILE));
+    }
+    standaloneStrategy.exec(spawn,actionExecutionContext);
+    return;
+  }
+  if (Iterables.isEmpty(spawn.getToolFiles())) {
+    if (options.workerVerbose) {
+      eventHandler.handle(Event.info(REASON_NO_TOOLS));
+    }
     standaloneStrategy.exec(spawn,actionExecutionContext);
     return;
   }
@@ -16,8 +30,9 @@
   ImmutableList<String> args=ImmutableList.<String>builder().addAll(spawn.getArguments().subList(0,spawn.getArguments().size() - 1)).add("--persistent_worker").build();
   ImmutableMap<String,String> env=spawn.getEnvironment();
   Path workDir=actionExecutionContext.getExecutor().getExecRoot();
-  WorkerKey key=new WorkerKey(args,env,workDir,spawn.getMnemonic());
   try {
+    HashCode workerFilesHash=combineActionInputHashes(spawn.getToolFiles(),actionExecutionContext.getActionInputFileCache());
+    WorkerKey key=new WorkerKey(args,env,workDir,spawn.getMnemonic(),workerFilesHash);
     WorkResponse response=execInWorker(executor.getEventHandler(),paramFile,key,maxRetries);
     outErr.getErrorStream().write(response.getOutputBytes().toByteArray());
     if (response.getExitCode() != 0) {

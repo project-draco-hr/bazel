@@ -14,11 +14,15 @@
   CommandLine actualCommandLine;
   if (paramsFile != null) {
     actualCommandLine=ParamFileHelper.createWithParamsFile(argv,arguments,commandLine,isShellCommand,owner,actions,paramFileInfo,paramsFile);
+    inputsBuilder.add(paramsFile);
   }
  else {
     actualCommandLine=ParamFileHelper.createWithoutParamsFile(argv,arguments,commandLine,isShellCommand);
   }
-  Iterable<Artifact> actualInputs=collectActualInputs(paramsFile);
-  actions.add(0,new SpawnAction(owner,actualInputs,ImmutableList.copyOf(outputs),resourceSet,actualCommandLine,environment,executionInfo,progressMessage,ImmutableMap.copyOf(inputManifests),mnemonic,executeUnconditionally,extraActionInfoSupplier));
+  NestedSet<Artifact> tools=toolsBuilder.build();
+  NestedSet<Artifact> inputsAndTools=NestedSetBuilder.<Artifact>stableOrder().addTransitive(inputsBuilder.build()).addTransitive(tools).build();
+  LinkedHashMap<PathFragment,Artifact> inputAndToolManifests=new LinkedHashMap<>(inputManifests);
+  inputAndToolManifests.putAll(toolManifests);
+  actions.add(0,new SpawnAction(owner,tools,inputsAndTools,ImmutableList.copyOf(outputs),resourceSet,actualCommandLine,environment,executionInfo,progressMessage,ImmutableMap.copyOf(inputAndToolManifests),mnemonic,executeUnconditionally,extraActionInfoSupplier));
   return actions.toArray(new Action[actions.size()]);
 }
