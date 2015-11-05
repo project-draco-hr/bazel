@@ -1,7 +1,9 @@
 {
   Artifact testIpa=testIpa();
   String runMemleaks=ruleContext.getFragment(ObjcConfiguration.class).runMemleaks() ? "true" : "false";
+  Map<String,String> testEnv=ruleContext.getConfiguration().getTestEnv();
   ImmutableList.Builder<Substitution> substitutions=new ImmutableList.Builder<Substitution>().add(Substitution.of("%(memleaks)s",runMemleaks)).add(Substitution.of("%(test_app_ipa)s",testIpa.getRootRelativePathString())).add(Substitution.of("%(test_app_name)s",baseNameWithoutIpa(testIpa))).add(Substitution.of("%(plugin_jars)s",Artifact.joinRootRelativePaths(":",plugins())));
+  substitutions.add(Substitution.ofSpaceSeparatedMap("%(test_env)s",testEnv));
   Optional<Artifact> xctestIpa=xctestIpa();
   if (xctestIpa.isPresent()) {
     substitutions.add(Substitution.of("%(xctest_app_ipa)s",xctestIpa.get().getRootRelativePathString())).add(Substitution.of("%(xctest_app_name)s",baseNameWithoutIpa(xctestIpa.get())));
