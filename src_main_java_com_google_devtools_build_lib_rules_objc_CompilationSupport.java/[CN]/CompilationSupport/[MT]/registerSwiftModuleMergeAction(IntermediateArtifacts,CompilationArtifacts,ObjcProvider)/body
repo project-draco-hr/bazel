@@ -1,0 +1,22 @@
+{
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  ImmutableList.Builder<Artifact> moduleFiles=new ImmutableList.Builder<>();
+  for (  Artifact src : compilationArtifacts.getSrcs()) {
+    if (ObjcRuleClasses.SWIFT_SOURCES.matches(src.getFilename())) {
+      moduleFiles.add(intermediateArtifacts.swiftModuleFile(src));
+    }
+  }
+  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder().add(SWIFT).add("-frontend").add("-emit-module").add("-sdk").add(IosSdkCommands.sdkDir(objcConfiguration)).add("-target").add(IosSdkCommands.swiftTarget(objcConfiguration));
+  if (objcConfiguration.generateDebugSymbols()) {
+    commandLine.add("-g");
+  }
+  commandLine.add("-module-name").add(getModuleName()).add("-parse-as-library").addExecPaths(moduleFiles.build()).addExecPath("-o",intermediateArtifacts.swiftModule()).addExecPath("-emit-objc-header-path",intermediateArtifacts.swiftHeader()).add("-Xcc").add("-I.");
+  for (  PathFragment directory : objcProvider.get(INCLUDE).toList()) {
+    commandLine.add("-Xcc").add(String.format("-I%s",directory.toString()));
+  }
+  if (objcConfiguration.moduleMapsEnabled()) {
+    PathFragment moduleMapPath=intermediateArtifacts.moduleMap().getArtifact().getExecPath();
+    commandLine.add("-I").add(moduleMapPath.getParentDirectory().toString());
+  }
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("SwiftModuleMerge").setExecutable(XCRUN).setCommandLine(commandLine.build()).addInputs(moduleFiles.build()).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addOutput(intermediateArtifacts.swiftModule()).addOutput(intermediateArtifacts.swiftHeader()).build(ruleContext));
+}
