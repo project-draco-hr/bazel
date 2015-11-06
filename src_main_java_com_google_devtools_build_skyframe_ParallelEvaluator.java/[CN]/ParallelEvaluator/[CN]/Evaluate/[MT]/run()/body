@@ -11,7 +11,7 @@
   SkyFunction factory=skyFunctions.get(functionName);
   Preconditions.checkState(factory != null,"%s %s",functionName,state);
   SkyValue value=null;
-  long startTime=Profiler.nanoTimeMaybe();
+  long startTime=BlazeClock.instance().nanoTime();
   try {
     value=factory.compute(skyKey,env);
   }
@@ -45,7 +45,7 @@ catch (  RuntimeException re) {
   }
  finally {
     env.doneBuilding();
-    long elapsedTimeNanos=Profiler.nanoTimeMaybe() - startTime;
+    long elapsedTimeNanos=BlazeClock.instance().nanoTime() - startTime;
     if (elapsedTimeNanos > 0) {
       if (progressReceiver != null) {
         progressReceiver.computed(skyKey,elapsedTimeNanos);
