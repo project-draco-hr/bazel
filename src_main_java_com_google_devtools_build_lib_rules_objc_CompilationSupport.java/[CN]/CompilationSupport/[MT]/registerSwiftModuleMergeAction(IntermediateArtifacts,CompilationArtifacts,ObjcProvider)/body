@@ -6,7 +6,7 @@
       moduleFiles.add(intermediateArtifacts.swiftModuleFile(src));
     }
   }
-  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder().add(SWIFT).add("-frontend").add("-emit-module").add("-sdk").add(IosSdkCommands.sdkDir(objcConfiguration)).add("-target").add(IosSdkCommands.swiftTarget(objcConfiguration));
+  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder().add(SWIFT).add("-frontend").add("-emit-module").add("-sdk").add(IosSdkCommands.sdkDir()).add("-target").add(IosSdkCommands.swiftTarget(objcConfiguration));
   if (objcConfiguration.generateDebugSymbols()) {
     commandLine.add("-g");
   }
@@ -18,5 +18,5 @@
     PathFragment moduleMapPath=intermediateArtifacts.moduleMap().getArtifact().getExecPath();
     commandLine.add("-I").add(moduleMapPath.getParentDirectory().toString());
   }
-  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("SwiftModuleMerge").setExecutable(XCRUN).setCommandLine(commandLine.build()).addInputs(moduleFiles.build()).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addOutput(intermediateArtifacts.swiftModule()).addOutput(intermediateArtifacts.swiftHeader()).build(ruleContext));
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("SwiftModuleMerge").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(commandLine.build()).addInputs(moduleFiles.build()).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addOutput(intermediateArtifacts.swiftModule()).addOutput(intermediateArtifacts.swiftHeader()).build(ruleContext));
 }

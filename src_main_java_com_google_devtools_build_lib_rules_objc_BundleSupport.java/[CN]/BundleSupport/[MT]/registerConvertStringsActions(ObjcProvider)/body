@@ -2,6 +2,6 @@
   IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   for (  Artifact strings : objcProvider.get(ObjcProvider.STRINGS)) {
     Artifact bundled=intermediateArtifacts.convertedStringsFile(strings);
-    ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("ConvertStringsPlist").setExecutable(new PathFragment("/usr/bin/plutil")).setCommandLine(CustomCommandLine.builder().add("-convert").add("binary1").addExecPath("-o",bundled).add("--").addPath(strings.getExecPath()).build()).addInput(strings).addOutput(bundled).build(ruleContext));
+    ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("ConvertStringsPlist").setExecutable(new PathFragment("/usr/bin/plutil")).setCommandLine(CustomCommandLine.builder().add("-convert").add("binary1").addExecPath("-o",bundled).add("--").addPath(strings.getExecPath()).build()).addInput(strings).addInput(CompilationSupport.xcrunwrapper(ruleContext).getExecutable()).addOutput(bundled).build(ruleContext));
   }
 }

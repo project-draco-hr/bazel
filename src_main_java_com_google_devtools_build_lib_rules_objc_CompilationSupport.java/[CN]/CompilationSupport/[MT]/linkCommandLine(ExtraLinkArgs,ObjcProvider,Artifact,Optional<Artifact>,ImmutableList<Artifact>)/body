@@ -1,6 +1,6 @@
 {
   ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  CustomCommandLine.Builder commandLine=CustomCommandLine.builder().addPath(XCRUN);
+  CustomCommandLine.Builder commandLine=CustomCommandLine.builder().addPath(xcrunwrapper(ruleContext).getExecutable().getExecPath());
   if (objcProvider.is(USES_CPP)) {
     commandLine.add(CLANG_PLUSPLUS).add("-stdlib=libc++");
   }
@@ -23,7 +23,7 @@
   }
   if (dsymBundle.isPresent()) {
     PathFragment dsymPath=FileSystemUtils.removeExtension(dsymBundle.get().getExecPath());
-    commandLine.add("&&").addPath(XCRUN).add(DSYMUTIL).add(linkedBinary.getExecPathString()).add("-o " + dsymPath).add("&& zipped_bundle=${PWD}/" + dsymBundle.get().getShellEscapedExecPathString()).add("&& cd " + dsymPath).add("&& /usr/bin/zip -q -r \"${zipped_bundle}\" .");
+    commandLine.add("&&").addPath(xcrunwrapper(ruleContext).getExecutable().getExecPath()).add(DSYMUTIL).add(linkedBinary.getExecPathString()).add("-o " + dsymPath).add("&& zipped_bundle=${PWD}/" + dsymBundle.get().getShellEscapedExecPathString()).add("&& cd " + dsymPath).add("&& /usr/bin/zip -q -r \"${zipped_bundle}\" .");
   }
   return new SingleArgCommandLine(commandLine.build());
 }
