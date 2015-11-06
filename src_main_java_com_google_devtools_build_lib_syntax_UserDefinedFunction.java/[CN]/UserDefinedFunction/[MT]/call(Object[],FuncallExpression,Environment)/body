@@ -5,6 +5,12 @@
   if (env.getStackTrace().contains(this)) {
     throw new EvalException(getLocation(),String.format("Recursion was detected when calling '%s' from '%s'",getName(),Iterables.getLast(env.getStackTrace()).getName()));
   }
+  if (enableCompiler && method.isPresent()) {
+    Object returnValue=callCompiledFunction(arguments,ast,env);
+    if (returnValue != null) {
+      return returnValue;
+    }
+  }
   Profiler.instance().startTask(ProfilerTask.SKYLARK_USER_FN,getLocationPathAndLine() + "#" + getName());
   try {
     env.enterScope(this,ast,definitionGlobals);

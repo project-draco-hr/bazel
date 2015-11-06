@@ -1,0 +1,17 @@
+{
+  compilerDebug("Calling compiled function " + getLocationPathAndLine() + " "+ getName());
+  try {
+    env.enterScope(this,ast,definitionGlobals);
+    return method.get().invoke(null,ImmutableList.builder().add(arguments).add(env).build().toArray());
+  }
+ catch (  IllegalAccessException e) {
+    throw new RuntimeException("Compiler created code that could not be accessed reflectively.",e);
+  }
+catch (  InvocationTargetException e) {
+    compilerDebug("Error running compiled version",e.getCause());
+    return null;
+  }
+ finally {
+    env.exitScope();
+  }
+}

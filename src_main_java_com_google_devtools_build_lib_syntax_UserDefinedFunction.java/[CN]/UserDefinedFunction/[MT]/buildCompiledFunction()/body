@@ -1,0 +1,25 @@
+{
+  String path=location.getPath() != null ? location.getPath().getPathString().replace('/','$') : "";
+  String compiledFunctionClassName=CompiledFunction.class.getCanonicalName() + path + "$"+ getName();
+  compilerDebug("Compiling " + getLocationPathAndLine() + " "+ getName());
+  try {
+    int publicStatic=Visibility.PUBLIC.getMask() | Ownership.STATIC.getMask();
+    TypeDescription.Latent latentCompiledFunctionClass=new TypeDescription.Latent(compiledFunctionClassName,publicStatic | TypeManifestation.FINAL.getMask(),new TypeDescription.ForLoadedType(CompiledFunction.class),Collections.<TypeDescription>emptyList());
+    MethodDescription getAstNode=new MethodDescription.Latent(latentCompiledFunctionClass,new MethodDescription.Token("getAstNode",publicStatic | MethodManifestation.FINAL.getMask(),new TypeDescription.ForLoadedType(ASTNode.class),Arrays.asList(new TypeDescription.ForLoadedType(int.class))));
+    MethodDescription getLocation=new MethodDescription.Latent(latentCompiledFunctionClass,new MethodDescription.Token("getLocation",publicStatic | MethodManifestation.FINAL.getMask(),new TypeDescription.ForLoadedType(Location.class),Arrays.asList(new TypeDescription.ForLoadedType(int.class))));
+    DebugInfo debugInfo=new DebugInfo(getAstNode,getLocation);
+    FunctionSignature sig=signature.getSignature();
+    VariableScope scope=VariableScope.function(sig.getNames());
+    Implementation compiledImplementation=compileBody(scope,debugInfo);
+    List<Class<?>> parameterTypes=sig.getShape().toClasses();
+    parameterTypes.add(Environment.class);
+    Unloaded<CompiledFunction> unloadedImplementation=new ByteBuddy().withClassVisitor(new StackMapFrameClassVisitor(debugCompilerPrintByteCode)).subclass(CompiledFunction.class).name(compiledFunctionClassName).defineMethod("call",Object.class,parameterTypes,Visibility.PUBLIC,Ownership.STATIC,MethodManifestation.FINAL).intercept(compiledImplementation).defineMethod(getAstNode).intercept(MethodDelegation.to(debugInfo,DebugInfo.class,"getAstNodeDelegate").filter(ElementMatchers.named("getAstNode"))).defineMethod(getLocation).intercept(MethodDelegation.to(debugInfo,DebugInfo.class,"getLocationDelegate").filter(ElementMatchers.named("getLocation"))).make();
+    saveByteCode(unloadedImplementation);
+    Class<? extends CompiledFunction> functionClass=unloadedImplementation.load(getClass().getClassLoader(),ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+    return Optional.of(ReflectionUtils.getMethod(functionClass,"call",parameterTypes.toArray(new Class<?>[parameterTypes.size()])).getLoadedMethod());
+  }
+ catch (  Throwable e) {
+    compilerDebug("Error while compiling",e);
+    return Optional.absent();
+  }
+}

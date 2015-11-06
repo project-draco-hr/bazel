@@ -1,0 +1,12 @@
+{
+  List<ByteCodeAppender> code=new ArrayList<>(statements.size());
+  code.add(null);
+  for (  Statement statement : statements) {
+    code.add(statement.compile(scope,LoopLabels.ABSENT,debugInfo));
+  }
+  if (statements.isEmpty() || !(statements.get(statements.size() - 1) instanceof ReturnStatement)) {
+    code.add(new ByteCodeAppender.Simple(Runtime.GET_NONE,MethodReturn.REFERENCE));
+  }
+  code.set(0,scope.createLocalVariablesUndefined());
+  return new Implementation.Simple(ByteCodeUtils.compoundAppender(code));
+}
