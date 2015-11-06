@@ -20,7 +20,13 @@
     commandLine.add("-g");
   }
   Artifact dotdFile=intermediateArtifacts.dotdFile(sourceFile);
-  commandLine.add(IosSdkCommands.compileFlagsForClang(objcConfiguration)).add(IosSdkCommands.commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration)).add(objcConfiguration.getCoptsForCompilationMode()).addBeforeEachPath("-iquote",ObjcCommon.userHeaderSearchPaths(ruleContext.getConfiguration())).addBeforeEachExecPath("-include",compilationArtifacts.getPchFile().asSet()).addBeforeEachPath("-I",objcProvider.get(INCLUDE)).addBeforeEachPath("-isystem",objcProvider.get(INCLUDE_SYSTEM)).add(otherFlags).addFormatEach("-D%s",objcProvider.get(DEFINE)).add(coverageFlags.build()).add(objcConfiguration.getCopts()).add(attributes.copts()).add(attributes.optionsCopts()).addExecPath("-c",sourceFile).addExecPath("-o",objFile).add("-MD").addExecPath("-MF",dotdFile);
+  commandLine.add(IosSdkCommands.compileFlagsForClang(objcConfiguration)).add(IosSdkCommands.commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration)).add(objcConfiguration.getCoptsForCompilationMode()).addBeforeEachPath("-iquote",ObjcCommon.userHeaderSearchPaths(ruleContext.getConfiguration())).addBeforeEachExecPath("-include",compilationArtifacts.getPchFile().asSet()).addBeforeEachPath("-I",objcProvider.get(INCLUDE)).addBeforeEachPath("-isystem",objcProvider.get(INCLUDE_SYSTEM)).add(otherFlags).addFormatEach("-D%s",objcProvider.get(DEFINE)).add(coverageFlags.build()).add(objcConfiguration.getCopts()).add(attributes.copts()).add(attributes.optionsCopts());
+  PathFragment sourceExecPathFragment=sourceFile.getExecPath();
+  String sourcePath=sourceExecPathFragment.getPathString();
+  if (!sourceExecPathFragment.isAbsolute() && objcConfiguration.getUseAbsolutePathsForActions()) {
+    sourcePath=objcConfiguration.getXcodeWorkspaceRoot() + "/" + sourcePath;
+  }
+  commandLine.add("-c").add(sourcePath).addExecPath("-o",objFile).add("-MD").addExecPath("-MF",dotdFile);
   if (moduleMap.isPresent()) {
     commandLine.add(attributes.enableModules() ? "-fmodules" : "-fmodule-maps").add("-iquote").add(moduleMap.get().getArtifact().getExecPath().getParentDirectory().toString()).add("-fmodule-name=" + moduleMap.get().getName());
     if (attributes.enableModules()) {
