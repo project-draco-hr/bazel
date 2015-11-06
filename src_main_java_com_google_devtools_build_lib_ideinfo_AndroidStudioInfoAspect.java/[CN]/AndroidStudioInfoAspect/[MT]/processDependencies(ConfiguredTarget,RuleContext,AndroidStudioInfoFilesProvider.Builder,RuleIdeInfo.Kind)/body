@@ -1,10 +1,9 @@
 {
   ImmutableList.Builder<TransitiveInfoCollection> directDepsBuilder=ImmutableList.builder();
-  if (ruleContext.attributes().has("deps",BuildType.LABEL_LIST)) {
-    directDepsBuilder.addAll(ruleContext.getPrerequisites("deps",Mode.TARGET));
-  }
-  if (ruleContext.attributes().has("exports",BuildType.LABEL_LIST)) {
-    directDepsBuilder.addAll(ruleContext.getPrerequisites("exports",Mode.TARGET));
+  for (  PrerequisiteAttr prerequisiteAttr : PREREQUISITE_ATTRS) {
+    if (ruleContext.attributes().has(prerequisiteAttr.name,prerequisiteAttr.type)) {
+      directDepsBuilder.addAll(ruleContext.getPrerequisites(prerequisiteAttr.name,Mode.TARGET));
+    }
   }
   List<TransitiveInfoCollection> directDeps=directDepsBuilder.build();
   NestedSetBuilder<Label> dependenciesBuilder=NestedSetBuilder.stableOrder();
