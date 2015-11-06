@@ -1,0 +1,27 @@
+{
+  AstAccessors debugAccessors=debugInfo.add(this);
+  List<ByteCodeAppender> listConstruction=new ArrayList<>();
+  if (isTuple()) {
+    append(listConstruction,ByteCodeMethodCalls.BCImmutableList.builder);
+  }
+ else {
+    append(listConstruction,NewObject.fromConstructor(MutableList.class,Mutability.class).arguments(scope.loadEnvironment(),ByteCodeUtils.invoke(Environment.class,"mutability")));
+  }
+  for (  Expression expression : exprs) {
+    Preconditions.checkNotNull(expression,"List literal at %s contains null expression",getLocation());
+    ByteCodeAppender compiledValue=expression.compile(scope,debugInfo);
+    if (isTuple()) {
+      listConstruction.add(compiledValue);
+      append(listConstruction,ByteCodeMethodCalls.BCImmutableList.Builder.add);
+    }
+ else {
+      append(listConstruction,Duplication.SINGLE);
+      listConstruction.add(compiledValue);
+      append(listConstruction,debugAccessors.loadLocation,scope.loadEnvironment(),ByteCodeUtils.cleanInvoke(MutableList.class,"add",Object.class,Location.class,Environment.class));
+    }
+  }
+  if (isTuple()) {
+    append(listConstruction,ByteCodeMethodCalls.BCImmutableList.Builder.build,ByteCodeUtils.invoke(Tuple.class,"create",ImmutableList.class));
+  }
+  return ByteCodeUtils.compoundAppender(listConstruction);
+}
