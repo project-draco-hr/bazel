@@ -2,12 +2,7 @@
   Object funcValue=func.eval(env);
   ImmutableList.Builder<Object> posargs=new ImmutableList.Builder<>();
   Map<String,Object> kwargs=new HashMap<>();
-  if ((funcValue instanceof BaseFunction)) {
-    BaseFunction function=(BaseFunction)funcValue;
-    evalArguments(posargs,kwargs,env);
-    return function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env);
-  }
- else {
-    throw new EvalException(getLocation(),"'" + EvalUtils.getDataTypeName(funcValue) + "' object is not callable");
-  }
+  BaseFunction function=checkCallable(funcValue,getLocation());
+  evalArguments(posargs,kwargs,env);
+  return function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env);
 }

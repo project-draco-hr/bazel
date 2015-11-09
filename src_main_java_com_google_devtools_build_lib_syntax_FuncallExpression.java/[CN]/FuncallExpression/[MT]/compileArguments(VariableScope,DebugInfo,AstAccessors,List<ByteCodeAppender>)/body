@@ -1,0 +1,41 @@
+{
+  InternalVariable positionalsBuilder=scope.freshVariable(ImmutableList.Builder.class);
+  append(code,ByteCodeMethodCalls.BCImmutableList.builder);
+  code.add(positionalsBuilder.store());
+  InternalVariable keyWordArgs=scope.freshVariable(Map.class);
+  append(code,NewObject.fromConstructor(HashMap.class).arguments());
+  code.add(keyWordArgs.store());
+  InternalVariable duplicatesBuilder=scope.freshVariable(new TypeDescription.ForLoadedType(ImmutableList.Builder.class));
+  append(code,ByteCodeMethodCalls.BCImmutableList.builder);
+  code.add(duplicatesBuilder.store());
+  StackManipulation builderAdd=new StackManipulation.Compound(ByteCodeMethodCalls.BCImmutableList.Builder.add,Removal.SINGLE);
+  if (obj != null) {
+    append(code,positionalsBuilder.load());
+    code.add(obj.compile(scope,debugInfo));
+    append(code,builderAdd);
+  }
+  for (  Argument.Passed arg : args) {
+    ByteCodeAppender value=arg.getValue().compile(scope,debugInfo);
+    if (arg.isPositional()) {
+      append(code,positionalsBuilder.load());
+      code.add(value);
+      append(code,builderAdd);
+    }
+ else     if (arg.isStar()) {
+      append(code,positionalsBuilder.load());
+      code.add(value);
+      append(code,TypeCasting.to(new TypeDescription.ForLoadedType(Iterable.class)),ByteCodeMethodCalls.BCImmutableList.Builder.addAll,Removal.SINGLE);
+    }
+ else     if (arg.isStarStar()) {
+      append(code,keyWordArgs.load());
+      code.add(value);
+      append(code,duplicatesBuilder.load(),debugAccessors.loadLocation,addKeywordArgs);
+    }
+ else {
+      append(code,keyWordArgs.load(),new TextConstant(arg.getName()));
+      code.add(value);
+      append(code,duplicatesBuilder.load(),addKeywordArg);
+    }
+  }
+  append(code,duplicatesBuilder.load(),new TextConstant(func.getName()),debugAccessors.loadLocation,checkDuplicates,positionalsBuilder.load(),ByteCodeMethodCalls.BCImmutableList.Builder.build,keyWordArgs.load(),ByteCodeMethodCalls.BCImmutableMap.copyOf,debugAccessors.loadAstNode,TypeCasting.to(new TypeDescription.ForLoadedType(FuncallExpression.class)),scope.loadEnvironment());
+}

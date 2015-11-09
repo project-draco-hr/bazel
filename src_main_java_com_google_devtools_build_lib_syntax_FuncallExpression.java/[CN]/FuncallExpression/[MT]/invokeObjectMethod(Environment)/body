@@ -1,48 +1,8 @@
 {
   Object objValue=obj.eval(env);
   ImmutableList.Builder<Object> posargs=new ImmutableList.Builder<>();
+  posargs.add(objValue);
   Map<String,Object> kwargs=new HashMap<>();
-  BaseFunction function=Runtime.getFunction(EvalUtils.getSkylarkType(objValue.getClass()),func.getName());
-  if (function != null) {
-    if (!isNamespace(objValue.getClass())) {
-      posargs.add(objValue);
-    }
-    evalArguments(posargs,kwargs,env);
-    return function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env);
-  }
- else   if (objValue instanceof ClassObject) {
-    Object fieldValue=((ClassObject)objValue).getValue(func.getName());
-    if (fieldValue == null) {
-      throw new EvalException(getLocation(),String.format("struct has no method '%s'",func.getName()));
-    }
-    if (!(fieldValue instanceof BaseFunction)) {
-      throw new EvalException(getLocation(),String.format("struct field '%s' is not a function",func.getName()));
-    }
-    function=(BaseFunction)fieldValue;
-    evalArguments(posargs,kwargs,env);
-    return function.call(posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env);
-  }
- else   if (env.isSkylark()) {
-    evalArguments(posargs,kwargs,env);
-    Class<?> objClass;
-    Object obj;
-    if (objValue instanceof Class<?>) {
-      obj=null;
-      objClass=(Class<?>)objValue;
-    }
- else {
-      obj=objValue;
-      objClass=objValue.getClass();
-    }
-    String name=func.getName();
-    ImmutableList<Object> args=posargs.build();
-    MethodDescriptor method=findJavaMethod(objClass,name,args);
-    if (!kwargs.isEmpty()) {
-      throw new EvalException(func.getLocation(),String.format("Keyword arguments are not allowed when calling a java method" + "\nwhile calling method '%s' for type %s",name,EvalUtils.getDataTypeNameFromClass(objClass)));
-    }
-    return callMethod(method,name,obj,args.toArray(),getLocation(),env);
-  }
- else {
-    throw new EvalException(getLocation(),String.format("%s is not defined on object of type '%s'",functionName(),EvalUtils.getDataTypeName(objValue)));
-  }
+  evalArguments(posargs,kwargs,env);
+  return invokeObjectMethod(func.getName(),posargs.build(),ImmutableMap.<String,Object>copyOf(kwargs),this,env);
 }
