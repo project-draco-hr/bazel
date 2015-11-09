@@ -1,0 +1,14 @@
+{
+  VariableScope ourScope=scope.createSubScope();
+  List<ByteCodeAppender> code=new ArrayList<>();
+  InternalVariable collection=compileInitialization(ourScope,code);
+  AstAccessors debugAccessors=debugInfo.add(this);
+  ByteCodeAppender collector=compileCollector(ourScope,collection,debugInfo,debugAccessors);
+  for (ListIterator<Clause> clauseIterator=clauses.listIterator(clauses.size()); clauseIterator.hasPrevious(); ) {
+    Clause clause=clauseIterator.previous();
+    collector=clause.compile(collector,ourScope,debugInfo,this,debugAccessors);
+  }
+  code.add(collector);
+  code.add(compileBuilding(ourScope,collection));
+  return ByteCodeUtils.compoundAppender(code);
+}

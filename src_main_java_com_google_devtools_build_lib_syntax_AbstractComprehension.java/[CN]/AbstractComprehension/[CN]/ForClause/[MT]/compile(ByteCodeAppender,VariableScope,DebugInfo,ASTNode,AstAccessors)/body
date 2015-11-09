@@ -1,0 +1,14 @@
+{
+  List<ByteCodeAppender> code=new ArrayList<>();
+  InternalVariable iterator=scope.freshVariable(new TypeDescription.ForLoadedType(Iterator.class));
+  code.add(list.compile(scope,debugInfo));
+  append(code,debugAccessors.loadLocation,EvalUtils.toIterable,ByteCodeMethodCalls.BCImmutableList.copyOf,ByteCodeMethodCalls.BCImmutableList.iterator);
+  code.add(iterator.store());
+  LabelAdder loopHeader=new LabelAdder();
+  LabelAdder loopBody=new LabelAdder();
+  append(code,Jump.to(loopHeader),loopBody,iterator.load(),ByteCodeMethodCalls.BCIterator.next);
+  code.add(variables.compileAssignment(node,debugAccessors,scope));
+  code.add(inner);
+  append(code,loopHeader,iterator.load(),ByteCodeMethodCalls.BCIterator.hasNext,Jump.ifIntOperandToZero(PrimitiveComparison.NOT_EQUAL).to(loopBody));
+  return ByteCodeUtils.compoundAppender(code);
+}
