@@ -1,0 +1,17 @@
+{
+  if (!outputGroupBuilders.isEmpty()) {
+    ImmutableMap.Builder<String,NestedSet<Artifact>> outputGroups=ImmutableMap.builder();
+    for (    Map.Entry<String,NestedSetBuilder<Artifact>> entry : outputGroupBuilders.entrySet()) {
+      outputGroups.put(entry.getKey(),entry.getValue().build());
+    }
+    if (providers.containsKey(OutputGroupProvider.class)) {
+      throw new IllegalStateException("OutputGroupProvider was provided explicitly; do not use addOutputGroup");
+    }
+    addProvider(OutputGroupProvider.class,new OutputGroupProvider(outputGroups.build()));
+  }
+  ImmutableMap<String,Object> skylarkProvidersMap=skylarkProviderBuilder.build();
+  if (!skylarkProvidersMap.isEmpty()) {
+    providers.put(SkylarkProviders.class,new SkylarkProviders(skylarkProvidersMap));
+  }
+  return new ConfiguredAspect(name,ImmutableMap.copyOf(providers));
+}

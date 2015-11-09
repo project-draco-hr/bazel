@@ -3,11 +3,11 @@
   NestedSetBuilder<Package> transitivePackages=NestedSetBuilder.stableOrder();
   AspectKey key=(AspectKey)skyKey.argument();
   ConfiguredAspectFactory aspectFactory;
-  if (key.getAspect() instanceof NativeAspectClass<?>) {
-    aspectFactory=(ConfiguredAspectFactory)((NativeAspectClass<?>)key.getAspect()).newInstance();
+  if (key.getAspectClass() instanceof NativeAspectClass<?>) {
+    aspectFactory=(ConfiguredAspectFactory)((NativeAspectClass<?>)key.getAspectClass()).newInstance();
   }
- else   if (key.getAspect() instanceof SkylarkAspectClass) {
-    SkylarkAspectClass skylarkAspectClass=(SkylarkAspectClass)key.getAspect();
+ else   if (key.getAspectClass() instanceof SkylarkAspectClass) {
+    SkylarkAspectClass skylarkAspectClass=(SkylarkAspectClass)key.getAspectClass();
     SkylarkAspect skylarkAspect;
     try {
       skylarkAspect=loadSkylarkAspect(env,skylarkAspectClass.getExtensionFile(),skylarkAspectClass.getExportedName());
@@ -59,7 +59,7 @@
     if (configConditions == null) {
       return null;
     }
-    ListMultimap<Attribute,ConfiguredTarget> depValueMap=ConfiguredTargetFunction.computeDependencies(env,resolver,ctgValue,key.getAspectWithParameters(),configConditions,ruleClassProvider,view.getHostConfiguration(ctgValue.getConfiguration()),transitivePackages);
+    ListMultimap<Attribute,ConfiguredTarget> depValueMap=ConfiguredTargetFunction.computeDependencies(env,resolver,ctgValue,key.getAspect(),configConditions,ruleClassProvider,view.getHostConfiguration(ctgValue.getConfiguration()),transitivePackages);
     return createAspect(env,key,aspectFactory,associatedTarget,configConditions,depValueMap,transitivePackages);
   }
  catch (  DependencyEvaluationException e) {

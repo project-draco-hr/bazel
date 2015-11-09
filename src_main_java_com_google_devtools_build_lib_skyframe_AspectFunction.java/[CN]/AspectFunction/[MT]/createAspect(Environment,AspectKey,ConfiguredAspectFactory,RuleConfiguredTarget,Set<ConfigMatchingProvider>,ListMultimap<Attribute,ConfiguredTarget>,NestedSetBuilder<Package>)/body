@@ -6,7 +6,7 @@
   if (env.valuesMissing()) {
     return null;
   }
-  Aspect aspect=view.createAspect(analysisEnvironment,associatedTarget,aspectFactory,directDeps,configConditions,key.getAspectWithParameters());
+  ConfiguredAspect configuredAspect=view.createAspect(analysisEnvironment,associatedTarget,aspectFactory,directDeps,configConditions,key.getAspect());
   events.replayOn(env.getListener());
   if (events.hasErrors()) {
     analysisEnvironment.disable(associatedTarget.getTarget());
@@ -17,6 +17,6 @@
     return null;
   }
   analysisEnvironment.disable(associatedTarget.getTarget());
-  Preconditions.checkNotNull(aspect);
-  return new AspectValue(key,associatedTarget.getLabel(),associatedTarget.getTarget().getLocation(),aspect,ImmutableList.copyOf(analysisEnvironment.getRegisteredActions()),transitivePackages.build());
+  Preconditions.checkNotNull(configuredAspect);
+  return new AspectValue(key,associatedTarget.getLabel(),associatedTarget.getTarget().getLocation(),configuredAspect,ImmutableList.copyOf(analysisEnvironment.getRegisteredActions()),transitivePackages.build());
 }

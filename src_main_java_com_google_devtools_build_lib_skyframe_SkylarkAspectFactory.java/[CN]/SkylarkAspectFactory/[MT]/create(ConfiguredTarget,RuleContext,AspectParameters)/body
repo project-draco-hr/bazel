@@ -19,15 +19,15 @@
         ruleContext.ruleError("Aspect implementation doesn't return a struct");
         return null;
       }
-      Aspect.Builder builder=new Aspect.Builder(name);
+      ConfiguredAspect.Builder builder=new ConfiguredAspect.Builder(name);
       SkylarkClassObject struct=(SkylarkClassObject)aspectSkylarkObject;
       Location loc=struct.getCreationLoc();
       for (      String key : struct.getKeys()) {
         builder.addSkylarkTransitiveInfo(key,struct.getValue(key),loc);
       }
-      Aspect aspect=builder.build();
+      ConfiguredAspect configuredAspect=builder.build();
       SkylarkProviderValidationUtil.checkOrphanArtifacts(ruleContext);
-      return aspect;
+      return configuredAspect;
     }
  catch (    EvalException e) {
       addAspectToStackTrace(base,e);

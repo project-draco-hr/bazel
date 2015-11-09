@@ -19,7 +19,7 @@
   final List<SkyKey> skyKeys=new ArrayList<>();
   for (  Dependency key : keys) {
     skyKeys.add(ConfiguredTargetValue.key(key.getLabel(),configs.get(key)));
-    for (    AspectWithParameters aspect : key.getAspects()) {
+    for (    Aspect aspect : key.getAspects()) {
       skyKeys.add(ConfiguredTargetFunction.createAspectKey(key.getLabel(),configs.get(key),aspect));
     }
   }
@@ -31,15 +31,15 @@
       continue;
     }
     ConfiguredTarget configuredTarget=((ConfiguredTargetValue)result.get(configuredTargetKey)).getConfiguredTarget();
-    List<Aspect> aspects=new ArrayList<>();
-    for (    AspectWithParameters aspect : key.getAspects()) {
+    List<ConfiguredAspect> configuredAspects=new ArrayList<>();
+    for (    Aspect aspect : key.getAspects()) {
       SkyKey aspectKey=ConfiguredTargetFunction.createAspectKey(key.getLabel(),configs.get(key),aspect);
       if (result.get(aspectKey) == null) {
         continue DependentNodeLoop;
       }
-      aspects.add(((AspectValue)result.get(aspectKey)).getAspect());
+      configuredAspects.add(((AspectValue)result.get(aspectKey)).getConfiguredAspect());
     }
-    cts.put(key,RuleConfiguredTarget.mergeAspects(configuredTarget,aspects));
+    cts.put(key,RuleConfiguredTarget.mergeAspects(configuredTarget,configuredAspects));
   }
   return cts.build();
 }

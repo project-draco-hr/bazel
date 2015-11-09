@@ -1,8 +1,8 @@
 {
-  ListMultimap<SkyKey,Aspect> result=ArrayListMultimap.create();
+  ListMultimap<SkyKey,ConfiguredAspect> result=ArrayListMultimap.create();
   Set<SkyKey> aspectKeys=new HashSet<>();
   for (  Dependency dep : deps) {
-    for (    AspectWithParameters depAspect : dep.getAspects()) {
+    for (    Aspect depAspect : dep.getAspects()) {
       aspectKeys.add(createAspectKey(dep.getLabel(),dep.getConfiguration(),depAspect));
     }
   }
@@ -13,7 +13,7 @@
       continue;
     }
     ConfiguredTarget depConfiguredTarget=configuredTargetMap.get(depKey);
-    for (    AspectWithParameters depAspect : dep.getAspects()) {
+    for (    Aspect depAspect : dep.getAspects()) {
       if (!aspectMatchesConfiguredTarget(depConfiguredTarget,depAspect)) {
         continue;
       }
@@ -31,7 +31,7 @@ catch (      NoSuchThingException e) {
       if (aspectValue == null) {
         return null;
       }
-      result.put(depKey,aspectValue.getAspect());
+      result.put(depKey,aspectValue.getConfiguredAspect());
       transitivePackages.addTransitive(aspectValue.getTransitivePackages());
     }
   }

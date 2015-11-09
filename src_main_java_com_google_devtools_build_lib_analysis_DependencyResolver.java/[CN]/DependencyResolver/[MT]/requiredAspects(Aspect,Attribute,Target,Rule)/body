@@ -1,0 +1,14 @@
+{
+  if (!(target instanceof Rule)) {
+    return ImmutableSet.of();
+  }
+  Set<Aspect> aspectCandidates=extractAspectCandidates(aspect,attribute,originalRule);
+  RuleClass ruleClass=((Rule)target).getRuleClassObject();
+  ImmutableSet.Builder<Aspect> result=ImmutableSet.builder();
+  for (  Aspect candidateClass : aspectCandidates) {
+    if (Sets.difference(candidateClass.getDefinition().getRequiredProviders(),ruleClass.getAdvertisedProviders()).isEmpty()) {
+      result.add(candidateClass);
+    }
+  }
+  return result.build();
+}
