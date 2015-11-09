@@ -1,0 +1,18 @@
+{
+  List<ByteCodeAppender> code=new ArrayList<>();
+  LabelAdder after=new LabelAdder();
+  LabelAdder nextConditionalOrElse;
+  for (  ConditionalStatements statement : thenBlocks) {
+    nextConditionalOrElse=new LabelAdder();
+    code.add(statement.getCondition().compile(scope,debugInfo));
+    append(code,EvalUtils.toBoolean,Jump.ifIntOperandToZero(PrimitiveComparison.EQUAL).to(nextConditionalOrElse));
+    code.add(statement.compile(scope,loopLabels,debugInfo));
+    append(code,Jump.to(after));
+    append(code,nextConditionalOrElse);
+  }
+  for (  Statement statement : elseBlock) {
+    code.add(statement.compile(scope,loopLabels,debugInfo));
+  }
+  append(code,after);
+  return ByteCodeUtils.compoundAppender(code);
+}

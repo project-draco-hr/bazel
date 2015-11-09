@@ -1,0 +1,12 @@
+{
+  List<ByteCodeAppender> code=new ArrayList<>();
+  LabelAdder afterLabel=new LabelAdder();
+  LabelAdder elseLabel=new LabelAdder();
+  code.add(condition.compile(scope,debugInfo));
+  append(code,EvalUtils.toBoolean,Jump.ifIntOperandToZero(PrimitiveComparison.EQUAL).to(elseLabel));
+  code.add(thenCase.compile(scope,debugInfo));
+  append(code,Jump.to(afterLabel),elseLabel);
+  code.add(elseCase.compile(scope,debugInfo));
+  append(code,afterLabel);
+  return ByteCodeUtils.compoundAppender(code);
+}
