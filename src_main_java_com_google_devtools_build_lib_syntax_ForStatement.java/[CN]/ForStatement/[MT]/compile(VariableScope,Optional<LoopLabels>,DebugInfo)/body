@@ -1,0 +1,28 @@
+{
+  AstAccessors debugAccessors=debugInfo.add(this);
+  List<ByteCodeAppender> code=new ArrayList<>();
+  InternalVariable originalIterable=scope.freshVariable(new TypeDescription.ForLoadedType(Iterable.class));
+  InternalVariable iterator=scope.freshVariable(new TypeDescription.ForLoadedType(Iterator.class));
+  code.add(collection.compile(scope,debugInfo));
+  append(code,debugAccessors.loadLocation,EvalUtils.toIterable,Duplication.SINGLE);
+  code.add(originalIterable.store());
+  append(code,ByteCodeMethodCalls.BCImmutableList.copyOf,ByteCodeMethodCalls.BCImmutableList.iterator);
+  code.add(iterator.store());
+  InternalVariable sizeCounterVariable=scope.freshVariable(new TypeDescription.ForLoadedType(int.class));
+  LabelAdder loopHeader=new LabelAdder();
+  LabelAdder loopBody=new LabelAdder();
+  LabelAdder breakLoop=new LabelAdder();
+  Optional<LoopLabels> loopLabels=LoopLabels.of(loopHeader.getLabel(),breakLoop.getLabel());
+  append(code,IntegerConstant.ZERO);
+  code.add(sizeCounterVariable.store());
+  append(code,Jump.to(loopHeader),loopBody,iterator.load());
+  append(code,ByteCodeMethodCalls.BCIterator.next);
+  code.add(variable.compileAssignment(this,debugAccessors,scope));
+  for (  Statement statement : block) {
+    append(code,new IntegerVariableIncrease(sizeCounterVariable,1));
+    code.add(statement.compile(scope,loopLabels,debugInfo));
+  }
+  append(code,loopHeader,iterator.load(),ByteCodeMethodCalls.BCIterator.hasNext,Jump.ifIntOperandToZero(PrimitiveComparison.NOT_EQUAL).to(loopBody));
+  append(code,breakLoop,originalIterable.load(),sizeCounterVariable.load(),debugAccessors.loadAstNode,ByteCodeUtils.invoke(ForStatement.class,"checkConcurrentModification",Iterable.class,int.class,ASTNode.class));
+  return ByteCodeUtils.compoundAppender(code);
+}
