@@ -18,8 +18,11 @@
     Class<? extends CompiledFunction> functionClass=unloadedImplementation.load(getClass().getClassLoader(),ClassLoadingStrategy.Default.WRAPPER).getLoaded();
     return Optional.of(ReflectionUtils.getMethod(functionClass,"call",parameterTypes.toArray(new Class<?>[parameterTypes.size()])).getLoadedMethod());
   }
- catch (  Throwable e) {
-    compilerDebug("Error while compiling",e);
-    return Optional.absent();
+ catch (  EvalException e) {
+    throw e;
   }
+catch (  Throwable e) {
+    compilerDebug("Error while compiling",e);
+  }
+  return Optional.absent();
 }

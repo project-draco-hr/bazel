@@ -1,0 +1,12 @@
+{
+  InternalVariable objects=scope.freshVariable(Collection.class);
+  InternalVariable iterator=scope.freshVariable(Iterator.class);
+  code.add(new ByteCodeAppender.Simple(debugAccessors.loadLocation,EvalUtils.toCollection));
+  code.add(objects.store());
+  append(code,IntegerConstant.forValue(lValueExpressions.size()),objects.load(),debugAccessors.loadLocation,ByteCodeUtils.invoke(LValue.class,"checkSize",int.class,Collection.class,Location.class),objects.load(),ByteCodeUtils.invoke(Collection.class,"iterator"));
+  code.add(iterator.store());
+  for (  Expression lValue : lValueExpressions) {
+    code.add(new ByteCodeAppender.Simple(iterator.load(),ByteCodeUtils.invoke(Iterator.class,"next")));
+    compileAssignment(node,debugAccessors,lValue,scope,code);
+  }
+}

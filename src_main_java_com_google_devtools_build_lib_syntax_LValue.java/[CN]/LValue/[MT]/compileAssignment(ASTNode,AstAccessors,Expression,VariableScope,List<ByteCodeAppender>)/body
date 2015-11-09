@@ -1,0 +1,13 @@
+{
+  if (leftValue instanceof Identifier) {
+    code.add(compileAssignment(scope,(Identifier)leftValue));
+  }
+ else   if (leftValue instanceof ListLiteral) {
+    List<Expression> lValueExpressions=((ListLiteral)leftValue).getElements();
+    compileAssignment(node,debugAccessors,scope,lValueExpressions,code);
+  }
+ else {
+    String message=String.format("Can't assign to expression '%s', only to variables or nested tuples of variables",leftValue);
+    throw new EvalExceptionWithStackTrace(new EvalException(node.getLocation(),message),node);
+  }
+}
