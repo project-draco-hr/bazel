@@ -1,6 +1,10 @@
 {
   RootedPath rootedPath=recursivePkgKey.getRootedPath();
-  Set<PathFragment> excludedPaths=recursivePkgKey.getExcludedPaths();
+  ImmutableSet<PathFragment> blacklist=PrecomputedValue.BLACKLISTED_PKG_PREFIXES.get(env);
+  if (blacklist == null) {
+    return null;
+  }
+  Set<PathFragment> excludedPaths=Sets.union(recursivePkgKey.getExcludedPaths(),blacklist);
   Path root=rootedPath.getRoot();
   PathFragment rootRelativePath=rootedPath.getRelativePath();
   SkyKey fileKey=FileValue.key(rootedPath);
