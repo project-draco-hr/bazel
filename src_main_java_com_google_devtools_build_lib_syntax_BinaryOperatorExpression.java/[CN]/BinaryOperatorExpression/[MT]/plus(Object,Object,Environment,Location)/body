@@ -6,7 +6,7 @@
     return (String)lval + (String)rval;
   }
   if (lval instanceof SelectorValue || rval instanceof SelectorValue || lval instanceof SelectorList|| rval instanceof SelectorList) {
-    return SelectorList.concat(getLocation(),lval,rval);
+    return SelectorList.concat(location,lval,rval);
   }
   if ((lval instanceof Tuple) && (rval instanceof Tuple)) {
     return Tuple.copyOf(Iterables.concat((Tuple)lval,(Tuple)rval));
@@ -23,10 +23,10 @@
     return ImmutableMap.copyOf(result);
   }
   if (lval instanceof SkylarkClassObject && rval instanceof SkylarkClassObject) {
-    return SkylarkClassObject.concat((SkylarkClassObject)lval,(SkylarkClassObject)rval,getLocation());
+    return SkylarkClassObject.concat((SkylarkClassObject)lval,(SkylarkClassObject)rval,location);
   }
   if (lval instanceof SkylarkNestedSet) {
-    return new SkylarkNestedSet((SkylarkNestedSet)lval,rval,getLocation());
+    return new SkylarkNestedSet((SkylarkNestedSet)lval,rval,location);
   }
-  throw new EvalException(getLocation(),String.format("unsupported operand type(s) for %s: '%s' and '%s'",operator,EvalUtils.getDataTypeName(lval),EvalUtils.getDataTypeName(rval)));
+  throw typeException(lval,rval,Operator.PLUS,location);
 }

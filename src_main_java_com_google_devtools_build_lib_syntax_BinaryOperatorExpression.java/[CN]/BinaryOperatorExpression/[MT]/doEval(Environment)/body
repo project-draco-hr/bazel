@@ -19,88 +19,34 @@
   Object rval=rhs.eval(env);
 switch (operator) {
 case PLUS:
-    return plus(lval,rval,env);
+    return plus(lval,rval,env,getLocation());
 case PIPE:
-  if (lval instanceof SkylarkNestedSet) {
-    return new SkylarkNestedSet((SkylarkNestedSet)lval,rval,getLocation());
-  }
-break;
+  return pipe(lval,rval,getLocation());
 case MINUS:
-if (lval instanceof Integer && rval instanceof Integer) {
-return ((Integer)lval).intValue() - ((Integer)rval).intValue();
-}
-break;
+return minus(lval,rval,getLocation());
 case MULT:
-if (lval instanceof Integer && rval instanceof Integer) {
-return ((Integer)lval).intValue() * ((Integer)rval).intValue();
-}
-if (lval instanceof String && rval instanceof Integer) {
-return Strings.repeat((String)lval,((Integer)rval).intValue());
-}
-if (lval instanceof Integer && rval instanceof String) {
-return Strings.repeat((String)rval,((Integer)lval).intValue());
-}
-break;
+return mult(lval,rval,getLocation());
 case DIVIDE:
-if (lval instanceof Integer && rval instanceof Integer) {
-if (rval.equals(0)) {
-throw new EvalException(getLocation(),"integer division by zero");
-}
-return (int)Math.floor(new Double((Integer)lval) / (Integer)rval);
-}
-break;
+return divide(lval,rval,getLocation());
 case PERCENT:
-if (lval instanceof Integer && rval instanceof Integer) {
-if (rval.equals(0)) {
-throw new EvalException(getLocation(),"integer modulo by zero");
-}
-int div=(Integer)rval;
-int result=((Integer)lval).intValue() % Math.abs(div);
-if (result > 0 && div < 0) {
-result+=div;
-}
- else if (result < 0 && div > 0) {
-result+=div;
-}
-return result;
-}
-if (lval instanceof String) {
-try {
-String pattern=(String)lval;
-if (rval instanceof List<?>) {
-List<?> rlist=(List<?>)rval;
-if (EvalUtils.isTuple(rlist)) {
-return Printer.formatToString(pattern,rlist);
-}
-}
-if (rval instanceof Tuple) {
-return Printer.formatToString(pattern,((Tuple)rval).getList());
-}
-return Printer.formatToString(pattern,Collections.singletonList(rval));
-}
- catch (IllegalFormatException e) {
-throw new EvalException(getLocation(),e.getMessage());
-}
-}
-break;
+return percent(lval,rval,getLocation());
 case EQUALS_EQUALS:
 return lval.equals(rval);
 case NOT_EQUALS:
 return !lval.equals(rval);
 case LESS:
-return compare(lval,rval) < 0;
+return compare(lval,rval,getLocation()) < 0;
 case LESS_EQUALS:
-return compare(lval,rval) <= 0;
+return compare(lval,rval,getLocation()) <= 0;
 case GREATER:
-return compare(lval,rval) > 0;
+return compare(lval,rval,getLocation()) > 0;
 case GREATER_EQUALS:
-return compare(lval,rval) >= 0;
+return compare(lval,rval,getLocation()) >= 0;
 case IN:
-return evalIn(lval,rval);
+return in(lval,rval,getLocation());
 case NOT_IN:
-return !evalIn(lval,rval);
+return !in(lval,rval,getLocation());
 default :
 throw new AssertionError("Unsupported binary operator: " + operator);
 }
-throw new EvalException(getLocation(),String.format("unsupported operand type(s) for %s: '%s' and '%s'",operator,EvalUtils.getDataTypeName(lval),EvalUtils.getDataTypeName(rval)));
 }

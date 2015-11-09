@@ -1,0 +1,35 @@
+{
+  if (lval instanceof Integer && rval instanceof Integer) {
+    if (rval.equals(0)) {
+      throw new EvalException(location,"integer modulo by zero");
+    }
+    int div=(Integer)rval;
+    int result=((Integer)lval).intValue() % Math.abs(div);
+    if (result > 0 && div < 0) {
+      result+=div;
+    }
+ else     if (result < 0 && div > 0) {
+      result+=div;
+    }
+    return result;
+  }
+  if (lval instanceof String) {
+    try {
+      String pattern=(String)lval;
+      if (rval instanceof List<?>) {
+        List<?> rlist=(List<?>)rval;
+        if (EvalUtils.isTuple(rlist)) {
+          return Printer.formatToString(pattern,rlist);
+        }
+      }
+      if (rval instanceof Tuple) {
+        return Printer.formatToString(pattern,((Tuple)rval).getList());
+      }
+      return Printer.formatToString(pattern,Collections.singletonList(rval));
+    }
+ catch (    IllegalFormatException e) {
+      throw new EvalException(location,e.getMessage());
+    }
+  }
+  throw typeException(lval,rval,Operator.PERCENT,location);
+}

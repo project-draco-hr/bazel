@@ -1,0 +1,47 @@
+{
+  AstAccessors debugAccessors=debugInfo.add(this);
+  List<ByteCodeAppender> code=new ArrayList<>();
+  ByteCodeAppender leftCompiled=lhs.compile(scope,debugInfo);
+  ByteCodeAppender rightCompiled=rhs.compile(scope,debugInfo);
+  if (EnumSet.of(Operator.AND,Operator.OR).contains(operator)) {
+    LabelAdder after=new LabelAdder();
+    code.add(leftCompiled);
+    append(code,Duplication.SINGLE,EvalUtils.toBoolean,Jump.ifIntOperandToZero(operator == Operator.AND ? PrimitiveComparison.EQUAL : PrimitiveComparison.NOT_EQUAL).to(after),Removal.SINGLE);
+    code.add(rightCompiled);
+    append(code,after);
+  }
+ else   if (EnumSet.of(Operator.LESS,Operator.LESS_EQUALS,Operator.GREATER,Operator.GREATER_EQUALS).contains(operator)) {
+    compileComparison(debugAccessors,code,leftCompiled,rightCompiled);
+  }
+ else {
+    code.add(leftCompiled);
+    code.add(rightCompiled);
+switch (operator) {
+case PLUS:
+      append(code,callImplementation(scope,debugAccessors,operator));
+    break;
+case PIPE:
+case MINUS:
+case MULT:
+case DIVIDE:
+case PERCENT:
+  append(code,callImplementation(debugAccessors,operator));
+break;
+case EQUALS_EQUALS:
+append(code,ByteCodeMethodCalls.BCObject.equals,ByteCodeMethodCalls.BCBoolean.valueOf);
+break;
+case NOT_EQUALS:
+append(code,ByteCodeMethodCalls.BCObject.equals,ByteCodeUtils.intLogicalNegation(),ByteCodeMethodCalls.BCBoolean.valueOf);
+break;
+case IN:
+append(code,callImplementation(debugAccessors,operator),ByteCodeMethodCalls.BCBoolean.valueOf);
+break;
+case NOT_IN:
+append(code,callImplementation(debugAccessors,Operator.IN),ByteCodeUtils.intLogicalNegation(),ByteCodeMethodCalls.BCBoolean.valueOf);
+break;
+default :
+throw new UnsupportedOperationException("Unsupported binary operator: " + operator);
+}
+}
+return ByteCodeUtils.compoundAppender(code);
+}
