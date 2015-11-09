@@ -1,6 +1,7 @@
 {
   compilerDebug("Calling compiled function " + getLocationPathAndLine() + " "+ getName());
   try {
+    Profiler.instance().startTask(ProfilerTask.SKYLARK_USER_COMPILED_FN,getLocationPathAndLine() + "#" + getName());
     env.enterScope(this,ast,definitionGlobals);
     return method.get().invoke(null,ImmutableList.builder().add(arguments).add(env).build().toArray());
   }
@@ -12,6 +13,7 @@ catch (  InvocationTargetException e) {
     return null;
   }
  finally {
+    Profiler.instance().completeTask(ProfilerTask.SKYLARK_USER_COMPILED_FN);
     env.exitScope();
   }
 }
