@@ -1,14 +1,14 @@
 {
   return builder.add(attr("entitlements",LABEL).legacyAllowAnyFileType()).add(attr("provisioning_profile",LABEL).singleArtifact().allowedFileTypes(FileType.of(".mobileprovision"))).add(attr(":default_provisioning_profile",LABEL).singleArtifact().allowedFileTypes(FileType.of(".mobileprovision")).value(new LateBoundLabel<BuildConfiguration>(ObjcConfiguration.class){
     @Override public Label getDefault(    Rule rule,    BuildConfiguration configuration){
-      ObjcConfiguration objcConfiguration=configuration.getFragment(ObjcConfiguration.class);
-      if (objcConfiguration.getBundlingPlatform() != Platform.IOS_DEVICE) {
+      AppleConfiguration appleConfiguration=configuration.getFragment(AppleConfiguration.class);
+      if (appleConfiguration.getBundlingPlatform() != Platform.IOS_DEVICE) {
         return null;
       }
       if (rule.isAttributeValueExplicitlySpecified("provisioning_profile")) {
         return null;
       }
-      return objcConfiguration.getDefaultProvisioningProfileLabel();
+      return appleConfiguration.getDefaultProvisioningProfileLabel();
     }
   }
 )).add(attr("app_icon",STRING)).add(attr("launch_image",STRING)).add(attr("bundle_id",STRING).value(new Attribute.ComputedDefault(){

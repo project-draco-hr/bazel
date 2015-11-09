@@ -3,10 +3,10 @@
   registerCombineArchitecturesAction();
   registerTransformAndCopyBreakpadFilesAction();
   registerSwiftStdlibActionsIfNecessary();
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   Artifact ipaOutput=ruleContext.getImplicitOutputArtifact(IPA);
   Artifact maybeSignedIpa;
-  if (objcConfiguration.getBundlingPlatform() == Platform.IOS_SIMULATOR) {
+  if (appleConfiguration.getBundlingPlatform() == Platform.IOS_SIMULATOR) {
     maybeSignedIpa=ipaOutput;
   }
  else   if (attributes.provisioningProfile() == null) {
@@ -17,7 +17,7 @@
   }
   registerEmbedLabelPlistAction();
   registerEnvironmentPlistAction();
-  BundleMergeControlBytes bundleMergeControlBytes=new BundleMergeControlBytes(bundling,maybeSignedIpa,objcConfiguration,bundleSupport.targetDeviceFamilies());
+  BundleMergeControlBytes bundleMergeControlBytes=new BundleMergeControlBytes(bundling,maybeSignedIpa,appleConfiguration,bundleSupport.targetDeviceFamilies());
   registerBundleMergeActions(maybeSignedIpa,bundling.getBundleContentArtifacts(),bundleMergeControlBytes);
   return this;
 }

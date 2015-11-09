@@ -1,6 +1,7 @@
 {
   final Artifact pbxproj=ruleContext.getImplicitOutputArtifact(XcodeSupport.PBXPROJ);
   final ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  final AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   return new ByteSource(){
     @Override public InputStream openStream(){
       XcodeGenProtos.Control.Builder builder=XcodeGenProtos.Control.newBuilder();
@@ -8,9 +9,9 @@
       if (workspaceRoot != null) {
         builder.setWorkspaceRoot(workspaceRoot);
       }
-      List<String> multiCpus=objcConfiguration.getIosMultiCpus();
+      List<String> multiCpus=appleConfiguration.getIosMultiCpus();
       if (multiCpus.isEmpty()) {
-        builder.addCpuArchitecture(objcConfiguration.getIosCpu());
+        builder.addCpuArchitecture(appleConfiguration.getIosCpu());
       }
  else {
         builder.addAllCpuArchitecture(multiCpus);

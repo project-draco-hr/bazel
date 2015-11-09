@@ -1,0 +1,13 @@
+{
+  ImmutableList.Builder<String> builder=new ImmutableList.Builder<>();
+  if (Platform.forArch(appleConfiguration.getIosCpu()) == Platform.IOS_SIMULATOR) {
+    builder.add("-mios-simulator-version-min=" + objcConfiguration.getMinimumOs());
+  }
+ else {
+    builder.add("-miphoneos-version-min=" + objcConfiguration.getMinimumOs());
+  }
+  if (objcConfiguration.generateDebugSymbols()) {
+    builder.add("-g");
+  }
+  return builder.add("-arch",appleConfiguration.getIosCpu()).add("-isysroot",AppleToolchain.sdkDir()).add("-F",AppleToolchain.sdkDeveloperFrameworkDir()).add("-F",AppleToolchain.platformDeveloperFrameworkDir(appleConfiguration)).addAll(Interspersing.beforeEach("-F",PathFragment.safePathStrings(uniqueParentDirectories(provider.get(FRAMEWORK_DIR))))).build();
+}

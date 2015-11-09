@@ -1,7 +1,7 @@
 {
   ImmutableList<BundleableFile> extraBundleFiles;
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  if (objcConfiguration.getBundlingPlatform() == Platform.IOS_DEVICE) {
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
+  if (appleConfiguration.getBundlingPlatform() == Platform.IOS_DEVICE) {
     extraBundleFiles=ImmutableList.of(new BundleableFile(new Attributes(ruleContext).provisioningProfile(),PROVISIONING_PROFILE_BUNDLE_FILE));
   }
  else {
@@ -15,5 +15,5 @@
  else {
     fallbackBundleId=ruleContext.attributes().get("bundle_id",Type.STRING);
   }
-  return new Bundling.Builder().setName(bundleName).setArchitecture(objcConfiguration.getDependencySingleArchitecture()).setBundleDirFormat(bundleDirFormat).addExtraBundleFiles(extraBundleFiles).setObjcProvider(objcProvider).addInfoplistInputFromRule(ruleContext).addInfoplistInput(getGeneratedVersionPlist()).addInfoplistInput(getGeneratedEnvironmentPlist()).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).setPrimaryBundleId(primaryBundleId).setFallbackBundleId(fallbackBundleId).setMinimumOsVersion(minimumOsVersion).build();
+  return new Bundling.Builder().setName(bundleName).setArchitecture(appleConfiguration.getDependencySingleArchitecture()).setBundleDirFormat(bundleDirFormat).addExtraBundleFiles(extraBundleFiles).setObjcProvider(objcProvider).addInfoplistInputFromRule(ruleContext).addInfoplistInput(getGeneratedVersionPlist()).addInfoplistInput(getGeneratedEnvironmentPlist()).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).setPrimaryBundleId(primaryBundleId).setFallbackBundleId(fallbackBundleId).setMinimumOsVersion(minimumOsVersion).build();
 }

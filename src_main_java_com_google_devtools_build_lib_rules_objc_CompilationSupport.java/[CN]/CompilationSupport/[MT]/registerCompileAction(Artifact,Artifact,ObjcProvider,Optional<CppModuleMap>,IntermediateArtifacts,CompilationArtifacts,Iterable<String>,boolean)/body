@@ -1,5 +1,6 @@
 {
   ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   ImmutableList.Builder<String> coverageFlags=new ImmutableList.Builder<>();
   ImmutableList.Builder<Artifact> gcnoFiles=new ImmutableList.Builder<>();
   ImmutableList.Builder<Artifact> additionalInputs=new ImmutableList.Builder<>();
@@ -20,7 +21,7 @@
     commandLine.add("-g");
   }
   Artifact dotdFile=intermediateArtifacts.dotdFile(sourceFile);
-  commandLine.add(IosSdkCommands.compileFlagsForClang(objcConfiguration)).add(IosSdkCommands.commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration)).add(objcConfiguration.getCoptsForCompilationMode()).addBeforeEachPath("-iquote",ObjcCommon.userHeaderSearchPaths(ruleContext.getConfiguration())).addBeforeEachExecPath("-include",compilationArtifacts.getPchFile().asSet()).addBeforeEachPath("-I",objcProvider.get(INCLUDE)).addBeforeEachPath("-isystem",objcProvider.get(INCLUDE_SYSTEM)).add(otherFlags).addFormatEach("-D%s",objcProvider.get(DEFINE)).add(coverageFlags.build()).add(objcConfiguration.getCopts()).add(attributes.copts()).add(attributes.optionsCopts());
+  commandLine.add(compileFlagsForClang(appleConfiguration)).add(commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration,appleConfiguration)).add(objcConfiguration.getCoptsForCompilationMode()).addBeforeEachPath("-iquote",ObjcCommon.userHeaderSearchPaths(ruleContext.getConfiguration())).addBeforeEachExecPath("-include",compilationArtifacts.getPchFile().asSet()).addBeforeEachPath("-I",objcProvider.get(INCLUDE)).addBeforeEachPath("-isystem",objcProvider.get(INCLUDE_SYSTEM)).add(otherFlags).addFormatEach("-D%s",objcProvider.get(DEFINE)).add(coverageFlags.build()).add(objcConfiguration.getCopts()).add(attributes.copts()).add(attributes.optionsCopts());
   PathFragment sourceExecPathFragment=sourceFile.getExecPath();
   String sourcePath=sourceExecPathFragment.getPathString();
   if (!sourceExecPathFragment.isAbsolute() && objcConfiguration.getUseAbsolutePathsForActions()) {

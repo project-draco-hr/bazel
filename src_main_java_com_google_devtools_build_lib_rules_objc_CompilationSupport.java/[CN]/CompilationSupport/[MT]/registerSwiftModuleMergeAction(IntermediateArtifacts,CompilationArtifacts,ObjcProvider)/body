@@ -1,12 +1,13 @@
 {
   ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   ImmutableList.Builder<Artifact> moduleFiles=new ImmutableList.Builder<>();
   for (  Artifact src : compilationArtifacts.getSrcs()) {
     if (ObjcRuleClasses.SWIFT_SOURCES.matches(src.getFilename())) {
       moduleFiles.add(intermediateArtifacts.swiftModuleFile(src));
     }
   }
-  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder().add(SWIFT).add("-frontend").add("-emit-module").add("-sdk").add(IosSdkCommands.sdkDir()).add("-target").add(IosSdkCommands.swiftTarget(objcConfiguration));
+  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder().add(SWIFT).add("-frontend").add("-emit-module").add("-sdk").add(AppleToolchain.sdkDir()).add("-target").add(swiftTarget(appleConfiguration));
   if (objcConfiguration.generateDebugSymbols()) {
     commandLine.add("-g");
   }

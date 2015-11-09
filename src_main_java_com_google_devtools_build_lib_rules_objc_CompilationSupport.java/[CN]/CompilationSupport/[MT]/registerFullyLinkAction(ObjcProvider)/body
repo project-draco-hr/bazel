@@ -1,6 +1,6 @@
 {
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   Artifact archive=ruleContext.getImplicitOutputArtifact(FULLY_LINKED_LIB);
   ImmutableList<Artifact> ccLibraries=ccLibraries(objcProvider);
-  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("ObjcLink").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(new CustomCommandLine.Builder().add(LIBTOOL).add("-static").add("-arch_only").add(objcConfiguration.getIosCpu()).add("-syslibroot").add(IosSdkCommands.sdkDir()).add("-o").add(archive.getExecPathString()).addExecPaths(objcProvider.get(LIBRARY)).addExecPaths(objcProvider.get(IMPORTED_LIBRARY)).addExecPaths(ccLibraries).build()).addInputs(ccLibraries).addTransitiveInputs(objcProvider.get(LIBRARY)).addTransitiveInputs(objcProvider.get(IMPORTED_LIBRARY)).addOutput(archive).build(ruleContext));
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder(ruleContext).setMnemonic("ObjcLink").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(new CustomCommandLine.Builder().add(LIBTOOL).add("-static").add("-arch_only").add(appleConfiguration.getIosCpu()).add("-syslibroot").add(AppleToolchain.sdkDir()).add("-o").add(archive.getExecPathString()).addExecPaths(objcProvider.get(LIBRARY)).addExecPaths(objcProvider.get(IMPORTED_LIBRARY)).addExecPaths(ccLibraries).build()).addInputs(ccLibraries).addTransitiveInputs(objcProvider.get(LIBRARY)).addTransitiveInputs(objcProvider.get(IMPORTED_LIBRARY)).addOutput(archive).build(ruleContext));
 }
