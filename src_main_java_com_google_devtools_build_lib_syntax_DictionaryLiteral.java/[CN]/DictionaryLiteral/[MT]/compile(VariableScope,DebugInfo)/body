@@ -1,0 +1,12 @@
+{
+  List<ByteCodeAppender> code=new ArrayList<>();
+  append(code,ByteCodeMethodCalls.BCImmutableMap.builder);
+  for (  DictionaryEntryLiteral entry : entries) {
+    code.add(entry.key.compile(scope,debugInfo));
+    append(code,Duplication.SINGLE,EvalUtils.checkValidDictKey);
+    code.add(entry.value.compile(scope,debugInfo));
+    append(code,ByteCodeMethodCalls.BCImmutableMap.Builder.put);
+  }
+  append(code,ByteCodeMethodCalls.BCImmutableMap.Builder.build);
+  return ByteCodeUtils.compoundAppender(code);
+}
