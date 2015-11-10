@@ -4,8 +4,8 @@
   List<Label> expectedLabels=ImmutableList.of(Label.create("a","a1"),Label.create("a","a2"));
   Object converted=BuildType.selectableConvert(BuildType.LABEL_LIST,nativeInput,null,currentRule);
   assertTrue(converted instanceof List<?>);
-  assertSameContents(expectedLabels,(List<Label>)converted);
+  assertThat((List<Label>)converted).containsExactlyElementsIn(expectedLabels);
   converted=BuildType.selectableConvert(BuildType.LABEL_LIST,selectableInput,null,currentRule);
   BuildType.SelectorList<?> selectorList=(BuildType.SelectorList<?>)converted;
-  assertSameContents(ImmutableMap.of(Label.parseAbsolute("//conditions:a"),expectedLabels,Label.parseAbsolute(BuildType.Selector.DEFAULT_CONDITION_KEY),expectedLabels).entrySet(),((Selector<Label>)selectorList.getSelectors().get(0)).getEntries().entrySet());
+  assertThat(((Selector<Label>)selectorList.getSelectors().get(0)).getEntries().entrySet()).containsExactlyElementsIn(ImmutableMap.of(Label.parseAbsolute("//conditions:a"),expectedLabels,Label.parseAbsolute(BuildType.Selector.DEFAULT_CONDITION_KEY),expectedLabels).entrySet());
 }

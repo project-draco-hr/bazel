@@ -2,5 +2,5 @@
   Rule rule=createRule("a","myrule","sh_binary(name = 'myrule',","          srcs = select({","              '//conditions:a': ['a.sh'],","              '//conditions:b': ['b.sh'],","              '" + BuildType.Selector.DEFAULT_CONDITION_KEY + "': ['default.sh'],","          }))");
   VisitationRecorder recorder=new VisitationRecorder();
   AggregatingAttributeMapper.of(rule).visitLabels(recorder);
-  assertSameContents(ImmutableList.of("//a:a.sh","//a:b.sh","//a:default.sh","//conditions:a","//conditions:b"),recorder.labelsVisited);
+  assertThat(recorder.labelsVisited).containsExactlyElementsIn(ImmutableList.of("//a:a.sh","//a:b.sh","//a:default.sh","//conditions:a","//conditions:b"));
 }
