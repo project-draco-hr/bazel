@@ -1,17 +1,17 @@
 {
-  FilesystemValueChecker checker=new FilesystemValueChecker(evaluator,tsgm,null);
+  FilesystemValueChecker checker=new FilesystemValueChecker(tsgm,null);
   Path path=fs.getPath("/foo");
   FileSystemUtils.createEmptyFile(path);
-  assertEmptyDiff(getDirtyFilesystemKeys(checker));
+  assertEmptyDiff(getDirtyFilesystemKeys(evaluator,checker));
   SkyKey skyKey=FileStateValue.key(RootedPath.toRootedPath(fs.getRootDirectory(),new PathFragment("foo")));
   EvaluationResult<SkyValue> result=driver.evaluate(ImmutableList.of(skyKey),false,SkyframeExecutor.DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
   assertFalse(result.hasError());
-  assertEmptyDiff(getDirtyFilesystemKeys(checker));
+  assertEmptyDiff(getDirtyFilesystemKeys(evaluator,checker));
   FileSystemUtils.writeContentAsLatin1(path,"hello");
-  assertDiffWithNewValues(getDirtyFilesystemKeys(checker),skyKey);
-  assertDiffWithNewValues(getDirtyFilesystemKeys(checker),skyKey);
+  assertDiffWithNewValues(getDirtyFilesystemKeys(evaluator,checker),skyKey);
+  assertDiffWithNewValues(getDirtyFilesystemKeys(evaluator,checker),skyKey);
   differencer.invalidate(ImmutableList.of(skyKey));
   result=driver.evaluate(ImmutableList.of(skyKey),false,SkyframeExecutor.DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
   assertFalse(result.hasError());
-  assertEmptyDiff(getDirtyFilesystemKeys(checker));
+  assertEmptyDiff(getDirtyFilesystemKeys(evaluator,checker));
 }

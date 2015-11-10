@@ -1,4 +1,7 @@
 {
+  if (Iterables.isEmpty(modifiedSourceFiles)) {
+    return new ImmutableDiff(ImmutableList.<SkyKey>of(),ImmutableMap.<SkyKey,SkyValue>of());
+  }
   Iterable<SkyKey> dirtyFileStateSkyKeys=Iterables.transform(modifiedSourceFiles,new Function<PathFragment,SkyKey>(){
     @Override public SkyKey apply(    PathFragment pathFragment){
       Preconditions.checkState(!pathFragment.isAbsolute(),"found absolute PathFragment: %s",pathFragment);
@@ -6,14 +9,9 @@
     }
   }
 );
-  Supplier<Map<SkyKey,SkyValue>> valuesSupplier=Suppliers.memoize(new Supplier<Map<SkyKey,SkyValue>>(){
-    @Override public Map<SkyKey,SkyValue> get(){
-      return memoizingEvaluator.getValues();
-    }
-  }
-);
-  FilesystemValueChecker fsvc=new FilesystemValueChecker(valuesSupplier,tsgm,null);
-  Differencer.DiffWithDelta diff=fsvc.getNewAndOldValues(dirtyFileStateSkyKeys,new FileDirtinessChecker());
+  FilesystemValueChecker fsvc=new FilesystemValueChecker(tsgm,null);
+  Map<SkyKey,SkyValue> valuesMap=memoizingEvaluator.getValues();
+  Differencer.DiffWithDelta diff=fsvc.getNewAndOldValues(valuesMap,dirtyFileStateSkyKeys,new FileDirtinessChecker());
   Set<SkyKey> valuesToInvalidate=new HashSet<>();
   Map<SkyKey,SkyValue> valuesToInject=new HashMap<>();
   for (  Map.Entry<SkyKey,Delta> entry : diff.changedKeysWithNewAndOldValues().entrySet()) {
@@ -38,7 +36,7 @@
       changedType=!oldValue.getType().equals(newValue.getType());
     }
  else {
-      DirectoryListingStateValue oldDirListingStateValue=(DirectoryListingStateValue)valuesSupplier.get().get(dirListingStateKey);
+      DirectoryListingStateValue oldDirListingStateValue=(DirectoryListingStateValue)valuesMap.get(dirListingStateKey);
       if (oldDirListingStateValue != null) {
         String baseName=rootedPath.getRelativePath().getBaseName();
         Dirent oldDirent=oldDirListingStateValue.getDirents().maybeGetDirent(baseName);

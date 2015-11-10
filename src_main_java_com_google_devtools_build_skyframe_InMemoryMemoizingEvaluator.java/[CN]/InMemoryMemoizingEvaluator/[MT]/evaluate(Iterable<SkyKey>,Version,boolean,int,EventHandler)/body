@@ -3,7 +3,7 @@
   Preconditions.checkState((lastGraphVersion == null && intVersion.getVal() == 0) || version.equals(lastGraphVersion.next()),"InMemoryGraph supports only monotonically increasing Integer versions: %s %s",lastGraphVersion,version);
   setAndCheckEvaluateState(true,roots);
   try {
-    Diff diff=differencer.getDiff(lastGraphVersion,version);
+    Diff diff=differencer.getDiff(new DelegatingWalkableGraph(graph),lastGraphVersion,version);
     valuesToInject.putAll(diff.changedKeysWithNewValues());
     invalidate(diff.changedKeysWithoutNewValues());
     pruneInjectedValues(valuesToInject);
