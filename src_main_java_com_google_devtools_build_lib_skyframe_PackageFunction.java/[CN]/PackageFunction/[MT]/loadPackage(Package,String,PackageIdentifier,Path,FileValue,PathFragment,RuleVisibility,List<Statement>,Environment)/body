@@ -3,12 +3,12 @@
   if (pkgBuilder == null) {
     profiler.startTask(ProfilerTask.CREATE_PACKAGE,packageId.toString());
     try {
-      Globber globber=packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
       AstAfterPreprocessing astAfterPreprocessing=astCache.getIfPresent(packageId);
       if (astAfterPreprocessing == null) {
         if (showLoadingProgress.get()) {
           env.getListener().handle(Event.progress("Loading package: " + packageId));
         }
+        Globber globber=packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
         Preprocessor.Result preprocessingResult;
         if (replacementContents == null) {
           Preconditions.checkNotNull(buildFileValue,packageId);
@@ -34,7 +34,8 @@
         }
         StoredEventHandler astParsingEventHandler=new StoredEventHandler();
         BuildFileAST ast=PackageFactory.parseBuildFile(packageId,preprocessingResult.result,preludeStatements,astParsingEventHandler);
-        astAfterPreprocessing=new AstAfterPreprocessing(preprocessingResult,ast,astParsingEventHandler);
+        Globber globberToStore=globber.getGlobPatterns().isEmpty() ? null : globber;
+        astAfterPreprocessing=new AstAfterPreprocessing(preprocessingResult,ast,astParsingEventHandler,globberToStore);
         astCache.put(packageId,astAfterPreprocessing);
       }
       SkylarkImportResult importResult;
@@ -49,6 +50,7 @@
         return null;
       }
       astCache.invalidate(packageId);
+      Globber globber=astAfterPreprocessing.globber != null ? astAfterPreprocessing.globber : packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
       pkgBuilder=packageFactory.createPackageFromPreprocessingAst(externalPkg,packageId,buildFilePath,astAfterPreprocessing,importResult.importMap,importResult.fileDependencies,defaultVisibility,globber);
       numPackagesLoaded.incrementAndGet();
       packageFunctionCache.put(packageId,pkgBuilder);
