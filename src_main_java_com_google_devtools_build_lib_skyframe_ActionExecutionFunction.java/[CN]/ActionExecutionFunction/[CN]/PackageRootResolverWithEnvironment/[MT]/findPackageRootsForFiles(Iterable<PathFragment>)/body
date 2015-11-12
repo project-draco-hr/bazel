@@ -2,7 +2,9 @@
   Preconditions.checkState(keysRequested.isEmpty(),"resolver should only be called once: %s %s",keysRequested,execPaths);
   Map<PathFragment,SkyKey> depKeys=new HashMap<>();
   for (  PathFragment path : execPaths) {
-    SkyKey depKey=ContainingPackageLookupValue.key(PackageIdentifier.createInDefaultRepo(path));
+    PathFragment parent=Preconditions.checkNotNull(path.getParentDirectory(),"Must pass in files, not root directory");
+    Preconditions.checkArgument(!parent.isAbsolute(),path);
+    SkyKey depKey=ContainingPackageLookupValue.key(PackageIdentifier.createInDefaultRepo(parent));
     depKeys.put(path,depKey);
     keysRequested.add(depKey);
   }

@@ -1,8 +1,9 @@
 {
   final List<SkyKey> packageKeys=new ArrayList<>();
   for (  PathFragment execPath : execPaths) {
-    Preconditions.checkArgument(!execPath.isAbsolute(),execPath);
-    packageKeys.add(ContainingPackageLookupValue.key(PackageIdentifier.createInDefaultRepo(execPath)));
+    PathFragment parent=Preconditions.checkNotNull(execPath.getParentDirectory(),"Must pass in files, not root directory");
+    Preconditions.checkArgument(!parent.isAbsolute(),execPath);
+    packageKeys.add(ContainingPackageLookupValue.key(PackageIdentifier.createInDefaultRepo(parent)));
   }
   EvaluationResult<ContainingPackageLookupValue> result;
   try {
@@ -23,7 +24,7 @@ synchronized (valueLookupLock) {
   }
   Map<PathFragment,Root> roots=new HashMap<>();
   for (  PathFragment execPath : execPaths) {
-    ContainingPackageLookupValue value=result.get(ContainingPackageLookupValue.key(PackageIdentifier.createInDefaultRepo(execPath)));
+    ContainingPackageLookupValue value=result.get(ContainingPackageLookupValue.key(PackageIdentifier.createInDefaultRepo(execPath.getParentDirectory())));
     if (value.hasContainingPackage()) {
       roots.put(execPath,Root.asSourceRoot(value.getContainingPackageRoot()));
     }
