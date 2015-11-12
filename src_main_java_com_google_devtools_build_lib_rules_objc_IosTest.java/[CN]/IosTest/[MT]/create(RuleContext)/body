@@ -9,16 +9,14 @@
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
   addResourceFilesToBuild(ruleContext,common.getObjcProvider(),filesToBuild);
-  XcodeProductType productType;
+  XcodeProductType productType=getProductType(ruleContext);
   ExtraLinkArgs extraLinkArgs;
   Iterable<Artifact> extraLinkInputs;
   if (!isXcTest(ruleContext)) {
-    productType=XcodeProductType.APPLICATION;
     extraLinkArgs=new ExtraLinkArgs();
     extraLinkInputs=ImmutableList.of();
   }
  else {
-    productType=XcodeProductType.UNIT_TEST;
     XcodeProvider appIpaXcodeProvider=ruleContext.getPrerequisite(XCTEST_APP,Mode.TARGET,XcodeProvider.class);
     xcodeProviderBuilder.setTestHost(appIpaXcodeProvider).setProductType(productType);
     XcTestAppProvider testApp=xcTestAppProvider(ruleContext);
@@ -29,9 +27,16 @@
   }
   new CompilationSupport(ruleContext).registerLinkActions(common.getObjcProvider(),extraLinkArgs,extraLinkInputs).registerJ2ObjcCompileAndArchiveActions(common.getObjcProvider()).registerCompileAndArchiveActions(common).addXcodeSettings(xcodeProviderBuilder,common).validateAttributes();
   ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,common.getObjcProvider(),LinkedBinary.LOCAL_AND_DEPENDENCIES,ReleaseBundlingSupport.APP_BUNDLE_DIR_FORMAT,objcConfiguration.getMinimumOs());
-  releaseBundlingSupport.registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateResources().validateAttributes();
+  new ReleaseBundlingSupport(ruleContext,common.getObjcProvider(),LinkedBinary.LOCAL_AND_DEPENDENCIES,ReleaseBundlingSupport.APP_BUNDLE_DIR_FORMAT,objcConfiguration.getMinimumOs()).registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateResources().validateAttributes();
   new ResourceSupport(ruleContext).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
   new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),productType).addDependencies(xcodeProviderBuilder,new Attribute("bundles",Mode.TARGET)).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET)).addNonPropagatedDependencies(xcodeProviderBuilder,new Attribute("non_propagated_deps",Mode.TARGET)).addFilesToBuild(filesToBuild).registerActions(xcodeProviderBuilder.build());
-  return create(ruleContext,common,xcodeProviderBuilder.build(),filesToBuild.build());
+  XcodeProvider xcodeProvider=xcodeProviderBuilder.build();
+  NestedSet<Artifact> filesToBuildSet=filesToBuild.build();
+  Runfiles.Builder runfilesBuilder=new Runfiles.Builder(ruleContext.getWorkspaceName()).addRunfiles(ruleContext,RunfilesProvider.DEFAULT_RUNFILES);
+  NestedSetBuilder<Artifact> filesToBuildBuilder=NestedSetBuilder.<Artifact>stableOrder().addTransitive(filesToBuildSet);
+  TestSupport testSupport=new TestSupport(ruleContext).registerTestRunnerActions().addRunfiles(runfilesBuilder).addFilesToBuild(filesToBuildBuilder);
+  Artifact executable=testSupport.generatedTestScript();
+  Runfiles runfiles=runfilesBuilder.build();
+  RunfilesSupport runfilesSupport=RunfilesSupport.withExecutable(ruleContext,runfiles,executable);
+  return new RuleConfiguredTargetBuilder(ruleContext).setFilesToBuild(filesToBuildBuilder.build()).add(XcodeProvider.class,xcodeProvider).add(RunfilesProvider.class,RunfilesProvider.simple(runfiles)).add(ExecutionInfoProvider.class,new ExecutionInfoProvider(ImmutableMap.of(ExecutionRequirements.REQUIRES_DARWIN,""))).addProvider(InstrumentedFilesProvider.class,new CompilationSupport(ruleContext).getInstrumentedFilesProvider(common)).addProviders(testSupport.getExtraProviders()).setRunfilesSupport(runfilesSupport,executable).build();
 }
