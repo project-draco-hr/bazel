@@ -1,9 +1,6 @@
 {
   for (  TransitiveInfoCollection dep : deps) {
-    BuildConfiguration depConfig=dep.getConfiguration();
-    if (depConfig != null && depConfig.hasFragment(CppConfiguration.class)) {
-      Preconditions.checkState(depConfig.getFragment(CppConfiguration.class).equals(configuration.getFragment(CppConfiguration.class)));
-    }
+    Preconditions.checkState(dep.getConfiguration() == null || configuration.equalsOrIsSupersetOf(dep.getConfiguration()),"dep " + dep.getLabel() + " has a different config than "+ ruleContext.getLabel());
     this.deps.add(dep);
   }
   return this;
