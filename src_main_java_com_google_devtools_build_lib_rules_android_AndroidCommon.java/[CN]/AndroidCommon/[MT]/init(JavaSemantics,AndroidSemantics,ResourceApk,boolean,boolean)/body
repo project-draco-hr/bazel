@@ -1,11 +1,17 @@
 {
   classJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_CLASS_JAR);
   idlHelper=new AndroidIdlHelper(ruleContext,classJar);
-  ImmutableList.Builder<Artifact> extraSourcesBuilder=ImmutableList.<Artifact>builder().addAll(resourceApk.isLegacy() || resourceApk.getResourceJavaSrcJar() == null ? ImmutableList.<Artifact>of() : ImmutableList.of(resourceApk.getResourceJavaSrcJar())).addAll(idlHelper.getIdlGeneratedJavaSources());
-  JavaTargetAttributes.Builder attributes=init(androidSemantics,extraSourcesBuilder.build());
+  javaCommon.initializeJavacOpts(androidSemantics.getJavacArguments());
+  JavaTargetAttributes.Builder attributes=javaCommon.initCommon(idlHelper.getIdlGeneratedJavaSources()).setBootClassPath(ImmutableList.of(AndroidSdkProvider.fromRuleContext(ruleContext).getAndroidJar()));
   JavaCompilationArtifacts.Builder artifactsBuilder=new JavaCompilationArtifacts.Builder();
-  if (resourceApk.isLegacy()) {
-    compileResources(javaSemantics,artifactsBuilder,attributes,resourceApk.getResourceDependencies(),resourceApk.getPrimaryResource());
+  NestedSetBuilder<Artifact> filesBuilder=NestedSetBuilder.<Artifact>stableOrder();
+  Artifact resourcesJar=resourceApk.getResourceJavaSrcJar();
+  if (resourcesJar != null) {
+    filesBuilder.add(resourcesJar);
+    compileResources(javaSemantics,resourcesJar,artifactsBuilder,attributes,filesBuilder);
+    if (resourceApk.isLegacy()) {
+      createJarJarActions(attributes,resourceApk.getResourceDependencies().getResources(),resourceApk.getPrimaryResource().getJavaPackage(),resourceClassJar);
+    }
   }
   JavaCompilationHelper helper=initAttributes(attributes,javaSemantics);
   if (ruleContext.hasErrors()) {
@@ -17,11 +23,11 @@
       return null;
     }
   }
-  jackCompilationHelper=initJack(helper.getAttributes(),javaSemantics);
+  jackCompilationHelper=initJack(helper.getAttributes());
   if (ruleContext.hasErrors()) {
     return null;
   }
-  initJava(helper,artifactsBuilder,collectJavaCompilationArgs,resourceApk.getResourceJavaSrcJar());
+  initJava(helper,artifactsBuilder,collectJavaCompilationArgs,filesBuilder);
   if (ruleContext.hasErrors()) {
     return null;
   }
