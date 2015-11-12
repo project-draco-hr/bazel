@@ -19,7 +19,11 @@
     Preconditions.checkState(runfilesSupport != null);
     add(TestProvider.class,initializeTestProvider(filesToRunProvider));
   }
-  add(ExtraActionArtifactsProvider.class,ExtraActionUtils.createExtraActionProvider(actionsWithoutExtraAction,mandatoryStampFiles,ruleContext));
+  ExtraActionArtifactsProvider extraActionsProvider=createExtraActionProvider(actionsWithoutExtraAction,ruleContext);
+  if (mandatoryStampFiles != null && !mandatoryStampFiles.isEmpty()) {
+    extraActionsProvider=ExtraActionArtifactsProvider.create(extraActionsProvider.getExtraActionArtifacts(),NestedSetBuilder.fromNestedSet(extraActionsProvider.getTransitiveExtraActionArtifacts()).add(ExtraArtifactSet.of(ruleContext.getLabel(),mandatoryStampFiles)).build());
+  }
+  add(ExtraActionArtifactsProvider.class,extraActionsProvider);
   if (!outputGroupBuilders.isEmpty()) {
     ImmutableMap.Builder<String,NestedSet<Artifact>> outputGroups=ImmutableMap.builder();
     for (    Map.Entry<String,NestedSetBuilder<Artifact>> entry : outputGroupBuilders.entrySet()) {
