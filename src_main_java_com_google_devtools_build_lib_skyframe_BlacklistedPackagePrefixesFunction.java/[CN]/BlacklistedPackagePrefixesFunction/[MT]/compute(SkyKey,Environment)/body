@@ -1,0 +1,29 @@
+{
+  PathPackageLocator pkgLocator=PrecomputedValue.PATH_PACKAGE_LOCATOR.get(env);
+  PathFragment patternsFile=PrecomputedValue.BLACKLISTED_PACKAGE_PREFIXES_FILE.get(env);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  if (patternsFile.equals(PathFragment.EMPTY_FRAGMENT)) {
+    return new BlacklistedPackagePrefixesValue(ImmutableSet.<PathFragment>of());
+  }
+  for (  Path packagePathEntry : pkgLocator.getPathEntries()) {
+    RootedPath rootedPatternFile=RootedPath.toRootedPath(packagePathEntry,patternsFile);
+    FileValue patternFileValue=(FileValue)env.getValue(FileValue.key(rootedPatternFile));
+    if (patternFileValue == null) {
+      return null;
+    }
+    if (patternFileValue.isFile()) {
+      try {
+        try (InputStreamReader reader=new InputStreamReader(rootedPatternFile.asPath().getInputStream(),StandardCharsets.UTF_8)){
+          return new BlacklistedPackagePrefixesValue(CharStreams.readLines(reader,new PathFragmentLineProcessor()));
+        }
+       }
+ catch (      IOException e) {
+        String errorMessage=e.getMessage() != null ? "error '" + e.getMessage() + "'" : "an error";
+        throw new BlacklistedPatternsFunctionException(new InconsistentFilesystemException(rootedPatternFile.asPath() + " is not readable because: " + errorMessage+ ". Was it modified mid-build?"));
+      }
+    }
+  }
+  return new BlacklistedPackagePrefixesValue(ImmutableSet.<PathFragment>of());
+}
