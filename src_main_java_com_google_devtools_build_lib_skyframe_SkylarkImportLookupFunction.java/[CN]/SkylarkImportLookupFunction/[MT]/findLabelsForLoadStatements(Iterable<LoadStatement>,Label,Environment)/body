@@ -1,13 +1,14 @@
 {
-  ImmutableSet.Builder<PathFragment> absolutePathsToLookup=new ImmutableSet.Builder<>();
   ImmutableMap.Builder<PathFragment,Label> outputMap=new ImmutableMap.Builder<>();
+  ImmutableSet.Builder<PathFragment> absolutePathsToLookup=new ImmutableSet.Builder<>();
+  ImmutableSet.Builder<PathFragment> relativePathsToConvert=new ImmutableSet.Builder<>();
   for (  LoadStatement loadStmt : loadStmts) {
     PathFragment importPath=loadStmt.getImportPath();
     if (loadStmt.isAbsolute()) {
       absolutePathsToLookup.add(importPath);
     }
  else {
-      outputMap.put(importPath,labelForRelativeImport(importPath,containingFileLabel));
+      relativePathsToConvert.add(importPath);
     }
   }
   ImmutableMap<PathFragment,Label> absoluteLabels=labelsForAbsoluteImports(absolutePathsToLookup.build(),env);
@@ -15,5 +16,8 @@
     return null;
   }
   outputMap.putAll(absoluteLabels);
+  for (  PathFragment importPath : relativePathsToConvert.build()) {
+    outputMap.put(importPath,labelForRelativeImport(importPath,containingFileLabel));
+  }
   return outputMap.build();
 }
