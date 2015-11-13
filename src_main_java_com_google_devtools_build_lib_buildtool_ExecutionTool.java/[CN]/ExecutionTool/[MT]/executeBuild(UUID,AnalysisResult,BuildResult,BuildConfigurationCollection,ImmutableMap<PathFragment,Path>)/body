@@ -10,15 +10,16 @@
     }
   }
   OutputService outputService=env.getOutputService();
+  ModifiedFileSet modifiedOutputFiles=ModifiedFileSet.EVERYTHING_MODIFIED;
   if (outputService != null) {
-    outputService.startBuild(buildId);
+    modifiedOutputFiles=outputService.startBuild(buildId);
   }
  else {
     startLocalOutputBuild();
   }
   ActionCache actionCache=getActionCache();
   SkyframeExecutor skyframeExecutor=env.getSkyframeExecutor();
-  Builder builder=createBuilder(request,executor,actionCache,skyframeExecutor);
+  Builder builder=createBuilder(request,executor,actionCache,skyframeExecutor,modifiedOutputFiles);
   Collection<ConfiguredTarget> configuredTargets=buildResult.getActualTargets();
   env.getEventBus().post(new ExecutionStartingEvent(configuredTargets));
   getReporter().handle(Event.progress("Building..."));
