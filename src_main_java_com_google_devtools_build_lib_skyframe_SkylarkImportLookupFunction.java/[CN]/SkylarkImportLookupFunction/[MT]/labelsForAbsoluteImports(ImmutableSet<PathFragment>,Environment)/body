@@ -13,12 +13,12 @@
   try {
     for (    Entry<SkyKey,ValueOrException2<BuildFileNotFoundException,InconsistentFilesystemException>> entry : lookupResults.entrySet()) {
       ContainingPackageLookupValue lookupValue=(ContainingPackageLookupValue)entry.getValue().get();
-      PackageIdentifier pkgIdForImport=lookupValue.getContainingPackageName();
       if (!lookupValue.hasContainingPackage()) {
         PackageIdentifier lookupKey=((PackageIdentifier)entry.getKey().argument());
         PathFragment importFile=lookupKey.getPackageFragment();
         throw SkylarkImportFailedException.noBuildFile(importFile);
       }
+      PackageIdentifier pkgIdForImport=lookupValue.getContainingPackageName();
       PathFragment containingPkgPath=pkgIdForImport.getPackageFragment();
       for (      PathFragment importPath : lookupMap.get(entry.getKey())) {
         PathFragment relativeImportPath=importPath.toRelative();
