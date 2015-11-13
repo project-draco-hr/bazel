@@ -77,8 +77,10 @@ catch (  NoSuchPackageException e) {
     throw new IllegalStateException(e);
   }
   List<SkyKey> childDeps=Lists.newArrayList();
+  boolean followSymlinks=shouldFollowSymlinksWhenTraversing(dirListingValue.getDirents());
   for (  Dirent dirent : dirListingValue.getDirents()) {
-    if (dirent.getType() != Type.DIRECTORY && dirent.getType() != Type.SYMLINK) {
+    Type type=dirent.getType();
+    if (type != Type.DIRECTORY && (type != Type.SYMLINK || (type == Type.SYMLINK && !followSymlinks))) {
       continue;
     }
     String basename=dirent.getName();
