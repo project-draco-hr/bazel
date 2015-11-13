@@ -1,16 +1,16 @@
 {
-  Path fromPath=from.asPath();
   try {
-    if (fromPath.exists()) {
-      fromPath.delete();
+    if (from.exists()) {
+      from.delete();
     }
-    FileSystemUtils.ensureSymbolicLink(fromPath,to);
+    FileSystemUtils.ensureSymbolicLink(from,to);
   }
  catch (  IOException e) {
     throw new RepositoryFunctionException(new IOException(String.format("Error creating symbolic link from %s to %s: %s",from,to,e.getMessage())),Transience.TRANSIENT);
   }
+  SkyKey outputDirectoryKey=FileValue.key(RootedPath.toRootedPath(from,PathFragment.EMPTY_FRAGMENT));
   try {
-    return (FileValue)env.getValueOrThrow(FileValue.key(from),IOException.class,FileSymlinkException.class,InconsistentFilesystemException.class);
+    return (FileValue)env.getValueOrThrow(outputDirectoryKey,IOException.class,FileSymlinkException.class,InconsistentFilesystemException.class);
   }
  catch (  IOException|FileSymlinkException|InconsistentFilesystemException e) {
     throw new RepositoryFunctionException(new IOException(String.format("Could not access %s: %s",from,e.getMessage())),Transience.PERSISTENT);
