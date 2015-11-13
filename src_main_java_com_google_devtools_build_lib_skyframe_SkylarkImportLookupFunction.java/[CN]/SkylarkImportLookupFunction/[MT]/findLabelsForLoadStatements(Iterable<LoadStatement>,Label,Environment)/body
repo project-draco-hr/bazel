@@ -1,0 +1,19 @@
+{
+  ImmutableSet.Builder<PathFragment> absolutePathsToLookup=new ImmutableSet.Builder<>();
+  ImmutableMap.Builder<PathFragment,Label> outputMap=new ImmutableMap.Builder<>();
+  for (  LoadStatement loadStmt : loadStmts) {
+    PathFragment importPath=loadStmt.getImportPath();
+    if (loadStmt.isAbsolute()) {
+      absolutePathsToLookup.add(importPath);
+    }
+ else {
+      outputMap.put(importPath,labelForRelativeImport(importPath,containingFileLabel));
+    }
+  }
+  ImmutableMap<PathFragment,Label> absoluteLabels=labelsForAbsoluteImports(absolutePathsToLookup.build(),env);
+  if (absoluteLabels == null) {
+    return null;
+  }
+  outputMap.putAll(absoluteLabels);
+  return outputMap.build();
+}

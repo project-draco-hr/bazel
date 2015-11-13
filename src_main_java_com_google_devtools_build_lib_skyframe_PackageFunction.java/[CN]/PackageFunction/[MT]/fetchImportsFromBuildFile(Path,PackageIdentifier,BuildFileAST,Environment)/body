@@ -1,0 +1,70 @@
+{
+  ImmutableList<LoadStatement> loadStmts=buildFileAST.getImports();
+  Map<PathFragment,Extension> importMap=Maps.newHashMapWithExpectedSize(loadStmts.size());
+  ImmutableList.Builder<SkylarkFileDependency> fileDependencies=ImmutableList.builder();
+  ImmutableMap<PathFragment,Label> importPathMap;
+  Label labelForCurrBuildFile;
+  try {
+    labelForCurrBuildFile=Label.create(packageId,"BUILD");
+  }
+ catch (  LabelSyntaxException e) {
+    throw new IllegalStateException(e);
+  }
+  try {
+    importPathMap=SkylarkImportLookupFunction.findLabelsForLoadStatements(loadStmts,labelForCurrBuildFile,env);
+    if (importPathMap == null) {
+      return null;
+    }
+  }
+ catch (  SkylarkImportFailedException e) {
+    env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
+    throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.PERSISTENT);
+  }
+  ImmutableCollection<Label> importLabels=importPathMap.values();
+  List<SkyKey> importLookupKeys=Lists.newArrayListWithExpectedSize(importLabels.size());
+  for (  Label importLabel : importLabels) {
+    importLookupKeys.add(SkylarkImportLookupValue.key(importLabel));
+  }
+  Map<SkyKey,SkyValue> skylarkImportMap=Maps.newHashMapWithExpectedSize(importPathMap.size());
+  boolean valuesMissing=false;
+  try {
+    if (skylarkImportLookupFunctionForInlining == null) {
+      Map<SkyKey,ValueOrException2<SkylarkImportFailedException,InconsistentFilesystemException>> skylarkLookupResults=env.getValuesOrThrow(importLookupKeys,SkylarkImportFailedException.class,InconsistentFilesystemException.class);
+      valuesMissing=env.valuesMissing();
+      for (      Map.Entry<SkyKey,ValueOrException2<SkylarkImportFailedException,InconsistentFilesystemException>> entry : skylarkLookupResults.entrySet()) {
+        skylarkImportMap.put(entry.getKey(),entry.getValue().get());
+      }
+    }
+ else {
+      for (      SkyKey importLookupKey : importLookupKeys) {
+        SkyValue skyValue=skylarkImportLookupFunctionForInlining.computeWithInlineCalls(importLookupKey,env);
+        if (skyValue == null) {
+          Preconditions.checkState(env.valuesMissing(),"no skylark import value for %s",importLookupKey);
+          valuesMissing=true;
+        }
+ else {
+          skylarkImportMap.put(importLookupKey,skyValue);
+        }
+      }
+    }
+  }
+ catch (  SkylarkImportFailedException e) {
+    env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
+    throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.PERSISTENT);
+  }
+catch (  InconsistentFilesystemException e) {
+    throw new PackageFunctionException(new InternalInconsistentFilesystemException(packageId,e),Transience.PERSISTENT);
+  }
+  if (valuesMissing) {
+    return null;
+  }
+  for (  Entry<PathFragment,Label> importEntry : importPathMap.entrySet()) {
+    PathFragment importPath=importEntry.getKey();
+    Label importLabel=importEntry.getValue();
+    SkyKey keyForLabel=SkylarkImportLookupValue.key(importLabel);
+    SkylarkImportLookupValue importLookupValue=(SkylarkImportLookupValue)skylarkImportMap.get(keyForLabel);
+    importMap.put(importPath,importLookupValue.getEnvironmentExtension());
+    fileDependencies.add(importLookupValue.getDependency());
+  }
+  return new SkylarkImportResult(importMap,transitiveClosureOfLabels(fileDependencies.build()));
+}

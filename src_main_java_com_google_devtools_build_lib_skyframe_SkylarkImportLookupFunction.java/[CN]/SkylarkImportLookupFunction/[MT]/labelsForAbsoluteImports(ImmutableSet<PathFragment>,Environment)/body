@@ -1,0 +1,42 @@
+{
+  ImmutableMap.Builder<PathFragment,Label> outputMap=new ImmutableMap.Builder<>();
+  Multimap<SkyKey,PathFragment> lookupMap=LinkedHashMultimap.create();
+  for (  PathFragment importPath : pathsToLookup) {
+    PathFragment relativeImportPath=importPath.toRelative();
+    PackageIdentifier pkgToLookUp=PackageIdentifier.createInDefaultRepo(relativeImportPath.getParentDirectory());
+    lookupMap.put(ContainingPackageLookupValue.key(pkgToLookUp),importPath);
+  }
+  Map<SkyKey,ValueOrException2<BuildFileNotFoundException,InconsistentFilesystemException>> lookupResults=env.getValuesOrThrow(lookupMap.keySet(),BuildFileNotFoundException.class,InconsistentFilesystemException.class);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  try {
+    for (    Entry<SkyKey,ValueOrException2<BuildFileNotFoundException,InconsistentFilesystemException>> entry : lookupResults.entrySet()) {
+      ContainingPackageLookupValue lookupValue=(ContainingPackageLookupValue)entry.getValue().get();
+      PackageIdentifier pkgIdForImport=lookupValue.getContainingPackageName();
+      if (!lookupValue.hasContainingPackage()) {
+        PackageIdentifier lookupKey=((PackageIdentifier)entry.getKey().argument());
+        PathFragment importFile=lookupKey.getPackageFragment();
+        throw SkylarkImportFailedException.noBuildFile(importFile);
+      }
+      PathFragment containingPkgPath=pkgIdForImport.getPackageFragment();
+      for (      PathFragment importPath : lookupMap.get(entry.getKey())) {
+        PathFragment relativeImportPath=importPath.toRelative();
+        String targetNameForImport=relativeImportPath.relativeTo(containingPkgPath).toString();
+        try {
+          outputMap.put(importPath,Label.create(pkgIdForImport,targetNameForImport));
+        }
+ catch (        LabelSyntaxException e) {
+          throw new SkylarkImportFailedException(e);
+        }
+      }
+    }
+  }
+ catch (  BuildFileNotFoundException e) {
+    throw new SkylarkImportFailedException(e);
+  }
+catch (  InconsistentFilesystemException e) {
+    throw new SkylarkImportFailedException(e);
+  }
+  return outputMap.build();
+}

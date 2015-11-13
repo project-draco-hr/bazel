@@ -1,9 +1,9 @@
 {
   scratch.file("pkg/ext.bzl","");
-  SkyKey skylarkImportLookupKey=SkylarkImportLookupValue.key(PackageIdentifier.createInDefaultRepo(new PathFragment("pkg/ext.bzl")));
+  SkyKey skylarkImportLookupKey=SkylarkImportLookupValue.key(Label.parseAbsoluteUnchecked("//pkg:ext.bzl"));
   EvaluationResult<SkylarkImportLookupValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),skylarkImportLookupKey,false,reporter);
   assertTrue(result.hasError());
   ErrorInfo errorInfo=result.getError(skylarkImportLookupKey);
   String errorMessage=errorInfo.getException().getMessage();
-  assertEquals("Every .bzl file must have a corresponding package, but 'pkg/ext.bzl' " + "does not have one. Please create a BUILD file in the same or any parent directory. " + "Note that this BUILD file does not need to do anything except exist.",errorMessage);
+  assertEquals("Extension file not found. Unable to load package for '//pkg:ext.bzl': " + "BUILD file not found on package path",errorMessage);
 }

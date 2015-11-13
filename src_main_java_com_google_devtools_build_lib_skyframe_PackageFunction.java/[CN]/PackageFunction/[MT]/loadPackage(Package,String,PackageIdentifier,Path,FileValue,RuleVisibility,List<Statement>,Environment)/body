@@ -1,0 +1,63 @@
+{
+  Package.LegacyBuilder pkgBuilder=packageFunctionCache.getIfPresent(packageId);
+  if (pkgBuilder == null) {
+    profiler.startTask(ProfilerTask.CREATE_PACKAGE,packageId.toString());
+    try {
+      AstAfterPreprocessing astAfterPreprocessing=astCache.getIfPresent(packageId);
+      if (astAfterPreprocessing == null) {
+        if (showLoadingProgress.get()) {
+          env.getListener().handle(Event.progress("Loading package: " + packageId));
+        }
+        Globber globber=packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
+        Preprocessor.Result preprocessingResult;
+        if (replacementContents == null) {
+          Preconditions.checkNotNull(buildFileValue,packageId);
+          byte[] buildFileBytes;
+          try {
+            buildFileBytes=buildFileValue.isSpecialFile() ? FileSystemUtils.readContent(buildFilePath) : FileSystemUtils.readWithKnownFileSize(buildFilePath,buildFileValue.getSize());
+          }
+ catch (          IOException e) {
+            env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
+            throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.TRANSIENT);
+          }
+          try {
+            preprocessingResult=packageFactory.preprocess(buildFilePath,packageId,buildFileBytes,globber);
+          }
+ catch (          IOException e) {
+            env.getListener().handle(Event.error(Location.fromFile(buildFilePath),"preprocessing failed: " + e.getMessage()));
+            throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,"preprocessing failed",e),Transience.TRANSIENT);
+          }
+        }
+ else {
+          ParserInputSource replacementSource=ParserInputSource.create(replacementContents,buildFilePath.asFragment());
+          preprocessingResult=Preprocessor.Result.noPreprocessing(replacementSource);
+        }
+        StoredEventHandler astParsingEventHandler=new StoredEventHandler();
+        BuildFileAST ast=PackageFactory.parseBuildFile(packageId,preprocessingResult.result,preludeStatements,astParsingEventHandler);
+        Globber globberToStore=globber.getGlobPatterns().isEmpty() ? null : globber;
+        astAfterPreprocessing=new AstAfterPreprocessing(preprocessingResult,ast,astParsingEventHandler,globberToStore);
+        astCache.put(packageId,astAfterPreprocessing);
+      }
+      SkylarkImportResult importResult;
+      try {
+        importResult=discoverSkylarkImports(buildFilePath,packageId,astAfterPreprocessing,env);
+      }
+ catch (      PackageFunctionException|InterruptedException e) {
+        astCache.invalidate(packageId);
+        throw e;
+      }
+      if (importResult == null) {
+        return null;
+      }
+      astCache.invalidate(packageId);
+      Globber globber=astAfterPreprocessing.globber != null ? astAfterPreprocessing.globber : packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
+      pkgBuilder=packageFactory.createPackageFromPreprocessingAst(externalPkg,packageId,buildFilePath,astAfterPreprocessing,importResult.importMap,importResult.fileDependencies,defaultVisibility,globber);
+      numPackagesLoaded.incrementAndGet();
+      packageFunctionCache.put(packageId,pkgBuilder);
+    }
+  finally {
+      profiler.completeTask(ProfilerTask.CREATE_PACKAGE);
+    }
+  }
+  return pkgBuilder;
+}

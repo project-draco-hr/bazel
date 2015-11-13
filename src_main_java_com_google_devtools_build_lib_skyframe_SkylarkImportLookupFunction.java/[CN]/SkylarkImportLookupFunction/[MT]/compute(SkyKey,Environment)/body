@@ -1,3 +1,12 @@
 {
-  return computeInternal((PackageIdentifier)skyKey.argument(),env,null);
+  Label fileLabel=(Label)skyKey.argument();
+  try {
+    return computeInternal(fileLabel,env,null);
+  }
+ catch (  InconsistentFilesystemException e) {
+    throw new SkylarkImportLookupFunctionException(e,Transience.PERSISTENT);
+  }
+catch (  SkylarkImportFailedException e) {
+    throw new SkylarkImportLookupFunctionException(e);
+  }
 }

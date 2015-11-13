@@ -1,0 +1,14 @@
+{
+  StoredEventHandler eventHandler=new StoredEventHandler();
+  PathFragment extensionFile=extensionLabel.toPathFragment();
+  try (Mutability mutability=Mutability.create("importing %s",extensionFile)){
+    com.google.devtools.build.lib.syntax.Environment extensionEnv=ruleClassProvider.createSkylarkRuleClassEnvironment(mutability,eventHandler,ast.getContentHashCode(),importMap).setupOverride("native",packageFactory.getNativeModule());
+    ast.exec(extensionEnv,eventHandler);
+    SkylarkRuleClassFunctions.exportRuleFunctionsAndAspects(extensionEnv,extensionLabel);
+    Event.replayEventsOn(env.getListener(),eventHandler.getEvents());
+    if (eventHandler.hasErrors()) {
+      throw SkylarkImportFailedException.errors(extensionFile);
+    }
+    return new Extension(extensionEnv);
+  }
+ }

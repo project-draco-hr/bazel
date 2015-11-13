@@ -1,12 +1,22 @@
 {
   SkylarkAspectLoadingKey aspectLoadingKey=(SkylarkAspectLoadingKey)skyKey.argument();
   String skylarkValueName=aspectLoadingKey.getSkylarkValueName();
-  PackageIdentifier extensionFile=aspectLoadingKey.getExtensionFile();
+  PathFragment extensionFile=aspectLoadingKey.getExtensionFile();
+  ImmutableMap<PathFragment,Label> labelLookupMap;
+  try {
+    labelLookupMap=SkylarkImportLookupFunction.labelsForAbsoluteImports(ImmutableSet.of(extensionFile),env);
+  }
+ catch (  SkylarkImportFailedException e) {
+    throw new LoadSkylarkAspectFunctionException(e,skyKey);
+  }
+  if (labelLookupMap == null) {
+    return null;
+  }
   SkylarkAspect skylarkAspect=null;
   try {
-    skylarkAspect=AspectFunction.loadSkylarkAspect(env,extensionFile,skylarkValueName);
+    skylarkAspect=AspectFunction.loadSkylarkAspect(env,labelLookupMap.get(extensionFile),skylarkValueName);
   }
- catch (  ASTLookupInputException|ConversionException e) {
+ catch (  ConversionException e) {
     throw new LoadSkylarkAspectFunctionException(e,skyKey);
   }
   if (skylarkAspect == null) {

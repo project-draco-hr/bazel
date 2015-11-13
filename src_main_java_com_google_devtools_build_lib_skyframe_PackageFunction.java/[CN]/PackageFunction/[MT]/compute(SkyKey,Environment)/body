@@ -59,8 +59,8 @@ RuleVisibility defaultVisibility=PrecomputedValue.DEFAULT_VISIBILITY.get(env);
 if (defaultVisibility == null) {
 return null;
 }
+SkyKey astLookupKey=ASTFileLookupValue.key(preludeLabel);
 ASTFileLookupValue astLookupValue=null;
-SkyKey astLookupKey=ASTFileLookupValue.key(PackageIdentifier.createInDefaultRepo(preludePath));
 try {
 astLookupValue=(ASTFileLookupValue)env.getValueOrThrow(astLookupKey,ErrorReadingSkylarkExtensionException.class,InconsistentFilesystemException.class);
 }
@@ -70,8 +70,8 @@ throw new PackageFunctionException(new BadPreludeFileException(packageId,e.getMe
 if (astLookupValue == null) {
 return null;
 }
-List<Statement> preludeStatements=astLookupValue.getAST() == null ? ImmutableList.<Statement>of() : astLookupValue.getAST().getStatements();
-Package.LegacyBuilder legacyPkgBuilder=loadPackage(externalPkg,replacementContents,packageId,buildFilePath,buildFileValue,buildFileFragment,defaultVisibility,preludeStatements,env);
+List<Statement> preludeStatements=astLookupValue.lookupSuccessful() ? astLookupValue.getAST().getStatements() : ImmutableList.<Statement>of();
+Package.LegacyBuilder legacyPkgBuilder=loadPackage(externalPkg,replacementContents,packageId,buildFilePath,buildFileValue,defaultVisibility,preludeStatements,env);
 if (legacyPkgBuilder == null) {
 return null;
 }

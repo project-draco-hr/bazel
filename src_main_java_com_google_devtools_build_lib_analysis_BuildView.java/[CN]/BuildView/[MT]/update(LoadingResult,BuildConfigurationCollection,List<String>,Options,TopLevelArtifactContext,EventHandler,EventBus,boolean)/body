@@ -16,13 +16,7 @@
   for (  String aspect : aspects) {
     int delimiterPosition=aspect.indexOf('%');
     if (delimiterPosition >= 0) {
-      PackageIdentifier bzlFile;
-      try {
-        bzlFile=PackageIdentifier.create(PackageIdentifier.DEFAULT_REPOSITORY,new PathFragment(aspect.substring(0,delimiterPosition)));
-      }
- catch (      LabelSyntaxException e) {
-        throw new ViewCreationFailedException("Error",e);
-      }
+      PathFragment bzlFile=new PathFragment("/" + aspect.substring(0,delimiterPosition));
       String skylarkFunctionName=aspect.substring(delimiterPosition + 1);
       for (      ConfiguredTargetKey targetSpec : targetSpecs) {
         aspectKeys.add(AspectValue.createSkylarkAspectKey(targetSpec.getLabel(),targetSpec.getConfiguration(),bzlFile,skylarkFunctionName));

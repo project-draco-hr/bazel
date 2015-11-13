@@ -1,0 +1,74 @@
+{
+  PathFragment filePath=fileLabel.toPathFragment();
+  ASTFileLookupValue astLookupValue;
+  try {
+    SkyKey astLookupKey=ASTFileLookupValue.key(fileLabel);
+    astLookupValue=(ASTFileLookupValue)env.getValueOrThrow(astLookupKey,ErrorReadingSkylarkExtensionException.class,InconsistentFilesystemException.class);
+  }
+ catch (  ErrorReadingSkylarkExtensionException e) {
+    throw SkylarkImportFailedException.errorReadingFile(filePath,e.getMessage());
+  }
+  if (astLookupValue == null) {
+    return null;
+  }
+  if (!astLookupValue.lookupSuccessful()) {
+    throw SkylarkImportFailedException.noFile(astLookupValue.getErrorMsg());
+  }
+  BuildFileAST ast=astLookupValue.getAST();
+  if (ast.containsErrors()) {
+    throw SkylarkImportFailedException.skylarkErrors(filePath);
+  }
+  ImmutableList<LoadStatement> loadStmts=ast.getImports();
+  Map<PathFragment,Extension> importMap=Maps.newHashMapWithExpectedSize(loadStmts.size());
+  ImmutableList.Builder<SkylarkFileDependency> fileDependencies=ImmutableList.builder();
+  ImmutableMap<PathFragment,Label> importPathMap;
+  importPathMap=findLabelsForLoadStatements(loadStmts,fileLabel,env);
+  if (importPathMap == null) {
+    return null;
+  }
+  ImmutableCollection<Label> importLabels=importPathMap.values();
+  List<SkyKey> importLookupKeys=Lists.newArrayListWithExpectedSize(importLabels.size());
+  for (  Label importLabel : importLabels) {
+    importLookupKeys.add(SkylarkImportLookupValue.key(importLabel));
+  }
+  Map<SkyKey,SkyValue> skylarkImportMap;
+  boolean valuesMissing=false;
+  if (visited == null) {
+    skylarkImportMap=env.getValues(importLookupKeys);
+    valuesMissing=env.valuesMissing();
+  }
+ else {
+    if (!visited.add(fileLabel)) {
+      ImmutableList<Label> cycle=CycleUtils.splitIntoPathAndChain(Predicates.equalTo(fileLabel),visited).second;
+      if (env.getValue(SkylarkImportUniqueCycleFunction.key(cycle)) == null) {
+        return null;
+      }
+      throw new SkylarkImportFailedException("Skylark import cycle");
+    }
+    skylarkImportMap=Maps.newHashMapWithExpectedSize(loadStmts.size());
+    for (    SkyKey importLookupKey : importLookupKeys) {
+      SkyValue skyValue=this.computeWithInlineCallsInternal((Label)importLookupKey.argument(),env,visited);
+      if (skyValue == null) {
+        Preconditions.checkState(env.valuesMissing(),"no skylark import value for %s",importLookupKey);
+        valuesMissing=true;
+      }
+ else {
+        skylarkImportMap.put(importLookupKey,skyValue);
+      }
+    }
+    visited.remove(fileLabel);
+  }
+  if (valuesMissing) {
+    return null;
+  }
+  for (  Entry<PathFragment,Label> importEntry : importPathMap.entrySet()) {
+    PathFragment importPath=importEntry.getKey();
+    Label importLabel=importEntry.getValue();
+    SkyKey keyForLabel=SkylarkImportLookupValue.key(importLabel);
+    SkylarkImportLookupValue importLookupValue=(SkylarkImportLookupValue)skylarkImportMap.get(keyForLabel);
+    importMap.put(importPath,importLookupValue.getEnvironmentExtension());
+    fileDependencies.add(importLookupValue.getDependency());
+  }
+  Extension extension=createExtension(ast,fileLabel,importMap,env);
+  return new SkylarkImportLookupValue(extension,new SkylarkFileDependency(fileLabel,fileDependencies.build()));
+}
