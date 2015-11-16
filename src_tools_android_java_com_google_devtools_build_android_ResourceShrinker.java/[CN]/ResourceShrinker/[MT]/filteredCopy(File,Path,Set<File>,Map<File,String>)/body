@@ -1,0 +1,26 @@
+{
+  File destinationFile=destination.toFile();
+  if (source.isDirectory()) {
+    File[] children=source.listFiles();
+    if (children != null) {
+      if (!destinationFile.exists()) {
+        boolean success=destinationFile.mkdirs();
+        if (!success) {
+          throw new IOException("Could not create " + destination);
+        }
+      }
+      for (      File child : children) {
+        filteredCopy(child,destination.resolve(child.getName()),skip,replace);
+      }
+    }
+  }
+ else   if (!skip.contains(source) && source.isFile()) {
+    String contents=replace.get(source);
+    if (contents != null) {
+      Files.write(contents,destinationFile,Charsets.UTF_8);
+    }
+ else {
+      Files.copy(source,destinationFile);
+    }
+  }
+}

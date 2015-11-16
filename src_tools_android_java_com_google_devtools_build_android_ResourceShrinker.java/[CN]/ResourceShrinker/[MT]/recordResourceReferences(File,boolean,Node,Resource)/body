@@ -1,0 +1,98 @@
+{
+  short nodeType=node.getNodeType();
+  if (nodeType == Node.ELEMENT_NODE) {
+    Element element=(Element)node;
+    if (from != null) {
+      NamedNodeMap attributes=element.getAttributes();
+      for (int i=0, n=attributes.getLength(); i < n; i++) {
+        Attr attr=(Attr)attributes.item(i);
+        Resource resource=getResource(attr.getValue());
+        if (resource != null) {
+          from.addReference(resource);
+        }
+      }
+      if ("rawPathResId".equals(element.getTagName())) {
+        StringBuilder sb=new StringBuilder();
+        NodeList children=node.getChildNodes();
+        for (int i=0, n=children.getLength(); i < n; i++) {
+          Node child=children.item(i);
+          if (child.getNodeType() == Element.TEXT_NODE || child.getNodeType() == Element.CDATA_SECTION_NODE) {
+            sb.append(child.getNodeValue());
+          }
+        }
+        if (sb.length() > 0) {
+          Resource resource=getResource(ResourceType.RAW,sb.toString().trim());
+          from.addReference(resource);
+        }
+      }
+    }
+    Resource definition=getResource(element);
+    if (definition != null) {
+      from=definition;
+      definition.addLocation(file);
+      if (isDefaultFolder) {
+        definition.hasDefault=true;
+      }
+    }
+    String tagName=element.getTagName();
+    if (TAG_STYLE.equals(tagName)) {
+      if (element.hasAttribute(ATTR_PARENT)) {
+        String parent=element.getAttribute(ATTR_PARENT);
+        if (!parent.isEmpty() && !parent.startsWith(ANDROID_STYLE_RESOURCE_PREFIX) && !parent.startsWith(PREFIX_ANDROID)) {
+          String parentStyle=parent;
+          if (!parentStyle.startsWith(STYLE_RESOURCE_PREFIX)) {
+            parentStyle=STYLE_RESOURCE_PREFIX + parentStyle;
+          }
+          Resource ps=getResource(getFieldName(parentStyle));
+          if (ps != null && definition != null) {
+            definition.addReference(ps);
+          }
+        }
+      }
+ else {
+        String name=getFieldName(element);
+        while (true) {
+          int index=name.lastIndexOf('_');
+          if (index != -1) {
+            name=name.substring(0,index);
+            Resource ps=getResource(STYLE_RESOURCE_PREFIX + getFieldName(name));
+            if (ps != null && definition != null) {
+              definition.addReference(ps);
+            }
+          }
+ else {
+            break;
+          }
+        }
+      }
+    }
+    if (TAG_ITEM.equals(tagName)) {
+      if (element.getParentNode() != null && element.getParentNode().getNodeName().equals(TAG_STYLE)) {
+        String name=element.getAttributeNS(ANDROID_URI,ATTR_NAME);
+        if (!name.isEmpty() && !name.startsWith("android:")) {
+          Resource resource=getResource(ResourceType.ATTR,name);
+          if (definition == null) {
+            Element style=(Element)element.getParentNode();
+            definition=getResource(style);
+            if (definition != null) {
+              from=definition;
+              definition.addReference(resource);
+            }
+          }
+        }
+      }
+    }
+  }
+ else   if (nodeType == Node.TEXT_NODE || nodeType == Node.CDATA_SECTION_NODE) {
+    String text=node.getNodeValue().trim();
+    Resource textResource=getResource(getFieldName(text));
+    if (textResource != null && from != null) {
+      from.addReference(textResource);
+    }
+  }
+  NodeList children=node.getChildNodes();
+  for (int i=0, n=children.getLength(); i < n; i++) {
+    Node child=children.item(i);
+    recordResourceReferences(file,isDefaultFolder,child,from);
+  }
+}

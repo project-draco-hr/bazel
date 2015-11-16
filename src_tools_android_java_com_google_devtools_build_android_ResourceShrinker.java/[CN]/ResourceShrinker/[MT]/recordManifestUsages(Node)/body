@@ -1,0 +1,20 @@
+{
+  short nodeType=node.getNodeType();
+  if (nodeType == Node.ELEMENT_NODE) {
+    Element element=(Element)node;
+    NamedNodeMap attributes=element.getAttributes();
+    for (int i=0, n=attributes.getLength(); i < n; i++) {
+      Attr attr=(Attr)attributes.item(i);
+      markReachable(getResource(attr.getValue()));
+    }
+  }
+ else   if (nodeType == Node.TEXT_NODE) {
+    String text=node.getNodeValue().trim();
+    markReachable(getResource(text));
+  }
+  NodeList children=node.getChildNodes();
+  for (int i=0, n=children.getLength(); i < n; i++) {
+    Node child=children.item(i);
+    recordManifestUsages(child);
+  }
+}
