@@ -1,5 +1,5 @@
-def add_tar(self, tar, rootuid=None, rootgid=None, numeric=False, name_filter=None):
-    'Merge a tar content into the current tar, stripping timestamp.\n\n    Args:\n      tar: the name of tar to extract and put content into the current tar.\n      rootuid: user id that we will pretend is root (replaced by uid 0).\n      rootgid: group id that we will pretend is root (replaced by gid 0).\n      numeric: set to true to strip out name of owners (and just use the\n          numeric values).\n      name_filter: filter out file by names. If not none, this method will be\n          called for each file to add, given the name and should return true if\n          the file is to be added to the final tar and false otherwise.\n    '
+def add_tar(self, tar, rootuid=None, rootgid=None, numeric=False, name_filter=None, root=None):
+    'Merge a tar content into the current tar, stripping timestamp.\n\n    Args:\n      tar: the name of tar to extract and put content into the current tar.\n      rootuid: user id that we will pretend is root (replaced by uid 0).\n      rootgid: group id that we will pretend is root (replaced by gid 0).\n      numeric: set to true to strip out name of owners (and just use the\n          numeric values).\n      name_filter: filter out file by names. If not none, this method will be\n          called for each file to add, given the name and should return true if\n          the file is to be added to the final tar and false otherwise.\n      root: place all non-absolute content under given root direcory, if not\n          None.\n    '
     compression = os.path.splitext(tar)[(-1)][1:]
     if (compression == 'tgz'):
         compression = 'gz'
@@ -28,7 +28,15 @@ def add_tar(self, tar, rootuid=None, rootgid=None, numeric=False, name_filter=No
                 tarinfo.gname = ''
             name = tarinfo.name
             if ((not name.startswith('/')) and (not name.startswith('.'))):
-                tarinfo.name = ('./' + name)
+                name = ('./' + name)
+            if (root is not None):
+                if name.startswith('.'):
+                    name = (('.' + root) + name.lstrip('.'))
+                    self.add_file(('.' + root), tarfile.DIRTYPE, uid=tarinfo.uid, gid=tarinfo.gid, uname=tarinfo.uname, gname=tarinfo.gname, mtime=tarinfo.mtime, mode=493)
+                link = tarinfo.linkname
+                if (link.startswith('.') and (tarinfo.type == tarfile.LNKTYPE)):
+                    tarinfo.linkname = (('.' + root) + link.lstrip('.'))
+            tarinfo.name = name
             if tarinfo.isfile():
                 self._addfile(tarinfo, intar.extractfile(tarinfo.name))
             else:
