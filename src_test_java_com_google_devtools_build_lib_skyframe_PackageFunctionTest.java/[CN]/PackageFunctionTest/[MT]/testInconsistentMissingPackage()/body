@@ -1,0 +1,23 @@
+{
+  reporter.removeHandler(failFastHandler);
+  Path root1=fs.getPath("/root1");
+  scratch.file("/root1/WORKSPACE");
+  scratch.file("/root1/foo/sub");
+  scratch.file("/root1/pkg/BUILD","subinclude('//foo:sub')");
+  Path root2=fs.getPath("/root2");
+  scratch.file("/root2/foo/BUILD");
+  scratch.file("/root2/foo/sub");
+  getSkyframeExecutor().preparePackageLoading(new PathPackageLocator(outputBase,ImmutableList.of(root1,root2)),ConstantRuleVisibility.PUBLIC,true,7,"",UUID.randomUUID());
+  SkyKey pkgLookupKey=PackageLookupValue.key(PackageIdentifier.parse("foo"));
+  EvaluationResult<PackageLookupValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),pkgLookupKey,false,reporter);
+  assertFalse(result.hasError());
+  assertEquals(root2,result.get(pkgLookupKey).getRoot());
+  scratch.file("/root1/foo/BUILD");
+  SkyKey skyKey=PackageValue.key(PackageIdentifier.parse("pkg"));
+  result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),skyKey,false,reporter);
+  assertTrue(result.hasError());
+  Throwable exception=result.getError(skyKey).getException();
+  System.out.println("exception: " + exception.getMessage());
+  assertThat(exception.getMessage()).contains("Inconsistent filesystem operations");
+  assertThat(exception.getMessage()).contains("Inconsistent package location");
+}

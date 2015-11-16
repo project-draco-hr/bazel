@@ -1,0 +1,16 @@
+{
+  scratch.file("a/BUILD");
+  scratch.file("a/b/BUILD");
+  scratch.file("a/c/BUILD");
+  PathFragment excludedPathFragment=new PathFragment("a/b");
+  SkyKey key=createPrepDepsKey(rootDirectory,new PathFragment("a"),ImmutableSet.of(excludedPathFragment));
+  EvaluationResult<PrepareDepsOfTargetsUnderDirectoryValue> evaluationResult=getEvaluationResult(key);
+  PrepareDepsOfTargetsUnderDirectoryValue value=evaluationResult.get(key);
+  assertThat(value.isDirectoryPackage()).isTrue();
+  RootedPath onlySubdir=Iterables.getOnlyElement(value.getSubdirectoryTransitivelyContainsPackages().keySet());
+  assertThat(onlySubdir.getRelativePath()).isEqualTo(new PathFragment("a/c"));
+  assertThat(value.getSubdirectoryTransitivelyContainsPackages().get(onlySubdir)).isTrue();
+  WalkableGraph graph=Preconditions.checkNotNull(evaluationResult.getWalkableGraph());
+  assertFalse(graph.exists(createPrepDepsKey(rootDirectory,excludedPathFragment,ImmutableSet.<PathFragment>of())));
+  assertTrue(graph.exists(createPrepDepsKey(rootDirectory,new PathFragment("a/c"),ImmutableSet.<PathFragment>of())));
+}

@@ -1,0 +1,11 @@
+{
+  Artifact pear=createDerivedArtifact("pear");
+  ActionEventRecorder recorder=new ActionEventRecorder();
+  EventBus eventBus=new EventBus();
+  eventBusRef.set(eventBus);
+  eventBus.register(recorder);
+  Action action=registerAction(new TestAction(Runnables.doNothing(),emptySet,asSet(pear)));
+  buildArtifacts(createBuilder(DEFAULT_NUM_JOBS,true),pear);
+  assertThat(recorder.actionExecutedEvents).hasSize(1);
+  assertEquals(action,recorder.actionExecutedEvents.get(0).getAction());
+}

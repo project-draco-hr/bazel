@@ -1,0 +1,9 @@
+{
+  Path workspacePath=scratch.overwriteFile("WORKSPACE","junk");
+  SkyKey skyKey=PackageValue.key(PackageIdentifier.createInDefaultRepo("external"));
+  getSkyframeExecutor().invalidate(Predicates.equalTo(FileStateValue.key(RootedPath.toRootedPath(workspacePath.getParentDirectory(),new PathFragment(workspacePath.getBaseName())))));
+  reporter.removeHandler(failFastHandler);
+  EvaluationResult<PackageValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),skyKey,false,reporter);
+  assertFalse(result.hasError());
+  assertTrue(result.get(skyKey).getPackage().containsErrors());
+}

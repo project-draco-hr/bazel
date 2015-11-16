@@ -1,0 +1,35 @@
+{
+  List<Artifact> sourceFiles=new ArrayList<>();
+  for (int i=0; i < 10; i++) {
+    sourceFiles.add(createInputFile("file" + i));
+  }
+  Artifact foo=createDerivedArtifact("foo");
+  Artifact bar=createDerivedArtifact("bar");
+  Artifact baz=createDerivedArtifact("baz");
+  bar.getPath().delete();
+  baz.getPath().delete();
+  final List<String> messages=new ArrayList<>();
+  EventHandler handler=new EventHandler(){
+    @Override public void handle(    Event event){
+      EventKind k=event.getKind();
+      if (k == EventKind.START || k == EventKind.FINISH) {
+        messages.add(event.getMessage().replaceFirst(TestUtils.tmpDir(),"") + " " + event.getKind());
+      }
+    }
+  }
+;
+  reporter.addHandler(handler);
+  reporter.addHandler(new PrintingEventHandler(EventKind.ALL_EVENTS));
+  registerAction(new TestAction(TestAction.NO_EFFECT,sourceFiles,asSet(foo)));
+  registerAction(new TestAction(TestAction.NO_EFFECT,asSet(foo),asSet(bar)));
+  registerAction(new TestAction(TestAction.NO_EFFECT,asSet(bar),asSet(baz)));
+  buildArtifacts(baz);
+  List<String> expectedMessages=Lists.newArrayList("Test foo START","Test foo FINISH","Test bar START","Test bar FINISH","Test baz START","Test baz FINISH");
+  assertThat(messages).containsAllIn(expectedMessages);
+  messages.clear();
+  bar.getPath().delete();
+  baz.getPath().delete();
+  buildArtifacts(baz);
+  expectedMessages=Lists.newArrayList("Test bar START","Test bar FINISH","Test baz START","Test baz FINISH");
+  assertThat(messages).containsAllIn(expectedMessages);
+}

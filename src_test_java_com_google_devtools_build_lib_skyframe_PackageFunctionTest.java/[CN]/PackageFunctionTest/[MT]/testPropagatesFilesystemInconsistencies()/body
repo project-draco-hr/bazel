@@ -1,0 +1,46 @@
+{
+  reporter.removeHandler(failFastHandler);
+  RecordingDifferencer differencer=getSkyframeExecutor().getDifferencerForTesting();
+  Path pkgRoot=getSkyframeExecutor().getPathEntries().get(0);
+  Path fooBuildFile=scratch.file("foo/BUILD");
+  Path fooDir=fooBuildFile.getParentDirectory();
+  FileStatus inconsistentParentFileStatus=new FileStatus(){
+    @Override public boolean isFile(){
+      return true;
+    }
+    @Override public boolean isDirectory(){
+      return false;
+    }
+    @Override public boolean isSymbolicLink(){
+      return false;
+    }
+    @Override public boolean isSpecialFile(){
+      return false;
+    }
+    @Override public long getSize() throws IOException {
+      return 0;
+    }
+    @Override public long getLastModifiedTime() throws IOException {
+      return 0;
+    }
+    @Override public long getLastChangeTime() throws IOException {
+      return 0;
+    }
+    @Override public long getNodeId() throws IOException {
+      return 0;
+    }
+  }
+;
+  fs.stubStat(fooDir,inconsistentParentFileStatus);
+  RootedPath pkgRootedPath=RootedPath.toRootedPath(pkgRoot,fooDir);
+  SkyValue fooDirValue=FileStateValue.create(pkgRootedPath,getSkyframeExecutor().getTimestampGranularityMonitorForTesting());
+  differencer.inject(ImmutableMap.of(FileStateValue.key(pkgRootedPath),fooDirValue));
+  SkyKey skyKey=PackageValue.key(PackageIdentifier.parse("foo"));
+  String expectedMessage="/workspace/foo/BUILD exists but its parent path /workspace/foo isn't " + "an existing directory";
+  EvaluationResult<PackageValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),skyKey,false,reporter);
+  assertTrue(result.hasError());
+  ErrorInfo errorInfo=result.getError(skyKey);
+  String errorMessage=errorInfo.getException().getMessage();
+  assertThat(errorMessage).contains("Inconsistent filesystem operations");
+  assertThat(errorMessage).contains(expectedMessage);
+}

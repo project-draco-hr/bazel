@@ -1,0 +1,38 @@
+{
+  final Semaphore semaphore=new Semaphore(1);
+  final boolean[] finished={false};
+  semaphore.acquireUninterruptibly();
+  Artifact foo=createDerivedArtifact("foo");
+  Callable<Void> makeFoo=new Callable<Void>(){
+    @Override public Void call() throws IOException {
+      semaphore.acquireUninterruptibly();
+      throw new IOException("foo action failed");
+    }
+  }
+;
+  registerAction(new TestAction(makeFoo,Artifact.NO_ARTIFACTS,ImmutableList.of(foo)));
+  Artifact bar=createDerivedArtifact("bar");
+  Runnable makeBar=new Runnable(){
+    @Override public void run(){
+      semaphore.release();
+      try {
+        Thread.sleep(100);
+      }
+ catch (      InterruptedException e) {
+      }
+      finished[0]=true;
+    }
+  }
+;
+  registerAction(new TestAction(makeBar,emptySet,asSet(bar)));
+  reporter.removeHandler(failFastHandler);
+  try {
+    buildArtifacts(foo,bar);
+    fail();
+  }
+ catch (  BuildFailedException e) {
+    assertThat(e.getMessage()).contains("TestAction failed due to exception: foo action failed");
+    assertContainsEvent("TestAction failed due to exception: foo action failed");
+  }
+  assertTrue("bar action not finished, yet buildArtifacts has completed.",finished[0]);
+}

@@ -1,0 +1,39 @@
+{
+  Artifact[] buildTargets;
+switch (random.nextInt(4)) {
+case 0:
+    LOG.fine("Building final output target.");
+  buildTargets=new Artifact[]{artifacts[numArtifacts - 1]};
+break;
+case 1:
+{
+LOG.fine("Building all the targets.");
+List<Artifact> targets=Lists.newArrayList(artifacts);
+Collections.shuffle(targets,random);
+buildTargets=targets.toArray(new Artifact[numArtifacts]);
+break;
+}
+case 2:
+LOG.fine("Building a random target.");
+buildTargets=new Artifact[]{artifacts[random.nextInt(numArtifacts)]};
+break;
+case 3:
+{
+LOG.fine("Building a random subset of targets.");
+List<Artifact> targets=Lists.newArrayList(artifacts);
+Collections.shuffle(targets,random);
+List<Artifact> targetSubset=new ArrayList<>();
+int numTargetsToTest=random.nextInt(numArtifacts);
+LOG.fine("numTargetsToTest = " + numTargetsToTest);
+Iterator<Artifact> iterator=targets.iterator();
+for (int i=0; i < numTargetsToTest; i++) {
+targetSubset.add(iterator.next());
+}
+buildTargets=targetSubset.toArray(new Artifact[numTargetsToTest]);
+break;
+}
+default :
+throw new IllegalStateException();
+}
+return buildTargets;
+}

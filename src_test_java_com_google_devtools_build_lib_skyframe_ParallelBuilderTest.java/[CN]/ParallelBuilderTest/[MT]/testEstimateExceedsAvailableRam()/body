@@ -1,0 +1,20 @@
+{
+  ResourceManager.instance().setAvailableResources(ResourceSet.createWithRamCpuIo(1.0,4,0));
+  ResourceManager.instance().resetResourceUsage();
+  final boolean[] finished={false};
+  Artifact foo=createDerivedArtifact("foo");
+  Runnable makeFoo=new Runnable(){
+    @Override public void run(){
+      finished[0]=true;
+    }
+  }
+;
+  registerAction(new TestAction(makeFoo,emptySet,asSet(foo)){
+    @Override public ResourceSet estimateResourceConsumption(    Executor executor){
+      return ResourceSet.createWithRamCpuIo(2.0,1,0);
+    }
+  }
+);
+  buildArtifacts(foo);
+  assertTrue(finished[0]);
+}

@@ -1,0 +1,15 @@
+{
+  Artifact foo=createDerivedArtifact("foo");
+  Artifact bar=createDerivedArtifact("bar");
+  Artifact baz=createDerivedArtifact("baz");
+  try {
+    registerAction(new TestAction(TestAction.NO_EFFECT,asSet(foo),asSet(bar)));
+    registerAction(new TestAction(TestAction.NO_EFFECT,asSet(bar),asSet(baz)));
+    registerAction(new TestAction(TestAction.NO_EFFECT,asSet(baz),asSet(foo)));
+    buildArtifacts(foo);
+    fail("Builder failed to detect cyclic action graph");
+  }
+ catch (  BuildFailedException e) {
+    assertEquals(e.getMessage(),CYCLE_MSG);
+  }
+}

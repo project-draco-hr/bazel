@@ -1,0 +1,17 @@
+{
+  Artifact foo=createDerivedArtifact("foo");
+  Artifact bar=createDerivedArtifact("bar");
+  Artifact baz=createDerivedArtifact("baz");
+  Artifact bat=createDerivedArtifact("bat");
+  try {
+    registerAction(new TestAction(TestAction.NO_EFFECT,asSet(bar),asSet(foo)));
+    registerAction(new TestAction(TestAction.NO_EFFECT,asSet(baz),asSet(bar)));
+    registerAction(new TestAction(TestAction.NO_EFFECT,asSet(bat,foo),asSet(baz)));
+    registerAction(new TestAction(TestAction.NO_EFFECT,ImmutableSet.<Artifact>of(),asSet(bat)));
+    buildArtifacts(foo);
+    fail("Builder failed to detect cyclic action graph");
+  }
+ catch (  BuildFailedException e) {
+    assertEquals(e.getMessage(),CYCLE_MSG);
+  }
+}

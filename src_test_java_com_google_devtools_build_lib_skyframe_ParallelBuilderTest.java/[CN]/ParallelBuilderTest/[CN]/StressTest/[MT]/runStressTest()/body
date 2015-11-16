@@ -1,0 +1,18 @@
+{
+  for (int trial=0; trial < numTrials; trial++) {
+    List<Counter> counters=buildRandomActionGraph(trial);
+    LOG.fine("Testing clean build... (trial " + trial + ")");
+    Artifact[] buildTargets=chooseRandomBuild();
+    buildArtifacts(buildTargets);
+    doSanityChecks(buildTargets,counters,BuildKind.Clean);
+    resetCounters(counters);
+    LOG.fine("Testing incremental build...");
+    buildTargets=chooseRandomBuild();
+    buildArtifacts(buildTargets);
+    doSanityChecks(buildTargets,counters,BuildKind.Incremental);
+    resetCounters(counters);
+    LOG.fine("Testing do-nothing rebuild...");
+    buildArtifacts(buildTargets);
+    doSanityChecks(buildTargets,counters,BuildKind.Nop);
+  }
+}

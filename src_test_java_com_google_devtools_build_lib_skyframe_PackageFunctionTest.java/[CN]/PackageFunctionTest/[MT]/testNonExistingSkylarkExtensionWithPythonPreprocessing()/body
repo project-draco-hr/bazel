@@ -1,0 +1,11 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("foo/BUILD","exports_files(['a'])");
+  scratch.file("foo/a","load('/test/skylark/bad_extension', 'some_symbol')");
+  scratch.file("test/skylark/BUILD","subinclude('//foo:a')");
+  invalidatePackages();
+  SkyKey skyKey=PackageValue.key(PackageIdentifier.parse("test/skylark"));
+  EvaluationResult<PackageValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),skyKey,false,reporter);
+  assertTrue(result.hasError());
+  assertContainsEvent("Extension file not found. " + "Unable to load file '//test/skylark:bad_extension.bzl': " + "file doesn't exist or isn't a file");
+}

@@ -1,0 +1,49 @@
+{
+  FileSystem fs=new InMemoryFileSystem(){
+    @Override public FileStatus stat(    Path path,    boolean followSymlinks) throws IOException {
+      final FileStatus stat=super.stat(path,followSymlinks);
+      if (path.toString().endsWith("/out/foo")) {
+        return new FileStatus(){
+          private final FileStatus original=stat;
+          @Override public boolean isSymbolicLink(){
+            return original.isSymbolicLink();
+          }
+          @Override public boolean isFile(){
+            return original.isFile();
+          }
+          @Override public boolean isDirectory(){
+            return original.isDirectory();
+          }
+          @Override public boolean isSpecialFile(){
+            return original.isSpecialFile();
+          }
+          @Override public long getSize() throws IOException {
+            return original.getSize();
+          }
+          @Override public long getNodeId() throws IOException {
+            return original.getNodeId();
+          }
+          @Override public long getLastModifiedTime() throws IOException {
+            throw new IOException();
+          }
+          @Override public long getLastChangeTime() throws IOException {
+            return original.getLastChangeTime();
+          }
+        }
+;
+      }
+      return stat;
+    }
+  }
+;
+  Artifact foo=createDerivedArtifact(fs,"foo");
+  registerAction(new TestAction(TestAction.NO_EFFECT,emptySet,ImmutableList.of(foo)));
+  reporter.removeHandler(failFastHandler);
+  try {
+    buildArtifacts(foo);
+    fail("Expected to fail");
+  }
+ catch (  BuildFailedException e) {
+    assertContainsEvent("not all outputs were created");
+  }
+}

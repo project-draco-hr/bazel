@@ -1,0 +1,10 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("foo/BUILD","sh_library(name = 'foo', srcs = ['bar/baz.sh'])");
+  Path barBuildFile=scratch.file("foo/bar/BUILD");
+  fs.stubStatError(barBuildFile,new IOException("nope"));
+  SkyKey skyKey=PackageValue.key(PackageIdentifier.parse("foo"));
+  EvaluationResult<PackageValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),skyKey,false,reporter);
+  assertTrue(result.hasError());
+  assertContainsEvent("nope");
+}

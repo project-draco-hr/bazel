@@ -1,0 +1,42 @@
+{
+  List<Counter> counters=new ArrayList<>(numArtifacts);
+  artifacts=new Artifact[numArtifacts];
+  for (int i=0; i < numArtifacts; i++) {
+    artifacts[i]=createDerivedArtifact("file" + actionGraphNumber + "-"+ i);
+  }
+  int numOutputs;
+  for (int i=0; i < artifacts.length; i+=numOutputs) {
+    int numInputs=random.nextInt(3);
+    numOutputs=1 + random.nextInt(2);
+    if (i + numOutputs >= artifacts.length) {
+      numOutputs=artifacts.length - i;
+    }
+    Collection<Artifact> inputs=new ArrayList<>(numInputs);
+    for (int j=0; j < numInputs; j++) {
+      if (i != 0) {
+        int inputNum=random.nextInt(i);
+        inputs.add(artifacts[inputNum]);
+      }
+    }
+    Collection<Artifact> outputs=new ArrayList<>(numOutputs);
+    for (int j=0; j < numOutputs; j++) {
+      outputs.add(artifacts[i + j]);
+    }
+    counters.add(createActionCounter(inputs,outputs));
+    if (inputs.isEmpty()) {
+      for (      Artifact output : outputs) {
+        BlazeTestUtils.makeEmptyFile(output.getPath());
+      }
+    }
+ else {
+      for (      Artifact output : outputs) {
+        try {
+          output.getPath().delete();
+        }
+ catch (        FileNotFoundException e) {
+        }
+      }
+    }
+  }
+  return counters;
+}

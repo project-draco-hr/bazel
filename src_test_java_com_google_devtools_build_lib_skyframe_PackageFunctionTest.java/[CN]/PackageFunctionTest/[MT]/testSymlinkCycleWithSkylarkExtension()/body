@@ -1,0 +1,13 @@
+{
+  reporter.removeHandler(failFastHandler);
+  Path extensionFilePath=scratch.resolve("/workspace/test/skylark/extension.bzl");
+  FileSystemUtils.ensureSymbolicLink(extensionFilePath,new PathFragment("extension.bzl"));
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'a')","genrule(name = gr,","    outs = ['out.txt'],","    cmd = 'echo hello >@')");
+  invalidatePackages();
+  SkyKey skyKey=PackageValue.key(PackageIdentifier.parse("test/skylark"));
+  EvaluationResult<PackageValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),skyKey,false,reporter);
+  assertTrue(result.hasError());
+  ErrorInfo errorInfo=result.getError(skyKey);
+  assertEquals(skyKey,errorInfo.getRootCauseOfException());
+  assertThat(errorInfo.getException()).hasMessage("error loading package 'test/skylark': Encountered error while reading extension " + "file 'test/skylark/extension.bzl': Symlink cycle");
+}

@@ -1,0 +1,36 @@
+{
+  final long maxIterations=100000000;
+  runningFooAction=false;
+  runningBarAction=false;
+  Artifact foo=createDerivedArtifact("foo");
+  Runnable makeFoo=new Runnable(){
+    @Override public void run(){
+      runningFooAction=true;
+      for (long i=0; i < maxIterations; i++) {
+        Thread.yield();
+        if (runningBarAction) {
+          return;
+        }
+      }
+      fail("ParallelBuilderTest: foo: waiting for bar: timed out");
+    }
+  }
+;
+  registerAction(new TestAction(makeFoo,Artifact.NO_ARTIFACTS,ImmutableList.of(foo)));
+  Artifact bar=createDerivedArtifact("bar");
+  Runnable makeBar=new Runnable(){
+    @Override public void run(){
+      runningBarAction=true;
+      for (long i=0; i < maxIterations; i++) {
+        Thread.yield();
+        if (runningFooAction) {
+          return;
+        }
+      }
+      fail("ParallelBuilderTest: bar: waiting for foo: timed out");
+    }
+  }
+;
+  registerAction(new TestAction(makeBar,Artifact.NO_ARTIFACTS,ImmutableList.of(bar)));
+  buildArtifacts(builder,foo,bar);
+}

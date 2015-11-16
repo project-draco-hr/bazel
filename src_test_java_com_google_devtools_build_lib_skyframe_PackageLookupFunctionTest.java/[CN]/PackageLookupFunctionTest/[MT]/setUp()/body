@@ -1,0 +1,24 @@
+{
+  super.setUp();
+  Path emptyPackagePath=rootDirectory.getRelative("somewhere/else");
+  scratch.file("parentpackage/BUILD");
+  AtomicReference<PathPackageLocator> pkgLocator=new AtomicReference<>(new PathPackageLocator(outputBase,ImmutableList.of(emptyPackagePath,rootDirectory)));
+  deletedPackages=new AtomicReference<>(ImmutableSet.<PackageIdentifier>of());
+  ExternalFilesHelper externalFilesHelper=new ExternalFilesHelper(pkgLocator);
+  TimestampGranularityMonitor tsgm=new TimestampGranularityMonitor(BlazeClock.instance());
+  BlazeDirectories directories=new BlazeDirectories(rootDirectory,outputBase,rootDirectory);
+  Map<SkyFunctionName,SkyFunction> skyFunctions=new HashMap<>();
+  skyFunctions.put(SkyFunctions.PACKAGE_LOOKUP,new PackageLookupFunction(deletedPackages));
+  skyFunctions.put(SkyFunctions.PACKAGE,new PackageFunction(null,null,null,null,null,null,null));
+  skyFunctions.put(SkyFunctions.FILE_STATE,new FileStateFunction(tsgm,externalFilesHelper));
+  skyFunctions.put(SkyFunctions.FILE,new FileFunction(pkgLocator,tsgm,externalFilesHelper));
+  skyFunctions.put(SkyFunctions.BLACKLISTED_PACKAGE_PREFIXES,new BlacklistedPackagePrefixesFunction());
+  RuleClassProvider ruleClassProvider=TestRuleClassProvider.getRuleClassProvider();
+  skyFunctions.put(SkyFunctions.WORKSPACE_FILE,new WorkspaceFileFunction(ruleClassProvider,new PackageFactory(ruleClassProvider,new BazelRulesModule().getPackageEnvironmentExtension()),directories));
+  differencer=new RecordingDifferencer();
+  evaluator=new InMemoryMemoizingEvaluator(skyFunctions,differencer);
+  driver=new SequentialBuildDriver(evaluator);
+  PrecomputedValue.BUILD_ID.set(differencer,UUID.randomUUID());
+  PrecomputedValue.PATH_PACKAGE_LOCATOR.set(differencer,pkgLocator.get());
+  PrecomputedValue.BLACKLISTED_PACKAGE_PREFIXES_FILE.set(differencer,PathFragment.EMPTY_FRAGMENT);
+}

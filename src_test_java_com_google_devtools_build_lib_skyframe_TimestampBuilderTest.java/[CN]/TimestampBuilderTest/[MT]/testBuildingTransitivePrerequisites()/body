@@ -1,0 +1,29 @@
+{
+  Artifact hello=createSourceArtifact("hello");
+  BlazeTestUtils.makeEmptyFile(hello.getPath());
+  Artifact wazuup=createDerivedArtifact("wazuup");
+  Button button1=createActionButton(Sets.newHashSet(hello),Sets.newHashSet(wazuup));
+  Artifact goodbye=createDerivedArtifact("goodbye");
+  Button button2=createActionButton(Sets.newHashSet(wazuup),Sets.newHashSet(goodbye));
+  button1.pressed=button2.pressed=false;
+  buildArtifacts(cachingBuilder(),wazuup);
+  assertTrue(button1.pressed);
+  assertFalse(button2.pressed);
+  button1.pressed=button2.pressed=false;
+  buildArtifacts(cachingBuilder(),wazuup);
+  assertFalse(button1.pressed);
+  assertFalse(button2.pressed);
+  button1.pressed=button2.pressed=false;
+  buildArtifacts(cachingBuilder(),goodbye);
+  assertFalse(button1.pressed);
+  assertTrue(button2.pressed);
+  button1.pressed=button2.pressed=false;
+  buildArtifacts(cachingBuilder(),goodbye);
+  assertFalse(button1.pressed);
+  assertFalse(button2.pressed);
+  FileSystemUtils.touchFile(hello.getPath());
+  button1.pressed=button2.pressed=false;
+  buildArtifacts(cachingBuilder(),goodbye);
+  assertTrue(button1.pressed);
+  assertTrue(button2.pressed);
+}

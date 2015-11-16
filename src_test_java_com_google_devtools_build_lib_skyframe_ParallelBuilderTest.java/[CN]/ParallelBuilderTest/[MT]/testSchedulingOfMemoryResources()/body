@@ -1,0 +1,37 @@
+{
+  ResourceManager.instance().setRamUtilizationPercentage(50);
+  ResourceManager.instance().setAvailableResources(ResourceSet.createWithRamCpuIo(12.8,Integer.MAX_VALUE,0.0));
+  ResourceManager.instance().resetResourceUsage();
+class Counter {
+    int currentlyRunning=0;
+    int maxConcurrent=0;
+    synchronized void increment(){
+      ++currentlyRunning;
+      if (currentlyRunning > maxConcurrent) {
+        maxConcurrent=currentlyRunning;
+      }
+    }
+    synchronized void decrement(){
+      currentlyRunning--;
+    }
+  }
+  final Counter counter=new Counter();
+  Artifact[] outputs=new Artifact[100];
+  for (int ii=0; ii < outputs.length; ++ii) {
+    Artifact artifact=createDerivedArtifact("file" + ii);
+    Callable<Void> callable=new Callable<Void>(){
+      @Override public Void call() throws Exception {
+        counter.increment();
+        Thread.sleep(100);
+        counter.decrement();
+        return null;
+      }
+    }
+;
+    registerAction(new TestAction(callable,Artifact.NO_ARTIFACTS,ImmutableList.of(artifact)));
+    outputs[ii]=artifact;
+  }
+  buildArtifacts(outputs);
+  assertEquals(0,counter.currentlyRunning);
+  assertEquals(6,counter.maxConcurrent);
+}

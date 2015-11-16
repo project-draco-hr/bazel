@@ -1,0 +1,24 @@
+{
+  Artifact foo=createDerivedArtifact("foo");
+  Callable<Void> makeFoo=new Callable<Void>(){
+    @Override public Void call() throws IOException {
+      throw new IOException("building 'foo' is supposed to fail");
+    }
+  }
+;
+  registerAction(new TestAction(makeFoo,Artifact.NO_ARTIFACTS,ImmutableList.of(foo)));
+  Artifact bar=createDerivedArtifact("bar");
+  registerAction(new TestAction(TestAction.NO_EFFECT,emptySet,ImmutableList.of(bar)));
+  reporter.removeHandler(failFastHandler);
+  try {
+    buildArtifacts(foo);
+    fail("building 'foo' was supposed to fail!");
+  }
+ catch (  BuildFailedException e) {
+    if (!e.getMessage().contains("building 'foo' is supposed to fail")) {
+      throw e;
+    }
+    assertContainsEvent("building 'foo' is supposed to fail");
+  }
+  buildArtifacts(bar);
+}

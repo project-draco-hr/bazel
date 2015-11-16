@@ -1,0 +1,12 @@
+{
+  createPackages();
+  SkyKey key=createPrepDepsKey(rootDirectory,new PathFragment("a"));
+  EvaluationResult<PrepareDepsOfTargetsUnderDirectoryValue> evaluationResult=getEvaluationResult(key);
+  WalkableGraph graph=Preconditions.checkNotNull(evaluationResult.getWalkableGraph());
+  SkyKey aaKey=TransitiveTraversalValue.key(Label.create("a","a"));
+  assertThat(graph.exists(aaKey)).isTrue();
+  Iterable<SkyKey> depsOfAa=Iterables.getOnlyElement(graph.getDirectDeps(ImmutableList.of(aaKey)).values());
+  SkyKey bTxtKey=TransitiveTraversalValue.key(Label.create("b","b.txt"));
+  assertThat(depsOfAa).contains(bTxtKey);
+  assertThat(graph.exists(bTxtKey)).isTrue();
+}

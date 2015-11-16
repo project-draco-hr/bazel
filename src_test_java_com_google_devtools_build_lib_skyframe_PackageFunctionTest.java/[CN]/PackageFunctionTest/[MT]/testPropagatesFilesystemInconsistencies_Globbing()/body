@@ -1,0 +1,26 @@
+{
+  reporter.removeHandler(failFastHandler);
+  RecordingDifferencer differencer=getSkyframeExecutor().getDifferencerForTesting();
+  Path pkgRoot=getSkyframeExecutor().getPathEntries().get(0);
+  scratch.file("foo/BUILD","subinclude('//a:a')","sh_library(name = 'foo', srcs = glob(['bar/**/baz.sh']))");
+  scratch.file("a/BUILD");
+  scratch.file("a/a");
+  Path bazFile=scratch.file("foo/bar/baz/baz.sh");
+  Path bazDir=bazFile.getParentDirectory();
+  Path barDir=bazDir.getParentDirectory();
+  long bazFileNodeId=bazFile.stat().getNodeId();
+  fs.stubStat(bazDir,null);
+  RootedPath barDirRootedPath=RootedPath.toRootedPath(pkgRoot,barDir);
+  FileStateValue barDirFileStateValue=FileStateValue.create(barDirRootedPath,getSkyframeExecutor().getTimestampGranularityMonitorForTesting());
+  FileValue barDirFileValue=FileValue.value(barDirRootedPath,barDirFileStateValue,barDirRootedPath,barDirFileStateValue);
+  DirectoryListingValue barDirListing=DirectoryListingValue.value(barDirRootedPath,barDirFileValue,DirectoryListingStateValue.create(ImmutableList.of(new Dirent("baz",Dirent.Type.DIRECTORY))));
+  differencer.inject(ImmutableMap.of(DirectoryListingValue.key(barDirRootedPath),barDirListing));
+  SkyKey skyKey=PackageValue.key(PackageIdentifier.parse("foo"));
+  String expectedMessage="Some filesystem operations implied /workspace/foo/bar/baz/baz.sh was " + "a regular file with size of 0 and mtime of 0 and nodeId of " + bazFileNodeId + " and "+ "mtime of 0 but others made us think it was a nonexistent path";
+  EvaluationResult<PackageValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),skyKey,false,reporter);
+  assertTrue(result.hasError());
+  ErrorInfo errorInfo=result.getError(skyKey);
+  String errorMessage=errorInfo.getException().getMessage();
+  assertThat(errorMessage).contains("Inconsistent filesystem operations");
+  assertThat(errorMessage).contains(expectedMessage);
+}

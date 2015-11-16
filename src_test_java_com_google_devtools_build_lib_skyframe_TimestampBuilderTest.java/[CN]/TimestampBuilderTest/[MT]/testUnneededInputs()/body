@@ -1,0 +1,27 @@
+{
+  Artifact hello=createSourceArtifact("hello");
+  BlazeTestUtils.makeEmptyFile(hello.getPath());
+  Artifact optional=createSourceArtifact("hello.optional");
+  Artifact goodbye=createDerivedArtifact("goodbye");
+  Button button=createActionButton(Sets.newHashSet(hello,optional),Sets.newHashSet(goodbye));
+  button.pressed=false;
+  buildArtifacts(cachingBuilder(),goodbye);
+  assertTrue(button.pressed);
+  button.pressed=false;
+  buildArtifacts(cachingBuilder(),goodbye);
+  assertFalse(button.pressed);
+  BlazeTestUtils.makeEmptyFile(optional.getPath());
+  button.pressed=false;
+  buildArtifacts(cachingBuilder(),goodbye);
+  assertTrue(button.pressed);
+  button.pressed=false;
+  buildArtifacts(cachingBuilder(),goodbye);
+  assertFalse(button.pressed);
+  optional.getPath().delete();
+  button.pressed=false;
+  buildArtifacts(cachingBuilder(),goodbye);
+  assertTrue(button.pressed);
+  button.pressed=false;
+  buildArtifacts(cachingBuilder(),goodbye);
+  assertFalse(button.pressed);
+}

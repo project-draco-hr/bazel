@@ -1,0 +1,9 @@
+{
+  String lines[]={"bind(name = 'foo/bar',","actual = '//foo:bar')"};
+  RootedPath workspacePath=createWorkspaceFile(lines);
+  SkyKey key=PackageValue.workspaceKey(workspacePath);
+  PackageValue value=(PackageValue)skyFunc.compute(key,getEnv());
+  Package pkg=value.getPackage();
+  assertEquals(Label.parseAbsolute("//foo:bar"),getLabelMapping(pkg,"foo/bar"));
+  MoreAsserts.assertNoEvents(pkg.getEvents());
+}
