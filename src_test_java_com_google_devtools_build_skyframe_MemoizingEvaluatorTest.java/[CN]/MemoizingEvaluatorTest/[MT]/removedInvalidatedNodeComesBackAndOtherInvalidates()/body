@@ -1,0 +1,19 @@
+{
+  SkyKey top=GraphTester.skyKey("top");
+  SkyKey leaf=GraphTester.skyKey("leaf");
+  tester.getOrCreate(top).addDependency(leaf).setComputedValue(CONCATENATE);
+  StringValue leafValue=new StringValue("leaf");
+  tester.set(leaf,leafValue);
+  assertThat(tester.evalAndGet(true,top)).isEqualTo(leafValue);
+  StringValue topValue=new StringValue("top");
+  tester.getOrCreate(top,true).removeDependency(leaf).setComputedValue(null).setConstantValue(topValue);
+  tester.getOrCreate(leaf,true);
+  tester.invalidate();
+  assertThat(tester.evalAndGet(true,top)).isEqualTo(topValue);
+  assertThat(tester.driver.getExistingValueForTesting(leaf)).isNull();
+  assertThat(tester.driver.getExistingErrorForTesting(leaf)).isNull();
+  assertThat(tester.evalAndGet(true,leaf)).isEqualTo(leafValue);
+  tester.getOrCreate(top,true).addDependency(leaf).setConstantValue(null).setComputedValue(CONCATENATE);
+  tester.invalidate();
+  assertThat(tester.evalAndGet(true,top)).isEqualTo(leafValue);
+}
