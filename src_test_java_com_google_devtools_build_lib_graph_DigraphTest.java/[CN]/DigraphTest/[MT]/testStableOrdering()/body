@@ -1,0 +1,30 @@
+{
+  Digraph<Target> digraph=new Digraph<>();
+  FakeTarget a=new FakeTarget(Label.create("pkg","a"));
+  FakeTarget b=new FakeTarget(Label.create("pkg","b"));
+  FakeTarget c=new FakeTarget(Label.create("pkg","c"));
+  FakeTarget d=new FakeTarget(Label.create("pkg","d"));
+  FakeTarget e=new FakeTarget(Label.create("pkg","e"));
+  FakeTarget f=new FakeTarget(Label.create("pkg","f"));
+  FakeTarget g=new FakeTarget(Label.create("pkg","g"));
+  digraph.addEdge(f,c);
+  digraph.addEdge(f,g);
+  digraph.addEdge(d,a);
+  digraph.addEdge(d,b);
+  digraph.addEdge(f,e);
+  digraph.addEdge(f,d);
+  Comparator<Target> comparator=new Comparator<Target>(){
+    @Override public int compare(    Target o1,    Target o2){
+      return o1.getLabel().compareTo(o2.getLabel()) * -1;
+    }
+  }
+;
+  Function<? super Node<Target>,? extends Label> unwrap=new Function<Node<Target>,Label>(){
+    @Override public Label apply(    Node<Target> node){
+      return node.getLabel().getLabel();
+    }
+  }
+;
+  List<Label> nodes=Lists.transform(digraph.getTopologicalOrder(comparator),unwrap);
+  assertThat(nodes).containsExactlyElementsIn(ImmutableList.of(Label.create("pkg","f"),Label.create("pkg","c"),Label.create("pkg","d"),Label.create("pkg","a"),Label.create("pkg","b"),Label.create("pkg","e"),Label.create("pkg","g")));
+}
