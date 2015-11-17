@@ -18,11 +18,12 @@
         pendingVisitations.remove(invalidationPair);
         return;
       }
-      if (!entry.markDirty(isChanged)) {
+      MarkedDirtyResult markedDirtyResult=entry.markDirty(isChanged);
+      if (markedDirtyResult == null) {
         pendingVisitations.remove(invalidationPair);
         return;
       }
-      for (      SkyKey reverseDep : entry.getReverseDeps()) {
+      for (      SkyKey reverseDep : markedDirtyResult.getReverseDepsUnsafe()) {
         visit(reverseDep,InvalidationType.DIRTIED,MUST_EXIST);
       }
       informInvalidationReceiver(key,EvaluationProgressReceiver.InvalidationState.DIRTY);
