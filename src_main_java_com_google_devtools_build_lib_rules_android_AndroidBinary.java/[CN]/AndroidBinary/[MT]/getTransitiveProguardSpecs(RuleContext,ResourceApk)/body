@@ -1,6 +1,11 @@
 {
-  if (proguardSpecs.isEmpty()) {
-    return proguardSpecs;
+  JavaOptimizationMode optMode=getJavaOptimizationMode(ruleContext);
+  if (optMode == JavaOptimizationMode.NOOP) {
+    return ImmutableList.of();
+  }
+  ImmutableList<Artifact> proguardSpecs=ruleContext.getPrerequisiteArtifacts(PROGUARD_SPECS,Mode.TARGET).list();
+  if (optMode == JavaOptimizationMode.LEGACY && proguardSpecs.isEmpty()) {
+    return ImmutableList.of();
   }
   ImmutableSortedSet.Builder<Artifact> builder=ImmutableSortedSet.<Artifact>orderedBy(Artifact.EXEC_PATH_COMPARATOR).addAll(proguardSpecs);
   for (  ProguardSpecProvider dep : ruleContext.getPrerequisites("deps",Mode.TARGET,ProguardSpecProvider.class)) {

@@ -13,7 +13,8 @@
     builder.addArgument("@" + proguardSpec.getExecPathString());
   }
   Artifact proguardOutputMap=null;
-  if (ruleContext.attributes().get("proguard_generate_mapping",Type.BOOLEAN)) {
+  JavaOptimizationMode optMode=getJavaOptimizationMode(ruleContext);
+  if (ruleContext.attributes().get("proguard_generate_mapping",Type.BOOLEAN) || optMode.alwaysGenerateOutputMapping()) {
     proguardOutputMap=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_PROGUARD_MAP);
     builder.addOutput(proguardOutputMap).addArgument("-printmapping").addArgument(proguardOutputMap.getExecPathString());
     filesBuilder.add(proguardOutputMap);
