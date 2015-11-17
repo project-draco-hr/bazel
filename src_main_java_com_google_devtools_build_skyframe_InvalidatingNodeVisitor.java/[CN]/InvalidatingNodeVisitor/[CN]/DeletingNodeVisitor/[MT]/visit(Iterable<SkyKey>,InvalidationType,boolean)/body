@@ -1,0 +1,48 @@
+{
+  Preconditions.checkState(invalidationType == InvalidationType.DELETED,keys);
+  Builder<SkyKey> unvisitedKeysBuilder=ImmutableList.builder();
+  for (  SkyKey key : keys) {
+    if (visited.add(key)) {
+      unvisitedKeysBuilder.add(key);
+    }
+  }
+  ImmutableList<SkyKey> unvisitedKeys=unvisitedKeysBuilder.build();
+  for (  SkyKey key : unvisitedKeys) {
+    pendingVisitations.add(Pair.of(key,InvalidationType.DELETED));
+  }
+  final Map<SkyKey,NodeEntry> entries=graph.getBatch(unvisitedKeys);
+  for (  final SkyKey key : unvisitedKeys) {
+    executor.execute(new Runnable(){
+      @Override public void run(){
+        NodeEntry entry=entries.get(key);
+        Pair<SkyKey,InvalidationType> invalidationPair=Pair.of(key,InvalidationType.DELETED);
+        if (entry == null) {
+          pendingVisitations.remove(invalidationPair);
+          return;
+        }
+        if (traverseGraph) {
+          visit(entry.getReverseDeps(),InvalidationType.DELETED,!MUST_EXIST);
+          Set<SkyKey> signalingDeps=entry.isDone() ? ImmutableSet.<SkyKey>of() : entry.getTemporaryDirectDeps();
+          Iterable<SkyKey> directDeps=entry.isDone() ? entry.getDirectDeps() : entry.getAllDirectDepsForIncompleteNode();
+          Map<SkyKey,NodeEntry> depMap=graph.getBatch(directDeps);
+          for (          Map.Entry<SkyKey,NodeEntry> directDepEntry : depMap.entrySet()) {
+            NodeEntry dep=directDepEntry.getValue();
+            if (dep != null) {
+              if (dep.isDone() || !signalingDeps.contains(directDepEntry.getKey())) {
+                dep.removeReverseDep(key);
+              }
+ else {
+                dep.removeInProgressReverseDep(key);
+              }
+            }
+          }
+        }
+        informInvalidationReceiver(key,EvaluationProgressReceiver.InvalidationState.DELETED);
+        graph.remove(key);
+        dirtyKeyTracker.notDirty(key);
+        pendingVisitations.remove(invalidationPair);
+      }
+    }
+);
+  }
+}
