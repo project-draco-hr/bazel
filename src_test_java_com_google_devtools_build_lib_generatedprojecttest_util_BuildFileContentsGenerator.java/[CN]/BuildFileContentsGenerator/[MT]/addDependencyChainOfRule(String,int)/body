@@ -1,0 +1,18 @@
+{
+  BuildRuleBuilder previous;
+  BuildRuleBuilder current=new BuildRuleBuilder(ruleClass,uniqueRuleName());
+  contents.append(current.build());
+  while (chainLength > 1) {
+    previous=current;
+    current=new BuildRuleBuilder(ruleClass,uniqueRuleName());
+    if (ruleClass.equals("java_library")) {
+      current.dependsVia("exports").on(previous);
+    }
+ else {
+      current.dependsVia("deps").on(previous);
+    }
+    contents.append(current.build());
+    chainLength--;
+  }
+  return this;
+}
