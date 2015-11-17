@@ -1,0 +1,23 @@
+{
+  ImmutableList<BundleableFile> extraBundleFiles;
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
+  if (appleConfiguration.getBundlingPlatform() == Platform.IOS_DEVICE) {
+    extraBundleFiles=ImmutableList.of(new BundleableFile(new Attributes(ruleContext).provisioningProfile(),PROVISIONING_PROFILE_BUNDLE_FILE));
+  }
+ else {
+    extraBundleFiles=ImmutableList.of();
+  }
+  String primaryBundleId=null;
+  String fallbackBundleId=null;
+  if (ruleContext.attributes().isAttributeValueExplicitlySpecified("bundle_id")) {
+    primaryBundleId=ruleContext.attributes().get("bundle_id",Type.STRING);
+  }
+ else {
+    fallbackBundleId=ruleContext.attributes().get("bundle_id",Type.STRING);
+  }
+  Bundling.Builder bundling=new Builder().setName(bundleName).setArchitecture(appleConfiguration.getDependencySingleArchitecture()).setBundleDirFormat(bundleDirFormat).addExtraBundleFiles(extraBundleFiles).setObjcProvider(objcProvider).addInfoplistInputFromRule(ruleContext).addInfoplistInput(getGeneratedVersionPlist()).addInfoplistInput(getGeneratedEnvironmentPlist()).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).setPrimaryBundleId(primaryBundleId).setFallbackBundleId(fallbackBundleId).setMinimumOsVersion(minimumOsVersion);
+  if (ObjcRuleClasses.useLaunchStoryboard(ruleContext)) {
+    bundling.addInfoplistInput(getLaunchStoryboardPlist());
+  }
+  return bundling.build();
+}

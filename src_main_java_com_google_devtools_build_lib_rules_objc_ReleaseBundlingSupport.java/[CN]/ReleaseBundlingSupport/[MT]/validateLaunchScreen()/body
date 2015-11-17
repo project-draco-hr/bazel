@@ -1,0 +1,15 @@
+{
+  if (ruleContext.attributes().isAttributeValueExplicitlySpecified("launch_storyboard")) {
+    DottedVersion minimumOs=ObjcRuleClasses.objcConfiguration(ruleContext).getMinimumOs();
+    if (ObjcRuleClasses.useLaunchStoryboard(ruleContext)) {
+      if (ruleContext.attributes().isAttributeValueExplicitlySpecified("launch_image")) {
+        ruleContext.attributeWarning("launch_image",String.format("launch_image was specified but since --ios_minimum_os=%s (>=8.0), the also " + "specified launch_storyboard will be used instead",minimumOs));
+      }
+    }
+ else {
+      if (!ruleContext.attributes().isAttributeValueExplicitlySpecified("launch_image")) {
+        ruleContext.attributeWarning("launch_storyboard",String.format("launch_storyboard was specified but since --ios_minimum_os=%s (<8.0) and no " + "launch_image was specified instead it will be ignored",minimumOs));
+      }
+    }
+  }
+}
