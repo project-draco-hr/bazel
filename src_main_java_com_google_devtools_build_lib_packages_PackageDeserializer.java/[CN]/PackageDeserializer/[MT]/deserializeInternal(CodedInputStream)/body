@@ -1,5 +1,5 @@
 {
-  Build.Package packagePb=Build.Package.parseDelimitedFrom(in);
+  Build.Package packagePb=readPackageProto(codedIn);
   Package.Builder builder;
   try {
     builder=new Package.Builder(PackageIdentifier.create(packagePb.getRepository(),new PathFragment(packagePb.getName())),null);
@@ -8,7 +8,7 @@
     throw new PackageDeserializationException(e);
   }
   StoredEventHandler eventHandler=new StoredEventHandler();
-  deserializeInternal(packagePb,eventHandler,builder,in);
+  deserializeInternal(packagePb,eventHandler,builder,codedIn);
   builder.addEvents(eventHandler.getEvents());
   return builder.build();
 }
