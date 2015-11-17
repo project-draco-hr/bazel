@@ -1,0 +1,30 @@
+{
+  if (!jarFile.toFile().exists()) {
+    return;
+  }
+  ZipInputStream zis=null;
+  try {
+    FileInputStream fis=new FileInputStream(jarFile.toFile());
+    try {
+      zis=new ZipInputStream(fis);
+      ZipEntry entry=zis.getNextEntry();
+      while (entry != null) {
+        String name=entry.getName();
+        if (name.endsWith(DOT_CLASS)) {
+          byte[] bytes=ByteStreams.toByteArray(zis);
+          if (bytes != null) {
+            ClassReader classReader=new ClassReader(bytes);
+            classReader.accept(new UsageVisitor(),0);
+          }
+        }
+        entry=zis.getNextEntry();
+      }
+    }
+  finally {
+      Closeables.close(fis,true);
+    }
+  }
+  finally {
+    Closeables.close(zis,true);
+  }
+}
