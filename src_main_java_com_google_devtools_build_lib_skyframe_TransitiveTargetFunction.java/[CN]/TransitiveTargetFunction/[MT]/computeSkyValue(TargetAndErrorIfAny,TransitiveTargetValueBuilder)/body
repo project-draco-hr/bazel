@@ -3,12 +3,16 @@
   NoSuchTargetException errorLoadingTarget=targetAndErrorIfAny.getErrorLoadingTarget();
   if (target instanceof Rule) {
     ConfigurationFragmentPolicy configurationFragmentPolicy=target.getAssociatedRule().getRuleClassObject().getConfigurationFragmentPolicy();
-    for (    Class<?> fragment : configurationFragmentPolicy.getRequiredConfigurationFragments()) {
-      if (!builder.getConfigFragmentsFromDeps().contains(fragment)) {
+    for (    ConfigurationFragmentFactory factory : ruleClassProvider.getConfigurationFragments()) {
+      Class<? extends Fragment> fragment=factory.creates();
+      if (configurationFragmentPolicy.isLegalConfigurationFragment(fragment) && !builder.getConfigFragmentsFromDeps().contains(fragment)) {
         builder.getTransitiveConfigFragments().add(fragment.asSubclass(BuildConfiguration.Fragment.class));
       }
     }
-    builder.getTransitiveConfigFragments().add(ruleClassProvider.getUniversalFragment().asSubclass(BuildConfiguration.Fragment.class));
+    Class<? extends Fragment> universalFragment=ruleClassProvider.getUniversalFragment().asSubclass(BuildConfiguration.Fragment.class);
+    if (!builder.getConfigFragmentsFromDeps().contains(universalFragment)) {
+      builder.getTransitiveConfigFragments().add(universalFragment);
+    }
   }
   return builder.build(errorLoadingTarget);
 }
