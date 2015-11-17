@@ -1,0 +1,10 @@
+{
+  setRules(new TestAspects.BaseRule(),new ExtraActionsAreEmitted.TestRule());
+  useConfiguration("--experimental_action_listener=//extra_actions:listener");
+  scratch.file("extra_actions/BUILD","extra_action(name='xa', cmd='echo dont-care')","action_listener(name='listener', mnemonics=['Null'], extra_actions=[':xa'])");
+  pkg("a","testrule(name='a', foo=[':b'])","testrule(name='b')");
+  update();
+  ConfiguredTarget a=getConfiguredTarget("//a:a");
+  NestedSet<ExtraActionArtifactsProvider.ExtraArtifactSet> extraActionArtifacts=a.getProvider(ExtraActionArtifactsProvider.class).getTransitiveExtraActionArtifacts();
+  assertThat(getOnlyElement(extraActionArtifacts).getLabel()).isEqualTo(Label.create("a","b"));
+}

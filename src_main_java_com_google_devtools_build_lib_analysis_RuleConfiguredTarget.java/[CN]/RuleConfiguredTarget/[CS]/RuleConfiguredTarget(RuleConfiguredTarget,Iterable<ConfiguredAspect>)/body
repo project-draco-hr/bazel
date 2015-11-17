@@ -4,6 +4,7 @@
   providers.addAll(base.providers.keySet());
   OutputGroupProvider mergedOutputGroupProvider=OutputGroupProvider.merge(getAllProviders(base,aspects,OutputGroupProvider.class));
   SkylarkProviders mergedSkylarkProviders=SkylarkProviders.merge(getAllProviders(base,aspects,SkylarkProviders.class));
+  ExtraActionArtifactsProvider mergedExtraActionProviders=ExtraActionArtifactsProvider.merge(getAllProviders(base,aspects,ExtraActionArtifactsProvider.class));
   for (  ConfiguredAspect configuredAspect : aspects) {
     for (    TransitiveInfoProvider aspectProvider : configuredAspect) {
       Class<? extends TransitiveInfoProvider> aClass=aspectProvider.getClass();
@@ -13,12 +14,15 @@
       if (SkylarkProviders.class.equals(aClass)) {
         continue;
       }
+      if (ExtraActionArtifactsProvider.class.equals(aClass)) {
+        continue;
+      }
       if (!providers.add(aClass)) {
         throw new IllegalStateException("Provider " + aClass + " provided twice");
       }
     }
   }
-  if (base.getProvider(OutputGroupProvider.class) == mergedOutputGroupProvider && base.getProvider(SkylarkProviders.class) == mergedSkylarkProviders) {
+  if (base.getProvider(OutputGroupProvider.class) == mergedOutputGroupProvider && base.getProvider(SkylarkProviders.class) == mergedSkylarkProviders && base.getProvider(ExtraActionArtifactsProvider.class) == mergedExtraActionProviders) {
     this.providers=base.providers;
   }
  else {
@@ -30,6 +34,9 @@
       if (SkylarkProviders.class.equals(aClass)) {
         continue;
       }
+      if (ExtraActionArtifactsProvider.class.equals(aClass)) {
+        continue;
+      }
       builder.put(aClass,base.providers.get(aClass));
     }
     if (mergedOutputGroupProvider != null) {
@@ -37,6 +44,9 @@
     }
     if (mergedSkylarkProviders != null) {
       builder.put(SkylarkProviders.class,mergedSkylarkProviders);
+    }
+    if (mergedExtraActionProviders != null) {
+      builder.put(ExtraActionArtifactsProvider.class,mergedExtraActionProviders);
     }
     this.providers=builder.build();
   }
