@@ -7,7 +7,10 @@
   Action action2=new TestAction(Runnables.doNothing(),ImmutableSet.<Artifact>of(),ImmutableSet.<Artifact>of(out2));
   differencer.inject(ImmutableMap.<SkyKey,SkyValue>of(ActionExecutionValue.key(action1),actionValue(action1,forceDigests),ActionExecutionValue.key(action2),actionValue(action2,forceDigests)));
   assertFalse(driver.evaluate(ImmutableList.<SkyKey>of(),false,1,NullEventHandler.INSTANCE).hasError());
-  assertThat(new FilesystemValueChecker(tsgm,null).getDirtyActionValues(evaluator.getValues(),batchStatter)).isEmpty();
+  assertThat(new FilesystemValueChecker(tsgm,null).getDirtyActionValues(evaluator.getValues(),batchStatter,ModifiedFileSet.EVERYTHING_MODIFIED)).isEmpty();
   FileSystemUtils.writeContentAsLatin1(out1.getPath(),"goodbye");
-  assertEquals(ActionExecutionValue.key(action1),Iterables.getOnlyElement(new FilesystemValueChecker(tsgm,null).getDirtyActionValues(evaluator.getValues(),batchStatter)));
+  assertEquals(ActionExecutionValue.key(action1),Iterables.getOnlyElement(new FilesystemValueChecker(tsgm,null).getDirtyActionValues(evaluator.getValues(),batchStatter,ModifiedFileSet.EVERYTHING_MODIFIED)));
+  assertEquals(ActionExecutionValue.key(action1),Iterables.getOnlyElement(new FilesystemValueChecker(tsgm,null).getDirtyActionValues(evaluator.getValues(),batchStatter,new ModifiedFileSet.Builder().modify(out1.getExecPath()).build())));
+  assertThat(new FilesystemValueChecker(tsgm,null).getDirtyActionValues(evaluator.getValues(),batchStatter,new ModifiedFileSet.Builder().modify(out1.getExecPath().getParentDirectory()).build())).isEmpty();
+  assertThat(new FilesystemValueChecker(tsgm,null).getDirtyActionValues(evaluator.getValues(),batchStatter,ModifiedFileSet.NOTHING_MODIFIED)).isEmpty();
 }

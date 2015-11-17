@@ -9,7 +9,9 @@
         }
  else {
           for (          Artifact artifact : actionValue.getAllOutputArtifactData().keySet()) {
-            artifactToKeyAndValue.put(artifact,keyAndValue);
+            if (shouldCheckArtifact(knownModifiedOutputFiles,artifact)) {
+              artifactToKeyAndValue.put(artifact,keyAndValue);
+            }
           }
         }
       }
@@ -20,7 +22,7 @@
       }
  catch (      IOException e) {
         LoggingUtil.logToRemote(Level.WARNING,"Unable to process batch stat",e);
-        outputStatJob(dirtyKeys,shard).run();
+        outputStatJob(dirtyKeys,shard,knownModifiedOutputFiles).run();
         return;
       }
 catch (      InterruptedException e) {

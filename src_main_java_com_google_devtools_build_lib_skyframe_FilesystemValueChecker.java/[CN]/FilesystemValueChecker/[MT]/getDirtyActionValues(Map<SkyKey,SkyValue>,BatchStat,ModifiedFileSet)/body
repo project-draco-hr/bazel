@@ -1,4 +1,8 @@
 {
+  if (modifiedOutputFiles == ModifiedFileSet.NOTHING_MODIFIED) {
+    LOG.info("Not checking for dirty actions since nothing was modified");
+    return ImmutableList.of();
+  }
   LOG.info("Accumulating dirty actions");
   final int numOutputJobs=Runtime.getRuntime().availableProcessors() * 4;
   final Set<SkyKey> actionSkyKeys=new HashSet<>();
@@ -17,8 +21,9 @@
   ThrowableRecordingRunnableWrapper wrapper=new ThrowableRecordingRunnableWrapper("FileSystemValueChecker#getDirtyActionValues");
   modifiedOutputFilesCounter.set(0);
   modifiedOutputFilesIntraBuildCounter.set(0);
+  ImmutableSet<PathFragment> knownModifiedOutputFiles=modifiedOutputFiles == ModifiedFileSet.EVERYTHING_MODIFIED ? null : modifiedOutputFiles.modifiedSourceFiles();
   for (  List<Pair<SkyKey,ActionExecutionValue>> shard : outputShards) {
-    Runnable job=(batchStatter == null) ? outputStatJob(dirtyKeys,shard) : batchStatJob(dirtyKeys,shard,batchStatter);
+    Runnable job=(batchStatter == null) ? outputStatJob(dirtyKeys,shard,knownModifiedOutputFiles) : batchStatJob(dirtyKeys,shard,batchStatter,knownModifiedOutputFiles);
     executor.submit(wrapper.wrap(job));
   }
   boolean interrupted=ExecutorUtil.interruptibleShutdown(executor);
