@@ -1,18 +1,52 @@
 {
-  PathFragment path=new PathFragment(s);
-  if (!path.isNormalized()) {
-    throw new IllegalArgumentException("The include path '" + s + "' is not normalized.");
-  }
-  if (path.startsWith(SYSROOT_FRAGMENT)) {
-    if (sysroot == null) {
-      throw new IllegalArgumentException("A %sysroot% prefix is only allowed if the " + "default_sysroot option is set");
+  PathFragment pathPrefix;
+  String pathString;
+  int packageEndIndex=s.indexOf(PACKAGE_END);
+  if (packageEndIndex != -1 && s.startsWith(PACKAGE_START)) {
+    String packageString=s.substring(PACKAGE_START.length(),packageEndIndex);
+    try {
+      pathPrefix=PackageIdentifier.parse(packageString).getPathFragment();
     }
-    return sysroot.getRelative(path.relativeTo(SYSROOT_FRAGMENT));
+ catch (    LabelSyntaxException e) {
+      throw new InvalidConfigurationException("The package '" + packageString + "' is not valid");
+    }
+    int pathStartIndex=packageEndIndex + PACKAGE_END.length();
+    if (pathStartIndex + 1 < s.length()) {
+      if (s.charAt(pathStartIndex) != '/') {
+        throw new InvalidConfigurationException("The path in the package for '" + s + "' is not valid");
+      }
+      pathString=s.substring(pathStartIndex + 1,s.length());
+    }
+ else {
+      pathString="";
+    }
   }
- else   if (path.startsWith(WORKSPACE_FRAGMENT)) {
-    return path.subFragment(1,path.segmentCount());
+ else   if (s.startsWith(SYSROOT_START)) {
+    if (sysroot == null) {
+      throw new InvalidConfigurationException("A %sysroot% prefix is only allowed if the " + "default_sysroot option is set");
+    }
+    pathPrefix=sysroot;
+    pathString=s.substring(SYSROOT_START.length(),s.length());
+  }
+ else   if (s.startsWith(WORKSPACE_START)) {
+    pathPrefix=PathFragment.EMPTY_FRAGMENT;
+    pathString=s.substring(WORKSPACE_START.length(),s.length());
   }
  else {
-    return crosstoolTopPathFragment.getRelative(path.startsWith(CROSSTOOL_FRAGMENT) ? path.subFragment(1,path.segmentCount()) : path);
+    pathPrefix=crosstoolTopPathFragment;
+    if (s.startsWith(CROSSTOOL_START)) {
+      pathString=s.substring(CROSSTOOL_START.length(),s.length());
+    }
+ else     if (s.startsWith("%")) {
+      throw new InvalidConfigurationException("The include path '" + s + "' has an "+ "unrecognized %prefix%");
+    }
+ else {
+      pathString=s;
+    }
   }
+  PathFragment path=new PathFragment(pathString);
+  if (!path.isNormalized()) {
+    throw new InvalidConfigurationException("The include path '" + s + "' is not normalized.");
+  }
+  return pathPrefix.getRelative(path);
 }
