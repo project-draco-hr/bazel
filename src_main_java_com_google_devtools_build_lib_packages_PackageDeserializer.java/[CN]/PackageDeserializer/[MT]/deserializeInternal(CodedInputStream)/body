@@ -1,14 +1,15 @@
 {
   Build.Package packagePb=readPackageProto(codedIn);
-  Package.Builder builder;
+  PackageIdentifier packageId;
   try {
-    builder=new Package.Builder(PackageIdentifier.create(packagePb.getRepository(),new PathFragment(packagePb.getName())),null);
+    packageId=PackageIdentifier.create(packagePb.getRepository(),new PathFragment(packagePb.getName()));
   }
  catch (  LabelSyntaxException e) {
     throw new PackageDeserializationException(e);
   }
+  Package.Builder builder=new Package.Builder(packageId,null);
   StoredEventHandler eventHandler=new StoredEventHandler();
-  deserializeInternal(packagePb,eventHandler,builder,codedIn);
+  deserializeInternal(packageId,packagePb,eventHandler,builder,codedIn);
   builder.addEvents(eventHandler.getEvents());
   return builder.build();
 }
