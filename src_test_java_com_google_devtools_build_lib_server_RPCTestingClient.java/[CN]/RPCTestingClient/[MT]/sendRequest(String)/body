@@ -1,0 +1,20 @@
+{
+  LocalClientSocket connection=new LocalClientSocket();
+  connection.connect(new LocalSocketAddress(socketFile.getPathFile()));
+  try {
+    OutputStream out=connection.getOutputStream();
+    out.write(request.getBytes(UTF_8));
+    out.flush();
+    connection.shutdownOutput();
+    OutputStream stdout=outErr.getOutputStream();
+    OutputStream stderr=outErr.getErrorStream();
+    ByteArrayOutputStream control=new ByteArrayOutputStream();
+    StreamDemultiplexer demux=new StreamDemultiplexer((byte)'1',stdout,stderr,control);
+    ByteStreams.copy(connection.getInputStream(),demux);
+    demux.flush();
+    return ServerResponse.parseFrom(control);
+  }
+  finally {
+    connection.close();
+  }
+}

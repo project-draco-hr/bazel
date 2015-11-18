@@ -1,0 +1,16 @@
+{
+  final List<String> savedArgs=new ArrayList<>();
+  RPCService service=new RPCService(new ServerCommand(){
+    @Override public int exec(    List<String> args,    OutErr outErr,    long firstContactTime) throws Exception {
+      savedArgs.addAll(args);
+      return 0;
+    }
+    @Override public boolean shutdown(){
+      return false;
+    }
+  }
+);
+  List<String> args=Arrays.asList("blaze",""," \n","","","","foo");
+  service.executeRequest(args,new RecordingOutErr(),0);
+  assertEquals(args.subList(1,args.size()),savedArgs);
+}
