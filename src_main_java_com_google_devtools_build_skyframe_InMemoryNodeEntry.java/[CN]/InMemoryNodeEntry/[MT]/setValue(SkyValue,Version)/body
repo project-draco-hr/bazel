@@ -1,11 +1,13 @@
 {
   Preconditions.checkState(isReady(),"%s %s",this,value);
-  Preconditions.checkState(this.version.atMost(version),"%s %s %s",this,version,value);
+  Preconditions.checkState(this.lastChangedVersion.atMost(version),"%s %s %s",this,version,value);
+  Preconditions.checkState(this.lastEvaluatedVersion.atMost(version),"%s %s %s",this,version,value);
+  this.lastEvaluatedVersion=version;
   if (isDirty() && buildingState.unchangedFromLastBuild(value)) {
     this.value=buildingState.getLastBuildValue();
   }
  else {
-    this.version=version;
+    this.lastChangedVersion=version;
     this.value=value;
   }
   return setStateFinishedAndReturnReverseDeps();
