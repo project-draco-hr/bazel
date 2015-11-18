@@ -6,5 +6,23 @@
     return false;
   }
   GroupedList<?> that=(GroupedList<?>)other;
-  return elements.equals(that.elements);
+  if (this.elements.size() != that.elements.size()) {
+    return false;
+  }
+  for (int i=0; i < this.elements.size(); i++) {
+    Object thisElt=this.elements.get(i);
+    Object thatElt=that.elements.get(i);
+    if (thisElt instanceof List) {
+      if (!(thatElt instanceof List)) {
+        return false;
+      }
+      if (!checkUnorderedEqualityWithoutDuplicates((List<?>)thisElt,(List<?>)thatElt)) {
+        return false;
+      }
+    }
+ else     if (!thisElt.equals(thatElt)) {
+      return false;
+    }
+  }
+  return true;
 }
