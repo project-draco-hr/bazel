@@ -1,9 +1,13 @@
 {
   Set<SkyKey> unfinishedDeps=new HashSet<>();
-  Iterables.addAll(unfinishedDeps,Iterables.filter(env.newlyRequestedDeps,Predicates.not(nodeEntryIsDone)));
+  Map<SkyKey,NodeEntry> batch=graph.getBatch(env.newlyRequestedDeps);
+  for (  SkyKey dep : env.newlyRequestedDeps) {
+    if (!isDoneForBuild(batch.get(dep))) {
+      unfinishedDeps.add(dep);
+    }
+  }
   env.newlyRequestedDeps.remove(unfinishedDeps);
   entry.addTemporaryDirectDeps(env.newlyRequestedDeps);
-  Map<SkyKey,NodeEntry> batch=graph.getBatch(env.newlyRequestedDeps);
   for (  SkyKey newDep : env.newlyRequestedDeps) {
     NodeEntry depEntry=Preconditions.checkNotNull(batch.get(newDep),newDep);
     DependencyState triState=depEntry.addReverseDepAndCheckIfDone(skyKey);

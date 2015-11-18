@@ -1,6 +1,14 @@
 {
   ImmutableSet<SkyKey> skyKeySet=ImmutableSet.copyOf(skyKeys);
-  if (Iterables.all(skyKeySet,nodeEntryIsDone)) {
+  boolean allAreDone=true;
+  Map<SkyKey,NodeEntry> batch=graph.getBatch(skyKeySet);
+  for (  SkyKey key : skyKeySet) {
+    if (!isDoneForBuild(batch.get(key))) {
+      allAreDone=false;
+      break;
+    }
+  }
+  if (allAreDone) {
     for (    SkyKey skyKey : skyKeySet) {
       informProgressReceiverThatValueIsDone(skyKey);
     }
