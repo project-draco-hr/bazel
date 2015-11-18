@@ -19,14 +19,14 @@
   if (definesLocalResources) {
     ApplicationManifest applicationManifest=androidSemantics.getManifestForRule(ruleContext);
     try {
-      resourceApk=applicationManifest.packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,ResourceDependencies.fromRuleDeps(ruleContext),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_SYMBOLS_TXT),ImmutableList.<String>of(),ImmutableList.<String>of(),ImmutableList.<String>of(),null,null,null,false,null);
+      resourceApk=applicationManifest.packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,ResourceDependencies.fromRuleDeps(ruleContext,JavaCommon.isNeverLink(ruleContext)),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_SYMBOLS_TXT),ImmutableList.<String>of(),ImmutableList.<String>of(),ImmutableList.<String>of(),null,null,null,false,null);
     }
  catch (    RuleConfigurationException e) {
       return null;
     }
   }
  else {
-    resourceApk=ResourceApk.fromTransitiveResources(ResourceDependencies.fromRuleResourceAndDeps(ruleContext));
+    resourceApk=ResourceApk.fromTransitiveResources(ResourceDependencies.fromRuleResourceAndDeps(ruleContext,false));
   }
   JavaTargetAttributes javaTargetAttributes=androidCommon.init(javaSemantics,androidSemantics,resourceApk,false,true);
   if (javaTargetAttributes == null) {
