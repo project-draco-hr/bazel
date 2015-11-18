@@ -1,0 +1,18 @@
+{
+  events.setFailFast(false);
+  Path path=scratch.file("/conflict/BUILD","genrule(name = 'rule1',","        cmd = '',","        srcs = ['in1', 'in2'],","        outs = ['out1', 'out2'])","genrule(name = 'rule2',","        cmd = '',","        srcs = ['in3', 'in4'],","        outs = ['out3', 'out2'])");
+  Package pkg=packages.createPackage("conflict",path);
+  events.assertContainsError("generated file 'out2' in rule 'rule2' " + "conflicts with existing generated file from rule 'rule1'");
+  assertTrue(pkg.containsErrors());
+  assertNull(pkg.getRule("rule2"));
+  assertSame(pkg.getRule("rule1"),((OutputFile)pkg.getTarget("out2")).getGeneratingRule());
+  List<Target> found=new ArrayList<>();
+  for (  String targetName : ImmutableList.of("rule2","in3","in4","out3")) {
+    try {
+      found.add(pkg.getTarget(targetName));
+    }
+ catch (    NoSuchTargetException e) {
+    }
+  }
+  assertThat(found).isEmpty();
+}

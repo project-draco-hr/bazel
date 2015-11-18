@@ -1,0 +1,8 @@
+{
+  String msg="I am completely operational, and all my circuits are functioning perfectly.";
+  Path file=scratch.file("/foo/BUILD","package(default_deprecation = \"" + msg + "\")","sh_library(name = 'bar', srcs=['b'])");
+  Package pkg=packages.eval("foo",file);
+  Rule fooRule=(Rule)pkg.getTarget("bar");
+  String deprAttr=attributes(fooRule).get("deprecation",com.google.devtools.build.lib.syntax.Type.STRING);
+  assertEquals(msg,deprAttr);
+}

@@ -1,0 +1,22 @@
+{
+  emptyFile("/rg/a.cc");
+  emptyFile("/rg/foo/bar.cc");
+  emptyFile("/rg/foo/foo.cc");
+  emptyFile("/rg/foo/wiz/bam.cc");
+  emptyFile("/rg/foo/wiz/bum.cc");
+  emptyFile("/rg/foo/wiz/quid/gav.cc");
+  Path file=scratch.file("/rg/BUILD","cc_library(name = 'ri', srcs = glob(['**/*.cc']))","cc_library(name = 're', srcs = glob(['*.cc'], ['**/*.c']))");
+  Package pkg=packages.eval("rg",file);
+  events.assertNoWarningsOrErrors();
+  assertEvaluates(pkg,ImmutableList.of("a.cc","foo/bar.cc","foo/foo.cc","foo/wiz/bam.cc","foo/wiz/bum.cc","foo/wiz/quid/gav.cc"),"**/*.cc");
+  assertEvaluates(pkg,ImmutableList.of("foo/bar.cc","foo/wiz/bam.cc","foo/wiz/bum.cc"),"**/b*.cc");
+  assertEvaluates(pkg,ImmutableList.of("foo/bar.cc","foo/foo.cc","foo/wiz/bam.cc","foo/wiz/bum.cc","foo/wiz/quid/gav.cc"),"**/*/*.cc");
+  assertEvaluates(pkg,ImmutableList.of("foo/wiz/quid/gav.cc"),"foo/**/quid/*.cc");
+  assertEvaluates(pkg,Collections.<String>emptyList(),ImmutableList.of("*.cc","*/*.cc","*/*/*.cc"),ImmutableList.of("**/*.cc"));
+  assertEvaluates(pkg,Collections.<String>emptyList(),ImmutableList.of("**/*.cc"),ImmutableList.of("**/*.cc"));
+  assertEvaluates(pkg,Collections.<String>emptyList(),ImmutableList.of("**/*.cc"),ImmutableList.of("*.cc","*/*.cc","*/*/*.cc","*/*/*/*.cc"));
+  assertEvaluates(pkg,Collections.<String>emptyList(),ImmutableList.of("**"),ImmutableList.of("*","*/*","*/*/*","*/*/*/*"));
+  assertEvaluates(pkg,ImmutableList.of("foo/bar.cc","foo/foo.cc","foo/wiz/bam.cc","foo/wiz/bum.cc","foo/wiz/quid/gav.cc"),ImmutableList.of("**/*.cc"),ImmutableList.of("*.cc"));
+  assertEvaluates(pkg,ImmutableList.of("a.cc","foo/wiz/bam.cc","foo/wiz/bum.cc","foo/wiz/quid/gav.cc"),ImmutableList.of("**/*.cc"),ImmutableList.of("*/*.cc"));
+  assertEvaluates(pkg,ImmutableList.of("a.cc","foo/bar.cc","foo/foo.cc","foo/wiz/quid/gav.cc"),ImmutableList.of("**/*.cc"),ImmutableList.of("**/wiz/*.cc"));
+}

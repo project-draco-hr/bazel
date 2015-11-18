@@ -1,0 +1,20 @@
+{
+  Path buildFile=scratch.file("/foo/BUILD","exports_files(['Z'])","cc_library(name='W', deps=['X', 'Y'])","cc_library(name='X', srcs=['X'])","cc_library(name='Y')");
+  Package pkg=packages.createPackage("foo",buildFile);
+  assertFalse(pkg.containsErrors());
+  assertSame(Rule.class,pkg.getTarget("X").getClass());
+  assertSame(Rule.class,pkg.getTarget("Y").getClass());
+  assertSame(InputFile.class,pkg.getTarget("Z").getClass());
+  try {
+    pkg.getTarget("A");
+    fail();
+  }
+ catch (  NoSuchTargetException e) {
+    assertThat(e).hasMessage("no such target '//foo:A': " + "target 'A' not declared in package 'foo' defined by /foo/BUILD");
+  }
+  Set<String> inputFiles=Sets.newTreeSet();
+  for (  InputFile inputFile : pkg.getTargets(InputFile.class)) {
+    inputFiles.add(inputFile.getName());
+  }
+  assertEquals(ImmutableList.of("BUILD","Z"),Lists.newArrayList(inputFiles));
+}

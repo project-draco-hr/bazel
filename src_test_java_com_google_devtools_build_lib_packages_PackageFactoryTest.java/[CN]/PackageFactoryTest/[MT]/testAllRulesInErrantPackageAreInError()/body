@@ -1,0 +1,11 @@
+{
+  events.setFailFast(false);
+  Path path=scratch.file("/error/BUILD","genrule(name = 'rule1',","        cmd = ':',","        outs = ['out.1'])","list = ['bad']","PopulateList(list)","genrule(name = 'rule2',","        cmd = ':',","        outs = list)");
+  Package pkg=packages.createPackage("error",path);
+  events.assertContainsError("name 'PopulateList' is not defined");
+  assertTrue(pkg.containsErrors());
+  assertTrue(pkg.getRule("rule1").containsErrors());
+  Rule rule2=pkg.getRule("rule2");
+  assertTrue(rule2.containsErrors());
+  assertEquals(Sets.newHashSet(pkg.getTarget("bad")),Sets.newHashSet(rule2.getOutputFiles()));
+}

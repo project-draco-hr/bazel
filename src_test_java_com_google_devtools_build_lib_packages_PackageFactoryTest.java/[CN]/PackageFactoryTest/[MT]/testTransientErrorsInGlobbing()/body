@@ -1,0 +1,16 @@
+{
+  events.setFailFast(false);
+  Path buildFile=scratch.file("/e/BUILD","sh_library(name = 'e', data = glob(['*.txt']))");
+  Path parentDir=buildFile.getParentDirectory();
+  scratch.file("/e/data.txt");
+  throwOnReaddir=parentDir;
+  Package pkg=packages.createPackage("e",buildFile);
+  assertTrue(pkg.containsErrors());
+  events.setFailFast(true);
+  throwOnReaddir=null;
+  pkg=packages.createPackage("e",buildFile);
+  assertFalse(pkg.containsErrors());
+  assertNotNull(pkg.getRule("e"));
+  GlobList globList=(GlobList)pkg.getRule("e").getAttributeContainer().getAttr("data");
+  assertThat(globList).containsExactly(Label.parseAbsolute("//e:data.txt"));
+}

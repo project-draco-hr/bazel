@@ -1,0 +1,9 @@
+{
+  Path globsDir=scratch.dir("/globs");
+  globsDir.getChild("subdir").createDirectory();
+  for (  String file : ImmutableList.of("Wombat1.java","Wombat2.java","subdir/Wombat3.java")) {
+    FileSystemUtils.createEmptyFile(globsDir.getRelative(file));
+  }
+  Path file=scratch.file("/globs/BUILD",Printer.format("result = glob(%r, %r, %r)",includes,excludes,excludeDirs ? 1 : 0),resultAssertion);
+  return packages.evalAndReturnGlobCache("globs",file,packages.ast(file));
+}

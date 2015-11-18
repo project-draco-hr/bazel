@@ -1,0 +1,7 @@
+{
+  Path path=scratch.file("/x/BUILD","java_test(name='j')","test_suite(name='t1')","test_suite(name='t2', tests=['//foo'])","test_suite(name='t3', tests=['//foo'])","cc_test(name='c')");
+  Package pkg=packages.createPackage("x",path);
+  assertThat(attributes(pkg.getRule("t1")).get("$implicit_tests",BuildType.LABEL_LIST)).containsExactlyElementsIn(Sets.newHashSet(Label.parseAbsolute("//x:c"),Label.parseAbsolute("//x:j")));
+  assertThat(attributes(pkg.getRule("t2")).get("$implicit_tests",BuildType.LABEL_LIST)).isEmpty();
+  assertThat(attributes(pkg.getRule("t3")).get("$implicit_tests",BuildType.LABEL_LIST)).isEmpty();
+}

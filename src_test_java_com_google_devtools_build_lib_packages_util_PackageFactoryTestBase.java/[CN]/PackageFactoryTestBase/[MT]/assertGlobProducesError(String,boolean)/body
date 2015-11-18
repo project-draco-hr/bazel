@@ -1,0 +1,17 @@
+{
+  events.setFailFast(false);
+  Package pkg=evaluateGlob(ImmutableList.of(pattern),Collections.<String>emptyList(),false,"").first;
+  assertEquals(errorExpected,pkg.containsErrors());
+  boolean foundError=false;
+  for (  Event event : events.collector()) {
+    if (event.getMessage().contains("glob")) {
+      if (!errorExpected) {
+        fail("error not expected for glob pattern " + pattern + ", but got: "+ event);
+        return;
+      }
+      foundError=errorExpected;
+      break;
+    }
+  }
+  assertEquals(errorExpected,foundError);
+}

@@ -1,0 +1,8 @@
+{
+  events.setFailFast(false);
+  Path buildFile=scratch.file("/multipleduplicaterulename/BUILD","# -*- python -*-","proto_library(name = 'spellcheck_proto',","         srcs = ['spellcheck.proto'],","         cc_api_version = 2)","cc_library(name = 'spellcheck_proto')","proto_library(name = 'spell_proto',","         srcs = ['spell.proto'],","         cc_api_version = 2)","cc_library(name = 'spell_proto')");
+  Package pkg=packages.createPackage("multipleduplicaterulename",buildFile);
+  events.assertContainsError("cc_library rule 'spellcheck_proto' in package " + "'multipleduplicaterulename' conflicts with existing proto_library rule");
+  events.assertContainsError("cc_library rule 'spell_proto' in package " + "'multipleduplicaterulename' conflicts with existing proto_library rule");
+  assertTrue(pkg.containsErrors());
+}

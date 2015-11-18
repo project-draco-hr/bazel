@@ -1,0 +1,12 @@
+{
+  events.setFailFast(false);
+  Path path=scratch.file("/dup/BUILD","proto_library(name = 'dup_proto',","              srcs  = ['dup.proto'],","              cc_api_version = 2)","","cc_library(name = 'dup_proto',","           srcs = ['dup.pb.cc', 'dup.pb.h'])");
+  Package pkg=packages.createPackage("dup",path);
+  events.assertContainsError("cc_library rule 'dup_proto' in package 'dup' " + "conflicts with existing proto_library rule");
+  assertTrue(pkg.containsErrors());
+  Rule dupProto=pkg.getRule("dup_proto");
+  assertEquals("proto_library",dupProto.getRuleClass());
+  for (  OutputFile out : dupProto.getOutputFiles()) {
+    assertThat(pkg.getTargets(FileTarget.class)).contains(out);
+  }
+}

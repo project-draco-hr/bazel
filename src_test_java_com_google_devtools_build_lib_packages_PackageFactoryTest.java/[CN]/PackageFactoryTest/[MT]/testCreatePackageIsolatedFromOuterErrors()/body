@@ -1,0 +1,18 @@
+{
+  ExecutorService e=Executors.newCachedThreadPool();
+  final Semaphore beforeError=new Semaphore(0);
+  final Semaphore afterError=new Semaphore(0);
+  Reporter reporter=new Reporter();
+  ParsingTracker parser=new ParsingTracker(beforeError,afterError,reporter);
+  final Logger log=Logger.getLogger(PackageFactory.class.getName());
+  log.addHandler(parser);
+  Level originalLevel=log.getLevel();
+  log.setLevel(Level.FINE);
+  e.execute(new ErrorReporter(reporter,beforeError,afterError));
+  e.execute(parser);
+  e.shutdown();
+  assertTrue(e.awaitTermination(TestUtils.WAIT_TIMEOUT_MILLISECONDS,TimeUnit.MILLISECONDS));
+  log.removeHandler(parser);
+  log.setLevel(originalLevel);
+  assertTrue(parser.hasParsed());
+}

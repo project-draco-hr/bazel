@@ -1,0 +1,8 @@
+{
+  Path file=scratch.file("/foo/BUILD","package(default_testonly = 1)","sh_library(name = 'foo', srcs=['b'])","sh_library(name = 'bar', srcs=['b'], testonly = 0)");
+  Package pkg=packages.eval("foo",file);
+  Rule fooRule=(Rule)pkg.getTarget("foo");
+  assertTrue(attributes(fooRule).get("testonly",com.google.devtools.build.lib.syntax.Type.BOOLEAN));
+  Rule barRule=(Rule)pkg.getTarget("bar");
+  assertFalse(attributes(barRule).get("testonly",com.google.devtools.build.lib.syntax.Type.BOOLEAN));
+}

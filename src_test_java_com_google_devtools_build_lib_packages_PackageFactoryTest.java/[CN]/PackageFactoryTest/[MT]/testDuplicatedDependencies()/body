@@ -1,0 +1,11 @@
+{
+  events.setFailFast(false);
+  Path buildFile=scratch.file("/has_dupe/BUILD","cc_library(name='dep')","cc_library(name='has_dupe', deps=[':dep', ':dep'])");
+  Package pkg=packages.createPackage("has_dupe",buildFile);
+  events.assertContainsError("Label '//has_dupe:dep' is duplicated in the 'deps' " + "attribute of rule 'has_dupe'");
+  assertTrue(pkg.containsErrors());
+  assertNotNull(pkg.getRule("has_dupe"));
+  assertNotNull(pkg.getRule("dep"));
+  assertTrue(pkg.getRule("has_dupe").containsErrors());
+  assertTrue(pkg.getRule("dep").containsErrors());
+}

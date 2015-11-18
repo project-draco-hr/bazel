@@ -1,0 +1,29 @@
+{
+  Path path=scratch.file("/x/BUILD","cc_library(name='x', srcs=['x.cc'])");
+  scratch.file("/x/x.cc");
+  scratch.file("/x/y.cc");
+  scratch.file("/x/dir/dummy");
+  Package pkg=packages.createPackage("x",path);
+  assertNotNull(pkg.getTarget("x.cc"));
+  try {
+    pkg.getTarget("y.cc");
+    fail();
+  }
+ catch (  NoSuchTargetException e) {
+    assertThat(e).hasMessage("no such target '//x:y.cc': " + "target 'y.cc' not declared in package 'x'; " + "however, a source file of this name exists.  "+ "(Perhaps add 'exports_files([\"y.cc\"])' to x/BUILD?) "+ "defined by /x/BUILD");
+  }
+  try {
+    pkg.getTarget("z.cc");
+    fail();
+  }
+ catch (  NoSuchTargetException e) {
+    assertThat(e).hasMessage("no such target '//x:z.cc': " + "target 'z.cc' not declared in package 'x' defined by /x/BUILD");
+  }
+  try {
+    pkg.getTarget("dir");
+    fail();
+  }
+ catch (  NoSuchTargetException e) {
+    assertThat(e).hasMessage("no such target '//x:dir': target 'dir' not declared in package 'x'; " + "however, a source directory of this name exists.  " + "(Perhaps add 'exports_files([\"dir\"])' to x/BUILD, "+ "or define a filegroup?) defined by /x/BUILD");
+  }
+}

@@ -1,0 +1,11 @@
+{
+  events.setFailFast(false);
+  scratch.dir("/pkg");
+  scratch.dir("/pkg/globs");
+  Path unreadableSubdir=scratch.resolve("/pkg/globs/unreadable_subdir");
+  unreadableSubdir.createDirectory();
+  unreadableSubdir.setReadable(false);
+  Path file=scratch.file("/pkg/BUILD","cc_library(name = 'c', srcs = glob(['globs/**']))");
+  packages.eval("pkg",file);
+  events.assertContainsError("error globbing [globs/**]: Directory is not readable");
+}

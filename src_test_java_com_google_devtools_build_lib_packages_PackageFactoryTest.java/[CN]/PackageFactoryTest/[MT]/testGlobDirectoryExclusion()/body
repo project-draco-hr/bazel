@@ -1,0 +1,13 @@
+{
+  emptyFile("/fruit/data/apple");
+  emptyFile("/fruit/data/pear");
+  emptyFile("/fruit/data/berry/black");
+  emptyFile("/fruit/data/berry/blue");
+  Path file=scratch.file("/fruit/BUILD","cc_library(name = 'yes', srcs = glob(['data/*']))","cc_library(name = 'no',  srcs = glob(['data/*'], exclude_directories=0))");
+  Package pkg=packages.eval("fruit",file);
+  events.assertNoWarningsOrErrors();
+  List<Label> yesFiles=attributes(pkg.getRule("yes")).get("srcs",BuildType.LABEL_LIST);
+  List<Label> noFiles=attributes(pkg.getRule("no")).get("srcs",BuildType.LABEL_LIST);
+  assertThat(Lists.newArrayList(Label.create("fruit","data/apple"),Label.create("fruit","data/pear"))).containsExactlyElementsIn(yesFiles);
+  assertThat(Lists.newArrayList(Label.create("fruit","data/apple"),Label.create("fruit","data/pear"),Label.create("fruit","data/berry"))).containsExactlyElementsIn(noFiles);
+}
