@@ -1,0 +1,8 @@
+{
+  events.setFailFast(false);
+  Path buildFile=scratch.file("namecollide/BUILD","genrule(name = 'hello_world',","srcs = ['ignore_me.txt'],","outs = ['message.txt', 'hello_world'],","cmd  = 'echo \"Hello, world.\" >$(location message.txt)')");
+  Package pkg=packages.createPackage("namecollide",buildFile);
+  Rule genRule=pkg.getRule("hello_world");
+  assertFalse(genRule.containsErrors());
+  events.assertContainsWarning("target 'hello_world' is both a rule and a file; please choose " + "another name for the rule");
+}

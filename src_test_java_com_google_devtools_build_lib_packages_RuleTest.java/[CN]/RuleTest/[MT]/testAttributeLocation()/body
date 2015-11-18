@@ -1,0 +1,11 @@
+{
+  Path buildFile=scratch.file("x/BUILD","cc_binary(name = 'x',","          srcs = ['a', 'b', 'c'],","          defines = ['-Da', '-Db'])");
+  Package pkg=packages.createPackage("x",buildFile);
+  Rule rule=pkg.getRule("x");
+  assertEquals(new LineAndColumn(1,1),rule.getLocation().getStartLineAndColumn());
+  assertEquals(new LineAndColumn(1,1),rule.getAttributeLocation("name").getStartLineAndColumn());
+  assertEquals(new LineAndColumn(2,18),rule.getAttributeLocation("srcs").getStartLineAndColumn());
+  assertEquals(new LineAndColumn(3,21),rule.getAttributeLocation("defines").getStartLineAndColumn());
+  assertEquals(new LineAndColumn(1,1),rule.getAttributeLocation("malloc").getStartLineAndColumn());
+  assertEquals(new LineAndColumn(1,1),rule.getAttributeLocation("no-such-attr").getStartLineAndColumn());
+}
