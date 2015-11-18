@@ -24,7 +24,8 @@ catch (  AbruptExitException e) {
   }
   String query=Joiner.on(' ').join(options.getResidue());
   Set<Setting> settings=queryOptions.toSettings();
-  AbstractBlazeQueryEnvironment<Target> queryEnv=newQueryEnvironment(env,queryOptions.keepGoing,QueryOutputUtils.orderResults(queryOptions,formatter),queryOptions.universeScope,queryOptions.loadingPhaseThreads,settings);
+  boolean streamResults=QueryOutputUtils.shouldStreamResults(queryOptions,formatter);
+  AbstractBlazeQueryEnvironment<Target> queryEnv=newQueryEnvironment(env,queryOptions.keepGoing,!streamResults,queryOptions.universeScope,queryOptions.loadingPhaseThreads,settings);
   QueryExpression expr;
   try {
     expr=QueryExpression.parse(query,queryEnv);
@@ -33,22 +34,33 @@ catch (  AbruptExitException e) {
     env.getReporter().handle(Event.error(null,"Error while parsing '" + query + "': "+ e.getMessage()));
     return ExitCode.COMMAND_LINE_ERROR;
   }
-  QueryEvalResult<Target> result;
-  try {
-    result=queryEnv.evaluateQuery(expr);
+  QueryEvalResult result;
+  PrintStream output=new PrintStream(env.getReporter().getOutErr().getOutputStream());
+  OutputFormatterCallback<Target> callback;
+  if (streamResults) {
+    callback=((StreamedFormatter)formatter).createStreamCallback(queryOptions,output,queryOptions.aspectDeps.createResolver(env.getPackageManager(),env.getReporter()));
   }
- catch (  QueryException|InterruptedException e) {
+ else {
+    callback=new AggregateAllOutputFormatterCallback<>();
+  }
+  try {
+    callback.start();
+    result=queryEnv.evaluateQuery(expr,callback);
+  }
+ catch (  QueryException e) {
     env.getReporter().handle(Event.error(e.getMessage() == null ? e.toString() : e.getMessage()));
     return ExitCode.ANALYSIS_FAILURE;
   }
-  env.getReporter().switchToAnsiAllowingHandler();
-  PrintStream output=new PrintStream(env.getReporter().getOutErr().getOutputStream());
-  try {
-    QueryOutputUtils.output(queryOptions,result,formatter,output,queryOptions.aspectDeps.createResolver(env.getPackageManager(),env.getReporter()));
-  }
- catch (  ClosedByInterruptException|InterruptedException e) {
-    env.getReporter().handle(Event.error("query interrupted"));
-    return ExitCode.INTERRUPTED;
+catch (  InterruptedException e) {
+    IOException ioException=callback.getIoException();
+    if (ioException == null || ioException instanceof ClosedByInterruptException) {
+      env.getReporter().handle(Event.error("query interrupted"));
+      return ExitCode.INTERRUPTED;
+    }
+ else {
+      env.getReporter().handle(Event.error("I/O error: " + e.getMessage()));
+      return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
+    }
   }
 catch (  IOException e) {
     env.getReporter().handle(Event.error("I/O error: " + e.getMessage()));
@@ -56,8 +68,33 @@ catch (  IOException e) {
   }
  finally {
     output.flush();
+    try {
+      callback.close();
+    }
+ catch (    IOException e) {
+      env.getReporter().handle(Event.error("I/O error: " + e.getMessage()));
+      return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
+    }
   }
-  if (result.getResultSet().isEmpty()) {
+  if (!streamResults) {
+    try {
+      Set<Target> targets=((AggregateAllOutputFormatterCallback<Target>)callback).getOutput();
+      QueryOutputUtils.output(queryOptions,result,targets,formatter,output,queryOptions.aspectDeps.createResolver(env.getPackageManager(),env.getReporter()));
+    }
+ catch (    ClosedByInterruptException|InterruptedException e) {
+      env.getReporter().handle(Event.error("query interrupted"));
+      return ExitCode.INTERRUPTED;
+    }
+catch (    IOException e) {
+      env.getReporter().handle(Event.error("I/O error: " + e.getMessage()));
+      return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
+    }
+ finally {
+      output.flush();
+    }
+  }
+  env.getReporter().switchToAnsiAllowingHandler();
+  if (result.isEmpty()) {
     env.getReporter().handle(Event.info("Empty results"));
   }
   return result.getSuccess() ? ExitCode.SUCCESS : ExitCode.PARTIAL_ANALYSIS_FAILURE;

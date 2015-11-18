@@ -1,0 +1,21 @@
+{
+  relativeLocations=options.relativeLocations;
+  this.aspectResolver=aspectResolver;
+  this.includeDefaultValues=options.protoIncludeDefaultValues;
+  setDependencyFilter(options);
+  return new OutputFormatterCallback<Target>(){
+    private Builder queryResult;
+    @Override public void start(){
+      queryResult=Build.QueryResult.newBuilder();
+    }
+    @Override protected void processOutput(    Iterable<Target> partialResult) throws IOException, InterruptedException {
+      for (      Target target : partialResult) {
+        queryResult.addTarget(toTargetProtoBuffer(target));
+      }
+    }
+    @Override public void close() throws IOException {
+      queryResult.build().writeTo(out);
+    }
+  }
+;
+}
