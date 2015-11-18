@@ -1,0 +1,33 @@
+{
+  List<BlazeModule> blazeModules=BlazeRuntime.createModules(modules);
+  Map<String,Object> optionsMap=new HashMap<>();
+  for (  Class<? extends OptionsBase> optionsClass : BlazeCommandUtils.getStartupOptions(blazeModules)) {
+    optionsMap.putAll(Options.getDefaults(optionsClass).asMap());
+  }
+  List<BlazeCommand> blazeCommands=new ArrayList<>();
+  blazeCommands.addAll(BlazeRuntime.getBuiltinCommandList());
+  for (  BlazeModule module : blazeModules) {
+    Iterables.addAll(blazeCommands,module.getCommands());
+  }
+  for (  BlazeCommand command : blazeCommands) {
+    for (    Class<? extends OptionsBase> optionClass : BlazeCommandUtils.getOptions(command.getClass(),blazeModules,ruleClassProvider)) {
+      optionsMap.putAll(Options.getDefaults(optionClass).asMap());
+    }
+  }
+  Matcher anchorMatcher=CODE_FLAG_PATTERN.matcher(documentationSource);
+  String flag;
+  boolean found;
+  while (anchorMatcher.find()) {
+    flag=anchorMatcher.group(1);
+    found=optionsMap.containsKey(flag);
+    if (!found && flag.startsWith("no")) {
+      found=optionsMap.containsKey(flag.substring(2));
+    }
+    if (!found && flag.startsWith("[no]")) {
+      found=optionsMap.containsKey(flag.substring(4));
+    }
+    assertWithMessage("flag '" + flag + "' is not a blaze option (anymore)").that(found).isTrue();
+  }
+  String unclosedTag=DocCheckerUtils.getFirstUnclosedTagAndPrintHelp(documentationSource);
+  assertWithMessage("Unclosed tag found: " + unclosedTag).that(unclosedTag).isNull();
+}
