@@ -1,14 +1,16 @@
 {
+  Map<SkyKey,NodeEntry> batch=graph.getBatch(keys);
   if (visitor != null) {
     for (    SkyKey key : keys) {
-      if (graph.get(key).signalDep(version)) {
+      NodeEntry entry=Preconditions.checkNotNull(batch.get(key),key);
+      if (entry.signalDep(version)) {
         visitor.enqueueEvaluation(key);
       }
     }
   }
  else {
     for (    SkyKey key : keys) {
-      NodeEntry entry=Preconditions.checkNotNull(graph.get(key),key);
+      NodeEntry entry=Preconditions.checkNotNull(batch.get(key),key);
       if (!entry.isDone()) {
         entry.signalDep(version);
       }
