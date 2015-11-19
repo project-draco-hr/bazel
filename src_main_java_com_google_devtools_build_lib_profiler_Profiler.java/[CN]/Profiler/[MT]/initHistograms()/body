@@ -1,0 +1,15 @@
+{
+  for (  ProfilerTask task : ProfilerTask.values()) {
+    if (task.isVfs()) {
+      Map<String,? extends Predicate<? super String>> vfsHeuristics=VfsHeuristics.vfsTypeHeuristics;
+      List<RecorderAndPredicate> recorders=new ArrayList<>(vfsHeuristics.size());
+      for (      Entry<String,? extends Predicate<? super String>> e : vfsHeuristics.entrySet()) {
+        recorders.add(new RecorderAndPredicate(new SingleStatRecorder(task + " " + e.getKey(),HISTOGRAM_BUCKETS),e.getValue()));
+      }
+      tasksHistograms[task.ordinal()]=new PredicateBasedStatRecorder(recorders);
+    }
+ else {
+      tasksHistograms[task.ordinal()]=new SingleStatRecorder(task,HISTOGRAM_BUCKETS);
+    }
+  }
+}

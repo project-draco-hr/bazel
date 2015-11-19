@@ -1,0 +1,14 @@
+{
+synchronized (this) {
+    ImmutableList.Builder<HistogramElement> result=ImmutableList.builder();
+    result.add(new HistogramElement(Range.closedOpen(0,1),histogram[0]));
+    int from=1;
+    for (int i=1; i < histogram.length - 1; i++) {
+      int to=from << 1;
+      result.add(new HistogramElement(Range.closedOpen(from,to),histogram[i]));
+      from=to;
+    }
+    result.add(new HistogramElement(Range.atLeast(from),histogram[histogram.length - 1]));
+    return new MetricData(description,result.build(),count,avg,Math.sqrt(m2 / (double)count),max);
+  }
+}
