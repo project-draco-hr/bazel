@@ -1,0 +1,11 @@
+{
+  super.setUp();
+  scratch.file("a/BUILD","testing_dummy_rule(name='a', outs=['a.out'])");
+  scratch.file("b/BUILD","testing_dummy_rule(name='b', outs=['b.out'])");
+  a=getFilesToBuild(getConfiguredTarget("//a")).iterator().next();
+  b=getFilesToBuild(getConfiguredTarget("//b")).iterator().next();
+  analysisEnvironment=new AnalysisTestUtil.CollectingAnalysisEnvironment(AnalysisTestUtil.STUB_ANALYSIS_ENVIRONMENT);
+  middlemanFactory=new MiddlemanFactory(view.getArtifactFactory(),analysisEnvironment);
+  middle=middlemanFactory.createAggregatingMiddleman(NULL_ACTION_OWNER,"middleman_test",Arrays.asList(a,b),targetConfig.getMiddlemanDirectory());
+  analysisEnvironment.registerWith(getMutableActionGraph());
+}

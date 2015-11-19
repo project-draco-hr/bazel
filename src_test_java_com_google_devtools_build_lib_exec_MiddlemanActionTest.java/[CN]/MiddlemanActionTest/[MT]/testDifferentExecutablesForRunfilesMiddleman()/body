@@ -1,0 +1,14 @@
+{
+  scratch.file("c/BUILD","testing_dummy_rule(name='c', outs=['c.out', 'd.out', 'common.out'])");
+  Artifact c=getFilesToBuild(getConfiguredTarget("//c:c.out")).iterator().next();
+  Artifact d=getFilesToBuild(getConfiguredTarget("//c:d.out")).iterator().next();
+  Artifact common=getFilesToBuild(getConfiguredTarget("//c:common.out")).iterator().next();
+  analysisEnvironment.clear();
+  Artifact middlemanForC=middlemanFactory.createRunfilesMiddleman(NULL_ACTION_OWNER,c,Arrays.asList(c,common),targetConfig.getMiddlemanDirectory());
+  Artifact middlemanForD=middlemanFactory.createRunfilesMiddleman(NULL_ACTION_OWNER,d,Arrays.asList(d,common),targetConfig.getMiddlemanDirectory());
+  analysisEnvironment.registerWith(getMutableActionGraph());
+  MiddlemanAction middlemanActionForC=(MiddlemanAction)getGeneratingAction(middlemanForC);
+  MiddlemanAction middlemanActionForD=(MiddlemanAction)getGeneratingAction(middlemanForD);
+  assertThat(Sets.newHashSet(middlemanActionForD.getInputs())).isNotEqualTo(Sets.newHashSet(middlemanActionForC.getInputs()));
+  assertThat(Sets.newHashSet(middlemanActionForD.getOutputs())).isNotEqualTo(Sets.newHashSet(middlemanActionForC.getOutputs()));
+}

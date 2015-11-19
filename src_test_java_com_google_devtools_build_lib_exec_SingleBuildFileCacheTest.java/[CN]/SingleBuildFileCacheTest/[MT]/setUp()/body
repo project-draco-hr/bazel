@@ -1,0 +1,16 @@
+{
+  calls=new HashMap<>();
+  fs=new InMemoryFileSystem(){
+    @Override protected InputStream getInputStream(    Path path) throws IOException {
+      int c=calls.containsKey(path.toString()) ? calls.get(path.toString()) : 0;
+      c++;
+      calls.put(path.toString(),c);
+      return super.getInputStream(path);
+    }
+  }
+;
+  cache=new SingleBuildFileCache("/",fs);
+  Path root=fs.getRootDirectory();
+  Path file=root.getChild("empty");
+  file.getOutputStream().close();
+}
