@@ -1,0 +1,40 @@
+{
+  initializeTester();
+  SkyKey parent=GraphTester.toSkyKey("parent");
+  SkyKey child=GraphTester.toSkyKey("child");
+  NotComparableStringValue notComparableString=new NotComparableStringValue("not comparable");
+  if (hasEvent) {
+    tester.getOrCreate(child).setConstantValue(notComparableString).setWarning("shmoop");
+  }
+ else {
+    tester.getOrCreate(child).setConstantValue(notComparableString);
+  }
+  final AtomicInteger parentEvaluated=new AtomicInteger();
+  final String val="some val";
+  tester.getOrCreate(parent).addDependency(child).setComputedValue(new ValueComputer(){
+    @Override public SkyValue compute(    Map<SkyKey,SkyValue> deps,    Environment env) throws InterruptedException {
+      parentEvaluated.incrementAndGet();
+      return new StringValue(val);
+    }
+  }
+);
+  assertStringValue(val,tester.evalAndGet(false,parent));
+  assertThat(parentEvaluated.get()).isEqualTo(1);
+  if (hasEvent) {
+    assertContainsEvent(eventCollector,"shmoop");
+  }
+ else {
+    assertEventCount(0,eventCollector);
+  }
+  tester.resetPlayedEvents();
+  tester.getOrCreate(child,true);
+  tester.invalidate();
+  assertStringValue(val,tester.evalAndGet(false,parent));
+  assertThat(parentEvaluated.get()).isEqualTo(2);
+  if (hasEvent) {
+    assertContainsEvent(eventCollector,"shmoop");
+  }
+ else {
+    assertEventCount(0,eventCollector);
+  }
+}
