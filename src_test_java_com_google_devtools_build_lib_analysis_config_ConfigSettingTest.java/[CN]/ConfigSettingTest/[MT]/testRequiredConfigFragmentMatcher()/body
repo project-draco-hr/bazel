@@ -1,0 +1,5 @@
+{
+  scratch.file("test/BUILD","config_setting(","    name = 'match',","    values = {","        'copt': '-Dfoo',","        'javacopt': '-Dbar'","    })");
+  Map<String,Class<? extends BuildConfiguration.Fragment>> map=ImmutableMap.of("copt",CppConfiguration.class,"unused",PythonConfiguration.class,"javacopt",Jvm.class);
+  assertThat(ConfigSettingRule.requiresConfigurationFragments((Rule)getTarget("//test:match"),map)).containsExactly(CppConfiguration.class,Jvm.class);
+}

@@ -1,0 +1,18 @@
+{
+  Map<String,Class<? extends Fragment>> result=new LinkedHashMap<>();
+  Set<Class<? extends FragmentOptions>> visitedOptionsClasses=new HashSet<>();
+  for (  ConfigurationFragmentFactory factory : ruleClassProvider.getConfigurationFragments()) {
+    for (    Class<? extends FragmentOptions> optionsClass : factory.requiredOptions()) {
+      if (visitedOptionsClasses.contains(optionsClass)) {
+        continue;
+      }
+      visitedOptionsClasses.add(optionsClass);
+      for (      Field field : optionsClass.getFields()) {
+        if (field.isAnnotationPresent(Option.class)) {
+          result.put(field.getAnnotation(Option.class).name(),factory.creates());
+        }
+      }
+    }
+  }
+  return result;
+}

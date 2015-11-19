@@ -9,6 +9,10 @@
         builder.getTransitiveConfigFragments().add(fragment.asSubclass(BuildConfiguration.Fragment.class));
       }
     }
+    Rule rule=(Rule)target;
+    if (rule.getRuleClass().equals(ConfigSettingRule.RULE_NAME)) {
+      builder.getTransitiveConfigFragments().addAll(ConfigSettingRule.requiresConfigurationFragments(rule,optionsToFragmentMap));
+    }
     Class<? extends Fragment> universalFragment=ruleClassProvider.getUniversalFragment().asSubclass(BuildConfiguration.Fragment.class);
     if (!builder.getConfigFragmentsFromDeps().contains(universalFragment)) {
       builder.getTransitiveConfigFragments().add(universalFragment);
