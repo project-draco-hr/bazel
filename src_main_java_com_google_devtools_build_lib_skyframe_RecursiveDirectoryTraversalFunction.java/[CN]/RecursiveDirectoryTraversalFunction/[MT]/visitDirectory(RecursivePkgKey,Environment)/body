@@ -22,6 +22,9 @@
     return getEmptyReturn();
   }
   PackageIdentifier packageId=PackageIdentifier.create(recursivePkgKey.getRepository(),rootRelativePath);
+  if (packageId.getRepository().isDefault() && fileValue.isSymlink() && fileValue.getUnresolvedLinkTarget().startsWith(directories.getOutputBase().asFragment())) {
+    return getEmptyReturn();
+  }
   SkyKey pkgLookupKey=PackageLookupValue.key(packageId);
   SkyKey dirListingKey=DirectoryListingValue.key(rootedPath);
   Map<SkyKey,ValueOrException4<NoSuchPackageException,InconsistentFilesystemException,FileSymlinkException,IOException>> pkgLookupAndDirectoryListingDeps=env.getValuesOrThrow(ImmutableList.of(pkgLookupKey,dirListingKey),NoSuchPackageException.class,InconsistentFilesystemException.class,FileSymlinkException.class,IOException.class);
@@ -76,8 +79,8 @@ catch (  FileSymlinkException e) {
 catch (  NoSuchPackageException e) {
     throw new IllegalStateException(e);
   }
-  List<SkyKey> childDeps=Lists.newArrayList();
   boolean followSymlinks=shouldFollowSymlinksWhenTraversing(dirListingValue.getDirents());
+  List<SkyKey> childDeps=new ArrayList<>();
   for (  Dirent dirent : dirListingValue.getDirents()) {
     Type type=dirent.getType();
     if (type != Type.DIRECTORY && (type != Type.SYMLINK || (type == Type.SYMLINK && !followSymlinks))) {
