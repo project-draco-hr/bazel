@@ -13,5 +13,10 @@
   }
   Artifact output=resourceApk.getResourceProguardConfig();
   builder.add(output);
+  if (!optMode.getImplicitProguardDirectives().isEmpty()) {
+    Artifact implicitDirectives=getProguardConfigArtifact(ruleContext,optMode.name().toLowerCase());
+    ruleContext.registerAction(new FileWriteAction(ruleContext.getActionOwner(),implicitDirectives,optMode.getImplicitProguardDirectives(),false));
+    builder.add(implicitDirectives);
+  }
   return builder.build().asList();
 }
