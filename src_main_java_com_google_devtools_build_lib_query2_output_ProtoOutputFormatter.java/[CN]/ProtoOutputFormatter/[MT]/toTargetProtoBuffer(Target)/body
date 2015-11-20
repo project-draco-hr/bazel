@@ -8,7 +8,7 @@
       if (!includeDefaultValues && !rule.isAttributeValueExplicitlySpecified(attr) || !includeAttribute(attr)) {
         continue;
       }
-      rulePb.addAttribute(PackageSerializer.getAttributeProto(attr,PackageSerializer.getAttributeValues(rule,attr),rule.isAttributeValueExplicitlySpecified(attr)));
+      rulePb.addAttribute(AttributeSerializer.getAttributeProto(attr,AttributeSerializer.getAttributeValues(rule,attr),rule.isAttributeValueExplicitlySpecified(attr),false));
     }
     postProcess(rule,rulePb);
     Environment env=rule.getRuleClassObject().getRuleDefinitionEnvironment();
@@ -17,7 +17,7 @@
     }
     ImmutableMultimap<Attribute,Label> aspectsDependencies=aspectResolver.computeAspectDependencies(target);
     for (    Entry<Attribute,Collection<Label>> entry : aspectsDependencies.asMap().entrySet()) {
-      rulePb.addAttribute(PackageSerializer.getAttributeProto(entry.getKey(),Lists.<Object>newArrayList(entry.getValue()),false));
+      rulePb.addAttribute(AttributeSerializer.getAttributeProto(entry.getKey(),Lists.<Object>newArrayList(entry.getValue()),false,false));
     }
     for (    Label label : aspectsDependencies.values()) {
       rulePb.addRuleInput(label.toString());
