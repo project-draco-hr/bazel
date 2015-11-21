@@ -2,9 +2,14 @@
   ImmutableList.Builder<Class<? extends BuildConfiguration.Fragment>> builder=ImmutableList.builder();
   AttributeMap attributes=NonconfigurableAttributeMapper.of(rule);
   for (  String optionName : attributes.get(SETTINGS_ATTRIBUTE,Type.STRING_DICT).keySet()) {
-    Class<? extends BuildConfiguration.Fragment> value=optionsToFragmentMap.get(optionName);
-    if (value != null) {
-      builder.add(value);
+    if (optionName.equals("cpu")) {
+      builder.add(getCppConfiguration(optionsToFragmentMap.values()));
+    }
+ else {
+      Class<? extends BuildConfiguration.Fragment> value=optionsToFragmentMap.get(optionName);
+      if (value != null) {
+        builder.add(value);
+      }
     }
   }
   return builder.build();
