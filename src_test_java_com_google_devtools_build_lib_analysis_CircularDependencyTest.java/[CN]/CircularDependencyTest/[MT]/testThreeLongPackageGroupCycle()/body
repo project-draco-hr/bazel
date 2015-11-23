@@ -1,0 +1,15 @@
+{
+  String expectedEvent="cycle in dependency graph:\n" + "    //cycle:superman\n" + "  * //cycle:rock\n"+ "    //cycle:paper\n"+ "    //cycle:scissors";
+  checkError("cycle","superman",expectedEvent,"# dummy line","package_group(name='paper', includes=['//cycle:scissors'])","package_group(name='rock', includes=['//cycle:paper'])","package_group(name='scissors', includes=['//cycle:rock'])","sh_library(name='superman', visibility=[':rock'])");
+  Event foundEvent=null;
+  for (  Event event : eventCollector) {
+    if (event.getMessage().contains(expectedEvent)) {
+      foundEvent=event;
+      break;
+    }
+  }
+  assertNotNull(foundEvent);
+  Location location=foundEvent.getLocation();
+  assertEquals(3,location.getStartLineAndColumn().getLine());
+  assertEquals("/workspace/cycle/BUILD",location.getPath().toString());
+}
