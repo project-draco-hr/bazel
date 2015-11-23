@@ -1,0 +1,7 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("cycles/BUILD","sh_library(name = 'a', deps = [':b'])","sh_library(name = 'b', deps = [':a'])","notvalidbuildsyntax");
+  update(defaultFlags().with(Flag.KEEP_GOING),"//cycles:a");
+  assertContainsEvent("'notvalidbuildsyntax'");
+  assertContainsEvent("cycle in dependency graph");
+}

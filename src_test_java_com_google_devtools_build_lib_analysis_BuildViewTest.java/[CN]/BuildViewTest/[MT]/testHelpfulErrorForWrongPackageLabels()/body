@@ -1,0 +1,7 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("x/BUILD","cc_library(name='x', srcs=['x.cc'])");
+  scratch.file("y/BUILD","cc_library(name='y', srcs=['y.cc'], deps=['//x:z'])");
+  update(defaultFlags().with(Flag.KEEP_GOING),"//y:y");
+  assertContainsEvent("no such target '//x:z': " + "target 'z' not declared in package 'x' " + "defined by /workspace/x/BUILD and referenced by '//y:y'");
+}

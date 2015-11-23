@@ -1,0 +1,11 @@
+{
+  scratch.file("tests/BUILD","sh_test(name = 'small_test_1',","        srcs = ['small_test_1.sh'],","        data = [':xUnit'],","        size = 'small',","        tags = ['tag1'])","","sh_test(name = 'small_test_2',","        srcs = ['small_test_2.sh'],","        size = 'small',","        tags = ['tag2'])","","","test_suite( name = 'smallTests', tags=['small'])");
+  update("//tests:smallTests");
+  ConfiguredTarget test1=getConfiguredTarget("//tests:small_test_1");
+  ConfiguredTarget test2=getConfiguredTarget("//tests:small_test_2");
+  ConfiguredTarget suite=getConfiguredTarget("//tests:smallTests");
+  assertNoEvents();
+  Collection<ConfiguredTarget> targets=new LinkedHashSet<>(ImmutableList.of(test1,test2,suite));
+  targets=Lists.newArrayList(BuildView.filterTestsByTargets(targets,Sets.newHashSet(test1.getTarget(),suite.getTarget())));
+  assertThat(targets).containsExactlyElementsIn(Sets.newHashSet(test1,suite));
+}

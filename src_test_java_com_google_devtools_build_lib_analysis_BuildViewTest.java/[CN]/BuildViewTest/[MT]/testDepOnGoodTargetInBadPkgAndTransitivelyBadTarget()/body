@@ -1,0 +1,10 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("parent/BUILD","sh_library(name = 'foo',","           srcs = ['//badpkg1:okay-target', '//okaypkg:transitively-bad-target'])");
+  Path badpkg1BuildFile=scratch.file("badpkg1/BUILD","exports_files(['okay-target'])","invalidbuildsyntax");
+  scratch.file("okaypkg/BUILD","sh_library(name = 'transitively-bad-target',","           srcs = ['//badpkg2:bad-target'])");
+  Path badpkg2BuildFile=scratch.file("badpkg2/BUILD","sh_library(name = 'bad-target')","invalidbuildsyntax");
+  update(defaultFlags().with(Flag.KEEP_GOING),"//parent:foo");
+  assertEquals(1,getFrequencyOfErrorsWithLocation(badpkg1BuildFile.asFragment(),eventCollector));
+  assertEquals(1,getFrequencyOfErrorsWithLocation(badpkg2BuildFile.asFragment(),eventCollector));
+}

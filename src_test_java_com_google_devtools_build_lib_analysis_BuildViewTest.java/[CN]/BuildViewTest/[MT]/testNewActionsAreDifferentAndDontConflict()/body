@@ -1,0 +1,11 @@
+{
+  scratch.file("pkg/BUILD","genrule(name='a', ","        cmd='',","        outs=['a.out'])");
+  update("//pkg:a.out");
+  OutputFileConfiguredTarget outputCT=(OutputFileConfiguredTarget)getConfiguredTarget("//pkg:a.out");
+  Artifact outputArtifact=outputCT.getArtifact();
+  Action action=getGeneratingAction(outputArtifact);
+  assertNotNull(action);
+  scratch.overwriteFile("pkg/BUILD","genrule(name='a', ","        cmd='false',","        outs=['a.out'])");
+  update("//pkg:a.out");
+  assertFalse("Actions should not be compatible",Actions.canBeShared(action,getGeneratingAction(outputArtifact)));
+}

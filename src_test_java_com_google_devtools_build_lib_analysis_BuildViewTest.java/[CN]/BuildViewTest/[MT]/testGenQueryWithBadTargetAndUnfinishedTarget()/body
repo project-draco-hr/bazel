@@ -1,0 +1,47 @@
+{
+  scratch.file("foo/BUILD","genquery(name = 'query',","         expression = 'deps(//foo:b) except //foo:nosuchtarget except //foo:z',","         scope = ['//foo:a'])","genquery(name = 'zquery',","         expression = 'deps(//foo:nosuchtarget)',","         scope = ['//foo:a'])","sh_library(name = 'a')","sh_library(name = 'b')","sh_library(name = 'z')");
+  Listener listener=new Listener(){
+    private final CountDownLatch errorDone=new CountDownLatch(1);
+    private final CountDownLatch realQueryStarted=new CountDownLatch(1);
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+      if (!key.functionName().equals(SkyFunctions.TARGET_PATTERN)) {
+        return;
+      }
+      String label=((TargetPatternKey)key.argument()).getPattern();
+      if (label.equals("//foo:nosuchtarget")) {
+        if (type == EventType.SET_VALUE) {
+          errorDone.countDown();
+          TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(realQueryStarted,"//foo:query did not request dep in time");
+        }
+ else         if (type == EventType.ADD_REVERSE_DEP && context.toString().contains("foo:query")) {
+          TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(errorDone,"//foo:nosuchtarget did not evaluate in time");
+        }
+      }
+ else       if ((label.equals("//foo:b") || label.equals("//foo:z")) && type == EventType.CREATE_IF_ABSENT) {
+        realQueryStarted.countDown();
+        TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(errorDone,"//foo:nosuchtarget did not evaluate in time");
+        CountDownLatch waitForInterrupt=new CountDownLatch(1);
+        try {
+          waitForInterrupt.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS);
+          throw new IllegalStateException("node was not interrupted in time");
+        }
+ catch (        InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+  }
+;
+  NotifyingInMemoryGraph graph=new DeterministicInMemoryGraph(listener);
+  setGraphForTesting(graph);
+  reporter.removeHandler(failFastHandler);
+  try {
+    update("//foo:query","//foo:zquery");
+    fail();
+  }
+ catch (  ViewCreationFailedException e) {
+    Truth.assertThat(e.getMessage()).contains("Analysis of target '//foo:query' failed; build aborted");
+  }
+  TrackingAwaiter.INSTANCE.assertNoErrors();
+  graph.assertNoExceptions();
+}

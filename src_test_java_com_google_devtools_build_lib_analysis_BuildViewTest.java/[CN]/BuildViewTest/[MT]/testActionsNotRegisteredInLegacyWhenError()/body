@@ -1,0 +1,16 @@
+{
+  scratch.file("actions_not_registered/BUILD","cc_binary(name = 'foo', srcs = ['foo.cc'])");
+  update("//actions_not_registered:foo");
+  Artifact fooOut=Iterables.getOnlyElement(getConfiguredTarget("//actions_not_registered:foo").getProvider(FileProvider.class).getFilesToBuild());
+  assertNotNull(getActionGraph().getGeneratingAction(fooOut));
+  clearAnalysisResult();
+  scratch.overwriteFile("actions_not_registered/BUILD","cc_binary(name = 'foo', linkshared = 1, srcs = ['foo.cc'])");
+  reporter.removeHandler(failFastHandler);
+  try {
+    update("//actions_not_registered:foo");
+    fail("This build should fail because: 'linkshared' used in non-shared library");
+  }
+ catch (  ViewCreationFailedException e) {
+    assertNull(getActionGraph().getGeneratingAction(fooOut));
+  }
+}

@@ -1,0 +1,10 @@
+{
+  setupDummyRule();
+  String aoutLabel="//pkg:a.out";
+  update(aoutLabel);
+  ConfiguredTarget target=Iterables.getOnlyElement(getAnalysisResult().getTargetsToBuild());
+  assertEquals(aoutLabel,target.getLabel().toString());
+  Artifact aout=Iterables.getOnlyElement(target.getProvider(FileProvider.class).getFilesToBuild());
+  Action action=getGeneratingAction(aout);
+  assertSame(FailAction.class,action.getClass());
+}

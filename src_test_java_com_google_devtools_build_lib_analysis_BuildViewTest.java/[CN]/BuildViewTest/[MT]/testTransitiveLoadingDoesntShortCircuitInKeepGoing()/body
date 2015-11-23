@@ -1,0 +1,9 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("parent/BUILD","sh_library(name = 'a', deps = ['//child:b'])","parentisbad");
+  scratch.file("child/BUILD","sh_library(name = 'b')","childisbad");
+  update(defaultFlags().with(Flag.KEEP_GOING),"//parent:a");
+  assertContainsEventWithFrequency("parentisbad",1);
+  assertContainsEventWithFrequency("childisbad",1);
+  assertContainsEventWithFrequency("and referenced by '//parent:a'",1);
+}

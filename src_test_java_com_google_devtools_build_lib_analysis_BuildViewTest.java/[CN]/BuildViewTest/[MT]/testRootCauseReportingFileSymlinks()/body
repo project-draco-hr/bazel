@@ -1,0 +1,17 @@
+{
+  scratch.file("gp/BUILD","sh_library(name = 'gp', deps = ['//p'])");
+  scratch.file("p/BUILD","sh_library(name = 'p', deps = ['//c'])");
+  scratch.file("c/BUILD","sh_library(name = 'c', deps = [':c1', ':c2'])","sh_library(name = 'c1', deps = ['//cycles1'])","sh_library(name = 'c2', deps = ['//cycles2'])");
+  Path cycles1BuildFilePath=scratch.file("cycles1/BUILD","sh_library(name = 'cycles1', srcs = glob(['*.sh']))");
+  Path cycles2BuildFilePath=scratch.file("cycles2/BUILD","sh_library(name = 'cycles2', srcs = glob(['*.sh']))");
+  cycles1BuildFilePath.getParentDirectory().getRelative("cycles1.sh").createSymbolicLink(new PathFragment("cycles1.sh"));
+  cycles2BuildFilePath.getParentDirectory().getRelative("cycles2.sh").createSymbolicLink(new PathFragment("cycles2.sh"));
+  reporter.removeHandler(failFastHandler);
+  EventBus eventBus=new EventBus();
+  LoadingFailureRecorder recorder=new LoadingFailureRecorder();
+  eventBus.register(recorder);
+  update(eventBus,defaultFlags().with(Flag.KEEP_GOING),"//gp");
+  assertThat(recorder.events).hasSize(2);
+  assertTrue(recorder.events.toString(),recorder.events.contains(Pair.of(Label.parseAbsolute("//gp"),Label.parseAbsolute("//cycles1"))));
+  assertTrue(recorder.events.toString(),recorder.events.contains(Pair.of(Label.parseAbsolute("//gp"),Label.parseAbsolute("//cycles2"))));
+}

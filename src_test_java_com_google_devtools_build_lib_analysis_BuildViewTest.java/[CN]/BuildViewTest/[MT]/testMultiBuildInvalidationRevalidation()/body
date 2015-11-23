@@ -1,0 +1,11 @@
+{
+  scratch.file("java/a/A.java","bla1");
+  scratch.file("java/a/C.java","bla2");
+  scratch.file("java/a/BUILD","java_test(name = 'A',","          srcs = glob(['A*.java']))","java_test(name = 'B',","          srcs = ['B.java'])");
+  update("//java/a:A");
+  ConfiguredTarget ct=getConfiguredTarget("//java/a:A");
+  scratch.deleteFile("java/a/C.java");
+  update("//java/a:B");
+  update("//java/a:A");
+  assertNotNull(getGeneratingAction(getBinArtifact("A_deploy.jar",ct)));
+}

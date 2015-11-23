@@ -1,0 +1,14 @@
+{
+  scratch.file("gp/BUILD","sh_library(name = 'gp', deps = ['//p:p'])");
+  scratch.file("p/BUILD","sh_library(name = 'p', deps = ['//c1:not', '//c2:not'])");
+  scratch.file("c1/BUILD");
+  scratch.file("c2/BUILD");
+  reporter.removeHandler(failFastHandler);
+  EventBus eventBus=new EventBus();
+  LoadingFailureRecorder recorder=new LoadingFailureRecorder();
+  eventBus.register(recorder);
+  update(eventBus,defaultFlags().with(Flag.KEEP_GOING),"//gp");
+  assertThat(recorder.events).hasSize(2);
+  assertTrue(recorder.events.toString(),recorder.events.contains(Pair.of(Label.parseAbsolute("//gp"),Label.parseAbsolute("//c1:not"))));
+  assertThat(recorder.events).contains(Pair.of(Label.parseAbsolute("//gp"),Label.parseAbsolute("//c2:not")));
+}

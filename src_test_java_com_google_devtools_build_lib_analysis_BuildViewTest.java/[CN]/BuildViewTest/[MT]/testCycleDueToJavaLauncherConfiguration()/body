@@ -1,0 +1,15 @@
+{
+  scratch.file("foo/BUILD","java_binary(name = 'java', srcs = ['DoesntMatter.java'])","cc_binary(name = 'cpp', data = [':java'])");
+  update(defaultFlags(),"//foo:java","//foo:cpp");
+  useConfiguration("--java_launcher=//foo:cpp");
+  reporter.removeHandler(failFastHandler);
+  try {
+    update(defaultFlags(),"//foo:java","//foo:cpp");
+    fail();
+  }
+ catch (  ViewCreationFailedException expected) {
+    Truth.assertThat(expected.getMessage()).matches("Analysis of target '//foo:(java|cpp)' failed; build aborted.*");
+  }
+  assertContainsEvent("cycle in dependency graph");
+  assertContainsEvent("This cycle occurred because of a configuration option");
+}

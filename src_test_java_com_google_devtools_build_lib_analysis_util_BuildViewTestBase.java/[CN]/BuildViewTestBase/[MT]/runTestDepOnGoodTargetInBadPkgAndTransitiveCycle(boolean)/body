@@ -1,0 +1,17 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("parent/BUILD","sh_library(name = 'foo',","           srcs = ['//badpkg:okay-target', '//okaypkg:transitively-a-cycle'])");
+  Path symlinkcycleBuildFile=scratch.file("symlinkcycle/BUILD","sh_library(name = 'cycle', srcs = glob(['*.sh']))");
+  Path dirPath=symlinkcycleBuildFile.getParentDirectory();
+  dirPath.getRelative("foo.sh").createSymbolicLink(new PathFragment("foo.sh"));
+  scratch.file("okaypkg/BUILD","sh_library(name = 'transitively-a-cycle',","           srcs = ['//symlinkcycle:cycle'])");
+  Path badpkgBuildFile=scratch.file("badpkg/BUILD","exports_files(['okay-target'])","invalidbuildsyntax");
+  if (incremental) {
+    update(defaultFlags().with(Flag.KEEP_GOING),"//okaypkg:transitively-a-cycle");
+    assertContainsEvent("circular symlinks detected");
+    eventCollector.clear();
+  }
+  update(defaultFlags().with(Flag.KEEP_GOING),"//parent:foo");
+  assertEquals(1,getFrequencyOfErrorsWithLocation(badpkgBuildFile.asFragment(),eventCollector));
+  assertContainsEvent("circular symlinks detected");
+}

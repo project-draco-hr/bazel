@@ -1,0 +1,7 @@
+{
+  scratch.file("foo/BUILD","sh_library(name = 'top1', srcs = ['top1.sh'], deps = [':rec1'])","sh_library(name = 'top2', srcs = ['top2.sh'], deps = [':rec1'])","sh_library(name = 'rec1', srcs = ['rec1.sh'], deps = [':rec2'])","sh_library(name = 'rec2', srcs = ['rec2.sh'], deps = [':rec1'])");
+  reporter.removeHandler(failFastHandler);
+  update(defaultFlags().with(Flag.KEEP_GOING),"//foo:top1","//foo:top2");
+  assertContainsEvent("in sh_library rule //foo:rec1: cycle in dependency graph:\n");
+  assertContainsEvent("in sh_library rule //foo:top");
+}

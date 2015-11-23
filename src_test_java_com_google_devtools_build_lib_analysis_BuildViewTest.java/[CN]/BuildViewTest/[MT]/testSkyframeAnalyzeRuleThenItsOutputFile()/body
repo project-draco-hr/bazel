@@ -1,0 +1,14 @@
+{
+  scratch.file("pkg/BUILD","testing_dummy_rule(name='foo', ","                   srcs=['a.src'],","                   outs=['a.out'])");
+  scratch.file("pkg2/BUILD","testing_dummy_rule(name='foo', ","                   srcs=['a.src'],","                   outs=['a.out'])");
+  String aoutLabel="//pkg:a.out";
+  update("//pkg2:foo");
+  update("//pkg:foo");
+  scratch.overwriteFile("pkg2/BUILD","testing_dummy_rule(name='foo', ","                   srcs=['a.src'],","                   outs=['a.out'])","# Comment");
+  update("//pkg:a.out");
+  ConfiguredTarget target=Iterables.getOnlyElement(getAnalysisResult().getTargetsToBuild());
+  assertEquals(aoutLabel,target.getLabel().toString());
+  Artifact aout=Iterables.getOnlyElement(target.getProvider(FileProvider.class).getFilesToBuild());
+  Action action=getGeneratingAction(aout);
+  assertSame(FailAction.class,action.getClass());
+}
