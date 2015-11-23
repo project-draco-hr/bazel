@@ -1,0 +1,28 @@
+{
+  SkyKey aKey=GraphTester.toSkyKey("a");
+  final SkyKey bKey=GraphTester.toSkyKey("b");
+  SkyKey cKey=GraphTester.toSkyKey("c");
+  final SkyKey leafKey=GraphTester.toSkyKey("leaf");
+  tester.getOrCreate(aKey).setBuilder(new SkyFunction(){
+    @Nullable @Override public SkyValue compute(    SkyKey skyKey,    Environment env){
+      env.getValues(ImmutableList.of(leafKey,bKey));
+      return null;
+    }
+    @Nullable @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  tester.getOrCreate(bKey).addDependency(cKey);
+  tester.getOrCreate(cKey).addDependency(aKey).addDependency(bKey);
+  tester.set(leafKey,new StringValue("leafy"));
+  EvaluationResult<StringValue> result=tester.eval(true,aKey);
+  assertEquals(null,result.get(aKey));
+  assertThat(result.getError(aKey).getCycleInfo()).containsExactly(new CycleInfo(ImmutableList.of(aKey,bKey,cKey)),new CycleInfo(ImmutableList.of(aKey),ImmutableList.of(bKey,cKey)));
+  tester.set(leafKey,new StringValue("crunchy"));
+  tester.getOrCreate(cKey,true);
+  tester.invalidate();
+  EvaluationResult<StringValue> result2=tester.eval(true,aKey);
+  assertEquals(null,result2.get(aKey));
+  assertThat(result2.getError(aKey).getCycleInfo()).containsExactly(new CycleInfo(ImmutableList.of(aKey,bKey,cKey)),new CycleInfo(ImmutableList.of(aKey),ImmutableList.of(bKey,cKey)));
+}
