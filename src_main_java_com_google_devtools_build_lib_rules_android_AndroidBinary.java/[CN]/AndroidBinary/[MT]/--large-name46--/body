@@ -3,6 +3,9 @@
   ProguardOutput proguardOutput=applyProguard(ruleContext,androidCommon,deployJar,filesBuilder,proguardSpecs,proguardMapping);
   Artifact jarToDex=proguardOutput.outputJar;
   DexingOutput dexingOutput=shouldDexWithJack(ruleContext) ? dexWithJack(ruleContext,androidCommon,proguardSpecs) : dex(ruleContext,getMultidexMode(ruleContext),ruleContext.getTokenizedStringListAttr("dexopts"),deployJar,jarToDex,androidCommon,resourceClasses);
+  if (dexingOutput == null) {
+    return null;
+  }
   Artifact unsignedApk=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_UNSIGNED_APK);
   Artifact signedApk=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_SIGNED_APK);
   ApkActionBuilder apkBuilder=new ApkActionBuilder(ruleContext,androidSemantics).classesDex(dexingOutput.classesDexZip).resourceApk(resourceApk.getArtifact()).javaResourceZip(dexingOutput.javaResourceJar).nativeLibs(nativeLibs);
