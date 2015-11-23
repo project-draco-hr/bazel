@@ -1,0 +1,14 @@
+{
+  scratch.file("java/a/BUILD","java_test(name = 'A',","          srcs = ['A.java'],","          deps = ['//java/b'])");
+  scratch.file("java/b/BUILD","java_library(name = 'b',","          srcs = ['B.java'],","          deps = ['//java/c'])");
+  scratch.file("java/c/BUILD","java_library(name = 'c',","          srcs = ['C.java'],","          deps = ['//java/b'])");
+  reporter.removeHandler(failFastHandler);
+  update(defaultFlags().with(Flag.KEEP_GOING),"//java/a:A");
+  ConfiguredTarget old=getConfiguredTarget("//java/a:A");
+  scratch.overwriteFile("java/b/BUILD","java_library(name = 'b',","             srcs = ['B.java'])");
+  eventCollector.clear();
+  reporter.addHandler(failFastHandler);
+  update("//java/a:A");
+  ConfiguredTarget current=getConfiguredTarget("//java/a:A");
+  assertNotSame(old,current);
+}

@@ -1,0 +1,15 @@
+{
+  scratch.file("java/a/BUILD","java_library(name = 'x', srcs = ['A.java'], deps = ['z', 'w'])","java_library(name = 'y', srcs = ['B.java'], deps = ['z', 'w'])","java_library(name = 'z', srcs = ['C.java'])","java_library(name = 'w', srcs = ['D.java'])");
+  update("//java/a:x");
+  Set<?> oldAnalyzedTargets=getSkyframeEvaluatedTargetKeys();
+  assertTrue(oldAnalyzedTargets.size() >= 2);
+  assertEquals(1,countObjectsPartiallyMatchingRegex(oldAnalyzedTargets,"//java/a:x"));
+  assertEquals(0,countObjectsPartiallyMatchingRegex(oldAnalyzedTargets,"//java/a:y"));
+  assertEquals(1,countObjectsPartiallyMatchingRegex(oldAnalyzedTargets,"//java/a:z"));
+  assertEquals(1,countObjectsPartiallyMatchingRegex(oldAnalyzedTargets,"//java/a:w"));
+  update("//java/a:x","//java/a:y","//java/a:z");
+  Set<?> newAnalyzedTargets=getSkyframeEvaluatedTargetKeys();
+  assertThat(newAnalyzedTargets).hasSize(2);
+  assertEquals(1,countObjectsPartiallyMatchingRegex(newAnalyzedTargets,"//java/a:B.java"));
+  assertEquals(1,countObjectsPartiallyMatchingRegex(newAnalyzedTargets,"//java/a:y"));
+}

@@ -1,0 +1,10 @@
+{
+  scratch.file("java/a/BUILD","java_test(name = 'A',","          srcs = ['A.java'],","          deps = ['//java/b'])");
+  scratch.file("java/b/BUILD","java_library(name = 'b',","             srcs = ['B.java'])");
+  update("//java/a:A");
+  ConfiguredTarget old=getConfiguredTarget("//java/a:A");
+  scratch.overwriteFile("java/b/BUILD","java_library(name = 'b',","             srcs = ['C.java'])");
+  update("//java/a:A");
+  ConfiguredTarget current=getConfiguredTarget("//java/a:A");
+  assertNotSame(old,current);
+}

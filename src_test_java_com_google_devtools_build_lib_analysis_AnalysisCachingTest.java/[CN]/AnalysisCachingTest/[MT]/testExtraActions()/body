@@ -1,0 +1,8 @@
+{
+  scratch.file("java/com/google/a/BUILD","java_library(name='a', srcs=['A.java'])");
+  scratch.file("java/com/google/b/BUILD","java_library(name='b', srcs=['B.java'])");
+  scratch.file("extra/BUILD","extra_action(name = 'extra',","             out_templates = ['$(OWNER_LABEL_DIGEST)_$(ACTION_ID).tst'],","             cmd = '')","action_listener(name = 'listener',","                mnemonics = ['Javac'],","                extra_actions = [':extra'])");
+  useConfiguration("--experimental_action_listener=//extra:listener");
+  update("//java/com/google/a:a");
+  update("//java/com/google/b:b");
+}

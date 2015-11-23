@@ -1,0 +1,16 @@
+{
+  scratch.file("java/a/BUILD","java_test(name = 'A',","          srcs = ['A.java'])");
+  scratch.file("java/b/BUILD","java_test(name = 'B',","          srcs = ['B.java'])");
+  String aTarget="//java/a:A";
+  update(aTarget);
+  ConfiguredTarget oldAConfTarget=getConfiguredTarget(aTarget);
+  String bTarget="//java/b:B";
+  update(bTarget);
+  ConfiguredTarget oldBConfTarget=getConfiguredTarget(bTarget);
+  scratch.overwriteFile("java/b/BUILD","java_test(name = 'B',","          srcs = ['C.java'])");
+  update(aTarget);
+  ConfiguredTarget newAConfTarget=getConfiguredTarget(aTarget);
+  ConfiguredTarget newBConfTarget=getConfiguredTarget(bTarget);
+  assertSame(oldAConfTarget,newAConfTarget);
+  assertNotSame(oldBConfTarget,newBConfTarget);
+}

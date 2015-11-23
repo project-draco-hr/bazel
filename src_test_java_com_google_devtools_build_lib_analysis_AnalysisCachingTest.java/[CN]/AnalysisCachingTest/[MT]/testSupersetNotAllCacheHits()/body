@@ -1,0 +1,13 @@
+{
+  scratch.file("java/a/BUILD","java_library(name = 'x', srcs = ['A.java'], deps = ['y'])","java_library(name = 'y', srcs = ['B.java'], deps = ['z'])","java_library(name = 'z', srcs = ['C.java'])");
+  update("//java/a:y");
+  Set<?> oldAnalyzedTargets=getSkyframeEvaluatedTargetKeys();
+  assertTrue(oldAnalyzedTargets.size() >= 3);
+  assertEquals(0,countObjectsPartiallyMatchingRegex(oldAnalyzedTargets,"//java/a:x"));
+  assertEquals(1,countObjectsPartiallyMatchingRegex(oldAnalyzedTargets,"//java/a:y"));
+  update("//java/a:x");
+  Set<?> newAnalyzedTargets=getSkyframeEvaluatedTargetKeys();
+  assertTrue(newAnalyzedTargets.size() >= 1);
+  assertEquals(1,countObjectsPartiallyMatchingRegex(newAnalyzedTargets,"//java/a:x"));
+  assertEquals(0,countObjectsPartiallyMatchingRegex(newAnalyzedTargets,"//java/a:y"));
+}
