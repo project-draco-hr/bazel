@@ -1,14 +1,14 @@
 {
   Preconditions.checkState(invalidationType != InvalidationType.DELETED,keys);
   final boolean isChanged=(invalidationType == InvalidationType.CHANGED);
-  Builder<Pair<SkyKey,InvalidationType>> invalidationPairsBuilder=ImmutableList.builder();
+  int size=Iterables.size(keys);
+  ArrayList<Pair<SkyKey,InvalidationType>> invalidationPairs=new ArrayList<>(size);
   for (  SkyKey key : keys) {
     Pair<SkyKey,InvalidationType> invalidationPair=Pair.of(key,invalidationType);
     if (visited.add(invalidationPair)) {
-      invalidationPairsBuilder.add(invalidationPair);
+      invalidationPairs.add(invalidationPair);
     }
   }
-  ImmutableList<Pair<SkyKey,InvalidationType>> invalidationPairs=invalidationPairsBuilder.build();
   List<SkyKey> keysToGet=Lists.transform(invalidationPairs,Pair.<SkyKey,InvalidationType>firstFunction());
   pendingVisitations.addAll(invalidationPairs);
   final Map<SkyKey,? extends ThinNodeEntry> entries=graph.getBatch(keysToGet);
