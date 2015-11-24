@@ -7,7 +7,7 @@
   if (optMode == JavaOptimizationMode.LEGACY && proguardSpecs.isEmpty()) {
     return ImmutableList.of();
   }
-  ImmutableSortedSet.Builder<Artifact> builder=ImmutableSortedSet.<Artifact>orderedBy(Artifact.EXEC_PATH_COMPARATOR).addAll(proguardSpecs);
+  ImmutableSortedSet.Builder<Artifact> builder=ImmutableSortedSet.orderedBy(Artifact.EXEC_PATH_COMPARATOR).addAll(proguardSpecs).addAll(ruleContext.getPrerequisiteArtifacts(":extra_proguard_specs",Mode.TARGET).list());
   for (  ProguardSpecProvider dep : ruleContext.getPrerequisites("deps",Mode.TARGET,ProguardSpecProvider.class)) {
     builder.addAll(dep.getTransitiveProguardSpecs());
   }
