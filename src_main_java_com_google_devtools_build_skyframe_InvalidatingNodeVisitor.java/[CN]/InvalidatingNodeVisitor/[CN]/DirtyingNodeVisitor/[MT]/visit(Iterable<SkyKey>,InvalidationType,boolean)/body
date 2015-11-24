@@ -10,7 +10,9 @@
     }
   }
   List<SkyKey> keysToGet=Lists.transform(invalidationPairs,Pair.<SkyKey,InvalidationType>firstFunction());
-  pendingVisitations.addAll(invalidationPairs);
+  if (supportInterruptions) {
+    pendingVisitations.addAll(invalidationPairs);
+  }
   final Map<SkyKey,? extends ThinNodeEntry> entries=graph.getBatch(keysToGet);
   for (  final Pair<SkyKey,InvalidationType> invalidationPair : invalidationPairs) {
     executor.execute(new Runnable(){
@@ -19,22 +21,30 @@
         ThinNodeEntry entry=entries.get(key);
         if (entry == null) {
           Preconditions.checkState(!mustExist,"%s does not exist in the graph but was enqueued for dirtying by another " + "node",key);
-          pendingVisitations.remove(invalidationPair);
+          if (supportInterruptions) {
+            pendingVisitations.remove(invalidationPair);
+          }
           return;
         }
         if (entry.isChanged() || (!isChanged && entry.isDirty())) {
-          pendingVisitations.remove(invalidationPair);
+          if (supportInterruptions) {
+            pendingVisitations.remove(invalidationPair);
+          }
           return;
         }
         MarkedDirtyResult markedDirtyResult=entry.markDirty(isChanged);
         if (markedDirtyResult == null) {
-          pendingVisitations.remove(invalidationPair);
+          if (supportInterruptions) {
+            pendingVisitations.remove(invalidationPair);
+          }
           return;
         }
         visit(markedDirtyResult.getReverseDepsUnsafe(),InvalidationType.DIRTIED,MUST_EXIST);
         informInvalidationReceiver(key,EvaluationProgressReceiver.InvalidationState.DIRTY);
         dirtyKeyTracker.dirty(key);
-        pendingVisitations.remove(invalidationPair);
+        if (supportInterruptions) {
+          pendingVisitations.remove(invalidationPair);
+        }
       }
     }
 );
