@@ -1,0 +1,12 @@
+def GetChecksumsFromFile(filename, hash_fns=None):
+    "Computes MD5 and/or other checksums of a file.\n\n  Args:\n    filename: Name of the file.\n    hash_fns: Mapping of hash functions.\n              Default is {'md5': hashlib.md5}\n\n  Returns:\n    Mapping of hash names to hexdigest strings.\n    { <hashname>: <hexdigest>, ... }\n  "
+    hash_fns = (hash_fns or {'md5': hashlib.md5, })
+    checksums = {k: fn() for (k, fn) in hash_fns.items()}
+    with open(filename) as file_handle:
+        while True:
+            buf = file_handle.read(1048576)
+            if (not buf):
+                break
+            for hashfn in checksums.values():
+                hashfn.update(buf)
+    return {k: fn.hexdigest() for (k, fn) in checksums.items()}
