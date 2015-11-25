@@ -1,0 +1,33 @@
+{
+  ran=true;
+  Thread thread=null;
+  boolean addedJob=false;
+  try {
+    thread=Thread.currentThread();
+    addJob(thread);
+    addedJob=true;
+    if (blockNewActions()) {
+      return;
+    }
+    originalRunnable.run();
+  }
+ catch (  Throwable e) {
+synchronized (AbstractQueueVisitor.this) {
+      if (unhandled == null) {
+        unhandled=e;
+        exceptionLatch.countDown();
+      }
+      markToStopAllJobsIfNeeded(e);
+    }
+  }
+ finally {
+    try {
+      if (thread != null && addedJob) {
+        removeJob(thread);
+      }
+    }
+  finally {
+      decrementRemainingTasks();
+    }
+  }
+}

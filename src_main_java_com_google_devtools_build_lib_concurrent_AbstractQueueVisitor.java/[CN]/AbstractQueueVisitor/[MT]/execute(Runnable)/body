@@ -1,13 +1,13 @@
 {
   if (concurrent) {
-    AtomicBoolean ranTask=new AtomicBoolean(false);
+    WrappedRunnable wrappedRunnable=new WrappedRunnable(runnable);
     try {
       long tasks=remainingTasks.incrementAndGet();
       Preconditions.checkState(tasks > 0,"Incrementing remaining tasks counter resulted in impossible non-positive number.");
-      executeRunnable(wrapRunnable(runnable,ranTask));
+      executeRunnable(wrappedRunnable);
     }
  catch (    Throwable e) {
-      if (!ranTask.get()) {
+      if (!wrappedRunnable.ran) {
         recordError(e);
       }
     }
