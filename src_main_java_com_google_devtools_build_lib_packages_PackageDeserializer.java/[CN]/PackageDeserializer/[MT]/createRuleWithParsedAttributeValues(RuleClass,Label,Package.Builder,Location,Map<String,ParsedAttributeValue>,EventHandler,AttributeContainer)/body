@@ -1,0 +1,21 @@
+{
+  Rule rule=pkgBuilder.newRuleWithLabelAndAttrContainer(label,ruleClass,ruleLocation,attributeContainer);
+  rule.checkValidityPredicate(eventHandler);
+  for (  Attribute attribute : rule.getRuleClassObject().getAttributes()) {
+    ParsedAttributeValue value=attributeValues.get(attribute.getName());
+    if (attribute.isMandatory()) {
+      Preconditions.checkState(value != null);
+    }
+    if (value == null) {
+      continue;
+    }
+    rule.setAttributeValue(attribute,value.value,value.explicitlySpecified);
+    ruleClass.checkAllowedValues(rule,attribute,eventHandler);
+    if (attribute.getName().equals("visibility")) {
+      rule.setVisibility(PackageFactory.getVisibility((List<Label>)value.value));
+    }
+  }
+  rule.populateOutputFiles(eventHandler,pkgBuilder);
+  Preconditions.checkState(!rule.containsErrors());
+  return rule;
+}

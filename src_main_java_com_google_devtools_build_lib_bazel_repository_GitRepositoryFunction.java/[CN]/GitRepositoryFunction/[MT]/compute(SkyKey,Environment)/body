@@ -5,6 +5,9 @@
     return null;
   }
   Path outputDirectory=getExternalRepositoryDirectory().getRelative(rule.getName());
+  if (isFilesystemUpToDate(rule,NO_RULE_SPECIFIC_DATA)) {
+    return RepositoryValue.create(outputDirectory);
+  }
   createDirectory(outputDirectory,rule);
   try {
     HttpDownloadValue value=(HttpDownloadValue)env.getValueOrThrow(GitCloneFunction.key(rule,outputDirectory),IOException.class);
@@ -15,5 +18,6 @@
  catch (  IOException e) {
     throw new RepositoryFunctionException(e,Transience.TRANSIENT);
   }
+  writeMarkerFile(rule,NO_RULE_SPECIFIC_DATA);
   return RepositoryValue.create(outputDirectory);
 }

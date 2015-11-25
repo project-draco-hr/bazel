@@ -1,0 +1,16 @@
+{
+  if (rule.getRuleClassObject().isSkylark()) {
+    builder.setIsSkylark(true);
+    Collection<OutputFile> outputsFromAttributes=rule.getOutputFileMap().values();
+    Set<Label> outputLabelsFromAttributes=Sets.newHashSetWithExpectedSize(outputsFromAttributes.size());
+    for (    OutputFile outputFile : outputsFromAttributes) {
+      outputLabelsFromAttributes.add(outputFile.getLabel());
+    }
+    for (    OutputFile outputFile : rule.getOutputFiles()) {
+      Label label=outputFile.getLabel();
+      if (!outputLabelsFromAttributes.contains(label)) {
+        builder.addRuleOutput(label.getName());
+      }
+    }
+  }
+}

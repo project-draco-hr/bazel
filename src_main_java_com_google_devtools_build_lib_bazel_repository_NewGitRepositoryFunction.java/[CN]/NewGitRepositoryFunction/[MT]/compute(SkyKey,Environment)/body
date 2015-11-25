@@ -5,6 +5,13 @@
     return null;
   }
   Path outputDirectory=getExternalRepositoryDirectory().getRelative(rule.getName());
+  if (isFilesystemUpToDate(rule,NO_RULE_SPECIFIC_DATA)) {
+    FileValue buildFileValue=getBuildFileValue(rule,env);
+    if (env.valuesMissing()) {
+      return null;
+    }
+    return RepositoryValue.createNew(outputDirectory,buildFileValue);
+  }
   createDirectory(outputDirectory,rule);
   try {
     HttpDownloadValue value=(HttpDownloadValue)env.getValueOrThrow(GitCloneFunction.key(rule,outputDirectory),IOException.class);
@@ -16,5 +23,5 @@
     throw new RepositoryFunctionException(e,Transience.TRANSIENT);
   }
   createWorkspaceFile(outputDirectory,rule);
-  return symlinkBuildFile(rule,getWorkspace(),outputDirectory,env);
+  return symlinkBuildFile(rule,outputDirectory,env);
 }

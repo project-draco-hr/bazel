@@ -1,0 +1,13 @@
+{
+  Build.SourceFile.Builder builder=Build.SourceFile.newBuilder();
+  builder.setName(inputFile.getLabel().getName());
+  if (inputFile.isVisibilitySpecified()) {
+    for (    Label visibilityLabel : inputFile.getVisibility().getDeclaredLabels()) {
+      builder.addVisibilityLabel(visibilityLabel.toString());
+    }
+  }
+  if (inputFile.isLicenseSpecified()) {
+    builder.setLicense(serializeLicense(inputFile.getLicense()));
+  }
+  return Build.Target.newBuilder().setType(Build.Target.Discriminator.SOURCE_FILE).setSourceFile(builder.build()).build();
+}

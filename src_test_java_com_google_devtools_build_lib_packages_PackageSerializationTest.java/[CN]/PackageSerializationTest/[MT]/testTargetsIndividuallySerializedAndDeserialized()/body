@@ -1,0 +1,15 @@
+{
+  scratchPackage("empty","sh_library(name='noop')");
+  Package pkg=scratchPackage("food","sh_library(name='pork',","           srcs=['pig.sh'])","sh_library(name='salmon',","           srcs=['river.sh'])","package_group(name='self',","           packages=['//food'])");
+  CodedInputStream codedIn=codedInputFromPackage(pkg);
+  readPackage(codedIn);
+  Multimap<Build.Target.Discriminator,Build.Target> targets=readTargets(codedIn);
+  assertThat(targets).hasSize(6);
+  assertThat(targets.get(Build.Target.Discriminator.SOURCE_FILE)).hasSize(3);
+  assertThat(targets.get(Build.Target.Discriminator.RULE)).hasSize(2);
+  assertThat(targets.get(Build.Target.Discriminator.PACKAGE_GROUP)).hasSize(1);
+  Package deserialized=deserializer.deserialize(codedInputFromPackage(pkg));
+  assertThat(deserialized.getTargets(InputFile.class)).hasSize(3);
+  assertThat(deserialized.getTargets(Rule.class)).hasSize(2);
+  assertThat(deserialized.getTargets(PackageGroup.class)).hasSize(1);
+}

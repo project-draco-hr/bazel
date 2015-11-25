@@ -1,0 +1,15 @@
+{
+  List<Build.MakeVar> result=new ArrayList<>();
+  for (  Map.Entry<String,ImmutableList<Binding>> var : makeEnv.getBindings().entrySet()) {
+    Build.MakeVar.Builder varPb=Build.MakeVar.newBuilder();
+    varPb.setName(var.getKey());
+    for (    Binding binding : var.getValue()) {
+      Build.MakeVarBinding.Builder bindingPb=Build.MakeVarBinding.newBuilder();
+      bindingPb.setValue(binding.getValue());
+      bindingPb.setPlatformSetRegexp(binding.getPlatformSetRegexp());
+      varPb.addBinding(bindingPb);
+    }
+    result.add(varPb.build());
+  }
+  return result;
+}

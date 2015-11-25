@@ -1,0 +1,15 @@
+{
+  Build.Package packagePb=readPackageProto(codedIn);
+  PackageIdentifier packageId;
+  try {
+    packageId=PackageIdentifier.create(packagePb.getRepository(),new PathFragment(packagePb.getName()));
+  }
+ catch (  LabelSyntaxException e) {
+    throw new PackageDeserializationException(e);
+  }
+  Package.Builder builder=new Package.Builder(packageId,null);
+  StoredEventHandler eventHandler=new StoredEventHandler();
+  deserializeInternal(packageId,packagePb,eventHandler,builder,codedIn);
+  builder.addEvents(eventHandler.getEvents());
+  return builder.build();
+}

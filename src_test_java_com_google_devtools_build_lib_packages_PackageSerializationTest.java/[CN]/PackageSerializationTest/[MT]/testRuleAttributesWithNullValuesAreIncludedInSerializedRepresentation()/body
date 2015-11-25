@@ -1,0 +1,15 @@
+{
+  Package pkg=scratchPackage("lettuce","sh_library(name='lettuce',","           srcs=['romaine.sh'])");
+  CodedInputStream codedIn=codedInputFromPackage(pkg);
+  readPackage(codedIn);
+  Multimap<Build.Target.Discriminator,Build.Target> targets=readTargets(codedIn);
+  Build.Rule pbRule=Iterables.getOnlyElement(targets.get(Build.Target.Discriminator.RULE)).getRule();
+  boolean foundEmptyAttribute=false;
+  for (  Build.Attribute attribute : pbRule.getAttributeList()) {
+    if (attribute.getName().equals("deprecation")) {
+      assertFalse(attribute.hasStringValue());
+      foundEmptyAttribute=true;
+    }
+  }
+  assertTrue(foundEmptyAttribute);
+}

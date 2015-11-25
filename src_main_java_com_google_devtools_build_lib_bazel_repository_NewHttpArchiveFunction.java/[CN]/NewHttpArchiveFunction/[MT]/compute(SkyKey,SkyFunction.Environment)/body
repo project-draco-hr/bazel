@@ -5,6 +5,13 @@
     return null;
   }
   Path outputDirectory=getExternalRepositoryDirectory().getRelative(rule.getName());
+  if (isFilesystemUpToDate(rule,NO_RULE_SPECIFIC_DATA)) {
+    FileValue buildFileValue=getBuildFileValue(rule,env);
+    if (env.valuesMissing()) {
+      return null;
+    }
+    return RepositoryValue.createNew(outputDirectory,buildFileValue);
+  }
   try {
     FileSystemUtils.createDirectoryAndParents(outputDirectory);
   }
@@ -37,5 +44,9 @@
     throw new RepositoryFunctionException(new IOException(e.getMessage()),Transience.TRANSIENT);
   }
   createWorkspaceFile(decompressed.getDirectory(),rule);
-  return symlinkBuildFile(rule,getWorkspace(),outputDirectory,env);
+  SkyValue result=symlinkBuildFile(rule,outputDirectory,env);
+  if (!env.valuesMissing()) {
+    writeMarkerFile(rule,NO_RULE_SPECIFIC_DATA);
+  }
+  return result;
 }

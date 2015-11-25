@@ -1,0 +1,16 @@
+{
+  if (attrPb.getGlobCriteriaCount() == 0) {
+    return matches;
+  }
+  Builder<GlobCriteria> criteriaBuilder=ImmutableList.builder();
+  for (  Build.GlobCriteria criteriaPb : attrPb.getGlobCriteriaList()) {
+    if (criteriaPb.hasGlob() && criteriaPb.getGlob()) {
+      criteriaBuilder.add(GlobCriteria.fromGlobCall(ImmutableList.copyOf(criteriaPb.getIncludeList()),ImmutableList.copyOf(criteriaPb.getExcludeList())));
+    }
+ else {
+      criteriaBuilder.add(GlobCriteria.fromList(ImmutableList.copyOf(criteriaPb.getIncludeList())));
+    }
+  }
+  @SuppressWarnings({"unchecked","rawtypes"}) GlobList<?> result=new GlobList(criteriaBuilder.build(),matches);
+  return result;
+}

@@ -16,7 +16,7 @@
   }
  else {
     String serverName=DEFAULT_SERVER;
-    if (mapper.has("server",Type.STRING) && !mapper.get("server",Type.STRING).isEmpty()) {
+    if (hasServer) {
       serverName=mapper.get("server",Type.STRING);
     }
     serverValue=(MavenServerValue)env.getValue(MavenServerValue.key(serverName));
@@ -24,6 +24,14 @@
       return null;
     }
   }
+  byte[] serverData=new Fingerprint().addString(serverValue.getUrl()).addBytes(serverValue.getSettingsFingerprint()).digestAndReset();
+  if (isFilesystemUpToDate(rule,serverData)) {
+    return RepositoryValue.create(getExternalRepositoryDirectory().getRelative(rule.getName()));
+  }
   MavenDownloader downloader=createMavenDownloader(mapper,serverValue);
-  return createOutputTree(downloader,env);
+  SkyValue result=createOutputTree(downloader,env);
+  if (!env.valuesMissing()) {
+    writeMarkerFile(rule,serverData);
+  }
+  return result;
 }
