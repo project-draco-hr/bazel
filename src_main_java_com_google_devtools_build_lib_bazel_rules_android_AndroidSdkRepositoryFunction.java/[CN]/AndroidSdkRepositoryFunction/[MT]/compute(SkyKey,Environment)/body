@@ -4,12 +4,9 @@
   if (rule == null) {
     return null;
   }
-  FileValue directoryValue=prepareLocalRepositorySymlinkTree(rule,env);
-  if (directoryValue == null) {
-    return null;
-  }
+  Path outputDirectory=prepareLocalRepositorySymlinkTree(rule,env);
   PathFragment pathFragment=getTargetPath(rule);
-  if (!symlinkLocalRepositoryContents(directoryValue.realRootedPath().asPath(),getOutputBase().getFileSystem().getPath(pathFragment),env)) {
+  if (!symlinkLocalRepositoryContents(outputDirectory,getOutputBase().getFileSystem().getPath(pathFragment),env)) {
     return null;
   }
   AttributeMap attributes=NonconfigurableAttributeMapper.of(rule);
@@ -23,5 +20,5 @@
     throw new IllegalStateException(e);
   }
   String buildFile=template.replaceAll("%build_tools_version%",buildToolsVersion).replaceAll("%api_level%",apiLevel.toString());
-  return writeBuildFile(directoryValue,buildFile);
+  return writeBuildFile(outputDirectory,buildFile);
 }

@@ -1,9 +1,6 @@
 {
   Path outputDirectory=getExternalRepositoryDirectory().getRelative(rule.getName());
-  FileValue directoryValue=createDirectory(outputDirectory,env);
-  if (directoryValue == null) {
-    return null;
-  }
+  createDirectory(outputDirectory);
   try {
     HttpDownloadValue downloadValue=(HttpDownloadValue)env.getValueOrThrow(HttpDownloadFunction.key(rule,outputDirectory),IOException.class);
     if (downloadValue == null) {
@@ -17,5 +14,5 @@
  catch (  IOException e) {
     throw new RepositoryFunctionException(e,Transience.TRANSIENT);
   }
-  return RepositoryValue.create(directoryValue);
+  return RepositoryValue.create(outputDirectory);
 }

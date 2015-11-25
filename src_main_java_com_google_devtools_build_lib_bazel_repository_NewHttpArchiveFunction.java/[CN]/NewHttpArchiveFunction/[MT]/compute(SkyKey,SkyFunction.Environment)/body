@@ -11,10 +11,6 @@
  catch (  IOException e) {
     throw new RepositoryFunctionException(new IOException("Could not create directory for " + rule.getName() + ": "+ e.getMessage()),Transience.TRANSIENT);
   }
-  FileValue repositoryDirectory=getRepositoryDirectory(outputDirectory,env);
-  if (repositoryDirectory == null) {
-    return null;
-  }
   HttpDownloadValue downloadedFileValue;
   try {
     downloadedFileValue=(HttpDownloadValue)env.getValueOrThrow(HttpDownloadFunction.key(rule,outputDirectory),IOException.class);
@@ -41,5 +37,5 @@
     throw new RepositoryFunctionException(new IOException(e.getMessage()),Transience.TRANSIENT);
   }
   createWorkspaceFile(decompressed.getDirectory(),rule);
-  return symlinkBuildFile(rule,getWorkspace(),repositoryDirectory,env);
+  return symlinkBuildFile(rule,getWorkspace(),outputDirectory,env);
 }

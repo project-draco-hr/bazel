@@ -4,13 +4,10 @@
   if (rule == null) {
     return null;
   }
-  FileValue directoryValue=prepareLocalRepositorySymlinkTree(rule,env);
-  if (directoryValue == null) {
-    return null;
-  }
+  Path outputDirectory=prepareLocalRepositorySymlinkTree(rule,env);
   PathFragment pathFragment=getTargetPath(rule);
-  if (!symlinkLocalRepositoryContents(directoryValue.realRootedPath().asPath(),getOutputBase().getFileSystem().getPath(pathFragment),env)) {
+  if (!symlinkLocalRepositoryContents(outputDirectory,getOutputBase().getFileSystem().getPath(pathFragment),env)) {
     return null;
   }
-  return symlinkBuildFile(rule,getWorkspace(),directoryValue,env);
+  return symlinkBuildFile(rule,getWorkspace(),outputDirectory,env);
 }

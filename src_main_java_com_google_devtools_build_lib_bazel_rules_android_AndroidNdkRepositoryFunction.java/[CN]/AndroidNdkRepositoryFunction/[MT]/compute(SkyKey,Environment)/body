@@ -4,12 +4,9 @@
   if (rule == null) {
     return null;
   }
-  FileValue directoryValue=prepareLocalRepositorySymlinkTree(rule,env);
-  if (directoryValue == null) {
-    return null;
-  }
+  Path outputDirectory=prepareLocalRepositorySymlinkTree(rule,env);
   PathFragment pathFragment=getTargetPath(rule);
-  Path ndkSymlinkTreeDirectory=directoryValue.realRootedPath().asPath().getRelative("ndk");
+  Path ndkSymlinkTreeDirectory=outputDirectory.getRelative("ndk");
   try {
     ndkSymlinkTreeDirectory.createDirectory();
   }
@@ -23,7 +20,7 @@
   String ruleName=rule.getName();
   String apiLevelAttr=attributes.get("api_level",Type.INTEGER).toString();
   ApiLevel apiLevel=new ApiLevel(env.getListener(),ruleName,apiLevelAttr);
-  NdkRelease ndkRelease=getNdkRelease(directoryValue,env);
+  NdkRelease ndkRelease=getNdkRelease(outputDirectory,env);
   ImmutableList.Builder<CrosstoolStlPair> crosstoolsAndStls=ImmutableList.builder();
   try {
     String hostPlatform=AndroidNdkCrosstools.getHostPlatform(ndkRelease);
@@ -37,5 +34,5 @@
     throw new RepositoryFunctionException(new IOException(e),Transience.PERSISTENT);
   }
   String buildFile=createBuildFile(ruleName,crosstoolsAndStls.build());
-  return writeBuildFile(directoryValue,buildFile);
+  return writeBuildFile(getOutputBase(),buildFile);
 }
