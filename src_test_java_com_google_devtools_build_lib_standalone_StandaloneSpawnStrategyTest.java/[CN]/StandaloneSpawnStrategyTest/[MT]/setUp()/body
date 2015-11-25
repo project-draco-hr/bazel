@@ -1,0 +1,15 @@
+{
+  super.setUp();
+  Path testRoot=createTestRoot();
+  Path workspaceDir=testRoot.getRelative(TestConstants.WORKSPACE_NAME);
+  workspaceDir.createDirectory();
+  Path outputBase=testRoot.getRelative("outputBase");
+  outputBase.createDirectory();
+  BlazeDirectories directories=new BlazeDirectories(outputBase,outputBase,workspaceDir);
+  BlazeTestUtils.getIntegrationBinTools(directories);
+  OptionsParser optionsParser=OptionsParser.newOptionsParser(ExecutionOptions.class);
+  optionsParser.parse("--verbose_failures");
+  EventBus bus=new EventBus();
+  this.executor=new BlazeExecutor(directories.getExecRoot(),directories.getOutputPath(),reporter,bus,BlazeClock.instance(),optionsParser,false,false,ImmutableList.<ActionContext>of(),ImmutableMap.<String,SpawnActionContext>of("",new StandaloneSpawnStrategy(directories.getExecRoot(),false)),ImmutableList.<ActionContextProvider>of());
+  executor.getExecRoot().createDirectory();
+}
