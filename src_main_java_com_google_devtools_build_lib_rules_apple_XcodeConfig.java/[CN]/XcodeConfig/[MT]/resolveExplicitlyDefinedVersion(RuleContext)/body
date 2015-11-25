@@ -1,0 +1,21 @@
+{
+  AppleConfiguration configuration=ruleContext.getFragment(AppleConfiguration.class);
+  Optional<DottedVersion> versionOverrideFlag=configuration.getXcodeVersionOverrideFlag();
+  if (versionOverrideFlag.isPresent()) {
+    DottedVersion explicitVerison=aliasesToVersionMap(ruleContext).get(versionOverrideFlag.get().toString());
+    if (explicitVerison != null) {
+      return explicitVerison;
+    }
+  }
+ else {
+    XcodeVersionProvider defaultProvider=ruleContext.getPrerequisite(XcodeConfigRule.DEFAULT_ATTR_NAME,Mode.TARGET,XcodeVersionProvider.class);
+    if (defaultProvider != null) {
+      return defaultProvider.getVersion();
+    }
+  }
+  boolean requireDefinedVersions=ruleContext.attributes().get(XcodeConfigRule.REQUIRE_DEFINED_VERSIONS_ATTR_NAME,BOOLEAN);
+  if (requireDefinedVersions) {
+    ruleContext.ruleError("xcode version config required an explicitly defined version, but none was available");
+  }
+  return null;
+}

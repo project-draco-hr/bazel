@@ -1,0 +1,18 @@
+{
+  AppleConfiguration configuration=ruleContext.getFragment(AppleConfiguration.class);
+  Optional<DottedVersion> versionOverrideFlag=configuration.getXcodeVersionOverrideFlag();
+  DottedVersion targetVersion=resolveExplicitlyDefinedVersion(ruleContext);
+  XcodeConfigProvider xcodeConfigProvider;
+  if (targetVersion == null) {
+    if (versionOverrideFlag.isPresent()) {
+      xcodeConfigProvider=new XcodeConfigProvider(versionOverrideFlag.get());
+    }
+ else {
+      xcodeConfigProvider=XcodeConfigProvider.hostSystemDefault();
+    }
+  }
+ else {
+    xcodeConfigProvider=new XcodeConfigProvider(targetVersion);
+  }
+  return new RuleConfiguredTargetBuilder(ruleContext).addProvider(RunfilesProvider.class,RunfilesProvider.EMPTY).addProvider(XcodeConfigProvider.class,xcodeConfigProvider).build();
+}
