@@ -1,0 +1,12 @@
+{
+  assertThat(getCommandLineForFlagGroups("flag_group { flag: '-f' flag: '%{v}' } flag_group { flag: '-end' }",createVariables("v","1","v","2"))).containsExactly("-f","1","-f","2","-end");
+  assertThat(getCommandLineForFlagGroups("flag_group { flag: '-f' flag: '%{v}' } flag_group { flag: '%{v}' }",createVariables("v","1","v","2"))).containsExactly("-f","1","-f","2","1","2");
+  assertThat(getCommandLineForFlagGroups("flag_group { flag: '-f' flag: '%{v}' } flag_group { flag: '%{v}' }",createVariables("v","1","v","2"))).containsExactly("-f","1","-f","2","1","2");
+  try {
+    getCommandLineForFlagGroups("flag_group { flag: '%{v1}' flag: '%{v2}' }",createVariables("v1","1","v1","2","v2","1","v2","2"));
+    fail("Expected ExpansionException");
+  }
+ catch (  ExpansionException e) {
+    assertThat(e.getMessage()).contains("'v1' and 'v2'");
+  }
+}

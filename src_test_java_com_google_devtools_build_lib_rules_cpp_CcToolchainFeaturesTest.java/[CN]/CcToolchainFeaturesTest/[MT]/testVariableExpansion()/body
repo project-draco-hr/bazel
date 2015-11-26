@@ -1,0 +1,14 @@
+{
+  assertThat(getExpansionOfFlag("%%")).isEqualTo("%");
+  assertThat(getExpansionOfFlag("%% a %% b %%")).isEqualTo("% a % b %");
+  assertThat(getExpansionOfFlag("%%{var}")).isEqualTo("%{var}");
+  assertThat(getExpansionOfFlag("%{v}",createVariables("v","<flag>"))).isEqualTo("<flag>");
+  assertThat(getExpansionOfFlag(" %{v1} %{v2} ",createVariables("v1","1","v2","2"))).isEqualTo(" 1 2 ");
+  assertThat(getFlagParsingError("%")).contains("expected '{'");
+  assertThat(getFlagParsingError("% ")).contains("expected '{'");
+  assertThat(getFlagParsingError("%{")).contains("expected variable name");
+  assertThat(getFlagParsingError("%{}")).contains("expected variable name");
+  assertThat(getCommandLineForFlag("%{v}",new Variables.Builder().addSequenceVariable("v",ImmutableList.<String>of()).build())).isEmpty();
+  assertThat(getFlagExpansionError("%{v}",createVariables())).contains("unknown variable 'v'");
+  assertThat(getFlagExpansionError("%{v}",new Variables.Builder().addSequenceVariable("v",ImmutableList.<String>of("1")).addVariable("v","2").build())).contains("variable 'v'");
+}

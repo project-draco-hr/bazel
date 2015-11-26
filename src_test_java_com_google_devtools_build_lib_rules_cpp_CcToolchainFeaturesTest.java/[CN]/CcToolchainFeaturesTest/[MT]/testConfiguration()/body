@@ -1,0 +1,9 @@
+{
+  CcToolchainFeatures features=buildFeatures("feature {","  name: 'a'","  flag_set {","    action: 'c++-compile'","    flag_group {","      flag: '-f'","      flag: '%{v}'","    }","  }","}","feature { name: 'b' implies: 'a' }");
+  assertThat(getEnabledFeatures(features,"b")).containsExactly("a","b");
+  assertThat(features.getFeatureConfiguration("b").getCommandLine(CppCompileAction.CPP_COMPILE,createVariables("v","1"))).containsExactly("-f","1");
+  byte[] serialized=TestUtils.serializeObject(features);
+  CcToolchainFeatures deserialized=(CcToolchainFeatures)TestUtils.deserializeObject(serialized);
+  assertThat(getEnabledFeatures(deserialized,"b")).containsExactly("a","b");
+  assertThat(features.getFeatureConfiguration("b").getCommandLine(CppCompileAction.CPP_COMPILE,createVariables("v","1"))).containsExactly("-f","1");
+}

@@ -1,0 +1,7 @@
+{
+  FeatureConfiguration configuration=buildFeatures("feature {","  name: 'a'","  flag_set {","     action: 'c++-compile'","     expand_if_all_available: 'v'","     flag_group { flag: '%{v}' }","  }","  flag_set {","     action: 'c++-compile'","     expand_if_all_available: 'v'","     expand_if_all_available: 'w'","     flag_group { flag: '%{v}%{w}' }","  }","  flag_set {","     action: 'c++-compile'","     flag_group { flag: 'unconditional' }","  }","}").getFeatureConfiguration("a");
+  assertThat(configuration.getCommandLine(CppCompileAction.CPP_COMPILE,createVariables())).containsExactly("unconditional");
+  assertThat(configuration.getCommandLine(CppCompileAction.CPP_COMPILE,createVariables("v","1"))).containsExactly("1","unconditional");
+  assertThat(configuration.getCommandLine(CppCompileAction.CPP_COMPILE,createVariables("v","1","v","2"))).containsExactly("1","2","unconditional").inOrder();
+  assertThat(configuration.getCommandLine(CppCompileAction.CPP_COMPILE,createVariables("v","1","v","2","w","3"))).containsExactly("1","2","13","23","unconditional").inOrder();
+}
