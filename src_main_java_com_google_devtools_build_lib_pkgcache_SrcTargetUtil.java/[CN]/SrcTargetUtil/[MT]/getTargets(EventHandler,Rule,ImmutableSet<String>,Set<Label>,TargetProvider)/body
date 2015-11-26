@@ -1,15 +1,12 @@
 {
   List<Label> srcLabels=Lists.newArrayList();
-  AttributeMap attributeMap=RawAttributeMapper.of(rule);
+  RawAttributeMapper attributeMapper=RawAttributeMapper.of(rule);
   for (  String attrName : attributes) {
-    if (rule.isConfigurableAttribute(attrName)) {
-      continue;
+    if (rule.isAttrDefined(attrName,BuildType.LABEL_LIST)) {
+      srcLabels.addAll(attributeMapper.getMergedValues(attrName,BuildType.LABEL_LIST));
     }
- else     if (rule.isAttrDefined(attrName,BuildType.LABEL_LIST)) {
-      srcLabels.addAll(attributeMap.get(attrName,BuildType.LABEL_LIST));
-    }
- else     if (rule.isAttrDefined(attrName,BuildType.LABEL)) {
-      Label srcLabel=attributeMap.get(attrName,BuildType.LABEL);
+ else     if (rule.isAttrDefined(attrName,BuildType.LABEL) && !rule.isConfigurableAttribute(attrName)) {
+      Label srcLabel=attributeMapper.get(attrName,BuildType.LABEL);
       if (srcLabel != null) {
         srcLabels.add(srcLabel);
       }
