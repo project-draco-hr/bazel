@@ -1,0 +1,13 @@
+{
+  Rule ruleTarget=(Rule)getTarget(targetName);
+  for (  String expectedOut : expectedOuts) {
+    Target outTarget=getTarget(expectedOut);
+    if (!(outTarget instanceof OutputFile)) {
+      fail("Target " + outTarget + " is not an output");
+      assertSame(ruleTarget,((OutputFile)outTarget).getGeneratingRule());
+      getConfiguredTarget(expectedOut);
+    }
+  }
+  Collection<OutputFile> outs=ruleTarget.getOutputFiles();
+  assertEquals("Mismatched outputs: " + outs,expectedOuts.length,outs.size());
+}

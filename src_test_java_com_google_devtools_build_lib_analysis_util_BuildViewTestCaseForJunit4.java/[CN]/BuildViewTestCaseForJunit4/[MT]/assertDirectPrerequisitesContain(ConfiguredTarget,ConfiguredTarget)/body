@@ -1,0 +1,16 @@
+{
+  Iterable<ConfiguredTarget> prereqs=getDirectPrerequisites(target);
+  BuildConfiguration depConfig=dep.getConfiguration();
+  for (  ConfiguredTarget contained : prereqs) {
+    if (contained.getLabel().equals(dep.getLabel())) {
+      BuildConfiguration containedConfig=contained.getConfiguration();
+      if (containedConfig == null && depConfig == null) {
+        return;
+      }
+ else       if (containedConfig != null && depConfig != null && containedConfig.cloneOptions().equals(depConfig.cloneOptions())) {
+        return;
+      }
+    }
+  }
+  fail("Cannot find " + target.toString() + " in "+ prereqs.toString());
+}

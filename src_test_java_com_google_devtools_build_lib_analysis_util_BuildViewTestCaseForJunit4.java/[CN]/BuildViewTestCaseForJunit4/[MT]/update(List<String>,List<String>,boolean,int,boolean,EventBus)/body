@@ -1,0 +1,12 @@
+{
+  LoadingOptions loadingOptions=Options.getDefaults(LoadingOptions.class);
+  loadingOptions.loadingPhaseThreads=loadingPhaseThreads;
+  BuildView.Options viewOptions=Options.getDefaults(BuildView.Options.class);
+  viewOptions.keepGoing=keepGoing;
+  LoadingPhaseRunner runner=new LegacyLoadingPhaseRunner(getPackageManager(),Collections.unmodifiableSet(ruleClassProvider.getRuleClassMap().keySet()));
+  LoadingResult loadingResult=runner.execute(reporter,eventBus,targets,loadingOptions,getTargetConfiguration().getAllLabels(),viewOptions.keepGoing,isLoadingEnabled(),false,null);
+  if (!doAnalysis) {
+    return null;
+  }
+  return view.update(loadingResult,masterConfig,aspects,viewOptions,AnalysisTestUtil.TOP_LEVEL_ARTIFACT_CONTEXT,reporter,eventBus,isLoadingEnabled());
+}

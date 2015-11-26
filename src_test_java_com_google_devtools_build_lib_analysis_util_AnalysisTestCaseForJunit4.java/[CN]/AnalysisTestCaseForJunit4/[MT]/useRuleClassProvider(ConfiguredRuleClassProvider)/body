@@ -1,0 +1,11 @@
+{
+  this.ruleClassProvider=ruleClassProvider;
+  PackageFactory pkgFactory=new PackageFactory(ruleClassProvider);
+  BinTools binTools=BinTools.forUnitTesting(directories,TestConstants.EMBEDDED_TOOLS);
+  skyframeExecutor=SequencedSkyframeExecutor.create(pkgFactory,new TimestampGranularityMonitor(BlazeClock.instance()),directories,binTools,workspaceStatusActionFactory,ruleClassProvider.getBuildInfoFactories(),ImmutableSet.<Path>of(),ImmutableList.<DiffAwareness.Factory>of(),Predicates.<PathFragment>alwaysFalse(),Preprocessor.Factory.Supplier.NullSupplier.INSTANCE,analysisMock.getSkyFunctions(directories),getPrecomputedValues(),ImmutableList.<SkyValueDirtinessChecker>of());
+  skyframeExecutor.preparePackageLoading(pkgLocator,Options.getDefaults(PackageCacheOptions.class).defaultVisibility,true,3,ruleClassProvider.getDefaultsPackageContent(),UUID.randomUUID());
+  packageManager=skyframeExecutor.getPackageManager();
+  loadingPhaseRunner=new LegacyLoadingPhaseRunner(packageManager,pkgFactory.getRuleClassNames());
+  buildView=new BuildView(directories,ruleClassProvider,skyframeExecutor,null);
+  useConfiguration();
+}
