@@ -1,0 +1,28 @@
+{
+  final RuleContext ruleContext=createDummyRuleContext();
+  final PathFragment outputPath=new PathFragment("dummyRuleContext/output/path.xyz");
+  final Artifact outputFile=getBinArtifactWithNoOwner(outputPath.getPathString());
+  final Artifact oFile=getSourceArtifact("cc/a.o");
+  final Artifact oFile2=getSourceArtifact("cc/a2.o");
+  final Artifact interfaceSoBuilder=getBinArtifactWithNoOwner("foo/build_interface_so");
+  ActionTester.runTest(128,new ActionCombinationFactory(){
+    @Override public Action generate(    int i){
+      CppLinkAction.Builder builder=new CppLinkAction.Builder(ruleContext,outputFile){
+        @Override protected Artifact getInterfaceSoBuilder(){
+          return interfaceSoBuilder;
+        }
+      }
+;
+      builder.addCompilationInputs((i & 1) == 0 ? ImmutableList.of(oFile) : ImmutableList.of(oFile2));
+      builder.setLinkType((i & 2) == 0 ? LinkTargetType.DYNAMIC_LIBRARY : LinkTargetType.EXECUTABLE);
+      builder.setLinkStaticness(LinkStaticness.DYNAMIC);
+      builder.setNativeDeps((i & 4) == 0);
+      builder.setUseTestOnlyFlags((i & 8) == 0);
+      builder.setWholeArchive((i & 16) == 0);
+      builder.setFake((i & 32) == 0);
+      builder.setRuntimeSolibDir((i & 64) == 0 ? null : new PathFragment("so1"));
+      return builder.build();
+    }
+  }
+);
+}

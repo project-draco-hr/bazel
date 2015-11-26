@@ -1,0 +1,7 @@
+{
+  scratch.file("pkg/BUILD","cc_binary(","    name = 'check',","    srcs = ['bin.cc', 'bin.h'],","    linkopts = ['-lm'],","    deps = [':dependent_lib'],",")","cc_binary(","    name = 'check_no_srcs',","    linkopts = ['-lm'],","    deps = [':dependent_lib'],",")","cc_library(","    name = 'dependent_lib',","    linkopts = ['-lz'],","    deps = [':check_lib'],",")","cc_library(","    name = 'check_lib',","    defines = ['foo'],","    linkopts = ['-Wl,-M'],",")");
+  assertThat(getApi("//pkg:check_lib").getLinkopts()).contains("-Wl,-M");
+  assertThat(getApi("//pkg:dependent_lib").getLinkopts()).containsAllOf("-lz","-Wl,-M").inOrder();
+  assertThat(getApi("//pkg:check").getLinkopts()).isEmpty();
+  assertThat(getApi("//pkg:check_no_srcs").getLinkopts()).isEmpty();
+}

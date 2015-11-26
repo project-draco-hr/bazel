@@ -1,0 +1,15 @@
+{
+  RuleContext ruleContext=createDummyRuleContext();
+  Artifact output=getDerivedArtifact(new PathFragment("output/path.xyz"),getTargetConfiguration().getBinDirectory(),ActionsTestUtil.NULL_ARTIFACT_OWNER);
+  final Artifact outputIfso=getDerivedArtifact(new PathFragment("output/path.ifso"),getTargetConfiguration().getBinDirectory(),ActionsTestUtil.NULL_ARTIFACT_OWNER);
+  CppLinkAction.Builder builder=new CppLinkAction.Builder(ruleContext,output);
+  builder.setLinkType(LinkTargetType.STATIC_LIBRARY);
+  assertTrue(builder.canSplitCommandLine());
+  builder.setLinkType(LinkTargetType.DYNAMIC_LIBRARY);
+  assertTrue(builder.canSplitCommandLine());
+  builder.setInterfaceOutput(outputIfso);
+  assertFalse(builder.canSplitCommandLine());
+  builder.setInterfaceOutput(null);
+  builder.setLinkType(LinkTargetType.INTERFACE_DYNAMIC_LIBRARY);
+  assertFalse(builder.canSplitCommandLine());
+}
