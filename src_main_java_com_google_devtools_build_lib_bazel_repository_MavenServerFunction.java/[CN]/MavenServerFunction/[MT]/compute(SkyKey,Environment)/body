@@ -46,7 +46,14 @@
   try {
     for (    Map.Entry<String,FileValue> entry : settingsFiles.entrySet()) {
       fingerprint.addString(entry.getKey());
-      fingerprint.addBytes(entry.getValue().realRootedPath().asPath().getMD5Digest());
+      Path path=entry.getValue().realRootedPath().asPath();
+      if (path.exists()) {
+        fingerprint.addBoolean(true);
+        fingerprint.addBytes(path.getMD5Digest());
+      }
+ else {
+        fingerprint.addBoolean(false);
+      }
     }
   }
  catch (  IOException e) {
