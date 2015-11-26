@@ -5,7 +5,15 @@
     throw new EvalException(definitionLocation,"Invalid rule class name '" + ruleClassName + "', test rule class names must end with '_test' and other rule classes must not");
   }
   for (  Pair<String,SkylarkAttr.Descriptor> attribute : attributes) {
-    addAttribute(definitionLocation,builder,attribute.getSecond().getAttributeBuilder().build(attribute.getFirst()));
+    SkylarkAttr.Descriptor descriptor=attribute.getSecond();
+    Attribute.Builder<?> attributeBuilder=descriptor.getAttributeBuilder();
+    for (    SkylarkAspect skylarkAspect : descriptor.getAspects()) {
+      if (!skylarkAspect.isExported()) {
+        throw new EvalException(definitionLocation,"All aspects applied to rule dependencies must be top-level values");
+      }
+      attributeBuilder.aspect(new SkylarkAspectClass(skylarkAspect));
+    }
+    addAttribute(definitionLocation,builder,descriptor.getAttributeBuilder().build(attribute.getFirst()));
   }
   this.ruleClass=builder.build(ruleClassName);
   this.builder=null;

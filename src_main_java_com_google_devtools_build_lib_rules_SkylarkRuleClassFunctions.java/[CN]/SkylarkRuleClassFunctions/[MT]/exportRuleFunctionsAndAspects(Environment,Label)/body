@@ -1,17 +1,27 @@
 {
-  for (  String name : env.getGlobals().getDirectVariableNames()) {
+  Set<String> globalNames=env.getGlobals().getDirectVariableNames();
+  for (  String name : globalNames) {
+    Object value;
+    try {
+      value=env.lookup(name);
+    }
+ catch (    NoSuchVariableException e) {
+      throw new AssertionError(e);
+    }
+    if (value instanceof SkylarkAspect) {
+      SkylarkAspect skylarkAspect=(SkylarkAspect)value;
+      if (!skylarkAspect.isExported()) {
+        skylarkAspect.export(skylarkLabel,name);
+      }
+    }
+  }
+  for (  String name : globalNames) {
     try {
       Object value=env.lookup(name);
       if (value instanceof RuleFunction) {
         RuleFunction function=(RuleFunction)value;
         if (function.skylarkLabel == null) {
           function.export(skylarkLabel,name);
-        }
-      }
-      if (value instanceof SkylarkAspect) {
-        SkylarkAspect skylarkAspect=(SkylarkAspect)value;
-        if (!skylarkAspect.isExported()) {
-          skylarkAspect.export(skylarkLabel,name);
         }
       }
     }
