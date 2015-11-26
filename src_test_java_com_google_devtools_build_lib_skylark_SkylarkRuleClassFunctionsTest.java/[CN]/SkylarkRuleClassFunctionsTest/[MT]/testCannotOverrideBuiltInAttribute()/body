@@ -1,3 +1,10 @@
 {
-  checkEvalError("There is already a built-in attribute 'tags' which cannot be overridden","def impl(ctx): return","r = rule(impl, attrs = {'tags': attr.string_list()})");
+  ev.setFailFast(true);
+  try {
+    evalAndExport("def impl(ctx): return","r = rule(impl, attrs = {'tags': attr.string_list()})");
+    Assert.fail("Expected error '" + "There is already a built-in attribute 'tags' which cannot be overridden" + "' but got no error");
+  }
+ catch (  IllegalArgumentException|EvalException e) {
+    assertThat(e).hasMessage("There is already a built-in attribute 'tags' which cannot be overridden");
+  }
 }

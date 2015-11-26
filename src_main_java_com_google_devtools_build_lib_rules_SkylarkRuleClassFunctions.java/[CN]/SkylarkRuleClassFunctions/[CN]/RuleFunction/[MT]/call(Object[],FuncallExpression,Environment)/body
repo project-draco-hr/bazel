@@ -1,13 +1,9 @@
 {
   env.checkLoadingPhase(getName(),ast.getLocation());
   try {
-    if (ruleClassName == null || skylarkLabel == null) {
+    if (ruleClass == null) {
       throw new EvalException(ast.getLocation(),"Invalid rule class hasn't been exported by a Skylark file");
     }
-    if (type == RuleClassType.TEST != TargetUtils.isTestRuleName(ruleClassName)) {
-      throw new EvalException(ast.getLocation(),"Invalid rule class name '" + ruleClassName + "', test rule class names must end with '_test' and other rule classes must not");
-    }
-    RuleClass ruleClass=builder.build(ruleClassName);
     PackageContext pkgContext=(PackageContext)env.lookup(PackageFactory.PKG_CONTEXT);
     return RuleFactory.createAndAddRule(pkgContext,ruleClass,(Map<String,Object>)args[0],ast,env);
   }
