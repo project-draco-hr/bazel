@@ -1,16 +1,16 @@
 {
   Builder builder=Package.newExternalPackageBuilder(workspacePath,"TESTING");
-  Location buildFile=Location.fromFile(getOutputPath().getRelative("BUILD"));
-  RuleClass ruleClass=TestRuleClassProvider.getRuleClassProvider().getRuleClassMap().get("cc_library");
+  Location buildFile=Location.fromFile(getOutputPath().getRelative("WORKSPACE"));
+  RuleClass ruleClass=TestRuleClassProvider.getRuleClassProvider().getRuleClassMap().get("local_repository");
   RuleClass bindRuleClass=TestRuleClassProvider.getRuleClassProvider().getRuleClassMap().get("bind");
   Map<String,Object> kwargs=ImmutableMap.of("name",(Object)"my-rule");
   FuncallExpression ast=new FuncallExpression(new Identifier(ruleClass.getName()),Lists.<Argument.Passed>newArrayList());
   ast.setLocation(buildFile);
   builder.externalPackageData().createAndAddRepositoryRule(builder,ruleClass,bindRuleClass,kwargs,ast);
-  ruleClass=TestRuleClassProvider.getRuleClassProvider().getRuleClassMap().get("sh_test");
+  ruleClass=TestRuleClassProvider.getRuleClassProvider().getRuleClassMap().get("new_local_repository");
   ast=new FuncallExpression(new Identifier(ruleClass.getName()),Lists.<Argument.Passed>newArrayList());
   ast.setLocation(buildFile);
   builder.externalPackageData().createAndAddRepositoryRule(builder,ruleClass,bindRuleClass,kwargs,ast);
   Package pkg=builder.build();
-  assertEquals("sh_test rule",pkg.getTarget("my-rule").getTargetKind());
+  assertEquals("new_local_repository rule",pkg.getTarget("my-rule").getTargetKind());
 }

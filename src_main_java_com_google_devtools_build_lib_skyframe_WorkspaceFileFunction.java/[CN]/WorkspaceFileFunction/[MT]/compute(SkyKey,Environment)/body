@@ -1,21 +1,30 @@
 {
+  final Environment skyEnvironment=env;
   RootedPath workspaceRoot=(RootedPath)skyKey.argument();
   FileValue workspaceFileValue=(FileValue)env.getValue(FileValue.key(workspaceRoot));
   if (workspaceFileValue == null) {
     return null;
   }
   Path repoWorkspace=workspaceRoot.getRoot().getRelative(workspaceRoot.getRelativePath());
-  Builder builder=com.google.devtools.build.lib.packages.Package.newExternalPackageBuilder(repoWorkspace,packageFactory.getRuleClassProvider().getRunfilesPrefix());
+  LegacyBuilder builder=com.google.devtools.build.lib.packages.Package.newExternalPackageBuilder(repoWorkspace,packageFactory.getRuleClassProvider().getRunfilesPrefix());
   try (Mutability mutability=Mutability.create("workspace %s",repoWorkspace)){
     WorkspaceFactory parser=new WorkspaceFactory(builder,packageFactory.getRuleClassProvider(),packageFactory.getEnvironmentExtensions(),mutability,directories.getEmbeddedBinariesRoot(),directories.getWorkspace());
-    parser.parse(ParserInputSource.create(ruleClassProvider.getDefaultWorkspaceFile(),new PathFragment("DEFAULT.WORKSPACE")));
-    if (!workspaceFileValue.exists()) {
-      return new PackageValue(builder.build());
-    }
     try {
-      parser.parse(ParserInputSource.create(repoWorkspace,workspaceFileValue.getSize()));
+      PathFragment pathFragment=new PathFragment("/DEFAULT.WORKSPACE");
+      if (!parse(ParserInputSource.create(ruleClassProvider.getDefaultWorkspaceFile(),pathFragment),repoWorkspace,parser,skyEnvironment)) {
+        return null;
+      }
+      if (!workspaceFileValue.exists()) {
+        return new PackageValue(builder.build());
+      }
+      if (!parse(ParserInputSource.create(repoWorkspace),repoWorkspace,parser,skyEnvironment)) {
+        return null;
+      }
     }
- catch (    IOException e) {
+ catch (    PackageFunctionException e) {
+      throw new WorkspaceFileFunctionException(e,Transience.PERSISTENT);
+    }
+catch (    IOException e) {
       throw new WorkspaceFileFunctionException(e,Transience.TRANSIENT);
     }
   }

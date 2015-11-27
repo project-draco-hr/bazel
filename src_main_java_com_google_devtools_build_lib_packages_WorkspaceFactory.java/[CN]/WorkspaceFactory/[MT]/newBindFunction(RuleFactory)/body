@@ -1,0 +1,23 @@
+{
+  return new BuiltinFunction("bind",FunctionSignature.namedOnly(1,"name","actual"),BuiltinFunction.USE_AST_ENV){
+    public Object invoke(    String name,    String actual,    FuncallExpression ast,    Environment env) throws EvalException, InterruptedException {
+      Label nameLabel=null;
+      try {
+        nameLabel=Label.parseAbsolute("//external:" + name);
+        try {
+          LegacyBuilder builder=PackageFactory.getContext(env,ast).pkgBuilder;
+          RuleClass ruleClass=ruleFactory.getRuleClass("bind");
+          builder.externalPackageData().addBindRule(builder,ruleClass,nameLabel,actual == null ? null : Label.parseAbsolute(actual),ast.getLocation());
+        }
+ catch (        RuleFactory.InvalidRuleException|Package.NameConflictException|LabelSyntaxException e) {
+          throw new EvalException(ast.getLocation(),e.getMessage());
+        }
+      }
+ catch (      LabelSyntaxException e) {
+        throw new EvalException(ast.getLocation(),e.getMessage());
+      }
+      return NONE;
+    }
+  }
+;
+}

@@ -1,0 +1,23 @@
+{
+  try {
+    workspaceEnv.update("workspace",newWorkspaceNameFunction());
+    for (    Map.Entry<String,BaseFunction> function : workspaceFunctions.entrySet()) {
+      workspaceEnv.update(function.getKey(),function.getValue());
+    }
+    if (installDir != null) {
+      workspaceEnv.update("__embedded_dir__",installDir.getPathString());
+    }
+    if (workspaceDir != null) {
+      workspaceEnv.update("__workspace_dir__",workspaceDir.getPathString());
+    }
+    File jreDirectory=new File(System.getProperty("java.home"));
+    workspaceEnv.update("DEFAULT_SERVER_JAVABASE",jreDirectory.getParentFile().toString());
+    for (    EnvironmentExtension extension : environmentExtensions) {
+      extension.updateWorkspace(workspaceEnv);
+    }
+    workspaceEnv.setupDynamic(PackageFactory.PKG_CONTEXT,new PackageFactory.PackageContext(builder,null,localReporter));
+  }
+ catch (  EvalException e) {
+    throw new AssertionError(e);
+  }
+}
