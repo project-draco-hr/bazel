@@ -1,41 +1,41 @@
 {
   Preconditions.checkState(invalidationType != InvalidationType.DELETED,keys);
   final boolean isChanged=(invalidationType == InvalidationType.CHANGED);
+  Set<SkyKey> setToCheck=isChanged ? changed : dirtied;
   int size=Iterables.size(keys);
-  ArrayList<Pair<SkyKey,InvalidationType>> invalidationPairs=new ArrayList<>(size);
+  ArrayList<SkyKey> keysToGet=new ArrayList<>(size);
   for (  SkyKey key : keys) {
-    Pair<SkyKey,InvalidationType> invalidationPair=Pair.of(key,invalidationType);
-    if (visited.add(invalidationPair)) {
-      invalidationPairs.add(invalidationPair);
+    if (setToCheck.add(key)) {
+      keysToGet.add(key);
     }
   }
-  List<SkyKey> keysToGet=Lists.transform(invalidationPairs,Pair.<SkyKey,InvalidationType>firstFunction());
   if (supportInterruptions) {
-    pendingVisitations.addAll(invalidationPairs);
+    for (    SkyKey key : keysToGet) {
+      pendingVisitations.add(Pair.of(key,invalidationType));
+    }
   }
   final Map<SkyKey,? extends ThinNodeEntry> entries=graph.getBatch(keysToGet);
-  for (  final Pair<SkyKey,InvalidationType> invalidationPair : invalidationPairs) {
+  for (  final SkyKey key : keysToGet) {
     executor.execute(new Runnable(){
       @Override public void run(){
-        SkyKey key=invalidationPair.getFirst();
         ThinNodeEntry entry=entries.get(key);
         if (entry == null) {
           Preconditions.checkState(!mustExist,"%s does not exist in the graph but was enqueued for dirtying by another " + "node",key);
           if (supportInterruptions) {
-            pendingVisitations.remove(invalidationPair);
+            pendingVisitations.remove(Pair.of(key,invalidationType));
           }
           return;
         }
         if (entry.isChanged() || (!isChanged && entry.isDirty())) {
           if (supportInterruptions) {
-            pendingVisitations.remove(invalidationPair);
+            pendingVisitations.remove(Pair.of(key,invalidationType));
           }
           return;
         }
         MarkedDirtyResult markedDirtyResult=entry.markDirty(isChanged);
         if (markedDirtyResult == null) {
           if (supportInterruptions) {
-            pendingVisitations.remove(invalidationPair);
+            pendingVisitations.remove(Pair.of(key,invalidationType));
           }
           return;
         }
@@ -43,7 +43,7 @@
         informInvalidationReceiver(key,EvaluationProgressReceiver.InvalidationState.DIRTY);
         dirtyKeyTracker.dirty(key);
         if (supportInterruptions) {
-          pendingVisitations.remove(invalidationPair);
+          pendingVisitations.remove(Pair.of(key,invalidationType));
         }
       }
     }
