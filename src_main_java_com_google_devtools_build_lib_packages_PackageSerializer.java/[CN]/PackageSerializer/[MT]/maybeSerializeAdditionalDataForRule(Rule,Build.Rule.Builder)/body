@@ -12,5 +12,16 @@
         builder.addRuleOutput(label.getName());
       }
     }
+    List<Attribute> attributes=rule.getRuleClassObject().getAttributes();
+    for (    Attribute attribute : attributes) {
+      ImmutableList<Aspect> aspects=attribute.getAspects(rule);
+      for (      Aspect aspect : aspects) {
+        if (aspect.getAspectClass() instanceof NativeAspectClass<?>) {
+          continue;
+        }
+        SkylarkAspect skylarkAspect=serializeSkylarkAspect(rule,aspect);
+        builder.addSkylarkAttributeAspects(AttributeAspect.newBuilder().setAttributeName(attribute.getName()).setAspect(skylarkAspect).build());
+      }
+    }
   }
 }

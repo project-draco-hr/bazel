@@ -1,0 +1,13 @@
+{
+  SkylarkAspectClass aspectClass=(SkylarkAspectClass)aspect.getAspectClass();
+  SkylarkAspect.Builder builder=SkylarkAspect.newBuilder().setExtensionFileLabel(aspectClass.getExtensionLabel().toString()).setExportedName(aspectClass.getExportedName());
+  AspectDefinition definition=aspect.getDefinition();
+  for (  Entry<String,Attribute> entry : definition.getAttributes().entrySet()) {
+    Attribute attribute=entry.getValue();
+    Object defaultValue=attribute.getDefaultValue(rule);
+    Verify.verify(defaultValue != null,"Aspect attributes must have default values.");
+    Build.Attribute attributePb=AttributeSerializer.getAttributeProto(attribute,ImmutableList.of(defaultValue),true,false);
+    builder.addAttribute(attributePb);
+  }
+  return builder.build();
+}
