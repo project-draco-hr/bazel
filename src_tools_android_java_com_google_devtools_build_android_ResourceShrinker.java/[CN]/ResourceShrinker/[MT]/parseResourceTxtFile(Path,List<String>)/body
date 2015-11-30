@@ -1,10 +1,12 @@
 {
-  BufferedReader reader=java.nio.file.Files.newBufferedReader(file,Charset.defaultCharset());
+  BufferedReader reader=java.nio.file.Files.newBufferedReader(rTxt,Charset.defaultCharset());
   String line;
   while ((line=reader.readLine()) != null) {
     String[] tokens=line.split(" ");
     ResourceType type=ResourceType.getEnum(tokens[1]);
-    resourceClassOwners.put(rPackagePath + "/R$" + type.getName(),type);
+    for (    String resourcePackage : resourcePackages) {
+      resourceClassOwners.put(resourcePackage.replace('.','/') + "/R$" + type.getName(),type);
+    }
     if (type == ResourceType.STYLEABLE) {
       if (tokens[0].equals("int[]")) {
         addResource(ResourceType.DECLARE_STYLEABLE,tokens[2],null);
