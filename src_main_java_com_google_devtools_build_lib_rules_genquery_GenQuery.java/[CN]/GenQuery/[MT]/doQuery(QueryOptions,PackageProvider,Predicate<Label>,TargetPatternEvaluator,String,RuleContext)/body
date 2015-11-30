@@ -1,13 +1,12 @@
 {
-  DigraphQueryEvalResult<Target> queryResult;
+  BlazeQueryEvalResult<Target> queryResult;
   OutputFormatter formatter;
-  AggregateAllCallback<Target> targets=new AggregateAllCallback<>();
   try {
     Set<Setting> settings=queryOptions.toSettings();
     settings.add(Setting.NO_NODEP_DEPS);
     ImmutableList<OutputFormatter> outputFormatters=QUERY_OUTPUT_FORMATTERS.get(ruleContext.getAnalysisEnvironment().getSkyframeEnv());
     formatter=OutputFormatter.getFormatter(Preconditions.checkNotNull(outputFormatters),queryOptions.outputFormat);
-    queryResult=(DigraphQueryEvalResult<Target>)AbstractBlazeQueryEnvironment.newQueryEnvironment(null,null,packageProvider,evaluator,false,ruleContext.attributes().get("strict",Type.BOOLEAN),!QueryOutputUtils.shouldStreamResults(queryOptions,formatter),ImmutableList.<String>of(),4,labelFilter,getEventHandler(ruleContext),settings,ImmutableList.<QueryFunction>of(),null).evaluateQuery(query,targets);
+    queryResult=(BlazeQueryEvalResult<Target>)AbstractBlazeQueryEnvironment.newQueryEnvironment(null,null,packageProvider,evaluator,false,ruleContext.attributes().get("strict",Type.BOOLEAN),QueryOutputUtils.orderResults(queryOptions,formatter),ImmutableList.<String>of(),4,labelFilter,getEventHandler(ruleContext),settings,ImmutableList.<QueryFunction>of(),null).evaluateQuery(query);
   }
  catch (  SkyframeRestartQueryException e) {
     return null;
@@ -19,7 +18,7 @@ catch (  QueryException e) {
   ByteArrayOutputStream outputStream=new ByteArrayOutputStream();
   PrintStream printStream=new PrintStream(outputStream);
   try {
-    QueryOutputUtils.output(queryOptions,queryResult,targets.getResult(),formatter,printStream,queryOptions.aspectDeps.createResolver(packageProvider,getEventHandler(ruleContext)));
+    QueryOutputUtils.output(queryOptions,queryResult,formatter,printStream,queryOptions.aspectDeps.createResolver(packageProvider,getEventHandler(ruleContext)));
   }
  catch (  ClosedByInterruptException e) {
     throw new InterruptedException(e.getMessage());
