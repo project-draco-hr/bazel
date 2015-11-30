@@ -1,0 +1,10 @@
+{
+  CppConfigurationLoader loader=loader("major_version: \"v17\"" + "minor_version: \"0\"" + "default_target_cpu: \"cpu\""+ "default_toolchain {"+ "  cpu: \"piii\""+ "  toolchain_identifier: \"default-libs\""+ "}"+ "default_toolchain {"+ "  cpu: \"k8\""+ "  toolchain_identifier: \"custom-libs\""+ "}"+ "toolchain {"+ "  toolchain_identifier: \"default-libs\""+ "  host_system_name: \"host-system-name\""+ "  target_system_name: \"target-system-name\""+ "  target_cpu: \"piii\""+ "  target_libc: \"target-libc\""+ "  compiler: \"compiler\""+ "  abi_version: \"abi-version\""+ "  abi_libc_version: \"abi-libc-version\""+ "  supports_embedded_runtimes: true"+ "}\n"+ "toolchain {"+ "  toolchain_identifier: \"custom-libs\""+ "  host_system_name: \"host-system-name\""+ "  target_system_name: \"target-system-name\""+ "  target_cpu: \"k8\""+ "  target_libc: \"target-libc\""+ "  compiler: \"compiler\""+ "  abi_version: \"abi-version\""+ "  abi_libc_version: \"abi-libc-version\""+ "  supports_embedded_runtimes: true"+ "  static_runtimes_filegroup: \"static-group\""+ "  dynamic_runtimes_filegroup: \"dynamic-group\""+ "}\n");
+  final String ctTop=TestConstants.TOOLS_REPOSITORY + "//" + TestConstants.MOCK_CROSSTOOL_PATH;
+  CppConfiguration defaultLibs=create(loader,"--cpu=piii");
+  assertEquals(ctTop + ":static-runtime-libs-piii",defaultLibs.getStaticRuntimeLibsLabel().toString());
+  assertEquals(ctTop + ":dynamic-runtime-libs-piii",defaultLibs.getDynamicRuntimeLibsLabel().toString());
+  CppConfiguration customLibs=create(loader,"--cpu=k8");
+  assertEquals(ctTop + ":static-group",customLibs.getStaticRuntimeLibsLabel().toString());
+  assertEquals(ctTop + ":dynamic-group",customLibs.getDynamicRuntimeLibsLabel().toString());
+}
