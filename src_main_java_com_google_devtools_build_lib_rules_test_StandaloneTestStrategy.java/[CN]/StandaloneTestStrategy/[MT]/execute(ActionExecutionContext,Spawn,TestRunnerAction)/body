@@ -10,10 +10,10 @@
         streamed=new StreamedTestOutput(Reporter.outErrForReporter(actionExecutionContext.getExecutor().getEventHandler()),testLogPath);
       }
       executor.getSpawnActionContext(action.getMnemonic()).exec(spawn,actionExecutionContext);
-      builder.setTestPassed(true).setStatus(BlazeTestStatus.PASSED).setCachable(true);
+      builder.setTestPassed(true).setStatus(BlazeTestStatus.PASSED).setCachable(true).setPassedLog(testLogPath.getPathString());
     }
  catch (    ExecException e) {
-      builder.setTestPassed(false).setStatus(e.hasTimedOut() ? BlazeTestStatus.TIMEOUT : BlazeTestStatus.FAILED);
+      builder.setTestPassed(false).setStatus(e.hasTimedOut() ? BlazeTestStatus.TIMEOUT : BlazeTestStatus.FAILED).addFailedLogs(testLogPath.getPathString());
     }
  finally {
       long duration=executor.getClock().currentTimeMillis() - startTime;
