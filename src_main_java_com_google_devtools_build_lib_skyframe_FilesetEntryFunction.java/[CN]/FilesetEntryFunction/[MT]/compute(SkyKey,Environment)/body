@@ -9,7 +9,9 @@
       return null;
     }
     for (    FilesetOutputSymlink s : nested.getSymlinks()) {
-      maybeStoreSymlink(s,t.getDestPath(),exclusions,outputSymlinks);
+      if (!exclusions.contains(s.name.getPathString())) {
+        maybeStoreSymlink(s,t.getDestPath(),outputSymlinks);
+      }
     }
   }
  else {
@@ -49,6 +51,10 @@
       results=ImmutableList.of(resolvedRoot);
     }
     for (    ResolvedFile f : results) {
+      PathFragment linkName=f.getNameInSymlinkTree().relativeTo(prefixToRemove);
+      if (exclusions.contains(linkName.getPathString())) {
+        continue;
+      }
       PathFragment targetName;
       try {
         targetName=f.getTargetInSymlinkTree(direct.isFollowingSymlinks());
@@ -57,8 +63,7 @@
         throw new FilesetEntryFunctionException(e);
       }
       String metadata=Integer.toHexString(f.metadata.get().hashCode());
-      PathFragment linkName=f.getNameInSymlinkTree().relativeTo(prefixToRemove);
-      maybeStoreSymlink(linkName,targetName,metadata,t.getDestPath(),exclusions,outputSymlinks);
+      maybeStoreSymlink(linkName,targetName,metadata,t.getDestPath(),outputSymlinks);
     }
   }
   return FilesetEntryValue.of(ImmutableSet.copyOf(outputSymlinks.values()));

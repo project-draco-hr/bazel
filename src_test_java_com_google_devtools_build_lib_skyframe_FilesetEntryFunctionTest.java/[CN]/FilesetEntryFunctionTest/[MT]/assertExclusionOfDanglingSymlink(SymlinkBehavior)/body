@@ -1,0 +1,10 @@
+{
+  Artifact linkName=getSourceArtifact("foo/dangling.sym");
+  Artifact buildFile=getSourceArtifact("foo/BUILD");
+  RootedPath linkTarget=createFile(siblingOf(linkName,"target.file"),"blah");
+  linkName.getPath().createSymbolicLink(new PathFragment("target.file"));
+  createFile(buildFile);
+  linkTarget.asPath().delete();
+  FilesetTraversalParams paramsWithSymlinkCopy=FilesetTraversalParamsFactory.recursiveTraversalOfPackage(label("//foo"),buildFile,new PathFragment("output-name"),ImmutableSet.of("dangling.sym"),symlinkBehavior,PackageBoundaryMode.DONT_CROSS);
+  assertSymlinksInOrder(paramsWithSymlinkCopy,symlink("output-name/BUILD",buildFile));
+}
