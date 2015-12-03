@@ -4,9 +4,15 @@
   Iterable<Artifact> artifacts=provider.getIdeInfoFiles();
   ImmutableMap.Builder<String,RuleIdeInfo> builder=ImmutableMap.builder();
   for (  Artifact artifact : artifacts) {
-    BinaryFileWriteAction generatingAction=(BinaryFileWriteAction)getGeneratingAction(artifact);
-    RuleIdeInfo ruleIdeInfo=RuleIdeInfo.parseFrom(generatingAction.getSource().openStream());
-    builder.put(ruleIdeInfo.getLabel(),ruleIdeInfo);
+    Action generatingAction=getGeneratingAction(artifact);
+    if (generatingAction instanceof BinaryFileWriteAction) {
+      BinaryFileWriteAction writeAction=(BinaryFileWriteAction)generatingAction;
+      RuleIdeInfo ruleIdeInfo=RuleIdeInfo.parseFrom(writeAction.getSource().openStream());
+      builder.put(ruleIdeInfo.getLabel(),ruleIdeInfo);
+    }
+ else {
+      verifyPackageManifestSpawnAction(generatingAction);
+    }
   }
   return builder.build();
 }

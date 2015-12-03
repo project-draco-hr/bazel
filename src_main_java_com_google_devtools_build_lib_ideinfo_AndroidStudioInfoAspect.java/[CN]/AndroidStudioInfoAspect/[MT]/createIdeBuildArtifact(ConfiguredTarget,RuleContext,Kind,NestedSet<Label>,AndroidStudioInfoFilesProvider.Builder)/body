@@ -1,15 +1,20 @@
 {
-  Artifact ideInfoFile=ideInfoArtifact(base,ruleContext,ASWB_BUILD_SUFFIX);
-  Artifact ideInfoTextFile=ideInfoArtifact(base,ruleContext,ASWB_BUILD_TEXT_SUFFIX);
+  Artifact ideInfoFile=derivedArtifact(base,ruleContext,ASWB_BUILD_SUFFIX);
+  Artifact ideInfoTextFile=derivedArtifact(base,ruleContext,ASWB_BUILD_TEXT_SUFFIX);
+  Artifact packageManifest=createPackageManifest(base,ruleContext,ruleKind);
   providerBuilder.ideInfoFilesBuilder().add(ideInfoFile);
   providerBuilder.ideInfoTextFilesBuilder().add(ideInfoTextFile);
+  if (packageManifest != null) {
+    providerBuilder.ideInfoFilesBuilder().add(packageManifest);
+  }
   NestedSetBuilder<Artifact> ideResolveArtifacts=providerBuilder.ideResolveFilesBuilder();
   RuleIdeInfo.Builder outputBuilder=RuleIdeInfo.newBuilder();
   outputBuilder.setLabel(base.getLabel().toString());
   outputBuilder.setBuildFile(ruleContext.getRule().getPackage().getBuildFile().getPath().toString());
   outputBuilder.setKind(ruleKind);
   if (ruleKind == Kind.JAVA_LIBRARY || ruleKind == Kind.JAVA_IMPORT || ruleKind == Kind.JAVA_TEST || ruleKind == Kind.JAVA_BINARY || ruleKind == Kind.ANDROID_LIBRARY || ruleKind == Kind.ANDROID_BINARY || ruleKind == Kind.ANDROID_TEST || ruleKind == Kind.ANDROID_ROBOELECTRIC_TEST || ruleKind == Kind.PROTO_LIBRARY) {
-    outputBuilder.setJavaRuleIdeInfo(makeJavaRuleIdeInfo(base,ruleContext,ideResolveArtifacts));
+    JavaRuleIdeInfo javaRuleIdeInfo=makeJavaRuleIdeInfo(base,ruleContext,ideResolveArtifacts,packageManifest);
+    outputBuilder.setJavaRuleIdeInfo(javaRuleIdeInfo);
   }
   if (ruleKind == Kind.ANDROID_LIBRARY || ruleKind == Kind.ANDROID_BINARY || ruleKind == Kind.ANDROID_TEST) {
     outputBuilder.setAndroidRuleIdeInfo(makeAndroidRuleIdeInfo(ruleContext,base,ideResolveArtifacts));
@@ -23,5 +28,8 @@
   final RuleIdeInfo ruleIdeInfo=outputBuilder.build();
   ruleContext.registerAction(makeProtoWriteAction(ruleContext.getActionOwner(),ruleIdeInfo,ideInfoFile));
   ruleContext.registerAction(makeProtoTextWriteAction(ruleContext.getActionOwner(),ruleIdeInfo,ideInfoTextFile));
+  if (packageManifest != null) {
+    ruleContext.registerAction(makePackageManifestAction(ruleContext,packageManifest,getJavaSources(ruleContext)));
+  }
   return provider;
 }

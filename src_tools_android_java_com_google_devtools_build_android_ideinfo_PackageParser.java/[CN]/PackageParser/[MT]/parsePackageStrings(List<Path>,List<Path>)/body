@@ -1,0 +1,21 @@
+{
+  ListeningExecutorService executorService=MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
+  Map<Path,ListenableFuture<String>> futures=Maps.newHashMap();
+  for (int i=0; i < absolutePaths.size(); i++) {
+    final Path source=executionPaths.get(i);
+    futures.put(absolutePaths.get(i),executorService.submit(new Callable<String>(){
+      @Override public String call() throws Exception {
+        return getDeclaredPackageOfJavaFile(source);
+      }
+    }
+));
+  }
+  Map<Path,String> map=Maps.newHashMap();
+  for (  Entry<Path,ListenableFuture<String>> entry : futures.entrySet()) {
+    String value=entry.getValue().get();
+    if (value != null) {
+      map.put(entry.getKey(),value);
+    }
+  }
+  return map;
+}
