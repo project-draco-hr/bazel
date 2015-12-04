@@ -27,12 +27,12 @@
       return FilesetEntryValue.EMPTY;
     }
     ResolvedFile resolvedRoot=rftv.getResolvedRoot().get();
-    if (!resolvedRoot.type.exists()) {
+    if (!resolvedRoot.getType().exists()) {
       return FilesetEntryValue.EMPTY;
     }
     PathFragment prefixToRemove=direct.getRoot().getRelativePart();
     Iterable<ResolvedFile> results=null;
-    if (direct.isRecursive() || (resolvedRoot.type.isDirectory() && !resolvedRoot.type.isSymlink())) {
+    if (direct.isRecursive() || (resolvedRoot.getType().isDirectory() && !resolvedRoot.getType().isSymlink())) {
       DirectoryTree root=new DirectoryTree();
       for (      ResolvedFile f : rftv.getTransitiveFiles().toCollection()) {
         PathFragment path=f.getNameInSymlinkTree().relativeTo(prefixToRemove);
@@ -62,7 +62,7 @@
  catch (      DanglingSymlinkException e) {
         throw new FilesetEntryFunctionException(e);
       }
-      String metadata=Integer.toHexString(f.metadata.get().hashCode());
+      String metadata=Integer.toHexString(f.getMetadata().get().hashCode());
       maybeStoreSymlink(linkName,targetName,metadata,t.getDestPath(),outputSymlinks);
     }
   }
