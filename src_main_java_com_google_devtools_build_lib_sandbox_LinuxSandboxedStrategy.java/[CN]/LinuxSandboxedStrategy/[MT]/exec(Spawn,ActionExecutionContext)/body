@@ -15,15 +15,9 @@
     mounts=getMounts(spawn,actionExecutionContext);
   }
  catch (  IllegalArgumentException|IOException e) {
-    throw new UserExecException("Could not prepare mounts for sandbox execution",e);
+    throw new EnvironmentalExecException("Could not prepare mounts for sandbox execution",e);
   }
-  ImmutableSet<Path> createDirs;
-  try {
-    createDirs=createImportantDirs(spawn.getEnvironment());
-  }
- catch (  IOException e) {
-    throw new UserExecException("Could not prepare the set of important directories to create in the sandbox",e);
-  }
+  ImmutableSet<Path> createDirs=createImportantDirs(spawn.getEnvironment());
   int timeout=getTimeout(spawn);
   try {
     final NamespaceSandboxRunner runner=new NamespaceSandboxRunner(execRoot,sandboxPath,mounts,createDirs,verboseFailures,sandboxDebug);
