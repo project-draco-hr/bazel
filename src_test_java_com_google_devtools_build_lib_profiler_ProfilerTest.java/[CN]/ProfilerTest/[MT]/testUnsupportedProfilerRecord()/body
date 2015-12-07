@@ -1,0 +1,35 @@
+{
+  Path dataFile=cacheDir.getRelative("profile5.dat");
+  profiler.start(ProfiledTaskKinds.ALL,dataFile.getOutputStream(),"phase test",false,BlazeClock.instance(),BlazeClock.instance().nanoTime());
+  profiler.startTask(ProfilerTask.TEST,"outer task");
+  profiler.logEvent(ProfilerTask.EXCEPTION,"inner task");
+  profiler.completeTask(ProfilerTask.TEST);
+  profiler.startTask(ProfilerTask.SCANNER,"outer task 2");
+  profiler.logSimpleTask(Profiler.nanoTimeMaybe(),ProfilerTask.TEST,"inner task 2");
+  profiler.completeTask(ProfilerTask.SCANNER);
+  profiler.stop();
+  ProfileInfo info=ProfileInfo.loadProfile(dataFile);
+  info.calculateStats();
+  assertFalse(info.isCorruptedOrIncomplete());
+  assertEquals(2,info.getStatsForType(ProfilerTask.TEST,info.rootTasksById).count);
+  assertEquals(0,info.getStatsForType(ProfilerTask.UNKNOWN,info.rootTasksById).count);
+  InputStream in=new InflaterInputStream(dataFile.getInputStream(),new Inflater(false),65536);
+  byte[] buffer=new byte[60000];
+  int len=in.read(buffer);
+  in.close();
+  assertTrue(len < buffer.length);
+  String content=new String(buffer,ISO_8859_1);
+  int infoIndex=content.indexOf("TEST");
+  assertTrue(infoIndex > 0);
+  content=content.substring(0,infoIndex) + "XXXX" + content.substring(infoIndex + 4);
+  OutputStream out=new DeflaterOutputStream(dataFile.getOutputStream(),new Deflater(Deflater.BEST_SPEED,false),65536);
+  out.write(content.getBytes(ISO_8859_1));
+  out.close();
+  info=ProfileInfo.loadProfile(dataFile);
+  info.calculateStats();
+  assertFalse(info.isCorruptedOrIncomplete());
+  assertEquals(0,info.getStatsForType(ProfilerTask.TEST,info.rootTasksById).count);
+  assertEquals(1,info.getStatsForType(ProfilerTask.SCANNER,info.rootTasksById).count);
+  assertEquals(1,info.getStatsForType(ProfilerTask.EXCEPTION,info.rootTasksById).count);
+  assertEquals(2,info.getStatsForType(ProfilerTask.UNKNOWN,info.rootTasksById).count);
+}

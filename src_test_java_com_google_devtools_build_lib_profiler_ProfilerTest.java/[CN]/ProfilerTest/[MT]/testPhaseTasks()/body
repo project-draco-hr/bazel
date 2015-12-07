@@ -1,0 +1,50 @@
+{
+  Path cacheFile=cacheDir.getRelative("profile4.dat");
+  profiler.start(ProfiledTaskKinds.ALL,cacheFile.getOutputStream(),"phase test",false,BlazeClock.instance(),BlazeClock.instance().nanoTime());
+  Thread thread1=new Thread(){
+    @Override public void run(){
+      for (int i=0; i < 100; i++) {
+        Profiler.instance().logEvent(ProfilerTask.TEST,"thread1");
+      }
+    }
+  }
+;
+  profiler.markPhase(ProfilePhase.INIT);
+  profiler.markPhase(ProfilePhase.LOAD);
+  thread1.start();
+  thread1.join();
+  Thread.sleep(1);
+  profiler.markPhase(ProfilePhase.ANALYZE);
+  Thread thread2=new Thread(){
+    @Override public void run(){
+      profiler.startTask(ProfilerTask.TEST,"complex task");
+      for (int i=0; i < 100; i++) {
+        Profiler.instance().logEvent(ProfilerTask.TEST,"thread2a");
+      }
+      profiler.completeTask(ProfilerTask.TEST);
+      profiler.markPhase(ProfilePhase.EXECUTE);
+      for (int i=0; i < 100; i++) {
+        Profiler.instance().logEvent(ProfilerTask.TEST,"thread2b");
+      }
+    }
+  }
+;
+  thread2.start();
+  thread2.join();
+  profiler.logEvent(ProfilerTask.TEST,"last task");
+  Thread.sleep(1);
+  profiler.stop();
+  ProfileInfo info=ProfileInfo.loadProfile(cacheFile);
+  info.calculateStats();
+  info.analyzeRelationships();
+  assertThat(info.allTasksById).hasSize(1 + 1 + 100+ 1+ 100+ 1+ 1+ 100+ 1+ 1);
+  assertThat(info.tasksByThread).hasSize(3);
+  ProfileInfo.Task p0=info.getPhaseTask(ProfilePhase.INIT);
+  assertThat(info.getTasksForPhase(p0)).hasSize(1);
+  ProfileInfo.Task p1=info.getPhaseTask(ProfilePhase.LOAD);
+  assertThat(info.getTasksForPhase(p1)).hasSize(101);
+  ProfileInfo.Task p2=info.getPhaseTask(ProfilePhase.ANALYZE);
+  assertThat(info.getTasksForPhase(p2)).hasSize(2);
+  ProfileInfo.Task p3=info.getPhaseTask(ProfilePhase.EXECUTE);
+  assertThat(info.getTasksForPhase(p3)).hasSize(103);
+}

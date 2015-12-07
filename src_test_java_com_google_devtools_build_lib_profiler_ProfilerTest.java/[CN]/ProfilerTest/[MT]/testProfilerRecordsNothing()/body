@@ -1,0 +1,11 @@
+{
+  Path profileData=cacheDir.getRelative("foo");
+  profiler.start(ProfiledTaskKinds.NONE,profileData.getOutputStream(),"test",true,BlazeClock.instance(),BlazeClock.instance().nanoTime());
+  profiler.logSimpleTask(10000,20000,ProfilerTask.VFS_STAT,"stat");
+  assertTrue(ProfilerTask.VFS_STAT.collectsSlowestInstances());
+  assertFalse(profiler.isProfiling(ProfilerTask.VFS_STAT));
+  profiler.stop();
+  ProfileInfo info=ProfileInfo.loadProfile(profileData);
+  info.calculateStats();
+  assertThat(info.allTasksById).isEmpty();
+}

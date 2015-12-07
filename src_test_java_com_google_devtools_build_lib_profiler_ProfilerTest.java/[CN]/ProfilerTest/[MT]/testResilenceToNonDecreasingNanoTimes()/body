@@ -1,0 +1,17 @@
+{
+  final long initialNanoTime=BlazeClock.instance().nanoTime();
+  final AtomicInteger numNanoTimeCalls=new AtomicInteger(0);
+  Clock badClock=new Clock(){
+    @Override public long currentTimeMillis(){
+      return BlazeClock.instance().currentTimeMillis();
+    }
+    @Override public long nanoTime(){
+      return initialNanoTime - numNanoTimeCalls.addAndGet(1);
+    }
+  }
+;
+  Path cacheFile=cacheDir.getRelative("profile1.dat");
+  profiler.start(ProfiledTaskKinds.ALL,cacheFile.getOutputStream(),"testResilenceToNonDecreasingNanoTimes",false,badClock,initialNanoTime);
+  profiler.logSimpleTask(badClock.nanoTime(),ProfilerTask.TEST,"some task");
+  profiler.stop();
+}

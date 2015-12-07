@@ -1,0 +1,29 @@
+{
+  Runnable run=new Runnable(){
+    @Override public void run(){
+      Profiler profiler=Profiler.instance();
+      profiler.startTask(ProfilerTask.ACTION,"action");
+      task(profiler,ProfilerTask.REMOTE_EXECUTION,"remote execution");
+      task(profiler,ProfilerTask.ACTION_CHECK,"check");
+      task(profiler,ProfilerTask.ACTION_LOCK,"lock");
+      profiler.completeTask(ProfilerTask.ACTION);
+      task(profiler,ProfilerTask.INFO,"info");
+      task(profiler,ProfilerTask.VFS_STAT,"stat");
+      task(profiler,ProfilerTask.WAIT,"wait");
+    }
+  }
+;
+  ProfileInfo info=createProfileInfo(run,1);
+  ChartCreator aggregatingCreator=new AggregatingChartCreator(info,true);
+  Chart aggregatedChart=aggregatingCreator.create();
+  assertThat(aggregatedChart.getSortedTypes()).hasSize(COMMON_CHART_TYPES + AGGREGATED_CHART_TYPES);
+  assertThat(aggregatedChart.getSortedRows().get(0).getBars()).hasSize(5);
+  ChartCreator aggregatingNoVfsCreator=new AggregatingChartCreator(info,false);
+  Chart aggregatedNoVfsChart=aggregatingNoVfsCreator.create();
+  assertThat(aggregatedNoVfsChart.getSortedTypes()).hasSize(COMMON_CHART_TYPES + AGGREGATED_CHART_NO_VFS_TYPES);
+  assertThat(aggregatedNoVfsChart.getSortedRows().get(0).getBars()).hasSize(4);
+  ChartCreator detailedCreator=new DetailedChartCreator(info);
+  Chart detailedChart=detailedCreator.create();
+  assertThat(detailedChart.getSortedTypes()).hasSize(COMMON_CHART_TYPES + ProfilerTask.values().length);
+  assertThat(detailedChart.getSortedRows().get(0).getBars()).hasSize(7);
+}

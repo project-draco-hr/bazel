@@ -1,0 +1,14 @@
+{
+  Path profileData=cacheDir.getRelative("foo");
+  profiler.start(ProfiledTaskKinds.SLOWEST,profileData.getOutputStream(),"test",true,BlazeClock.instance(),BlazeClock.instance().nanoTime());
+  profiler.logSimpleTask(10000,20000,ProfilerTask.VFS_STAT,"stat");
+  profiler.logSimpleTask(20000,30000,ProfilerTask.REMOTE_EXECUTION,"remote execution");
+  assertTrue(profiler.isProfiling(ProfilerTask.VFS_STAT));
+  assertFalse(profiler.isProfiling(ProfilerTask.REMOTE_EXECUTION));
+  profiler.stop();
+  ProfileInfo info=ProfileInfo.loadProfile(profileData);
+  info.calculateStats();
+  assertThat(info.allTasksById).hasSize(1);
+  ProfileInfo.Task task=info.allTasksById.get(0);
+  assertEquals(ProfilerTask.VFS_STAT,task.type);
+}

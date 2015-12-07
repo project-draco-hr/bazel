@@ -1,0 +1,20 @@
+{
+  Runnable run=new Runnable(){
+    @Override public void run(){
+      Profiler.instance().startTask(ProfilerTask.ACTION,"action");
+      Profiler.instance().completeTask(ProfilerTask.ACTION);
+    }
+  }
+;
+  int threads=4;
+  ProfileInfo info=createProfileInfo(run,threads - 1);
+  ChartCreator aggregatingCreator=new AggregatingChartCreator(info,true);
+  Chart aggregatedChart=aggregatingCreator.create();
+  assertEquals(threads,aggregatedChart.getRowCount());
+  assertThat(aggregatedChart.getSortedRows().get(0).getBars()).hasSize(1);
+  ChartCreator detailedCreator=new DetailedChartCreator(info);
+  Chart detailedChart=detailedCreator.create();
+  assertThat(detailedChart.getSortedTypes()).hasSize(COMMON_CHART_TYPES + DETAILED_CHART_TYPES);
+  assertEquals(threads,detailedChart.getRowCount());
+  assertThat(detailedChart.getSortedRows().get(0).getBars()).hasSize(1);
+}

@@ -1,0 +1,49 @@
+{
+  Path cacheFile=cacheDir.getRelative("profile3.dat");
+  profiler.start(ProfiledTaskKinds.ALL,cacheFile.getOutputStream(),"concurrent test",false,BlazeClock.instance(),BlazeClock.instance().nanoTime());
+  long id=Thread.currentThread().getId();
+  Thread thread1=new Thread(){
+    @Override public void run(){
+      for (int i=0; i < 10000; i++) {
+        Profiler.instance().logEvent(ProfilerTask.TEST,"thread1");
+      }
+    }
+  }
+;
+  long id1=thread1.getId();
+  Thread thread2=new Thread(){
+    @Override public void run(){
+      for (int i=0; i < 10000; i++) {
+        Profiler.instance().logEvent(ProfilerTask.TEST,"thread2");
+      }
+    }
+  }
+;
+  long id2=thread2.getId();
+  profiler.startTask(ProfilerTask.PHASE,"main task");
+  profiler.logEvent(ProfilerTask.TEST,"starting threads");
+  thread1.start();
+  thread2.start();
+  thread2.join();
+  thread1.join();
+  profiler.logEvent(ProfilerTask.TEST,"joined");
+  profiler.completeTask(ProfilerTask.PHASE);
+  profiler.stop();
+  ProfileInfo info=ProfileInfo.loadProfile(cacheFile);
+  info.calculateStats();
+  info.analyzeRelationships();
+  assertEquals(info.allTasksById.size(),4 + 10000 + 10000);
+  assertEquals(info.tasksByThread.size(),3);
+  assertEquals(info.tasksByThread.get(id).length,2);
+  ProfileInfo.Task mainTask=info.tasksByThread.get(id)[0];
+  assertEquals(mainTask.getDescription(),"main task");
+  assertEquals(mainTask.subtasks.length,2);
+  assertEquals(info.tasksByThread.get(id1).length,10000);
+  assertEquals(info.tasksByThread.get(id2).length,10000);
+  int startId=mainTask.subtasks[0].id;
+  int endId=mainTask.subtasks[1].id;
+  assertTrue(startId < info.tasksByThread.get(id1)[0].id);
+  assertTrue(startId < info.tasksByThread.get(id2)[0].id);
+  assertTrue(endId > info.tasksByThread.get(id1)[9999].id);
+  assertTrue(endId > info.tasksByThread.get(id2)[9999].id);
+}

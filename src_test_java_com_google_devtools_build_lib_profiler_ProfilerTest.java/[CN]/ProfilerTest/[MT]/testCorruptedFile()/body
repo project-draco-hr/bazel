@@ -1,0 +1,19 @@
+{
+  Path cacheFile=cacheDir.getRelative("profile5.dat");
+  profiler.start(ProfiledTaskKinds.ALL,cacheFile.getOutputStream(),"phase test",false,BlazeClock.instance(),BlazeClock.instance().nanoTime());
+  for (int i=0; i < 100; i++) {
+    profiler.startTask(ProfilerTask.TEST,"outer task " + i);
+    profiler.logEvent(ProfilerTask.TEST,"inner task " + i);
+    profiler.completeTask(ProfilerTask.TEST);
+  }
+  profiler.stop();
+  ProfileInfo info=ProfileInfo.loadProfile(cacheFile);
+  info.calculateStats();
+  assertFalse(info.isCorruptedOrIncomplete());
+  Path corruptedFile=cacheDir.getRelative("profile5bad.dat");
+  FileSystemUtils.writeContent(corruptedFile,Arrays.copyOf(FileSystemUtils.readContent(cacheFile),2000));
+  info=ProfileInfo.loadProfile(corruptedFile);
+  info.calculateStats();
+  assertTrue(info.isCorruptedOrIncomplete());
+  assertEquals(info.rootTasksById.size(),info.allTasksById.size() / 2);
+}

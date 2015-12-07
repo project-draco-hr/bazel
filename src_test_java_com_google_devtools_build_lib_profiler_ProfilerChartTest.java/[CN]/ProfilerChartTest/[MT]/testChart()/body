@@ -1,0 +1,38 @@
+{
+  Chart chart=new Chart();
+  ChartBarType type3=chart.createType("name3",Color.GREEN);
+  ChartBarType type2=chart.createType("name2",Color.RED);
+  ChartBarType type1=chart.createType("name1",Color.BLACK);
+  List<ChartBarType> types=chart.getSortedTypes();
+  assertThat(types).hasSize(3);
+  assertEquals(type1.getName(),types.get(0).getName());
+  assertEquals(type1.getColor(),types.get(0).getColor());
+  assertEquals(type2.getName(),types.get(1).getName());
+  assertEquals(type2.getColor(),types.get(1).getColor());
+  assertEquals(type3.getName(),types.get(2).getName());
+  assertEquals(type3.getColor(),types.get(2).getColor());
+  assertSame(type3,chart.lookUpType("name3"));
+  assertSame(type2,chart.lookUpType("name2"));
+  assertSame(type1,chart.lookUpType("name1"));
+  assertSame(Chart.UNKNOWN_TYPE,chart.lookUpType("wergl"));
+  types=chart.getSortedTypes();
+  assertThat(types).hasSize(4);
+  chart.addBar(1,2,3,type1,"label1");
+  chart.addBar(2,3,4,type2,"label2");
+  chart.addBar(2,4,5,type3,"label3");
+  chart.addBar(3,3,4,type2,"label4");
+  chart.addBar(3,4,5,type3,"label5");
+  chart.addBar(3,5,6,type3,"label6");
+  assertEquals(6,chart.getMaxStop());
+  assertEquals(3,chart.getRowCount());
+  List<ChartRow> rows=chart.getSortedRows();
+  assertThat(rows).hasSize(3);
+  assertThat(rows.get(0).getBars()).hasSize(1);
+  assertThat(rows.get(1).getBars()).hasSize(2);
+  assertThat(rows.get(2).getBars()).hasSize(3);
+  ChartBar bar=rows.get(0).getBars().get(0);
+  assertEquals(2,bar.getStart());
+  assertEquals(3,bar.getStop());
+  assertSame(type1,bar.getType());
+  assertEquals("label1",bar.getLabel());
+}

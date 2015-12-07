@@ -1,0 +1,43 @@
+{
+  Path cacheFile=cacheDir.getRelative("profile1.dat");
+  profiler.start(ProfiledTaskKinds.ALL,cacheFile.getOutputStream(),"basic test",false,BlazeClock.instance(),BlazeClock.instance().nanoTime());
+  profiler.logSimpleTask(getTestClock().nanoTime(),ProfilerTask.PHASE,"profiler start");
+  profiler.startTask(ProfilerTask.ACTION,"complex task");
+  profiler.logEvent(ProfilerTask.PHASE,"event1");
+  profiler.startTask(ProfilerTask.ACTION_CHECK,"complex subtask");
+  profiler.logSimpleTask(getTestClock().nanoTime(),ProfilerTask.VFS_STAT,"stat1");
+  long startTime=getTestClock().nanoTime();
+  Thread.sleep(20);
+  profiler.logSimpleTask(startTime,ProfilerTask.VFS_STAT,"stat2");
+  profiler.completeTask(ProfilerTask.ACTION_CHECK);
+  profiler.completeTask(ProfilerTask.ACTION);
+  profiler.stop();
+  profiler.logEvent(ProfilerTask.PHASE,"should be ignored");
+  profiler.completeTask(ProfilerTask.ACTION_EXECUTE);
+  ProfileInfo info=ProfileInfo.loadProfile(cacheFile);
+  info.calculateStats();
+  assertThat(info.allTasksById).hasSize(6);
+  ProfileInfo.Task task=info.allTasksById.get(0);
+  assertTrue(task.stats.isEmpty());
+  task=info.allTasksById.get(1);
+  int count=0;
+  for (  ProfileInfo.AggregateAttr attr : task.getStatAttrArray()) {
+    if (attr != null) {
+      count++;
+    }
+  }
+  assertEquals(count,2);
+  assertEquals(task.aggregatedStats.toArray().length,ProfilerTask.TASK_COUNT);
+  assertEquals(task.aggregatedStats.getAttr(ProfilerTask.VFS_STAT).count,2);
+  task=info.allTasksById.get(2);
+  assertThat(task.durationNanos).isEqualTo(0);
+  task=info.allTasksById.get(3);
+  assertEquals(task.stats.getAttr(ProfilerTask.VFS_STAT).count,2);
+  assertEquals(task.subtasks.length,1);
+  assertEquals(task.subtasks[0].getDescription(),"stat2");
+  long time=-1;
+  for (  ProfileInfo.Task t : info.allTasksById) {
+    assertTrue(t.startTime >= time);
+    time=t.startTime;
+  }
+}

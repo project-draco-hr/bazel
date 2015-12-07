@@ -1,0 +1,14 @@
+{
+  Path cacheFile=cacheDir.getRelative("profile1.dat");
+  profiler.start(ProfiledTaskKinds.ALL,cacheFile.getOutputStream(),"basic test",true,BlazeClock.instance(),BlazeClock.instance().nanoTime());
+  profiler.startTask(ProfilerTask.ACTION,"action task");
+  profiler.logSimpleTask(getTestClock().nanoTime(),ProfilerTask.VFS_STAT,"stat1");
+  profiler.completeTask(ProfilerTask.ACTION);
+  profiler.stop();
+  ProfileInfo info=ProfileInfo.loadProfile(cacheFile);
+  info.calculateStats();
+  assertThat(info.allTasksById).hasSize(3);
+  ProfileInfo.Task task=info.allTasksById.get(1);
+  assertEquals(ProfilerTask.VFS_STAT,task.type);
+  assertThat(task.durationNanos).isLessThan(ProfilerTask.VFS_STAT.minDuration);
+}

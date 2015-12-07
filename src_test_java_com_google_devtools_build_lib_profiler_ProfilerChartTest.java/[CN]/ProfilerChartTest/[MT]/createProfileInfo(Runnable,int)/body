@@ -1,0 +1,14 @@
+{
+  Scratch scratch=new Scratch();
+  Path cacheDir=scratch.dir("/tmp");
+  Path cacheFile=cacheDir.getRelative("profile1.dat");
+  Profiler profiler=Profiler.instance();
+  profiler.start(ProfiledTaskKinds.ALL,cacheFile.getOutputStream(),"basic test",false,BlazeClock.instance(),BlazeClock.instance().nanoTime());
+  for (int i=0; i < noOfRows; i++) {
+    Thread t=new Thread(runnable);
+    t.start();
+    t.join();
+  }
+  profiler.stop();
+  return ProfileInfo.loadProfile(cacheFile);
+}
