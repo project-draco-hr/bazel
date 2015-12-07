@@ -8,16 +8,10 @@
   ImmutableList<TransitiveInfoCollection> deps=ImmutableList.<TransitiveInfoCollection>copyOf(ruleContext.getPrerequisites("deps",Mode.TARGET));
   JavaCommon javaCommon=new JavaCommon(ruleContext,javaSemantics,deps,deps,deps);
   AndroidCommon androidCommon=new AndroidCommon(javaCommon,true,true);
-  try {
-    ResourceDependencies resourceDeps=LocalResourceContainer.definesAndroidResources(ruleContext.attributes()) ? ResourceDependencies.fromRuleDeps(ruleContext,false) : ResourceDependencies.fromRuleResourceAndDeps(ruleContext,false);
-    RuleConfiguredTargetBuilder builder=init(ruleContext,filesBuilder,resourceDeps,javaCommon,androidCommon,javaSemantics,androidSemantics,ImmutableList.<String>of("deps"));
-    if (builder == null) {
-      return null;
-    }
-    return builder.build();
-  }
- catch (  RuleConfigurationException e) {
-    Preconditions.checkArgument(ruleContext.hasErrors(),"Exception caught but no errors reported:\n %s",Joiner.on("\n").join(e.getStackTrace()));
+  ResourceDependencies resourceDeps=LocalResourceContainer.definesAndroidResources(ruleContext.attributes()) ? ResourceDependencies.fromRuleDeps(ruleContext,false) : ResourceDependencies.fromRuleResourceAndDeps(ruleContext,false);
+  RuleConfiguredTargetBuilder builder=init(ruleContext,filesBuilder,resourceDeps,javaCommon,androidCommon,javaSemantics,androidSemantics,ImmutableList.<String>of("deps"));
+  if (builder == null) {
     return null;
   }
+  return builder.build();
 }

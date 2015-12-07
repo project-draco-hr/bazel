@@ -50,11 +50,24 @@
     }
     applicationManifest=ruleManifest.mergeWith(ruleContext,resourceDeps);
     resourceApk=applicationManifest.packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.getTokenizedStringListAttr("densities"),ruleContext.attributes().get("application_id",Type.STRING),getExpandedMakeVarsForAttr(ruleContext,"version_code"),getExpandedMakeVarsForAttr(ruleContext,"version_name"),false,getProguardConfigArtifact(ruleContext,""));
+    if (ruleContext.hasErrors()) {
+      return null;
+    }
     incrementalResourceApk=applicationManifest.addStubApplication(ruleContext).packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_INCREMENTAL_RESOURCES_APK),ruleContext,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.getTokenizedStringListAttr("densities"),ruleContext.attributes().get("application_id",Type.STRING),getExpandedMakeVarsForAttr(ruleContext,"version_code"),getExpandedMakeVarsForAttr(ruleContext,"version_name"),true,getProguardConfigArtifact(ruleContext,"incremental"));
+    if (ruleContext.hasErrors()) {
+      return null;
+    }
     splitResourceApk=applicationManifest.createSplitManifest(ruleContext,"android_resources",false).packWithDataAndResources(getDxArtifact(ruleContext,"android_resources.ap_"),ruleContext,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.getTokenizedStringListAttr("densities"),ruleContext.attributes().get("application_id",Type.STRING),getExpandedMakeVarsForAttr(ruleContext,"version_code"),getExpandedMakeVarsForAttr(ruleContext,"version_name"),true,getProguardConfigArtifact(ruleContext,"incremental_split"));
+    if (ruleContext.hasErrors()) {
+      return null;
+    }
   }
  else {
-    applicationManifest=ApplicationManifest.fromResourcesRule(ruleContext).mergeWith(ruleContext,resourceDeps);
+    ApplicationManifest resourcesManifest=ApplicationManifest.fromResourcesRule(ruleContext);
+    if (resourcesManifest == null) {
+      return null;
+    }
+    applicationManifest=resourcesManifest.mergeWith(ruleContext,resourceDeps);
     if (shouldRegenerate(ruleContext,resourceDeps)) {
       resourceApk=applicationManifest.packWithResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,resourceDeps,true,getProguardConfigArtifact(ruleContext,""));
     }
@@ -62,7 +75,13 @@
       resourceApk=applicationManifest.useCurrentResources(ruleContext,getProguardConfigArtifact(ruleContext,""));
     }
     incrementalResourceApk=applicationManifest.addStubApplication(ruleContext).packWithResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_INCREMENTAL_RESOURCES_APK),ruleContext,resourceDeps,false,getProguardConfigArtifact(ruleContext,"incremental"));
+    if (ruleContext.hasErrors()) {
+      return null;
+    }
     splitResourceApk=applicationManifest.createSplitManifest(ruleContext,"android_resources",false).packWithResources(getDxArtifact(ruleContext,"android_resources.ap_"),ruleContext,resourceDeps,false,getProguardConfigArtifact(ruleContext,"incremental_split"));
+    if (ruleContext.hasErrors()) {
+      return null;
+    }
   }
   JavaTargetAttributes resourceClasses=androidCommon.init(javaSemantics,androidSemantics,resourceApk,ruleContext.getConfiguration().isCodeCoverageEnabled(),true);
   if (resourceClasses == null) {
