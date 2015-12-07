@@ -11,10 +11,10 @@
   RootedPath pp2bBuild=createFile(rootedPath(bBuildArtifact));
   RootedPath pp2bFileA=createFile(siblingOf(pp2bBuild,"file.a"));
   createFile(siblingOf(pp2aBuild,"subdir.fake/file.fake"));
-  traverseAndAssertFiles(pkgRoot(parentOf(rootedPath(aBuildArtifact)),CROSS),resolvedFile(pp1aBuild),resolvedFile(pp1aFileA),resolvedFile(pp1aSubdirFileB),resolvedFile(pp2bBuild),resolvedFile(pp2bFileA));
-  traverseAndAssertFiles(pkgRoot(parentOf(rootedPath(aBuildArtifact)),DONT_CROSS),resolvedFile(pp1aBuild),resolvedFile(pp1aFileA),resolvedFile(pp1aSubdirFileB));
+  traverseAndAssertFiles(pkgRoot(parentOf(rootedPath(aBuildArtifact)),CROSS),regularFileForTesting(pp1aBuild),regularFileForTesting(pp1aFileA),regularFileForTesting(pp1aSubdirFileB),regularFileForTesting(pp2bBuild),regularFileForTesting(pp2bFileA));
+  traverseAndAssertFiles(pkgRoot(parentOf(rootedPath(aBuildArtifact)),DONT_CROSS),regularFileForTesting(pp1aBuild),regularFileForTesting(pp1aFileA),regularFileForTesting(pp1aSubdirFileB));
   RootedPath pp1aBsym=siblingOf(pp1aFileA,"b.sym");
   pp1aBsym.asPath().createSymbolicLink(new PathFragment("b"));
   invalidateDirectory(parentOf(pp1aBsym));
-  traverseAndAssertFiles(pkgRoot(parentOf(rootedPath(aBuildArtifact)),DONT_CROSS),resolvedFile(pp1aBuild),resolvedFile(pp1aFileA),resolvedFile(childOf(pp1aBsym,"file.fake")),resolvedSymlinkToDir(parentOf(pp1bFileFake),pp1aBsym,new PathFragment("b")),resolvedFile(pp1aSubdirFileB));
+  traverseAndAssertFiles(pkgRoot(parentOf(rootedPath(aBuildArtifact)),DONT_CROSS),regularFileForTesting(pp1aBuild),regularFileForTesting(pp1aFileA),regularFileForTesting(childOf(pp1aBsym,"file.fake")),symlinkToDirectoryForTesting(parentOf(pp1bFileFake),pp1aBsym,new PathFragment("b")),regularFileForTesting(pp1aSubdirFileB));
 }

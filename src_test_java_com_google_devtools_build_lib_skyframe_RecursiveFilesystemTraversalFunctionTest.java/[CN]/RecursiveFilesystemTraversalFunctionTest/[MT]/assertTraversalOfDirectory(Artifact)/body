@@ -2,15 +2,15 @@
   RootedPath file1=createFile(childOf(directoryArtifact,"bar.txt"));
   RootedPath file2=createFile(childOf(directoryArtifact,"baz/qux.txt"));
   TraversalRequest traversalRoot=fileLikeRoot(directoryArtifact,DONT_CROSS);
-  ResolvedFile expected1=resolvedFile(file1);
-  ResolvedFile expected2=resolvedFile(file2);
+  ResolvedFile expected1=regularFileForTesting(file1);
+  ResolvedFile expected2=regularFileForTesting(file2);
   RecursiveFilesystemTraversalValue v1=traverseAndAssertFiles(traversalRoot,expected1,expected2);
   assertThat(progressReceiver.invalidations).isEmpty();
   assertThat(progressReceiver.evaluations).contains(v1);
   progressReceiver.clear();
   RootedPath file3=createFile(childOf(directoryArtifact,"foo.txt"));
   invalidateDirectory(directoryArtifact);
-  ResolvedFile expected3=resolvedFile(file3);
+  ResolvedFile expected3=regularFileForTesting(file3);
   RecursiveFilesystemTraversalValue v2=traverseAndAssertFiles(traversalRoot,expected1,expected2,expected3);
   assertThat(progressReceiver.invalidations).contains(rftvSkyKey(traversalRoot));
   assertThat(progressReceiver.evaluations).contains(v2);

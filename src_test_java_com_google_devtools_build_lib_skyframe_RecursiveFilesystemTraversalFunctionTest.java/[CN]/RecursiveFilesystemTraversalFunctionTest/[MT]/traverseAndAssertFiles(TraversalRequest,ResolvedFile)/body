@@ -1,13 +1,9 @@
 {
-  Set<ResolvedFile> expectedMap=new HashSet<>();
-  for (  ResolvedFile exp : expectedFilesIgnoringMetadata) {
-    expectedMap.add(exp.stripMetadataForTesting());
-  }
   RecursiveFilesystemTraversalValue result=evalTraversalRequest(params);
-  Set<ResolvedFile> actualMap=new HashSet<>();
+  Set<ResolvedFile> actual=new HashSet<>();
   for (  ResolvedFile act : result.getTransitiveFiles()) {
-    actualMap.add(act.stripMetadataForTesting());
+    actual.add(act.stripMetadataForTesting());
   }
-  assertThat(expectedMap).isEqualTo(actualMap);
+  assertThat(actual).containsExactly((Object[])expectedFilesIgnoringMetadata);
   return result;
 }
