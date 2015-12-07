@@ -1,0 +1,10 @@
+{
+  scratch.file("foo/bar/bad/BUILD","invalid build file");
+  reporter.removeHandler(failFastHandler);
+  Pair<Set<Label>,Boolean> result=parseListKeepGoing("foo/...");
+  assertThat(result.first).containsExactlyElementsIn(rulesBeneathFoo);
+  assertContainsEvent("syntax error at 'build'");
+  assertContainsEvent("package contains errors");
+  reporter.addHandler(failFastHandler);
+  assertFalse(result.second);
+}

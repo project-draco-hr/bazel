@@ -1,0 +1,11 @@
+{
+  invalidate(ModifiedFileSet.EVERYTHING_MODIFIED);
+  scratch.dir("h/i/j/k/BUILD");
+  scratch.file("h/BUILD","sh_library(name='h')");
+  assertThat(parseList("//h/...")).containsExactlyElementsIn(labels("//h"));
+  scratch.file("h/i/j/BUILD","sh_library(name='j')");
+  assertThat(parseList("//h/...")).containsExactlyElementsIn(labels("//h"));
+  ModifiedFileSet modifiedFileSet=ModifiedFileSet.builder().modify(new PathFragment("h/i/j/BUILD")).build();
+  invalidate(modifiedFileSet);
+  assertThat(parseList("//h/...")).containsExactly(Label.parseAbsolute("//h/i/j:j"),Label.parseAbsolute("//h"));
+}

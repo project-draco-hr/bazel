@@ -1,0 +1,17 @@
+{
+  reporter.removeHandler(failFastHandler);
+  Path tuv=scratch.dir("t/u/v");
+  tuv.getChild("BUILD").createSymbolicLink(new PathFragment("../../BUILD"));
+  try {
+    parseList("//t/...");
+    fail("TargetParsingException expected");
+  }
+ catch (  TargetParsingException e) {
+  }
+  scratch.file("t/BUILD","sh_library(name='t')");
+  ModifiedFileSet modifiedFileSet=ModifiedFileSet.builder().modify(new PathFragment("t/BUILD")).build();
+  invalidate(modifiedFileSet);
+  reporter.addHandler(failFastHandler);
+  Set<Label> result=parseList("//t/...");
+  assertThat(result).containsExactly(Label.parseAbsolute("//t:t"),Label.parseAbsolute("//t/u/v:t"));
+}

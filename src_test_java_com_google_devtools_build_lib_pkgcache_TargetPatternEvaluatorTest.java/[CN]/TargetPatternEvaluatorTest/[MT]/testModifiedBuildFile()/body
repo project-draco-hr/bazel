@@ -1,0 +1,7 @@
+{
+  assertThat(parseList("foo:all")).containsExactlyElementsIn(rulesInFoo);
+  assertNoEvents();
+  scratch.overwriteFile("foo/BUILD","cc_library(name = 'foo1', srcs = [ 'foo1.cc' ], hdrs = [ 'foo1.h' ])","cc_library(name = 'foo2', srcs = [ 'foo1.cc' ], hdrs = [ 'foo1.h' ])");
+  invalidate("foo/BUILD");
+  assertThat(parseList("foo:all")).containsExactlyElementsIn(labels("//foo:foo1","//foo:foo2"));
+}

@@ -1,0 +1,7 @@
+{
+  scratch.file("x/y/BUILD","cc_library(name='y')");
+  scratch.file("x/z/BUILD","cc_library(name='z')");
+  setDeletedPackages(Sets.newHashSet(PackageIdentifier.createInDefaultRepo("x/y")));
+  parser.updateOffset(new PathFragment("x"));
+  assertEquals(Sets.newHashSet(Label.parseAbsolute("//x/z")),targetsToLabels(getFailFast(parser.parseTargetPattern(parsingListener,"...",false))));
+}

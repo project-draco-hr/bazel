@@ -1,0 +1,11 @@
+{
+  assertThat(parseList("foo" + suffix)).containsExactlyElementsIn(rulesInFoo);
+  assertThat(parseList("foo/bar" + suffix)).containsExactlyElementsIn(rulesInFooBar);
+  assertThat(parseList("otherrules" + suffix)).containsExactlyElementsIn(rulesInOtherrules);
+  assertNoEvents();
+  String msg1="while parsing 'nosuchpkg" + suffix + "': no such package 'nosuchpkg': "+ "BUILD file not found on package path";
+  expectError(msg1,"nosuchpkg" + suffix);
+  String msg2="while parsing 'nosuchdirectory" + suffix + "': no such package 'nosuchdirectory': "+ "BUILD file not found on package path";
+  expectError(msg2,"nosuchdirectory" + suffix);
+  assertThat(parsingListener.events).containsExactly(Pair.of("nosuchpkg" + suffix,msg1),Pair.of("nosuchdirectory" + suffix,msg2));
+}

@@ -1,0 +1,15 @@
+{
+  scratch.dir("from-b");
+  scratch.file("from-b/BUILD","filegroup(name = 'from-b')");
+  scratch.dir("from-c");
+  scratch.file("from-c/BUILD","filegroup(name = 'from-c')");
+  Path ab=scratch.dir("a/b");
+  ab.getChild("symlink").createSymbolicLink(new PathFragment("../../from-b"));
+  scratch.dir("a/b/not-a-symlink");
+  scratch.file("a/b/not-a-symlink/BUILD","filegroup(name = 'not-a-symlink')");
+  scratch.file("a/b/DONT_FOLLOW_SYMLINKS_WHEN_TRAVERSING_THIS_DIRECTORY_VIA_A_RECURSIVE_TARGET_PATTERN");
+  Path ac=scratch.dir("a/c");
+  ac.getChild("symlink").createSymbolicLink(new PathFragment("../../from-c"));
+  ResolvedTargets<Target> result=parseTargetPatternList(parser,parsingListener,ImmutableList.of("//a/..."),true);
+  assertThat(targetsToLabels(result.getTargets())).containsExactly(Label.parseAbsolute("//a/c/symlink:from-c"),Label.parseAbsolute("//a/b/not-a-symlink:not-a-symlink"));
+}

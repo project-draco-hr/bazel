@@ -1,0 +1,17 @@
+{
+  invalidate(ModifiedFileSet.EVERYTHING_MODIFIED);
+  reporter.removeHandler(failFastHandler);
+  scratch.dir("h");
+  try {
+    parseList("//h/...");
+    fail("TargetParsingException expected");
+  }
+ catch (  TargetParsingException e) {
+  }
+  scratch.file("h/i/j/k/BUILD","sh_library(name='l')");
+  ModifiedFileSet modifiedFileSet=ModifiedFileSet.builder().modify(new PathFragment("h")).modify(new PathFragment("h/i")).modify(new PathFragment("h/i/j")).modify(new PathFragment("h/i/j/k")).modify(new PathFragment("h/i/j/k/BUILD")).build();
+  invalidate(modifiedFileSet);
+  reporter.addHandler(failFastHandler);
+  Set<Label> nonEmptyResult=parseList("//h/...");
+  assertThat(nonEmptyResult).containsExactly(Label.parseAbsolute("//h/i/j/k:l"));
+}

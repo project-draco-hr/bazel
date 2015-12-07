@@ -1,0 +1,8 @@
+{
+  scratch.file("nest/BUILD","cc_library(name = 'nested1', srcs = [ ])");
+  scratch.file("nest/nest/BUILD","cc_library(name = 'nested2', srcs = [ ])");
+  updateOffset(new PathFragment("nest"));
+  assertThat(parseList(":all")).containsExactlyElementsIn(labels("//nest:nested1"));
+  updateOffset(new PathFragment("nest/nest"));
+  assertThat(parseList(":all")).containsExactlyElementsIn(labels("//nest/nest:nested2"));
+}

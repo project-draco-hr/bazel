@@ -1,0 +1,30 @@
+{
+  boolean hasImplicitCcOutputs=ruleClassProvider.getRuleClassMap().get("cc_library").getImplicitOutputsFunction() != ImplicitOutputsFunction.NONE;
+  scratch.file("foo/BUILD","cc_library(name = 'foo1', srcs = [ 'foo1.cc' ], hdrs = [ 'foo1.h' ])","exports_files(['baz/bang'])");
+  scratch.file("foo/bar/BUILD","cc_library(name = 'bar1', alwayslink = 1)","cc_library(name = 'bar2')","exports_files(['wiz/bang', 'wiz/all', 'baz', 'baz/bang', 'undeclared.h'])");
+  scratch.file("otherrules/BUILD","test_suite(name = 'suite1')","filegroup(name='group', srcs=['suite/somefile'])","exports_files(['suite/somefile'])","cc_library(name = 'wiz', linkstatic = 1)");
+  scratch.file("nosuchpkg/subdir/empty","");
+  Path foo=scratch.dir("foo");
+  fooOffset=foo.relativeTo(rootDirectory);
+  rulesBeneathFoo=labels("//foo:foo1","//foo/bar:bar1","//foo/bar:bar2");
+  rulesBeneathFooBar=labels("//foo/bar:bar1","//foo/bar:bar2");
+  rulesBeneathOtherrules=labels("//otherrules:suite1","//otherrules:wiz","//otherrules:group");
+  rulesInFoo=labels("//foo:foo1");
+  rulesInFooBar=labels("//foo/bar:bar1","//foo/bar:bar2");
+  rulesInOtherrules=rulesBeneathOtherrules;
+  targetsInFoo=labels("//foo:foo1","//foo:foo1","//foo:foo1.cc","//foo:foo1.h","//foo:BUILD","//foo:baz/bang");
+  if (hasImplicitCcOutputs) {
+    targetsInFoo.addAll(labels("//foo:libfoo1.a","//foo:libfoo1.so"));
+  }
+  targetsInFooBar=labels("//foo/bar:bar1","//foo/bar:bar2","//foo/bar:BUILD","//foo/bar:wiz/bang","//foo/bar:wiz/all","//foo/bar:baz","//foo/bar:baz/bang","//foo/bar:undeclared.h");
+  if (hasImplicitCcOutputs) {
+    targetsInFooBar.addAll(labels("//foo/bar:libbar1.lo","//foo/bar:libbar2.a"));
+  }
+  targetsBeneathFoo=Sets.newHashSet();
+  targetsBeneathFoo.addAll(targetsInFoo);
+  targetsBeneathFoo.addAll(targetsInFooBar);
+  targetsInOtherrules=labels("//otherrules:group","//otherrules:wiz","//otherrules:suite1","//otherrules:BUILD","//otherrules:suite/somefile","//otherrules:wiz","//otherrules:suite1");
+  if (hasImplicitCcOutputs) {
+    targetsInOtherrules.addAll(labels("//otherrules:libwiz.a"));
+  }
+}

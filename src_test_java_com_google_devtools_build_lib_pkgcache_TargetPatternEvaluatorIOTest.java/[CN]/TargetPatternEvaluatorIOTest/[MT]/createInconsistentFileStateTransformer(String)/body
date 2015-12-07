@@ -1,0 +1,53 @@
+{
+  final AtomicBoolean isDirectory=new AtomicBoolean(true);
+  return new Transformer(){
+    @Nullable @Override public FileStatus stat(    final FileStatus stat,    Path path,    boolean followSymlinks) throws IOException {
+      if (path.getPathString().endsWith(badPathSuffix)) {
+        return new InMemoryContentInfo(BlazeClock.instance()){
+          @Override public boolean isDirectory(){
+            return isDirectory.getAndSet(false);
+          }
+          @Override public boolean isFile(){
+            return stat.isFile();
+          }
+          @Override public boolean isSpecialFile(){
+            return stat.isSpecialFile();
+          }
+          @Override public boolean isSymbolicLink(){
+            return stat.isSymbolicLink();
+          }
+          @Override public long getSize() throws IOException {
+            return stat.getSize();
+          }
+          @Override public synchronized long getLastModifiedTime(){
+            try {
+              return stat.getLastModifiedTime();
+            }
+ catch (            IOException e) {
+              throw new IllegalStateException(e);
+            }
+          }
+          @Override public synchronized long getLastChangeTime(){
+            try {
+              return stat.getLastChangeTime();
+            }
+ catch (            IOException e) {
+              throw new IllegalStateException(e);
+            }
+          }
+          @Override public long getNodeId(){
+            try {
+              return stat.getNodeId();
+            }
+ catch (            IOException e) {
+              throw new IllegalStateException(e);
+            }
+          }
+        }
+;
+      }
+      return stat;
+    }
+  }
+;
+}

@@ -1,0 +1,11 @@
+{
+  Path outputBaseBuildFile=outputBase.getRelative("workspace/test/BUILD");
+  scratch.file(outputBaseBuildFile.getPathString(),"filegroup(name='c')");
+  PathFragment targetFragment=outputBase.asFragment().getRelative("workspace/test");
+  Path d=scratch.dir("d");
+  d.getChild("c").createSymbolicLink(targetFragment);
+  rootDirectory.getChild("convenience").createSymbolicLink(targetFragment);
+  Set<Label> result=parseList("//...");
+  assertThat(result).doesNotContain(Label.parseAbsolute("//convenience:c"));
+  assertThat(result).doesNotContain(Label.parseAbsolute("//d/c:c"));
+}

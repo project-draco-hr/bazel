@@ -1,0 +1,8 @@
+{
+  scratch.file("x/y/BUILD","filegroup(name = 'a')","BROKEN","filegroup(name = 'b')");
+  reporter.removeHandler(failFastHandler);
+  Pair<Set<Label>,Boolean> result=parseListKeepGoing("//x/...");
+  assertContainsEvent("name 'BROKEN' is not defined");
+  assertThat(result.first).containsExactlyElementsIn(Sets.newHashSet(Label.parseAbsolute("//x/y:a"),Label.parseAbsolute("//x/y:b")));
+  assertFalse(result.second);
+}

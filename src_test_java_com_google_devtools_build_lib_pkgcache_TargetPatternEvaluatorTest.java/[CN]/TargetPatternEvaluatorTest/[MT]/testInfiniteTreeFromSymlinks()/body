@@ -1,0 +1,8 @@
+{
+  reporter.removeHandler(failFastHandler);
+  Path ab=scratch.dir("a/b");
+  ab.getChild("c").createSymbolicLink(new PathFragment("../b"));
+  scratch.file("a/b/BUILD","filegroup(name='g')");
+  ResolvedTargets<Target> result=parseTargetPatternList(parser,parsingListener,ImmutableList.of("//a/b/..."),true);
+  assertThat(targetsToLabels(result.getTargets())).containsExactly(Label.parseAbsolute("//a/b:g"));
+}

@@ -1,0 +1,7 @@
+{
+  reporter.removeHandler(failFastHandler);
+  Path parent=scratch.file("parent/BUILD","sh_library(name = 'parent')").getParentDirectory();
+  FileSystemUtils.createDirectoryAndParents(parent.getRelative("badstat"));
+  this.transformer=createInconsistentFileStateTransformer("parent/badstat");
+  Truth.assertThat(parseListKeepGoing("//parent/...").getFirst()).containsExactlyElementsIn(labels("//parent:parent"));
+}
