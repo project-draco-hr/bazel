@@ -22,17 +22,20 @@
   assertThat(progressReceiver.invalidations).contains(rftvSkyKey(traversalRoot));
   assertThat(progressReceiver.evaluations).contains(v2);
   assertThat(v2).isNotEqualTo(v1);
+  assertTraversalRootHashesAreNotEqual(v1,v2);
   progressReceiver.clear();
   appendToFile(file1,"bar");
   RecursiveFilesystemTraversalValue v3=traverseAndAssertFiles(traversalRoot,expected1,expected2,expected3,expected4);
   assertThat(progressReceiver.invalidations).contains(rftvSkyKey(traversalRoot));
   assertThat(progressReceiver.evaluations).contains(v3);
   assertThat(v3).isNotEqualTo(v2);
+  assertTraversalRootHashesAreNotEqual(v2,v3);
   progressReceiver.clear();
   Artifact someFile=sourceArtifact("somewhere/else/a.file");
   createFile(someFile,"new file");
   appendToFile(someFile,"not all changes are treated equal");
   RecursiveFilesystemTraversalValue v4=traverseAndAssertFiles(traversalRoot,expected1,expected2,expected3,expected4);
   assertThat(v4).isEqualTo(v3);
+  assertTraversalRootHashesAreEqual(v3,v4);
   assertThat(progressReceiver.invalidations).doesNotContain(rftvSkyKey(traversalRoot));
 }

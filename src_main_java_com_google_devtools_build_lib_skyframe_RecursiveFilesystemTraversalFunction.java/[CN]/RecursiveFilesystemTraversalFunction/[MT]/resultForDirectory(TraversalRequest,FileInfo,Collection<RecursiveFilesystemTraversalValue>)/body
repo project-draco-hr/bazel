@@ -5,8 +5,9 @@
   }
   ResolvedFile root;
   if (rootInfo.type.isSymlink()) {
-    root=ResolvedFileFactory.symlinkToDirectory(rootInfo.realPath,traversal.path,rootInfo.unresolvedSymlinkTarget,Integer.valueOf(rootInfo.metadata.hashCode()));
-    paths.add(root);
+    NestedSet<ResolvedFile> children=paths.build();
+    root=ResolvedFileFactory.symlinkToDirectory(rootInfo.realPath,traversal.path,rootInfo.unresolvedSymlinkTarget,hashDirectorySymlink(children,rootInfo.metadata.hashCode()));
+    paths=NestedSetBuilder.<ResolvedFile>stableOrder().addTransitive(children).add(root);
   }
  else {
     root=ResolvedFileFactory.directory(rootInfo.realPath);
