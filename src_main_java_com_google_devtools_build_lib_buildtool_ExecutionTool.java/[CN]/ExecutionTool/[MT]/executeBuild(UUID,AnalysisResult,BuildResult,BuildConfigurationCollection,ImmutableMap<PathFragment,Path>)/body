@@ -25,13 +25,13 @@
   getReporter().handle(Event.progress("Building..."));
   ExplanationHandler explanationHandler=installExplanationHandler(request.getBuildOptions().explanationPath,request.getOptionsDescription());
   Set<ConfiguredTarget> builtTargets=new HashSet<>();
-  boolean interrupted=false;
+  Collection<AspectValue> aspects=analysisResult.getAspects();
+  Iterable<Artifact> allArtifactsForProviders=Iterables.concat(additionalArtifacts,TopLevelArtifactHelper.getAllArtifactsToBuild(analysisResult.getTargetsToBuild(),analysisResult.getTopLevelContext()).getAllArtifacts(),TopLevelArtifactHelper.getAllArtifactsToBuildFromAspects(aspects,analysisResult.getTopLevelContext()).getAllArtifacts(),TopLevelArtifactHelper.getAllArtifactsToTest(analysisResult.getTargetsToTest()));
+  if (request.isRunningInEmacs()) {
+    request.getOutErr().printErrLn("blaze: Entering directory `" + getExecRoot() + "/'");
+  }
+  boolean buildCompleted=false;
   try {
-    Collection<AspectValue> aspects=analysisResult.getAspects();
-    Iterable<Artifact> allArtifactsForProviders=Iterables.concat(additionalArtifacts,TopLevelArtifactHelper.getAllArtifactsToBuild(analysisResult.getTargetsToBuild(),analysisResult.getTopLevelContext()).getAllArtifacts(),TopLevelArtifactHelper.getAllArtifactsToBuildFromAspects(aspects,analysisResult.getTopLevelContext()).getAllArtifacts(),TopLevelArtifactHelper.getAllArtifactsToTest(analysisResult.getTargetsToTest()));
-    if (request.isRunningInEmacs()) {
-      request.getOutErr().printErrLn("blaze: Entering directory `" + getExecRoot() + "/'");
-    }
     for (    ActionContextProvider actionContextProvider : actionContextProviders) {
       actionContextProvider.executionPhaseStarting(fileCache,actionGraph,allArtifactsForProviders);
     }
@@ -44,9 +44,10 @@
     configureResourceManager(request);
     Profiler.instance().markPhase(ProfilePhase.EXECUTE);
     builder.buildArtifacts(env.getReporter(),additionalArtifacts,analysisResult.getParallelTests(),analysisResult.getExclusiveTests(),analysisResult.getTargetsToBuild(),analysisResult.getAspects(),executor,builtTargets,request.getBuildOptions().explanationPath != null,runtime.getLastExecutionTimeRange());
+    buildCompleted=true;
   }
- catch (  InterruptedException e) {
-    interrupted=true;
+ catch (  BuildFailedException|TestExecException e) {
+    buildCompleted=true;
     throw e;
   }
  finally {
@@ -54,7 +55,7 @@
     if (request.isRunningInEmacs()) {
       request.getOutErr().printErrLn("blaze: Leaving directory `" + getExecRoot() + "/'");
     }
-    if (!interrupted) {
+    if (buildCompleted) {
       getReporter().handle(Event.progress("Building complete."));
     }
     env.getEventBus().post(new ExecutionFinishedEvent(ImmutableMap.<String,Long>of(),0L,skyframeExecutor.getOutputDirtyFilesAndClear(),skyframeExecutor.getModifiedFilesDuringPreviousBuildAndClear()));
@@ -63,7 +64,7 @@
       actionContextProvider.executionPhaseEnding();
     }
     Profiler.instance().markPhase(ProfilePhase.FINISH);
-    if (!interrupted) {
+    if (buildCompleted) {
       saveCaches(actionCache);
     }
     try (AutoProfiler p=AutoProfiler.profiled("Show results",ProfilerTask.INFO)){
