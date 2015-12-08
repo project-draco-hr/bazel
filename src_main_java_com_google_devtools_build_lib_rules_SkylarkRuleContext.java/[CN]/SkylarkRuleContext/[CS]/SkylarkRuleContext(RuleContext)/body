@@ -57,9 +57,8 @@
       continue;
     }
     String skyname=a.getPublicName();
-    Mode mode=getMode(a.getName());
     if (a.isExecutable()) {
-      FilesToRunProvider provider=ruleContext.getExecutablePrerequisite(a.getName(),mode);
+      FilesToRunProvider provider=ruleContext.getExecutablePrerequisite(a.getName(),Mode.DONT_CHECK);
       if (provider != null && provider.getExecutable() != null) {
         Artifact executable=provider.getExecutable();
         executableBuilder.put(skyname,executable);
@@ -70,7 +69,7 @@
       }
     }
     if (a.isSingleArtifact()) {
-      Artifact artifact=ruleContext.getPrerequisiteArtifact(a.getName(),mode);
+      Artifact artifact=ruleContext.getPrerequisiteArtifact(a.getName(),Mode.DONT_CHECK);
       if (artifact != null) {
         fileBuilder.put(skyname,artifact);
       }
@@ -78,10 +77,10 @@
         fileBuilder.put(skyname,Runtime.NONE);
       }
     }
-    filesBuilder.put(skyname,ruleContext.getPrerequisiteArtifacts(a.getName(),mode).list());
-    List<?> allPrereq=ruleContext.getPrerequisites(a.getName(),mode);
+    filesBuilder.put(skyname,ruleContext.getPrerequisiteArtifacts(a.getName(),Mode.DONT_CHECK).list());
+    List<?> allPrereq=ruleContext.getPrerequisites(a.getName(),Mode.DONT_CHECK);
     if (type == BuildType.LABEL) {
-      Object prereq=ruleContext.getPrerequisite(a.getName(),mode);
+      Object prereq=ruleContext.getPrerequisite(a.getName(),Mode.DONT_CHECK);
       if (prereq == null) {
         prereq=Runtime.NONE;
       }
