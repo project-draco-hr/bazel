@@ -51,31 +51,40 @@
     Map<Artifact,FileArtifactValue> metadataFoundDuringActionExecution=declareAdditionalDependencies(env,action,state.inputArtifactData.keySet());
     if (state.discoveredInputs == null) {
       state.discoveredInputs=metadataFoundDuringActionExecution.keySet();
-    }
- else {
       if (env.valuesMissing()) {
-        Set<Artifact> missingArtifacts=Maps.filterValues(metadataFoundDuringActionExecution,Predicates.isNull()).keySet();
-        throw new IllegalStateException("Missing artifacts: " + missingArtifacts + ", "+ state+ action);
+        return null;
       }
-      Set<FileArtifactValue> knownMetadata=ImmutableSet.copyOf(state.inputArtifactData.values());
-      ImmutableSet.Builder<Artifact> discoveredInputBuilder=ImmutableSet.<Artifact>builder().addAll(state.discoveredInputs);
-      for (      Map.Entry<Artifact,FileArtifactValue> entry : metadataFoundDuringActionExecution.entrySet()) {
-        Preconditions.checkState(knownMetadata.contains(entry.getValue()),"%s %s",action,entry);
-        discoveredInputBuilder.add(entry.getKey());
+      if (!metadataFoundDuringActionExecution.isEmpty()) {
+        Map<Artifact,FileArtifactValue> inputArtifactData=new HashMap<>();
+        inputArtifactData.putAll(state.inputArtifactData);
+        inputArtifactData.putAll(metadataFoundDuringActionExecution);
+        state.inputArtifactData=inputArtifactData;
+        metadataHandler=new ActionMetadataHandler(state.inputArtifactData,action.getOutputs(),tsgm);
       }
-      state.discoveredInputs=discoveredInputBuilder.build();
     }
-    if (env.valuesMissing()) {
-      return null;
-    }
-    if (!metadataFoundDuringActionExecution.isEmpty()) {
-      Map<Artifact,FileArtifactValue> inputArtifactData=new HashMap<>();
-      inputArtifactData.putAll(state.inputArtifactData);
-      inputArtifactData.putAll(metadataFoundDuringActionExecution);
-      state.inputArtifactData=inputArtifactData;
-      metadataHandler=new ActionMetadataHandler(state.inputArtifactData,action.getOutputs(),tsgm);
+ else     if (!metadataFoundDuringActionExecution.isEmpty()) {
+      String errorMessage=action.prettyPrint() + " discovered unexpected inputs. This indicates a mismatch between " + Constants.PRODUCT_NAME+ " and the action's compiler. Please report this issue. The ";
+      if (metadataFoundDuringActionExecution.size() > 10) {
+        errorMessage+="first ten ";
+      }
+      errorMessage+="additional inputs found were: ";
+      int artifactPrinted=0;
+      for (      Artifact extraArtifact : metadataFoundDuringActionExecution.keySet()) {
+        if (artifactPrinted >= 10) {
+          break;
+        }
+        if (artifactPrinted > 0) {
+          errorMessage+=", ";
+        }
+        artifactPrinted++;
+        errorMessage+=extraArtifact.prettyPrint();
+      }
+      ActionExecutionException exception=new ActionExecutionException(errorMessage,action,false);
+      LoggingUtil.logToRemote(Level.SEVERE,errorMessage,exception);
+      throw exception;
     }
   }
+  Preconditions.checkState(!env.valuesMissing(),action);
   skyframeActionExecutor.afterExecution(action,metadataHandler,state.token);
   return state.value;
 }
