@@ -1,14 +1,15 @@
 {
-  if (getFileType(rootedPath) == FileType.EXTERNAL_MUTABLE_FILE) {
-    if (!errorOnExternalFiles) {
-      PrecomputedValue.dependOnBuildId(env);
-    }
- else {
-      throw new FileOutsidePackageRootsException(rootedPath);
-    }
+  if (isInternal(rootedPath,pkgLocator.get())) {
+    return;
   }
- else   if (getFileType(rootedPath) == FileType.EXTERNAL_IMMUTABLE_FILE) {
-    PackageValue pkgValue=(PackageValue)Preconditions.checkNotNull(env.getValue(PackageValue.key(Package.EXTERNAL_PACKAGE_IDENTIFIER)));
+  if (externalFileAction == ExternalFileAction.DEPEND_ON_EXTERNAL_PKG) {
+    PackageValue pkgValue=(PackageValue)env.getValue(PackageValue.key(PackageIdentifier.createInDefaultRepo(PackageIdentifier.EXTERNAL_PREFIX)));
+    if (pkgValue == null) {
+      return;
+    }
     Preconditions.checkState(!pkgValue.getPackage().containsErrors());
+  }
+ else {
+    throw new FileOutsidePackageRootsException(rootedPath);
   }
 }

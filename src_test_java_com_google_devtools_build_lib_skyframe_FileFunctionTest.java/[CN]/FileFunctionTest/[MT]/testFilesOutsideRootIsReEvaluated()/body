@@ -1,0 +1,21 @@
+{
+  Path file=file("/outsideroot");
+  SequentialBuildDriver driver=makeDriver();
+  SkyKey key=skyKey("/outsideroot");
+  EvaluationResult<SkyValue> result;
+  result=driver.evaluate(ImmutableList.of(key),false,DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  if (result.hasError()) {
+    fail(String.format("Evaluation error for %s: %s",key,result.getError()));
+  }
+  FileValue oldValue=(FileValue)result.get(key);
+  assertTrue(oldValue.exists());
+  file.delete();
+  differencer.invalidate(ImmutableList.of(fileStateSkyKey("/outsideroot")));
+  result=driver.evaluate(ImmutableList.of(key),false,DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  if (result.hasError()) {
+    fail(String.format("Evaluation error for %s: %s",key,result.getError()));
+  }
+  FileValue newValue=(FileValue)result.get(key);
+  assertNotSame(oldValue,newValue);
+  assertFalse(newValue.exists());
+}

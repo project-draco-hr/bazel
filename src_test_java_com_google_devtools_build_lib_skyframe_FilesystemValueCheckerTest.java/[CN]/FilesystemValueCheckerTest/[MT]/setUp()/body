@@ -2,15 +2,21 @@
   ImmutableMap.Builder<SkyFunctionName,SkyFunction> skyFunctions=ImmutableMap.builder();
   fs=new MockFileSystem();
   pkgRoot=fs.getPath("/testroot");
+  FileSystemUtils.createDirectoryAndParents(pkgRoot);
+  FileSystemUtils.createEmptyFile(pkgRoot.getRelative("WORKSPACE"));
   tsgm=new TimestampGranularityMonitor(BlazeClock.instance());
-  AtomicReference<PathPackageLocator> pkgLocator=new AtomicReference<>(PathPackageLocator.EMPTY);
-  ExternalFilesHelper externalFilesHelper=new ExternalFilesHelper(pkgLocator);
+  AtomicReference<PathPackageLocator> pkgLocator=new AtomicReference<>(new PathPackageLocator(pkgRoot));
+  ExternalFilesHelper externalFilesHelper=new ExternalFilesHelper(pkgLocator,false);
   skyFunctions.put(SkyFunctions.FILE_STATE,new FileStateFunction(tsgm,externalFilesHelper));
-  skyFunctions.put(SkyFunctions.FILE,new FileFunction(pkgLocator,tsgm,externalFilesHelper));
+  skyFunctions.put(SkyFunctions.FILE,new FileFunction(pkgLocator));
   skyFunctions.put(SkyFunctions.FILE_SYMLINK_CYCLE_UNIQUENESS,new FileSymlinkCycleUniquenessFunction());
   skyFunctions.put(SkyFunctions.FILE_SYMLINK_INFINITE_EXPANSION_UNIQUENESS,new FileSymlinkInfiniteExpansionUniquenessFunction());
+  skyFunctions.put(SkyFunctions.PACKAGE,new PackageFunction(null,null,null,null,null,null,null));
+  skyFunctions.put(SkyFunctions.PACKAGE_LOOKUP,new PackageLookupFunction(new AtomicReference<>(ImmutableSet.<PackageIdentifier>of())));
+  skyFunctions.put(SkyFunctions.WORKSPACE_FILE,new WorkspaceFileFunction(TestRuleClassProvider.getRuleClassProvider(),new PackageFactory(TestRuleClassProvider.getRuleClassProvider()),new BlazeDirectories(pkgRoot,pkgRoot,pkgRoot)));
   differencer=new RecordingDifferencer();
   evaluator=new InMemoryMemoizingEvaluator(skyFunctions.build(),differencer);
   driver=new SequentialBuildDriver(evaluator);
   PrecomputedValue.BUILD_ID.set(differencer,UUID.randomUUID());
+  PrecomputedValue.PATH_PACKAGE_LOCATOR.set(differencer,pkgLocator.get());
 }
