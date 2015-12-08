@@ -1,0 +1,10 @@
+{
+  scratch.file("recursive/BUILD","filegroup(name = 'x', srcs = [':y'])","filegroup(name = 'y', srcs = [':x'])","exports_files(['foo'])");
+  try {
+    parseCompileOneDep("//recursive:foo");
+    fail();
+  }
+ catch (  TargetParsingException e) {
+    assertThat(e).hasMessage("Couldn't find dependency on target '//recursive:foo'");
+  }
+}

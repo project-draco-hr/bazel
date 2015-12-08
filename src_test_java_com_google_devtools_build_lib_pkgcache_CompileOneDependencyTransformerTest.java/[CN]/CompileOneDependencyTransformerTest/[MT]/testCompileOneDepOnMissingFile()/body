@@ -1,0 +1,24 @@
+{
+  writeSimpleExample();
+  try {
+    parseCompileOneDep("//foo:missing.cc");
+    fail();
+  }
+ catch (  TargetParsingException e) {
+    assertThat(e).hasMessage("no such target '//foo:missing.cc': target 'missing.cc' not declared in package 'foo' " + "defined by /workspace/foo/BUILD");
+  }
+  try {
+    parseCompileOneDep("//foo:baz/bang");
+    fail();
+  }
+ catch (  TargetParsingException e) {
+    assertThat(e).hasMessage("Couldn't find dependency on target '//foo:baz/bang'");
+  }
+  try {
+    parseCompileOneDep("//foo/bar:undeclared.h");
+    fail();
+  }
+ catch (  TargetParsingException e) {
+    assertThat(e).hasMessage("Couldn't find dependency on target '//foo/bar:undeclared.h'");
+  }
+}

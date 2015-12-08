@@ -1,0 +1,6 @@
+{
+  scratch.file("recursive/BUILD","filegroup(name = 'x', srcs = ['foox', ':y'])","filegroup(name = 'y', srcs = ['fooy', ':z'])","filegroup(name = 'z', srcs = ['fooz', ':x'])");
+  ResolvedTargets<Target> result=parseCompileOneDep("//recursive:foox","//recursive:fooy","//recursive:fooz");
+  assertFalse(result.hasError());
+  assertThat(result.getTargets()).hasSize(1);
+}

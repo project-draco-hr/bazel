@@ -1,0 +1,14 @@
+{
+  Path foo=scratch.dir("foo");
+  TargetPatternEvaluator fooOffsetParser=getPackageManager().newTargetPatternEvaluator();
+  fooOffsetParser.updateOffset(foo.relativeTo(rootDirectory));
+  ResolvedTargets<Target> result;
+  try {
+    result=fooOffsetParser.parseTargetPatternList(reporter,Arrays.asList(patterns),FilteringPolicies.NO_FILTER,false);
+  }
+ catch (  InterruptedException e) {
+    throw new RuntimeException(e);
+  }
+  result=transformer.transformCompileOneDependency(reporter,result);
+  return targetsToLabels(getFailFast(result));
+}

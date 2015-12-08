@@ -1,0 +1,4 @@
+{
+  scratch.file("a/BUILD","config_setting(name = 'a', values = {'define': 'foo=a'})","cc_library(name = 'foo_select', srcs = ['a.cc'],","    copts = select({':a': ['-DA'], ':b': ['-DB']}))","cc_library(name = 'foo_always', srcs = ['a.cc'])");
+  assertThat(parseListCompileOneDep("a/a.cc")).containsExactlyElementsIn(labels("//a:foo_select"));
+}

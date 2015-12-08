@@ -1,0 +1,6 @@
+{
+  scratch.file("a/BUILD","cc_library(name = 'foo_lib', srcs = [ 'file.cc' ])","cc_library(name = 'bar_lib', srcs = [ 'file.cc' ])");
+  scratch.file("b/BUILD","cc_library(name = 'bar_lib', srcs = [ 'file.cc' ])","cc_library(name = 'foo_lib', srcs = [ 'file.cc' ])");
+  assertThat(parseListCompileOneDep("a/file.cc")).containsExactlyElementsIn(labels("//a:foo_lib"));
+  assertThat(parseListCompileOneDep("b/file.cc")).containsExactlyElementsIn(labels("//b:bar_lib"));
+}
