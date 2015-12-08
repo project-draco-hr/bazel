@@ -1,6 +1,7 @@
 {
   ImmutableList.Builder<String> builder=new ImmutableList.Builder<>();
-  if (Platform.forIosArch(appleConfiguration.getIosCpu()) == Platform.IOS_SIMULATOR) {
+  Platform platform=Platform.forIosArch(appleConfiguration.getIosCpu());
+  if (platform == Platform.IOS_SIMULATOR) {
     builder.add("-mios-simulator-version-min=" + objcConfiguration.getMinimumOs());
   }
  else {
@@ -9,5 +10,5 @@
   if (objcConfiguration.generateDebugSymbols()) {
     builder.add("-g");
   }
-  return builder.add("-arch",appleConfiguration.getIosCpu()).add("-isysroot",AppleToolchain.sdkDir()).add("-F",AppleToolchain.sdkDeveloperFrameworkDir()).add("-F",AppleToolchain.platformDeveloperFrameworkDir(appleConfiguration)).addAll(Interspersing.beforeEach("-F",PathFragment.safePathStrings(uniqueParentDirectories(provider.get(FRAMEWORK_DIR))))).build();
+  return builder.add("-arch",appleConfiguration.getIosCpu()).add("-isysroot",AppleToolchain.sdkDir()).add("-F",AppleToolchain.sdkFrameworkDir(platform,appleConfiguration)).add("-F",AppleToolchain.platformDeveloperFrameworkDir(appleConfiguration)).addAll(Interspersing.beforeEach("-F",PathFragment.safePathStrings(uniqueParentDirectories(provider.get(FRAMEWORK_DIR))))).build();
 }
