@@ -1,21 +1,24 @@
 {
+  FileSystem fileSystem=FileSystems.getDefault();
   OptionsParser parser=OptionsParser.newOptionsParser(PlMergeOptions.class);
   parser.parse(args);
   PlMergeOptions options=parser.getOptions(PlMergeOptions.class);
-  if (options.sourceFiles.isEmpty()) {
-    missingArg("At least one --source_file");
+  MergingArguments data=null;
+  if (usingControlProtobuf(options)) {
+    InputStream in=Files.newInputStream(fileSystem.getPath(options.controlPath));
+    Control control=Control.parseFrom(in);
+    validateControl(control);
+    data=new MergingArguments(control);
   }
-  if (options.outFile == null) {
-    missingArg("--out_file");
+ else   if (usingCommandLineArgs(options)) {
+    data=new MergingArguments(options);
   }
-  FileSystem fileSystem=FileSystems.getDefault();
-  List<Path> sourceFilePaths=new ArrayList<>();
-  for (  String sourceFile : options.sourceFiles) {
-    sourceFilePaths.add(fileSystem.getPath(sourceFile));
+ else {
+    missingArg("Either --control or --out_file and at least one --source_file");
   }
-  PlistMerging merging=PlistMerging.from(sourceFilePaths,ImmutableMap.<String,NSObject>of(),ImmutableMap.<String,String>of(),new KeysToRemoveIfEmptyString());
-  if (options.primaryBundleId != null || options.fallbackBundleId != null) {
-    merging.setBundleIdentifier(options.primaryBundleId,options.fallbackBundleId);
+  PlistMerging merging=PlistMerging.from(data,ImmutableMap.<String,NSObject>of(),new KeysToRemoveIfEmptyString("CFBundleIconFile","NSPrincipalClass"));
+  if (data.getPrimaryBundleId() != null || data.getFallbackBundleId() != null) {
+    merging.setBundleIdentifier(data.getPrimaryBundleId(),data.getFallbackBundleId());
   }
-  merging.writePlist(fileSystem.getPath(options.outFile));
+  merging.writePlist(fileSystem.getPath(data.getOutFile()));
 }
