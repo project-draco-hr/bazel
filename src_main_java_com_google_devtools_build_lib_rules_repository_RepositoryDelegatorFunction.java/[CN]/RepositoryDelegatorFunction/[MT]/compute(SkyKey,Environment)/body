@@ -4,32 +4,38 @@
   if (rule == null) {
     return null;
   }
-  if (!isFetch.get()) {
-    FileValue repoRoot=RepositoryFunction.getRepositoryDirectory(RepositoryFunction.getExternalRepositoryDirectory(directories).getRelative(rule.getName()),env);
-    if (repoRoot == null) {
-      return null;
-    }
-    Path repoPath=repoRoot.realRootedPath().asPath();
-    if (!repoPath.exists()) {
-      throw new RepositoryFunctionException(new IOException("to fix, run\n\tbazel fetch //...\nExternal repository " + repositoryName + " not found"),Transience.TRANSIENT);
-    }
-    return RepositoryValue.create(repoPath);
-  }
   RepositoryFunction handler=handlers.get(rule.getRuleClass());
   if (handler == null) {
     throw new RepositoryFunctionException(new EvalException(Location.fromFile(directories.getWorkspace().getRelative("WORKSPACE")),"Could not find handler for " + rule),Transience.PERSISTENT);
   }
-  SkyKey key=new SkyKey(handler.getSkyFunctionName(),repositoryName);
-  try {
-    return env.getValueOrThrow(key,NoSuchPackageException.class,IOException.class,EvalException.class);
+  if (handler.isLocal()) {
+    return handler.fetch(rule,env);
   }
- catch (  NoSuchPackageException e) {
-    throw new RepositoryFunctionException(e,Transience.PERSISTENT);
+  Path repoRoot=RepositoryFunction.getExternalRepositoryDirectory(directories).getRelative(rule.getName());
+  byte[] ruleSpecificData=handler.getRuleSpecificMarkerData(rule,env);
+  boolean markerUpToDate=handler.isFilesystemUpToDate(rule,ruleSpecificData);
+  if (markerUpToDate && repoRoot.exists()) {
+    FileValue repoRootValue=RepositoryFunction.getRepositoryDirectory(repoRoot,env);
+    if (env.valuesMissing()) {
+      return null;
+    }
+    return RepositoryValue.create(repoRootValue.realRootedPath().asPath());
   }
-catch (  IOException e) {
-    throw new RepositoryFunctionException(e,Transience.PERSISTENT);
+  if (isFetch.get()) {
+    SkyValue result=handler.fetch(rule,env);
+    if (env.valuesMissing()) {
+      return null;
+    }
+    handler.writeMarkerFile(rule,ruleSpecificData);
+    return result;
   }
-catch (  EvalException e) {
-    throw new RepositoryFunctionException(e,Transience.PERSISTENT);
+  if (!repoRoot.exists()) {
+    throw new RepositoryFunctionException(new IOException("to fix, run\n\tbazel fetch //...\nExternal repository " + repositoryName + " not found and fetching repositories is disabled."),Transience.TRANSIENT);
   }
+  FileValue repoRootValue=RepositoryFunction.getRepositoryDirectory(repoRoot,env);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  env.getListener().handle(Event.warn(rule.getLocation(),String.format("External repository '%s' is not up-to-date and fetching is disabled. To update, " + "run the build without the '--nofetch' command line option.",rule.getName())));
+  return RepositoryValue.fetchingDelayed(repoRootValue.realRootedPath().asPath());
 }
