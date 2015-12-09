@@ -5,6 +5,7 @@
   ImmutableList.Builder<CycleInfo> cycleBuilder=ImmutableList.builder();
   Exception firstException=null;
   SkyKey firstChildKey=null;
+  boolean isTransient=false;
   boolean isCatastrophic=false;
   for (  ErrorInfo child : childErrors) {
     if (firstException == null) {
@@ -13,7 +14,8 @@
     }
     rootCausesBuilder.addTransitive(child.rootCauses);
     cycleBuilder.addAll(CycleInfo.prepareCycles(currentValue,child.cycles));
+    isTransient|=child.isTransient();
     isCatastrophic|=child.isCatastrophic();
   }
-  return new ErrorInfo(rootCausesBuilder.build(),firstException,firstChildKey,cycleBuilder.build(),false,isCatastrophic);
+  return new ErrorInfo(rootCausesBuilder.build(),firstException,firstChildKey,cycleBuilder.build(),isTransient,isCatastrophic);
 }

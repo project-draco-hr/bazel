@@ -24,9 +24,20 @@
           return;
         }
       }
-      registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,env);
-      ErrorInfo errorInfo=ErrorInfo.fromException(reifiedBuilderException);
-      env.setError(errorInfo);
+      Map<SkyKey,NodeEntry> newlyRequestedDeps=graph.getBatch(env.newlyRequestedDeps);
+      boolean isTransitivelyTransient=reifiedBuilderException.isTransient();
+      for (      NodeEntry depEntry : Iterables.concat(env.directDeps.values(),newlyRequestedDeps.values())) {
+        if (!isDoneForBuild(depEntry)) {
+          continue;
+        }
+        ErrorInfo depError=depEntry.getErrorInfo();
+        if (depError != null) {
+          isTransitivelyTransient|=depError.isTransient();
+        }
+      }
+      ErrorInfo errorInfo=ErrorInfo.fromException(reifiedBuilderException,isTransitivelyTransient);
+      registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,newlyRequestedDeps,env);
+      env.setError(errorInfo,reifiedBuilderException.isTransient());
       env.commit(keepGoing);
       if (!shouldFailFast) {
         return;
@@ -57,7 +68,7 @@ catch (  RuntimeException re) {
   if (value != null) {
     Preconditions.checkState(!env.valuesMissing(),"%s -> %s, ValueEntry: %s",skyKey,newDirectDeps,state);
     env.setValue(value);
-    registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,env);
+    registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,graph.getBatch(env.newlyRequestedDeps),env);
     env.commit(true);
     return;
   }

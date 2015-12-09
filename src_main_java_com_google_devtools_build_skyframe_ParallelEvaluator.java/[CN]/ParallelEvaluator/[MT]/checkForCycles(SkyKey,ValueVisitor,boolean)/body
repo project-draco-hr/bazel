@@ -28,7 +28,7 @@
       List<ErrorInfo> errorDeps=getChildrenErrorsForCycle(directDeps);
       Preconditions.checkState(!errorDeps.isEmpty(),"Value %s was not successfully evaluated, but had no child errors. ValueEntry: %s",key,entry);
       SkyFunctionEnvironment env=new SkyFunctionEnvironment(key,directDeps,visitor);
-      env.setError(ErrorInfo.fromChildErrors(key,errorDeps));
+      env.setError(ErrorInfo.fromChildErrors(key,errorDeps),false);
       env.commit(false);
     }
  else {
@@ -59,7 +59,7 @@
         List<ErrorInfo> allErrors=getChildrenErrors(entry.getTemporaryDirectDeps(),cycleChild);
         CycleInfo cycleInfo=new CycleInfo(cycle);
         allErrors.add(ErrorInfo.fromCycle(cycleInfo));
-        env.setError(ErrorInfo.fromChildErrors(key,allErrors));
+        env.setError(ErrorInfo.fromChildErrors(key,allErrors),false);
         env.commit(false);
         continue;
       }
