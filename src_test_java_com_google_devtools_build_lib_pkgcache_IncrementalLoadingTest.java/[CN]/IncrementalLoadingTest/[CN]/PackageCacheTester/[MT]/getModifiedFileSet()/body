@@ -1,0 +1,15 @@
+{
+  if (everythingModified) {
+    everythingModified=false;
+    return ModifiedFileSet.EVERYTHING_MODIFIED;
+  }
+  ModifiedFileSet.Builder builder=ModifiedFileSet.builder();
+  for (  Path path : changes) {
+    if (!path.startsWith(workspace)) {
+      continue;
+    }
+    PathFragment workspacePath=path.relativeTo(workspace);
+    builder.modify(workspacePath);
+  }
+  return builder.build();
+}

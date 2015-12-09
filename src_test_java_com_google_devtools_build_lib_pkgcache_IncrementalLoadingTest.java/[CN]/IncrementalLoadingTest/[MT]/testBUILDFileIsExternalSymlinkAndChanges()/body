@@ -1,0 +1,11 @@
+{
+  tester.addFile("/nonroot/file","filegroup(name='a', srcs=['file'])");
+  tester.addSymlink("a/BUILD","/nonroot/file");
+  tester.sync();
+  Target a1=tester.getTarget("//a:a");
+  tester.modifyFile("/nonroot/file","filegroup(name='a', srcs=['file2'])");
+  tester.sync();
+  Target a2=tester.getTarget("//a:a");
+  tester.sync();
+  assertNotSame(a1,a2);
+}

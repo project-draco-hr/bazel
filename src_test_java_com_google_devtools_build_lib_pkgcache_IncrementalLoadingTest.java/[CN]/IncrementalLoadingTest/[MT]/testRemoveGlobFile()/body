@@ -1,0 +1,11 @@
+{
+  tester.addFile("base/BUILD","filegroup(name = 'hello', srcs = glob(['*.txt']))");
+  tester.addFile("base/foo.txt","nothing");
+  tester.addFile("base/bar.txt","also nothing");
+  tester.sync();
+  Target oldTarget=tester.getTarget("//base:hello");
+  tester.removeFile("base/bar.txt");
+  tester.sync();
+  Target newTarget=tester.getTarget("//base:hello");
+  assertNotSame(oldTarget,newTarget);
+}

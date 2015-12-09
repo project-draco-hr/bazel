@@ -1,0 +1,12 @@
+{
+  tester.addFile("a/BUILD","filegroup(name='a', srcs=['bad.sh'])");
+  tester.sync();
+  Target a1=tester.getTarget("//a:a");
+  tester.addFile("b/BUILD","filegroup(name='b', srcs=['b.sh'])");
+  tester.modifyFile("a/BUILD","filegroup(name='a', srcs=['good.sh'])");
+  tester.sync();
+  tester.getTarget("//b:b");
+  tester.sync();
+  Target a2=tester.getTarget("//a:a");
+  assertNotSame(a1,a2);
+}

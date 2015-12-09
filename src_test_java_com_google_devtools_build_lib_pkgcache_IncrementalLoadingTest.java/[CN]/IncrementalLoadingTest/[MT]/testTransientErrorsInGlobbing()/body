@@ -1,0 +1,17 @@
+{
+  Path buildFile=tester.addFile("e/BUILD","sh_library(name = 'e', data = glob(['*.txt']))");
+  Path parentDir=buildFile.getParentDirectory();
+  tester.addFile("e/data.txt");
+  throwOnReaddir=parentDir;
+  tester.sync();
+  Target target=tester.getTarget("//e:e");
+  assertThat(((Rule)target).containsErrors()).isTrue();
+  GlobList<?> globList=(GlobList<?>)((Rule)target).getAttributeContainer().getAttr("data");
+  assertThat(globList).isEmpty();
+  throwOnReaddir=null;
+  tester.sync();
+  target=tester.getTarget("//e:e");
+  assertThat(((Rule)target).containsErrors()).isFalse();
+  globList=(GlobList<?>)((Rule)target).getAttributeContainer().getAttr("data");
+  assertThat(globList).containsExactly(Label.parseAbsolute("//e:data.txt"));
+}

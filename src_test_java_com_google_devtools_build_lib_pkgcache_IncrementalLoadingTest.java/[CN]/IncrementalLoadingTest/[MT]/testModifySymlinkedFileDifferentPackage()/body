@@ -1,0 +1,10 @@
+{
+  tester.addSymlink("base/BUILD","../other/BUILD");
+  tester.addFile("other/BUILD","filegroup(name = 'hello', srcs = ['foo.txt'])");
+  tester.sync();
+  Target oldTarget=tester.getTarget("//base:hello");
+  tester.modifyFile("other/BUILD","filegroup(name = 'hello', srcs = ['bar.txt'])");
+  tester.sync();
+  Target newTarget=tester.getTarget("//base:hello");
+  assertNotSame(oldTarget,newTarget);
+}

@@ -1,0 +1,17 @@
+{
+  tester.addFile("one","filegroup(name='a', srcs=['1'])");
+  tester.sync();
+  tester.addFile("two","filegroup(name='a', srcs=['2'])");
+  tester.addSymlink("oldlink","one");
+  tester.addSymlink("newlink","one");
+  tester.addSymlink("a/BUILD","../oldlink");
+  tester.sync();
+  Target a1=tester.getTarget("//a:a");
+  tester.modifySymlink("a/BUILD","../newlink");
+  tester.sync();
+  tester.getTarget("//a:a");
+  tester.modifySymlink("newlink","two");
+  tester.sync();
+  Target a3=tester.getTarget("//a:a");
+  assertNotSame(a1,a3);
+}

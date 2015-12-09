@@ -1,0 +1,19 @@
+{
+  ManualClock clock=new ManualClock();
+  FileSystem fs=new InMemoryFileSystem(clock){
+    @Override public Collection<Dirent> readdir(    Path path,    boolean followSymlinks) throws IOException {
+      if (path.equals(throwOnReaddir)) {
+        throw new FileNotFoundException(path.getPathString());
+      }
+      return super.readdir(path,followSymlinks);
+    }
+    @Nullable @Override public FileStatus stat(    Path path,    boolean followSymlinks) throws IOException {
+      if (path.equals(throwOnStat)) {
+        throw new IOException("bork " + path.getPathString());
+      }
+      return super.stat(path,followSymlinks);
+    }
+  }
+;
+  tester=createTester(fs,clock);
+}
