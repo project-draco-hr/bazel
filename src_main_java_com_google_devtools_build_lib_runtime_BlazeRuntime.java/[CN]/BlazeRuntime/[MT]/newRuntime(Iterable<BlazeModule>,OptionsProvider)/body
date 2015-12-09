@@ -13,7 +13,7 @@
   if (outputBase != null && !outputBase.isAbsolute()) {
     throw new IllegalArgumentException("Bad --output_base option specified: '" + outputBase + "'");
   }
-  PathFragment outputPathFragment=BlazeDirectories.outputPathFromOutputBase(outputBase,workspaceDirectory);
+  PathFragment outputPathFragment=BlazeDirectories.outputPathFromOutputBase(outputBase,workspaceDirectory,startupOptions.deepExecRoot);
   FileSystem fs=null;
   for (  BlazeModule module : blazeModules) {
     FileSystem moduleFs=module.getFileSystem(options,outputPathFragment);
@@ -32,7 +32,7 @@
   if (!workspaceDirectory.equals(PathFragment.EMPTY_FRAGMENT)) {
     workspaceDirectoryPath=fs.getPath(workspaceDirectory);
   }
-  BlazeDirectories directories=new BlazeDirectories(installBasePath,outputBasePath,workspaceDirectoryPath,startupOptions.installMD5);
+  BlazeDirectories directories=new BlazeDirectories(installBasePath,outputBasePath,workspaceDirectoryPath,startupOptions.deepExecRoot,startupOptions.installMD5);
   Clock clock=BlazeClock.instance();
   BinTools binTools;
   try {
