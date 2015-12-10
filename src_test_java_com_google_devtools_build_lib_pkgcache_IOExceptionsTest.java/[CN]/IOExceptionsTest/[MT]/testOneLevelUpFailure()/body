@@ -1,0 +1,17 @@
+{
+  reporter.removeHandler(failFastHandler);
+  final Path buildPath=scratch.file("top/BUILD","sh_library(name = 'x')");
+  buildPath.getParentDirectory().getRelative("pkg").createDirectory();
+  crashMessage=new Function<Path,String>(){
+    @Override public String apply(    Path path){
+      if (buildPath.equals(path)) {
+        return "custom crash: " + buildPath;
+      }
+      return null;
+    }
+  }
+;
+  assertFalse(visitor.sync(reporter,ImmutableSet.<Target>of(),ImmutableSet.of(Label.parseAbsolute("//top/pkg:x")),false,5,Integer.MAX_VALUE));
+  assertContainsEvent("no such package 'top/pkg'");
+  assertEquals(1,eventCollector.count());
+}
