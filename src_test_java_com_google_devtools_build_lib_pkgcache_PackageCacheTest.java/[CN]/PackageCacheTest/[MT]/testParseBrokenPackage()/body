@@ -1,0 +1,18 @@
+{
+  reporter.removeHandler(failFastHandler);
+  Path brokenBuildFile=scratch.file("broken/BUILD");
+  brokenBuildFile.setReadable(false);
+  try {
+    getPackage("broken");
+    fail();
+  }
+ catch (  BuildFileContainsErrorsException e) {
+    assertThat(e.getMessage()).contains("/workspace/broken/BUILD (Permission denied)");
+  }
+  eventCollector.clear();
+  scratch.overwriteFile("broken/BUILD","# an ok build file");
+  invalidatePackages();
+  Package broken=getPackage("broken");
+  assertEquals("broken",broken.getName());
+  assertNoEvents();
+}

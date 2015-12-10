@@ -1,0 +1,10 @@
+{
+  reporter.removeHandler(failFastHandler);
+  AnalysisMock.get().setupMockClient(new MockToolsConfig(rootDirectory));
+  scratch.file("a/BUILD","genrule(name='x',","        srcs = ['file.txt'],","        outs = ['foo'],","        cmd = 'echo')","@");
+  scratch.file("b/BUILD","genrule(name= 'cc',","        tools = ['//a:x'],","        outs = ['bar'],","        cmd = 'echo')");
+  Package pkgB=getPackage("b");
+  visitLabel("//b:cc");
+  assertContainsEvent("invalid character: '@'");
+  assertFalse(pkgB.containsErrors());
+}

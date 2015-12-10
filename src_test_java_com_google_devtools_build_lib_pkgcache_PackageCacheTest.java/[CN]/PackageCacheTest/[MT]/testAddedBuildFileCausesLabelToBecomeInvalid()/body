@@ -1,0 +1,9 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("pkg/BUILD","           cc_library(name = 'foo', ","           srcs = ['x/y.cc'])");
+  assertLabelValidity(true,"//pkg:x/y.cc");
+  scratch.file("pkg/x/BUILD");
+  assertLabelValidity(true,"//pkg:x/y.cc");
+  invalidatePackages();
+  assertPackageLoadingFails("pkg","Label '//pkg:x/y.cc' crosses boundary of subpackage 'pkg/x' " + "(perhaps you meant to put the colon here: '//pkg/x:y.cc'?)");
+}
