@@ -1,0 +1,35 @@
+{
+  final AtomicBoolean empty=new AtomicBoolean(true);
+  try (final AutoProfiler p=AutoProfiler.logged("evaluating query",LOG)){
+    resolvedTargetPatterns.clear();
+    Set<String> targetPatternSet=new LinkedHashSet<>();
+    expr.collectTargetPatterns(targetPatternSet);
+    try {
+      resolvedTargetPatterns.putAll(preloadOrThrow(expr,targetPatternSet));
+    }
+ catch (    TargetParsingException e) {
+      throw new QueryException(expr,e.getMessage());
+    }
+    try {
+      this.eval(expr,new Callback<T>(){
+        @Override public void process(        Iterable<T> partialResult) throws QueryException, InterruptedException {
+          empty.compareAndSet(true,Iterables.isEmpty(partialResult));
+          callback.process(partialResult);
+        }
+      }
+);
+    }
+ catch (    QueryException e) {
+      throw new QueryException(e,expr);
+    }
+  }
+   if (eventHandler.hasErrors()) {
+    if (!keepGoing) {
+      throw new QueryException("Evaluation of query \"" + expr + "\" failed due to BUILD file errors");
+    }
+ else {
+      eventHandler.handle(Event.warn("--keep_going specified, ignoring errors.  " + "Results may be inaccurate"));
+    }
+  }
+  return new QueryEvalResult(!eventHandler.hasErrors(),empty.get());
+}
