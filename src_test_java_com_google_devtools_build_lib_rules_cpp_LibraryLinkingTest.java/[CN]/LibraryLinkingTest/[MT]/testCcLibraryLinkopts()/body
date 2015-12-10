@@ -1,0 +1,21 @@
+{
+  scratch.overwriteFile("custom_malloc/BUILD","cc_library(name = 'custom_malloc',","           srcs = ['custom_malloc.cc'],","           linkopts = ['-Lmalloc_dir -lmalloc_opt']);");
+  ConfiguredTarget ccLib=getConfiguredTarget("//custom_malloc:custom_malloc");
+  final String linkOpt1="-Lmalloc_dir";
+  final String linkOpt2="-lmalloc_opt";
+  Artifact archiveLib=Iterables.getOnlyElement(Iterables.filter(ccLib.getProvider(FileProvider.class).getFilesToBuild(),new Predicate<Artifact>(){
+    @Override public boolean apply(    Artifact artifact){
+      return artifact.getFilename().equals("libcustom_malloc.a");
+    }
+  }
+));
+  CppLinkAction archiveLink=(CppLinkAction)getGeneratingAction(archiveLib);
+  List<String> args=archiveLink.getArgv();
+  assertThat(args).doesNotContain(linkOpt1);
+  assertThat(args).doesNotContain(linkOpt2);
+  Artifact soLib=Iterables.getOnlyElement(ccLib.getProvider(CcExecutionDynamicLibrariesProvider.class).getExecutionDynamicLibraryArtifacts());
+  CppLinkAction solibLink=(CppLinkAction)getGeneratingAction(getGeneratingAction(soLib).getPrimaryInput());
+  args=solibLink.getArgv();
+  assertThat(args).contains(linkOpt1);
+  assertThat(args).contains(linkOpt2);
+}
