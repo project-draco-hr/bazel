@@ -1,21 +1,29 @@
 {
   Path tempMergedPlist=Files.createTempFile(tempDir,null,INFOPLIST_FILENAME);
   Path tempPkgInfo=Files.createTempFile(tempDir,null,PKGINFO_FILENAME);
-  ImmutableList.Builder<Path> sourcePlistFilesBuilder=new ImmutableList.Builder<>();
-  for (  String sourcePlist : control.getSourcePlistFileList()) {
-    sourcePlistFilesBuilder.add(fileSystem.getPath(sourcePlist));
+  if (control.hasBundleInfoPlistFile() && !control.getSourcePlistFileList().isEmpty()) {
+    throw new IllegalArgumentException(BOTH_ARGS_ERR);
   }
-  ImmutableList<Path> sourcePlistFiles=sourcePlistFilesBuilder.build();
-  ImmutableMap.Builder<String,String> substitutionMap=ImmutableMap.builder();
-  for (  VariableSubstitution substitution : control.getVariableSubstitutionList()) {
-    substitutionMap.put(substitution.getName(),substitution.getValue());
+  if (control.hasBundleInfoPlistFile()) {
+    Path bundleInfoPlist=fileSystem.getPath(control.getBundleInfoPlistFile());
+    new PlistMerging(PlistMerging.readPlistFile(bundleInfoPlist)).setBundleIdentifier(control.hasPrimaryBundleIdentifier() ? control.getPrimaryBundleIdentifier() : null,control.hasFallbackBundleIdentifier() ? control.getFallbackBundleIdentifier() : null).write(tempMergedPlist,tempPkgInfo);
   }
-  PlistMerging plistMerging=PlistMerging.from(sourcePlistFiles,PlistMerging.automaticEntries(control.getTargetDeviceFamilyList(),platformFromName(control.getPlatform()),control.getSdkVersion(),control.getMinimumOsVersion()),substitutionMap.build(),new KeysToRemoveIfEmptyString("CFBundleIconFile","NSPrincipalClass"));
-  if (control.hasExecutableName()) {
-    plistMerging.setExecutableName(control.getExecutableName());
+ else {
+    ImmutableList.Builder<Path> sourcePlistFilesBuilder=new ImmutableList.Builder<>();
+    for (    String sourcePlist : control.getSourcePlistFileList()) {
+      sourcePlistFilesBuilder.add(fileSystem.getPath(sourcePlist));
+    }
+    ImmutableList<Path> sourcePlistFiles=sourcePlistFilesBuilder.build();
+    ImmutableMap.Builder<String,String> substitutionMap=ImmutableMap.builder();
+    for (    VariableSubstitution substitution : control.getVariableSubstitutionList()) {
+      substitutionMap.put(substitution.getName(),substitution.getValue());
+    }
+    PlistMerging plistMerging=PlistMerging.from(sourcePlistFiles,PlistMerging.automaticEntries(control.getTargetDeviceFamilyList(),platformFromName(control.getPlatform()),control.getSdkVersion(),control.getMinimumOsVersion()),substitutionMap.build(),new KeysToRemoveIfEmptyString("CFBundleIconFile","NSPrincipalClass"));
+    if (control.hasExecutableName()) {
+      plistMerging.setExecutableName(control.getExecutableName());
+    }
+    plistMerging.setBundleIdentifier(control.hasPrimaryBundleIdentifier() ? control.getPrimaryBundleIdentifier() : null,control.hasFallbackBundleIdentifier() ? control.getFallbackBundleIdentifier() : null).write(tempMergedPlist,tempPkgInfo);
   }
-  plistMerging.setBundleIdentifier(control.hasPrimaryBundleIdentifier() ? control.getPrimaryBundleIdentifier() : null,control.hasFallbackBundleIdentifier() ? control.getFallbackBundleIdentifier() : null);
-  plistMerging.write(tempMergedPlist,tempPkgInfo);
   bundleRoot=joinPath(bundleRoot,control.getBundleRoot());
   packagedFilesBuilder.add(new ZipInputEntry(tempMergedPlist,joinPath(bundleRoot,INFOPLIST_FILENAME)));
   if (includePkgInfo) {
