@@ -1,0 +1,33 @@
+{
+  checkState(langPluginParameter == null || langPluginParameterSupplier == null,"Only one of {langPluginParameter, langPluginParameterSupplier} should be set.");
+  final Supplier<String> langPluginParameter1=langPluginParameter == null ? langPluginParameterSupplier : Suppliers.ofInstance(langPluginParameter);
+  if (isEmpty(outputs)) {
+    return absent();
+  }
+  FilesToRunProvider langPluginTarget=null;
+  List<? extends CharSequence> prefixArguments;
+  if (langPluginName != null) {
+    Preconditions.checkArgument(langParameter == null);
+    Preconditions.checkArgument(langPluginParameter1 != null);
+    langPluginTarget=ruleContext.getExecutablePrerequisite(langPluginName,Mode.HOST);
+    if (ruleContext.hasErrors()) {
+      return absent();
+    }
+    LazyString lazyLangPlugingFlag=new LazyString(){
+      @Override public String toString(){
+        return String.format("--%s_out=%s",langPrefix,langPluginParameter1.get());
+      }
+    }
+;
+    prefixArguments=ImmutableList.of(String.format("--plugin=protoc-gen-%s=%s",langPrefix,langPluginTarget.getExecutable().getExecPathString()),lazyLangPlugingFlag);
+  }
+ else {
+    prefixArguments=(langParameter != null) ? ImmutableList.of(langParameter) : ImmutableList.<String>of();
+  }
+  List<String> suffixArguments=hasServices ? ImmutableList.<String>of() : ImmutableList.of("--disallow_services");
+  FilesToRunProvider compilerTarget=ruleContext.getExecutablePrerequisite("$compiler",Mode.HOST);
+  if (ruleContext.hasErrors()) {
+    return absent();
+  }
+  return Optional.of(new ProtoCompileAction(ruleContext,supportData,language,suffixArguments,outputs,prefixArguments,langPluginTarget,compilerTarget));
+}
