@@ -1,8 +1,8 @@
 {
   NSDictionary merged=PlistMerging.merge(sourceFiles);
-  Set<String> conflictingEntries=Sets.intersection(automaticEntries.keySet(),merged.keySet());
-  Preconditions.checkArgument(conflictingEntries.isEmpty(),"The following plist entries are generated automatically, but are present in more than one " + "of the input lists: %s",conflictingEntries);
-  merged.putAll(automaticEntries);
+  Set<String> conflictingEntries=Sets.intersection(immutableEntries.keySet(),merged.keySet());
+  Preconditions.checkArgument(conflictingEntries.isEmpty(),"The following plist entries may not be overridden, but are present in more than one " + "of the input lists: %s",conflictingEntries);
+  merged.putAll(immutableEntries);
   for (  Map.Entry<String,NSObject> entry : merged.entrySet()) {
     if (entry.getValue().toJavaObject() instanceof String) {
       String newValue=substituteEnvironmentVariable(substitutions,(String)entry.getValue().toJavaObject());
@@ -14,7 +14,7 @@
       merged.remove(key);
     }
   }
-  if (automaticEntries.size() > 0) {
+  if (!immutableEntries.isEmpty()) {
     Pattern versionPattern=Pattern.compile("[^0-9.]");
     if (!merged.containsKey(BUNDLE_VERSION_PLIST_KEY)) {
       merged.put(BUNDLE_VERSION_PLIST_KEY,BUNDLE_VERSION_DEFAULT);
