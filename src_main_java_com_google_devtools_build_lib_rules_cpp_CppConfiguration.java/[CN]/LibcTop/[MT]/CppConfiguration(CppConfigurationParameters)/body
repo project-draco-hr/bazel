@@ -1,6 +1,6 @@
 {
   CrosstoolConfig.CToolchain toolchain=params.toolchain;
-  cppOptions=params.buildOptions.get(CppOptions.class);
+  cppOptions=params.cppOptions;
   this.hostSystemName=toolchain.getHostSystemName();
   this.compiler=toolchain.getCompiler();
   this.targetCpu=toolchain.getTargetCpu();
@@ -9,7 +9,7 @@
   this.targetLibc=toolchain.getTargetLibc();
   this.crosstoolTop=params.crosstoolTop;
   this.ccToolchainLabel=params.ccToolchainLabel;
-  this.compilationMode=params.buildOptions.get(BuildConfiguration.Options.class).compilationMode;
+  this.compilationMode=params.commonOptions.compilationMode;
   this.lipoContextCollector=cppOptions.lipoCollector;
   this.execRoot=params.execRoot;
   this.greppedIncludesDirectory=Root.asDerivedRoot(execRoot,execRoot.getRelative(IncludeScanningUtil.GREPPED_INCLUDES));
@@ -39,7 +39,7 @@ default :
 throw new IllegalStateException("Invalid dynamicMode.");
 }
 }
-this.fdoSupport=new FdoSupport(params.buildOptions.get(CppOptions.class).fdoInstrument,params.fdoZip,cppOptions.lipoMode,execRoot);
+this.fdoSupport=new FdoSupport(cppOptions.fdoInstrument,params.fdoZip,cppOptions.lipoMode,execRoot);
 this.stripBinaries=(cppOptions.stripBinaries == StripMode.ALWAYS || (cppOptions.stripBinaries == StripMode.SOMETIMES && compilationMode == CompilationMode.FASTBUILD));
 CrosstoolConfigurationIdentifier crosstoolConfig=CrosstoolConfigurationIdentifier.fromToolchain(toolchain);
 Preconditions.checkState(crosstoolConfig.getCpu().equals(targetCpu));
