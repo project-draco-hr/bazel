@@ -8,15 +8,6 @@
  catch (  IOException e) {
     throw new RepositoryFunctionException(e,Transience.TRANSIENT);
   }
-  DecompressorValue value;
-  try {
-    value=(DecompressorValue)env.getValueOrThrow(DecompressorValue.key(JarFunction.NAME,DecompressorDescriptor.builder().setTargetKind(MavenJarRule.NAME).setTargetName(downloader.getName()).setArchivePath(repositoryJar).setRepositoryPath(outputDirectory).build()),IOException.class);
-    if (value == null) {
-      return null;
-    }
-  }
- catch (  IOException e) {
-    throw new RepositoryFunctionException(e,Transience.TRANSIENT);
-  }
-  return RepositoryValue.create(value.getDirectory());
+  Path result=DecompressorValue.decompress(DecompressorDescriptor.builder().setDecompressor(JarFunction.INSTANCE).setTargetKind(MavenJarRule.NAME).setTargetName(downloader.getName()).setArchivePath(repositoryJar).setRepositoryPath(outputDirectory).build());
+  return RepositoryValue.create(result);
 }

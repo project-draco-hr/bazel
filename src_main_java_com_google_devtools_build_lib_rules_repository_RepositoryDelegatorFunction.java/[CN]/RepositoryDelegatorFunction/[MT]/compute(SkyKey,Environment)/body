@@ -8,10 +8,11 @@
   if (handler == null) {
     throw new RepositoryFunctionException(new EvalException(Location.fromFile(directories.getWorkspace().getRelative("WORKSPACE")),"Could not find handler for " + rule),Transience.PERSISTENT);
   }
-  if (handler.isLocal()) {
-    return handler.fetch(rule,env);
-  }
   Path repoRoot=RepositoryFunction.getExternalRepositoryDirectory(directories).getRelative(rule.getName());
+  if (handler.isLocal()) {
+    setupRepositoryRoot(repoRoot);
+    return handler.fetch(rule,repoRoot,env);
+  }
   byte[] ruleSpecificData=handler.getRuleSpecificMarkerData(rule,env);
   boolean markerUpToDate=handler.isFilesystemUpToDate(rule,ruleSpecificData);
   if (markerUpToDate && repoRoot.exists()) {
@@ -22,7 +23,8 @@
     return RepositoryValue.create(repoRootValue.realRootedPath().asPath());
   }
   if (isFetch.get()) {
-    SkyValue result=handler.fetch(rule,env);
+    setupRepositoryRoot(repoRoot);
+    SkyValue result=handler.fetch(rule,repoRoot,env);
     if (env.valuesMissing()) {
       return null;
     }

@@ -1,0 +1,51 @@
+{
+  AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(rule);
+  if ((mapper.has("commit",Type.STRING) == mapper.has("tag",Type.STRING)) && (mapper.get("commit",Type.STRING).isEmpty() == mapper.get("tag",Type.STRING).isEmpty())) {
+    throw new RepositoryFunctionException(new EvalException(rule.getLocation(),"One of either commit or tag must be defined"),Transience.PERSISTENT);
+  }
+  String startingPoint;
+  if (mapper.has("commit",Type.STRING) && !mapper.get("commit",Type.STRING).isEmpty()) {
+    startingPoint=mapper.get("commit",Type.STRING);
+  }
+ else {
+    startingPoint="tags/" + mapper.get("tag",Type.STRING);
+  }
+  GitRepositoryDescriptor descriptor=new GitRepositoryDescriptor(mapper.get("remote",Type.STRING),startingPoint,mapper.get("init_submodules",Type.BOOLEAN),outputDirectory);
+  Git git=null;
+  try {
+    if (descriptor.directory.exists()) {
+      if (isUpToDate(descriptor)) {
+        return new HttpDownloadValue(descriptor.directory);
+      }
+      try {
+        FileSystemUtils.deleteTree(descriptor.directory);
+      }
+ catch (      IOException e) {
+        throw new RepositoryFunctionException(e,Transience.TRANSIENT);
+      }
+    }
+    git=Git.cloneRepository().setURI(descriptor.remote).setCredentialsProvider(new NetRCCredentialsProvider()).setDirectory(descriptor.directory.getPathFile()).setCloneSubmodules(false).setNoCheckout(true).setProgressMonitor(new GitProgressMonitor("Cloning " + descriptor.remote,eventHandler)).call();
+    git.checkout().setCreateBranch(true).setName("bazel-checkout").setStartPoint(descriptor.checkout).call();
+    if (descriptor.initSubmodules && !git.submoduleInit().call().isEmpty()) {
+      git.submoduleUpdate().setProgressMonitor(new GitProgressMonitor("Cloning submodules for " + descriptor.remote,eventHandler)).call();
+    }
+  }
+ catch (  InvalidRemoteException e) {
+    throw new RepositoryFunctionException(new IOException("Invalid Git repository URI: " + e.getMessage()),Transience.PERSISTENT);
+  }
+catch (  RefNotFoundException|InvalidRefNameException e) {
+    throw new RepositoryFunctionException(new IOException("Invalid branch, tag, or commit: " + e.getMessage()),Transience.PERSISTENT);
+  }
+catch (  GitAPIException e) {
+    throw new RepositoryFunctionException(new IOException(e.getMessage()),Transience.TRANSIENT);
+  }
+catch (  JGitInternalException e) {
+    throw new RepositoryFunctionException(new IOException(e.getMessage()),Transience.PERSISTENT);
+  }
+ finally {
+    if (git != null) {
+      git.close();
+    }
+  }
+  return new HttpDownloadValue(descriptor.directory);
+}

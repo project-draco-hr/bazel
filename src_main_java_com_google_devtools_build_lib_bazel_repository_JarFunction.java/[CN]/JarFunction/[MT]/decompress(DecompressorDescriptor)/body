@@ -1,0 +1,23 @@
+{
+  String baseName=descriptor.archivePath().getBaseName();
+  try {
+    FileSystemUtils.createDirectoryAndParents(descriptor.repositoryPath());
+    Path workspaceFile=descriptor.repositoryPath().getRelative("WORKSPACE");
+    FileSystemUtils.writeContent(workspaceFile,Charset.forName("UTF-8"),String.format("# DO NOT EDIT: automatically generated WORKSPACE file for %s rule %s\n",descriptor.targetKind(),descriptor.targetName()));
+    Path jarDirectory=descriptor.repositoryPath().getRelative(getPackageName());
+    FileSystemUtils.createDirectoryAndParents(jarDirectory);
+    Path jarSymlink=jarDirectory.getRelative(baseName);
+    if (!jarSymlink.exists()) {
+      jarSymlink.createSymbolicLink(descriptor.archivePath());
+    }
+    Path buildFile=jarDirectory.getRelative("BUILD");
+    FileSystemUtils.writeLinesAs(buildFile,Charset.forName("UTF-8"),"# DO NOT EDIT: automatically generated BUILD file for " + descriptor.targetKind() + " rule "+ descriptor.targetName(),createBuildFile(baseName));
+    if (descriptor.executable()) {
+      descriptor.archivePath().chmod(0755);
+    }
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(new IOException("Error auto-creating jar repo structure: " + e.getMessage()),Transience.TRANSIENT);
+  }
+  return descriptor.repositoryPath();
+}
