@@ -2,19 +2,5 @@
   if (OS.getCurrent() != OS.DARWIN) {
     throw new UserExecException("Cannot locate iOS SDK on non-darwin operating system");
   }
-  try {
-    CommandResult xcrunResult=new Command(new String[]{"/usr/bin/xcrun","--sdk",String.format("%s%s",appleSdkPlatform.toLowerCase(),iosSdkVersion),"--show-sdk-path"}).execute();
-    TerminationStatus xcrunStatus=xcrunResult.getTerminationStatus();
-    if (!xcrunResult.getTerminationStatus().exited()) {
-      throw new UserExecException(String.format("xcrun failed.\n%s\nStderr: %s",xcrunStatus.toString(),new String(xcrunResult.getStderr(),StandardCharsets.UTF_8)));
-    }
-    envBuilder.put("SDKROOT",new String(xcrunResult.getStdout(),StandardCharsets.UTF_8).trim());
-  }
- catch (  AbnormalTerminationException e) {
-    String message=String.format("%s : %s",e.getResult().getTerminationStatus(),new String(e.getResult().getStderr()));
-    throw new UserExecException(message,e);
-  }
-catch (  CommandException e) {
-    throw new UserExecException(e);
-  }
+  envBuilder.put("SDKROOT",AppleHostInfo.getSdkRoot(execRoot,iosSdkVersion,appleSdkPlatform));
 }
