@@ -1,0 +1,9 @@
+{
+  AnalysisMock.get().ccSupport().setupCrosstool(mockToolsConfig,"feature { name: 'module_maps' }");
+  useConfiguration();
+  writeSimpleCcLibrary();
+  CppModuleMapAction action=getCppModuleMapAction("//module:map");
+  assertThat(ActionsTestUtil.baseArtifactNames(action.getDependencyArtifacts())).containsExactly("stl.cppmap","crosstool.cppmap");
+  assertEquals(ImmutableSet.of("src module/a.h"),artifactsToStrings(action.getPrivateHeaders()));
+  assertThat(action.getPublicHeaders()).isEmpty();
+}

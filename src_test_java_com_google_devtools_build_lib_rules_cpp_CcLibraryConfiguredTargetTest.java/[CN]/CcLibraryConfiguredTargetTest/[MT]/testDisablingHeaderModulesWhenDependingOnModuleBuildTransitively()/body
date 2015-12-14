@@ -1,0 +1,10 @@
+{
+  AnalysisMock.get().ccSupport().setupCrosstool(mockToolsConfig,MockCcSupport.HEADER_MODULES_FEATURE_CONFIGURATION);
+  useConfiguration();
+  scratch.file("module/BUILD","package(features = ['header_modules'])","cc_library(","    name = 'module',","    srcs = ['a.cc', 'a.h'],",")");
+  scratch.file("nomodule/BUILD","package(features = ['-header_modules'])","cc_library(","    name = 'nomodule',","    srcs = ['a.cc', 'a.h'],","    deps = ['//module']",")");
+  CppCompileAction moduleAction=getCppCompileAction("//module:module");
+  assertThat(moduleAction.getCompilerOptions()).contains("module_name://module:module");
+  CppCompileAction noModuleAction=getCppCompileAction("//nomodule:nomodule");
+  assertThat(noModuleAction.getCompilerOptions()).doesNotContain("module_name://module:module");
+}

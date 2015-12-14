@@ -1,0 +1,17 @@
+{
+  AnalysisMock.get().ccSupport().setupCrosstool(mockToolsConfig,"" + "feature { name: 'header_modules' }" + "feature { name: 'module_maps' }");
+  useConfiguration();
+  scratch.file("module/BUILD","package(features = ['header_modules'])","cc_library(","    name = 'a',","    srcs = ['a.h', 'a.cc'],","    deps = ['b']",")","cc_library(","    name = 'b',","    srcs = ['b.h'],","    textual_hdrs = ['t.h'],",")");
+  getConfiguredTarget("//module:b");
+  Artifact bModuleArtifact=getBinArtifact("_objs/b/module/b.pic.pcm","//module:b");
+  CppCompileAction bModuleAction=(CppCompileAction)getGeneratingAction(bModuleArtifact);
+  assertThat(bModuleAction.getIncludeScannerSources()).containsExactly(getSourceArtifact("module/b.h"),getSourceArtifact("module/t.h"));
+  assertThat(bModuleAction.getInputs()).contains(getGenfilesArtifactWithNoOwner("module/b.cppmap"));
+  getConfiguredTarget("//module:a");
+  Artifact aObjectArtifact=getBinArtifact("_objs/a/module/a.pic.o","//module:a");
+  CppCompileAction aObjectAction=(CppCompileAction)getGeneratingAction(aObjectArtifact);
+  assertThat(aObjectAction.getIncludeScannerSources()).containsExactly(getSourceArtifact("module/a.cc"),getSourceArtifact("module/b.h"),getSourceArtifact("module/t.h"));
+  assertThat(aObjectAction.getInputs()).contains(getBinArtifact("_objs/b/module/b.pic.pcm","//module:b"));
+  assertThat(aObjectAction.getInputs()).contains(getGenfilesArtifactWithNoOwner("module/b.cppmap"));
+  assertNoEvents();
+}

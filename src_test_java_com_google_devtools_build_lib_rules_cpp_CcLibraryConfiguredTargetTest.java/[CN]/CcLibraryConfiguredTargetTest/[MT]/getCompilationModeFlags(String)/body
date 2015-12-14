@@ -1,0 +1,9 @@
+{
+  AnalysisMock.get().ccSupport().setupCrosstool(mockToolsConfig,COMPILATION_MODE_FEATURES);
+  useConfiguration(flags);
+  scratch.overwriteFile("mode/BUILD","cc_library(name = 'a', srcs = ['a.cc'])");
+  getConfiguredTarget("//mode:a");
+  Artifact objectArtifact=getBinArtifact("_objs/a/mode/a.pic.o","//mode:a");
+  CppCompileAction action=(CppCompileAction)getGeneratingAction(objectArtifact);
+  return action.getCompilerOptions();
+}

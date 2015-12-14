@@ -1,0 +1,14 @@
+{
+  useConfiguration("--nointerface_shared_objects");
+  ConfiguredTarget hello=getConfiguredTarget("//hello:hello");
+  Artifact sharedObject=getOnlyElement(FileType.filter(getFilesToBuild(hello),CppFileTypes.SHARED_LIBRARY));
+  CppLinkAction action=(CppLinkAction)getGeneratingAction(sharedObject);
+  for (  String option : action.getLinkCommandLine().getLinkopts()) {
+    assertThat(option).doesNotContain("-Wl,-soname");
+  }
+  useConfiguration("--interface_shared_objects");
+  hello=getConfiguredTarget("//hello:hello");
+  sharedObject=FileType.filter(getFilesToBuild(hello),CppFileTypes.SHARED_LIBRARY).iterator().next();
+  action=(CppLinkAction)getGeneratingAction(sharedObject);
+  assertThat(action.getLinkCommandLine().getLinkopts()).contains("-Wl,-soname=libhello_Slibhello.so");
+}

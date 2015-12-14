@@ -1,0 +1,10 @@
+{
+  ConfiguredTarget helloStatic=getConfiguredTarget("//hello:hello_static");
+  assertEquals(ImmutableSet.of("bin hello/_objs/hello_static/hello/hello.pic.o"),artifactsToStrings(getOutputGroup(helloStatic,OutputGroupProvider.HIDDEN_TOP_LEVEL)));
+  Artifact implSharedObject=getBinArtifact("libhello_static.so",helloStatic);
+  assertThat(getFilesToBuild(helloStatic)).doesNotContain(implSharedObject);
+  ConfiguredTarget hello=getConfiguredTarget("//hello:hello");
+  assertEquals(ImmutableSet.of("bin hello/_objs/hello_static/hello/hello.pic.o"),artifactsToStrings(getOutputGroup(helloStatic,OutputGroupProvider.HIDDEN_TOP_LEVEL)));
+  implSharedObject=getBinArtifact("libhello.so",hello);
+  assertThat(getFilesToBuild(hello)).contains(implSharedObject);
+}

@@ -1,0 +1,19 @@
+{
+  AnalysisMock.get().ccSupport().setupCrosstool(mockToolsConfig,MockCcSupport.HEADER_MODULES_FEATURE_CONFIGURATION);
+  useConfiguration();
+  setupPackagesForModuleTests(true);
+  getConfiguredTarget("//nomodule:f");
+  Artifact fObjectArtifact=getBinArtifact("_objs/f/nomodule/f.pic.o","//nomodule:f");
+  CppCompileAction fObjectAction=(CppCompileAction)getGeneratingAction(fObjectArtifact);
+  assertThat(getNonSystemModuleMaps(fObjectAction.getInputs())).containsExactly(getGenfilesArtifact("f.cppmap","//nomodule:f"),getGenfilesArtifact("e.cppmap","//nomodule:e"));
+  getConfiguredTarget("//nomodule:c");
+  Artifact cObjectArtifact=getBinArtifact("_objs/c/nomodule/c.pic.o","//nomodule:c");
+  CppCompileAction cObjectAction=(CppCompileAction)getGeneratingAction(cObjectArtifact);
+  assertThat(getNonSystemModuleMaps(cObjectAction.getInputs())).containsExactly(getGenfilesArtifact("b.cppmap","//module:b"),getGenfilesArtifact("c.cppmap","//nomodule:e"));
+  assertThat(getHeaderModuleFlags(cObjectAction.getCompilerOptions())).containsExactly("b.pic.pcm");
+  getConfiguredTarget("//nomodule:d");
+  Artifact dObjectArtifact=getBinArtifact("_objs/d/nomodule/d.pic.o","//nomodule:d");
+  CppCompileAction dObjectAction=(CppCompileAction)getGeneratingAction(dObjectArtifact);
+  assertThat(getNonSystemModuleMaps(dObjectAction.getInputs())).containsExactly(getGenfilesArtifact("c.cppmap","//nomodule:c"),getGenfilesArtifact("d.cppmap","//nomodule:d"));
+  assertThat(getHeaderModuleFlags(dObjectAction.getCompilerOptions())).containsExactly("b.pic.pcm");
+}

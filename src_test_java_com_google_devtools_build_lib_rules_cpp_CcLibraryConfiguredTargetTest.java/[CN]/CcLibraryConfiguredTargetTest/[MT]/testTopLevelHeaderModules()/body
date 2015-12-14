@@ -1,0 +1,9 @@
+{
+  AnalysisMock.get().ccSupport().setupCrosstool(mockToolsConfig,MockCcSupport.HEADER_MODULES_FEATURE_CONFIGURATION + "feature { name: 'header_module_includes_dependencies' }");
+  useConfiguration();
+  setupPackagesForModuleTests(false);
+  getConfiguredTarget("//module:j");
+  Artifact jObjectArtifact=getBinArtifact("_objs/j/module/j.pic.o","//module:j");
+  CppCompileAction jObjectAction=(CppCompileAction)getGeneratingAction(jObjectArtifact);
+  assertThat(getHeaderModuleFlags(jObjectAction.getCompilerOptions())).containsExactly("g.pic.pcm");
+}
