@@ -1,0 +1,23 @@
+{
+  scratch.file("test/BUILD","cc_test(name ='a', srcs = ['a.cc'])","cc_test(name ='b', srcs = ['b.cc'], stamp = 0)","cc_test(name ='c', srcs = ['c.cc'], stamp = 1)","cc_binary(name ='d', srcs = ['d.cc'])","cc_binary(name ='e', srcs = ['e.cc'], stamp = 0)","cc_binary(name ='f', srcs = ['f.cc'], stamp = 1)");
+  assertStamping(false,"//test:a");
+  assertStamping(false,"//test:b");
+  assertStamping(true,"//test:c");
+  assertStamping(true,"//test:d");
+  assertStamping(false,"//test:e");
+  assertStamping(true,"//test:f");
+  useConfiguration("--stamp");
+  assertStamping(false,"//test:a");
+  assertStamping(false,"//test:b");
+  assertStamping(true,"//test:c");
+  assertStamping(true,"//test:d");
+  assertStamping(false,"//test:e");
+  assertStamping(true,"//test:f");
+  useConfiguration("--nostamp");
+  assertStamping(false,"//test:a");
+  assertStamping(false,"//test:b");
+  assertStamping(true,"//test:c");
+  assertStamping(false,"//test:d");
+  assertStamping(false,"//test:e");
+  assertStamping(true,"//test:f");
+}

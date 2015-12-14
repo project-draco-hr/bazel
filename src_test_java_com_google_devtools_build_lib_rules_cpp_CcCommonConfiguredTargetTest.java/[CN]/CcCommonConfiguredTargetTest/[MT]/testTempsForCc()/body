@@ -1,0 +1,8 @@
+{
+  useConfiguration("--save_temps");
+  ConfiguredTarget fooTarget=getConfiguredTarget("//foo:foo");
+  List<Artifact> temps=ImmutableList.copyOf(getOutputGroup(fooTarget,OutputGroupProvider.TEMP_FILES));
+  assertThat(temps).hasSize(2);
+  getOnlyElement(filter(temps,fileTypePredicate(CppFileTypes.PIC_PREPROCESSED_CPP)));
+  getOnlyElement(filter(temps,fileTypePredicate(CppFileTypes.PIC_ASSEMBLER)));
+}

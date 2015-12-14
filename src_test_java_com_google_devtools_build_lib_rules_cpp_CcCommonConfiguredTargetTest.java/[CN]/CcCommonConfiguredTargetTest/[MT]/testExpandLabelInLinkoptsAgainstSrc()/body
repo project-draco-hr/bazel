@@ -1,0 +1,10 @@
+{
+  scratch.file("coolthing/BUILD","genrule(name = 'build-that',","  srcs = [ 'foo' ],","  outs = [ 'nicelib.a' ],","  cmd = 'cat  $< > $@')");
+  scratch.file("myapp/BUILD","cc_binary(name = 'myapp',","    srcs = [ '//coolthing:nicelib.a' ],","    linkopts = [ '//coolthing:nicelib.a' ])");
+  ConfiguredTarget theLib=getConfiguredTarget("//coolthing:build-that");
+  ConfiguredTarget theApp=getConfiguredTarget("//myapp:myapp");
+  assertNoEvents();
+  Action linkAction=getGeneratingAction(Iterables.getOnlyElement(getFilesToBuild(theApp)));
+  ImmutableList<Artifact> filesToBuild=ImmutableList.copyOf(getFilesToBuild(theLib));
+  assertTrue(ImmutableSet.copyOf(linkAction.getInputs()).containsAll(filesToBuild));
+}

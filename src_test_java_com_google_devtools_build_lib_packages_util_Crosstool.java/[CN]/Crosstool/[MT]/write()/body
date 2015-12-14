@@ -26,11 +26,8 @@
   String build=Joiner.on("\n").join("package(default_visibility=['//visibility:public'])","licenses(['restricted'])","","filegroup(name = 'everything-multilib',","          srcs = glob(['" + version + "/**/*'],","              exclude_directories = 1),","          output_licenses = ['unencumbered'])","",String.format("filegroup(name = 'everything', srcs = ['%s', ':every-file'])",Joiner.on("', '").join(compilerRules)),"",String.format("filegroup(name = 'every-file', srcs = ['%s'%s%s])",Joiner.on("', '").join(CROSSTOOL_BINARIES),addEmbeddedRuntimes ? ", ':dynamic-runtime-libs-k8'" : "",addEmbeddedRuntimes ? ", ':static-runtime-libs-k8'" : ""),"",compilationTools.toString(),runtimes,"","cc_library(name = 'malloc')");
   config.create(crosstoolTop + "/" + version+ "/x86/bin/gcc");
   config.create(crosstoolTop + "/" + version+ "/x86/bin/ld");
-  config.create(crosstoolTop + "/BUILD",build);
-  Path crosstoolPath=config.getPath(crosstoolTop + "/CROSSTOOL");
-  if (crosstoolPath.exists()) {
-    crosstoolPath.delete();
-  }
-  config.create(crosstoolTop + "/CROSSTOOL",crosstoolFileContents);
+  config.getPath(crosstoolTop + "/CROSSTOOL");
+  config.overwrite(crosstoolTop + "/BUILD",build);
+  config.overwrite(crosstoolTop + "/CROSSTOOL",crosstoolFileContents);
   config.create(crosstoolTop + "/crosstool.cppmap","module crosstool {}");
 }

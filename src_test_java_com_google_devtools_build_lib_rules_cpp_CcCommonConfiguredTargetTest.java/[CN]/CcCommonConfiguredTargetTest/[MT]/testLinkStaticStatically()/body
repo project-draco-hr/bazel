@@ -1,0 +1,8 @@
+{
+  ConfiguredTarget statically=scratchConfiguredTarget("statically","statically","cc_library(name = 'statically',","           srcs = ['statically.cc'],","           linkstatic=1)");
+  assertTrue(statically.getProvider(CcExecutionDynamicLibrariesProvider.class).getExecutionDynamicLibraryArtifacts().isEmpty());
+  Artifact staticallyDotA=getOnlyElement(getFilesToBuild(statically));
+  assertThat(getGeneratingAction(staticallyDotA)).isInstanceOf(CppLinkAction.class);
+  PathFragment dotAPath=staticallyDotA.getExecPath();
+  assertThat(dotAPath.getPathString()).endsWith(STATIC_LIB);
+}
