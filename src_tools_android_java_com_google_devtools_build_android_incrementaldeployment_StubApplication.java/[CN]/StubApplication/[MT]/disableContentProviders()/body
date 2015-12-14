@@ -1,0 +1,16 @@
+{
+  Log.v("INCREMENTAL","disableContentProviders");
+  try {
+    Class<?> activityThread=Class.forName("android.app.ActivityThread");
+    Method mCurrentActivityThread=activityThread.getMethod("currentActivityThread");
+    mCurrentActivityThread.setAccessible(true);
+    Object currentActivityThread=mCurrentActivityThread.invoke(null);
+    Object boundApplication=getField(currentActivityThread,"mBoundApplication").get(currentActivityThread);
+    Field fProviders=getField(boundApplication,"providers");
+    stashedContentProviders=fProviders.get(boundApplication);
+    fProviders.set(boundApplication,null);
+  }
+ catch (  ClassNotFoundException|NoSuchMethodException|IllegalAccessException|InvocationTargetException e) {
+    throw new IllegalStateException(e);
+  }
+}
