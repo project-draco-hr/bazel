@@ -1,0 +1,32 @@
+{
+  Set<Target> dependentFiles=new LinkedHashSet<>();
+  Set<Package> seenPackages=new HashSet<>();
+  Set<Label> seenLabels=new HashSet<>();
+  for (  Target x : nodes) {
+    Package pkg=x.getPackage();
+    if (seenPackages.add(pkg)) {
+      if (buildFiles) {
+        addIfUniqueLabel(pkg.getBuildFile(),seenLabels,dependentFiles);
+      }
+      List<Label> extensions=new ArrayList<>();
+      if (subincludes) {
+        extensions.addAll(pkg.getSubincludeLabels());
+      }
+      if (loads) {
+        extensions.addAll(pkg.getSkylarkFileDependencies());
+      }
+      for (      Label subinclude : extensions) {
+        addIfUniqueLabel(getSubincludeTarget(subinclude,pkg),seenLabels,dependentFiles);
+        if (buildFiles) {
+          try {
+            addIfUniqueLabel(getSubincludeTarget(subinclude.getLocalTargetLabel("BUILD"),pkg),seenLabels,dependentFiles);
+          }
+ catch (          LabelSyntaxException e) {
+            throw new AssertionError("BUILD should always parse as a target name",e);
+          }
+        }
+      }
+    }
+  }
+  return dependentFiles;
+}
