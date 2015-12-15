@@ -1,26 +1,16 @@
 {
-  Set<String> languageSpecificRuleFamilies=new TreeSet<>();
-  Set<String> genericRuleFamilies=new TreeSet<>();
-  separateRuleFamilies(docEntries,languageSpecificRuleFamilies,genericRuleFamilies);
+  Set<String> langSpecificRuleFamilyNames=new TreeSet<>();
+  Set<String> genericRuleFamilyNames=new TreeSet<>();
+  separateRuleFamilies(docEntries,langSpecificRuleFamilyNames,genericRuleFamilyNames);
   Map<String,ListMultimap<RuleType,RuleDocumentation>> ruleMapping=new HashMap<>();
   createRuleMapping(docEntries,ruleMapping);
-  List<Pair<String,String>> ruleFamilyNames=new ArrayList<>(languageSpecificRuleFamilies.size() + genericRuleFamilies.size());
-  List<SummaryRuleFamily> languageSpecificSummaryFamilies=new ArrayList<SummaryRuleFamily>(languageSpecificRuleFamilies.size());
-  for (  String ruleFamily : languageSpecificRuleFamilies) {
-    ListMultimap<RuleType,RuleDocumentation> ruleTypeMap=ruleMapping.get(ruleFamily);
-    String ruleFamilyId=RuleDocumentation.normalize(ruleFamily);
-    languageSpecificSummaryFamilies.add(new SummaryRuleFamily(ruleTypeMap,ruleFamily,ruleFamilyId));
-    writeRuleDoc(outputDir,ruleFamily,ruleFamilyId,ruleTypeMap);
-    ruleFamilyNames.add(Pair.<String,String>of(ruleFamilyId,ruleFamily));
+  List<RuleFamily> langSpecificRuleFamilies=assembleRuleFamilies(ruleMapping,langSpecificRuleFamilyNames);
+  List<RuleFamily> genericRuleFamilies=assembleRuleFamilies(ruleMapping,genericRuleFamilyNames);
+  List<RuleFamily> allRuleFamilies=new ArrayList<>(langSpecificRuleFamilies);
+  allRuleFamilies.addAll(genericRuleFamilies);
+  writeOverviewPage(outputDir,langSpecificRuleFamilies,genericRuleFamilies);
+  writeBeNav(outputDir,allRuleFamilies);
+  for (  RuleFamily ruleFamily : allRuleFamilies) {
+    writeRuleDoc(outputDir,ruleFamily);
   }
-  List<SummaryRuleFamily> otherSummaryFamilies=new ArrayList<SummaryRuleFamily>(genericRuleFamilies.size());
-  for (  String ruleFamily : genericRuleFamilies) {
-    ListMultimap<RuleType,RuleDocumentation> ruleTypeMap=ruleMapping.get(ruleFamily);
-    String ruleFamilyId=RuleDocumentation.normalize(ruleFamily);
-    otherSummaryFamilies.add(new SummaryRuleFamily(ruleTypeMap,ruleFamily,ruleFamilyId));
-    writeRuleDoc(outputDir,ruleFamily,ruleFamilyId,ruleTypeMap);
-    ruleFamilyNames.add(Pair.<String,String>of(ruleFamilyId,ruleFamily));
-  }
-  writeOverviewPage(outputDir,languageSpecificSummaryFamilies,otherSummaryFamilies);
-  writeBeNav(outputDir,ruleFamilyNames);
 }
