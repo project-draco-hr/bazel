@@ -4,10 +4,9 @@
   if (!AndroidSdkProvider.verifyPresence(ruleContext)) {
     return null;
   }
-  List<? extends TransitiveInfoCollection> deps=ruleContext.getPrerequisites("deps",Mode.TARGET);
   checkResourceInlining(ruleContext);
   NestedSetBuilder<Aar> transitiveAars=collectTransitiveAars(ruleContext);
-  NestedSet<LinkerInput> transitiveNativeLibraries=AndroidCommon.collectTransitiveNativeLibraries(deps);
+  NestedSet<LinkerInput> transitiveNativeLibraries=AndroidCommon.collectTransitiveNativeLibraries(AndroidCommon.collectTransitiveInfo(ruleContext,Mode.TARGET));
   NestedSet<Artifact> transitiveProguardConfigs=new ProguardLibrary(ruleContext).collectProguardSpecs();
   JavaCommon javaCommon=new JavaCommon(ruleContext,javaSemantics);
   AndroidCommon androidCommon=new AndroidCommon(javaCommon);
