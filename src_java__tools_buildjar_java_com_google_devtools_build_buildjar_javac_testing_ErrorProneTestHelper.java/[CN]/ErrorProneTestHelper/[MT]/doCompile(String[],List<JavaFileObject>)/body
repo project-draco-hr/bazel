@@ -1,0 +1,14 @@
+{
+  assertNotNull("Tests must register a plugin or scanner before compilation",registeredPlugin);
+  List<String> argList=new ArrayList<>(BazelJavaCompiler.getDefaultJavacopts());
+  argList.addAll(Arrays.asList(args));
+  List<String> remainingArgs=null;
+  try {
+    remainingArgs=registeredPlugin.processArgs(argList);
+  }
+ catch (  InvalidCommandLineException e) {
+    fail("Invalid command line argument: " + e.getMessage());
+  }
+  fileManager.initializeClasspath(ImmutableList.<Path>of());
+  return compilerMain.compile(remainingArgs.toArray(new String[remainingArgs.size()]),context,fileManager,collector,sources,null);
+}

@@ -1,0 +1,21 @@
+{
+  final ImmutableList.Builder<CompiledClass> result=ImmutableList.builder();
+  try {
+    Files.walkFileTree(fileSystem.getPath("/"),new SimpleFileVisitor<Path>(){
+      @Override public FileVisitResult visitFile(      Path filePath,      BasicFileAttributes attrs) throws IOException {
+        if (filePath.toString().endsWith(".class")) {
+          String className=filePath.toString();
+          className=className.substring(0,className.length() - ".class".length());
+          className=DOT_MATCHER.trimLeadingFrom(SLASH_MATCHER.replaceFrom(className,'.'));
+          result.add(CompiledClass.create(className,Files.readAllBytes(filePath)));
+        }
+        return FileVisitResult.CONTINUE;
+      }
+    }
+);
+  }
+ catch (  IOException e) {
+    throw new IOError(e);
+  }
+  return result.build();
+}

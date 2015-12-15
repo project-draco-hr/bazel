@@ -1,0 +1,19 @@
+{
+  try {
+    String jarName="lib" + pkg.replace(".","") + ".jar";
+    Path jarPath=fileSystem.getPath("/" + jarName);
+    try (ZipOutputStream out=new ZipOutputStream(Files.newOutputStream(jarPath))){
+      for (      CompiledClass compiledClass : compiled) {
+        if (pkg.equals(getPackageName(compiledClass.name()))) {
+          String entry=DOT_MATCHER.replaceFrom(compiledClass.name(),'/') + ".class";
+          out.putNextEntry(new ZipEntry(entry));
+          out.write(compiledClass.data());
+        }
+      }
+    }
+     return jarPath;
+  }
+ catch (  IOException e) {
+    throw new IOError(e);
+  }
+}
