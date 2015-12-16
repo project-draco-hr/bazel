@@ -1,8 +1,10 @@
 {
-  String value="????????";
+  byte[] bytesToDecode={(byte)0xC2,(byte)0xA2,(byte)0xC2,(byte)0xA2};
+  Charset latin1=StandardCharsets.ISO_8859_1;
+  Charset utf8=StandardCharsets.UTF_8;
   SkylarkRuleContext ruleContext=createRuleContext("//foo:foo");
-  TemplateExpansionAction action=(TemplateExpansionAction)evalRuleContextCode(ruleContext,"ruleContext.template_action(","  template = ruleContext.files.srcs[0],","  output = ruleContext.files.srcs[1],","  substitutions = {'a': '" + convertUtf8ToLatin1(value) + "'},","  executable = False)");
+  TemplateExpansionAction action=(TemplateExpansionAction)evalRuleContextCode(ruleContext,"ruleContext.template_action(","  template = ruleContext.files.srcs[0],","  output = ruleContext.files.srcs[1],","  substitutions = {'a': '" + new String(bytesToDecode,latin1) + "'},","  executable = False)");
   List<Substitution> substitutions=action.getSubstitutions();
   assertThat(substitutions).hasSize(1);
-  assertThat(substitutions.get(0).getValue()).isEqualTo(value);
+  assertThat(substitutions.get(0).getValue()).isEqualTo(new String(bytesToDecode,utf8));
 }
