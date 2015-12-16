@@ -1,0 +1,9 @@
+{
+  String pathToTest="/some/skylark/file";
+  SkylarkImport importForPath=SkylarkImports.create(pathToTest);
+  assertThat(importForPath.hasAbsolutePath()).isTrue();
+  Label irrelevantContainingFile=Label.parseAbsoluteUnchecked("//another/path:BUILD");
+  assertThat(importForPath.getAbsolutePath()).isEqualTo(new PathFragment(pathToTest));
+  thrown.expect(IllegalStateException.class);
+  importForPath.getLabel(irrelevantContainingFile);
+}

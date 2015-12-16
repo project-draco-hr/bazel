@@ -1,0 +1,52 @@
+{
+  if (importString.startsWith("//") || importString.startsWith("@")) {
+    Label importLabel;
+    try {
+      importLabel=Label.parseAbsolute(importString);
+    }
+ catch (    LabelSyntaxException e) {
+      throw new SkylarkImportSyntaxException(INVALID_LABEL_PREFIX + e.getMessage());
+    }
+    String targetName=importLabel.getName();
+    if (!targetName.endsWith(".bzl")) {
+      throw new SkylarkImportSyntaxException(MUST_HAVE_BZL_EXT_MSG);
+    }
+    PackageIdentifier packageId=importLabel.getPackageIdentifier();
+    if (packageId.equals(Label.EXTERNAL_PACKAGE_IDENTIFIER)) {
+      throw new SkylarkImportSyntaxException(EXTERNAL_PKG_NOT_ALLOWED_MSG);
+    }
+    return new AbsoluteLabelImport(importLabel);
+  }
+ else   if (importString.startsWith("/")) {
+    if (importString.endsWith(".bzl")) {
+      throw new SkylarkImportSyntaxException(BZL_EXT_IMPLICIT_MSG);
+    }
+    PathFragment importPath=new PathFragment(importString);
+    return new AbsolutePathImport(importPath);
+  }
+ else   if (importString.startsWith(":")) {
+    String importTarget=importString.substring(1);
+    if (!importTarget.endsWith(".bzl")) {
+      throw new SkylarkImportSyntaxException(MUST_HAVE_BZL_EXT_MSG);
+    }
+    String maybeErrMsg=LabelValidator.validateTargetName(importTarget);
+    if (maybeErrMsg != null) {
+      throw new SkylarkImportSyntaxException(INVALID_TARGET_PREFIX + maybeErrMsg);
+    }
+    return new RelativeLabelImport(importTarget);
+  }
+ else {
+    if (importString.endsWith(".bzl")) {
+      throw new SkylarkImportSyntaxException(BZL_EXT_IMPLICIT_MSG);
+    }
+    if (importString.contains("/")) {
+      throw new SkylarkImportSyntaxException(RELATIVE_PATH_NO_SUBDIRS_MSG);
+    }
+    String importTarget=importString + ".bzl";
+    String maybeErrMsg=LabelValidator.validateTargetName(importTarget);
+    if (maybeErrMsg != null) {
+      throw new SkylarkImportSyntaxException(INVALID_FILENAME_PREFIX + maybeErrMsg);
+    }
+    return new RelativePathImport(importTarget);
+  }
+}

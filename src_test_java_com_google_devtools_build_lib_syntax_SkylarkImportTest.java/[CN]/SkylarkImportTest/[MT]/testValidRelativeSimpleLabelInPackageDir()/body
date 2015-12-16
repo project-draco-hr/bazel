@@ -1,0 +1,9 @@
+{
+  String labelToTest=":file.bzl";
+  SkylarkImport importForLabel=SkylarkImports.create(labelToTest);
+  assertThat(importForLabel.hasAbsolutePath()).isFalse();
+  Label containingFile=Label.parseAbsolute("//some/skylark:BUILD");
+  assertThat(importForLabel.getLabel(containingFile)).isEqualTo(Label.parseAbsolute("//some/skylark:file.bzl"));
+  thrown.expect(IllegalStateException.class);
+  importForLabel.getAbsolutePath();
+}
