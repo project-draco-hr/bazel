@@ -1,5 +1,7 @@
 {
-  evalAndExport("def _impl(target, ctx):","   pass","my_aspect = aspect(_impl,","   extra_deps=['//foo/bar:baz']",")");
+  evalAndExport("def _impl(target, ctx):","   pass","my_aspect = aspect(_impl,","   attrs = { '_extra_deps' : attr.label(default = Label('//foo/bar:baz')) }",")");
   SkylarkAspect aspect=(SkylarkAspect)ev.lookup("my_aspect");
-  assertThat(aspect.getExtraDeps()).containsExactly(Label.parseAbsolute("//foo/bar:baz"));
+  Pair<String,Descriptor> pair=Iterables.getOnlyElement(aspect.getAttributes());
+  assertThat(pair.first).isEqualTo("$extra_deps");
+  assertThat(pair.second.getAttributeBuilder().build("$extra_deps").getDefaultValue(null)).isEqualTo(Label.parseAbsolute("//foo/bar:baz"));
 }

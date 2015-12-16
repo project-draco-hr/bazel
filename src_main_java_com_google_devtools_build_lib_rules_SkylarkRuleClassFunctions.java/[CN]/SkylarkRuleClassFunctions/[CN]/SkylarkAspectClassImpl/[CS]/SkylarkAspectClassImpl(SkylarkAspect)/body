@@ -6,6 +6,9 @@
   for (  String attributeAspect : skylarkAspect.getAttributeAspects()) {
     builder.attributeAspect(attributeAspect,this);
   }
-  builder.add(attr("$extra_deps",LABEL_LIST).value(skylarkAspect.getExtraDeps()));
+  ImmutableList<Pair<String,Descriptor>> attributes=skylarkAspect.getAttributes();
+  for (  Pair<String,Descriptor> attribute : attributes) {
+    builder.add(attribute.second.getAttributeBuilder().build(attribute.first));
+  }
   this.aspectDefinition=builder.build();
 }

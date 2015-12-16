@@ -1,0 +1,59 @@
+{
+  this.ruleContext=Preconditions.checkNotNull(ruleContext);
+  fragments=new FragmentCollection(ruleContext,ConfigurationTransition.NONE);
+  hostFragments=new FragmentCollection(ruleContext,ConfigurationTransition.HOST);
+  if (kind == Kind.RULE) {
+    Collection<Attribute> attributes=ruleContext.getRule().getAttributes();
+    HashMap<String,Object> outputsBuilder=new HashMap<>();
+    if (ruleContext.getRule().getRuleClassObject().outputsDefaultExecutable()) {
+      addOutput(outputsBuilder,"executable",ruleContext.createOutputArtifact());
+    }
+    ImplicitOutputsFunction implicitOutputsFunction=ruleContext.getRule().getRuleClassObject().getImplicitOutputsFunction();
+    if (implicitOutputsFunction instanceof SkylarkImplicitOutputsFunction) {
+      SkylarkImplicitOutputsFunction func=(SkylarkImplicitOutputsFunction)ruleContext.getRule().getRuleClassObject().getImplicitOutputsFunction();
+      for (      Map.Entry<String,String> entry : func.calculateOutputs(RawAttributeMapper.of(ruleContext.getRule())).entrySet()) {
+        addOutput(outputsBuilder,entry.getKey(),ruleContext.getImplicitOutputArtifact(entry.getValue()));
+      }
+    }
+    Builder<Artifact,Label> artifactLabelMapBuilder=ImmutableMap.builder();
+    for (    Attribute a : attributes) {
+      String attrName=a.getName();
+      Type<?> type=a.getType();
+      if (type != BuildType.OUTPUT && type != BuildType.OUTPUT_LIST) {
+        continue;
+      }
+      ImmutableList.Builder<Artifact> artifactsBuilder=ImmutableList.builder();
+      for (      OutputFile outputFile : ruleContext.getRule().getOutputFileMap().get(attrName)) {
+        Artifact artifact=ruleContext.createOutputArtifact(outputFile);
+        artifactsBuilder.add(artifact);
+        artifactLabelMapBuilder.put(artifact,outputFile.getLabel());
+      }
+      ImmutableList<Artifact> artifacts=artifactsBuilder.build();
+      if (type == BuildType.OUTPUT) {
+        if (artifacts.size() == 1) {
+          addOutput(outputsBuilder,attrName,Iterables.getOnlyElement(artifacts));
+        }
+ else {
+          addOutput(outputsBuilder,attrName,Runtime.NONE);
+        }
+      }
+ else       if (type == BuildType.OUTPUT_LIST) {
+        addOutput(outputsBuilder,attrName,new MutableList(artifacts));
+      }
+ else {
+        throw new IllegalArgumentException("Type of " + attrName + "("+ type+ ") is not output type ");
+      }
+    }
+    this.artifactsLabelMap=artifactLabelMapBuilder.build();
+    this.outputsObject=new SkylarkClassObject(outputsBuilder,"No attribute '%s' in outputs. Make sure you declared a rule output with this name.");
+    this.attributesCollection=buildAttributesCollection(attributes,ruleContext,attributeValueExtractorForRule(ruleContext));
+    this.ruleAttributesCollection=null;
+  }
+ else {
+    this.artifactsLabelMap=ImmutableMap.of();
+    this.outputsObject=null;
+    this.attributesCollection=buildAttributesCollection(ruleContext.getAspectAttributes().values(),ruleContext,ATTRIBUTE_VALUE_EXTRACTOR_FOR_ASPECT);
+    this.ruleAttributesCollection=buildAttributesCollection(ruleContext.getRule().getAttributes(),ruleContext,attributeValueExtractorForRule(ruleContext));
+  }
+  makeVariables=ruleContext.getConfigurationMakeVariableContext().collectMakeVariables();
+}
