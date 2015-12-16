@@ -1,0 +1,15 @@
+{
+  tester.addFile("a/BUILD","load('/a/b', 'b')","b()");
+  tester.addFile("/b.bzl","def b():","  pass");
+  tester.addSymlink("a/b.bzl","/b.bzl");
+  tester.sync();
+  tester.getTarget("//a:BUILD");
+  tester.modifyFile("/b.bzl","ERROR ERROR");
+  tester.sync();
+  try {
+    tester.getTarget("//a:BUILD");
+    fail();
+  }
+ catch (  NoSuchThingException e) {
+  }
+}
