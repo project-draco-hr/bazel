@@ -4,5 +4,6 @@
     return createEmptyProguardAction(ruleContext,proguardOutputJar,deployJarArtifact);
   }
   AndroidSdkProvider sdk=AndroidSdkProvider.fromRuleContext(ruleContext);
-  return createProguardAction(ruleContext,common,sdk.getProguard(),deployJarArtifact,proguardSpecs,proguardMapping,sdk.getAndroidJar(),proguardOutputJar,filesBuilder);
+  NestedSet<Artifact> libraryJars=NestedSetBuilder.<Artifact>naiveLinkOrder().add(sdk.getAndroidJar()).addTransitive(common.getTransitiveNeverLinkLibraries()).build();
+  return ProguardHelper.createProguardAction(ruleContext,sdk.getProguard(),deployJarArtifact,proguardSpecs,proguardMapping,libraryJars,proguardOutputJar,ruleContext.attributes().get("proguard_generate_mapping",Type.BOOLEAN),filesBuilder);
 }

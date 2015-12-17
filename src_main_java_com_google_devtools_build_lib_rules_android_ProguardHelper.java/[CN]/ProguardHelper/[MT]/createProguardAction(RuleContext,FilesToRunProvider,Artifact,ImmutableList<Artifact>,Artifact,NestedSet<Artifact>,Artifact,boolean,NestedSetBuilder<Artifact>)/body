@@ -1,6 +1,8 @@
 {
-  Iterable<Artifact> libraryJars=NestedSetBuilder.<Artifact>naiveLinkOrder().add(androidJar).addTransitive(common.getTransitiveNeverLinkLibraries()).build();
-  Builder builder=new SpawnAction.Builder().addInput(jar).addInputs(libraryJars).addInputs(proguardSpecs).addOutput(proguardOutputJar).setExecutable(proguard).setProgressMessage("Trimming binary with proguard").setMnemonic("Proguard").addArgument("-injars").addArgument(jar.getExecPathString());
+  JavaOptimizationMode optMode=getJavaOptimizationMode(ruleContext);
+  Preconditions.checkArgument(optMode != JavaOptimizationMode.NOOP);
+  Preconditions.checkArgument(optMode != JavaOptimizationMode.LEGACY || !proguardSpecs.isEmpty());
+  Builder builder=new SpawnAction.Builder().addInput(programJar).addInputs(libraryJars).addInputs(proguardSpecs).addOutput(proguardOutputJar).setExecutable(proguard).setProgressMessage("Trimming binary with Proguard").setMnemonic("Proguard").addArgument("-injars").addArgument(programJar.getExecPathString());
   for (  Artifact libraryJar : libraryJars) {
     builder.addArgument("-libraryjars").addArgument(libraryJar.getExecPathString());
   }
@@ -13,8 +15,7 @@
     builder.addArgument("@" + proguardSpec.getExecPathString());
   }
   Artifact proguardOutputMap=null;
-  JavaOptimizationMode optMode=getJavaOptimizationMode(ruleContext);
-  if (ruleContext.attributes().get("proguard_generate_mapping",Type.BOOLEAN) || optMode.alwaysGenerateOutputMapping()) {
+  if (mappingRequested || optMode.alwaysGenerateOutputMapping()) {
     proguardOutputMap=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_PROGUARD_MAP);
     builder.addOutput(proguardOutputMap).addArgument("-printmapping").addArgument(proguardOutputMap.getExecPathString());
     filesBuilder.add(proguardOutputMap);
