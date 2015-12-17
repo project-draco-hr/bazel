@@ -1,11 +1,10 @@
 {
   List<Argument.Passed> args=new ArrayList<>();
   Expression startExpr;
-  Expression endExpr;
   expect(TokenKind.LBRACKET);
   int loc1=token.left;
   if (token.kind == TokenKind.COLON) {
-    startExpr=setLocation(new IntegerLiteral(0),token.left,token.right);
+    startExpr=setLocation(new Identifier("None"),token.left,token.right);
   }
  else {
     startExpr=parseExpression();
@@ -15,15 +14,8 @@
     expect(TokenKind.RBRACKET);
     return makeFuncallExpression(receiver,new Identifier("$index"),args,start,token.right);
   }
-  expect(TokenKind.COLON);
-  int loc2=token.left;
-  if (token.kind == TokenKind.RBRACKET) {
-    endExpr=setLocation(new IntegerLiteral(Integer.MAX_VALUE),token.left,token.right);
-  }
- else {
-    endExpr=parseNonTupleExpression();
-  }
+  args.add(parseSliceArgument(new Identifier("None")));
+  args.add(parseSliceArgument(new IntegerLiteral(1)));
   expect(TokenKind.RBRACKET);
-  args.add(setLocation(new Argument.Positional(endExpr),loc2,endExpr));
   return makeFuncallExpression(receiver,new Identifier("$slice"),args,start,token.right);
 }
