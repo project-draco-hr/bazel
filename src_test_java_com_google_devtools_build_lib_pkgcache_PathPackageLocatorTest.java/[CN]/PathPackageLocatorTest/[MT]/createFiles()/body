@@ -1,0 +1,38 @@
+{
+  rootDir1=scratch.resolve("/home/user/src-foo/workspace");
+  rootDir2=scratch.resolve("/somewhere/1234567/build/workspace");
+  rootDir3ParentParent=scratch.resolve("/usr/local/google/jrluser-foo");
+  rootDir3=rootDir3ParentParent.getRelative("READONLY/workspace");
+  rootDir4Parent=scratch.resolve("/usr/local/symlinks/client_symlink_jrluser-foo");
+  rootDir4=rootDir4Parent.getRelative("workspace");
+  rootDir5=scratch.resolve("/foo/bar");
+  rootDir1WorkspaceFile=scratch.file(rootDir1 + "/WORKSPACE");
+  buildFile_1A=createBuildFile(rootDir1,"A");
+  buildFile_1B=createBuildFile(rootDir1,"B");
+  createBuildFile(rootDir1,"C/I");
+  scratch.file(rootDir1.getPathString() + "/F/G");
+  rootDir1.getRelative("C").createDirectory();
+  rootDir1.getRelative("C/D").createDirectory();
+  rootDir1.getRelative("C/E").createDirectory();
+  scratch.file(rootDir2 + "/WORKSPACE");
+  createBuildFile(rootDir2,"B");
+  buildFile_2C=createBuildFile(rootDir2,"C");
+  buildFile_2CD=createBuildFile(rootDir2,"C/D");
+  buildFile_2F=createBuildFile(rootDir2,"F");
+  buildFile_2FGH=createBuildFile(rootDir2,"F/G/H");
+  scratch.file(rootDir2.getPathString() + "/C/I");
+  FileSystemUtils.ensureSymbolicLink(rootDir3ParentParent.getRelative("READONLY"),rootDir4Parent);
+  buildFile_3A=rootDir3.getRelative("A/BUILD");
+  buildFile_3B=rootDir3.getRelative("B/BUILD");
+  buildFile_3CI=rootDir3.getRelative("C/I/BUILD");
+  FileSystemUtils.ensureSymbolicLink(rootDir4.getRelative("A"),rootDir1.getRelative("A"));
+  FileSystemUtils.ensureSymbolicLink(rootDir4.getRelative("B/BUILD"),rootDir1.getRelative("B/BUILD"));
+  FileSystemUtils.ensureSymbolicLink(rootDir4.getRelative("C/I/BUILD"),rootDir1.getRelative("C/I/BUILD"));
+  FileSystemUtils.ensureSymbolicLink(rootDir4.getRelative("C/D/BUILD"),rootDir1.getRelative("C/D/BUILD"));
+  FileSystemUtils.ensureSymbolicLink(rootDir4.getRelative("C/E/BUILD"),rootDir1.getRelative("C/E/BUILD"));
+  FileSystemUtils.ensureSymbolicLink(rootDir4.getRelative("F/G/BUILD"),rootDir1.getRelative("F/G/BUILD"));
+  FileSystemUtils.ensureSymbolicLink(rootDir4.getRelative("H/I"),rootDir5.getRelative("H/I"));
+  createBuildFile(rootDir5,"H/I");
+  locator=new PathPackageLocator(outputBase,ImmutableList.of(rootDir1,rootDir2));
+  locatorWithSymlinks=new PathPackageLocator(outputBase,ImmutableList.of(rootDir3));
+}

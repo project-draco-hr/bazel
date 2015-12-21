@@ -1,0 +1,9 @@
+{
+  Path workspace=scratch.dir("/some/path/to/workspace");
+  Path clientPath=workspace.getRelative("somewhere/below/workspace");
+  scratch.dir(clientPath.getPathString());
+  Path belowClient=clientPath.getRelative("below/client");
+  scratch.dir(belowClient.getPathString());
+  List<String> pathElements=ImmutableList.of("./below/client",".","%workspace%/somewhere",clientPath.getRelative("below").getPathString());
+  assertThat(PathPackageLocator.create(null,pathElements,reporter,workspace,clientPath).getPathEntries()).containsExactly(belowClient,clientPath,workspace.getRelative("somewhere"),clientPath.getRelative("below")).inOrder();
+}
