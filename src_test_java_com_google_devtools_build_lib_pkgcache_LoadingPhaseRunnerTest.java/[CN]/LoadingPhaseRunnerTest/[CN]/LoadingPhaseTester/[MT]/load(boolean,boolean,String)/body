@@ -1,0 +1,21 @@
+{
+  sync();
+  storedErrors.clear();
+  LoadingResult result;
+  try {
+    EventBus eventBus=new EventBus();
+    FilteredTargetListener listener=new FilteredTargetListener();
+    eventBus.register(listener);
+    result=loadingPhaseRunner.execute(storedErrors,eventBus,ImmutableList.copyOf(patterns),options,ImmutableListMultimap.<String,Label>of(),keepGoing,true,determineTests,null);
+    this.filteredTargets=listener.filteredTargets;
+    this.testFilteredTargets=listener.testFilteredTargets;
+  }
+ catch (  LoadingFailedException e) {
+    System.err.println(storedErrors.getEvents());
+    throw e;
+  }
+  if (!keepGoing) {
+    assertFalse(storedErrors.hasErrors());
+  }
+  return result;
+}

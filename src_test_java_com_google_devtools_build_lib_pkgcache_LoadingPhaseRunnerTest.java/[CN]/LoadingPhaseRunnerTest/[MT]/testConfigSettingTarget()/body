@@ -1,0 +1,8 @@
+{
+  AnalysisMock.get().ccSupport().setup(tester.mockToolsConfig);
+  tester.addFile("config/BUILD","cc_library(name = 'somelib', srcs = [ 'somelib.cc' ], hdrs = [ 'somelib.h' ])","config_setting(name = 'configa', values = { 'define': 'foo=a' })","config_setting(name = 'configb', values = { 'define': 'foo=b' })");
+  LoadingResult loadingResult=assertNoErrors(tester.load("//config:all"));
+  assertThat(loadingResult.getTargets()).containsExactlyElementsIn(getTargets("//config:somelib"));
+  loadingResult=assertNoErrors(tester.load("//config:configa"));
+  assertThat(loadingResult.getTargets()).containsExactlyElementsIn(getTargets("//config:configa"));
+}

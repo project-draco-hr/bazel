@@ -1,0 +1,7 @@
+{
+  AnalysisMock.get().ccSupport().setup(tester.mockToolsConfig);
+  tester.addFile("cc/BUILD","cc_test(name = 'my_test', srcs = ['test.cc'])","cc_test(name = 'my_other_test', srcs = ['other_test.cc'])","test_suite(name = 'tests', tests = [':my_test', ':my_other_test'])");
+  LoadingResult loadingResult=assertNoErrors(tester.loadTests("//cc:tests","-//cc:my_test"));
+  assertThat(loadingResult.getTargets()).containsExactlyElementsIn(getTargets("//cc:my_other_test","//cc:my_test"));
+  assertThat(loadingResult.getTestsToRun()).containsExactlyElementsIn(getTargets("//cc:my_other_test"));
+}

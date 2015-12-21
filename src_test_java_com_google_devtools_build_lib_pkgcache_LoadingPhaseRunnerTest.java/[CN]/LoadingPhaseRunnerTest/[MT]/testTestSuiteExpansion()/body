@@ -1,0 +1,10 @@
+{
+  AnalysisMock.get().ccSupport().setup(tester.mockToolsConfig);
+  tester.addFile("cc/BUILD","cc_test(name = 'my_test', srcs = ['test.cc'])","test_suite(name = 'tests', tests = [':my_test'])");
+  LoadingResult loadingResult=assertNoErrors(tester.loadTests("//cc:tests"));
+  assertThat(loadingResult.getTargets()).containsExactlyElementsIn(getTargets("//cc:my_test"));
+  assertThat(loadingResult.getTestsToRun()).containsExactlyElementsIn(getTargets("//cc:my_test"));
+  if (runsLoadingPhase()) {
+    assertThat(loadingResult.getPackageRoots().entrySet()).contains(entryFor(PackageIdentifier.createInDefaultRepo("cc"),tester.getWorkspace()));
+  }
+}

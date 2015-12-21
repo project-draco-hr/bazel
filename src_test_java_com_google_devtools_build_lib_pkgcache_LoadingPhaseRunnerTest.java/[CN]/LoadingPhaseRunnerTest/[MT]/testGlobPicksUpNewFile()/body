@@ -1,0 +1,10 @@
+{
+  tester.addFile("foo/BUILD","filegroup(name='x', srcs=glob(['*.y']))");
+  tester.addFile("foo/a.y");
+  Target result=Iterables.getOnlyElement(assertNoErrors(tester.load("//foo:x")).getTargets());
+  assertThat(Iterables.transform(result.getAssociatedRule().getLabels(),Functions.toStringFunction())).containsExactly("//foo:a.y");
+  tester.addFile("foo/b.y");
+  tester.sync();
+  result=Iterables.getOnlyElement(assertNoErrors(tester.load("//foo:x")).getTargets());
+  assertThat(Iterables.transform(result.getAssociatedRule().getLabels(),Functions.toStringFunction())).containsExactly("//foo:a.y","//foo:b.y");
+}

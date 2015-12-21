@@ -1,0 +1,10 @@
+{
+  tester.addFile("base/BUILD");
+  LoadingResult loadingResult=tester.loadTestsKeepGoing("//base:missing");
+  assertTrue(loadingResult.hasTargetPatternError());
+  assertFalse(loadingResult.hasLoadingError());
+  assertThat(loadingResult.getTargets()).containsExactlyElementsIn(ImmutableList.<Target>of());
+  assertThat(loadingResult.getTestsToRun()).containsExactlyElementsIn(ImmutableList.<Target>of());
+  tester.assertContainsError("Skipping '//base:missing': no such target '//base:missing'");
+  tester.assertContainsWarning("Target pattern parsing failed.");
+}
