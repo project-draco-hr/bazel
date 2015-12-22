@@ -1,18 +1,19 @@
 {
   mergeZipPrefix+=bundling.getBundleDir() + "/";
-  BundleMergeProtos.Control.Builder control=BundleMergeProtos.Control.newBuilder().addAllBundleFile(BundleableFile.toBundleFiles(bundling.getBundleFiles())).setMinimumOsVersion(bundling.getMinimumOsVersion().toString()).setSdkVersion(appleConfiguration.getIosSdkVersion().toString()).setPlatform(appleConfiguration.getBundlingPlatform().name()).setBundleRoot(bundling.getBundleDir());
-  if (bundling.getBundleInfoplist().isPresent()) {
-    control.setBundleInfoPlistFile((bundling.getBundleInfoplist().get().getExecPathString()));
-  }
+  BundleMergeProtos.Control.Builder control=BundleMergeProtos.Control.newBuilder().addAllBundleFile(BundleableFile.toBundleFiles(bundling.getBundleFiles())).addAllSourcePlistFile(Artifact.toExecPaths(bundling.getBundleInfoplist().asSet())).setMinimumOsVersion(bundling.getMinimumOsVersion().toString()).setSdkVersion(appleConfiguration.getIosSdkVersion().toString()).setPlatform(appleConfiguration.getBundlingPlatform().name()).setBundleRoot(bundling.getBundleDir());
   for (  Artifact mergeZip : bundling.getMergeZips()) {
     control.addMergeZip(MergeZip.newBuilder().setEntryNamePrefix(mergeZipPrefix).setSourcePath(mergeZip.getExecPathString()).build());
   }
   for (  TargetDeviceFamily targetDeviceFamily : families) {
     control.addTargetDeviceFamily(targetDeviceFamily.name());
   }
+  Map<String,String> variableSubstitutions=bundling.variableSubstitutions();
+  for (  String variable : variableSubstitutions.keySet()) {
+    control.addVariableSubstitution(VariableSubstitution.newBuilder().setName(variable).setValue(variableSubstitutions.get(variable)).build());
+  }
   control.setOutFile(mergedIpa.getExecPathString());
   for (  Artifact linkedBinary : bundling.getCombinedArchitectureBinary().asSet()) {
-    control.addBundleFile(BundleMergeProtos.BundleFile.newBuilder().setSourceFile(linkedBinary.getExecPathString()).setBundlePath(bundling.getName()).setExternalFileAttribute(BundleableFile.EXECUTABLE_EXTERNAL_FILE_ATTRIBUTE).build());
+    control.addBundleFile(BundleMergeProtos.BundleFile.newBuilder().setSourceFile(linkedBinary.getExecPathString()).setBundlePath(bundling.getName()).setExternalFileAttribute(BundleableFile.EXECUTABLE_EXTERNAL_FILE_ATTRIBUTE).build()).setExecutableName(bundling.getName());
   }
   for (  Bundling nestedBundling : bundling.getNestedBundlings()) {
     if (nestedBundling.getArchitecture().equals(bundling.getArchitecture())) {
