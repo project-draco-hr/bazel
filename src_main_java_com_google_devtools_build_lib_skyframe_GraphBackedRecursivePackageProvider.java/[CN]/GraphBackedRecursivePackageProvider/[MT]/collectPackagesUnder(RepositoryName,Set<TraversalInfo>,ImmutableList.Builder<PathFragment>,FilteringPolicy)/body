@@ -1,0 +1,34 @@
+{
+  Map<TraversalInfo,SkyKey> traversalToKeyMap=Maps.asMap(traversals,new Function<TraversalInfo,SkyKey>(){
+    @Override public SkyKey apply(    TraversalInfo traversalInfo){
+      return PrepareDepsOfTargetsUnderDirectoryValue.key(repository,traversalInfo.rootedDir,traversalInfo.excludedSubdirectories,policy);
+    }
+  }
+);
+  Map<SkyKey,SkyValue> values=graph.getSuccessfulValues(traversalToKeyMap.values());
+  preloadPackages(repository,traversals);
+  ImmutableSet.Builder<TraversalInfo> subdirTraversalBuilder=ImmutableSet.builder();
+  for (  Map.Entry<TraversalInfo,SkyKey> entry : traversalToKeyMap.entrySet()) {
+    TraversalInfo info=entry.getKey();
+    SkyKey key=entry.getValue();
+    SkyValue val=values.get(key);
+    PrepareDepsOfTargetsUnderDirectoryValue prepDepsValue=(PrepareDepsOfTargetsUnderDirectoryValue)val;
+    if (prepDepsValue != null) {
+      if (prepDepsValue.isDirectoryPackage()) {
+        builder.add(info.rootedDir.getRelativePath());
+      }
+      ImmutableMap<RootedPath,Boolean> subdirectoryTransitivelyContainsPackages=prepDepsValue.getSubdirectoryTransitivelyContainsPackages();
+      for (      RootedPath subdirectory : subdirectoryTransitivelyContainsPackages.keySet()) {
+        if (subdirectoryTransitivelyContainsPackages.get(subdirectory)) {
+          PathFragment subdirectoryRelativePath=subdirectory.getRelativePath();
+          ImmutableSet<PathFragment> excludedSubdirectoriesBeneathThisSubdirectory=PathFragment.filterPathsStartingWith(info.excludedSubdirectories,subdirectoryRelativePath);
+          subdirTraversalBuilder.add(new TraversalInfo(subdirectory,excludedSubdirectoriesBeneathThisSubdirectory));
+        }
+      }
+    }
+  }
+  ImmutableSet<TraversalInfo> subdirTraversals=subdirTraversalBuilder.build();
+  if (!subdirTraversals.isEmpty()) {
+    collectPackagesUnder(repository,subdirTraversals,builder,policy);
+  }
+}

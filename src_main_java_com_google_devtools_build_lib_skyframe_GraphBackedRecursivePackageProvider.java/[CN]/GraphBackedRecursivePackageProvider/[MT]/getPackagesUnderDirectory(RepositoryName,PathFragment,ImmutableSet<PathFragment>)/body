@@ -24,7 +24,9 @@
   ImmutableList.Builder<PathFragment> builder=ImmutableList.builder();
   if (filteringPolicy != null) {
     for (    Path root : roots) {
-      collectPackagesUnder(repository,RootedPath.toRootedPath(root,directory),excludedSubdirectories,builder,filteringPolicy);
+      RootedPath rootedDir=RootedPath.toRootedPath(root,directory);
+      TraversalInfo info=new TraversalInfo(rootedDir,excludedSubdirectories);
+      collectPackagesUnder(repository,ImmutableSet.of(info),builder,filteringPolicy);
     }
   }
   return builder.build();
