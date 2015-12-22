@@ -1,0 +1,23 @@
+{
+  Map<String,String> docMap=new HashMap<>();
+  Map<String,SkylarkModuleDoc> modules=SkylarkDocumentationCollector.collectModules();
+  SkylarkModuleDoc topLevel=modules.remove(SkylarkDocumentationCollector.getTopLevelModule().name());
+  for (  Entry<String,SkylarkBuiltinMethodDoc> entry : topLevel.getBuiltinMethods().entrySet()) {
+    docMap.put(entry.getKey(),entry.getValue().getDocumentation());
+  }
+  for (  Entry<String,SkylarkModuleDoc> entry : modules.entrySet()) {
+    docMap.put(entry.getKey(),entry.getValue().getDocumentation());
+  }
+  List<String> undocumentedItems=new ArrayList<>();
+  for (  String varname : env.getVariableNames()) {
+    if (docMap.containsKey(varname)) {
+      if (docMap.get(varname).isEmpty()) {
+        undocumentedItems.add(varname);
+      }
+    }
+ else {
+      undocumentedItems.add(varname);
+    }
+  }
+  assertWithMessage("Undocumented Skylark Environment items: " + undocumentedItems).that(undocumentedItems).isEmpty();
+}
