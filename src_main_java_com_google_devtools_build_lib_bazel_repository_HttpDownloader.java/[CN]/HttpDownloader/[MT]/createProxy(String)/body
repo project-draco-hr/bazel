@@ -1,0 +1,30 @@
+{
+  if (Strings.isNullOrEmpty(proxyAddress)) {
+    return Proxy.NO_PROXY;
+  }
+  int protocolIndex=proxyAddress.indexOf(':');
+  if (protocolIndex == -1) {
+    throw new IOException("No proxy protocol found for " + proxyAddress);
+  }
+  boolean https;
+  String protocol=proxyAddress.substring(0,protocolIndex);
+  if (protocol.equals("https")) {
+    https=true;
+  }
+ else   if (protocol.equals("http")) {
+    https=false;
+  }
+ else {
+    throw new IOException("Invalid proxy protocol for " + proxyAddress);
+  }
+  int portIndex=proxyAddress.lastIndexOf(':');
+  if (protocolIndex == portIndex) {
+    return new Proxy(Proxy.Type.HTTP,new InetSocketAddress(proxyAddress,https ? 443 : 80));
+  }
+  try {
+    return new Proxy(Proxy.Type.HTTP,new InetSocketAddress(proxyAddress.substring(0,portIndex),Integer.parseInt(proxyAddress.substring(portIndex + 1))));
+  }
+ catch (  NumberFormatException e) {
+    throw new IOException("Error parsing proxy port: " + proxyAddress);
+  }
+}
