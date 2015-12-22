@@ -1,0 +1,17 @@
+{
+  Preconditions.checkState(isGlobal());
+  if (!importedExtensions.containsKey(importString)) {
+    throw new LoadFailedException(importString);
+  }
+  Extension ext=importedExtensions.get(importString);
+  if (!ext.containsKey(nameInLoadedFile)) {
+    throw new NoSuchVariableException(nameInLoadedFile);
+  }
+  Object value=ext.get(nameInLoadedFile);
+  try {
+    update(symbol.getName(),value);
+  }
+ catch (  EvalException e) {
+    throw new LoadFailedException(importString);
+  }
+}

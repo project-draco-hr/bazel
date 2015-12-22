@@ -1,8 +1,8 @@
 {
-  ImmutableList<LoadStatement> loadStmts=buildFileAST.getImports();
-  Map<PathFragment,Extension> importMap=Maps.newHashMapWithExpectedSize(loadStmts.size());
+  ImmutableList<SkylarkImport> imports=buildFileAST.getImports();
+  Map<String,Extension> importMap=Maps.newHashMapWithExpectedSize(imports.size());
   ImmutableList.Builder<SkylarkFileDependency> fileDependencies=ImmutableList.builder();
-  ImmutableMap<PathFragment,Label> importPathMap;
+  ImmutableMap<String,Label> importPathMap;
   Label labelForCurrBuildFile;
   try {
     labelForCurrBuildFile=Label.create(packageId,"BUILD");
@@ -11,13 +11,12 @@
     throw new IllegalStateException(e);
   }
   try {
-    importPathMap=SkylarkImportLookupFunction.findLabelsForLoadStatements(loadStmts,labelForCurrBuildFile,env);
+    importPathMap=SkylarkImportLookupFunction.findLabelsForLoadStatements(imports,labelForCurrBuildFile,env);
     if (importPathMap == null) {
       return null;
     }
   }
  catch (  SkylarkImportFailedException e) {
-    env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
     throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.PERSISTENT);
   }
   ImmutableCollection<Label> importLabels=importPathMap.values();
@@ -50,7 +49,6 @@
     }
   }
  catch (  SkylarkImportFailedException e) {
-    env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
     throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.PERSISTENT);
   }
 catch (  InconsistentFilesystemException e) {
@@ -59,12 +57,12 @@ catch (  InconsistentFilesystemException e) {
   if (valuesMissing) {
     return null;
   }
-  for (  Entry<PathFragment,Label> importEntry : importPathMap.entrySet()) {
-    PathFragment importPath=importEntry.getKey();
+  for (  Entry<String,Label> importEntry : importPathMap.entrySet()) {
+    String importString=importEntry.getKey();
     Label importLabel=importEntry.getValue();
     SkyKey keyForLabel=SkylarkImportLookupValue.key(importLabel,inWorkspace);
     SkylarkImportLookupValue importLookupValue=(SkylarkImportLookupValue)skylarkImportMap.get(keyForLabel);
-    importMap.put(importPath,importLookupValue.getEnvironmentExtension());
+    importMap.put(importString,importLookupValue.getEnvironmentExtension());
     fileDependencies.add(importLookupValue.getDependency());
   }
   return new SkylarkImportResult(importMap,transitiveClosureOfLabels(fileDependencies.build()));

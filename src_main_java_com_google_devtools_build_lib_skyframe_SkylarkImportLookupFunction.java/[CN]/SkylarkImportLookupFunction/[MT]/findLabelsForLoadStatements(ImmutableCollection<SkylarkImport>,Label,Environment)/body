@@ -1,0 +1,27 @@
+{
+  Map<String,Label> outputMap=Maps.newHashMapWithExpectedSize(imports.size());
+  ImmutableSet.Builder<PathFragment> absoluteImportsToLookup=new ImmutableSet.Builder<>();
+  ImmutableMultimap.Builder<PathFragment,String> pathToImports=new ImmutableMultimap.Builder<>();
+  for (  SkylarkImport imp : imports) {
+    if (imp.hasAbsolutePath()) {
+      absoluteImportsToLookup.add(imp.getAbsolutePath());
+      pathToImports.put(imp.getAbsolutePath(),imp.getImportString());
+    }
+ else {
+      outputMap.put(imp.getImportString(),imp.getLabel(containingFileLabel));
+    }
+  }
+  ImmutableMap<PathFragment,Label> absoluteLabels=labelsForAbsoluteImports(absoluteImportsToLookup.build(),env);
+  if (absoluteLabels == null) {
+    return null;
+  }
+  for (  Entry<PathFragment,Label> entry : absoluteLabels.entrySet()) {
+    PathFragment currPath=entry.getKey();
+    Label currLabel=entry.getValue();
+    for (    String importString : pathToImports.build().get(currPath)) {
+      outputMap.put(importString,currLabel);
+    }
+  }
+  ImmutableMap<String,Label> immutableOutputMap=ImmutableMap.copyOf(outputMap);
+  return immutableOutputMap;
+}

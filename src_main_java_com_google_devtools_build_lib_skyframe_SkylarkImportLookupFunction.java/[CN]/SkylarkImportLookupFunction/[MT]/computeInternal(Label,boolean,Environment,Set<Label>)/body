@@ -18,15 +18,15 @@
   if (ast.containsErrors()) {
     throw SkylarkImportFailedException.skylarkErrors(filePath);
   }
-  ImmutableList<LoadStatement> loadStmts=ast.getImports();
-  Map<PathFragment,Extension> importMap=Maps.newHashMapWithExpectedSize(loadStmts.size());
+  ImmutableList<SkylarkImport> imports=ast.getImports();
+  Map<String,Extension> extensionsForImports=Maps.newHashMapWithExpectedSize(imports.size());
   ImmutableList.Builder<SkylarkFileDependency> fileDependencies=ImmutableList.builder();
-  ImmutableMap<PathFragment,Label> importPathMap;
-  importPathMap=findLabelsForLoadStatements(loadStmts,fileLabel,env);
-  if (importPathMap == null) {
+  ImmutableMap<String,Label> labelsForImports;
+  labelsForImports=findLabelsForLoadStatements(imports,fileLabel,env);
+  if (labelsForImports == null) {
     return null;
   }
-  ImmutableCollection<Label> importLabels=importPathMap.values();
+  ImmutableCollection<Label> importLabels=labelsForImports.values();
   List<SkyKey> importLookupKeys=Lists.newArrayListWithExpectedSize(importLabels.size());
   for (  Label importLabel : importLabels) {
     importLookupKeys.add(SkylarkImportLookupValue.key(importLabel,inWorkspace));
@@ -45,7 +45,7 @@
       }
       throw new SkylarkImportFailedException("Skylark import cycle");
     }
-    skylarkImportMap=Maps.newHashMapWithExpectedSize(loadStmts.size());
+    skylarkImportMap=Maps.newHashMapWithExpectedSize(imports.size());
     for (    SkyKey importLookupKey : importLookupKeys) {
       SkyValue skyValue=this.computeWithInlineCallsInternal(importLookupKey,env,visited);
       if (skyValue == null) {
@@ -61,14 +61,14 @@
   if (valuesMissing) {
     return null;
   }
-  for (  Entry<PathFragment,Label> importEntry : importPathMap.entrySet()) {
-    PathFragment importPath=importEntry.getKey();
+  for (  Entry<String,Label> importEntry : labelsForImports.entrySet()) {
+    String importString=importEntry.getKey();
     Label importLabel=importEntry.getValue();
     SkyKey keyForLabel=SkylarkImportLookupValue.key(importLabel,inWorkspace);
     SkylarkImportLookupValue importLookupValue=(SkylarkImportLookupValue)skylarkImportMap.get(keyForLabel);
-    importMap.put(importPath,importLookupValue.getEnvironmentExtension());
+    extensionsForImports.put(importString,importLookupValue.getEnvironmentExtension());
     fileDependencies.add(importLookupValue.getDependency());
   }
-  Extension extension=createExtension(ast,fileLabel,importMap,env,inWorkspace);
+  Extension extension=createExtension(ast,fileLabel,extensionsForImports,env,inWorkspace);
   return new SkylarkImportLookupValue(extension,new SkylarkFileDependency(fileLabel,fileDependencies.build()));
 }

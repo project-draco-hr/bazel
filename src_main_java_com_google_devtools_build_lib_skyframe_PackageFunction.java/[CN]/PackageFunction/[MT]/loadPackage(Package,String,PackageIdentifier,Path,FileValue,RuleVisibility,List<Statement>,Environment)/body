@@ -17,15 +17,13 @@
             buildFileBytes=buildFileValue.isSpecialFile() ? FileSystemUtils.readContent(buildFilePath) : FileSystemUtils.readWithKnownFileSize(buildFilePath,buildFileValue.getSize());
           }
  catch (          IOException e) {
-            env.getListener().handle(Event.error(Location.fromFile(buildFilePath),e.getMessage()));
             throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.TRANSIENT);
           }
           try {
             preprocessingResult=packageFactory.preprocess(buildFilePath,packageId,buildFileBytes,globber);
           }
  catch (          IOException e) {
-            env.getListener().handle(Event.error(Location.fromFile(buildFilePath),"preprocessing failed: " + e.getMessage()));
-            throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,"preprocessing failed",e),Transience.TRANSIENT);
+            throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,"preprocessing failed" + e.getMessage(),e),Transience.TRANSIENT);
           }
         }
  else {

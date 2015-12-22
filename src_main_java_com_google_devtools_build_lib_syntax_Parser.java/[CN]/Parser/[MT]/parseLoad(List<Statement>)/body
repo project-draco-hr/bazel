@@ -16,12 +16,14 @@
     parseLoadSymbol(symbols);
   }
   expect(TokenKind.RPAREN);
-  LoadStatement stmt=new LoadStatement(path,symbols);
+  SkylarkImport imp;
   try {
-    stmt.validatePath();
+    imp=SkylarkImports.create(path.getValue());
+    LoadStatement stmt=new LoadStatement(imp,symbols);
+    list.add(setLocation(stmt,start,token.left));
   }
- catch (  EvalException e) {
-    reportError(path.getLocation(),e.getMessage());
+ catch (  SkylarkImportSyntaxException e) {
+    String msg="Load statement parameter '" + path + "' is invalid. "+ e.getMessage();
+    reportError(path.getLocation(),msg);
   }
-  list.add(setLocation(stmt,start,token.left));
 }

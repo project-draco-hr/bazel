@@ -15,14 +15,14 @@
     if (packageId.equals(Label.EXTERNAL_PACKAGE_IDENTIFIER)) {
       throw new SkylarkImportSyntaxException(EXTERNAL_PKG_NOT_ALLOWED_MSG);
     }
-    return new AbsoluteLabelImport(importLabel);
+    return new AbsoluteLabelImport(importString,importLabel);
   }
  else   if (importString.startsWith("/")) {
     if (importString.endsWith(".bzl")) {
       throw new SkylarkImportSyntaxException(BZL_EXT_IMPLICIT_MSG);
     }
-    PathFragment importPath=new PathFragment(importString);
-    return new AbsolutePathImport(importPath);
+    PathFragment importPath=new PathFragment(importString + ".bzl");
+    return new AbsolutePathImport(importString,importPath);
   }
  else   if (importString.startsWith(":")) {
     String importTarget=importString.substring(1);
@@ -33,7 +33,7 @@
     if (maybeErrMsg != null) {
       throw new SkylarkImportSyntaxException(INVALID_TARGET_PREFIX + maybeErrMsg);
     }
-    return new RelativeLabelImport(importTarget);
+    return new RelativeLabelImport(importString,importTarget);
   }
  else {
     if (importString.endsWith(".bzl")) {
@@ -47,6 +47,6 @@
     if (maybeErrMsg != null) {
       throw new SkylarkImportSyntaxException(INVALID_FILENAME_PREFIX + maybeErrMsg);
     }
-    return new RelativePathImport(importTarget);
+    return new RelativePathImport(importString,importTarget);
   }
 }
