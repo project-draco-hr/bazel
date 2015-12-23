@@ -1,0 +1,18 @@
+{
+  scratch.file("test/aspect.bzl","def _impl(target, ctx):","   f = target.output_group('_hidden_top_level')","   return struct(output_groups = { 'my_result' : f })","","MyAspect = aspect(","   implementation=_impl,","   attr_aspects=['deps'],",")");
+  scratch.file("test/BUILD","java_library(","     name = 'xxx',","     srcs = ['A.java'],",")");
+  AnalysisResult analysisResult=update(ImmutableList.of("//test:xxx"),ImmutableList.of("test/aspect.bzl%MyAspect"),false,LOADING_PHASE_THREADS,true,new EventBus());
+  assertThat(transform(analysisResult.getTargetsToBuild(),new Function<ConfiguredTarget,String>(){
+    @Nullable @Override public String apply(    ConfiguredTarget configuredTarget){
+      return configuredTarget.getLabel().toString();
+    }
+  }
+)).containsExactly("//test:xxx");
+  AspectValue aspectValue=analysisResult.getAspects().iterator().next();
+  OutputGroupProvider outputGroupProvider=aspectValue.getConfiguredAspect().getProvider(OutputGroupProvider.class);
+  assertThat(outputGroupProvider).isNotNull();
+  NestedSet<Artifact> names=outputGroupProvider.getOutputGroup("my_result");
+  assertThat(names).isNotEmpty();
+  NestedSet<Artifact> expectedSet=getConfiguredTarget("//test:xxx").getProvider(OutputGroupProvider.class).getOutputGroup(OutputGroupProvider.HIDDEN_TOP_LEVEL);
+  assertThat(names).containsExactlyElementsIn(expectedSet);
+}
