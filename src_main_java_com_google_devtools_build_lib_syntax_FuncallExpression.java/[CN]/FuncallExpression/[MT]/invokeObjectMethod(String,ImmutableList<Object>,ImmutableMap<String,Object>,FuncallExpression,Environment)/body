@@ -20,7 +20,7 @@
     function=(BaseFunction)fieldValue;
     return function.call(positionalArgs,ImmutableMap.<String,Object>copyOf(keyWordArgs),call,env);
   }
- else   if (env.isSkylark()) {
+ else {
     Class<?> objClass;
     Object obj;
     if (value instanceof Class<?>) {
@@ -36,8 +36,5 @@
       throw new EvalException(call.func.getLocation(),String.format("Keyword arguments are not allowed when calling a java method" + "\nwhile calling method '%s' for type %s",method,EvalUtils.getDataTypeNameFromClass(objClass)));
     }
     return callMethod(methodDescriptor,method,obj,positionalArgs.toArray(),location,env);
-  }
- else {
-    throw new EvalException(location,String.format("%s is not defined on object of type '%s'",call.functionName(),EvalUtils.getDataTypeName(value)));
   }
 }
