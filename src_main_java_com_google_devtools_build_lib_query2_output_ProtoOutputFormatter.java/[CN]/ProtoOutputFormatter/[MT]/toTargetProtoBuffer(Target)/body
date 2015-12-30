@@ -8,7 +8,10 @@
       if (!includeDefaultValues && !rule.isAttributeValueExplicitlySpecified(attr) || !includeAttribute(attr)) {
         continue;
       }
-      rulePb.addAttribute(AttributeSerializer.getAttributeProto(attr,AttributeSerializer.getAttributeValues(rule,attr),rule.isAttributeValueExplicitlySpecified(attr),false));
+      Iterable<Object> possibleAttributeValues=AggregatingAttributeMapper.of(rule).getPossibleAttributeValues(rule,attr);
+      Object flattenedAttributeValue=AggregatingAttributeMapper.flattenAttributeValues(attr.getType(),possibleAttributeValues);
+      Build.Attribute serializedAttribute=AttributeSerializer.getAttributeProto(attr,flattenedAttributeValue,rule.isAttributeValueExplicitlySpecified(attr),false,true);
+      rulePb.addAttribute(serializedAttribute);
     }
     postProcess(rule,rulePb);
     Environment env=rule.getRuleClassObject().getRuleDefinitionEnvironment();
@@ -17,7 +20,11 @@
     }
     ImmutableMultimap<Attribute,Label> aspectsDependencies=aspectResolver.computeAspectDependencies(target);
     for (    Entry<Attribute,Collection<Label>> entry : aspectsDependencies.asMap().entrySet()) {
-      rulePb.addAttribute(AttributeSerializer.getAttributeProto(entry.getKey(),Lists.<Object>newArrayList(entry.getValue()),false,false));
+      Attribute attribute=entry.getKey();
+      Collection<Label> labels=entry.getValue();
+      Object attributeValue=getAspectAttributeValue(attribute,labels);
+      Build.Attribute serializedAttribute=AttributeSerializer.getAttributeProto(attribute,attributeValue,false,false,true);
+      rulePb.addAttribute(serializedAttribute);
     }
     for (    Label label : aspectsDependencies.values()) {
       rulePb.addRuleInput(label.toString());

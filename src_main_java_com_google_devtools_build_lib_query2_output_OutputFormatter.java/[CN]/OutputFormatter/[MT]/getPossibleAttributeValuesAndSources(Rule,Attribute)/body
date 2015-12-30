@@ -1,0 +1,19 @@
+{
+  AttributeValueSource source;
+  if (attr.getName().equals("visibility")) {
+    if (rule.isVisibilitySpecified()) {
+      source=AttributeValueSource.RULE;
+    }
+ else     if (rule.getPackage().isDefaultVisibilitySet()) {
+      source=AttributeValueSource.PACKAGE;
+    }
+ else {
+      source=AttributeValueSource.DEFAULT;
+    }
+  }
+ else {
+    source=rule.isAttributeValueExplicitlySpecified(attr) ? AttributeValueSource.RULE : AttributeValueSource.DEFAULT;
+  }
+  Iterable<Object> possibleAttributeValues=AggregatingAttributeMapper.of(rule).getPossibleAttributeValues(rule,attr);
+  return Pair.of(possibleAttributeValues,source);
+}

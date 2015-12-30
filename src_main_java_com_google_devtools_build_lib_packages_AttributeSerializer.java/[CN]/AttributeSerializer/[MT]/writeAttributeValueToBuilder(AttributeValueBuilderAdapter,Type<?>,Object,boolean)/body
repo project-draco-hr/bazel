@@ -1,0 +1,109 @@
+{
+  if (type == INTEGER) {
+    builder.setIntValue((Integer)value);
+  }
+ else   if (type == STRING || type == LABEL || type == NODEP_LABEL || type == OUTPUT) {
+    builder.setStringValue(value.toString());
+  }
+ else   if (type == STRING_LIST || type == LABEL_LIST || type == NODEP_LABEL_LIST || type == OUTPUT_LIST || type == DISTRIBUTIONS) {
+    for (    Object entry : (Collection<?>)value) {
+      builder.addStringListValue(entry.toString());
+    }
+  }
+ else   if (type == INTEGER_LIST) {
+    for (    Integer entry : (Collection<Integer>)value) {
+      builder.addIntListValue(entry);
+    }
+  }
+ else   if (type == BOOLEAN) {
+    builder.setBooleanValue((Boolean)value);
+  }
+ else   if (type == TRISTATE) {
+    builder.setTristateValue(triStateToProto((TriState)value));
+  }
+ else   if (type == LICENSE) {
+    License license=(License)value;
+    Build.License.Builder licensePb=Build.License.newBuilder();
+    for (    License.LicenseType licenseType : license.getLicenseTypes()) {
+      licensePb.addLicenseType(licenseType.toString());
+    }
+    for (    Label exception : license.getExceptions()) {
+      licensePb.addException(exception.toString());
+    }
+    builder.setLicense(licensePb);
+  }
+ else   if (type == STRING_DICT) {
+    Map<String,String> dict=(Map<String,String>)value;
+    for (    Map.Entry<String,String> keyValueList : dict.entrySet()) {
+      StringDictEntry.Builder entry=StringDictEntry.newBuilder().setKey(keyValueList.getKey()).setValue(keyValueList.getValue());
+      builder.addStringDictValue(entry);
+    }
+  }
+ else   if (type == STRING_DICT_UNARY) {
+    Map<String,String> dict=(Map<String,String>)value;
+    for (    Map.Entry<String,String> dictEntry : dict.entrySet()) {
+      StringDictUnaryEntry.Builder entry=StringDictUnaryEntry.newBuilder().setKey(dictEntry.getKey()).setValue(dictEntry.getValue());
+      builder.addStringDictUnaryValue(entry);
+    }
+  }
+ else   if (type == STRING_LIST_DICT) {
+    Map<String,List<String>> dict=(Map<String,List<String>>)value;
+    for (    Map.Entry<String,List<String>> dictEntry : dict.entrySet()) {
+      StringListDictEntry.Builder entry=StringListDictEntry.newBuilder().setKey(dictEntry.getKey());
+      for (      Object dictEntryValue : dictEntry.getValue()) {
+        entry.addValue(dictEntryValue.toString());
+      }
+      builder.addStringListDictValue(entry);
+    }
+  }
+ else   if (type == LABEL_DICT_UNARY) {
+    Map<String,Label> dict=(Map<String,Label>)value;
+    for (    Map.Entry<String,Label> dictEntry : dict.entrySet()) {
+      LabelDictUnaryEntry.Builder entry=LabelDictUnaryEntry.newBuilder().setKey(dictEntry.getKey()).setValue(dictEntry.getValue().toString());
+      builder.addLabelDictUnaryValue(entry);
+    }
+  }
+ else   if (type == LABEL_LIST_DICT) {
+    Map<String,List<Label>> dict=(Map<String,List<Label>>)value;
+    for (    Map.Entry<String,List<Label>> dictEntry : dict.entrySet()) {
+      LabelListDictEntry.Builder entry=LabelListDictEntry.newBuilder().setKey(dictEntry.getKey());
+      for (      Object dictEntryValue : dictEntry.getValue()) {
+        entry.addValue(dictEntryValue.toString());
+      }
+      builder.addLabelListDictValue(entry);
+    }
+  }
+ else   if (type == FILESET_ENTRY_LIST) {
+    List<FilesetEntry> filesetEntries=(List<FilesetEntry>)value;
+    for (    FilesetEntry filesetEntry : filesetEntries) {
+      Build.FilesetEntry.Builder filesetEntryPb=Build.FilesetEntry.newBuilder().setSource(filesetEntry.getSrcLabel().toString()).setDestinationDirectory(filesetEntry.getDestDir().getPathString()).setSymlinkBehavior(symlinkBehaviorToPb(filesetEntry.getSymlinkBehavior())).setStripPrefix(filesetEntry.getStripPrefix()).setFilesPresent(filesetEntry.getFiles() != null);
+      if (filesetEntry.getFiles() != null) {
+        for (        Label file : filesetEntry.getFiles()) {
+          filesetEntryPb.addFile(file.toString());
+        }
+      }
+      if (filesetEntry.getExcludes() != null) {
+        for (        String exclude : filesetEntry.getExcludes()) {
+          filesetEntryPb.addExclude(exclude);
+        }
+      }
+      builder.addFilesetListValue(filesetEntryPb);
+    }
+  }
+ else {
+    throw new AssertionError("Unknown type: " + type);
+  }
+  if (includeGlobs && value instanceof GlobList<?>) {
+    GlobList<?> globList=(GlobList<?>)value;
+    for (    GlobCriteria criteria : globList.getCriteria()) {
+      Build.GlobCriteria.Builder criteriaPb=Build.GlobCriteria.newBuilder().setGlob(criteria.isGlob());
+      for (      String include : criteria.getIncludePatterns()) {
+        criteriaPb.addInclude(include);
+      }
+      for (      String exclude : criteria.getExcludePatterns()) {
+        criteriaPb.addExclude(exclude);
+      }
+      builder.addGlobCriteria(criteriaPb);
+    }
+  }
+}

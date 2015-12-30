@@ -1,0 +1,15 @@
+{
+  Build.Attribute.SelectorList.Builder selectorListBuilder=Build.Attribute.SelectorList.newBuilder();
+  selectorListBuilder.setType(ProtoUtils.getDiscriminatorFromType(type));
+  for (  Selector<?> selector : selectorList.getSelectors()) {
+    Build.Attribute.Selector.Builder selectorBuilder=Build.Attribute.Selector.newBuilder();
+    for (    Entry<Label,?> entry : selector.getEntries().entrySet()) {
+      Builder selectorEntryBuilder=SelectorEntry.newBuilder();
+      selectorEntryBuilder.setLabel(entry.getKey().toString());
+      writeAttributeValueToBuilder(new SelectorEntryBuilderAdapter(selectorEntryBuilder),type,entry.getValue(),includeGlobs);
+      selectorBuilder.addEntries(selectorEntryBuilder);
+    }
+    selectorListBuilder.addElements(selectorBuilder);
+  }
+  attrPb.setSelectorList(selectorListBuilder);
+}

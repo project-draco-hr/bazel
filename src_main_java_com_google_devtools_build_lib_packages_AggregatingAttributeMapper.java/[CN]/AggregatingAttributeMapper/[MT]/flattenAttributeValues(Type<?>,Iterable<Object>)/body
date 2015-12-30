@@ -1,0 +1,29 @@
+{
+  if (Iterables.size(possibleValues) == 1) {
+    return Iterables.getOnlyElement(possibleValues);
+  }
+  if (scalarTypes.contains(attrType)) {
+    return null;
+  }
+  if (attrType == STRING_LIST || attrType == LABEL_LIST || attrType == NODEP_LABEL_LIST || attrType == OUTPUT_LIST || attrType == DISTRIBUTIONS || attrType == INTEGER_LIST || attrType == FILESET_ENTRY_LIST) {
+    Builder<Object> builder=ImmutableList.builder();
+    for (    Object possibleValue : possibleValues) {
+      Collection<Object> collection=(Collection<Object>)possibleValue;
+      for (      Object o : collection) {
+        builder.add(o);
+      }
+    }
+    return builder.build();
+  }
+  if (attrType == STRING_DICT || attrType == STRING_DICT_UNARY || attrType == STRING_LIST_DICT || attrType == LABEL_DICT_UNARY || attrType == LABEL_LIST_DICT) {
+    Map<Object,Object> mergedDict=new HashMap<>();
+    for (    Object possibleValue : possibleValues) {
+      Map<Object,Object> stringDict=(Map<Object,Object>)possibleValue;
+      for (      Entry<Object,Object> entry : stringDict.entrySet()) {
+        mergedDict.put(entry.getKey(),entry.getValue());
+      }
+    }
+    return mergedDict;
+  }
+  throw new AssertionError("Unknown type: " + attrType);
+}
