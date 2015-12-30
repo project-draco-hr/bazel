@@ -4,8 +4,14 @@
   PathFragment pathFragment=TargetPatternResolverUtil.getPathFragment(directory);
   ResolvedTargets.Builder<Target> targetBuilder=ResolvedTargets.builder();
   Iterable<PathFragment> packagesUnderDirectory=recursivePackageProvider.getPackagesUnderDirectory(repository,pathFragment,excludedPathFragments);
-  for (  PathFragment pkg : packagesUnderDirectory) {
-    targetBuilder.merge(getTargetsInPackage(originalPattern,PackageIdentifier.create(repository,pkg),FilteringPolicies.NO_FILTER));
+  Iterable<PackageIdentifier> pkgIds=Iterables.transform(packagesUnderDirectory,new Function<PathFragment,PackageIdentifier>(){
+    @Override public PackageIdentifier apply(    PathFragment path){
+      return PackageIdentifier.create(repository,path);
+    }
+  }
+);
+  for (  ResolvedTargets<Target> targets : bulkGetTargetsInPackage(originalPattern,pkgIds,FilteringPolicies.NO_FILTER).values()) {
+    targetBuilder.merge(targets);
   }
   if (targetBuilder.isEmpty()) {
     throw new TargetParsingException("no targets found beneath '" + pathFragment + "'");

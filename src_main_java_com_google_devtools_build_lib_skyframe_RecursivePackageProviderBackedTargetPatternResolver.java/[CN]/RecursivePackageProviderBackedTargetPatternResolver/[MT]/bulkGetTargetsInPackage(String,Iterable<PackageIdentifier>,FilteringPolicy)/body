@@ -1,0 +1,15 @@
+{
+  try {
+    Map<PackageIdentifier,Package> pkgs=bulkGetPackages(pkgIds);
+    ImmutableMap.Builder<PackageIdentifier,ResolvedTargets<Target>> result=ImmutableMap.builder();
+    for (    PackageIdentifier pkgId : pkgIds) {
+      Package pkg=pkgs.get(pkgId);
+      result.put(pkgId,TargetPatternResolverUtil.resolvePackageTargets(pkg,policy));
+    }
+    return result.build();
+  }
+ catch (  NoSuchThingException e) {
+    String message=TargetPatternResolverUtil.getParsingErrorMessage(e.getMessage(),originalPattern);
+    throw new TargetParsingException(message,e);
+  }
+}

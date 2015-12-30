@@ -1,0 +1,20 @@
+{
+  Set<SkyKey> pkgKeys=ImmutableSet.copyOf(PackageValue.keys(pkgIds));
+  ImmutableMap.Builder<PackageIdentifier,Package> pkgResults=ImmutableMap.builder();
+  Map<SkyKey,SkyValue> packages=graph.getSuccessfulValues(pkgKeys);
+  for (  PackageIdentifier pkgId : pkgIds) {
+    PackageValue pkgValue=(PackageValue)packages.get(PackageValue.key(pkgId));
+    pkgResults.put(pkgId,Preconditions.checkNotNull(pkgValue.getPackage(),pkgId));
+  }
+  SetView<SkyKey> unknownKeys=Sets.difference(pkgKeys,packages.keySet());
+  for (  Map.Entry<SkyKey,Exception> missingOrExceptionEntry : graph.getMissingAndExceptions(unknownKeys).entrySet()) {
+    PackageIdentifier pkgIdentifier=(PackageIdentifier)missingOrExceptionEntry.getKey().argument();
+    Exception exception=missingOrExceptionEntry.getValue();
+    if (exception == null) {
+      throw new BuildFileNotFoundException(pkgIdentifier,"BUILD file not found on package path");
+    }
+    Throwables.propagateIfInstanceOf(exception,NoSuchPackageException.class);
+    Throwables.propagate(exception);
+  }
+  return pkgResults.build();
+}
