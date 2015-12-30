@@ -2,8 +2,12 @@
   List<Statement> statements=parseFileForSkylark("load('" + importString + "', 'fun_test')\n");
   LoadStatement stmt=(LoadStatement)statements.get(0);
   SkylarkImport imp=stmt.getImport();
-  assertThat(imp.getImportString()).isEqualTo(importString);
-  assertThat(imp.hasAbsolutePath()).isFalse();
+  assertThat(imp.getImportString()).named("getImportString()").isEqualTo(importString);
+  assertThat(imp.hasAbsolutePath()).named("hasAbsolutePath()").isFalse();
   Label containingFileLabel=Label.parseAbsoluteUnchecked(containingFileLabelString);
-  assertThat(imp.getLabel(containingFileLabel)).isEqualTo(Label.parseAbsoluteUnchecked(expectedLabelString));
+  assertThat(imp.getLabel(containingFileLabel)).named("containingFileLabel()").isEqualTo(Label.parseAbsoluteUnchecked(expectedLabelString));
+  int startOffset=stmt.getImportLocation().getStartOffset();
+  int endOffset=stmt.getImportLocation().getEndOffset();
+  assertThat(startOffset).named("getStartOffset()").isEqualTo(5);
+  assertThat(endOffset).named("getEndOffset()").isEqualTo(startOffset + importString.length() + 2);
 }
