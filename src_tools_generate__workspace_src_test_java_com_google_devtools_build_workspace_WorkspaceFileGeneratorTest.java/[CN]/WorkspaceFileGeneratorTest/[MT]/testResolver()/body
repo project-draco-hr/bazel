@@ -1,0 +1,16 @@
+{
+  File tmpdir=new File(System.getenv("TEST_TMPDIR"));
+  String pom=tmpdir + "/pom.xml";
+  PrintWriter pomWriter=new PrintWriter(pom);
+  pomWriter.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""+ "xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 "+ "http://maven.apache.org/xsd/maven-4.0.0.xsd\">"+ "  <modelVersion>4.0.0</modelVersion>"+ "  <version>1.0</version>"+ "  <groupId>com.google.appengine.demos</groupId>"+ "  <artifactId>appengine-try-java</artifactId>"+ "  <properties>"+ "    <appengine.target.version>1.9.20</appengine.target.version>"+ "  </properties>"+ "  <dependencies>"+ "    <dependency>"+ "      <groupId>com.google.appengine</groupId>"+ "      <artifactId>appengine-api-1.0-sdk</artifactId>"+ "      <version>${appengine.target.version}</version>"+ "    </dependency>"+ " </dependencies>"+ "</project>");
+  pomWriter.close();
+  StoredEventHandler handler=new StoredEventHandler();
+  Resolver resolver=new Resolver(handler);
+  String outputFile=tmpdir + "/output";
+  PrintStream outputStream=new PrintStream(outputFile);
+  resolver.resolvePomDependencies(tmpdir.getAbsolutePath());
+  resolver.writeWorkspace(outputStream);
+  outputStream.close();
+  assertEquals("# The following dependencies were calculated from:\n" + "# " + pom + "\n\n\n"+ "# com.google.appengine.demos:appengine-try-java:jar:1.0\n"+ "maven_jar(\n"+ "    name = \"com.google.appengine_appengine-api-1.0-sdk\",\n"+ "    artifact = \"com.google.appengine:appengine-api-1.0-sdk:1.9.20\",\n"+ ")\n\n",new String(Files.readAllBytes(Paths.get(outputFile))));
+  assertTrue(handler.hasErrors());
+}
