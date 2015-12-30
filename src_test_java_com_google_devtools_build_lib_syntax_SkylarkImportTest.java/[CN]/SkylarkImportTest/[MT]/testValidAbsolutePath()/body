@@ -1,10 +1,11 @@
 {
   String pathToTest="/some/skylark/file";
   SkylarkImport importForPath=SkylarkImports.create(pathToTest);
-  assertThat(importForPath.hasAbsolutePath()).isTrue();
-  assertThat(importForPath.getImportString()).isEqualTo(pathToTest);
+  assertThat(importForPath.hasAbsolutePath()).named("hasAbsolutePath()").isTrue();
+  assertThat(importForPath.getImportString()).named("getImportString()").isEqualTo(pathToTest);
   Label irrelevantContainingFile=Label.parseAbsoluteUnchecked("//another/path:BUILD");
-  assertThat(importForPath.getAbsolutePath()).isEqualTo(new PathFragment(pathToTest + ".bzl"));
+  assertThat(importForPath.getAbsolutePath()).named("getAbsolutePath()").isEqualTo(new PathFragment("//some/skylark/file.bzl"));
+  assertThat(importForPath.asPathFragment()).named("asPathFragment()").isEqualTo(new PathFragment("/some/skylark/file.bzl"));
   thrown.expect(IllegalStateException.class);
   importForPath.getLabel(irrelevantContainingFile);
 }

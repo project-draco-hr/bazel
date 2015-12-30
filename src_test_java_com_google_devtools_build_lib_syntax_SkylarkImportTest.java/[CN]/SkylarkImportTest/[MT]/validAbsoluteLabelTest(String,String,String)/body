@@ -1,0 +1,10 @@
+{
+  SkylarkImport importForLabel=SkylarkImports.create(labelString);
+  assertThat(importForLabel.hasAbsolutePath()).named("hasAbsolutePath()").isFalse();
+  assertThat(importForLabel.getImportString()).named("getIMportString()").isEqualTo(labelString);
+  Label irrelevantContainingFile=Label.parseAbsoluteUnchecked("//another/path:BUILD");
+  assertThat(importForLabel.getLabel(irrelevantContainingFile)).named("getLabel()").isEqualTo(Label.parseAbsoluteUnchecked(expectedLabelString));
+  assertThat(importForLabel.asPathFragment()).named("asPathFragment()").isEqualTo(new PathFragment(expectedPathString));
+  thrown.expect(IllegalStateException.class);
+  importForLabel.getAbsolutePath();
+}
