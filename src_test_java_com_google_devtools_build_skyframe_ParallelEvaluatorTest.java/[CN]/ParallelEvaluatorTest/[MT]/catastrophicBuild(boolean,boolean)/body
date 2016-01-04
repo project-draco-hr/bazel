@@ -2,9 +2,10 @@
   graph=new InMemoryGraph(keepEdges);
   SkyKey catastropheKey=GraphTester.toSkyKey("catastrophe");
   SkyKey otherKey=GraphTester.toSkyKey("someKey");
+  final Exception catastrophe=new SomeErrorException("bad");
   tester.getOrCreate(catastropheKey).setBuilder(new SkyFunction(){
     @Nullable @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
-      throw new SkyFunctionException(new SomeErrorException("bad"),Transience.PERSISTENT){
+      throw new SkyFunctionException(catastrophe,Transience.PERSISTENT){
         @Override public boolean isCatastrophic(){
           return true;
         }
@@ -36,5 +37,6 @@
  else {
     assertTrue(result.hasError());
     assertThat(result.errorMap()).isEmpty();
+    assertThat(result.getCatastrophe()).isSameAs(catastrophe);
   }
 }
