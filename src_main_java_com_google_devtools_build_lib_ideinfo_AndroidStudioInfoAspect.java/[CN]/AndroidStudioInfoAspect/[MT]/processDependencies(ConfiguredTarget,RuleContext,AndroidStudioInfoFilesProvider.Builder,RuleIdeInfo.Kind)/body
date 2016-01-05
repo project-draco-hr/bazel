@@ -27,16 +27,22 @@
       }
     }
   }
+  List<? extends TransitiveInfoCollection> runtimeDeps=ImmutableList.of();
+  NestedSetBuilder<Label> runtimeDepsBuilder=NestedSetBuilder.stableOrder();
+  if (ruleContext.attributes().has("runtime_deps",BuildType.LABEL_LIST)) {
+    runtimeDeps=ruleContext.getPrerequisites("runtime_deps",Mode.TARGET);
+    for (    TransitiveInfoCollection dep : runtimeDeps) {
+      runtimeDepsBuilder.add(dep.getLabel());
+    }
+  }
   ImmutableList.Builder<TransitiveInfoCollection> prerequisitesBuilder=ImmutableList.builder();
   prerequisitesBuilder.addAll(directDeps);
-  if (ruleContext.attributes().has("runtime_deps",BuildType.LABEL_LIST)) {
-    prerequisitesBuilder.addAll(ruleContext.getPrerequisites("runtime_deps",Mode.TARGET));
-  }
+  prerequisitesBuilder.addAll(runtimeDeps);
   List<TransitiveInfoCollection> prerequisites=prerequisitesBuilder.build();
   for (  AndroidStudioInfoFilesProvider depProvider : AnalysisUtils.getProviders(prerequisites,AndroidStudioInfoFilesProvider.class)) {
     providerBuilder.ideInfoFilesBuilder().addTransitive(depProvider.getIdeInfoFiles());
     providerBuilder.ideInfoTextFilesBuilder().addTransitive(depProvider.getIdeInfoTextFiles());
     providerBuilder.ideResolveFilesBuilder().addTransitive(depProvider.getIdeResolveFiles());
   }
-  return dependencies;
+  return new DependenciesResult(dependencies,runtimeDepsBuilder.build());
 }
