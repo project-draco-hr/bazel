@@ -3,12 +3,21 @@
   Map<String,Set<Target>> result=Maps.newHashMapWithExpectedSize(patterns.size());
   Map<String,SkyKey> keys=new HashMap<>(patterns.size());
   for (  String pattern : patterns) {
-    keys.put(pattern,TargetPatternValue.key(pattern,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,parserPrefix));
+    try {
+      keys.put(pattern,TargetPatternValue.key(pattern,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,parserPrefix));
+    }
+ catch (    TargetParsingException e) {
+      reportBuildFileError(caller,e.getMessage());
+      result.put(pattern,ImmutableSet.<Target>of());
+    }
   }
   Map<SkyKey,SkyValue> existingPatterns=graph.getSuccessfulValues(keys.values());
   Map<String,Set<Target>> patternsWithTargetsToFilter=new HashMap<>();
   for (  String pattern : patterns) {
     SkyKey patternKey=keys.get(pattern);
+    if (patternKey == null) {
+      continue;
+    }
     TargetParsingException targetParsingException=null;
     if (existingPatterns.containsKey(patternKey)) {
       TargetPatternValue value=(TargetPatternValue)existingPatterns.get(patternKey);
@@ -34,13 +43,8 @@ catch (      InterruptedException e) {
       }
     }
     if (targetParsingException != null) {
-      if (!keepGoing) {
-        throw targetParsingException;
-      }
- else {
-        eventHandler.handle(Event.error("Evaluation of query \"" + caller + "\" failed: "+ targetParsingException.getMessage()));
-        result.put(pattern,ImmutableSet.<Target>of());
-      }
+      reportBuildFileError(caller,targetParsingException.getMessage());
+      result.put(pattern,ImmutableSet.<Target>of());
     }
   }
   Set<Target> targetsInGraph=filterTargetsNotInGraph(ImmutableSet.copyOf(Iterables.concat(patternsWithTargetsToFilter.values())));
