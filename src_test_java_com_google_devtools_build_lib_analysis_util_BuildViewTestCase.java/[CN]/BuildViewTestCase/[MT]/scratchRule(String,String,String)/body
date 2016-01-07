@@ -1,6 +1,12 @@
 {
   String buildFilePathString=packageName + "/BUILD";
-  scratch.file(buildFilePathString,lines);
+  if (packageName.equals(Label.EXTERNAL_PATH_PREFIX)) {
+    buildFilePathString="WORKSPACE";
+    scratch.overwriteFile(buildFilePathString,lines);
+  }
+ else {
+    scratch.file(buildFilePathString,lines);
+  }
   skyframeExecutor.invalidateFilesUnderPathForTesting(reporter,new ModifiedFileSet.Builder().modify(new PathFragment(buildFilePathString)).build(),rootDirectory);
   return (Rule)getTarget("//" + packageName + ":"+ ruleName);
 }
