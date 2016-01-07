@@ -17,5 +17,14 @@
     }
     return;
   }
+  if (lvalue instanceof FuncallExpression) {
+    FuncallExpression func=(FuncallExpression)lvalue;
+    List<Argument.Passed> args=func.getArguments();
+    if (func.getFunction().getName().equals("$index") && func.getObject() instanceof Identifier && args.size() == 1) {
+      Object key=args.get(0).getValue().eval(env);
+      assignItem(env,loc,(Identifier)func.getObject(),key,result);
+      return;
+    }
+  }
   throw new EvalException(loc,"can only assign to variables and tuples, not to '" + lvalue + "'");
 }
