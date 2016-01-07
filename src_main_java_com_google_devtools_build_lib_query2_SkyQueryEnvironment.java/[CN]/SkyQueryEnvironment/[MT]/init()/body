@@ -6,15 +6,15 @@
   if (duration > 0) {
     LOG.info("Spent " + (duration / 1000 / 1000) + " ms on evaluation and walkable graph");
   }
+  SkyKey universeKey=graphFactory.getUniverseKey(universeScope,parserPrefix);
+  universeTargetPatternKeys=PrepareDepsOfPatternsFunction.getTargetPatternKeys(PrepareDepsOfPatternsFunction.getSkyKeys(universeKey,eventHandler));
   Collection<SkyValue> values=result.values();
   if (!values.isEmpty()) {
     Preconditions.checkState(values.size() == 1,"Universe query \"%s\" returned multiple" + " values unexpectedly (%s values in result)",universeScope,values.size());
-    PrepareDepsOfPatternsValue prepareDepsOfPatternsValue=(PrepareDepsOfPatternsValue)Iterables.getOnlyElement(values);
-    universeTargetPatternKeys=prepareDepsOfPatternsValue.getTargetPatternKeys();
+    Preconditions.checkNotNull(result.get(universeKey),result);
   }
  else {
     boolean foundCycle=!Iterables.isEmpty(result.getError().getCycleInfo());
     Preconditions.checkState(foundCycle,"Universe query \"%s\" failed with non-cycle error: %s",universeScope,result.getError());
-    universeTargetPatternKeys=ImmutableList.of();
   }
 }

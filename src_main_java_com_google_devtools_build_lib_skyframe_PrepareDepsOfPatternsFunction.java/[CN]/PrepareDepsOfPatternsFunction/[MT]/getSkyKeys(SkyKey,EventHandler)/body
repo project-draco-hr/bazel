@@ -1,0 +1,15 @@
+{
+  TargetPatternSequence targetPatternSequence=(TargetPatternSequence)skyKey.argument();
+  Iterable<PrepareDepsOfPatternSkyKeyOrException> keysMaybe=PrepareDepsOfPatternValue.keys(targetPatternSequence.getPatterns(),targetPatternSequence.getOffset());
+  ImmutableList.Builder<SkyKey> skyKeyBuilder=ImmutableList.builder();
+  boolean handlerIsParseFailureListener=eventHandler instanceof ParseFailureListener;
+  for (  PrepareDepsOfPatternSkyKeyOrException skyKeyOrException : keysMaybe) {
+    try {
+      skyKeyBuilder.add(skyKeyOrException.getSkyKey());
+    }
+ catch (    TargetParsingException e) {
+      handleTargetParsingException(eventHandler,handlerIsParseFailureListener,skyKeyOrException.getOriginalPattern(),e);
+    }
+  }
+  return skyKeyBuilder.build();
+}
