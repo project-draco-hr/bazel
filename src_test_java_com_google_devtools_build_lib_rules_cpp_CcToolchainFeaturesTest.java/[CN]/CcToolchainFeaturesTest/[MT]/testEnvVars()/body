@@ -1,0 +1,6 @@
+{
+  FeatureConfiguration configuration=buildFeatures("feature {","  name: 'a'","  env_set {","     action: 'c++-compile'","     env_entry { key: 'foo', value: 'bar' }","     env_entry { key: 'cat', value: 'meow' }","  }","  flag_set {","     action: 'c++-compile'","     flag_group { flag: '-a-c++-compile' }","  }","}","feature {","  name: 'b'","  env_set {","     action: 'c++-compile'","     env_entry { key: 'dog', value: 'woof' }","  }","}","feature {","  name: 'c'","  env_set {","     action: 'c++-compile'","     env_entry { key: 'doNotInclude', value: 'doNotIncludePlease' }","  }","}").getFeatureConfiguration("a","b");
+  Map<String,String> env=configuration.getEnvironmentVariables(CppCompileAction.CPP_COMPILE,createVariables());
+  assertThat(env).containsExactly("foo","bar","cat","meow","dog","woof").inOrder();
+  assertThat(env).doesNotContainEntry("doNotInclude","doNotIncludePlease");
+}
