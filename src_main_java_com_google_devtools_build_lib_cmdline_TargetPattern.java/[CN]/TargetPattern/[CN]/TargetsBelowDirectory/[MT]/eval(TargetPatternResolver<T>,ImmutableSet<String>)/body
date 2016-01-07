@@ -1,3 +1,11 @@
 {
-  return resolver.findTargetsBeneathDirectory(directory.getRepository(),getOriginalPattern(),directory.getPackageFragment().getPathString(),rulesOnly,excludedSubdirectories);
+  final Set<T> results=CompactHashSet.create();
+  BatchCallback<T,RuntimeException> callback=new BatchCallback<T,RuntimeException>(){
+    @Override public void process(    Iterable<T> partialResult){
+      Iterables.addAll(results,partialResult);
+    }
+  }
+;
+  resolver.findTargetsBeneathDirectory(directory.getRepository(),getOriginalPattern(),directory.getPackageFragment().getPathString(),rulesOnly,excludedSubdirectories,callback);
+  return ResolvedTargets.<T>builder().addAll(results).build();
 }

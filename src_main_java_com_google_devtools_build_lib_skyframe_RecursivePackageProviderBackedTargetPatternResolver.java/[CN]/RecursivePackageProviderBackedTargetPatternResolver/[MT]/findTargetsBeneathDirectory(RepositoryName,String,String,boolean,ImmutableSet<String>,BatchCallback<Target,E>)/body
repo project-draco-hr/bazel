@@ -2,7 +2,6 @@
   FilteringPolicy actualPolicy=rulesOnly ? FilteringPolicies.and(FilteringPolicies.RULES_ONLY,policy) : policy;
   ImmutableSet<PathFragment> excludedPathFragments=TargetPatternResolverUtil.getPathFragments(excludedSubdirectories);
   PathFragment pathFragment=TargetPatternResolverUtil.getPathFragment(directory);
-  ResolvedTargets.Builder<Target> targetBuilder=ResolvedTargets.builder();
   Iterable<PathFragment> packagesUnderDirectory=recursivePackageProvider.getPackagesUnderDirectory(repository,pathFragment,excludedPathFragments);
   Iterable<PackageIdentifier> pkgIds=Iterables.transform(packagesUnderDirectory,new Function<PathFragment,PackageIdentifier>(){
     @Override public PackageIdentifier apply(    PathFragment path){
@@ -10,21 +9,20 @@
     }
   }
 );
-  for (  ResolvedTargets<Target> targets : bulkGetTargetsInPackage(originalPattern,pkgIds,FilteringPolicies.NO_FILTER).values()) {
-    targetBuilder.merge(targets);
-  }
-  if (targetBuilder.isEmpty()) {
-    throw new TargetParsingException("no targets found beneath '" + pathFragment + "'");
-  }
-  ResolvedTargets<Target> prefilteredTargets=targetBuilder.build();
-  ResolvedTargets.Builder<Target> filteredBuilder=ResolvedTargets.builder();
-  if (prefilteredTargets.hasError()) {
-    filteredBuilder.setError();
-  }
-  for (  Target target : prefilteredTargets.getTargets()) {
-    if (actualPolicy.shouldRetain(target,false)) {
-      filteredBuilder.add(target);
+  boolean foundTarget=false;
+  for (  Iterable<PackageIdentifier> pkgIdBatch : Iterables.partition(pkgIds,MAX_PACKAGES_BULK_GET)) {
+    for (    ResolvedTargets<Target> targets : bulkGetTargetsInPackage(originalPattern,pkgIdBatch,FilteringPolicies.NO_FILTER).values()) {
+      List<Target> filteredTargets=new ArrayList<>(targets.getTargets().size());
+      for (      Target target : targets.getTargets()) {
+        foundTarget=true;
+        if (actualPolicy.shouldRetain(target,false)) {
+          filteredTargets.add(target);
+        }
+      }
+      callback.process(filteredTargets);
     }
   }
-  return filteredBuilder.build();
+  if (!foundTarget) {
+    throw new TargetParsingException("no targets found beneath '" + pathFragment + "'");
+  }
 }
