@@ -1,5 +1,36 @@
 {
-  Set<Target> targets=new LinkedHashSet<>(resolvedTargetPatterns.get(pattern));
+  Set<Target> targets=ImmutableSet.of();
+  if (precomputedPatterns.containsKey(pattern)) {
+    Set<Label> labels=precomputedPatterns.get(pattern);
+    if (labels != null) {
+      targets=ImmutableSet.copyOf(makeTargetsFromLabels(labels));
+    }
+ else {
+      TargetParsingException exception;
+      try {
+        exception=(TargetParsingException)Preconditions.checkNotNull(graph.getException(TargetPatternValue.key(pattern,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,parserPrefix)),pattern);
+      }
+ catch (      TargetParsingException e) {
+        exception=e;
+      }
+      reportBuildFileError(owner,exception.getMessage());
+    }
+  }
+ else {
+    try {
+      TargetPatternKey targetPatternKey=((TargetPatternKey)TargetPatternValue.key(pattern,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,parserPrefix).argument());
+      GraphBackedRecursivePackageProvider provider=new GraphBackedRecursivePackageProvider(graph,universeTargetPatternKeys,pkgPath);
+      RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,eventHandler,targetPatternKey.getPolicy());
+      TargetPattern parsedPattern=targetPatternKey.getParsedPattern();
+      targets=parsedPattern.eval(resolver).getTargets();
+    }
+ catch (    TargetParsingException e) {
+      reportBuildFileError(owner,e.getMessage());
+    }
+catch (    InterruptedException e) {
+      throw new QueryException(owner,e.getMessage());
+    }
+  }
   Iterator<Target> targetIterator=targets.iterator();
   while (targetIterator.hasNext()) {
     Target target=targetIterator.next();
@@ -8,7 +39,7 @@
     }
   }
   try {
-    callback.process(targets);
+    callback.process(filterTargetsNotInGraph(targets));
   }
  catch (  InterruptedException e) {
     throw new QueryException(owner,e.getMessage());

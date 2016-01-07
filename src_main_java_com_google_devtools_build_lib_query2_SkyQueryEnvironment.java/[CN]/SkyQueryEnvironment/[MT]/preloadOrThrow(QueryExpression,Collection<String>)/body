@@ -1,6 +1,4 @@
 {
-  GraphBackedRecursivePackageProvider provider=new GraphBackedRecursivePackageProvider(graph,universeTargetPatternKeys,pkgPath);
-  Map<String,Set<Target>> result=Maps.newHashMapWithExpectedSize(patterns.size());
   Map<String,SkyKey> keys=new HashMap<>(patterns.size());
   for (  String pattern : patterns) {
     try {
@@ -8,11 +6,9 @@
     }
  catch (    TargetParsingException e) {
       reportBuildFileError(caller,e.getMessage());
-      result.put(pattern,ImmutableSet.<Target>of());
     }
   }
   Map<SkyKey,SkyValue> existingPatterns=graph.getSuccessfulValues(keys.values());
-  Map<String,Set<Target>> patternsWithTargetsToFilter=new HashMap<>();
   for (  String pattern : patterns) {
     SkyKey patternKey=keys.get(pattern);
     if (patternKey == null) {
@@ -22,34 +18,14 @@
     if (existingPatterns.containsKey(patternKey)) {
       TargetPatternValue value=(TargetPatternValue)existingPatterns.get(patternKey);
       if (value != null) {
-        result.put(pattern,ImmutableSet.copyOf(makeTargetsFromLabels(value.getTargets().getTargets())));
+        precomputedPatterns.put(pattern,value.getTargets().getTargets());
       }
  else {
         targetParsingException=(TargetParsingException)Preconditions.checkNotNull(graph.getException(patternKey),pattern);
       }
     }
- else {
-      TargetPatternValue.TargetPatternKey targetPatternKey=((TargetPatternValue.TargetPatternKey)patternKey.argument());
-      RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,eventHandler,targetPatternKey.getPolicy());
-      TargetPattern parsedPattern=targetPatternKey.getParsedPattern();
-      try {
-        patternsWithTargetsToFilter.put(pattern,parsedPattern.eval(resolver).getTargets());
-      }
- catch (      TargetParsingException e) {
-        targetParsingException=e;
-      }
-catch (      InterruptedException e) {
-        throw new QueryException(e.getMessage());
-      }
-    }
     if (targetParsingException != null) {
       reportBuildFileError(caller,targetParsingException.getMessage());
-      result.put(pattern,ImmutableSet.<Target>of());
     }
   }
-  Set<Target> targetsInGraph=filterTargetsNotInGraph(ImmutableSet.copyOf(Iterables.concat(patternsWithTargetsToFilter.values())));
-  for (  Entry<String,Set<Target>> pattern : patternsWithTargetsToFilter.entrySet()) {
-    result.put(pattern.getKey(),Sets.intersection(pattern.getValue(),targetsInGraph));
-  }
-  return result;
 }
