@@ -1,3 +1,11 @@
 {
-  return eval(resolver,ImmutableSet.<String>of());
+  final Set<T> results=CompactHashSet.create();
+  BatchCallback<T,RuntimeException> callback=new BatchCallback<T,RuntimeException>(){
+    @Override public void process(    Iterable<T> partialResult){
+      Iterables.addAll(results,partialResult);
+    }
+  }
+;
+  eval(resolver,ImmutableSet.<String>of(),callback);
+  return ResolvedTargets.<T>builder().addAll(results).build();
 }

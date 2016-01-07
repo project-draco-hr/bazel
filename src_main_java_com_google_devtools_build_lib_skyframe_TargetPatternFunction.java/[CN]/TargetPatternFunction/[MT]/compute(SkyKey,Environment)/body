@@ -6,7 +6,15 @@
     RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,env.getListener(),patternKey.getPolicy());
     TargetPattern parsedPattern=patternKey.getParsedPattern();
     ImmutableSet<String> excludedSubdirectories=patternKey.getExcludedSubdirectories();
-    resolvedTargets=parsedPattern.eval(resolver,excludedSubdirectories);
+    final Set<Target> results=CompactHashSet.create();
+    BatchCallback<Target,RuntimeException> callback=new BatchCallback<Target,RuntimeException>(){
+      @Override public void process(      Iterable<Target> partialResult){
+        Iterables.addAll(results,partialResult);
+      }
+    }
+;
+    parsedPattern.eval(resolver,excludedSubdirectories,callback);
+    resolvedTargets=ResolvedTargets.<Target>builder().addAll(results).build();
   }
  catch (  TargetParsingException e) {
     throw new TargetPatternFunctionException(e);
