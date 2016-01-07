@@ -1,0 +1,19 @@
+{
+  ImmutableMap.Builder<RootedPath,Boolean> builder=ImmutableMap.builder();
+  for (  SkyKey key : subdirectorySkyValues.keySet()) {
+    RecursivePkgKey recursivePkgKey=(RecursivePkgKey)key.argument();
+    CollectPackagesUnderDirectoryValue collectPackagesValue=(CollectPackagesUnderDirectoryValue)subdirectorySkyValues.get(key);
+    boolean packagesInSubdirectory=collectPackagesValue.isDirectoryPackage();
+    if (!packagesInSubdirectory) {
+      ImmutableCollection<Boolean> subdirectoryValues=collectPackagesValue.getSubdirectoryTransitivelyContainsPackages().values();
+      for (      Boolean pkgsInSubSub : subdirectoryValues) {
+        if (pkgsInSubSub) {
+          packagesInSubdirectory=true;
+          break;
+        }
+      }
+    }
+    builder.put(recursivePkgKey.getRootedPath(),packagesInSubdirectory);
+  }
+  return CollectPackagesUnderDirectoryValue.of(visitor.isDirectoryPackage(),builder.build());
+}

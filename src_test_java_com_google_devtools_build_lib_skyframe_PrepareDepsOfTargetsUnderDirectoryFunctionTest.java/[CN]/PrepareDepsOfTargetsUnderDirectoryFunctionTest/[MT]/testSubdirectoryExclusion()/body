@@ -5,7 +5,7 @@
   PathFragment excludedPathFragment=new PathFragment("a/b");
   SkyKey key=createPrepDepsKey(rootDirectory,new PathFragment("a"),ImmutableSet.of(excludedPathFragment));
   EvaluationResult<PrepareDepsOfTargetsUnderDirectoryValue> evaluationResult=getEvaluationResult(key);
-  PrepareDepsOfTargetsUnderDirectoryValue value=evaluationResult.get(key);
+  CollectPackagesUnderDirectoryValue value=(CollectPackagesUnderDirectoryValue)evaluationResult.getWalkableGraph().getValue(createCollectPackagesKey(rootDirectory,new PathFragment("a"),ImmutableSet.of(excludedPathFragment)));
   assertThat(value.isDirectoryPackage()).isTrue();
   RootedPath onlySubdir=Iterables.getOnlyElement(value.getSubdirectoryTransitivelyContainsPackages().keySet());
   assertThat(onlySubdir.getRelativePath()).isEqualTo(new PathFragment("a/c"));

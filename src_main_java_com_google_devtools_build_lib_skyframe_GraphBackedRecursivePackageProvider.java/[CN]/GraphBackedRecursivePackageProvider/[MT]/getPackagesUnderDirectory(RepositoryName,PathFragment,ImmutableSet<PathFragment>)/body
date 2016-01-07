@@ -1,14 +1,17 @@
 {
   PathFragment.checkAllPathsAreUnder(excludedSubdirectories,directory);
-  FilteringPolicy filteringPolicy=null;
+  boolean inUniverse=false;
   for (  TargetPatternKey patternKey : universeTargetPatternKeys) {
     TargetPattern pattern=patternKey.getParsedPattern();
     boolean isTBD=pattern.getType().equals(Type.TARGETS_BELOW_DIRECTORY);
     PackageIdentifier packageIdentifier=PackageIdentifier.create(repository,directory);
     if (isTBD && pattern.containsBelowDirectory(packageIdentifier)) {
-      filteringPolicy=pattern.getRulesOnly() ? FilteringPolicies.RULES_ONLY : FilteringPolicies.NO_FILTER;
+      inUniverse=true;
       break;
     }
+  }
+  if (!inUniverse) {
+    return ImmutableList.of();
   }
   List<Path> roots=new ArrayList<>();
   if (repository.isDefault()) {
@@ -22,12 +25,10 @@
     roots.add(repositoryValue.getPath());
   }
   ImmutableList.Builder<PathFragment> builder=ImmutableList.builder();
-  if (filteringPolicy != null) {
-    for (    Path root : roots) {
-      RootedPath rootedDir=RootedPath.toRootedPath(root,directory);
-      TraversalInfo info=new TraversalInfo(rootedDir,excludedSubdirectories);
-      collectPackagesUnder(repository,ImmutableSet.of(info),builder,filteringPolicy);
-    }
+  for (  Path root : roots) {
+    RootedPath rootedDir=RootedPath.toRootedPath(root,directory);
+    TraversalInfo info=new TraversalInfo(rootedDir,excludedSubdirectories);
+    collectPackagesUnder(repository,ImmutableSet.of(info),builder);
   }
   return builder.build();
 }

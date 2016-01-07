@@ -1,6 +1,30 @@
 {
   PrepareDepsOfTargetsUnderDirectoryKey argument=(PrepareDepsOfTargetsUnderDirectoryKey)skyKey.argument();
   FilteringPolicy filteringPolicy=argument.getFilteringPolicy();
-  RecursivePkgKey recursivePkgKey=argument.getRecursivePkgKey();
-  return new MyTraversalFunction(filteringPolicy).visitDirectory(recursivePkgKey,env);
+  CollectPackagesUnderDirectoryValue collectPackagesUnderDirectoryValue=(CollectPackagesUnderDirectoryValue)env.getValue(CollectPackagesUnderDirectoryValue.key(argument.getRecursivePkgKey()));
+  if (env.valuesMissing()) {
+    return null;
+  }
+  Map<RootedPath,Boolean> subdirMap=collectPackagesUnderDirectoryValue.getSubdirectoryTransitivelyContainsPackages();
+  List<SkyKey> subdirKeys=new ArrayList<>(subdirMap.size());
+  RepositoryName repositoryName=argument.getRecursivePkgKey().getRepository();
+  ImmutableSet<PathFragment> excludedPaths=argument.getRecursivePkgKey().getExcludedPaths();
+  PathFragment baseDir=argument.getRecursivePkgKey().getRootedPath().getRelativePath();
+  for (  Map.Entry<RootedPath,Boolean> subdirEntry : subdirMap.entrySet()) {
+    if (subdirEntry.getValue()) {
+      RootedPath subdir=subdirEntry.getKey();
+      PathFragment subdirRelativePath=subdir.getRelativePath().relativeTo(baseDir);
+      ImmutableSet<PathFragment> excludedSubdirectoriesBeneathThisSubdirectory=PathFragment.filterPathsStartingWith(excludedPaths,subdirRelativePath);
+      subdirKeys.add(PrepareDepsOfTargetsUnderDirectoryValue.key(repositoryName,subdir,excludedSubdirectoriesBeneathThisSubdirectory,filteringPolicy));
+    }
+  }
+  if (collectPackagesUnderDirectoryValue.isDirectoryPackage()) {
+    PackageIdentifier packageIdentifier=PackageIdentifier.create(argument.getRecursivePkgKey().getRepository(),argument.getRecursivePkgKey().getRootedPath().getRelativePath());
+    PackageValue pkgValue=(PackageValue)Preconditions.checkNotNull(env.getValue(PackageValue.key(packageIdentifier)),collectPackagesUnderDirectoryValue);
+    loadTransitiveTargets(env,pkgValue.getPackage(),filteringPolicy,subdirKeys);
+  }
+ else {
+    env.getValues(subdirKeys);
+  }
+  return env.valuesMissing() ? null : PrepareDepsOfTargetsUnderDirectoryValue.INSTANCE;
 }
