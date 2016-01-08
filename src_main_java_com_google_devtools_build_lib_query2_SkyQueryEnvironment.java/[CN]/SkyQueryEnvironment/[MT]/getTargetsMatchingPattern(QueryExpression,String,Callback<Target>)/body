@@ -1,9 +1,13 @@
 {
-  Set<Target> targets=ImmutableSet.of();
   if (precomputedPatterns.containsKey(pattern)) {
     Set<Label> labels=precomputedPatterns.get(pattern);
     if (labels != null) {
-      targets=ImmutableSet.copyOf(makeTargetsFromLabels(labels));
+      try {
+        callback.process(ImmutableSet.copyOf(makeTargetsFromLabels(labels)));
+      }
+ catch (      InterruptedException e) {
+        throw new QueryException(owner,e.getMessage());
+      }
     }
  else {
       TargetParsingException exception;
@@ -22,7 +26,9 @@
       GraphBackedRecursivePackageProvider provider=new GraphBackedRecursivePackageProvider(graph,universeTargetPatternKeys,pkgPath);
       RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,eventHandler,targetPatternKey.getPolicy());
       TargetPattern parsedPattern=targetPatternKey.getParsedPattern();
-      targets=parsedPattern.eval(resolver).getTargets();
+      FilteringBatchingUniquifyingCallback wrapper=new FilteringBatchingUniquifyingCallback(callback);
+      parsedPattern.eval(resolver,wrapper);
+      wrapper.processLastPending();
     }
  catch (    TargetParsingException e) {
       reportBuildFileError(owner,e.getMessage());
@@ -30,18 +36,5 @@
 catch (    InterruptedException e) {
       throw new QueryException(owner,e.getMessage());
     }
-  }
-  Iterator<Target> targetIterator=targets.iterator();
-  while (targetIterator.hasNext()) {
-    Target target=targetIterator.next();
-    if (!validateScope(target.getLabel(),strictScope)) {
-      targetIterator.remove();
-    }
-  }
-  try {
-    callback.process(filterTargetsNotInGraph(targets));
-  }
- catch (  InterruptedException e) {
-    throw new QueryException(owner,e.getMessage());
   }
 }
