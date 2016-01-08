@@ -1,7 +1,7 @@
 {
-  Multimap<SkyKey,E> packageKeyToTargetKeyMap=ArrayListMultimap.create();
-  for (  E key : keys) {
-    Label label=toLabel.apply(key);
+  Multimap<SkyKey,SkyKey> packageKeyToTargetKeyMap=ArrayListMultimap.create();
+  for (  SkyKey key : keys) {
+    Label label=SKYKEY_TO_LABEL.apply(key);
     if (label == null) {
       continue;
     }
@@ -11,12 +11,12 @@
  catch (    QueryException e) {
     }
   }
-  ImmutableMap.Builder<E,Target> result=ImmutableMap.builder();
+  ImmutableMap.Builder<SkyKey,Target> result=ImmutableMap.builder();
   Map<SkyKey,SkyValue> packageMap=graph.getSuccessfulValues(packageKeyToTargetKeyMap.keySet());
   for (  Map.Entry<SkyKey,SkyValue> entry : packageMap.entrySet()) {
-    for (    E targetKey : packageKeyToTargetKeyMap.get(entry.getKey())) {
+    for (    SkyKey targetKey : packageKeyToTargetKeyMap.get(entry.getKey())) {
       try {
-        result.put(targetKey,((PackageValue)entry.getValue()).getPackage().getTarget((toLabel.apply(targetKey)).getName()));
+        result.put(targetKey,((PackageValue)entry.getValue()).getPackage().getTarget((SKYKEY_TO_LABEL.apply(targetKey)).getName()));
       }
  catch (      NoSuchTargetException e) {
       }
