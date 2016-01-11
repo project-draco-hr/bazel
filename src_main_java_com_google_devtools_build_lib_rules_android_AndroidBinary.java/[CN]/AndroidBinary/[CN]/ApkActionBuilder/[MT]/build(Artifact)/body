@@ -14,7 +14,14 @@
   if (javaResourceFile != null) {
     actionBuilder.addArgument("-rf").addArgument((javaResourceFile.getExecPath().getParentDirectory().getPathString())).addInput(javaResourceFile);
   }
-  semantics.addSigningArguments(ruleContext,sign,actionBuilder);
+  if (sign) {
+    Artifact signingKey=semantics.getApkDebugSigningKey(ruleContext);
+    actionBuilder.addArgument("-ks").addArgument(signingKey.getExecPathString());
+    actionBuilder.addInput(signingKey);
+  }
+ else {
+    actionBuilder.addArgument("-u");
+  }
   actionBuilder.addArgument("-z").addInputArgument(resourceApk);
   if (classesDex != null) {
     actionBuilder.addArgument(classesDex.getFilename().endsWith(".dex") ? "-f" : "-z").addInputArgument(classesDex);
