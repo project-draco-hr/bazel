@@ -1,0 +1,28 @@
+{
+  if (!nativeFolder.isDirectory()) {
+    if (nativeFolder.exists()) {
+      throw new ApkCreationException("%s is not a folder",nativeFolder);
+    }
+ else {
+      throw new ApkCreationException("%s does not exist",nativeFolder);
+    }
+  }
+  List<FileEntry> files=new ArrayList<FileEntry>();
+  File[] abiList=nativeFolder.listFiles();
+  if (abiList != null) {
+    for (    File abi : abiList) {
+      if (abi.isDirectory()) {
+        File[] libs=abi.listFiles();
+        if (libs != null) {
+          for (          File lib : libs) {
+            if (lib.isFile() && (PATTERN_NATIVELIB_EXT.matcher(lib.getName()).matches() || PATTERN_BITCODELIB_EXT.matcher(lib.getName()).matches() || (debugMode && SdkConstants.FN_GDBSERVER.equals(lib.getName())))) {
+              String path=SdkConstants.FD_APK_NATIVE_LIBS + "/" + abi.getName()+ "/"+ lib.getName();
+              files.add(new FileEntry(lib,path));
+            }
+          }
+        }
+      }
+    }
+  }
+  return files;
+}

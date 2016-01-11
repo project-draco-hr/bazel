@@ -1,0 +1,27 @@
+{
+  ZipInputStream zis=new ZipInputStream(input);
+  try {
+    ZipEntry entry;
+    while ((entry=zis.getNextEntry()) != null) {
+      String name=entry.getName();
+      if (entry.isDirectory() || name.startsWith("META-INF/")) {
+        continue;
+      }
+      if (filter != null && filter.checkEntry(name) == false) {
+        continue;
+      }
+      JarEntry newEntry;
+      if (entry.getMethod() == JarEntry.STORED) {
+        newEntry=new JarEntry(entry);
+      }
+ else {
+        newEntry=new JarEntry(name);
+      }
+      writeEntry(zis,newEntry);
+      zis.closeEntry();
+    }
+  }
+  finally {
+    zis.close();
+  }
+}

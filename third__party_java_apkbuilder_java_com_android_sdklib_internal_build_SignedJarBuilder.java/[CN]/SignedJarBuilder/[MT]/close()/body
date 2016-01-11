@@ -1,0 +1,16 @@
+{
+  if (mManifest != null) {
+    mOutputJar.putNextEntry(new JarEntry(JarFile.MANIFEST_NAME));
+    mManifest.write(mOutputJar);
+    Signature signature=Signature.getInstance("SHA1with" + mKey.getAlgorithm());
+    signature.initSign(mKey);
+    mOutputJar.putNextEntry(new JarEntry("META-INF/CERT.SF"));
+    SignatureOutputStream out=new SignatureOutputStream(mOutputJar,signature);
+    writeSignatureFile(out);
+    mOutputJar.putNextEntry(new JarEntry("META-INF/CERT." + mKey.getAlgorithm()));
+    writeSignatureBlock(signature,mCertificate,mKey);
+    out.close();
+  }
+  mOutputJar.close();
+  mOutputJar=null;
+}

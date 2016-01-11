@@ -1,0 +1,33 @@
+{
+  String[] segments=archivePath.split("/");
+  if (segments.length == 0) {
+    return false;
+  }
+  for (int i=0; i < segments.length - 1; i++) {
+    if (!checkFolderForPackaging(segments[i])) {
+      return false;
+    }
+  }
+  String fileName=segments[segments.length - 1];
+  boolean check=checkFileForPackaging(fileName);
+  if (check) {
+    verbosePrintln("=> %s",archivePath);
+    File duplicate=checkFileForDuplicate(archivePath);
+    if (duplicate != null) {
+      throw new DuplicateFileException(archivePath,duplicate,mInputFile);
+    }
+ else {
+      mAddedFiles.put(archivePath,mInputFile);
+    }
+    if (archivePath.endsWith(".so") || archivePath.endsWith(".bc")) {
+      mNativeLibs.add(archivePath);
+      if (archivePath.startsWith(SdkConstants.FD_APK_NATIVE_LIBS + "/")) {
+        mNativeLibsConflict=true;
+      }
+    }
+ else     if (archivePath.endsWith(".jnilib")) {
+      mNativeLibs.add(archivePath);
+    }
+  }
+  return check;
+}

@@ -1,0 +1,96 @@
+{
+  Thread threadErr=new Thread("stderr"){
+    @Override public void run(){
+      InputStream is=process.getErrorStream();
+      InputStreamReader isr=new InputStreamReader(is);
+      BufferedReader errReader=new BufferedReader(isr);
+      try {
+        while (true) {
+          String line=errReader.readLine();
+          if (output != null) {
+            output.err(line);
+          }
+          if (line == null) {
+            break;
+          }
+        }
+      }
+ catch (      IOException e) {
+      }
+ finally {
+        try {
+          Closeables.close(is,true);
+        }
+ catch (        IOException e) {
+        }
+        try {
+          Closeables.close(isr,true);
+        }
+ catch (        IOException e) {
+        }
+        try {
+          Closeables.close(errReader,true);
+        }
+ catch (        IOException e) {
+        }
+      }
+    }
+  }
+;
+  Thread threadOut=new Thread("stdout"){
+    @Override public void run(){
+      InputStream is=process.getInputStream();
+      InputStreamReader isr=new InputStreamReader(is);
+      BufferedReader outReader=new BufferedReader(isr);
+      try {
+        while (true) {
+          String line=outReader.readLine();
+          if (output != null) {
+            output.out(line);
+          }
+          if (line == null) {
+            break;
+          }
+        }
+      }
+ catch (      IOException e) {
+      }
+ finally {
+        try {
+          Closeables.close(is,true);
+        }
+ catch (        IOException e) {
+        }
+        try {
+          Closeables.close(isr,true);
+        }
+ catch (        IOException e) {
+        }
+        try {
+          Closeables.close(outReader,true);
+        }
+ catch (        IOException e) {
+        }
+      }
+    }
+  }
+;
+  threadErr.start();
+  threadOut.start();
+  if (waitMode == Wait.ASYNC) {
+    return 0;
+  }
+  if (waitMode == Wait.WAIT_FOR_READERS) {
+    try {
+      threadErr.join();
+    }
+ catch (    InterruptedException e) {
+    }
+    try {
+      threadOut.join();
+    }
+ catch (    InterruptedException e) {
+    }
+  }
+  return process.waitFor();
+}

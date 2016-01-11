@@ -1,0 +1,88 @@
+{
+  String os=System.getProperty("os.name");
+  String keytoolCommand;
+  if (os.startsWith("Windows")) {
+    keytoolCommand="keytool.exe";
+  }
+ else {
+    keytoolCommand="keytool";
+  }
+  String javaHome=System.getProperty("java.home");
+  if (javaHome != null && javaHome.length() > 0) {
+    keytoolCommand=javaHome + File.separator + "bin"+ File.separator+ keytoolCommand;
+  }
+  ArrayList<String> commandList=new ArrayList<String>();
+  commandList.add(keytoolCommand);
+  commandList.add("-genkey");
+  commandList.add("-alias");
+  commandList.add(alias);
+  commandList.add("-keyalg");
+  commandList.add("RSA");
+  commandList.add("-dname");
+  commandList.add(description);
+  commandList.add("-validity");
+  commandList.add(Integer.toString(validityYears * 365));
+  commandList.add("-keypass");
+  commandList.add(keyPassword);
+  commandList.add("-keystore");
+  commandList.add(osKeyStorePath);
+  commandList.add("-storepass");
+  commandList.add(storePassword);
+  if (storeType != null) {
+    commandList.add("-storetype");
+    commandList.add(storeType);
+  }
+  String[] commandArray=commandList.toArray(new String[commandList.size()]);
+  int result=0;
+  try {
+    Process process=Runtime.getRuntime().exec(commandArray);
+    result=GrabProcessOutput.grabProcessOutput(process,Wait.WAIT_FOR_READERS,new IProcessOutput(){
+      @Override public void out(      @Nullable String line){
+        if (line != null) {
+          if (output != null) {
+            output.out(line);
+          }
+ else {
+            System.out.println(line);
+          }
+        }
+      }
+      @Override public void err(      @Nullable String line){
+        if (line != null) {
+          if (output != null) {
+            output.err(line);
+          }
+ else {
+            System.err.println(line);
+          }
+        }
+      }
+    }
+);
+  }
+ catch (  Exception e) {
+    StringBuilder builder=new StringBuilder();
+    boolean firstArg=true;
+    for (    String arg : commandArray) {
+      boolean hasSpace=arg.indexOf(' ') != -1;
+      if (firstArg == true) {
+        firstArg=false;
+      }
+ else {
+        builder.append(' ');
+      }
+      if (hasSpace) {
+        builder.append('"');
+      }
+      builder.append(arg);
+      if (hasSpace) {
+        builder.append('"');
+      }
+    }
+    throw new KeytoolException("Failed to create key: " + e.getMessage(),javaHome,builder.toString());
+  }
+  if (result != 0) {
+    return false;
+  }
+  return true;
+}

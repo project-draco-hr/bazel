@@ -1,0 +1,54 @@
+{
+  try {
+    if (storeOsPath != null) {
+      File storeFile=new File(storeOsPath);
+      try {
+        checkInputFile(storeFile);
+      }
+ catch (      FileNotFoundException e) {
+      }
+      if (verboseStream != null) {
+        verboseStream.println(String.format("Using keystore: %s",storeOsPath));
+      }
+      IKeyGenOutput keygenOutput=null;
+      if (verboseStream != null) {
+        keygenOutput=new IKeyGenOutput(){
+          @Override public void out(          String message){
+            verboseStream.println(message);
+          }
+          @Override public void err(          String message){
+            verboseStream.println(message);
+          }
+        }
+;
+      }
+      DebugKeyProvider keyProvider=new DebugKeyProvider(storeOsPath,null,keygenOutput);
+      PrivateKey key=keyProvider.getDebugKey();
+      X509Certificate certificate=(X509Certificate)keyProvider.getCertificate();
+      if (key == null) {
+        throw new ApkCreationException("Unable to get debug signature key");
+      }
+      if (certificate != null && certificate.getNotAfter().compareTo(new Date()) < 0) {
+        throw new ApkCreationException("Debug Certificate expired on " + DateFormat.getInstance().format(certificate.getNotAfter()));
+      }
+      return new SigningInfo(key,certificate);
+    }
+ else {
+      return null;
+    }
+  }
+ catch (  KeytoolException e) {
+    if (e.getJavaHome() == null) {
+      throw new ApkCreationException(e.getMessage() + "\nJAVA_HOME seems undefined, setting it will help locating keytool automatically\n" + "You can also manually execute the following command\n:"+ e.getCommandLine(),e);
+    }
+ else {
+      throw new ApkCreationException(e.getMessage() + "\nJAVA_HOME is set to: " + e.getJavaHome()+ "\nUpdate it if necessary, or manually execute the following command:\n"+ e.getCommandLine(),e);
+    }
+  }
+catch (  ApkCreationException e) {
+    throw e;
+  }
+catch (  Exception e) {
+    throw new ApkCreationException(e);
+  }
+}

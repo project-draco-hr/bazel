@@ -1,0 +1,30 @@
+{
+  if (sPrefsLocation == null) {
+    String home=findValidPath(new EnvVar[]{EnvVar.ANDROID_SDK_HOME,EnvVar.USER_HOME,EnvVar.HOME});
+    if (home == null) {
+      throw new AndroidLocationException("Unable to get the Android SDK home directory.\n" + "Make sure the environment variable ANDROID_SDK_HOME is set up.");
+    }
+ else {
+      sPrefsLocation=home;
+      if (!sPrefsLocation.endsWith(File.separator)) {
+        sPrefsLocation+=File.separator;
+      }
+      sPrefsLocation+=FOLDER_DOT_ANDROID + File.separator;
+    }
+  }
+  File f=new File(sPrefsLocation);
+  if (f.exists() == false) {
+    try {
+      f.mkdir();
+    }
+ catch (    SecurityException e) {
+      AndroidLocationException e2=new AndroidLocationException(String.format("Unable to create folder '%1$s'. " + "This is the path of preference folder expected by the Android tools.",sPrefsLocation));
+      e2.initCause(e);
+      throw e2;
+    }
+  }
+ else   if (f.isFile()) {
+    throw new AndroidLocationException(sPrefsLocation + " is not a directory! " + "This is the path of preference folder expected by the Android tools.");
+  }
+  return sPrefsLocation;
+}

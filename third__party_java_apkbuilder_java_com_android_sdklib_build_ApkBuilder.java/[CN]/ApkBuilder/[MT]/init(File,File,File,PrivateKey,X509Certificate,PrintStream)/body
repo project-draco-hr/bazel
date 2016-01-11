@@ -1,0 +1,31 @@
+{
+  try {
+    checkOutputFile(mApkFile=apkFile);
+    checkInputFile(mResFile=resFile);
+    if (dexFile != null) {
+      checkInputFile(mDexFile=dexFile);
+    }
+ else {
+      mDexFile=null;
+    }
+    mVerboseStream=verboseStream;
+    mBuilder=new SignedJarBuilder(new FileOutputStream(mApkFile,false),key,certificate);
+    verbosePrintln("Packaging %s",mApkFile.getName());
+    addZipFile(mResFile);
+    if (mDexFile != null) {
+      addFile(mDexFile,SdkConstants.FN_APK_CLASSES_DEX);
+    }
+  }
+ catch (  ApkCreationException e) {
+    if (mBuilder != null) {
+      mBuilder.cleanUp();
+    }
+    throw e;
+  }
+catch (  Exception e) {
+    if (mBuilder != null) {
+      mBuilder.cleanUp();
+    }
+    throw new ApkCreationException(e);
+  }
+}

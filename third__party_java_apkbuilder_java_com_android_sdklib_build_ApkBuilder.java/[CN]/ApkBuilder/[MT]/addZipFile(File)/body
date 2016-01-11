@@ -1,0 +1,20 @@
+{
+  if (mIsSealed) {
+    throw new SealedApkException("APK is already sealed");
+  }
+  try {
+    verbosePrintln("%s:",zipFile);
+    mNullFilter.reset(zipFile);
+    FileInputStream fis=new FileInputStream(zipFile);
+    mBuilder.writeZip(fis,mNullFilter);
+    fis.close();
+  }
+ catch (  DuplicateFileException e) {
+    mBuilder.cleanUp();
+    throw e;
+  }
+catch (  Exception e) {
+    mBuilder.cleanUp();
+    throw new ApkCreationException(e,"Failed to add %s",zipFile);
+  }
+}

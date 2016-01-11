@@ -1,0 +1,16 @@
+{
+  File renamed=new File(outApk.getPath() + ".nonhermetic");
+  if (!outApk.renameTo(renamed)) {
+    throw new IOException("could not rename: " + outApk);
+  }
+  OutputStream out=new FileOutputStream(outApk);
+  ZipCombiner combiner=new ZipCombiner(new ZipEntryFilter(){
+    @Override public void accept(    String filename,    StrategyCallback callback) throws IOException {
+      callback.copy(ZipCombiner.DOS_EPOCH);
+    }
+  }
+,out);
+  combiner.addZip(renamed);
+  combiner.close();
+  renamed.deleteOnExit();
+}

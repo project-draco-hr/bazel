@@ -1,0 +1,21 @@
+{
+  if (mIsSealed) {
+    throw new SealedApkException("APK is already sealed");
+  }
+  try {
+    verbosePrintln("%s:",jarFile);
+    mFilter.reset(jarFile);
+    FileInputStream fis=new FileInputStream(jarFile);
+    mBuilder.writeZip(fis,mFilter);
+    fis.close();
+    return new JarStatusImpl(mFilter.getNativeLibs(),mFilter.getNativeLibsConflict());
+  }
+ catch (  DuplicateFileException e) {
+    mBuilder.cleanUp();
+    throw e;
+  }
+catch (  Exception e) {
+    mBuilder.cleanUp();
+    throw new ApkCreationException(e,"Failed to add %s",jarFile);
+  }
+}

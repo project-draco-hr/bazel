@@ -1,0 +1,126 @@
+{
+  if (args.length < 1) {
+    printUsageAndQuit();
+  }
+  try {
+    File outApk=new File(args[0]);
+    File dexFile=null;
+    ArrayList<File> zipArchives=new ArrayList<File>();
+    ArrayList<File> sourceFolders=new ArrayList<File>();
+    ArrayList<File> jarFiles=new ArrayList<File>();
+    ArrayList<File> nativeFolders=new ArrayList<File>();
+    boolean verbose=false;
+    boolean signed=true;
+    boolean debug=false;
+    String keystorePath=null;
+    int index=1;
+    do {
+      String argument=args[index++];
+      if ("-v".equals(argument)) {
+        verbose=true;
+      }
+ else       if ("-d".equals(argument)) {
+        debug=true;
+      }
+ else       if ("-u".equals(argument)) {
+        signed=false;
+      }
+ else       if ("-ks".equals(argument)) {
+        if (index == args.length) {
+          printAndExit("Missing value for -ks");
+        }
+        keystorePath=args[index++];
+      }
+ else       if ("-z".equals(argument)) {
+        if (index == args.length) {
+          printAndExit("Missing value for -z");
+        }
+        zipArchives.add(new File(args[index++]));
+      }
+ else       if ("-f".equals(argument)) {
+        if (dexFile != null) {
+          printAndExit("Can't have more than one dex file (-f)");
+        }
+        if (index == args.length) {
+          printAndExit("Missing value for -f");
+        }
+        dexFile=new File(args[index++]);
+      }
+ else       if ("-rf".equals(argument)) {
+        if (index == args.length) {
+          printAndExit("Missing value for -rf");
+        }
+        sourceFolders.add(new File(args[index++]));
+      }
+ else       if ("-rj".equals(argument)) {
+        if (index == args.length) {
+          printAndExit("Missing value for -rj");
+        }
+        jarFiles.add(new File(args[index++]));
+      }
+ else       if ("-nf".equals(argument)) {
+        if (index == args.length) {
+          printAndExit("Missing value for -nf");
+        }
+        nativeFolders.add(new File(args[index++]));
+      }
+ else       if ("-storetype".equals(argument)) {
+        if (index == args.length) {
+          printAndExit("Missing value for -storetype");
+        }
+      }
+ else {
+        printAndExit("Unknown argument: " + argument);
+      }
+    }
+ while (index < args.length);
+    if (zipArchives.size() == 0) {
+      printAndExit("No zip archive, there must be one for the resources");
+    }
+    if (signed && keystorePath == null) {
+      keystorePath=ApkBuilder.getDebugKeystore();
+    }
+    ApkBuilder builder=new ApkBuilder(outApk,zipArchives.get(0),dexFile,signed ? keystorePath : null,verbose ? System.out : null);
+    builder.setDebugMode(debug);
+    for (int i=1; i < zipArchives.size(); i++) {
+      builder.addZipFile(zipArchives.get(i));
+    }
+    for (    File sourceFolder : sourceFolders) {
+      builder.addSourceFolder(sourceFolder);
+    }
+    for (    File jarFile : jarFiles) {
+      if (jarFile.isDirectory()) {
+        String[] filenames=jarFile.list(new FilenameFilter(){
+          public boolean accept(          File dir,          String name){
+            return PATTERN_JAR_EXT.matcher(name).matches();
+          }
+        }
+);
+        for (        String filename : filenames) {
+          builder.addResourcesFromJar(new File(jarFile,filename));
+        }
+      }
+ else {
+        builder.addResourcesFromJar(jarFile);
+      }
+    }
+    for (    File nativeFolder : nativeFolders) {
+      builder.addNativeLibraries(nativeFolder);
+    }
+    builder.sealApk();
+    clearTimeStamps(outApk);
+  }
+ catch (  ApkCreationException e) {
+    printAndExit(e.getMessage());
+  }
+catch (  DuplicateFileException e) {
+    printAndExit(String.format("Found duplicate file for APK: %1$s\nOrigin 1: %2$s\nOrigin 2: %3$s",e.getArchivePath(),e.getFile1(),e.getFile2()));
+  }
+catch (  SealedApkException e) {
+    printAndExit(e.getMessage());
+  }
+catch (  Exception e) {
+    e.printStackTrace();
+    System.exit(1);
+  }
+}
