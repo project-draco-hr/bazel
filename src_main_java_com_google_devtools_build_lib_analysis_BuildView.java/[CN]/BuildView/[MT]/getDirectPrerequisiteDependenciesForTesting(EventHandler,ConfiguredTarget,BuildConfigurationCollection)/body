@@ -1,6 +1,6 @@
 {
   if (!(ct.getTarget() instanceof Rule)) {
-    return ImmutableList.of();
+    return ArrayListMultimap.create();
   }
 class SilentDependencyResolver extends DependencyResolver {
     @Override protected void invalidVisibilityReferenceHook(    TargetAndConfiguration node,    Label label){
@@ -8,18 +8,10 @@ class SilentDependencyResolver extends DependencyResolver {
     @Override protected void invalidPackageGroupReferenceHook(    TargetAndConfiguration node,    Label label){
     }
     @Override protected Target getTarget(    Label label) throws NoSuchThingException {
-      if (targetCache == null) {
-        return LoadedPackageProvider.Bridge.getLoadedTarget(skyframeExecutor.getPackageManager(),eventHandler,label);
-      }
-      try {
-        return targetCache.get(label);
-      }
- catch (      ExecutionException e) {
-        throw new IllegalStateException(e);
-      }
+      return LoadedPackageProvider.Bridge.getLoadedTarget(skyframeExecutor.getPackageManager(),eventHandler,label);
     }
   }
   DependencyResolver dependencyResolver=new SilentDependencyResolver();
   TargetAndConfiguration ctgNode=new TargetAndConfiguration(ct.getTarget(),ct.getConfiguration());
-  return dependencyResolver.dependentNodes(ctgNode,configurations.getHostConfiguration(),getConfigurableAttributeKeysForTesting(eventHandler,ctgNode));
+  return dependencyResolver.dependentNodeMap(ctgNode,configurations.getHostConfiguration(),null,getConfigurableAttributeKeysForTesting(eventHandler,ctgNode));
 }

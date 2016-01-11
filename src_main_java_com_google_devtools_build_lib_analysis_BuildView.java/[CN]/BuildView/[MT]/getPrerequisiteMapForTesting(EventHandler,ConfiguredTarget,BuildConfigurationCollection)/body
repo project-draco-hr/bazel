@@ -1,25 +1,6 @@
 {
-  DependencyResolver resolver=new DependencyResolver(){
-    @Override protected void invalidVisibilityReferenceHook(    TargetAndConfiguration node,    Label label){
-      throw new RuntimeException("bad visibility on " + label + " during testing unexpected");
-    }
-    @Override protected void invalidPackageGroupReferenceHook(    TargetAndConfiguration node,    Label label){
-      throw new RuntimeException("bad package group on " + label + " during testing unexpected");
-    }
-    @Override protected Target getTarget(    Label label) throws NoSuchThingException {
-      return LoadedPackageProvider.Bridge.getLoadedTarget(skyframeExecutor.getPackageManager(),eventHandler,label);
-    }
-  }
-;
-  TargetAndConfiguration ctNode=new TargetAndConfiguration(target);
-  ListMultimap<Attribute,Dependency> depNodeNames;
-  try {
-    depNodeNames=resolver.dependentNodeMap(ctNode,configurations.getHostConfiguration(),null,getConfigurableAttributeKeysForTesting(eventHandler,ctNode));
-  }
- catch (  EvalException e) {
-    throw new IllegalStateException(e);
-  }
-  ImmutableMap<Dependency,ConfiguredTarget> cts=skyframeExecutor.getConfiguredTargetMap(eventHandler,ctNode.getConfiguration(),ImmutableSet.copyOf(depNodeNames.values()),false);
+  ListMultimap<Attribute,Dependency> depNodeNames=getDirectPrerequisiteDependenciesForTesting(eventHandler,target,configurations);
+  ImmutableMap<Dependency,ConfiguredTarget> cts=skyframeExecutor.getConfiguredTargetMap(eventHandler,target.getConfiguration(),ImmutableSet.copyOf(depNodeNames.values()),false);
   ImmutableListMultimap.Builder<Attribute,ConfiguredTarget> builder=ImmutableListMultimap.builder();
   for (  Map.Entry<Attribute,Dependency> entry : depNodeNames.entries()) {
     builder.put(entry.getKey(),cts.get(entry.getValue()));
