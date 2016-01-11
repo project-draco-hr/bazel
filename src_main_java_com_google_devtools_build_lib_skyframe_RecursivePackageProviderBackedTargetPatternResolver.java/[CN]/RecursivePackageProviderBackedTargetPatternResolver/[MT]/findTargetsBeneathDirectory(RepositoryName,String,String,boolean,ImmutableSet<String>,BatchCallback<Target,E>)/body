@@ -11,16 +11,17 @@
 );
   boolean foundTarget=false;
   for (  Iterable<PackageIdentifier> pkgIdBatch : Iterables.partition(pkgIds,MAX_PACKAGES_BULK_GET)) {
-    for (    ResolvedTargets<Target> targets : bulkGetTargetsInPackage(originalPattern,pkgIdBatch,FilteringPolicies.NO_FILTER).values()) {
-      List<Target> filteredTargets=new ArrayList<>(targets.getTargets().size());
+    Iterable<ResolvedTargets<Target>> resolvedTargets=bulkGetTargetsInPackage(originalPattern,pkgIdBatch,NO_FILTER).values();
+    List<Target> filteredTargets=new ArrayList<>(calculateSize(resolvedTargets));
+    for (    ResolvedTargets<Target> targets : resolvedTargets) {
       for (      Target target : targets.getTargets()) {
         foundTarget=true;
         if (actualPolicy.shouldRetain(target,false)) {
           filteredTargets.add(target);
         }
       }
-      callback.process(filteredTargets);
     }
+    callback.process(filteredTargets);
   }
   if (!foundTarget) {
     throw new TargetParsingException("no targets found beneath '" + pathFragment + "'");
