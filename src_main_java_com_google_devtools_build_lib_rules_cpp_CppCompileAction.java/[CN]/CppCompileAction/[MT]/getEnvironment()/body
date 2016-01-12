@@ -5,7 +5,8 @@
   }
   AppleConfiguration appleConfiguration=configuration.getFragment(AppleConfiguration.class);
   if (CppConfiguration.MAC_SYSTEM_NAME.equals(getHostSystemName())) {
-    environment.putAll(appleConfiguration.appleHostSystemEnv());
+    XcodeConfigProvider xcodeConfigProvider=ruleContext.getPrerequisite(":xcode_config",Mode.HOST,XcodeConfigProvider.class);
+    environment.putAll(AppleToolchain.appleHostSystemEnv(xcodeConfigProvider));
   }
   if (Platform.isApplePlatform(cppConfiguration.getTargetCpu())) {
     environment.putAll(appleConfiguration.appleTargetPlatformEnv(Platform.forTargetCpu(cppConfiguration.getTargetCpu())));

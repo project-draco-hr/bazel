@@ -1,0 +1,6 @@
+{
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
+  XcodeConfigProvider xcodeConfigProvider=ruleContext.getPrerequisite(":xcode_config",Mode.HOST,XcodeConfigProvider.class);
+  ImmutableMap.Builder<String,String> envBuilder=ImmutableMap.<String,String>builder().putAll(appleConfiguration.getEnvironmentForIosAction()).putAll(AppleToolchain.appleHostSystemEnv(xcodeConfigProvider));
+  return spawnOnDarwinActionBuilder().setEnvironment(envBuilder.build());
+}
