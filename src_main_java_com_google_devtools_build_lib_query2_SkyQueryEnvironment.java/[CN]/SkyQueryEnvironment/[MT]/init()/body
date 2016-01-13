@@ -1,11 +1,9 @@
 {
-  long startTime=Profiler.nanoTimeMaybe();
-  EvaluationResult<SkyValue> result=graphFactory.prepareAndGet(universeScope,parserPrefix,loadingPhaseThreads,eventHandler);
-  graph=result.getWalkableGraph();
-  long duration=Profiler.nanoTimeMaybe() - startTime;
-  if (duration > 0) {
-    LOG.info("Spent " + (duration / 1000 / 1000) + " ms on evaluation and walkable graph");
+  EvaluationResult<SkyValue> result;
+  try (AutoProfiler p=AutoProfiler.logged("evaluation and walkable graph",LOG)){
+    result=graphFactory.prepareAndGet(universeScope,parserPrefix,loadingPhaseThreads,eventHandler);
   }
+   graph=result.getWalkableGraph();
   SkyKey universeKey=graphFactory.getUniverseKey(universeScope,parserPrefix);
   universeTargetPatternKeys=PrepareDepsOfPatternsFunction.getTargetPatternKeys(PrepareDepsOfPatternsFunction.getSkyKeys(universeKey,eventHandler));
   Collection<SkyValue> values=result.values();
