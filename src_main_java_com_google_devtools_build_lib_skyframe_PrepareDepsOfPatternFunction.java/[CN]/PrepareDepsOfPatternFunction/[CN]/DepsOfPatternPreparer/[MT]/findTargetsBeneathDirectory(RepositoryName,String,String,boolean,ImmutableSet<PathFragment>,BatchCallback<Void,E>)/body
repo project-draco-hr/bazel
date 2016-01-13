@@ -1,6 +1,5 @@
 {
   FilteringPolicy policy=rulesOnly ? FilteringPolicies.RULES_ONLY : FilteringPolicies.NO_FILTER;
-  ImmutableSet<PathFragment> excludedPathFragments=TargetPatternResolverUtil.getPathFragments(excludedSubdirectories);
   PathFragment pathFragment=TargetPatternResolverUtil.getPathFragment(directory);
   List<Path> roots=new ArrayList<>();
   if (repository.isDefault()) {
@@ -15,7 +14,7 @@
   }
   for (  Path root : roots) {
     RootedPath rootedPath=RootedPath.toRootedPath(root,pathFragment);
-    SkyValue token=env.getValue(PrepareDepsOfTargetsUnderDirectoryValue.key(repository,rootedPath,excludedPathFragments,policy));
+    SkyValue token=env.getValue(PrepareDepsOfTargetsUnderDirectoryValue.key(repository,rootedPath,excludedSubdirectories,policy));
     if (token == null) {
       throw new MissingDepException();
     }
