@@ -1,12 +1,12 @@
 {
   boolean createExecutable=ruleContext.attributes().get("create_executable",Type.BOOLEAN);
-  String mainClass=getMainClassInternal(ruleContext);
+  String mainClass=getMainClassInternal(ruleContext,javaCommon);
   if (!createExecutable && !mainClass.isEmpty()) {
     ruleContext.ruleError("main class must not be specified when executable is not created");
   }
   if (createExecutable && mainClass.isEmpty()) {
     if (javaCommon.getSrcsArtifacts().isEmpty()) {
-      ruleContext.ruleError("need at least one of 'main_class', 'use_testrunner' or Java source files");
+      ruleContext.ruleError("need at least one of 'main_class' or Java source files");
     }
     mainClass=javaCommon.determinePrimaryClass(javaCommon.getSrcsArtifacts());
     if (mainClass == null) {

@@ -1,15 +1,17 @@
 {
   if (ruleContext.getRule().getRuleClass().equals("java_test")) {
-    if (ruleContext.getConfiguration().getTestArguments().isEmpty() && !ruleContext.attributes().isAttributeValueExplicitlySpecified("args")) {
-      ImmutableList.Builder<String> builder=ImmutableList.builder();
-      for (      Artifact artifact : javaCommon.getSrcsArtifacts()) {
-        PathFragment path=artifact.getRootRelativePath();
-        String className=JavaUtil.getJavaFullClassname(FileSystemUtils.removeExtension(path));
-        if (className != null) {
-          builder.add(className);
+    if (useLegacyJavaTest(ruleContext)) {
+      if (ruleContext.getConfiguration().getTestArguments().isEmpty() && !ruleContext.attributes().isAttributeValueExplicitlySpecified("args")) {
+        ImmutableList.Builder<String> builder=ImmutableList.builder();
+        for (        Artifact artifact : javaCommon.getSrcsArtifacts()) {
+          PathFragment path=artifact.getRootRelativePath();
+          String className=JavaUtil.getJavaFullClassname(FileSystemUtils.removeExtension(path));
+          if (className != null) {
+            builder.add(className);
+          }
         }
+        return builder.build();
       }
-      return builder.build();
     }
   }
   return ImmutableList.<String>of();

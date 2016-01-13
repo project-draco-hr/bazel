@@ -1,0 +1,15 @@
+{
+  if (!isJavaBinaryOrJavaTest(ruleContext)) {
+    return null;
+  }
+  if (useLegacyJavaTest(ruleContext)) {
+    return null;
+  }
+  boolean createExecutable=ruleContext.attributes().get("create_executable",Type.BOOLEAN);
+  if (createExecutable && ruleContext.attributes().get("use_testrunner",Type.BOOLEAN)) {
+    return Iterables.getOnlyElement(ruleContext.getPrerequisites("$testsupport",Mode.TARGET));
+  }
+ else {
+    return null;
+  }
+}

@@ -1,3 +1,8 @@
 {
-  return builder.add(attr("classpath_resources",LABEL_LIST).legacyAllowAnyFileType()).add(attr("jvm_flags",STRING_LIST)).add(attr("main_class",STRING)).add(attr("create_executable",BOOLEAN).nonconfigurable("internal").value(true)).add(attr("deploy_manifest_lines",STRING_LIST)).add(attr("stamp",TRISTATE).value(TriState.AUTO)).add(attr(":java_launcher",LABEL).value(JavaSemantics.JAVA_LAUNCHER)).build();
+  return builder.add(attr("classpath_resources",LABEL_LIST).legacyAllowAnyFileType()).add(attr("jvm_flags",STRING_LIST)).add(attr("use_testrunner",BOOLEAN).value(false)).add(attr("main_class",STRING)).add(attr("create_executable",BOOLEAN).nonconfigurable("internal").value(true)).add(attr("$testsupport",LABEL).value(new Attribute.ComputedDefault("use_testrunner"){
+    @Override public Object getDefault(    AttributeMap rule){
+      return rule.get("use_testrunner",Type.BOOLEAN) ? env.getLabel(JUNIT_TESTRUNNER) : null;
+    }
+  }
+)).add(attr("deploy_manifest_lines",STRING_LIST)).add(attr("stamp",TRISTATE).value(TriState.AUTO)).add(attr(":java_launcher",LABEL).value(JavaSemantics.JAVA_LAUNCHER)).build();
 }

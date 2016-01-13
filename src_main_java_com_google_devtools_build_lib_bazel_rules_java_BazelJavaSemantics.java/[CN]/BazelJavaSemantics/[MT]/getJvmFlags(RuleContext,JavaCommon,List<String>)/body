@@ -1,3 +1,20 @@
 {
-  return userJvmFlags;
+  ImmutableList.Builder<String> jvmFlags=ImmutableList.builder();
+  jvmFlags.addAll(userJvmFlags);
+  if (!useLegacyJavaTest(ruleContext)) {
+    if (ruleContext.attributes().get("use_testrunner",Type.BOOLEAN)) {
+      String testClass=ruleContext.getRule().isAttrDefined("test_class",Type.STRING) ? ruleContext.attributes().get("test_class",Type.STRING) : "";
+      if (testClass.isEmpty()) {
+        testClass=javaCommon.determinePrimaryClass(javaCommon.getSrcsArtifacts());
+      }
+      if (testClass == null) {
+        ruleContext.ruleError("cannot determine test class");
+      }
+ else {
+        jvmFlags.add("-ea");
+        jvmFlags.add("-Dbazel.test_suite=" + ShellEscaper.escapeString(testClass));
+      }
+    }
+  }
+  return jvmFlags.build();
 }

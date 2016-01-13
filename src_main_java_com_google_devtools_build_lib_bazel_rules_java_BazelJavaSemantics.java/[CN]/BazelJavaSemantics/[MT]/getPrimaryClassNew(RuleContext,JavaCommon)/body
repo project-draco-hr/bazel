@@ -1,0 +1,24 @@
+{
+  boolean createExecutable=ruleContext.attributes().get("create_executable",Type.BOOLEAN);
+  Set<Artifact> sourceFiles=ImmutableSet.copyOf(javaCommon.getSrcsArtifacts());
+  if (!createExecutable) {
+    return null;
+  }
+  boolean useTestrunner=ruleContext.attributes().get("use_testrunner",Type.BOOLEAN);
+  String testClass=ruleContext.getRule().isAttrDefined("test_class",Type.STRING) ? ruleContext.attributes().get("test_class",Type.STRING) : "";
+  if (useTestrunner) {
+    if (testClass.isEmpty()) {
+      testClass=javaCommon.determinePrimaryClass(sourceFiles);
+      if (testClass == null) {
+        ruleContext.ruleError("cannot determine junit.framework.Test class " + "(Found no source file '" + ruleContext.getTarget().getName() + ".java' and package name doesn't include 'java' or 'javatests'. "+ "You might want to rename the rule or add a 'test_class' "+ "attribute.)");
+      }
+    }
+    return testClass;
+  }
+ else {
+    if (!testClass.isEmpty()) {
+      ruleContext.attributeError("test_class","this attribute is only meaningful to " + "BazelTestRunner, but you are not using it (use_testrunner = 0)");
+    }
+    return getMainClassInternal(ruleContext,javaCommon);
+  }
+}
