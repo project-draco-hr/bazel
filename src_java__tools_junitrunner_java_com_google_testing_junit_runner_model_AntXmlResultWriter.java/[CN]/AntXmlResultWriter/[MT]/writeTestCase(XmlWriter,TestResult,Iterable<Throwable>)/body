@@ -1,0 +1,14 @@
+{
+  writer.startElement(JUNIT_ELEMENT_TESTCASE);
+  for (  Throwable failure : Iterables.concat(parentFailures,result.getFailures())) {
+    writer.startElement(JUNIT_ELEMENT_FAILURE);
+    writer.writeAttribute(JUNIT_ATTR_FAILURE_MESSAGE,Strings.nullToEmpty(failure.getMessage()));
+    writer.writeAttribute(JUNIT_ATTR_FAILURE_TYPE,failure.getClass().getName());
+    writer.writeCharacters(formatStackTrace(failure));
+    writer.endElement();
+  }
+  writer.writeAttribute(JUNIT_ATTR_TESTCASE_NAME,result.getName());
+  writer.writeAttribute(JUNIT_ATTR_TESTCASE_CLASSNAME,result.getClassName());
+  writer.writeAttribute(JUNIT_ATTR_TESTCASE_TIME,getFormattedRunTime(result.getRunTimeInterval()));
+  writer.endElement();
+}

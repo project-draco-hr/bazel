@@ -1,0 +1,12 @@
+{
+  Class<?> suite=getTestClass(suiteClassName);
+  if (suite == null) {
+    if (args.length == 0 && suiteClassName != null) {
+      System.err.printf("Class not found: [%s]%n",suiteClassName);
+      return 2;
+    }
+  }
+  Injector injector=Guice.createInjector(new BazelTestRunnerModule(suite,ImmutableList.copyOf(args)));
+  JUnit4Runner runner=injector.getInstance(JUnit4Runner.class);
+  return runner.run().wasSuccessful() ? 0 : 1;
+}

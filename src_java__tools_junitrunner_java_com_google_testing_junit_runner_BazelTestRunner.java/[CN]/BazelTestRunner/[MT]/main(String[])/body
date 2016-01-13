@@ -1,0 +1,18 @@
+{
+  PrintStream stderr=System.err;
+  String suiteClassName=System.getProperty(TEST_SUITE_PROPERTY_NAME);
+  if (!checkTestSuiteProperty(suiteClassName)) {
+    System.exit(2);
+  }
+  int exitCode=runTestsInSuite(suiteClassName,args);
+  System.err.printf("%nBazelTestRunner exiting with a return value of %d%n",exitCode);
+  System.err.println("JVM shutdown hooks (if any) will run now.");
+  System.err.println("The JVM will exit once they complete.");
+  System.err.println();
+  printStackTracesIfJvmExitHangs(stderr);
+  DateTimeFormatter formatter=DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
+  DateTime shutdownTime=new DateTime();
+  String formattedShutdownTime=formatter.print(shutdownTime);
+  System.err.printf("-- JVM shutdown starting at %s --%n%n",formattedShutdownTime);
+  System.exit(exitCode);
+}

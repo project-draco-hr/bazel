@@ -1,0 +1,34 @@
+{
+  out.println("Starting full thread dump ...\n");
+  ThreadMXBean mb=ManagementFactory.getThreadMXBean();
+  ThreadInfo[] threadInfos=mb.dumpAllThreads(true,true);
+  Set<Thread> threads=Thread.getAllStackTraces().keySet();
+  ImmutableMap<Long,Thread> threadMap=Maps.uniqueIndex(threads,new Function<Thread,Long>(){
+    @Override public Long apply(    Thread thread){
+      return thread.getId();
+    }
+  }
+);
+  for (  ThreadInfo threadInfo : threadInfos) {
+    Thread thread=threadMap.get(threadInfo.getThreadId());
+    if (thread != null && !thread.isDaemon()) {
+      dumpThreadInfo(threadInfo,thread,out);
+    }
+  }
+  for (  ThreadInfo threadInfo : threadInfos) {
+    Thread thread=threadMap.get(threadInfo.getThreadId());
+    if (thread != null && thread.isDaemon()) {
+      dumpThreadInfo(threadInfo,thread,out);
+    }
+  }
+  long[] deadlockedThreads=mb.findDeadlockedThreads();
+  if (deadlockedThreads != null) {
+    out.println("Detected deadlocked threads: " + Arrays.toString(deadlockedThreads));
+  }
+  long[] monitorDeadlockedThreads=mb.findMonitorDeadlockedThreads();
+  if (monitorDeadlockedThreads != null) {
+    out.println("Detected monitor deadlocked threads: " + Arrays.toString(monitorDeadlockedThreads));
+  }
+  out.println("\nDone full thread dump.");
+  out.flush();
+}

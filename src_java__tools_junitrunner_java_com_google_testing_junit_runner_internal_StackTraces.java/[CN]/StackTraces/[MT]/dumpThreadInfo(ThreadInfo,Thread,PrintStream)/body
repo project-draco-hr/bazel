@@ -1,0 +1,60 @@
+{
+  out.print("\"" + t.getThreadName() + "\""+ " Id="+ t.getThreadId()+ " "+ t.getThreadState());
+  if (t.getLockName() != null) {
+    out.print(" on " + t.getLockName());
+  }
+  if (t.getLockOwnerName() != null) {
+    out.print(" owned by \"" + t.getLockOwnerName() + "\" Id="+ t.getLockOwnerId());
+  }
+  if (t.isSuspended()) {
+    out.print(" (suspended)");
+  }
+  if (t.isInNative()) {
+    out.print(" (in native)");
+  }
+  if (thread.isDaemon()) {
+    out.print(" (daemon)");
+  }
+  out.print('\n');
+  StackTraceElement[] stackTrace=t.getStackTrace();
+  MonitorInfo[] lockedMonitors=t.getLockedMonitors();
+  for (int i=0; i < stackTrace.length; i++) {
+    StackTraceElement ste=stackTrace[i];
+    out.print("\tat " + ste.toString());
+    out.print('\n');
+    if (i == 0 && t.getLockInfo() != null) {
+      Thread.State ts=t.getThreadState();
+switch (ts) {
+case BLOCKED:
+        out.print("\t-  blocked on " + t.getLockInfo());
+      out.print('\n');
+    break;
+case WAITING:
+  out.print("\t-  waiting on " + t.getLockInfo());
+out.print('\n');
+break;
+case TIMED_WAITING:
+out.print("\t-  waiting on " + t.getLockInfo());
+out.print('\n');
+break;
+default :
+}
+}
+for (MonitorInfo mi : lockedMonitors) {
+if (mi.getLockedStackDepth() == i) {
+out.print("\t-  locked " + mi);
+out.print('\n');
+}
+}
+}
+LockInfo[] locks=t.getLockedSynchronizers();
+if (locks.length > 0) {
+out.print("\n\tNumber of locked synchronizers = " + locks.length);
+out.print('\n');
+for (LockInfo li : locks) {
+out.print("\t- " + li);
+out.print('\n');
+}
+}
+out.print('\n');
+}

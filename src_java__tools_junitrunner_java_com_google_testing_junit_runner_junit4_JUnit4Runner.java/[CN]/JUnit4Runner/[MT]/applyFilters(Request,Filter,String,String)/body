@@ -1,0 +1,37 @@
+{
+  boolean allowNoTests=false;
+  Filter filter=Filter.ALL;
+  if (testIncludeFilterRegexp != null) {
+    filter=RegExTestCaseFilter.include(testIncludeFilterRegexp);
+  }
+  if (testExcludeFilterRegexp != null) {
+    Filter excludeFilter=RegExTestCaseFilter.exclude(testExcludeFilterRegexp);
+    filter=filter.intersect(excludeFilter);
+  }
+  if (testIncludeFilterRegexp != null || testExcludeFilterRegexp != null) {
+    try {
+      request=applyFilter(request,filter);
+    }
+ catch (    NoTestsRemainException e) {
+      return createErrorReportingRequestForFilterError(filter);
+    }
+    allowNoTests=(shardingFilter != Filter.ALL);
+  }
+  if (shardingFilter != Filter.ALL) {
+    filter=filter.intersect(shardingFilter);
+  }
+  if (filter != Filter.ALL) {
+    try {
+      request=applyFilter(request,filter);
+    }
+ catch (    NoTestsRemainException e) {
+      if (allowNoTests) {
+        return Request.runner(new NoOpRunner());
+      }
+ else {
+        return createErrorReportingRequestForFilterError(filter);
+      }
+    }
+  }
+  return request;
+}

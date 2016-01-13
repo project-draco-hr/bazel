@@ -1,0 +1,13 @@
+{
+  final AtomicReference<SignalHandler> previousHandlerReference=new AtomicReference<>();
+  previousHandlerReference.set(handlerInstaller.install(signal,new SignalHandler(){
+    @Override public void handle(    Signal signal){
+      signalHandler.handle(signal);
+      SignalHandler previousHandler=previousHandlerReference.get();
+      if (previousHandler != null) {
+        previousHandler.handle(signal);
+      }
+    }
+  }
+));
+}

@@ -1,0 +1,28 @@
+{
+  testRunnerOut.println("JUnit4 Test Runner");
+  checkJUnitRunnerApiVersion();
+  TestSuiteModel model=modelSupplier.get();
+  Filter shardingFilter=model.getShardingFilter();
+  Request filteredRequest=applyFilters(request,shardingFilter,config.getTestIncludeFilterRegexp(),config.getTestExcludeFilterRegexp());
+  JUnitCore core=new JUnitCore();
+  for (  RunListener runListener : runListeners) {
+    core.addListener(runListener);
+  }
+  File exitFile=getExitFile();
+  exitFileActive(exitFile);
+  try {
+    try {
+      if (config.shouldInstallSecurityManager()) {
+        installSecurityManager();
+      }
+      Request cancellableRequest=requestFactory.createRequest(filteredRequest);
+      return core.run(cancellableRequest);
+    }
+  finally {
+      disableSecurityManager();
+    }
+  }
+  finally {
+    exitFileInactive(exitFile);
+  }
+}

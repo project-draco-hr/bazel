@@ -1,0 +1,18 @@
+{
+  return createFake(new Callback(){
+    private final Multiset<String> repeatedPropertyNames=HashMultiset.create();
+    @Override public void exportProperty(    String name,    String value){
+      backingMap.put(name,value);
+    }
+    @Override public String exportRepeatedProperty(    String name,    String value){
+      String propertyName=getRepeatedPropertyName(name);
+      backingMap.put(propertyName,value);
+      return propertyName;
+    }
+    private String getRepeatedPropertyName(    String name){
+      int index=repeatedPropertyNames.add(name,1) + INITIAL_INDEX_FOR_REPEATED_PROPERTY;
+      return name + index;
+    }
+  }
+);
+}

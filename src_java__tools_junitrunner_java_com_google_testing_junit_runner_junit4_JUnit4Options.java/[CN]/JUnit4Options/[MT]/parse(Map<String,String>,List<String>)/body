@@ -1,0 +1,31 @@
+{
+  ImmutableList.Builder<String> unparsedArgsBuilder=ImmutableList.builder();
+  Map<String,String> optionsMap=Maps.newHashMap();
+  optionsMap.put(TEST_INCLUDE_FILTER_OPTION,null);
+  optionsMap.put(TEST_EXCLUDE_FILTER_OPTION,null);
+  for (Iterator<String> it=args.iterator(); it.hasNext(); ) {
+    String arg=it.next();
+    int indexOfEquals=arg.indexOf("=");
+    if (indexOfEquals > 0) {
+      String optionName=arg.substring(0,indexOfEquals);
+      if (optionsMap.containsKey(optionName)) {
+        optionsMap.put(optionName,arg.substring(indexOfEquals + 1));
+        continue;
+      }
+    }
+ else     if (optionsMap.containsKey(arg)) {
+      if (!it.hasNext()) {
+        throw new RuntimeException("No filter expression specified after " + arg);
+      }
+      optionsMap.put(arg,it.next());
+      continue;
+    }
+    unparsedArgsBuilder.add(arg);
+  }
+  String testFilter=envVars.get(TESTBRIDGE_TEST_ONLY);
+  if (testFilter != null && optionsMap.get(TEST_INCLUDE_FILTER_OPTION) == null) {
+    optionsMap.put(TEST_INCLUDE_FILTER_OPTION,testFilter);
+  }
+  ImmutableList<String> unparsedArgs=unparsedArgsBuilder.build();
+  return new JUnit4Options(optionsMap.get(TEST_INCLUDE_FILTER_OPTION),optionsMap.get(TEST_EXCLUDE_FILTER_OPTION),unparsedArgs.toArray(new String[unparsedArgs.size()]));
+}

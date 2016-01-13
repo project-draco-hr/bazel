@@ -1,0 +1,15 @@
+{
+  String name=getDescription().getMethodName();
+  String className=getDescription().getClassName();
+  if (name == null) {
+    name=className;
+    className=parent.getDescription().getDisplayName();
+  }
+  List<TestResult> childResults=Lists.newLinkedList();
+  for (  Description dynamicTest : getDescription().getChildren()) {
+    childResults.add(buildDynamicResult(dynamicTest,getRuntime(),getTestResultStatus()));
+  }
+  int numTests=getDescription().isTest() ? 1 : getDescription().getChildren().size();
+  int numFailures=globalFailures.isEmpty() ? dynamicTestToFailures.keySet().size() : numTests;
+  return new TestResult.Builder().name(name).className(className).properties(properties).failures(ImmutableList.copyOf(globalFailures)).runTimeInterval(getRuntime()).status(getTestResultStatus()).numTests(numTests).numFailures(numFailures).childResults(childResults).build();
+}

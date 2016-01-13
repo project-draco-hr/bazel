@@ -1,0 +1,17 @@
+{
+  Interval runTime=null;
+  int numTests=0, numFailures=0;
+  LinkedList<TestResult> childResults=Lists.newLinkedList();
+  for (  TestNode child : children) {
+    TestResult childResult=child.getResult();
+    childResults.add(childResult);
+    numTests+=childResult.getNumTests();
+    numFailures+=childResult.getNumFailures();
+    Optional<Interval> optionalChildRunTime=childResult.getRunTimeInterval();
+    if (optionalChildRunTime.isPresent()) {
+      Interval childRunTime=optionalChildRunTime.get();
+      runTime=runTime == null ? childRunTime : new Interval(Math.min(runTime.getStartMillis(),childRunTime.getStartMillis()),Math.max(runTime.getEndMillis(),childRunTime.getEndMillis()));
+    }
+  }
+  return new TestResult.Builder().name(getDescription().getDisplayName()).className("").properties(ImmutableMap.<String,String>of()).failures(ImmutableList.<Throwable>of()).runTimeInterval(Optional.fromNullable(runTime)).status(Status.SKIPPED).numTests(numTests).numFailures(numFailures).childResults(childResults).build();
+}
