@@ -1,0 +1,36 @@
+{
+  BitSet definedAttrIndices=new BitSet();
+  for (  String attributeName : attributeValues.getAttributeNames()) {
+    if (attributeName.equals("name")) {
+      continue;
+    }
+    Object attributeValue=attributeValues.getAttributeValue(attributeName);
+    if (attributeValue == Runtime.NONE) {
+      continue;
+    }
+    Integer attrIndex=getAttributeIndex(attributeName);
+    if (attrIndex == null) {
+      rule.reportError(String.format("%s: no such attribute '%s' in '%s' rule",rule.getLabel(),attributeName,name),eventHandler);
+      continue;
+    }
+    Attribute attr=getAttribute(attrIndex);
+    Object nativeAttributeValue;
+    if (attributeValues.valuesAreBuildLanguageTyped()) {
+      try {
+        nativeAttributeValue=convertFromBuildLangType(rule,attr,attributeValue);
+      }
+ catch (      ConversionException e) {
+        rule.reportError(String.format("%s: %s",rule.getLabel(),e.getMessage()),eventHandler);
+        continue;
+      }
+    }
+ else {
+      nativeAttributeValue=attributeValue;
+    }
+    boolean explicit=attributeValues.isAttributeExplicitlySpecified(attributeName);
+    setRuleAttributeValue(rule,eventHandler,attr,nativeAttributeValue,explicit);
+    definedAttrIndices.set(attrIndex);
+    checkAttrValNonEmpty(rule,eventHandler,attributeValue,attr);
+  }
+  return definedAttrIndices;
+}

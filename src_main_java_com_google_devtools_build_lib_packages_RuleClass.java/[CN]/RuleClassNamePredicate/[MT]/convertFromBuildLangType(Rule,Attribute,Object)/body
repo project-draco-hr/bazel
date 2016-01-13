@@ -1,0 +1,15 @@
+{
+  String what=String.format("attribute '%s' in '%s' rule",attr.getName(),rule.getRuleClass());
+  Object converted=BuildType.selectableConvert(attr.getType(),buildLangValue,what,rule.getLabel());
+  if ((converted instanceof SelectorList<?>) && !attr.isConfigurable()) {
+    throw new ConversionException(String.format("attribute \"%s\" is not configurable",attr.getName()));
+  }
+  if ((converted instanceof List<?>) && !(converted instanceof GlobList<?>)) {
+    if (attr.isOrderIndependent()) {
+      @SuppressWarnings("unchecked") List<? extends Comparable<?>> list=(List<? extends Comparable<?>>)converted;
+      converted=Ordering.natural().sortedCopy(list);
+    }
+    converted=ImmutableList.copyOf((List<?>)converted);
+  }
+  return converted;
+}

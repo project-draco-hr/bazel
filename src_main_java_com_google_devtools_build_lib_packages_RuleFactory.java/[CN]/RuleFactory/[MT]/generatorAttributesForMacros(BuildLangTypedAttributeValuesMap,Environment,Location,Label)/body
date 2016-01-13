@@ -1,0 +1,36 @@
+{
+  if (env == null) {
+    return new AttributesAndLocation(args,location);
+  }
+  boolean hasName=args.containsAttributeNamed("generator_name");
+  boolean hasFunc=args.containsAttributeNamed("generator_function");
+  if (hasName || hasFunc) {
+    return new AttributesAndLocation(args,location);
+  }
+  Pair<FuncallExpression,BaseFunction> topCall=env.getTopCall();
+  if (topCall == null || !(topCall.second instanceof UserDefinedFunction)) {
+    return new AttributesAndLocation(args,location);
+  }
+  FuncallExpression generator=topCall.first;
+  BaseFunction function=topCall.second;
+  String name=generator.getNameArg();
+  ImmutableMap.Builder<String,Object> builder=ImmutableMap.builder();
+  for (  String attributeName : args.getAttributeNames()) {
+    builder.put(attributeName,args.getAttributeValue(attributeName));
+  }
+  builder.put("generator_name",(name == null) ? args.getAttributeValue("name") : name);
+  builder.put("generator_function",function.getName());
+  if (generator.getLocation() != null) {
+    location=generator.getLocation();
+  }
+  String relativePath=maybeGetRelativeLocation(location,label);
+  if (relativePath != null) {
+    builder.put("generator_location",relativePath);
+  }
+  try {
+    return new AttributesAndLocation(new BuildLangTypedAttributeValuesMap(builder.build()),location);
+  }
+ catch (  IllegalArgumentException ex) {
+    return new AttributesAndLocation(args,location);
+  }
+}

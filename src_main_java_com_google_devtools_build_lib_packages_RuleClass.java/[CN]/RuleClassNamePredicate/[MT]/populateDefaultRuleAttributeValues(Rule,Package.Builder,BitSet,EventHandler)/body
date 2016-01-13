@@ -1,0 +1,25 @@
+{
+  List<Attribute> attrsWithComputedDefaults=new ArrayList<>();
+  int numAttributes=getAttributeCount();
+  for (int attrIndex=0; attrIndex < numAttributes; ++attrIndex) {
+    if (definedAttrIndices.get(attrIndex)) {
+      continue;
+    }
+    Attribute attr=getAttribute(attrIndex);
+    if (attr.isMandatory()) {
+      rule.reportError(String.format("%s: missing value for mandatory attribute '%s' in '%s' rule",rule.getLabel(),attr.getName(),name),eventHandler);
+    }
+    if (attr.hasComputedDefault()) {
+      attrsWithComputedDefaults.add(attr);
+    }
+ else {
+      Object defaultValue=getAttributeNoncomputedDefaultValue(attr,pkgBuilder);
+      checkAttrValNonEmpty(rule,eventHandler,defaultValue,attr);
+      rule.setAttributeValue(attr,defaultValue,false);
+      checkAllowedValues(rule,attr,eventHandler);
+    }
+  }
+  for (  Attribute attr : attrsWithComputedDefaults) {
+    rule.setAttributeValue(attr,attr.getDefaultValue(rule),false);
+  }
+}

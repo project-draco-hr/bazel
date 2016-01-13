@@ -4,23 +4,24 @@
   builder.setRuleClass(rule.getRuleClass());
   builder.setPublicByDefault(rule.getRuleClassObject().isPublicByDefault());
   RawAttributeMapper rawAttributeMapper=RawAttributeMapper.of(rule);
+  boolean isSkylark=rule.getRuleClassObject().isSkylark();
   for (  Attribute attr : rule.getAttributes()) {
     Object rawAttributeValue=rawAttributeMapper.getRawAttributeValue(rule,attr);
+    boolean isExplicit=rule.isAttributeValueExplicitlySpecified(attr);
+    if (!isSkylark && !isExplicit) {
+      continue;
+    }
     Object valueToSerialize;
-    if (rawAttributeValue instanceof ComputedDefault) {
-      if (rule.getRuleClassObject().isSkylark()) {
-        Preconditions.checkState(SKYLARK_RULE_CLASS_COMPUTED_DEFAULT_ATTRIBUTES.contains(attr.getName()),"Unexpected ComputedDefault value for %s in %s",attr,rule);
-        valueToSerialize=rawAttributeMapper.get(attr.getName(),attr.getType());
-      }
- else {
-        Iterable<Object> possibleValues=AggregatingAttributeMapper.of(rule).getPossibleAttributeValues(rule,attr);
-        valueToSerialize=AggregatingAttributeMapper.flattenAttributeValues(attr.getType(),possibleValues);
-      }
+    if (isExplicit) {
+      valueToSerialize=rawAttributeValue;
+    }
+ else     if (rawAttributeValue instanceof ComputedDefault) {
+      valueToSerialize=evaluateSkylarkComputedDefault(rule,rawAttributeMapper,attr);
     }
  else {
       valueToSerialize=rawAttributeValue;
     }
-    builder.addAttribute(AttributeSerializer.getAttributeProto(attr,valueToSerialize,rule.isAttributeValueExplicitlySpecified(attr),true,false));
+    builder.addAttribute(AttributeSerializer.getAttributeProto(attr,valueToSerialize,isExplicit,true,false));
   }
   return builder;
 }

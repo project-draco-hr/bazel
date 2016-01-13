@@ -1,0 +1,33 @@
+{
+  Preconditions.checkNotNull(ruleClass);
+  String ruleClassName=ruleClass.getName();
+  Object nameObject=attributeValues.getAttributeValue("name");
+  if (nameObject == null) {
+    throw new InvalidRuleException(ruleClassName + " rule has no 'name' attribute");
+  }
+ else   if (!(nameObject instanceof String)) {
+    throw new InvalidRuleException(ruleClassName + " 'name' attribute must be a string");
+  }
+  String name=(String)nameObject;
+  Label label;
+  try {
+    label=pkgBuilder.createLabel(name);
+  }
+ catch (  LabelSyntaxException e) {
+    throw new InvalidRuleException("illegal rule name: " + name + ": "+ e.getMessage());
+  }
+  boolean inWorkspaceFile=pkgBuilder.isWorkspace();
+  if (ruleClass.getWorkspaceOnly() && !inWorkspaceFile) {
+    throw new RuleFactory.InvalidRuleException(ruleClass + " must be in the WORKSPACE file " + "(used by "+ label+ ")");
+  }
+ else   if (!ruleClass.getWorkspaceOnly() && inWorkspaceFile) {
+    throw new RuleFactory.InvalidRuleException(ruleClass + " cannot be in the WORKSPACE file " + "(used by "+ label+ ")");
+  }
+  AttributesAndLocation generator=generatorAttributesForMacros(attributeValues,env,location,label);
+  try {
+    return ruleClass.createRule(pkgBuilder,label,generator.attributes,eventHandler,ast,generator.location,new AttributeContainer(ruleClass));
+  }
+ catch (  LabelSyntaxException e) {
+    throw new RuleFactory.InvalidRuleException(ruleClass + " " + e.getMessage());
+  }
+}
