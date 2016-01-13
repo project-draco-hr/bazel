@@ -3,12 +3,13 @@
   ImmutableList.Builder<PackageSpecification> directPackageBuilder=ImmutableList.builder();
   ImmutableList.Builder<Label> packageGroupBuilder=ImmutableList.builder();
   for (  Label label : labels) {
-    PackageSpecification specification=PackageSpecification.fromLabel(label);
+    Label resolved=ruleLabel.resolveRepositoryRelative(label);
+    PackageSpecification specification=PackageSpecification.fromLabel(resolved);
     if (specification != null) {
       directPackageBuilder.add(specification);
     }
  else {
-      packageGroupBuilder.add(label);
+      packageGroupBuilder.add(resolved);
     }
   }
   packageGroups=packageGroupBuilder.build();
