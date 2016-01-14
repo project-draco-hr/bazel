@@ -1,0 +1,22 @@
+{
+  boolean ok=!env.valuesMissing();
+  Iterable<SkyKey> depKeys=Iterables.transform(deps,TO_KEYS);
+  Map<SkyKey,SkyValue> depValues=env.getValues(depKeys);
+  Map<SkyKey,ConfiguredTarget> result=Maps.newHashMapWithExpectedSize(depValues.size());
+  for (  Map.Entry<SkyKey,SkyValue> entry : depValues.entrySet()) {
+    ConfiguredTargetValue depValue=(ConfiguredTargetValue)entry.getValue();
+    if (depValue == null) {
+      ok=false;
+    }
+ else {
+      result.put(entry.getKey(),depValue.getConfiguredTarget());
+      transitivePackages.addTransitive(depValue.getTransitivePackages());
+    }
+  }
+  if (!ok) {
+    return null;
+  }
+ else {
+    return result;
+  }
+}
