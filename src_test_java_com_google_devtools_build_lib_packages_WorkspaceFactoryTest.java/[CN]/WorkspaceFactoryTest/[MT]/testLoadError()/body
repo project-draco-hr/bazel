@@ -1,0 +1,15 @@
+{
+  Path workspaceFilePath=scratch.file("/workspace/WORKSPACE","load('//a', 'a')");
+  LegacyBuilder builder=Package.newExternalPackageBuilder(workspaceFilePath,"");
+  WorkspaceFactory factory=new WorkspaceFactory(builder,TestRuleClassProvider.getRuleClassProvider(),ImmutableList.<PackageFactory.EnvironmentExtension>of(),Mutability.create("test"),root,root);
+  try {
+    factory.parse(ParserInputSource.create(workspaceFilePath));
+    fail("Parsing " + workspaceFilePath + " should have failed");
+  }
+ catch (  IOException e) {
+    assertThat(e.getMessage()).contains("Failed to parse " + workspaceFilePath);
+  }
+  List<Event> events=factory.getEvents();
+  assertEquals(1,events.size());
+  assertThat(events.get(0).getMessage()).contains("The label must reference a file with extension '.bzl'");
+}
