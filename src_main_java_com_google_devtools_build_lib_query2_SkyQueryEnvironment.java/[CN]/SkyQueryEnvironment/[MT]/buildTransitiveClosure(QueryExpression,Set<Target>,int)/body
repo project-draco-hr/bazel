@@ -16,9 +16,11 @@
   Set<Entry<SkyKey,Exception>> errorEntries=graph.getMissingAndExceptions(unsuccessfulKeys).entrySet();
   for (  Map.Entry<SkyKey,Exception> entry : errorEntries) {
     if (entry.getValue() == null) {
-      throw new QueryException(entry.getKey().argument() + " does not exist in graph");
+      eventHandler.handle(Event.warn(entry.getKey().argument() + " does not exist in graph"));
     }
-    errorMessagesBuilder.add(entry.getValue().getMessage());
+ else {
+      errorMessagesBuilder.add(entry.getValue().getMessage());
+    }
   }
   ImmutableList<String> errorMessages=errorMessagesBuilder.build();
   for (  String errorMessage : errorMessages) {
