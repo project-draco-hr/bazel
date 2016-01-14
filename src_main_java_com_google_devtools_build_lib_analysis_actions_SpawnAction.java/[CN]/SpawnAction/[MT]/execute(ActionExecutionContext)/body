@@ -1,5 +1,15 @@
 {
   Executor executor=actionExecutionContext.getExecutor();
+  if (verboseFailuresAndSubcommandsInEnv) {
+    ImmutableMap.Builder<String,String> environmentBuilder=new ImmutableMap.Builder<String,String>().putAll(environment);
+    if (executor.getVerboseFailures()) {
+      environmentBuilder.put(VERBOSE_FAILURES_KEY,"true");
+    }
+    if (executor.reportsSubcommands()) {
+      environmentBuilder.put(SUBCOMMANDS_KEY,"true");
+    }
+    this.environment=environmentBuilder.build();
+  }
   try {
     internalExecute(actionExecutionContext);
   }
