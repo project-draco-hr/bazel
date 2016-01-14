@@ -1,0 +1,13 @@
+{
+  ConfigurationFragmentPolicy policy=new ConfigurationFragmentPolicy.Builder().requiresConfigurationFragmentsBySkylarkModuleName(ImmutableSet.of("test_fragment")).requiresHostConfigurationFragmentsBySkylarkModuleName(ImmutableSet.of("other_fragment")).build();
+  assertThat(policy.getRequiredConfigurationFragments()).isEmpty();
+  assertThat(policy.isLegalConfigurationFragment(TestFragment.class)).isTrue();
+  assertThat(policy.isLegalConfigurationFragment(TestFragment.class,ConfigurationTransition.NONE)).isTrue();
+  assertThat(policy.isLegalConfigurationFragment(TestFragment.class,ConfigurationTransition.HOST)).isFalse();
+  assertThat(policy.isLegalConfigurationFragment(OtherFragment.class)).isTrue();
+  assertThat(policy.isLegalConfigurationFragment(OtherFragment.class,ConfigurationTransition.NONE)).isFalse();
+  assertThat(policy.isLegalConfigurationFragment(OtherFragment.class,ConfigurationTransition.HOST)).isTrue();
+  assertThat(policy.isLegalConfigurationFragment(UnknownFragment.class)).isFalse();
+  assertThat(policy.isLegalConfigurationFragment(UnknownFragment.class,ConfigurationTransition.NONE)).isFalse();
+  assertThat(policy.isLegalConfigurationFragment(UnknownFragment.class,ConfigurationTransition.HOST)).isFalse();
+}
