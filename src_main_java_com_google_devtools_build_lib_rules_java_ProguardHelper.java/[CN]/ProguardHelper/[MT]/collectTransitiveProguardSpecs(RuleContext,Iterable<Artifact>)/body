@@ -1,0 +1,20 @@
+{
+  JavaOptimizationMode optMode=getJavaOptimizationMode(ruleContext);
+  if (optMode == JavaOptimizationMode.NOOP) {
+    return ImmutableList.of();
+  }
+  ImmutableList<Artifact> proguardSpecs=ruleContext.attributes().has(PROGUARD_SPECS,BuildType.LABEL_LIST) ? ruleContext.getPrerequisiteArtifacts(PROGUARD_SPECS,Mode.TARGET).list() : ImmutableList.<Artifact>of();
+  if (optMode == JavaOptimizationMode.LEGACY && proguardSpecs.isEmpty()) {
+    return ImmutableList.of();
+  }
+  ImmutableSortedSet.Builder<Artifact> builder=ImmutableSortedSet.orderedBy(Artifact.EXEC_PATH_COMPARATOR).addAll(proguardSpecs).addAll(specsToInclude).addAll(ruleContext.getPrerequisiteArtifacts(":extra_proguard_specs",Mode.TARGET).list());
+  for (  ProguardSpecProvider dep : ruleContext.getPrerequisites("deps",Mode.TARGET,ProguardSpecProvider.class)) {
+    builder.addAll(dep.getTransitiveProguardSpecs());
+  }
+  if (!optMode.getImplicitProguardDirectives().isEmpty()) {
+    Artifact implicitDirectives=getProguardConfigArtifact(ruleContext,optMode.name().toLowerCase());
+    ruleContext.registerAction(new FileWriteAction(ruleContext.getActionOwner(),implicitDirectives,optMode.getImplicitProguardDirectives(),false));
+    builder.add(implicitDirectives);
+  }
+  return builder.build().asList();
+}

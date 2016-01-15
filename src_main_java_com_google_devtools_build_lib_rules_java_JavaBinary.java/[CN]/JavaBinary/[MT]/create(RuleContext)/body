@@ -88,16 +88,23 @@
   helper.createSourceJarAction(ImmutableMap.<PathFragment,Artifact>of(),transitiveSourceJars.toCollection(),ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_DEPLOY_SOURCE_JAR));
   RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
   semantics.addProviders(ruleContext,common,jvmFlags,classJar,srcJar,genClassJar,genSourceJar,ImmutableMap.<Artifact,Artifact>of(),helper,filesBuilder,builder);
+  Artifact deployJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_DEPLOY_JAR);
+  boolean runProguard=applyProguardIfRequested(ruleContext,deployJar,common.getBootClasspath(),mainClass,filesBuilder);
   NestedSet<Artifact> filesToBuild=filesBuilder.build();
   collectDefaultRunfiles(runfilesBuilder,ruleContext,common,filesToBuild,launcher,dynamicRuntimeActionInputs);
   Runfiles defaultRunfiles=runfilesBuilder.build();
-  RunfilesSupport runfilesSupport=createExecutable ? runfilesSupport=RunfilesSupport.withExecutable(ruleContext,defaultRunfiles,executable,semantics.getExtraArguments(ruleContext,common)) : null;
+  RunfilesSupport runfilesSupport=null;
+  if (createExecutable) {
+    List<String> extraArgs=new ArrayList<>(semantics.getExtraArguments(ruleContext,common));
+    if (runProguard) {
+      extraArgs.add("--wrapper_script_flag=--singlejar");
+    }
+    runfilesSupport=RunfilesSupport.withExecutable(ruleContext,defaultRunfiles,executable,extraArgs);
+  }
   RunfilesProvider runfilesProvider=RunfilesProvider.withData(defaultRunfiles,new Runfiles.Builder(ruleContext.getWorkspaceName()).merge(runfilesSupport).build());
   ImmutableList<String> deployManifestLines=getDeployManifestLines(ruleContext,originalMainClass);
-  Artifact deployJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_DEPLOY_JAR);
+  deployArchiveBuilder.setOutputJar(runProguard ? ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_MERGED_JAR) : deployJar).setJavaStartClass(mainClass).setDeployManifestLines(deployManifestLines).setAttributes(attributes).addRuntimeJars(common.getJavaCompilationArtifacts().getRuntimeJars()).setIncludeBuildData(true).setRunfilesMiddleman(runProguard || runfilesSupport == null ? null : runfilesSupport.getRunfilesMiddleman()).setCompression(runProguard ? UNCOMPRESSED : COMPRESSED).setLauncher(launcher).build();
   Artifact unstrippedDeployJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_UNSTRIPPED_BINARY_DEPLOY_JAR);
-  deployArchiveBuilder.setOutputJar(deployJar).setJavaStartClass(mainClass).setDeployManifestLines(deployManifestLines).setAttributes(attributes).addRuntimeJars(common.getJavaCompilationArtifacts().getRuntimeJars()).setIncludeBuildData(true).setRunfilesMiddleman(runfilesSupport == null ? null : runfilesSupport.getRunfilesMiddleman()).setCompression(COMPRESSED).setLauncher(launcher);
-  deployArchiveBuilder.build();
   if (stripAsDefault) {
     unstrippedDeployArchiveBuilder.setOutputJar(unstrippedDeployJar).setJavaStartClass(mainClass).setDeployManifestLines(deployManifestLines).setAttributes(attributes).addRuntimeJars(common.getJavaCompilationArtifacts().getRuntimeJars()).setIncludeBuildData(true).setRunfilesMiddleman(runfilesSupport == null ? null : runfilesSupport.getRunfilesMiddleman()).setCompression(COMPRESSED).setLauncher(unstrippedLauncher);
     unstrippedDeployArchiveBuilder.build();
