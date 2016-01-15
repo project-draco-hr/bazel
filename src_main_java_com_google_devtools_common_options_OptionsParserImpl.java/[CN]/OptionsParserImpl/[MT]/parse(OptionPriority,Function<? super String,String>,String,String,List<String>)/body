@@ -82,7 +82,14 @@
       }
     }
     if (implicitDependent == null) {
-      unparsedValues.add(new UnparsedOptionValueDescription(originalName,field,value,priority,sourceFunction.apply(originalName),expandedFrom == null));
+      UnparsedOptionValueDescription unparsedOptionValueDescription=new UnparsedOptionValueDescription(originalName,field,value,priority,sourceFunction.apply(originalName),expandedFrom == null);
+      unparsedValues.add(unparsedOptionValueDescription);
+      if (option.allowMultiple()) {
+        canonicalizeValues.put(field,unparsedOptionValueDescription);
+      }
+ else {
+        canonicalizeValues.replaceValues(field,ImmutableList.of(unparsedOptionValueDescription));
+      }
     }
     if (option.expansion().length > 0) {
       Function<Object,String> expansionSourceFunction=Functions.<String>constant("expanded from option --" + originalName + " from "+ sourceFunction.apply(originalName));

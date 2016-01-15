@@ -1,5 +1,5 @@
 {
-  List<UnparsedOptionValueDescription> processed=Lists.newArrayList(unparsedValues);
+  List<UnparsedOptionValueDescription> processed=Lists.newArrayList(canonicalizeValues.values());
   Collections.sort(processed,new Comparator<UnparsedOptionValueDescription>(){
     @Override public int compare(    UnparsedOptionValueDescription o1,    UnparsedOptionValueDescription o2){
       if (o1.isImplicitRequirement()) {
@@ -13,13 +13,7 @@
   }
 );
   List<String> result=Lists.newArrayList();
-  for (int i=0; i < processed.size(); i++) {
-    UnparsedOptionValueDescription value=processed.get(i);
-    if (!value.allowMultiple()) {
-      if ((i < processed.size() - 1) && value.getName().equals(processed.get(i + 1).getName())) {
-        continue;
-      }
-    }
+  for (  UnparsedOptionValueDescription value : processed) {
     if (value.isExpansion()) {
       continue;
     }
