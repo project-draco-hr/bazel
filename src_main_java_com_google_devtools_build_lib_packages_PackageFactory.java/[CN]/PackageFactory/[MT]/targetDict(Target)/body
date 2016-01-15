@@ -1,0 +1,21 @@
+{
+  if (target == null && !(target instanceof Rule)) {
+    return null;
+  }
+  Map<String,Object> values=new TreeMap<>();
+  Rule rule=(Rule)target;
+  AttributeContainer cont=rule.getAttributeContainer();
+  for (  Attribute attr : rule.getAttributes()) {
+    if (!Character.isAlphabetic(attr.getName().charAt(0))) {
+      continue;
+    }
+    Object val=skylarkifyValue(cont.getAttr(attr.getName()),target.getPackage());
+    if (val == null) {
+      continue;
+    }
+    values.put(attr.getName(),val);
+  }
+  values.put("name",rule.getName());
+  values.put("kind",rule.getRuleClass());
+  return values;
+}

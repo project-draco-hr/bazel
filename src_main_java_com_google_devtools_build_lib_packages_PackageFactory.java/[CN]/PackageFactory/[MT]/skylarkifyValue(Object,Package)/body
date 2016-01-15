@@ -1,0 +1,36 @@
+{
+  if (val == null) {
+    return null;
+  }
+  if (val instanceof Integer) {
+    return val;
+  }
+  if (val instanceof String) {
+    return val;
+  }
+  if (val instanceof Label) {
+    Label l=(Label)val;
+    if (l.getPackageName().equals(pkg.getName())) {
+      return ":" + l.getName();
+    }
+    return l.getCanonicalForm();
+  }
+  if (val instanceof List) {
+    List<Object> l=new ArrayList<>();
+    for (    Object o : (List)val) {
+      l.add(skylarkifyValue(o,pkg));
+    }
+    return SkylarkList.Tuple.copyOf(l);
+  }
+  if (val instanceof Map) {
+    Map<Object,Object> m=new TreeMap<>();
+    for (    Map.Entry<?,?> e : ((Map<?,?>)val).entrySet()) {
+      m.put(skylarkifyValue(e.getKey(),pkg),skylarkifyValue(e.getValue(),pkg));
+    }
+    return m;
+  }
+  if (val.getClass().isAnonymousClass()) {
+    return null;
+  }
+  return null;
+}
