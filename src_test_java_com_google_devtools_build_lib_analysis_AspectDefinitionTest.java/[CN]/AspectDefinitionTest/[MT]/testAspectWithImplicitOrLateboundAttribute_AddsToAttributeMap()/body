@@ -1,0 +1,13 @@
+{
+  Attribute implicit=attr("$runtime",BuildType.LABEL).value(Label.parseAbsoluteUnchecked("//run:time")).build();
+  LateBoundLabel<String> latebound=new LateBoundLabel<String>(){
+    @Override public Label getDefault(    Rule rule,    String configuration){
+      return Label.parseAbsoluteUnchecked("//run:away");
+    }
+  }
+;
+  AspectDefinition simple=new AspectDefinition.Builder("simple").add(implicit).add(attr(":latebound",BuildType.LABEL).value(latebound)).build();
+  assertThat(simple.getAttributes()).containsEntry("$runtime",implicit);
+  assertThat(simple.getAttributes()).containsKey(":latebound");
+  assertThat(simple.getAttributes().get(":latebound").getLateBoundDefault()).isEqualTo(latebound);
+}
