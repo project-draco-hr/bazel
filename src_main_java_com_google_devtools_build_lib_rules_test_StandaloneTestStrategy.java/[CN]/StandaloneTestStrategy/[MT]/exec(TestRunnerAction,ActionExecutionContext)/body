@@ -8,13 +8,14 @@
   }
   Path testTmpDir=TestStrategy.getTmpRoot(workspace,actionExecutionContext.getExecutor().getExecRoot(),executionOptions).getChild(getTmpDirName(action.getExecutionSettings().getExecutable().getExecPath()));
   Path workingDirectory=runfilesDir.getRelative(action.getRunfilesPrefix());
-  TestRunnerAction.ResolvedPaths resolvedPaths=action.resolve(actionExecutionContext.getExecutor().getExecRoot());
+  Path execRoot=actionExecutionContext.getExecutor().getExecRoot();
+  TestRunnerAction.ResolvedPaths resolvedPaths=action.resolve(execRoot);
   Map<String,String> env=getEnv(action,runfilesDir,testTmpDir,resolvedPaths);
   Map<String,String> info=new HashMap<>();
   info.put("timeout","" + getTimeout(action));
   info.putAll(action.getTestProperties().getExecutionInfo());
   Artifact testSetup=action.getRuntimeArtifact(TEST_SETUP_BASENAME);
-  Spawn spawn=new BaseSpawn(getArgs(testSetup.getExecPathString(),"",action),env,info,new RunfilesSupplierImpl(runfilesDir.asFragment(),action.getExecutionSettings().getRunfiles()),action,action.getTestProperties().getLocalResourceUsage(executionOptions.usingLocalTestJobs()));
+  Spawn spawn=new BaseSpawn(getArgs(testSetup.getExecPathString(),"",action),env,info,new RunfilesSupplierImpl(runfilesDir.asFragment(),action.getExecutionSettings().getRunfiles()),action,action.getTestProperties().getLocalResourceUsage(executionOptions.usingLocalTestJobs()),ImmutableSet.of(resolvedPaths.getXmlOutputPath().relativeTo(execRoot)));
   Executor executor=actionExecutionContext.getExecutor();
   try {
     if (testTmpDir.exists(Symlinks.NOFOLLOW)) {
