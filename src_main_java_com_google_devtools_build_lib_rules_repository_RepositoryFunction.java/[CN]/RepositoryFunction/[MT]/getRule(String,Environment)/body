@@ -14,5 +14,9 @@
   if (externalPackage.containsErrors()) {
     throw new RepositoryFunctionException(new BuildFileContainsErrorsException(Label.EXTERNAL_PACKAGE_IDENTIFIER,"Could not load //external package"),Transience.PERSISTENT);
   }
-  return externalPackage;
+  Rule rule=externalPackage.getRule(repository);
+  if (rule == null) {
+    throw new RepositoryNotFoundException(repository);
+  }
+  return rule;
 }

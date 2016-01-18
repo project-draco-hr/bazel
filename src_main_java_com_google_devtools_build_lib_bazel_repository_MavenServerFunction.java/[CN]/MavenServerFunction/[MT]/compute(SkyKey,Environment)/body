@@ -1,10 +1,15 @@
 {
   String repository=(String)skyKey.argument();
-  Package externalPackage=RepositoryFunction.getExternalPackage(env);
-  if (externalPackage == null) {
-    return null;
+  Rule repositoryRule;
+  try {
+    repositoryRule=RepositoryFunction.getRule(repository,env);
+    if (repositoryRule == null) {
+      return null;
+    }
   }
-  Rule repositoryRule=externalPackage.getRule(repository);
+ catch (  RepositoryNotFoundException ex) {
+    repositoryRule=null;
+  }
   String serverName;
   String url;
   Map<String,FileValue> settingsFiles;
