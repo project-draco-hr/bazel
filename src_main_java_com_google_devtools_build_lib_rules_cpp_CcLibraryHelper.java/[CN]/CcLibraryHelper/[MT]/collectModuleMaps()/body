@@ -1,9 +1,11 @@
 {
   List<CppModuleMap> result=new ArrayList<>();
   Iterables.addAll(result,Iterables.transform(deps,CPP_DEPS_TO_MODULES));
-  CppCompilationContext stl=ruleContext.getPrerequisite(":stl",Mode.TARGET,CppCompilationContext.class);
-  if (stl != null) {
-    result.add(stl.getCppModuleMap());
+  if (ruleContext.getRule().getAttributeDefinition(":stl") != null) {
+    CppCompilationContext stl=ruleContext.getPrerequisite(":stl",Mode.TARGET,CppCompilationContext.class);
+    if (stl != null) {
+      result.add(stl.getCppModuleMap());
+    }
   }
   CcToolchainProvider toolchain=CppHelper.getToolchain(ruleContext);
   if (toolchain != null) {
