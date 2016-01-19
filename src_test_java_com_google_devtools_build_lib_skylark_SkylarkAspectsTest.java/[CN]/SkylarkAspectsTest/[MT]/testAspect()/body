@@ -1,7 +1,7 @@
 {
   scratch.file("test/aspect.bzl","def _impl(target, ctx):","   print('This aspect does nothing')","   return struct()","MyAspect = aspect(implementation=_impl)");
   scratch.file("test/BUILD","java_library(name = 'xxx',)");
-  AnalysisResult analysisResult=update(ImmutableList.of("//test:xxx"),ImmutableList.of("test/aspect.bzl%MyAspect"),false,LOADING_PHASE_THREADS,true,new EventBus());
+  AnalysisResult analysisResult=update(ImmutableList.of("test/aspect.bzl%MyAspect"),"//test:xxx");
   assertThat(transform(analysisResult.getTargetsToBuild(),new Function<ConfiguredTarget,String>(){
     @Nullable @Override public String apply(    ConfiguredTarget configuredTarget){
       return configuredTarget.getLabel().toString();

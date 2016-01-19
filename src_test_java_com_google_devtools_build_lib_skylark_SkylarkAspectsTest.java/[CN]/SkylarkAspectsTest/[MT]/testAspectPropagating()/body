@@ -1,7 +1,7 @@
 {
   scratch.file("test/aspect.bzl","def _impl(target, ctx):","   s = set([target.label])","   c = set([ctx.rule.kind])","   for i in ctx.rule.attr.deps:","       s += i.target_labels","       c += i.rule_kinds","   return struct(target_labels = s, rule_kinds = c)","","MyAspect = aspect(","   implementation=_impl,","   attr_aspects=['deps'],",")");
   scratch.file("test/BUILD","java_library(","     name = 'yyy',",")","java_library(","     name = 'xxx',","     srcs = ['A.java'],","     deps = [':yyy'],",")");
-  AnalysisResult analysisResult=update(ImmutableList.of("//test:xxx"),ImmutableList.of("test/aspect.bzl%MyAspect"),false,LOADING_PHASE_THREADS,true,new EventBus());
+  AnalysisResult analysisResult=update(ImmutableList.of("test/aspect.bzl%MyAspect"),"//test:xxx");
   assertThat(transform(analysisResult.getTargetsToBuild(),new Function<ConfiguredTarget,String>(){
     @Nullable @Override public String apply(    ConfiguredTarget configuredTarget){
       return configuredTarget.getLabel().toString();
