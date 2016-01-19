@@ -1,0 +1,21 @@
+{
+  createFsAndRoot(new CustomInMemoryFs(manualClock){
+    @Override protected boolean isReadable(    Path path) throws IOException {
+      if (path.getBaseName().equals("unreadable")) {
+        throw new IOException("isReadable failed");
+      }
+      return super.isReadable(path);
+    }
+  }
+);
+  Path p=file("unreadable");
+  p.chmod(0);
+  SequentialBuildDriver driver=makeDriver();
+  SkyKey skyKey=skyKey("unreadable");
+  EvaluationResult<FileValue> result=driver.evaluate(ImmutableList.of(skyKey),false,DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
+  assertTrue(result.hasError());
+  ErrorInfo errorInfo=result.getError(skyKey);
+  assertThat(errorInfo.getException()).isInstanceOf(InconsistentFilesystemException.class);
+  assertThat(errorInfo.getException().getMessage()).contains("encountered error 'isReadable failed'");
+  assertThat(errorInfo.getException().getMessage()).contains("/root/unreadable is no longer a file");
+}

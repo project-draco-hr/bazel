@@ -1,0 +1,14 @@
+{
+  final byte[] expectedDigest=MessageDigest.getInstance("md5").digest("blah".getBytes(StandardCharsets.UTF_8));
+  createFsAndRoot(new CustomInMemoryFs(manualClock){
+    @Override protected byte[] getFastDigest(    Path path){
+      return path.getBaseName().equals("unreadable") ? expectedDigest : null;
+    }
+  }
+);
+  Path p=file("unreadable");
+  p.chmod(0);
+  FileValue value=valueForPath(p);
+  assertThat(value.exists()).isTrue();
+  assertThat(value.getDigest()).isNotNull();
+}
