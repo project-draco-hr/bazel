@@ -1,7 +1,6 @@
 {
   ImmutableMap<Action,ConflictException> badActions=PrecomputedValue.BAD_ACTIONS.get(env);
   ConfiguredTargetValue ctValue=(ConfiguredTargetValue)env.getValue(ConfiguredTargetValue.key((ConfiguredTargetKey)skyKey.argument()));
-  SkyframeDependencyResolver resolver=buildViewProvider.getSkyframeBuildView().createDependencyResolver(env);
   if (env.valuesMissing()) {
     return null;
   }
@@ -19,6 +18,7 @@
   ListMultimap<Attribute,Dependency> deps;
   try {
     BuildConfiguration hostConfiguration=buildViewProvider.getSkyframeBuildView().getHostConfiguration(ct.getConfiguration());
+    SkyframeDependencyResolver resolver=buildViewProvider.getSkyframeBuildView().createDependencyResolver(env);
     deps=resolver.dependentNodeMap(ctgValue,hostConfiguration,null,configConditions);
     if (ct.getConfiguration() != null && ct.getConfiguration().useDynamicConfigurations()) {
       deps=ConfiguredTargetFunction.trimConfigurations(env,ctgValue,deps,hostConfiguration,ruleClassProvider);

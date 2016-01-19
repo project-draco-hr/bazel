@@ -17,10 +17,12 @@
   }
   analysisEnvironment.disable(target);
   Preconditions.checkNotNull(configuredTarget,target);
+  Map<Artifact,Action> generatingActions;
   try {
-    return new ConfiguredTargetValue(configuredTarget,filterSharedActionsAndThrowIfConflict(analysisEnvironment.getRegisteredActions()),transitivePackages.build());
+    generatingActions=filterSharedActionsAndThrowIfConflict(analysisEnvironment.getRegisteredActions());
   }
  catch (  ActionConflictException e) {
     throw new ConfiguredTargetFunctionException(e);
   }
+  return new ConfiguredTargetValue(configuredTarget,generatingActions,transitivePackages.build());
 }

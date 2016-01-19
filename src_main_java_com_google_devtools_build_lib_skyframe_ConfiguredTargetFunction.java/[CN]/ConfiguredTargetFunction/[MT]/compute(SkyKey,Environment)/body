@@ -10,7 +10,7 @@
   }
   Package pkg=packageValue.getPackage();
   if (pkg.containsErrors()) {
-    throw new ConfiguredTargetFunctionException(new BuildFileContainsErrorsException(lc.getLabel().getPackageIdentifier()),Transience.PERSISTENT);
+    throw new ConfiguredTargetFunctionException(new BuildFileContainsErrorsException(lc.getLabel().getPackageIdentifier()));
   }
   Target target;
   try {
@@ -23,11 +23,8 @@
   if (!target.isConfigurable()) {
     configuration=null;
   }
-  TargetAndConfiguration ctgValue=new TargetAndConfiguration(target,configuration);
   SkyframeDependencyResolver resolver=view.createDependencyResolver(env);
-  if (resolver == null) {
-    return null;
-  }
+  TargetAndConfiguration ctgValue=new TargetAndConfiguration(target,configuration);
   try {
     Set<ConfigMatchingProvider> configConditions=getConfigConditions(ctgValue.getTarget(),env,resolver,ctgValue,transitivePackages);
     if (env.valuesMissing()) {
