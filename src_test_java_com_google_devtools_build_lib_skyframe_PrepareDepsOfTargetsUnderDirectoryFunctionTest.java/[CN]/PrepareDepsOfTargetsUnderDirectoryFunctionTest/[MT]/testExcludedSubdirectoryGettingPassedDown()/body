@@ -4,7 +4,8 @@
   scratch.file("a/b/d/helloworld");
   ImmutableSet<PathFragment> excludedPaths=ImmutableSet.of(new PathFragment("a/b/c"));
   SkyKey key=createPrepDepsKey(rootDirectory,new PathFragment("a"),excludedPaths);
-  EvaluationResult<PrepareDepsOfTargetsUnderDirectoryValue> evaluationResult=getEvaluationResult(key);
+  SkyKey collectKey=createCollectPackagesKey(rootDirectory,new PathFragment("a"),excludedPaths);
+  EvaluationResult<?> evaluationResult=getEvaluationResult(key,collectKey);
   CollectPackagesUnderDirectoryValue value=(CollectPackagesUnderDirectoryValue)evaluationResult.getWalkableGraph().getValue(createCollectPackagesKey(rootDirectory,new PathFragment("a"),excludedPaths));
   assertThat(value.isDirectoryPackage()).isTrue();
   RootedPath onlySubdir=Iterables.getOnlyElement(value.getSubdirectoryTransitivelyContainsPackages().keySet());

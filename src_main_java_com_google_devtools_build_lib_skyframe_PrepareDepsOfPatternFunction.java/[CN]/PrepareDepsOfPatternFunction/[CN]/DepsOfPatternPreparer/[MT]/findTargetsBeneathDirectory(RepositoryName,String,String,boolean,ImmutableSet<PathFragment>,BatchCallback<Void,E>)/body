@@ -14,8 +14,8 @@
   }
   for (  Path root : roots) {
     RootedPath rootedPath=RootedPath.toRootedPath(root,pathFragment);
-    SkyValue token=env.getValue(PrepareDepsOfTargetsUnderDirectoryValue.key(repository,rootedPath,excludedSubdirectories,policy));
-    if (token == null) {
+    env.getValues(ImmutableList.of(PrepareDepsOfTargetsUnderDirectoryValue.key(repository,rootedPath,excludedSubdirectories,policy),CollectPackagesUnderDirectoryValue.key(repository,rootedPath,excludedSubdirectories)));
+    if (env.valuesMissing()) {
       throw new MissingDepException();
     }
   }
