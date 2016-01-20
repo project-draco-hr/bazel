@@ -21,18 +21,30 @@
     if (dependency.isOptional()) {
       continue;
     }
+    if (exclusions.contains(dependency.getGroupId() + ":" + dependency.getArtifactId())) {
+      continue;
+    }
     try {
       Rule artifactRule=new Rule(dependency);
+      HashSet<String> localDepExclusions=new HashSet<>(exclusions);
+      localDepExclusions.addAll(artifactRule.getExclusions());
       boolean isNewDependency=addArtifact(artifactRule,model.toString());
       if (isNewDependency) {
         ModelSource depModelSource=modelResolver.resolveModel(dependency.getGroupId(),dependency.getArtifactId(),dependency.getVersion());
         if (depModelSource != null) {
           artifactRule.setRepository(depModelSource.getLocation(),handler);
-          resolveEffectiveModel(depModelSource);
+          resolveEffectiveModel(depModelSource,localDepExclusions,artifactRule);
         }
  else {
           handler.handle(Event.error("Could not get a model for " + dependency));
         }
+      }
+      if (parent != null) {
+        parent.addDependency(artifactRule);
+        parent.getDependencies().addAll(artifactRule.getDependencies());
+      }
+ else {
+        rootDependencies.add(artifactRule);
       }
     }
  catch (    UnresolvableModelException|Rule.InvalidRuleException e) {

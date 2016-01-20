@@ -1,12 +1,15 @@
 {
   writeHeader(outputStream);
-  outputStream.println("java_library(");
-  outputStream.println("    name = \"transitive-deps\",");
-  outputStream.println("    visibility = [\"//visibility:public\"],");
-  outputStream.println("    exports = [");
-  for (  Rule rule : deps.values()) {
+  for (  Rule rule : rootDependencies) {
+    outputStream.println("java_library(");
+    outputStream.println("    name = \"" + rule.name() + "\",");
+    outputStream.println("    visibility = [\"//visibility:public\"],");
+    outputStream.println("    exports = [");
     outputStream.println("        \"@" + rule.name() + "//jar\",");
+    for (    Rule r : rule.getDependencies()) {
+      outputStream.println("        \"@" + r.name() + "//jar\",");
+    }
+    outputStream.println("    ],");
+    outputStream.println(")");
   }
-  outputStream.println("    ],");
-  outputStream.println(")");
 }
