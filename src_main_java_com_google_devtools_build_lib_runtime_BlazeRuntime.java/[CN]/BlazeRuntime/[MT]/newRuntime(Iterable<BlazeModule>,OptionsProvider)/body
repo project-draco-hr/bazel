@@ -32,6 +32,9 @@
   if (!workspaceDirectory.equals(PathFragment.EMPTY_FRAGMENT)) {
     workspaceDirectoryPath=fs.getPath(workspaceDirectory);
   }
+  if (fs instanceof UnixFileSystem) {
+    ((UnixFileSystem)fs).setRootsWithAllowedHardlinks(Iterables.filter(Arrays.asList(installBasePath,outputBasePath,workspaceDirectoryPath),Predicates.notNull()));
+  }
   BlazeDirectories directories=new BlazeDirectories(installBasePath,outputBasePath,workspaceDirectoryPath,startupOptions.deepExecRoot,startupOptions.installMD5);
   Clock clock=BlazeClock.instance();
   BinTools binTools;
