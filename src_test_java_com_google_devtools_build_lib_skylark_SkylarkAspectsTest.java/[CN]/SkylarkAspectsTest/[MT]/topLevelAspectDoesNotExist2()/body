@@ -1,0 +1,11 @@
+{
+  scratch.file("test/BUILD","java_library(name = 'xxx')");
+  reporter.removeHandler(failFastHandler);
+  try {
+    update(ImmutableList.of("test/aspect.bzl%MyAspect"),"//test:xxx");
+    fail();
+  }
+ catch (  ViewCreationFailedException e) {
+  }
+  assertContainsEvent("Extension file not found. Unable to load file '//test:aspect.bzl': " + "file doesn't exist or isn't a file");
+}

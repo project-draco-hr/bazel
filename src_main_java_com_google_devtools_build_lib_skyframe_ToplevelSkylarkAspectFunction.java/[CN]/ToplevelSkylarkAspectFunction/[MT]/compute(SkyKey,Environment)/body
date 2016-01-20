@@ -7,6 +7,7 @@
     labelLookupMap=SkylarkImportLookupFunction.labelsForAbsoluteImports(ImmutableSet.of(extensionFile),env);
   }
  catch (  SkylarkImportFailedException e) {
+    env.getListener().handle(Event.error(e.getMessage()));
     throw new LoadSkylarkAspectFunctionException(e,skyKey);
   }
   if (labelLookupMap == null) {
@@ -16,8 +17,13 @@
   try {
     skylarkAspect=AspectFunction.loadSkylarkAspect(env,labelLookupMap.get(extensionFile),skylarkValueName);
   }
- catch (  ConversionException e) {
-    throw new LoadSkylarkAspectFunctionException(e,skyKey);
+ catch (  SkylarkImportFailedException e) {
+    env.getListener().handle(Event.error(e.getMessage()));
+    throw new LoadSkylarkAspectFunctionException(new AspectCreationException(e.getMessage()),skyKey);
+  }
+catch (  ConversionException e) {
+    env.getListener().handle(Event.error(e.getMessage()));
+    throw new LoadSkylarkAspectFunctionException(new AspectCreationException(e.getMessage()),skyKey);
   }
   if (skylarkAspect == null) {
     return null;
