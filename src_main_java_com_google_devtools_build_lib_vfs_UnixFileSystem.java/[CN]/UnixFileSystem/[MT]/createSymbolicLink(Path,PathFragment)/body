@@ -1,6 +1,16 @@
 {
-  checkForWindowsCompatibility(linkPath,targetFragment);
+  SymlinkImplementation strategy=computeSymlinkImplementation(linkPath,targetFragment);
+switch (strategy) {
+case HARDLINK:
+case JUNCTION:
+case SYMLINK:
 synchronized (linkPath) {
-    FilesystemUtils.symlink(targetFragment.toString(),linkPath.toString());
-  }
+      FilesystemUtils.symlink(targetFragment.toString(),linkPath.toString());
+    }
+  break;
+case FAIL:
+if (symlinkLogFile == null) {
+  throw new IOException(String.format("Symlink emulation failed for symlink: %s -> %s",linkPath,targetFragment));
+}
+}
 }
