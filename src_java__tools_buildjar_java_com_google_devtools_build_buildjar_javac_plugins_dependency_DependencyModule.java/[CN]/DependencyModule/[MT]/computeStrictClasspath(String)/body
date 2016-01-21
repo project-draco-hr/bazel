@@ -2,15 +2,5 @@
   if (!strictClasspathMode) {
     return originalClasspath;
   }
-  requiredClasspath=new HashSet<>(directJarsToTargets.keySet());
-  for (  String depsArtifact : depsArtifacts) {
-    collectDependenciesFromArtifact(depsArtifact);
-  }
-  List<String> filteredClasspath=new ArrayList<>();
-  for (  String entry : CLASSPATH_SPLITTER.split(originalClasspath)) {
-    if (requiredClasspath.contains(entry)) {
-      filteredClasspath.add(entry);
-    }
-  }
-  return CLASSPATH_JOINER.join(filteredClasspath);
+  return CLASSPATH_JOINER.join(computeStrictClasspath(CLASSPATH_SPLITTER.split(originalClasspath)));
 }
