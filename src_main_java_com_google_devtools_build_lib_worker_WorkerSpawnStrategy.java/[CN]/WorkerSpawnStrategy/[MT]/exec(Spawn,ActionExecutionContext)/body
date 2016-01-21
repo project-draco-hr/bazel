@@ -28,11 +28,10 @@
   FileOutErr outErr=actionExecutionContext.getFileOutErr();
   ImmutableList<String> args=ImmutableList.<String>builder().addAll(spawn.getArguments().subList(0,spawn.getArguments().size() - 1)).add("--persistent_worker").build();
   ImmutableMap<String,String> env=spawn.getEnvironment();
-  Path workDir=actionExecutionContext.getExecutor().getExecRoot();
   try {
     ActionInputFileCache inputFileCache=actionExecutionContext.getActionInputFileCache();
     HashCode workerFilesHash=combineActionInputHashes(spawn.getToolFiles(),inputFileCache);
-    WorkerKey key=new WorkerKey(args,env,workDir,spawn.getMnemonic(),workerFilesHash);
+    WorkerKey key=new WorkerKey(args,env,execRoot,spawn.getMnemonic(),workerFilesHash);
     WorkRequest.Builder requestBuilder=WorkRequest.newBuilder();
     expandArgument(requestBuilder,Iterables.getLast(spawn.getArguments()));
     List<ActionInput> inputs=ActionInputHelper.expandMiddlemen(spawn.getInputFiles(),actionExecutionContext.getMiddlemanExpander());
@@ -50,7 +49,7 @@
     }
   }
  catch (  Exception e) {
-    String message=CommandFailureUtils.describeCommandFailure(verboseFailures,spawn.getArguments(),env,workDir.getPathString());
+    String message=CommandFailureUtils.describeCommandFailure(verboseFailures,spawn.getArguments(),env,execRoot.getPathString());
     throw new UserExecException(message,e);
   }
 }
