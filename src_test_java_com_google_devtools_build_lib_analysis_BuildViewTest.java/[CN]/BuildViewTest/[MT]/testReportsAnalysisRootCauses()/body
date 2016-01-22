@@ -1,0 +1,13 @@
+{
+  scratch.file("private/BUILD","genrule(","    name='private',","    outs=['private.out'],","    cmd='',","    visibility=['//visibility:private'])");
+  scratch.file("foo/BUILD","genrule(","    name='foo',","    tools=[':bar'],","    outs=['foo.out'],","    cmd='')","genrule(","    name='bar',","    tools=['//private'],","    outs=['bar.out'],","    cmd='')");
+  reporter.removeHandler(failFastHandler);
+  EventBus eventBus=new EventBus();
+  AnalysisFailureRecorder recorder=new AnalysisFailureRecorder();
+  eventBus.register(recorder);
+  update(eventBus,defaultFlags().with(Flag.KEEP_GOING),"//foo");
+  assertThat(recorder.events).hasSize(1);
+  AnalysisFailureEvent event=recorder.events.get(0);
+  assertEquals("//foo:bar",event.getFailureReason().toString());
+  assertEquals("//foo:foo",event.getFailedTarget().getLabel().toString());
+}
