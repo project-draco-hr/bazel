@@ -11,6 +11,13 @@
  else {
     startLocalOutputBuild();
   }
+  if (getWorkspace().getFileSystem().supportsSymbolicLinks()) {
+    List<BuildConfiguration> targetConfigurations=configurations.getTargetConfigurations();
+    BuildConfiguration targetConfiguration=targetConfigurations.size() == 1 ? targetConfigurations.get(0) : null;
+    if (targetConfigurations.size() == 1) {
+      OutputDirectoryLinksUtils.createOutputDirectoryLinks(runtime.getWorkspaceName(),getWorkspace(),getExecRoot(),runtime.getOutputPath(),getReporter(),targetConfiguration,request.getBuildOptions().getSymlinkPrefix());
+    }
+  }
   ActionCache actionCache=getActionCache();
   SkyframeExecutor skyframeExecutor=env.getSkyframeExecutor();
   Builder builder=createBuilder(request,executor,actionCache,skyframeExecutor,modifiedOutputFiles);
@@ -51,12 +58,6 @@
     }
     if (buildCompleted) {
       getReporter().handle(Event.progress("Building complete."));
-      if (getWorkspace().getFileSystem().supportsSymbolicLinks()) {
-        List<BuildConfiguration> targetConfigurations=configurations.getTargetConfigurations();
-        if (targetConfigurations.size() == 1) {
-          OutputDirectoryLinksUtils.createOutputDirectoryLinks(runtime.getWorkspaceName(),getWorkspace(),getExecRoot(),runtime.getOutputPath(),getReporter(),targetConfigurations.get(0),request.getBuildOptions().getSymlinkPrefix());
-        }
-      }
     }
     env.getEventBus().post(new ExecutionFinishedEvent(ImmutableMap.<String,Long>of(),0L,skyframeExecutor.getOutputDirtyFilesAndClear(),skyframeExecutor.getModifiedFilesDuringPreviousBuildAndClear()));
     executor.executionPhaseEnding();

@@ -1,12 +1,17 @@
 {
   try {
-    if (target.exists()) {
-      FileSystemUtils.ensureSymbolicLink(base.getRelative(name),target);
-    }
-    return true;
+    FileSystemUtils.createDirectoryAndParents(target);
   }
  catch (  IOException e) {
-    failures.add(String.format("%s -> %s:  %s",name,target.getPathString(),e.getMessage()));
+    failures.add(String.format("cannot create directory %s: %s",target.getPathString(),e.getMessage()));
     return false;
   }
+  try {
+    FileSystemUtils.ensureSymbolicLink(base.getRelative(name),target);
+  }
+ catch (  IOException e) {
+    failures.add(String.format("cannot create symbolic link %s -> %s:  %s",name,target.getPathString(),e.getMessage()));
+    return false;
+  }
+  return true;
 }

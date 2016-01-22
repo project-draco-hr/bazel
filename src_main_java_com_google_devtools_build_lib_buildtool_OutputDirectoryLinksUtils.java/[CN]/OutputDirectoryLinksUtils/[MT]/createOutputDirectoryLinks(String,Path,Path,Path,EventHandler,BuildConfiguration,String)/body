@@ -5,9 +5,11 @@
   List<String> failures=new ArrayList<>();
   createLink(workspace,OUTPUT_SYMLINK_NAME,outputPath,failures);
   createLink(workspace,execRootSymlink(workspaceName),execRoot,failures);
-  createLink(workspace,symlinkPrefix + "bin",targetConfig.getBinDirectory().getPath(),failures);
-  createLink(workspace,symlinkPrefix + "testlogs",targetConfig.getTestLogsDirectory().getPath(),failures);
-  createLink(workspace,symlinkPrefix + "genfiles",targetConfig.getGenfilesDirectory().getPath(),failures);
+  if (targetConfig != null) {
+    createLink(workspace,symlinkPrefix + "bin",targetConfig.getBinDirectory().getPath(),failures);
+    createLink(workspace,symlinkPrefix + "testlogs",targetConfig.getTestLogsDirectory().getPath(),failures);
+    createLink(workspace,symlinkPrefix + "genfiles",targetConfig.getGenfilesDirectory().getPath(),failures);
+  }
   if (!failures.isEmpty()) {
     eventHandler.handle(Event.warn(String.format("failed to create one or more convenience symlinks for prefix '%s':\n  %s",symlinkPrefix,Joiner.on("\n  ").join(failures))));
   }
