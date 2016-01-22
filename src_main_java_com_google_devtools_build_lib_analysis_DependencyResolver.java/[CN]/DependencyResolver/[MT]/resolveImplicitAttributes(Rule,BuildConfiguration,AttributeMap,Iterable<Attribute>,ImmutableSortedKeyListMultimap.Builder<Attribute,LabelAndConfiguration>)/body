@@ -1,4 +1,5 @@
 {
+  Label ruleLabel=rule.getLabel();
   ImmutableSet<String> mappedAttributes=ImmutableSet.copyOf(attributeMap.getAttributeNames());
   for (  Attribute attribute : attributes) {
     if (!attribute.isImplicit() || !attribute.getCondition().apply(attributeMap)) {
@@ -11,7 +12,19 @@
       }
     }
  else     if (attribute.getType() == BuildType.LABEL_LIST) {
-      List<Label> labelList=mappedAttributes.contains(attribute.getName()) ? attributeMap.get(attribute.getName(),BuildType.LABEL_LIST) : BuildType.LABEL_LIST.cast(attribute.getDefaultValue(rule));
+      List<Label> labelList;
+      if (mappedAttributes.contains(attribute.getName())) {
+        labelList=new ArrayList<>();
+        for (        Label label : attributeMap.get(attribute.getName(),BuildType.LABEL_LIST)) {
+          if (attribute.getName().equals("$config_dependencies")) {
+            label=ruleLabel.resolveRepositoryRelative(label);
+          }
+          labelList.add(label);
+        }
+      }
+ else {
+        labelList=BuildType.LABEL_LIST.cast(attribute.getDefaultValue(rule));
+      }
       for (      Label label : labelList) {
         builder.put(attribute,LabelAndConfiguration.of(label,configuration));
       }
