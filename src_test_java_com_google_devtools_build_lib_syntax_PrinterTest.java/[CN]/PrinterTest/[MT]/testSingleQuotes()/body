@@ -4,13 +4,13 @@
   assertEquals("'\\''",Printer.repr("'",'\''));
   assertEquals("\"",Printer.str("\"",'\''));
   assertEquals("'\"'",Printer.repr("\"",'\''));
-  List<?> list=makeList("foo","bar");
-  List<?> tuple=makeTuple("foo","bar");
-  assertThat(Printer.str(makeTuple(1,list,3),'\'')).isEqualTo("(1, ['foo', 'bar'], 3)");
-  assertThat(Printer.repr(makeTuple(1,list,3),'\'')).isEqualTo("(1, ['foo', 'bar'], 3)");
-  assertThat(Printer.str(makeList(1,tuple,3),'\'')).isEqualTo("[1, ('foo', 'bar'), 3]");
-  assertThat(Printer.repr(makeList(1,tuple,3),'\'')).isEqualTo("[1, ('foo', 'bar'), 3]");
-  Map<Object,Object> dict=ImmutableMap.<Object,Object>of(1,tuple,2,list,"foo",makeList());
+  List<?> list=MutableList.of(null,"foo","bar");
+  List<?> tuple=Tuple.of("foo","bar");
+  assertThat(Printer.str(Tuple.of(1,list,3),'\'')).isEqualTo("(1, ['foo', 'bar'], 3)");
+  assertThat(Printer.repr(Tuple.of(1,list,3),'\'')).isEqualTo("(1, ['foo', 'bar'], 3)");
+  assertThat(Printer.str(MutableList.of(null,1,tuple,3),'\'')).isEqualTo("[1, ('foo', 'bar'), 3]");
+  assertThat(Printer.repr(MutableList.of(null,1,tuple,3),'\'')).isEqualTo("[1, ('foo', 'bar'), 3]");
+  Map<Object,Object> dict=ImmutableMap.<Object,Object>of(1,tuple,2,list,"foo",MutableList.of(null));
   assertThat(Printer.str(dict,'\'')).isEqualTo("{1: ('foo', 'bar'), 2: ['foo', 'bar'], 'foo': []}");
   assertThat(Printer.repr(dict,'\'')).isEqualTo("{1: ('foo', 'bar'), 2: ['foo', 'bar'], 'foo': []}");
 }
