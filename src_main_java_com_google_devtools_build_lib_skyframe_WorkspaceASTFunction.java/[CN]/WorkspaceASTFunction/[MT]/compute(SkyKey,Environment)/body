@@ -1,0 +1,25 @@
+{
+  RootedPath workspaceRoot=(RootedPath)skyKey.argument();
+  FileValue workspaceFileValue=(FileValue)env.getValue(FileValue.key(workspaceRoot));
+  if (workspaceFileValue == null) {
+    return null;
+  }
+  Path repoWorkspace=workspaceRoot.getRoot().getRelative(workspaceRoot.getRelativePath());
+  PathFragment pathFragment=new PathFragment("/DEFAULT.WORKSPACE");
+  try {
+    BuildFileAST ast=BuildFileAST.parseBuildFile(ParserInputSource.create(ruleClassProvider.getDefaultWorkspaceFile(),pathFragment),env.getListener(),false);
+    if (ast.containsErrors()) {
+      throw new WorkspaceASTFunctionException(new IOException("Failed to parse default WORKSPACE file"),Transience.PERSISTENT);
+    }
+    if (workspaceFileValue.exists()) {
+      ast=BuildFileAST.parseBuildFile(ParserInputSource.create(repoWorkspace),ast.getStatements(),env.getListener(),false);
+      if (ast.containsErrors()) {
+        throw new WorkspaceASTFunctionException(new IOException("Failed to parse WORKSPACE file"),Transience.PERSISTENT);
+      }
+    }
+    return new WorkspaceASTValue(ast);
+  }
+ catch (  IOException ex) {
+    throw new WorkspaceASTFunctionException(ex,Transience.TRANSIENT);
+  }
+}

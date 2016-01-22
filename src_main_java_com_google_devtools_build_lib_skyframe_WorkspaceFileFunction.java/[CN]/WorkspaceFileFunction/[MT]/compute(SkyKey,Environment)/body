@@ -1,8 +1,7 @@
 {
-  final Environment skyEnvironment=env;
   RootedPath workspaceRoot=(RootedPath)skyKey.argument();
-  FileValue workspaceFileValue=(FileValue)env.getValue(FileValue.key(workspaceRoot));
-  if (workspaceFileValue == null) {
+  WorkspaceASTValue workspaceASTValue=(WorkspaceASTValue)env.getValue(new SkyKey(SkyFunctions.WORKSPACE_AST,workspaceRoot));
+  if (workspaceASTValue == null) {
     return null;
   }
   Path repoWorkspace=workspaceRoot.getRoot().getRelative(workspaceRoot.getRelativePath());
@@ -10,25 +9,17 @@
   try (Mutability mutability=Mutability.create("workspace %s",repoWorkspace)){
     WorkspaceFactory parser=new WorkspaceFactory(builder,ruleClassProvider,packageFactory.getEnvironmentExtensions(),mutability,directories.getEmbeddedBinariesRoot(),directories.getWorkspace());
     try {
-      PathFragment pathFragment=new PathFragment("/DEFAULT.WORKSPACE");
-      if (!parse(ParserInputSource.create(ruleClassProvider.getDefaultWorkspaceFile(),pathFragment),repoWorkspace,parser,skyEnvironment)) {
-        return null;
+      BuildFileAST ast=workspaceASTValue.getAST();
+      PackageFunction.SkylarkImportResult importResult=PackageFunction.fetchImportsFromBuildFile(repoWorkspace,Label.EXTERNAL_PACKAGE_IDENTIFIER,ast,env,null);
+      if (importResult != null) {
+        parser.execute(ast,importResult.importMap);
       }
-      if (!workspaceFileValue.exists()) {
-        return new PackageValue(builder.build());
-      }
-      if (!parse(ParserInputSource.create(repoWorkspace),repoWorkspace,parser,skyEnvironment)) {
+ else {
         return null;
       }
     }
  catch (    PackageFunctionException e) {
       throw new WorkspaceFileFunctionException(e,Transience.PERSISTENT);
-    }
-catch (    IOException e) {
-      for (      Event event : parser.getEvents()) {
-        env.getListener().handle(event);
-      }
-      throw new WorkspaceFileFunctionException(e,Transience.TRANSIENT);
     }
   }
    return new PackageValue(builder.build());

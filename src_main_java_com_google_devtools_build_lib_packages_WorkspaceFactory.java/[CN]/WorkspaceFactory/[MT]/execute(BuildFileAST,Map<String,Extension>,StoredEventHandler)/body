@@ -1,0 +1,16 @@
+{
+  Environment.Builder environmentBuilder=Environment.builder(mutability).setGlobals(Environment.BUILD).setEventHandler(localReporter);
+  if (importedExtensions != null) {
+    environmentBuilder.setImportedExtensions(importedExtensions);
+  }
+  Environment workspaceEnv=environmentBuilder.setLoadingPhase().build();
+  addWorkspaceFunctions(workspaceEnv,localReporter);
+  if (!ast.exec(workspaceEnv,localReporter)) {
+    localReporter.handle(Event.error("Error evaluating WORKSPACE file"));
+  }
+  builder.addEvents(localReporter.getEvents());
+  if (localReporter.hasErrors()) {
+    builder.setContainsErrors();
+  }
+  localReporter.clear();
+}
