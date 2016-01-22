@@ -1,5 +1,8 @@
 {
   writer.startElement(JUNIT_ELEMENT_TESTCASE);
+  writer.writeAttribute(JUNIT_ATTR_TESTCASE_NAME,result.getName());
+  writer.writeAttribute(JUNIT_ATTR_TESTCASE_CLASSNAME,result.getClassName());
+  writer.writeAttribute(JUNIT_ATTR_TESTCASE_TIME,getFormattedRunTime(result.getRunTimeInterval()));
   for (  Throwable failure : Iterables.concat(parentFailures,result.getFailures())) {
     writer.startElement(JUNIT_ELEMENT_FAILURE);
     writer.writeAttribute(JUNIT_ATTR_FAILURE_MESSAGE,Strings.nullToEmpty(failure.getMessage()));
@@ -7,8 +10,5 @@
     writer.writeCharacters(formatStackTrace(failure));
     writer.endElement();
   }
-  writer.writeAttribute(JUNIT_ATTR_TESTCASE_NAME,result.getName());
-  writer.writeAttribute(JUNIT_ATTR_TESTCASE_CLASSNAME,result.getClassName());
-  writer.writeAttribute(JUNIT_ATTR_TESTCASE_TIME,getFormattedRunTime(result.getRunTimeInterval()));
   writer.endElement();
 }
