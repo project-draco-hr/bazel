@@ -1,14 +1,13 @@
 {
   ruleContext.checkSrcsSamePackage(true);
   FeatureConfiguration featureConfiguration=CcCommon.configureFeatures(ruleContext);
-  CcCommon common=new CcCommon(ruleContext,featureConfiguration);
+  CcCommon common=new CcCommon(ruleContext);
   CppConfiguration cppConfiguration=ruleContext.getFragment(CppConfiguration.class);
   PrecompiledFiles precompiledFiles=new PrecompiledFiles(ruleContext);
   LinkTargetType linkType=isLinkShared(ruleContext) ? LinkTargetType.DYNAMIC_LIBRARY : LinkTargetType.EXECUTABLE;
   List<String> linkopts=common.getLinkopts();
   LinkStaticness linkStaticness=getLinkStaticness(ruleContext,linkopts,cppConfiguration);
-  ImmutableList<Pair<Artifact,Label>> cAndCppSources=common.getCAndCppSources();
-  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,semantics,featureConfiguration).fromCommon(common).addSources(cAndCppSources).addDeps(ImmutableList.of(CppHelper.mallocForTarget(ruleContext))).addPrivateHeaders(FileType.filter(ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list(),CppFileTypes.CPP_HEADER)).setFake(fake).setLinkType(linkType).addPrecompiledFiles(precompiledFiles);
+  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,semantics,featureConfiguration).fromCommon(common).addSources(common.getSources()).addDeps(ImmutableList.of(CppHelper.mallocForTarget(ruleContext))).setFake(fake).setLinkType(linkType).addPrecompiledFiles(precompiledFiles);
   CcLibraryHelper.Info info=helper.build();
   CppCompilationContext cppCompilationContext=info.getCppCompilationContext();
   CcCompilationOutputs ccCompilationOutputs=info.getCcCompilationOutputs();
@@ -74,7 +73,7 @@
   if (!cppConfiguration.useFission()) {
     explicitDwpFile=null;
   }
-  Runfiles runfiles=collectRunfiles(ruleContext,linkingOutputs,cppCompilationContext,linkStaticness,filesToBuild,fakeLinkerInputs,fake,cAndCppSources);
+  Runfiles runfiles=collectRunfiles(ruleContext,linkingOutputs,cppCompilationContext,linkStaticness,filesToBuild,fakeLinkerInputs,fake,helper.getCompilationUnitSources());
   RunfilesSupport runfilesSupport=RunfilesSupport.withExecutable(ruleContext,runfiles,executable,ruleContext.getConfiguration().buildRunfiles());
   TransitiveLipoInfoProvider transitiveLipoInfo;
   if (cppConfiguration.isLipoContextCollector()) {
