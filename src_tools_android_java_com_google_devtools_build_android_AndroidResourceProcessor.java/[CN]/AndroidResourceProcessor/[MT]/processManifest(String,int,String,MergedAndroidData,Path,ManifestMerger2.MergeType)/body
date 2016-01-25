@@ -1,0 +1,40 @@
+{
+  if (versionCode != -1 || versionName != null || newManifestPackage != null) {
+    Path androidManifest=Files.createDirectories(workingDirectory).resolve("AndroidManifest.xml");
+    @SuppressWarnings("unchecked") Invoker<?> manifestMergerInvoker=ManifestMerger2.newMerger(primaryData.getManifestFile(),stdLogger,mergeType);
+    if (newManifestPackage != null) {
+      manifestMergerInvoker.setOverride(SystemProperty.PACKAGE,newManifestPackage);
+    }
+    if (versionCode > 0) {
+      manifestMergerInvoker.setOverride(SystemProperty.VERSION_CODE,String.valueOf(versionCode));
+    }
+    if (versionName != null) {
+      manifestMergerInvoker.setOverride(SystemProperty.VERSION_NAME,versionName);
+    }
+    if (mergeType == ManifestMerger2.MergeType.APPLICATION) {
+      manifestMergerInvoker.withFeatures(Invoker.Feature.REMOVE_TOOLS_DECLARATIONS);
+    }
+    try {
+      MergingReport mergingReport=manifestMergerInvoker.merge();
+switch (mergingReport.getResult()) {
+case WARNING:
+        mergingReport.log(stdLogger);
+      writeMergedManifest(mergingReport,androidManifest);
+    break;
+case SUCCESS:
+  writeMergedManifest(mergingReport,androidManifest);
+break;
+case ERROR:
+mergingReport.log(stdLogger);
+throw new RuntimeException(mergingReport.getReportString());
+default :
+throw new RuntimeException("Unhandled result type : " + mergingReport.getResult());
+}
+}
+ catch (IOException|SAXException|ParserConfigurationException|MergeFailureException e) {
+Throwables.propagate(e);
+}
+return androidManifest.toFile();
+}
+return primaryData.getManifestFile();
+}
