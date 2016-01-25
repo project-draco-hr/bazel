@@ -35,9 +35,19 @@
     return ans;
   }
  catch (  DependencyEvaluationException e) {
-    throw new ConfiguredTargetFunctionException(e.getRootCauseSkyKey(),e.getCause());
+    if (e.getCause() instanceof ConfiguredValueCreationException) {
+      throw new ConfiguredTargetFunctionException((ConfiguredValueCreationException)e.getCause());
+    }
+ else {
+      InvalidConfigurationException cause=(InvalidConfigurationException)e.getCause();
+      throw new ConfiguredTargetFunctionException(new ConfiguredValueCreationException(cause.getMessage(),target.getLabel()));
+    }
   }
 catch (  AspectCreationException e) {
-    throw new ConfiguredTargetFunctionException(new ConfiguredValueCreationException(e.getMessage()));
+    Label rootCause=target.getLabel();
+    if (e.getAnalysisRootCause() != null) {
+      rootCause=e.getAnalysisRootCause();
+    }
+    throw new ConfiguredTargetFunctionException(new ConfiguredValueCreationException(e.getMessage(),rootCause));
   }
 }

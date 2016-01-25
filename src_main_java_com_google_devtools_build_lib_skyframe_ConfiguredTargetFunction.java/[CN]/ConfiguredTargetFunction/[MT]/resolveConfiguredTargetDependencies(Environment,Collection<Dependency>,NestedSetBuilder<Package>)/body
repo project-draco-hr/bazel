@@ -1,10 +1,16 @@
 {
   boolean ok=!env.valuesMissing();
   Iterable<SkyKey> depKeys=Iterables.transform(deps,TO_KEYS);
-  Map<SkyKey,SkyValue> depValues=env.getValues(depKeys);
+  Map<SkyKey,ValueOrException<ConfiguredValueCreationException>> depValues=env.getValuesOrThrow(depKeys,ConfiguredValueCreationException.class);
   Map<SkyKey,ConfiguredTarget> result=Maps.newHashMapWithExpectedSize(depValues.size());
-  for (  Map.Entry<SkyKey,SkyValue> entry : depValues.entrySet()) {
-    ConfiguredTargetValue depValue=(ConfiguredTargetValue)entry.getValue();
+  for (  Map.Entry<SkyKey,ValueOrException<ConfiguredValueCreationException>> entry : depValues.entrySet()) {
+    ConfiguredTargetValue depValue;
+    try {
+      depValue=(ConfiguredTargetValue)entry.getValue().get();
+    }
+ catch (    ConfiguredValueCreationException e) {
+      throw new DependencyEvaluationException(e);
+    }
     if (depValue == null) {
       ok=false;
     }
