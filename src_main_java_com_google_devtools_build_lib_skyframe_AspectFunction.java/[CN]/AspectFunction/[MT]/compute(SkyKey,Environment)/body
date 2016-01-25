@@ -13,10 +13,12 @@
       skylarkAspect=loadSkylarkAspect(env,skylarkAspectClass.getExtensionLabel(),skylarkAspectClass.getExportedName());
     }
  catch (    SkylarkImportFailedException e) {
-      throw new AspectFunctionException(skyKey,e);
+      env.getListener().handle(Event.error(e.getMessage()));
+      throw new AspectFunctionException(new AspectCreationException(e.getMessage()));
     }
 catch (    ConversionException e) {
-      throw new AspectFunctionException(skyKey,e);
+      env.getListener().handle(Event.error(e.getMessage()));
+      throw new AspectFunctionException(new AspectCreationException(e.getMessage()));
     }
     if (skylarkAspect == null) {
       return null;
@@ -32,14 +34,14 @@ catch (    ConversionException e) {
   }
   Package pkg=packageValue.getPackage();
   if (pkg.containsErrors()) {
-    throw new AspectFunctionException(skyKey,new BuildFileContainsErrorsException(key.getLabel().getPackageIdentifier()));
+    throw new AspectFunctionException(new BuildFileContainsErrorsException(key.getLabel().getPackageIdentifier()));
   }
   Target target;
   try {
     target=pkg.getTarget(key.getLabel().getName());
   }
  catch (  NoSuchTargetException e) {
-    throw new AspectFunctionException(skyKey,e);
+    throw new AspectFunctionException(e);
   }
   if (!(target instanceof Rule)) {
     throw new AspectFunctionException(new AspectCreationException("aspects must be attached to rules"));
