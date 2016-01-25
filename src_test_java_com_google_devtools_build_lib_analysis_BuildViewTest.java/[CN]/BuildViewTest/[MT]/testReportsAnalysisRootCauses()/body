@@ -5,7 +5,8 @@
   EventBus eventBus=new EventBus();
   AnalysisFailureRecorder recorder=new AnalysisFailureRecorder();
   eventBus.register(recorder);
-  update(eventBus,defaultFlags().with(Flag.KEEP_GOING),"//foo");
+  AnalysisResult result=update(eventBus,defaultFlags().with(Flag.KEEP_GOING),"//foo");
+  assertThat(result.hasError()).isTrue();
   assertThat(recorder.events).hasSize(1);
   AnalysisFailureEvent event=recorder.events.get(0);
   assertEquals("//foo:bar",event.getFailureReason().toString());

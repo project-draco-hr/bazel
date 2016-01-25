@@ -4,7 +4,8 @@
   EventBus eventBus=new EventBus();
   LoadingFailureRecorder recorder=new LoadingFailureRecorder();
   eventBus.register(recorder);
-  update(eventBus,defaultFlags().with(Flag.KEEP_GOING),"//pkg:foo");
+  AnalysisResult result=update(eventBus,defaultFlags().with(Flag.KEEP_GOING),"//pkg:foo");
+  assertThat(result.hasError()).isTrue();
   assertThat(recorder.events).contains(Pair.of(Label.parseAbsolute("//pkg:foo"),Label.parseAbsolute("//nopackage:missing")));
   assertContainsEvent("missing value for mandatory attribute 'outs'");
   assertContainsEvent("no such package 'nopackage'");

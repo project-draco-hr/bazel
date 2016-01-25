@@ -8,7 +8,8 @@
   EventBus eventBus=new EventBus();
   LoadingFailureRecorder recorder=new LoadingFailureRecorder();
   eventBus.register(recorder);
-  update(eventBus,defaultFlags().with(Flag.KEEP_GOING),"//third_party/first","//third_party/third");
+  AnalysisResult result=update(eventBus,defaultFlags().with(Flag.KEEP_GOING),"//third_party/first","//third_party/third");
+  assertThat(result.hasError()).isTrue();
   assertThat(recorder.events).hasSize(2);
   assertTrue(recorder.events.toString(),recorder.events.contains(Pair.of(Label.parseAbsolute("//third_party/first"),Label.parseAbsolute("//third_party/fourth"))));
   assertThat(recorder.events).contains(Pair.of(Label.parseAbsolute("//third_party/third"),Label.parseAbsolute("//third_party/fourth")));
