@@ -8,7 +8,7 @@
   }
  catch (  SkylarkImportFailedException e) {
     env.getListener().handle(Event.error(e.getMessage()));
-    throw new LoadSkylarkAspectFunctionException(e,skyKey);
+    throw new LoadSkylarkAspectFunctionException(new AspectCreationException(e.getMessage()),skyKey);
   }
   if (labelLookupMap == null) {
     return null;
@@ -17,13 +17,8 @@
   try {
     skylarkAspect=AspectFunction.loadSkylarkAspect(env,labelLookupMap.get(extensionFile),skylarkValueName);
   }
- catch (  SkylarkImportFailedException e) {
-    env.getListener().handle(Event.error(e.getMessage()));
-    throw new LoadSkylarkAspectFunctionException(new AspectCreationException(e.getMessage()),skyKey);
-  }
-catch (  ConversionException e) {
-    env.getListener().handle(Event.error(e.getMessage()));
-    throw new LoadSkylarkAspectFunctionException(new AspectCreationException(e.getMessage()),skyKey);
+ catch (  AspectCreationException e) {
+    throw new LoadSkylarkAspectFunctionException(e,skyKey);
   }
   if (skylarkAspect == null) {
     return null;

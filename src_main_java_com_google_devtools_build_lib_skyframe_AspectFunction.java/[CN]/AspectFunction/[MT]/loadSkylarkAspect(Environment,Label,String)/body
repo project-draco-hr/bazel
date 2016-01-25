@@ -1,12 +1,18 @@
 {
   SkyKey importFileKey=SkylarkImportLookupValue.key(extensionLabel,false);
-  SkylarkImportLookupValue skylarkImportLookupValue=(SkylarkImportLookupValue)env.getValueOrThrow(importFileKey,SkylarkImportFailedException.class);
-  if (skylarkImportLookupValue == null) {
-    return null;
+  try {
+    SkylarkImportLookupValue skylarkImportLookupValue=(SkylarkImportLookupValue)env.getValueOrThrow(importFileKey,SkylarkImportFailedException.class);
+    if (skylarkImportLookupValue == null) {
+      return null;
+    }
+    Object skylarkValue=skylarkImportLookupValue.getEnvironmentExtension().get(skylarkValueName);
+    if (!(skylarkValue instanceof SkylarkAspect)) {
+      throw new ConversionException(skylarkValueName + " from " + extensionLabel.toString()+ " is not an aspect");
+    }
+    return (SkylarkAspect)skylarkValue;
   }
-  Object skylarkValue=skylarkImportLookupValue.getEnvironmentExtension().get(skylarkValueName);
-  if (!(skylarkValue instanceof SkylarkAspect)) {
-    throw new ConversionException(skylarkValueName + " from " + extensionLabel.toString()+ " is not an aspect");
+ catch (  SkylarkImportFailedException|ConversionException e) {
+    env.getListener().handle(Event.error(e.getMessage()));
+    throw new AspectCreationException(e.getMessage());
   }
-  return (SkylarkAspect)skylarkValue;
 }
