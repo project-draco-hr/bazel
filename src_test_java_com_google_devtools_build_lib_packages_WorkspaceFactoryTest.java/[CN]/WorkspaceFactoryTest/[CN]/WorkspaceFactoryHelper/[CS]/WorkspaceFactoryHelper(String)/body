@@ -1,0 +1,27 @@
+{
+  Path root=null;
+  Path workspaceFilePath=null;
+  try {
+    Scratch scratch=new Scratch("/");
+    root=scratch.dir("/workspace");
+    workspaceFilePath=scratch.file("/workspace/WORKSPACE",args);
+  }
+ catch (  IOException e) {
+    fail("Shouldn't happen: " + e.getMessage());
+  }
+  StoredEventHandler eventHandler=new StoredEventHandler();
+  builder=Package.newExternalPackageBuilder(workspaceFilePath,"");
+  this.factory=new WorkspaceFactory(builder,TestRuleClassProvider.getRuleClassProvider(),ImmutableList.<PackageFactory.EnvironmentExtension>of(),Mutability.create("test"),root,root);
+  Exception exception=null;
+  try {
+    factory.parse(ParserInputSource.create(workspaceFilePath),eventHandler);
+  }
+ catch (  IOException e) {
+    exception=e;
+  }
+catch (  InterruptedException e) {
+    fail("Shouldn't happen: " + e.getMessage());
+  }
+  this.events=eventHandler.getEvents();
+  this.exception=exception;
+}
