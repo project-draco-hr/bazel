@@ -1,23 +1,23 @@
 {
   if (result.hasError()) {
-    boolean hasCycles=false;
     for (    Map.Entry<SkyKey,ErrorInfo> entry : result.errorMap().entrySet()) {
       Iterable<CycleInfo> cycles=entry.getValue().getCycleInfo();
       skyframeExecutor.reportCycles(eventHandler,cycles,entry.getKey());
-      hasCycles|=!Iterables.isEmpty(cycles);
     }
-    boolean hasCatastrophe=resultHasCatastrophicError(result);
-    if (keepGoing && !hasCatastrophe) {
+    if (result.getCatastrophe() != null) {
+      rethrow(result.getCatastrophe());
+    }
+    if (keepGoing) {
       return false;
     }
-    if (hasCycles || result.errorMap().isEmpty()) {
-      if (result.getCatastrophe() != null) {
-        rethrow(result.getCatastrophe());
-      }
-      throw new BuildFailedException(null,hasCatastrophe);
+    ErrorInfo errorInfo=Preconditions.checkNotNull(result.getError(),result);
+    Exception exception=errorInfo.getException();
+    if (exception == null) {
+      Preconditions.checkState(!Iterables.isEmpty(errorInfo.getCycleInfo()),errorInfo);
+      throw new BuildFailedException(null,false);
     }
  else {
-      rethrow(Preconditions.checkNotNull(result.getError().getException()));
+      rethrow(exception);
     }
   }
   return true;

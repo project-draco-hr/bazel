@@ -1,3 +1,7 @@
 {
-  return getGraphFromPatternsEvaluation(patternSequence,successExpected,true);
+  SkyKey independentTarget=PrepareDepsOfPatternsValue.key(patternSequence,"");
+  ImmutableList<SkyKey> singletonTargetPattern=ImmutableList.of(independentTarget);
+  EvaluationResult<SkyValue> evaluationResult=getSkyframeExecutor().getDriverForTesting().evaluate(singletonTargetPattern,keepGoing,LOADING_PHASE_THREADS,eventCollector);
+  assertThatEvaluationResult(evaluationResult).hasNoError();
+  return Preconditions.checkNotNull(evaluationResult.getWalkableGraph());
 }

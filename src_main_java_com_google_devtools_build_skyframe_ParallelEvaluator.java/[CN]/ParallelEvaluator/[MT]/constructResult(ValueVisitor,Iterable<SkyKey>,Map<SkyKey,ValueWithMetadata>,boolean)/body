@@ -2,21 +2,18 @@
   Preconditions.checkState(catastrophe == (keepGoing && bubbleErrorInfo != null),"Catastrophe not consistent with keepGoing mode and bubbleErrorInfo: %s %s %s %s",skyKeys,catastrophe,keepGoing,bubbleErrorInfo);
   EvaluationResult.Builder<T> result=EvaluationResult.builder();
   List<SkyKey> cycleRoots=new ArrayList<>();
-  boolean hasError=false;
   for (  SkyKey skyKey : skyKeys) {
     ValueWithMetadata valueWithMetadata=getValueMaybeFromError(skyKey,bubbleErrorInfo);
     if (valueWithMetadata == null) {
       if (bubbleErrorInfo == null) {
         cycleRoots.add(skyKey);
       }
-      hasError=true;
       continue;
     }
     SkyValue value=valueWithMetadata.getValue();
     replayingNestedSetEventVisitor.visit(valueWithMetadata.getTransitiveEvents());
     ErrorInfo errorInfo=valueWithMetadata.getErrorInfo();
     Preconditions.checkState(value != null || errorInfo != null,skyKey);
-    hasError=hasError || (errorInfo != null);
     if (!keepGoing && errorInfo != null) {
       result.addError(skyKey,errorInfo);
       continue;
@@ -32,12 +29,12 @@
     Preconditions.checkState(visitor != null,skyKeys);
     checkForCycles(cycleRoots,result,visitor,keepGoing);
   }
-  Preconditions.checkState(bubbleErrorInfo == null || hasError,"If an error bubbled up, some top-level node must be in error",bubbleErrorInfo,skyKeys);
-  result.setHasError(hasError);
   if (catastrophe) {
     ErrorInfo errorInfo=Preconditions.checkNotNull(Iterables.getOnlyElement(bubbleErrorInfo.values()).getErrorInfo(),"bubbleErrorInfo should have contained element with errorInfo: %s",bubbleErrorInfo);
     Preconditions.checkState(errorInfo.isCatastrophic(),"bubbleErrorInfo should have contained element with catastrophe: %s",bubbleErrorInfo);
     result.setCatastrophe(errorInfo.getException());
   }
-  return result.build();
+  EvaluationResult<T> builtResult=result.build();
+  Preconditions.checkState(bubbleErrorInfo == null || builtResult.hasError(),"If an error bubbled up, some top-level node must be in error: %s %s %s",bubbleErrorInfo,skyKeys,builtResult);
+  return builtResult;
 }
