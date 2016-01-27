@@ -1,0 +1,18 @@
+{
+  update();
+  Aspect simpleAspect=new Aspect(new NativeAspectClass<TestAspects.SimpleAspect>(TestAspects.SimpleAspect.class));
+  Aspect attributeAspect=new Aspect(new NativeAspectClass<TestAspects.AttributeAspect>(TestAspects.AttributeAspect.class));
+  ImmutableSet<Aspect> twoAspects=ImmutableSet.of(simpleAspect,attributeAspect);
+  Dependency targetDep=Dependency.withConfigurationAndAspects(Label.parseAbsolute("//a"),getTargetConfiguration(),twoAspects);
+  assertThat(targetDep.getLabel()).isEqualTo(Label.parseAbsolute("//a"));
+  assertThat(targetDep.hasStaticConfiguration()).isTrue();
+  assertThat(targetDep.getConfiguration()).isEqualTo(getTargetConfiguration());
+  assertThat(targetDep.getAspects()).containsExactlyElementsIn(twoAspects);
+  assertThat(targetDep.getAspectConfigurations()).containsExactlyEntriesIn(ImmutableMap.of(simpleAspect,getTargetConfiguration(),attributeAspect,getTargetConfiguration()));
+  try {
+    targetDep.getTransition();
+    fail("withConfigurationAndAspects-created Dependencies should throw ISE on getTransition()");
+  }
+ catch (  IllegalStateException ex) {
+  }
+}

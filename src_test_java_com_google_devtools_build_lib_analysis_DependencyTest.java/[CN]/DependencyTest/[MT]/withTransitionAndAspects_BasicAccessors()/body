@@ -1,0 +1,22 @@
+{
+  Aspect simpleAspect=new Aspect(new NativeAspectClass<TestAspects.SimpleAspect>(TestAspects.SimpleAspect.class));
+  Aspect attributeAspect=new Aspect(new NativeAspectClass<TestAspects.AttributeAspect>(TestAspects.AttributeAspect.class));
+  ImmutableSet<Aspect> twoAspects=ImmutableSet.of(simpleAspect,attributeAspect);
+  Dependency hostDep=Dependency.withTransitionAndAspects(Label.parseAbsolute("//a"),ConfigurationTransition.HOST,twoAspects);
+  assertThat(hostDep.getLabel()).isEqualTo(Label.parseAbsolute("//a"));
+  assertThat(hostDep.hasStaticConfiguration()).isFalse();
+  assertThat(hostDep.getAspects()).containsExactlyElementsIn(twoAspects);
+  assertThat(hostDep.getTransition()).isEqualTo(ConfigurationTransition.HOST);
+  try {
+    hostDep.getConfiguration();
+    fail("withTransitionAndAspects-created Dependencies should throw ISE on getConfiguration()");
+  }
+ catch (  IllegalStateException ex) {
+  }
+  try {
+    hostDep.getAspectConfigurations();
+    fail("withTransitionAndAspects-created Dependencies should throw ISE on " + "getAspectConfigurations()");
+  }
+ catch (  IllegalStateException ex) {
+  }
+}

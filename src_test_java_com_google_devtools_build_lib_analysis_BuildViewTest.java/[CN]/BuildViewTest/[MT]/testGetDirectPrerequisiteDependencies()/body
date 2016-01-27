@@ -6,12 +6,12 @@
   Dependency innerDependency;
   Dependency fileDependency;
   if (top.getConfiguration().useDynamicConfigurations()) {
-    innerDependency=new Dependency(Label.parseAbsolute("//package:inner"),Attribute.ConfigurationTransition.NONE,ImmutableSet.<Aspect>of());
-    fileDependency=new Dependency(Label.parseAbsolute("//package:file"),Attribute.ConfigurationTransition.NONE,ImmutableSet.<Aspect>of());
+    innerDependency=Dependency.withTransitionAndAspects(Label.parseAbsolute("//package:inner"),Attribute.ConfigurationTransition.NONE,ImmutableSet.<Aspect>of());
+    fileDependency=Dependency.withTransitionAndAspects(Label.parseAbsolute("//package:file"),Attribute.ConfigurationTransition.NONE,ImmutableSet.<Aspect>of());
   }
  else {
-    innerDependency=new Dependency(Label.parseAbsolute("//package:inner"),getTargetConfiguration(),ImmutableSet.<Aspect>of());
-    fileDependency=new Dependency(Label.parseAbsolute("//package:file"),(BuildConfiguration)null,ImmutableSet.<Aspect>of());
+    innerDependency=Dependency.withConfiguration(Label.parseAbsolute("//package:inner"),getTargetConfiguration());
+    fileDependency=Dependency.withNullConfiguration(Label.parseAbsolute("//package:file"));
   }
   assertThat(targets).containsExactly(innerDependency,fileDependency);
 }
