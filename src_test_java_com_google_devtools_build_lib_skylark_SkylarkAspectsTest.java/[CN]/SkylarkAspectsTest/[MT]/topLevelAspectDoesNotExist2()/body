@@ -2,8 +2,9 @@
   scratch.file("test/BUILD","java_library(name = 'xxx')");
   reporter.removeHandler(failFastHandler);
   try {
-    update(ImmutableList.of("test/aspect.bzl%MyAspect"),"//test:xxx");
-    fail();
+    AnalysisResult result=update(ImmutableList.of("test/aspect.bzl%MyAspect"),"//test:xxx");
+    assertThat(keepGoing()).isTrue();
+    assertThat(result.hasError()).isTrue();
   }
  catch (  ViewCreationFailedException e) {
   }
