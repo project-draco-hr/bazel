@@ -1,11 +1,3 @@
 {
-  return builder.add(attr(":dumpsyms",LABEL).cfg(HOST).singleArtifact().value(new LateBoundLabel<BuildConfiguration>(ObjcConfiguration.class){
-    @Override public Label getDefault(    Rule rule,    BuildConfiguration configuration){
-      if (!configuration.getFragment(ObjcConfiguration.class).generateDebugSymbols()) {
-        return null;
-      }
-      return configuration.getFragment(ObjcConfiguration.class).getDumpSymsLabel();
-    }
-  }
-)).add(attr("$j2objc_dead_code_pruner",LABEL).allowedFileTypes(FileType.of(".py")).cfg(HOST).exec().singleArtifact().value(env.getLabel(Constants.TOOLS_REPOSITORY + "//tools/objc:j2objc_dead_code_pruner"))).build();
+  return builder.add(attr("$dumpsyms",LABEL).cfg(HOST).singleArtifact().value(env.getLabel(Constants.TOOLS_REPOSITORY + "//tools/objc:dump_syms"))).add(attr("$j2objc_dead_code_pruner",LABEL).allowedFileTypes(FileType.of(".py")).cfg(HOST).exec().singleArtifact().value(env.getLabel(Constants.TOOLS_REPOSITORY + "//tools/objc:j2objc_dead_code_pruner"))).build();
 }
