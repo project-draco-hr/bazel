@@ -6,7 +6,7 @@
       aspectKeys.add(createAspectKey(dep.getLabel(),dep.getConfiguration(),depAspect));
     }
   }
-  Map<SkyKey,ValueOrException3<AspectCreationException,NoSuchThingException,ConfiguredValueCreationException>> depAspects=env.getValuesOrThrow(aspectKeys,AspectCreationException.class,NoSuchThingException.class,ConfiguredValueCreationException.class);
+  Map<SkyKey,ValueOrException2<AspectCreationException,NoSuchThingException>> depAspects=env.getValuesOrThrow(aspectKeys,AspectCreationException.class,NoSuchThingException.class);
   for (  Dependency dep : deps) {
     SkyKey depKey=TO_KEYS.apply(dep);
     if (result.containsKey(depKey)) {
@@ -22,10 +22,7 @@
       try {
         aspectValue=(AspectValue)depAspects.get(aspectKey).get();
       }
- catch (      ConfiguredValueCreationException e) {
-        throw new IllegalStateException(e);
-      }
-catch (      NoSuchThingException e) {
+ catch (      NoSuchThingException e) {
         throw new AspectCreationException(String.format("Evaluation of aspect %s on %s failed: %s",depAspect.getDefinition().getName(),dep.getLabel(),e.toString()));
       }
       if (aspectValue == null) {

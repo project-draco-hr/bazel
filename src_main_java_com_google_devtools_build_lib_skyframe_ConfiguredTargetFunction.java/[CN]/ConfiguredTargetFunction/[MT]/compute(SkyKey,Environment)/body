@@ -1,6 +1,7 @@
 {
   SkyframeBuildView view=buildViewProvider.getSkyframeBuildView();
   NestedSetBuilder<Package> transitivePackages=NestedSetBuilder.stableOrder();
+  NestedSetBuilder<Label> transitiveLoadingRootCauses=NestedSetBuilder.stableOrder();
   ConfiguredTargetKey configuredTargetKey=(ConfiguredTargetKey)key.argument();
   LabelAndConfiguration lc=LabelAndConfiguration.of(configuredTargetKey.getLabel(),configuredTargetKey.getConfiguration());
   BuildConfiguration configuration=lc.getConfiguration();
@@ -26,11 +27,18 @@
   SkyframeDependencyResolver resolver=view.createDependencyResolver(env);
   TargetAndConfiguration ctgValue=new TargetAndConfiguration(target,configuration);
   try {
-    Set<ConfigMatchingProvider> configConditions=getConfigConditions(ctgValue.getTarget(),env,resolver,ctgValue,transitivePackages);
+    Set<ConfigMatchingProvider> configConditions=getConfigConditions(ctgValue.getTarget(),env,resolver,ctgValue,transitivePackages,transitiveLoadingRootCauses);
     if (env.valuesMissing()) {
       return null;
     }
-    ListMultimap<Attribute,ConfiguredTarget> depValueMap=computeDependencies(env,resolver,ctgValue,null,configConditions,ruleClassProvider,view.getHostConfiguration(configuration),transitivePackages);
+    ListMultimap<Attribute,ConfiguredTarget> depValueMap=computeDependencies(env,resolver,ctgValue,null,configConditions,ruleClassProvider,view.getHostConfiguration(configuration),transitivePackages,transitiveLoadingRootCauses);
+    if (env.valuesMissing()) {
+      return null;
+    }
+    if (!transitiveLoadingRootCauses.isEmpty()) {
+      throw new ConfiguredTargetFunctionException(new ConfiguredValueCreationException(transitiveLoadingRootCauses.build()));
+    }
+    Preconditions.checkNotNull(depValueMap);
     ConfiguredTargetValue ans=createConfiguredTarget(view,env,target,configuration,depValueMap,configConditions,transitivePackages);
     return ans;
   }
@@ -44,10 +52,10 @@
     }
   }
 catch (  AspectCreationException e) {
-    Label rootCause=target.getLabel();
+    Label analysisRootCause=target.getLabel();
     if (e.getAnalysisRootCause() != null) {
-      rootCause=e.getAnalysisRootCause();
+      analysisRootCause=e.getAnalysisRootCause();
     }
-    throw new ConfiguredTargetFunctionException(new ConfiguredValueCreationException(e.getMessage(),rootCause));
+    throw new ConfiguredTargetFunctionException(new ConfiguredValueCreationException(e.getMessage(),analysisRootCause));
   }
 }

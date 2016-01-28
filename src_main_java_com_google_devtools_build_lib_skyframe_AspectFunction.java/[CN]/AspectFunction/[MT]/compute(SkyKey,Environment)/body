@@ -1,6 +1,7 @@
 {
   SkyframeBuildView view=buildViewProvider.getSkyframeBuildView();
   NestedSetBuilder<Package> transitivePackages=NestedSetBuilder.stableOrder();
+  NestedSetBuilder<Label> transitiveRootCauses=NestedSetBuilder.stableOrder();
   AspectKey key=(AspectKey)skyKey.argument();
   ConfiguredAspectFactory aspectFactory;
   if (key.getAspectClass() instanceof NativeAspectClass<?>) {
@@ -41,7 +42,13 @@
   if (!(target instanceof Rule)) {
     throw new AspectFunctionException(new AspectCreationException("aspects must be attached to rules"));
   }
-  final ConfiguredTargetValue configuredTargetValue=(ConfiguredTargetValue)env.getValue(ConfiguredTargetValue.key(key.getLabel(),key.getConfiguration()));
+  final ConfiguredTargetValue configuredTargetValue;
+  try {
+    configuredTargetValue=(ConfiguredTargetValue)env.getValueOrThrow(ConfiguredTargetValue.key(key.getLabel(),key.getConfiguration()),ConfiguredValueCreationException.class);
+  }
+ catch (  ConfiguredValueCreationException e) {
+    throw new AspectFunctionException(new AspectCreationException(e.getRootCauses()));
+  }
   if (configuredTargetValue == null) {
     return null;
   }
@@ -52,11 +59,17 @@
   SkyframeDependencyResolver resolver=view.createDependencyResolver(env);
   TargetAndConfiguration ctgValue=new TargetAndConfiguration(target,key.getConfiguration());
   try {
-    Set<ConfigMatchingProvider> configConditions=ConfiguredTargetFunction.getConfigConditions(target,env,resolver,ctgValue,transitivePackages);
+    Set<ConfigMatchingProvider> configConditions=ConfiguredTargetFunction.getConfigConditions(target,env,resolver,ctgValue,transitivePackages,transitiveRootCauses);
     if (configConditions == null) {
       return null;
     }
-    ListMultimap<Attribute,ConfiguredTarget> depValueMap=ConfiguredTargetFunction.computeDependencies(env,resolver,ctgValue,key.getAspect(),configConditions,ruleClassProvider,view.getHostConfiguration(ctgValue.getConfiguration()),transitivePackages);
+    ListMultimap<Attribute,ConfiguredTarget> depValueMap=ConfiguredTargetFunction.computeDependencies(env,resolver,ctgValue,key.getAspect(),configConditions,ruleClassProvider,view.getHostConfiguration(ctgValue.getConfiguration()),transitivePackages,transitiveRootCauses);
+    if (depValueMap == null) {
+      return null;
+    }
+    if (!transitiveRootCauses.isEmpty()) {
+      throw new AspectFunctionException(new AspectCreationException("Loading failed",transitiveRootCauses.build()));
+    }
     return createAspect(env,key,aspectFactory,associatedTarget,configConditions,depValueMap,transitivePackages);
   }
  catch (  DependencyEvaluationException e) {

@@ -1,0 +1,35 @@
+{
+  boolean missedValues=env.valuesMissing();
+  boolean failed=false;
+  Iterable<SkyKey> depKeys=Iterables.transform(deps,TO_KEYS);
+  Map<SkyKey,ValueOrException<ConfiguredValueCreationException>> depValuesOrExceptions=env.getValuesOrThrow(depKeys,ConfiguredValueCreationException.class);
+  Map<SkyKey,ConfiguredTarget> result=Maps.newHashMapWithExpectedSize(depValuesOrExceptions.size());
+  for (  Map.Entry<SkyKey,ValueOrException<ConfiguredValueCreationException>> entry : depValuesOrExceptions.entrySet()) {
+    try {
+      ConfiguredTargetValue depValue=(ConfiguredTargetValue)entry.getValue().get();
+      if (depValue == null) {
+        missedValues=true;
+      }
+ else {
+        result.put(entry.getKey(),depValue.getConfiguredTarget());
+        transitivePackages.addTransitive(depValue.getTransitivePackages());
+      }
+    }
+ catch (    ConfiguredValueCreationException e) {
+      if (e.getAnalysisRootCause() != null) {
+        throw new DependencyEvaluationException(e);
+      }
+      transitiveLoadingRootCauses.addTransitive(e.loadingRootCauses);
+      failed=true;
+    }
+  }
+  if (missedValues) {
+    return null;
+  }
+ else   if (failed) {
+    throw new DependencyEvaluationException(new ConfiguredValueCreationException(transitiveLoadingRootCauses.build()));
+  }
+ else {
+    return result;
+  }
+}

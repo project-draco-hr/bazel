@@ -4,8 +4,13 @@
   }
 class SilentDependencyResolver extends DependencyResolver {
     @Override protected void invalidVisibilityReferenceHook(    TargetAndConfiguration node,    Label label){
+      throw new RuntimeException("bad visibility on " + label + " during testing unexpected");
     }
     @Override protected void invalidPackageGroupReferenceHook(    TargetAndConfiguration node,    Label label){
+      throw new RuntimeException("bad package group on " + label + " during testing unexpected");
+    }
+    @Override protected void missingEdgeHook(    Target from,    Label to,    NoSuchThingException e){
+      throw new RuntimeException("missing dependency from " + from.getLabel() + " to "+ to+ ": "+ e.getMessage(),e);
     }
     @Override protected Target getTarget(    Label label) throws NoSuchThingException {
       return LoadedPackageProvider.Bridge.getLoadedTarget(skyframeExecutor.getPackageManager(),eventHandler,label);

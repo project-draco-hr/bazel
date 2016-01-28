@@ -1,0 +1,44 @@
+{
+  if (!(target instanceof Rule)) {
+    return ImmutableSet.of();
+  }
+  ImmutableSet.Builder<ConfigMatchingProvider> configConditions=ImmutableSet.builder();
+  ListMultimap<Attribute,LabelAndConfiguration> configLabelMap=ArrayListMultimap.create();
+  RawAttributeMapper attributeMap=RawAttributeMapper.of(((Rule)target));
+  for (  Attribute a : ((Rule)target).getAttributes()) {
+    for (    Label configLabel : attributeMap.getConfigurabilityKeys(a.getName(),a.getType())) {
+      if (!BuildType.Selector.isReservedLabel(configLabel)) {
+        configLabelMap.put(a,LabelAndConfiguration.of(target.getLabel().resolveRepositoryRelative(configLabel),ctgValue.getConfiguration()));
+      }
+    }
+  }
+  if (configLabelMap.isEmpty()) {
+    return ImmutableSet.of();
+  }
+  Collection<Dependency> configValueNames=resolver.resolveRuleLabels(ctgValue,configLabelMap,transitiveLoadingRootCauses);
+  BuildConfiguration targetConfig=ctgValue.getConfiguration();
+  if (targetConfig != null && targetConfig.useDynamicConfigurations()) {
+    ImmutableList.Builder<Dependency> staticConfigs=ImmutableList.builder();
+    for (    Dependency dep : configValueNames) {
+      staticConfigs.add(Dependency.withConfigurationAndAspects(dep.getLabel(),targetConfig,dep.getAspects()));
+    }
+    configValueNames=staticConfigs.build();
+  }
+  Map<SkyKey,ConfiguredTarget> configValues=resolveConfiguredTargetDependencies(env,configValueNames,transitivePackages,transitiveLoadingRootCauses);
+  if (configValues == null) {
+    return null;
+  }
+  for (  Dependency entry : configValueNames) {
+    ConfiguredTarget value=configValues.get(TO_KEYS.apply(entry));
+    ConfigMatchingProvider provider=value.getProvider(ConfigMatchingProvider.class);
+    if (provider != null) {
+      configConditions.add(provider);
+    }
+ else {
+      String message=entry.getLabel() + " is not a valid configuration key for " + target.getLabel();
+      env.getListener().handle(Event.error(TargetUtils.getLocationMaybe(target),message));
+      throw new DependencyEvaluationException(new ConfiguredValueCreationException(message,target.getLabel()));
+    }
+  }
+  return configConditions.build();
+}
