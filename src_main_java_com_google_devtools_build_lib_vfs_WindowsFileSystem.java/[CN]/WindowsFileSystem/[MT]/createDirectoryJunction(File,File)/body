@@ -1,0 +1,22 @@
+{
+  StringBuilder cl=new StringBuilder("cmd.exe /c ");
+  cl.append("mklink /J ");
+  cl.append('"');
+  cl.append(targetPath.getAbsolutePath());
+  cl.append('"');
+  cl.append(' ');
+  cl.append('"');
+  cl.append(sourceDirectory.getAbsolutePath());
+  cl.append('"');
+  Process process=Runtime.getRuntime().exec(cl.toString());
+  try {
+    process.waitFor();
+    if (process.exitValue() != 0) {
+      throw new IOException("Command failed " + cl);
+    }
+  }
+ catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+    throw new IOException("Command failed ",e);
+  }
+}

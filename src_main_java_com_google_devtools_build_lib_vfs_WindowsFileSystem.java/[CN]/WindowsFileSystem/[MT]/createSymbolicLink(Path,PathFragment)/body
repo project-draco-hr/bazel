@@ -1,0 +1,21 @@
+{
+  File file=getIoFile(linkPath);
+  try {
+    File targetFile=new File(targetFragment.getPathString());
+    if (targetFile.isDirectory()) {
+      createDirectoryJunction(targetFile,file);
+    }
+ else {
+      Files.copy(targetFile.toPath(),file.toPath());
+    }
+  }
+ catch (  java.nio.file.FileAlreadyExistsException e) {
+    throw new IOException(linkPath + ERR_FILE_EXISTS);
+  }
+catch (  java.nio.file.AccessDeniedException e) {
+    throw new IOException(linkPath + ERR_PERMISSION_DENIED);
+  }
+catch (  java.nio.file.NoSuchFileException e) {
+    throw new FileNotFoundException(linkPath + ERR_NO_SUCH_FILE_OR_DIR);
+  }
+}
