@@ -1,13 +1,13 @@
 {
-  SkylarkDict<Object,Object> dict=SkylarkDict.<Object,Object>of(env);
-  Location loc=getLocation();
+  Map<Object,Object> map=new LinkedHashMap<>();
   for (  DictionaryEntryLiteral entry : entries) {
     if (entry == null) {
-      throw new EvalException(loc,"null expression in " + this);
+      throw new EvalException(getLocation(),"null expression in " + this);
     }
     Object key=entry.key.eval(env);
+    EvalUtils.checkValidDictKey(key);
     Object val=entry.value.eval(env);
-    dict.put(key,val,loc,env);
+    map.put(key,val);
   }
-  return dict;
+  return ImmutableMap.copyOf(map);
 }

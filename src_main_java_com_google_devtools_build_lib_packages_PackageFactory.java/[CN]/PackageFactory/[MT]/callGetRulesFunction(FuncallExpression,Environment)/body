@@ -1,13 +1,12 @@
 {
   PackageContext context=getContext(env,ast);
   Collection<Target> targets=context.pkgBuilder.getTargets();
-  Location loc=ast.getLocation();
-  SkylarkDict<String,SkylarkDict<String,Object>> rules=SkylarkDict.<String,SkylarkDict<String,Object>>of(env);
+  Map<String,Map<String,Object>> rules=new TreeMap<>();
   for (  Target t : targets) {
     if (t instanceof Rule) {
-      SkylarkDict<String,Object> m=targetDict(t,loc,env);
+      Map<String,Object> m=targetDict(t);
       Preconditions.checkNotNull(m);
-      rules.put(t.getName(),m,loc,env);
+      rules.put(t.getName(),m);
     }
   }
   return rules;

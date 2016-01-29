@@ -1,7 +1,8 @@
 {
-  Object desc=description == null ? null : Printer.formattable("'%s' element",description);
   for (  Object value : list) {
-    SkylarkType.checkType(value,type,desc);
+    if (!type.isInstance(value)) {
+      throw new EvalException(null,Printer.format("Illegal argument: expected type %r %sbut got type %s instead",type,description == null ? "" : String.format("for '%s' element ",description),EvalUtils.getDataTypeName(value)));
+    }
   }
   return (List<TYPE>)list;
 }
