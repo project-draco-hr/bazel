@@ -3,7 +3,7 @@
   ResolvedTargets<Target> resolvedTargets;
   try {
     EnvironmentBackedRecursivePackageProvider provider=new EnvironmentBackedRecursivePackageProvider(env);
-    RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,env.getListener(),patternKey.getPolicy());
+    RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,env.getListener(),patternKey.getPolicy(),MoreExecutors.newDirectExecutorService());
     TargetPattern parsedPattern=patternKey.getParsedPattern();
     ImmutableSet<PathFragment> excludedSubdirectories=patternKey.getExcludedSubdirectories();
     final Set<Target> results=CompactHashSet.create();
@@ -13,7 +13,7 @@
       }
     }
 ;
-    parsedPattern.eval(resolver,excludedSubdirectories,callback);
+    parsedPattern.eval(resolver,excludedSubdirectories,callback,RuntimeException.class);
     resolvedTargets=ResolvedTargets.<Target>builder().addAll(results).build();
   }
  catch (  TargetParsingException e) {

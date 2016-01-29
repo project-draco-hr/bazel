@@ -1,0 +1,65 @@
+{
+  final FilteringPolicy actualPolicy=rulesOnly ? FilteringPolicies.and(FilteringPolicies.RULES_ONLY,policy) : policy;
+  PathFragment pathFragment=TargetPatternResolverUtil.getPathFragment(directory);
+  Iterable<PathFragment> packagesUnderDirectory=recursivePackageProvider.getPackagesUnderDirectory(repository,pathFragment,excludedSubdirectories);
+  Iterable<PackageIdentifier> pkgIds=Iterables.transform(packagesUnderDirectory,new Function<PathFragment,PackageIdentifier>(){
+    @Override public PackageIdentifier apply(    PathFragment path){
+      return PackageIdentifier.create(repository,path);
+    }
+  }
+);
+  final AtomicBoolean foundTarget=new AtomicBoolean(false);
+  final AtomicReference<InterruptedException> interrupt=new AtomicReference<>();
+  final AtomicReference<TargetParsingException> parsingException=new AtomicReference<>();
+  final AtomicReference<Exception> genericException=new AtomicReference<>();
+  final Object callbackLock=new Object();
+  try {
+    for (    final Iterable<PackageIdentifier> pkgIdBatch : Iterables.partition(pkgIds,MAX_PACKAGES_BULK_GET)) {
+      executor.execute(new Runnable(){
+        @Override public void run(){
+          Iterable<ResolvedTargets<Target>> resolvedTargets=null;
+          try {
+            resolvedTargets=bulkGetTargetsInPackage(originalPattern,pkgIdBatch,NO_FILTER).values();
+          }
+ catch (          InterruptedException e) {
+            interrupt.compareAndSet(null,e);
+            return;
+          }
+catch (          TargetParsingException e) {
+            parsingException.compareAndSet(null,e);
+          }
+          List<Target> filteredTargets=new ArrayList<>(calculateSize(resolvedTargets));
+          for (          ResolvedTargets<Target> targets : resolvedTargets) {
+            for (            Target target : targets.getTargets()) {
+              foundTarget.set(true);
+              if (actualPolicy.shouldRetain(target,false)) {
+                filteredTargets.add(target);
+              }
+            }
+          }
+          try {
+synchronized (callbackLock) {
+              callback.process(filteredTargets);
+            }
+          }
+ catch (          InterruptedException e) {
+            interrupt.compareAndSet(null,e);
+          }
+catch (          Exception e) {
+            genericException.compareAndSet(e,null);
+          }
+        }
+      }
+);
+    }
+  }
+  finally {
+    ExecutorUtil.interruptibleShutdown(executor);
+  }
+  Throwables.propagateIfInstanceOf(interrupt.get(),InterruptedException.class);
+  Throwables.propagateIfInstanceOf(parsingException.get(),TargetParsingException.class);
+  Throwables.propagateIfPossible(genericException.get(),exceptionClass);
+  if (!foundTarget.get()) {
+    throw new TargetParsingException("no targets found beneath '" + pathFragment + "'");
+  }
+}
