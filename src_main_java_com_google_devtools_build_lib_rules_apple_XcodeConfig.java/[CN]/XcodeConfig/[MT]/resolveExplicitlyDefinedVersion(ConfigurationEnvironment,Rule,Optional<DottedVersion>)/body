@@ -1,0 +1,19 @@
+{
+  if (versionOverrideFlag.isPresent()) {
+    DottedVersion explicitVersion=aliasesToVersionMap(env,xcodeConfigTarget).get(versionOverrideFlag.get().toString());
+    if (explicitVersion != null) {
+      return explicitVersion;
+    }
+  }
+ else {
+    DottedVersion defaultVersion=getDefaultVersion(env,xcodeConfigTarget);
+    if (defaultVersion != null) {
+      return defaultVersion;
+    }
+  }
+  boolean requireDefinedVersions=NonconfigurableAttributeMapper.of(xcodeConfigTarget).get(XcodeConfigRule.REQUIRE_DEFINED_VERSIONS_ATTR_NAME,Type.BOOLEAN);
+  if (requireDefinedVersions) {
+    throw new InvalidConfigurationException("xcode version config required an explicitly defined version, but none was available");
+  }
+  return null;
+}

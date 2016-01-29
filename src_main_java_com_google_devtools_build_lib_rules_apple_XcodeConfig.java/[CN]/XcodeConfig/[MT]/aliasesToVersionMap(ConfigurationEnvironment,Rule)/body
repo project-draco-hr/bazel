@@ -1,0 +1,21 @@
+{
+  List<Label> xcodeVersionLabels=NonconfigurableAttributeMapper.of(xcodeConfigTarget).get(XcodeConfigRule.VERSIONS_ATTR_NAME,BuildType.LABEL_LIST);
+  ImmutableList.Builder<XcodeVersionRuleData> xcodeVersionRuleListBuilder=ImmutableList.builder();
+  for (  Label label : xcodeVersionLabels) {
+    Rule xcodeVersionRule=getRuleForLabel(label,"xcode_version",env,"xcode_version");
+    xcodeVersionRuleListBuilder.add(new XcodeVersionRuleData(label,xcodeVersionRule));
+  }
+  ImmutableList<XcodeVersionRuleData> xcodeVersionRules=xcodeVersionRuleListBuilder.build();
+  Map<String,DottedVersion> aliasesToVersionMap=Maps.newLinkedHashMap();
+  for (  XcodeVersionRuleData xcodeVersionRule : xcodeVersionRules) {
+    for (    String alias : xcodeVersionRule.getAliases()) {
+      if (aliasesToVersionMap.put(alias,xcodeVersionRule.getVersion()) != null) {
+        configErrorDuplicateAlias(alias,xcodeVersionRules);
+      }
+    }
+    if (aliasesToVersionMap.put(xcodeVersionRule.getVersion().toString(),xcodeVersionRule.getVersion()) != null) {
+      configErrorDuplicateAlias(xcodeVersionRule.getVersion().toString(),xcodeVersionRules);
+    }
+  }
+  return aliasesToVersionMap;
+}

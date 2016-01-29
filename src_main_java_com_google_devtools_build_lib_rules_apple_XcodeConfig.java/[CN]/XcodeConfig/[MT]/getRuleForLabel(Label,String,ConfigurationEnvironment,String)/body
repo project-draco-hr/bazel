@@ -1,0 +1,18 @@
+{
+  label=RedirectChaser.followRedirects(env,label,description);
+  if (label == null) {
+    throw new InvalidConfigurationException(String.format("Expected value of %s (%s) to resolve to a target of type %s",description,label,type));
+  }
+  try {
+    Target target=env.getTarget(label);
+    if (target instanceof Rule && ((Rule)target).getRuleClass().equals(type)) {
+      return (Rule)target;
+    }
+ else {
+      throw new InvalidConfigurationException(String.format("Expected value of %s (%s) to resolve to a target of type %s",description,label,type));
+    }
+  }
+ catch (  NoSuchPackageException|NoSuchTargetException exception) {
+    throw new InvalidConfigurationException(exception);
+  }
+}
