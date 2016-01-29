@@ -1,6 +1,11 @@
 {
-  for (  Pair<SkyKey,InvalidationType> visitData : ImmutableList.copyOf(pendingVisitations)) {
-    visit(ImmutableList.of(visitData.first),visitData.second,!MUST_EXIST);
+  for (  final Pair<SkyKey,InvalidationType> visitData : ImmutableList.copyOf(pendingVisitations)) {
+    executor.execute(new Runnable(){
+      @Override public void run(){
+        visit(ImmutableList.of(visitData.first),visitData.second,!MUST_EXIST);
+      }
+    }
+);
   }
   executor.awaitQuiescence(true);
   Preconditions.checkState(!getSupportInterruptions() || pendingVisitations.isEmpty(),"All dirty nodes should have been processed: %s",pendingVisitations);
