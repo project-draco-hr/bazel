@@ -122,7 +122,7 @@ LinkingMode realmode=importLinkingMode(flags.getMode());
 linkOptionsFromLinkingMode.putAll(realmode,flags.getLinkerFlagList());
 }
 this.commonLinkOptions=ImmutableList.copyOf(toolchain.getLinkerFlagList());
-dynamicLibraryLinkFlags=new FlagList(ImmutableList.copyOf(toolchain.getDynamicLibraryLinkerFlagList()),convertOptionalOptions(toolchain.getOptionalDynamicLibraryLinkerFlagList()),Collections.<String>emptyList());
+dynamicLibraryLinkFlags=new FlagList(ImmutableList.copyOf(toolchain.getDynamicLibraryLinkerFlagList()),convertOptionalOptions(toolchain.getOptionalDynamicLibraryLinkerFlagList()),ImmutableList.<String>of());
 this.objcopyOptions=ImmutableList.copyOf(toolchain.getObjcopyEmbedFlagList());
 this.ldOptions=ImmutableList.copyOf(toolchain.getLdEmbedFlagList());
 this.arOptions=copyOrDefaultIfEmpty(toolchain.getArFlagList(),"rcsD");
@@ -170,7 +170,7 @@ if (sysrootFlag != null) {
 unfilteredCoptsBuilder.add(sysrootFlag);
 }
 unfilteredCoptsBuilder.addAll(toolchain.getUnfilteredCxxFlagList());
-unfilteredCompilerFlags=new FlagList(unfilteredCoptsBuilder.build(),convertOptionalOptions(toolchain.getOptionalUnfilteredCxxFlagList()),Collections.<String>emptyList());
+unfilteredCompilerFlags=new FlagList(unfilteredCoptsBuilder.build(),convertOptionalOptions(toolchain.getOptionalUnfilteredCxxFlagList()),ImmutableList.<String>of());
 ImmutableList.Builder<String> linkoptsBuilder=ImmutableList.builder();
 linkoptsBuilder.addAll(cppOptions.linkoptList);
 if (cppOptions.experimentalOmitfp) {
@@ -186,16 +186,16 @@ coptsBuilder.add("-fomit-frame-pointer");
 coptsBuilder.add("-fasynchronous-unwind-tables");
 coptsBuilder.add("-DNO_FRAME_POINTER");
 }
-this.compilerFlags=new FlagList(coptsBuilder.build(),convertOptionalOptions(toolchain.getOptionalCompilerFlagList()),cppOptions.coptList);
+this.compilerFlags=new FlagList(coptsBuilder.build(),convertOptionalOptions(toolchain.getOptionalCompilerFlagList()),ImmutableList.copyOf(cppOptions.coptList));
 this.cOptions=ImmutableList.copyOf(cppOptions.conlyoptList);
 ImmutableList.Builder<String> cxxOptsBuilder=ImmutableList.<String>builder().addAll(toolchain.getCxxFlagList()).addAll(cxxFlags.get(compilationMode)).addAll(lipoCxxFlags.get(cppOptions.getLipoMode()));
-this.cxxFlags=new FlagList(cxxOptsBuilder.build(),convertOptionalOptions(toolchain.getOptionalCxxFlagList()),cppOptions.cxxoptList);
+this.cxxFlags=new FlagList(cxxOptsBuilder.build(),convertOptionalOptions(toolchain.getOptionalCxxFlagList()),ImmutableList.copyOf(cppOptions.cxxoptList));
 this.ldExecutable=getToolPathFragment(CppConfiguration.Tool.LD);
 boolean stripBinaries=(cppOptions.stripBinaries == StripMode.ALWAYS) || ((cppOptions.stripBinaries == StripMode.SOMETIMES) && (compilationMode == CompilationMode.FASTBUILD));
-fullyStaticLinkFlags=new FlagList(configureLinkerOptions(compilationMode,lipoMode,LinkingMode.FULLY_STATIC,ldExecutable,stripBinaries),convertOptionalOptions(toolchain.getOptionalLinkerFlagList()),Collections.<String>emptyList());
-mostlyStaticLinkFlags=new FlagList(configureLinkerOptions(compilationMode,lipoMode,LinkingMode.MOSTLY_STATIC,ldExecutable,stripBinaries),convertOptionalOptions(toolchain.getOptionalLinkerFlagList()),Collections.<String>emptyList());
-mostlyStaticSharedLinkFlags=new FlagList(configureLinkerOptions(compilationMode,lipoMode,LinkingMode.MOSTLY_STATIC_LIBRARIES,ldExecutable,stripBinaries),convertOptionalOptions(toolchain.getOptionalLinkerFlagList()),Collections.<String>emptyList());
-dynamicLinkFlags=new FlagList(configureLinkerOptions(compilationMode,lipoMode,LinkingMode.DYNAMIC,ldExecutable,stripBinaries),convertOptionalOptions(toolchain.getOptionalLinkerFlagList()),Collections.<String>emptyList());
+fullyStaticLinkFlags=new FlagList(configureLinkerOptions(compilationMode,lipoMode,LinkingMode.FULLY_STATIC,ldExecutable,stripBinaries),convertOptionalOptions(toolchain.getOptionalLinkerFlagList()),ImmutableList.<String>of());
+mostlyStaticLinkFlags=new FlagList(configureLinkerOptions(compilationMode,lipoMode,LinkingMode.MOSTLY_STATIC,ldExecutable,stripBinaries),convertOptionalOptions(toolchain.getOptionalLinkerFlagList()),ImmutableList.<String>of());
+mostlyStaticSharedLinkFlags=new FlagList(configureLinkerOptions(compilationMode,lipoMode,LinkingMode.MOSTLY_STATIC_LIBRARIES,ldExecutable,stripBinaries),convertOptionalOptions(toolchain.getOptionalLinkerFlagList()),ImmutableList.<String>of());
+dynamicLinkFlags=new FlagList(configureLinkerOptions(compilationMode,lipoMode,LinkingMode.DYNAMIC,ldExecutable,stripBinaries),convertOptionalOptions(toolchain.getOptionalLinkerFlagList()),ImmutableList.<String>of());
 testOnlyLinkFlags=ImmutableList.copyOf(toolchain.getTestOnlyLinkerFlagList());
 Map<String,String> makeVariablesBuilder=new HashMap<>();
 makeVariablesBuilder.put("STACK_FRAME_UNLIMITED","");
