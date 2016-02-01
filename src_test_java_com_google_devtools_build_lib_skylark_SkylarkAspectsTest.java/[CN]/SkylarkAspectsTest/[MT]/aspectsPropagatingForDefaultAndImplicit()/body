@@ -1,7 +1,7 @@
 {
-  scratch.file("test/aspect.bzl","def _impl(target, ctx):","   s = set([target.label])","   c = set([ctx.rule.kind])","   a = ctx.rule.attr","   if hasattr(a, '_stl') and a._stl:","       s += a._stl.target_labels","       c += a._stl.rule_kinds","   if hasattr(a, '_stl_default') and a._stl_default:","       s += a._stl_default.target_labels","       c += a._stl_default.rule_kinds","   return struct(target_labels = s, rule_kinds = c)","","MyAspect = aspect(","   implementation=_impl,","   attr_aspects=[':stl', '$stl_default'],",")");
-  scratch.file("test/BUILD","cc_library(","     name = 'xxx',",")");
-  AnalysisResult analysisResult=update(ImmutableList.of("test/aspect.bzl%MyAspect"),"//test:xxx");
+  scratch.file("test/aspect.bzl","def _impl(target, ctx):","   s = set([target.label])","   c = set([ctx.rule.kind])","   a = ctx.rule.attr","   if hasattr(a, '_stl') and a._stl:","       s += a._stl.target_labels","       c += a._stl.rule_kinds","   if hasattr(a, '_stl_default') and a._stl_default:","       s += a._stl_default.target_labels","       c += a._stl_default.rule_kinds","   return struct(target_labels = s, rule_kinds = c)","","def _rule_impl(ctx):","   pass","","my_rule = rule(implementation = _rule_impl,","   attrs = { '_stl' : attr.label(default = Label('//test:xxx')) },",")","MyAspect = aspect(","   implementation=_impl,","   attr_aspects=['_stl', '_stl_default'],",")");
+  scratch.file("test/BUILD","load('/test/aspect', 'my_rule')","cc_library(","     name = 'xxx',",")","my_rule(","     name = 'yyy',",")");
+  AnalysisResult analysisResult=update(ImmutableList.of("test/aspect.bzl%MyAspect"),"//test:yyy");
   AspectValue aspectValue=analysisResult.getAspects().iterator().next();
   SkylarkProviders skylarkProviders=aspectValue.getConfiguredAspect().getProvider(SkylarkProviders.class);
   assertThat(skylarkProviders).isNotNull();
@@ -13,5 +13,5 @@
       return ((Label)o).getName();
     }
   }
-)).containsExactly("stl","xxx");
+)).containsExactly("stl","xxx","yyy");
 }
