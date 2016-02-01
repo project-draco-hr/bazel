@@ -5,17 +5,26 @@ import multiprocessing
 import os
 import Queue
 import shutil
+import subprocess
 import threading
 PRUNED_SRC_CONTENT = 'static int DUMMY_unused __attribute__((unused,used)) = 0;'
 if (__name__ == '__main__'):
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
-    parser.add_argument('--input_files', required=True, help='The comma-separated file paths of translated source files to prune.')
-    parser.add_argument('--output_files', required=True, help='The comma-separated file paths of pruned source files to write to.')
-    parser.add_argument('--dependency_mapping_files', required=True, help='The comma-separated file paths of dependency mapping files.')
-    parser.add_argument('--header_mapping_files', required=True, help='The comma-separated file paths of header mapping files.')
-    parser.add_argument('--entry_classes', required=True, help='The comma-separated list of Java entry classes to be used as entry point of the dead code anlysis.')
-    parser.add_argument('--objc_file_path', required=True, help='The file path which represents a directory where the generated ObjC files reside')
+    parser.add_argument('--input_files', help='The comma-separated file paths of translated source files to prune.')
+    parser.add_argument('--output_files', help='The comma-separated file paths of pruned source files to write to.')
+    parser.add_argument('--objc_file_path', help='The file path which represents a directory where the generated ObjC files reside')
+    parser.add_argument('--input_archive', help='The path of the translated archive to prune.')
+    parser.add_argument('--output_archive', help='The path of the pruned archive file to write to.')
+    parser.add_argument('--dummy_archive', help='The dummy archive file that contains no symbol.')
+    parser.add_argument('--dependency_mapping_files', help='The comma-separated file paths of dependency mapping files.')
+    parser.add_argument('--header_mapping_files', help='The comma-separated file paths of header mapping files.')
+    parser.add_argument('--archive_source_mapping_files', help='The comma-separated file paths of archive to source mapping files.These mapping files should contain mappings between the translated source files and the archive file compiled from those source files.')
+    parser.add_argument('--entry_classes', help='The comma-separated list of Java entry classes to be used as entry point of the dead code anlysis.')
+    parser.add_argument('--xcrunwrapper', help='The xcrun wrapper script.')
     args = parser.parse_args()
     if (not args.entry_classes):
         raise Exception('J2objC dead code removal is on but no entry class is ', 'specified in any j2objc_library targets in the transitive', ' closure')
-    PruneDeadCode(args.input_files, args.output_files, args.dependency_mapping_files, args.header_mapping_files, args.entry_classes, args.objc_file_path)
+    if (args.input_archive and args.output_archive):
+        PruneArchiveFile(args.input_archive, args.output_archive, args.dummy_archive, args.dependency_mapping_files, args.header_mapping_files, args.archive_source_mapping_files, args.entry_classes, args.xcrunwrapper)
+    else:
+        PruneSourceFiles(args.input_files, args.output_files, args.dependency_mapping_files, args.header_mapping_files, args.entry_classes, args.objc_file_path)

@@ -1,0 +1,17 @@
+def _DuplicatedFiles(archive_source_file_mapping):
+    'Returns a list of file with duplicated base names in each archive file.\n\n  Args:\n    archive_source_file_mapping: A dict mapping source files to the associated\n        archive file that contains them.\n  Returns:\n    A list containg files with duplicated base names.\n  '
+    duplicated_files = []
+    dict_with_duplicates = dict()
+    for (archive, source_files) in archive_source_file_mapping.iteritems():
+        for source_file in source_files:
+            file_basename = os.path.basename(source_file)
+            file_without_ext = os.path.splitext(source_file)[0]
+            if (file_basename in dict_with_duplicates):
+                dict_with_duplicates[file_basename].append(file_without_ext)
+            else:
+                dict_with_duplicates[file_basename] = [file_without_ext]
+        for basename in dict_with_duplicates:
+            if (len(dict_with_duplicates[basename]) > 1):
+                duplicated_files.extend(dict_with_duplicates[basename])
+        dict_with_duplicates = dict()
+    return duplicated_files

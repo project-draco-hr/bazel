@@ -1,10 +1,12 @@
-def BuildReachableFileSet(entry_classes, reachability_tree, header_mapping):
-    'Builds a set of reachable translated files from entry Java classes.\n\n  Args:\n    entry_classes: A comma separated list of Java entry classes.\n    reachability_tree: A dict mapping translated files to their direct\n        dependencies.\n    header_mapping: A dict mapping Java class names to translated source files.\n  Returns:\n    A set of reachable translated files from the given list of entry classes.\n  Raises:\n    Exception: If there is an entry class that is not being transpiled in this\n        j2objc_library.\n  '
+def BuildReachableFileSet(entry_classes, reachability_tree, header_mapping, archive_source_file_mapping=None):
+    'Builds a set of reachable translated files from entry Java classes.\n\n  Args:\n    entry_classes: A comma separated list of Java entry classes.\n    reachability_tree: A dict mapping translated files to their direct\n        dependencies.\n    header_mapping: A dict mapping Java class names to translated source files.\n    archive_source_file_mapping: A dict mapping source files to the associated\n        archive file that contains them.\n  Returns:\n    A set of reachable translated files from the given list of entry classes.\n  Raises:\n    Exception: If there is an entry class that is not being transpiled in this\n        j2objc_library.\n  '
     transpiled_entry_files = []
     for entry_class in entry_classes.split(','):
         if (entry_class not in header_mapping):
             raise Exception(((entry_class + 'is not in the transitive Java deps of included ') + 'j2objc_library rules.'))
         transpiled_entry_files.append(header_mapping[entry_class])
+    if archive_source_file_mapping:
+        transpiled_entry_files.extend(_DuplicatedFiles(archive_source_file_mapping))
     for transpiled_file in reachability_tree:
         if transpiled_file.endswith('package-info'):
             transpiled_entry_files.append(transpiled_file)

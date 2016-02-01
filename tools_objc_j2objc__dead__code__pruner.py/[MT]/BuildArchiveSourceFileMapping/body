@@ -1,0 +1,13 @@
+def BuildArchiveSourceFileMapping(archive_source_mapping_files, file_open):
+    'Builds a mapping between archive files and their associated source files.\n\n  Args:\n    archive_source_mapping_files: A comma separated list of J2ObjC-generated\n        mapping between archive files and their associated source files.\n    file_open: Reference to the builtin open function so it may be\n        overridden for testing.\n  Returns:\n    A dict mapping between archive files and their associated source files.\n  '
+    tree = dict()
+    for archive_source_mapping_file in archive_source_mapping_files.split(','):
+        with file_open(archive_source_mapping_file, 'r') as f:
+            for line in f:
+                entry = line.strip().split(':')[0]
+                dep = line.strip().split(':')[1]
+                if (entry in tree):
+                    tree[entry].append(dep)
+                else:
+                    tree[entry] = [dep]
+    return tree
