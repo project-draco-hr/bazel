@@ -1,0 +1,12 @@
+{
+  tester.addFile("hello/BUILD","cc_library(name = 'a', srcs = glob(['*.cc']))");
+  Path buildFilePath=tester.getWorkspace().getRelative("hello/BUILD");
+  Path dirPath=buildFilePath.getParentDirectory();
+  Path fooFilePath=dirPath.getRelative("foo.cc");
+  Path barFilePath=dirPath.getRelative("bar.cc");
+  Path bazFilePath=dirPath.getRelative("baz.cc");
+  fooFilePath.createSymbolicLink(barFilePath);
+  barFilePath.createSymbolicLink(bazFilePath);
+  bazFilePath.createSymbolicLink(fooFilePath);
+  assertCircularSymlinksDuringTargetParsing("//hello:a");
+}
