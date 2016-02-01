@@ -1,0 +1,24 @@
+{
+  for (  CycleInfo cycleInfo : cycleInfos) {
+    SkyKey culprit=Iterables.getFirst(cycleInfo.getCycle(),null);
+    if (culprit == null) {
+      continue;
+    }
+    if (culprit.functionName().equals(SkyFunctions.CONFIGURED_TARGET)) {
+      return ((ConfiguredTargetKey)culprit.argument()).getLabel();
+    }
+ else {
+      Label furthestTarget=labelToLoad;
+      for (      SkyKey skyKey : cycleInfo.getPathToCycle()) {
+        if (skyKey.functionName().equals(SkyFunctions.CONFIGURED_TARGET)) {
+          furthestTarget=(Label)skyKey.argument();
+        }
+ else {
+          break;
+        }
+      }
+      return furthestTarget;
+    }
+  }
+  return null;
+}

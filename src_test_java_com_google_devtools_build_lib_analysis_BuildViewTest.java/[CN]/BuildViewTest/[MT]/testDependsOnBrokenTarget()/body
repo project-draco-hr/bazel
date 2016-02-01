@@ -1,0 +1,15 @@
+{
+  scratch.file("foo/BUILD","sh_test(name = 'test', srcs = ['test.sh'], data = ['//bar:data'])");
+  scratch.file("bar/BUILD","BROKEN BROKEN BROKEN!!!");
+  reporter.removeHandler(failFastHandler);
+  try {
+    update("//foo:test");
+    fail();
+  }
+ catch (  LoadingFailedException expected) {
+    Truth.assertThat(expected.getMessage()).matches("Loading failed; build aborted.*");
+  }
+catch (  ViewCreationFailedException expected) {
+    Truth.assertThat(expected.getMessage()).matches("Analysis of target '//foo:test' failed; build aborted.*");
+  }
+}

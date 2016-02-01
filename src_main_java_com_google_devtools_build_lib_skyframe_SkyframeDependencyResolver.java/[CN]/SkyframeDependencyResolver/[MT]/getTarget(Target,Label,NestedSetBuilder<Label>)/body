@@ -1,0 +1,36 @@
+{
+  SkyKey key=PackageValue.key(label.getPackageIdentifier());
+  PackageValue packageValue;
+  try {
+    packageValue=(PackageValue)env.getValueOrThrow(key,NoSuchPackageException.class);
+  }
+ catch (  NoSuchPackageException e) {
+    rootCauses.add(label);
+    missingEdgeHook(from,label,e);
+    return null;
+  }
+  if (packageValue == null) {
+    return null;
+  }
+  Package pkg=packageValue.getPackage();
+  try {
+    Target target=pkg.getTarget(label.getName());
+    if (pkg.containsErrors()) {
+      NoSuchPackageException e=new BuildFileContainsErrorsException(label.getPackageIdentifier());
+      missingEdgeHook(from,label,e);
+      if (target != null) {
+        rootCauses.add(label);
+        return target;
+      }
+ else {
+        return null;
+      }
+    }
+    return target;
+  }
+ catch (  NoSuchTargetException e) {
+    rootCauses.add(label);
+    missingEdgeHook(from,label,e);
+    return null;
+  }
+}

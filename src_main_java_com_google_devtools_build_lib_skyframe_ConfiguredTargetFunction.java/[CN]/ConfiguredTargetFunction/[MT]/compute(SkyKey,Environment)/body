@@ -10,26 +10,34 @@
     return null;
   }
   Package pkg=packageValue.getPackage();
-  if (pkg.containsErrors()) {
-    throw new ConfiguredTargetFunctionException(new BuildFileContainsErrorsException(lc.getLabel().getPackageIdentifier()));
-  }
   Target target;
   try {
-    target=packageValue.getPackage().getTarget(lc.getLabel().getName());
+    target=pkg.getTarget(lc.getLabel().getName());
   }
  catch (  NoSuchTargetException e) {
-    throw new ConfiguredTargetFunctionException(e);
+    throw new ConfiguredTargetFunctionException(new ConfiguredValueCreationException(e.getMessage()));
   }
-  transitivePackages.add(packageValue.getPackage());
+  if (pkg.containsErrors()) {
+    if (target == null) {
+      throw new ConfiguredTargetFunctionException(new ConfiguredValueCreationException(new BuildFileContainsErrorsException(lc.getLabel().getPackageIdentifier()).getMessage()));
+    }
+ else {
+      transitiveLoadingRootCauses.add(lc.getLabel());
+    }
+  }
+  transitivePackages.add(pkg);
   if (!target.isConfigurable()) {
     configuration=null;
   }
-  SkyframeDependencyResolver resolver=view.createDependencyResolver(env);
   TargetAndConfiguration ctgValue=new TargetAndConfiguration(target,configuration);
+  SkyframeDependencyResolver resolver=view.createDependencyResolver(env);
   try {
     Set<ConfigMatchingProvider> configConditions=getConfigConditions(ctgValue.getTarget(),env,resolver,ctgValue,transitivePackages,transitiveLoadingRootCauses);
     if (env.valuesMissing()) {
       return null;
+    }
+    if (!transitiveLoadingRootCauses.isEmpty() && configConditions != NO_CONFIG_CONDITIONS) {
+      throw new ConfiguredTargetFunctionException(new ConfiguredValueCreationException(transitiveLoadingRootCauses.build()));
     }
     ListMultimap<Attribute,ConfiguredTarget> depValueMap=computeDependencies(env,resolver,ctgValue,null,configConditions,ruleClassProvider,view.getHostConfiguration(configuration),transitivePackages,transitiveLoadingRootCauses);
     if (env.valuesMissing()) {
