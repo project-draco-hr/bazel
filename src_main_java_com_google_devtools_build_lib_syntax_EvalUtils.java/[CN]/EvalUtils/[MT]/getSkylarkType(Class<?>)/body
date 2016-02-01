@@ -1,11 +1,27 @@
 {
-  if (String.class.equals(c) || Boolean.class.equals(c) || Integer.class.equals(c)|| Iterable.class.equals(c)|| Class.class.equals(c)) {
+  if (SkylarkList.class.isAssignableFrom(c)) {
     return c;
   }
-  Class<?> parent=getParentWithSkylarkModule(c);
-  if (parent != null) {
-    return parent;
+ else   if (ImmutableList.class.isAssignableFrom(c)) {
+    return ImmutableList.class;
   }
-  Preconditions.checkArgument(SkylarkValue.class.isAssignableFrom(c),"%s is not allowed as a Skylark value",c);
+ else   if (List.class.isAssignableFrom(c)) {
+    return List.class;
+  }
+ else   if (Map.class.isAssignableFrom(c)) {
+    return Map.class;
+  }
+ else   if (NestedSet.class.isAssignableFrom(c)) {
+    return NestedSet.class;
+  }
+ else   if (Set.class.isAssignableFrom(c)) {
+    return Set.class;
+  }
+ else {
+    Class<?> parent=getParentWithSkylarkModule(c);
+    if (parent != null) {
+      return parent;
+    }
+  }
   return c;
 }

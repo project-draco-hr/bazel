@@ -1,13 +1,12 @@
 {
   List<ByteCodeAppender> code=new ArrayList<>();
-  append(code,scope.loadEnvironment());
-  append(code,ByteCodeMethodCalls.BCSkylarkDict.of);
+  append(code,ByteCodeMethodCalls.BCImmutableMap.builder);
   for (  DictionaryEntryLiteral entry : entries) {
-    append(code,Duplication.SINGLE);
     code.add(entry.key.compile(scope,debugInfo));
     append(code,Duplication.SINGLE,EvalUtils.checkValidDictKey);
     code.add(entry.value.compile(scope,debugInfo));
-    append(code,debugInfo.add(this).loadLocation,scope.loadEnvironment(),ByteCodeMethodCalls.BCSkylarkDict.put);
+    append(code,ByteCodeMethodCalls.BCImmutableMap.Builder.put);
   }
+  append(code,ByteCodeMethodCalls.BCImmutableMap.Builder.build);
   return ByteCodeUtils.compoundAppender(code);
 }
