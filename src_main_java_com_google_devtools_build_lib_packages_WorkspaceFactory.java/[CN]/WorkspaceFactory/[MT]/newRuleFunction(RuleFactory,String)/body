@@ -6,7 +6,9 @@
         RuleClass ruleClass=ruleFactory.getRuleClass(ruleClassName);
         RuleClass bindRuleClass=ruleFactory.getRuleClass("bind");
         Rule rule=builder.externalPackageData().createAndAddRepositoryRule(builder,ruleClass,bindRuleClass,kwargs,ast);
-        checkWorkspaceName(rule.getName(),ast);
+        if (!isLegalWorkspaceName(rule.getName())) {
+          throw new EvalException(ast.getLocation(),rule + "'s name field must be a legal workspace name");
+        }
       }
  catch (      RuleFactory.InvalidRuleException|Package.NameConflictException|LabelSyntaxException e) {
         throw new EvalException(ast.getLocation(),e.getMessage());
