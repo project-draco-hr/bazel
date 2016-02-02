@@ -1,0 +1,25 @@
+{
+  scratch.file("cycle/BUILD","cc_library(name = 'foo', srcs = ['foo.cc'], deps = [':bar'])","cc_library(name = 'bar', srcs = ['bar.cc'], deps = [':foo'])","cc_library(name = 'bat', srcs = ['bat.cc'], deps = [':bas'])","cc_library(name = 'bas', srcs = ['bas.cc'], deps = [':bau'])","cc_library(name = 'bau', srcs = ['bas.cc'], deps = [':bas'])","cc_library(name = 'baz', srcs = ['baz.cc'])");
+  reporter.removeHandler(failFastHandler);
+  EventBus eventBus=new EventBus();
+  LoadingFailureRecorder loadingFailureRecorder=new LoadingFailureRecorder();
+  AnalysisFailureRecorder analysisFailureRecorder=new AnalysisFailureRecorder();
+  eventBus.register(loadingFailureRecorder);
+  eventBus.register(analysisFailureRecorder);
+  update(eventBus,defaultFlags().with(Flag.KEEP_GOING),"//cycle:foo","//cycle:bat","//cycle:baz");
+  assertContainsEvent("in cc_library rule //cycle:foo: cycle in dependency graph:");
+  assertContainsEvent("errors encountered while analyzing target '//cycle:foo': it will not be built");
+  assertContainsEvent("in cc_library rule //cycle:bas: cycle in dependency graph:");
+  assertContainsEvent("errors encountered while analyzing target '//cycle:bat': it will not be built");
+  if (defaultFlags().contains(Flag.SKYFRAME_LOADING_PHASE)) {
+    assertThat(Iterables.transform(analysisFailureRecorder.events,ANALYSIS_EVENT_TO_STRING_PAIR)).containsExactly(Pair.of("//cycle:foo","//cycle:foo"),Pair.of("//cycle:bat","//cycle:bas"));
+  }
+ else {
+    assertThat(Iterables.transform(loadingFailureRecorder.events,new Function<Pair<Label,Label>,Pair<String,String>>(){
+      @Override public Pair<String,String> apply(      Pair<Label,Label> labelPair){
+        return Pair.of(labelPair.getFirst().toString(),labelPair.getSecond().toString());
+      }
+    }
+)).containsExactly(Pair.of("//cycle:foo","//cycle:foo"),Pair.of("//cycle:bat","//cycle:bas"));
+  }
+}
