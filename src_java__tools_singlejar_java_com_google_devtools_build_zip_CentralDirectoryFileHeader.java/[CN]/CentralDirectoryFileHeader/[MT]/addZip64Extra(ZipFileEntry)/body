@@ -1,0 +1,33 @@
+{
+  EnumSet<Feature> features=entry.getFeatureSet();
+  ExtraDataList extra=entry.getExtra();
+  int extraSize=0;
+  if (features.contains(Feature.ZIP64_SIZE)) {
+    extraSize+=8;
+  }
+  if (features.contains(Feature.ZIP64_CSIZE)) {
+    extraSize+=8;
+  }
+  if (features.contains(Feature.ZIP64_OFFSET)) {
+    extraSize+=8;
+  }
+  if (extraSize > 0) {
+    extra.remove((short)0x0001);
+    byte[] zip64Extra=new byte[ExtraData.FIXED_DATA_SIZE + extraSize];
+    ZipUtil.shortToLittleEndian(zip64Extra,ExtraData.ID_OFFSET,(short)0x0001);
+    ZipUtil.shortToLittleEndian(zip64Extra,ExtraData.LENGTH_OFFSET,(short)extraSize);
+    int offset=ExtraData.FIXED_DATA_SIZE;
+    if (features.contains(Feature.ZIP64_SIZE)) {
+      ZipUtil.longToLittleEndian(zip64Extra,offset,entry.getSize());
+      offset+=8;
+    }
+    if (features.contains(Feature.ZIP64_CSIZE)) {
+      ZipUtil.longToLittleEndian(zip64Extra,offset,entry.getCompressedSize());
+      offset+=8;
+    }
+    if (features.contains(Feature.ZIP64_OFFSET)) {
+      ZipUtil.longToLittleEndian(zip64Extra,offset,entry.getLocalHeaderOffset());
+    }
+    extra.add(new ExtraData(zip64Extra,0));
+  }
+}

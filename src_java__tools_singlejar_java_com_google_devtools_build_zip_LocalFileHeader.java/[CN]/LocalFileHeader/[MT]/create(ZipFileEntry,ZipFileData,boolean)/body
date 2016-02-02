@@ -1,0 +1,54 @@
+{
+  byte[] name=entry.getName().getBytes(file.getCharset());
+  ExtraDataList extra=entry.getExtra();
+  EnumSet<Feature> features=entry.getFeatureSet();
+  int size=(int)entry.getSize();
+  int csize=(int)entry.getCompressedSize();
+  if (features.contains(Feature.ZIP64_SIZE) || features.contains(Feature.ZIP64_CSIZE)) {
+    if (!allowZip64) {
+      throw new ZipException(String.format("Writing an entry of size %d(%d) without Zip64" + " extensions is not supported.",entry.getSize(),entry.getCompressedSize()));
+    }
+    extra.remove((short)0x0001);
+    int extraSize=0;
+    if (features.contains(Feature.ZIP64_SIZE)) {
+      size=-1;
+      extraSize+=8;
+    }
+    if (features.contains(Feature.ZIP64_CSIZE)) {
+      csize=-1;
+      extraSize+=8;
+    }
+    byte[] zip64Extra=new byte[ExtraData.FIXED_DATA_SIZE + extraSize];
+    ZipUtil.shortToLittleEndian(zip64Extra,ExtraData.ID_OFFSET,(short)0x0001);
+    ZipUtil.shortToLittleEndian(zip64Extra,ExtraData.LENGTH_OFFSET,(short)extraSize);
+    int offset=ExtraData.FIXED_DATA_SIZE;
+    if (features.contains(Feature.ZIP64_SIZE)) {
+      ZipUtil.longToLittleEndian(zip64Extra,offset,entry.getSize());
+      offset+=8;
+    }
+    if (features.contains(Feature.ZIP64_CSIZE)) {
+      ZipUtil.longToLittleEndian(zip64Extra,offset,entry.getCompressedSize());
+      offset+=8;
+    }
+    extra.add(new ExtraData(zip64Extra,0));
+  }
+ else {
+    extra.remove((short)0x0001);
+  }
+  extra.remove(ExtraDataList.EXTENDED_TIMESTAMP);
+  extra.remove(ExtraDataList.INFOZIP_UNIX_NEW);
+  byte[] buf=new byte[FIXED_DATA_SIZE + name.length + extra.getLength()];
+  ZipUtil.intToLittleEndian(buf,SIGNATURE_OFFSET,SIGNATURE);
+  ZipUtil.shortToLittleEndian(buf,VERSION_OFFSET,entry.getVersionNeeded());
+  ZipUtil.shortToLittleEndian(buf,FLAGS_OFFSET,entry.getFlags());
+  ZipUtil.shortToLittleEndian(buf,METHOD_OFFSET,entry.getMethod().getValue());
+  ZipUtil.intToLittleEndian(buf,MOD_TIME_OFFSET,ZipUtil.unixToDosTime(entry.getTime()));
+  ZipUtil.intToLittleEndian(buf,CRC_OFFSET,(int)(entry.getCrc() & 0xffffffff));
+  ZipUtil.intToLittleEndian(buf,COMPRESSED_SIZE_OFFSET,csize);
+  ZipUtil.intToLittleEndian(buf,UNCOMPRESSED_SIZE_OFFSET,size);
+  ZipUtil.shortToLittleEndian(buf,FILENAME_LENGTH_OFFSET,(short)name.length);
+  ZipUtil.shortToLittleEndian(buf,EXTRA_FIELD_LENGTH_OFFSET,(short)extra.getLength());
+  System.arraycopy(name,0,buf,FIXED_DATA_SIZE,name.length);
+  ZipUtil.readFully(extra.getByteStream(),buf,FIXED_DATA_SIZE + name.length,extra.getLength());
+  return buf;
+}
