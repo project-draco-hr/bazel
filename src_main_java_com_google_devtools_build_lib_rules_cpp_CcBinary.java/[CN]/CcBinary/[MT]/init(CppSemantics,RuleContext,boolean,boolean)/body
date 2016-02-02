@@ -74,6 +74,11 @@
   if (!cppConfiguration.useFission()) {
     explicitDwpFile=null;
   }
+ else {
+    if (TargetUtils.isTestRule(ruleContext.getRule()) && linkStaticness == LinkStaticness.FULLY_STATIC && cppConfiguration.shouldBuildTestDwp()) {
+      filesToBuild=NestedSetBuilder.fromNestedSet(filesToBuild).add(dwpFile).build();
+    }
+  }
   Runfiles runfiles=collectRunfiles(ruleContext,linkingOutputs,cppCompilationContext,linkStaticness,filesToBuild,fakeLinkerInputs,fake,cAndCppSources);
   RunfilesSupport runfilesSupport=RunfilesSupport.withExecutable(ruleContext,runfiles,executable,ruleContext.getConfiguration().buildRunfiles());
   TransitiveLipoInfoProvider transitiveLipoInfo;
