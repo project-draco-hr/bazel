@@ -1,12 +1,13 @@
 {
-  Executor executor=actionExecutionContext.getExecutor();
   if (!spawn.isRemotable()) {
     standaloneStrategy.exec(spawn,actionExecutionContext);
     return;
   }
+  Executor executor=actionExecutionContext.getExecutor();
   if (executor.reportsSubcommands()) {
     executor.reportSubcommand(Label.print(spawn.getOwner().getLabel()) + " [" + spawn.getResourceOwner().prettyPrint()+ "]",spawn.asShellCommand(executor.getExecRoot()));
   }
+  executor.getEventBus().post(ActionStatusMessage.runningStrategy(spawn.getResourceOwner(),"sandbox"));
   FileOutErr outErr=actionExecutionContext.getFileOutErr();
   String execId=uuid + "-" + execCounter.getAndIncrement();
   Path sandboxPath=execRoot.getRelative(Constants.PRODUCT_NAME + "-sandbox").getRelative(execId);

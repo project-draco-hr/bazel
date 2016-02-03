@@ -1,13 +1,13 @@
 {
   verifyNoOutput();
-  List<Action> actions=ImmutableList.of(mockAction("remote1",true),mockAction("remote2",true),mockAction("remote3",true),mockAction("local1",false),mockAction("local2",false),mockAction("local3",false));
+  List<Action> actions=ImmutableList.of(mockAction("remote1"),mockAction("remote2"),mockAction("remote3"),mockAction("local1"),mockAction("local2"),mockAction("local3"));
   for (  Action a : actions) {
     setScheduling(a);
     clock.advance();
   }
   verifyOutput("Still waiting for 6 jobs to complete:","Scheduling:","remote1, 6 s","remote2, 5 s","remote3, 4 s","local1, 3 s","local2, 2 s","local3, 1 s");
   for (  Action a : actions) {
-    setRunning(a);
+    setRunning(a,a.getProgressMessage().startsWith("remote") ? "remote" : "something else");
     clock.advanceBy(2000);
   }
   verifyOutput("Still waiting for 6 jobs to complete:","Running (remote):","remote1, 12 s","remote2, 10 s","remote3, 8 s","Running (something else):","local1, 6 s","local2, 4 s","local3, 2 s");
