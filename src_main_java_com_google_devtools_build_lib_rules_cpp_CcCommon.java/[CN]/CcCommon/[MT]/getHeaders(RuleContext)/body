@@ -1,15 +1,21 @@
 {
-  List<Artifact> hdrs=new ArrayList<>();
+  Map<Artifact,Label> map=Maps.newLinkedHashMap();
   for (  TransitiveInfoCollection target : ruleContext.getPrerequisitesIf("hdrs",Mode.TARGET,FileProvider.class)) {
     FileProvider provider=target.getProvider(FileProvider.class);
     for (    Artifact artifact : provider.getFilesToBuild()) {
-      if (!CppRuleClasses.DISALLOWED_HDRS_FILES.matches(artifact.getFilename())) {
-        hdrs.add(artifact);
-      }
- else {
+      if (CppRuleClasses.DISALLOWED_HDRS_FILES.matches(artifact.getFilename())) {
         ruleContext.attributeWarning("hdrs","file '" + artifact.getFilename() + "' from target '"+ target.getLabel()+ "' is not allowed in hdrs");
+        continue;
+      }
+      Label oldLabel=map.put(artifact,provider.getLabel());
+      if (oldLabel != null && !oldLabel.equals(provider.getLabel())) {
+        ruleContext.attributeWarning("hdrs",String.format("Artifact '%s' is duplicated (through '%s' and '%s')",artifact.getExecPathString(),oldLabel,provider.getLabel()));
       }
     }
   }
-  return hdrs;
+  ImmutableList.Builder<Pair<Artifact,Label>> result=ImmutableList.builder();
+  for (  Map.Entry<Artifact,Label> entry : map.entrySet()) {
+    result.add(Pair.of(entry.getKey(),entry.getValue()));
+  }
+  return result.build();
 }
