@@ -1,5 +1,6 @@
 {
   Collection<Target> testsToRun=loadingResult.getTestsToRun();
+  Collection<ConfiguredTarget> configuredTargets=skyframeAnalysisResult.getConfiguredTargets();
   Collection<ConfiguredTarget> allTargetsToTest=null;
   if (testsToRun != null) {
     allTargetsToTest=Lists.<ConfiguredTarget>newArrayList(filterTestsByTargets(configuredTargets,Sets.newHashSet(testsToRun)));
@@ -23,7 +24,8 @@
     }
   }
   scheduleTestsIfRequested(parallelTests,exclusiveTests,topLevelOptions,allTargetsToTest);
-  String error=!loadingResult.hasLoadingError() ? (analysisSuccessful ? null : "execution phase succeeded, but not all targets were analyzed") : "execution phase succeeded, but there were loading phase errors";
+  String error=loadingResult.hasLoadingError() || skyframeAnalysisResult.hasLoadingError() ? "execution phase succeeded, but there were loading phase errors" : skyframeAnalysisResult.hasAnalysisError() ? "execution phase succeeded, but not all targets were analyzed" : null;
+  final WalkableGraph graph=skyframeAnalysisResult.getWalkableGraph();
   final ActionGraph actionGraph=new ActionGraph(){
     @Nullable @Override public Action getGeneratingAction(    Artifact artifact){
       ArtifactOwner artifactOwner=artifact.getArtifactOwner();
@@ -36,5 +38,5 @@
     }
   }
 ;
-  return new AnalysisResult(configuredTargets,aspects,allTargetsToTest,error,actionGraph,artifactsToBuild,parallelTests,exclusiveTests,topLevelOptions,packageRoots);
+  return new AnalysisResult(configuredTargets,skyframeAnalysisResult.getAspects(),allTargetsToTest,error,actionGraph,artifactsToBuild,parallelTests,exclusiveTests,topLevelOptions,skyframeAnalysisResult.getPackageRoots());
 }
