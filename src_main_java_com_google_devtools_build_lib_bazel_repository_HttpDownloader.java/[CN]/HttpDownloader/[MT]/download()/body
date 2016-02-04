@@ -18,12 +18,16 @@
   }
   AtomicInteger totalBytes=new AtomicInteger(0);
   final ScheduledFuture<?> loggerHandle=getLoggerHandle(totalBytes);
-  try (OutputStream out=destination.getOutputStream();InputStream in=getInputStream(url)){
+  try (OutputStream out=destination.getOutputStream();HttpConnection connection=HttpConnection.createAndConnect(url)){
+    InputStream inputStream=connection.getInputStream();
     int read;
     byte[] buf=new byte[BUFFER_SIZE];
-    while ((read=in.read(buf)) > 0) {
+    while ((read=inputStream.read(buf)) > 0) {
       totalBytes.addAndGet(read);
       out.write(buf,0,read);
+    }
+    if (connection.getContentLength() != -1 && totalBytes.get() != connection.getContentLength()) {
+      throw new IOException("Expected " + formatSize(connection.getContentLength()) + ", got "+ formatSize(totalBytes.get()));
     }
   }
  catch (  IOException e) {
