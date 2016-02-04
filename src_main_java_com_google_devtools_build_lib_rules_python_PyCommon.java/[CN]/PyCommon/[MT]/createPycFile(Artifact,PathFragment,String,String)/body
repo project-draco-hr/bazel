@@ -1,4 +1,9 @@
 {
+  PackageIdentifier packageId=ruleContext.getLabel().getPackageIdentifier();
+  PackageIdentifier itemPackageId=source.getOwner().getPackageIdentifier();
+  if (!itemPackageId.equals(packageId)) {
+    return null;
+  }
   Artifact output=ruleContext.getRelatedArtifact(source.getRootRelativePath(),".pyc");
   SpawnAction.Builder builder=new SpawnAction.Builder().setResources(PY_COMPILE_RESOURCE_SET).setExecutable(pythonBinary).setProgressMessage("Compiling Python").addInputArgument(ruleContext.getPrerequisiteArtifact(pythonPrecompileAttribute,Mode.HOST)).setMnemonic("PyCompile");
   TransitiveInfoCollection pythonTarget=ruleContext.getPrerequisite(hostPython2RuntimeAttribute,Mode.HOST);
