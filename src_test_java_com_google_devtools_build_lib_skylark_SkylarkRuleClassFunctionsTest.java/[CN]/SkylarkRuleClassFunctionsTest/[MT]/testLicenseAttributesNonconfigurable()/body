@@ -1,0 +1,7 @@
+{
+  scratch.file("test/BUILD");
+  scratch.file("test/rule.bzl","def _impl(ctx):","  return","some_rule = rule(","  implementation = _impl,","  attrs = {","    'licenses': attr.license()","  }",")");
+  scratch.file("third_party/foo/BUILD","load('/test/rule', 'some_rule')","some_rule(","    name='r',","    licenses = ['unencumbered']",")");
+  invalidatePackages();
+  createRuleContext("//third_party/foo:r");
+}
