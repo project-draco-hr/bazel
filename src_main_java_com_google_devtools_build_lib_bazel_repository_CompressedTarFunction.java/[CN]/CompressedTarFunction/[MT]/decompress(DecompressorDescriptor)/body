@@ -1,8 +1,8 @@
 {
   Optional<String> prefix=descriptor.prefix();
   boolean foundPrefix=false;
-  try (GZIPInputStream gzipStream=new GZIPInputStream(new FileInputStream(descriptor.archivePath().getPathFile()))){
-    TarArchiveInputStream tarStream=new TarArchiveInputStream(gzipStream);
+  try (InputStream decompressorStream=getDecompressorStream(descriptor)){
+    TarArchiveInputStream tarStream=new TarArchiveInputStream(decompressorStream);
     TarArchiveEntry entry;
     while ((entry=tarStream.getNextTarEntry()) != null) {
       StripPrefixedPath entryPath=StripPrefixedPath.maybeDeprefix(entry.getName(),prefix);
