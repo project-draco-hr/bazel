@@ -1,0 +1,9 @@
+{
+  Iterable<String> paramsArgs=Iterables.concat(BASE_ARGS,Arrays.asList("--javacopts","-source","8","-target","8"));
+  Path params=tmpFolder.newFile("params.txt").toPath();
+  Files.write(params,paramsArgs,StandardCharsets.UTF_8);
+  String[] lines={"@" + params.toAbsolutePath(),"--target_label","//custom/label"};
+  TurbineOptions options=TurbineOptionsParser.parse(Arrays.asList(lines));
+  assertThat(options.javacOpts()).containsExactly("-source","8","-target","8").inOrder();
+  assertThat(options.targetLabel()).isEqualTo("//custom/label");
+}
