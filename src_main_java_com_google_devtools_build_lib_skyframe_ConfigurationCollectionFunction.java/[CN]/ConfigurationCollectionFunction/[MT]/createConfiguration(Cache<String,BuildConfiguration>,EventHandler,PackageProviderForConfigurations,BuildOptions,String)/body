@@ -1,15 +1,14 @@
 {
-  StoredEventHandler errorEventListener=new StoredEventHandler();
+  ErrorSensingEventHandler eventHandler=new ErrorSensingEventHandler(originalEventListener);
   if (cpuOverride != null) {
     buildOptions=buildOptions.clone();
     buildOptions.get(BuildConfiguration.Options.class).cpu=cpuOverride;
   }
-  BuildConfiguration targetConfig=configurationFactory.get().createConfigurations(cache,loadedPackageProvider,buildOptions,errorEventListener);
+  BuildConfiguration targetConfig=configurationFactory.get().createConfigurations(cache,loadedPackageProvider,buildOptions,eventHandler);
   if (targetConfig == null) {
     return null;
   }
-  errorEventListener.replayOn(originalEventListener);
-  if (errorEventListener.hasErrors()) {
+  if (eventHandler.hasErrors()) {
     throw new InvalidConfigurationException("Build options are invalid");
   }
   return targetConfig;

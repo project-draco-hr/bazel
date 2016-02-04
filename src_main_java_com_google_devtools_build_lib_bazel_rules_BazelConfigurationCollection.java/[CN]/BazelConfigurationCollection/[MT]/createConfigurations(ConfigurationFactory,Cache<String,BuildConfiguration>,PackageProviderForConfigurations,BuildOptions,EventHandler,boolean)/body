@@ -24,18 +24,23 @@
   }
   Set<Label> reachableLabels=new HashSet<>();
   if (performSanityCheck) {
-    for (    Label label : buildOptions.getAllLabels().values()) {
+    for (    Map.Entry<String,Label> entry : buildOptions.getAllLabels().entries()) {
+      Label label=entry.getValue();
       try {
         collectTransitiveClosure(packageProvider,reachableLabels,label);
       }
  catch (      NoSuchThingException e) {
-        throw new IllegalStateException(e);
+        eventHandler.handle(Event.error(e.getMessage()));
+        throw new InvalidConfigurationException(String.format("Failed to load required %s target: '%s'",entry.getKey(),label));
       }
+    }
+    if (packageProvider.valuesMissing()) {
+      return null;
     }
     sanityCheckImplicitLabels(reachableLabels,targetConfiguration);
     sanityCheckImplicitLabels(reachableLabels,hostConfiguration);
   }
   BuildConfiguration result=setupTransitions(targetConfiguration,dataConfiguration,hostConfiguration,splitTransitionsTable);
-  result.reportInvalidOptions(errorEventListener);
+  result.reportInvalidOptions(eventHandler);
   return result;
 }
