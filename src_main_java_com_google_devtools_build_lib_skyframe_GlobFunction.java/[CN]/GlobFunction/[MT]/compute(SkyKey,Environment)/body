@@ -1,10 +1,5 @@
 {
   GlobDescriptor glob=(GlobDescriptor)skyKey.argument();
-  PackageLookupValue globPkgLookupValue=(PackageLookupValue)env.getValue(PackageLookupValue.key(glob.getPackageId()));
-  if (globPkgLookupValue == null) {
-    return null;
-  }
-  Preconditions.checkState(globPkgLookupValue.packageExists(),"%s isn't an existing package",glob.getPackageId());
   PathFragment globSubdir=glob.getSubdir();
   if (!globSubdir.equals(PathFragment.EMPTY_FRAGMENT)) {
     PackageLookupValue globSubdirPkgLookupValue=(PackageLookupValue)env.getValue(PackageLookupValue.key(PackageIdentifier.create(glob.getPackageId().getRepository(),glob.getPackageId().getPackageFragment().getRelative(globSubdir))));
@@ -35,7 +30,7 @@
       }
     }
  else {
-      SkyKey globKey=GlobValue.internalKey(glob.getPackageId(),globSubdir,patternTail,glob.excludeDirs());
+      SkyKey globKey=GlobValue.internalKey(glob.getPackageId(),glob.getPackageRoot(),globSubdir,patternTail,glob.excludeDirs());
       GlobValue globValue=(GlobValue)env.getValue(globKey);
       if (globValue == null) {
         return null;
@@ -44,7 +39,7 @@
     }
   }
   PathFragment dirPathFragment=glob.getPackageId().getPackageFragment().getRelative(globSubdir);
-  RootedPath dirRootedPath=RootedPath.toRootedPath(globPkgLookupValue.getRoot(),dirPathFragment);
+  RootedPath dirRootedPath=RootedPath.toRootedPath(glob.getPackageRoot(),dirPathFragment);
   if (alwaysUseDirListing || containsGlobs(patternHead)) {
     DirectoryListingValue listingValue=(DirectoryListingValue)env.getValue(DirectoryListingValue.key(dirRootedPath));
     if (listingValue == null) {
@@ -58,7 +53,7 @@
         continue;
       }
       if (direntType == Dirent.Type.SYMLINK) {
-        RootedPath symlinkRootedPath=RootedPath.toRootedPath(globPkgLookupValue.getRoot(),dirPathFragment.getRelative(fileName));
+        RootedPath symlinkRootedPath=RootedPath.toRootedPath(glob.getPackageRoot(),dirPathFragment.getRelative(fileName));
         FileValue symlinkFileValue=(FileValue)env.getValue(FileValue.key(symlinkRootedPath));
         if (symlinkFileValue == null) {
           continue;
@@ -74,7 +69,7 @@
   }
  else {
     String fileName=patternHead;
-    RootedPath fileRootedPath=RootedPath.toRootedPath(globPkgLookupValue.getRoot(),dirPathFragment.getRelative(fileName));
+    RootedPath fileRootedPath=RootedPath.toRootedPath(glob.getPackageRoot(),dirPathFragment.getRelative(fileName));
     FileValue fileValue=(FileValue)env.getValue(FileValue.key(fileRootedPath));
     if (fileValue == null) {
       return null;
