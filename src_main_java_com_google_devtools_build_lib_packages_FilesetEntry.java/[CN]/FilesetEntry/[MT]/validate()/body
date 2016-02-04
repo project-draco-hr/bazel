@@ -11,8 +11,14 @@
  else   if (!stripPrefix.equals(DEFAULT_STRIP_PREFIX) && files == null) {
     return "If the strip prefix is not \"" + DEFAULT_STRIP_PREFIX + "\", files must be specified";
   }
+ else   if (stripPrefix.startsWith("/")) {
+    return "Cannot specify absolute strip prefix; perhaps you need to use \"" + STRIP_PREFIX_WORKSPACE + "\"";
+  }
  else   if (new PathFragment(stripPrefix).containsUplevelReferences()) {
     return "Strip prefix must not contain uplevel references";
+  }
+ else   if (stripPrefix.startsWith("%") && !stripPrefix.startsWith(STRIP_PREFIX_WORKSPACE)) {
+    return "If the strip_prefix starts with \"%\" then it must start with \"" + STRIP_PREFIX_WORKSPACE + "\"";
   }
  else {
     return null;
