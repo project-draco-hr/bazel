@@ -8,6 +8,12 @@
  else {
     dsymBundle=Optional.absent();
   }
-  registerLinkAction(objcProvider,extraLinkArgs,extraLinkInputs,dsymBundle);
+  Iterable<Artifact> prunedJ2ObjcArchives=ImmutableList.<Artifact>of();
+  if (stripJ2ObjcDeadCode()) {
+    J2ObjcEntryClassProvider provider=J2ObjcEntryClassProvider.buildFrom(ruleContext);
+    registerJ2ObjcDeadCodeRemovalActions(objcProvider,provider.getEntryClasses());
+    prunedJ2ObjcArchives=j2objcPrunedLibraries(objcProvider);
+  }
+  registerLinkAction(objcProvider,extraLinkArgs,extraLinkInputs,dsymBundle,prunedJ2ObjcArchives);
   return this;
 }

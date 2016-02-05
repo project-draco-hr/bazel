@@ -3,30 +3,19 @@
   JavaCompilationArgsProvider compilationArgsProvider=base.getProvider(JavaCompilationArgsProvider.class);
   JavaSourceInfoProvider sourceInfoProvider=base.getProvider(JavaSourceInfoProvider.class);
   ImmutableSet<Artifact> javaInputFiles=ImmutableSet.<Artifact>builder().addAll(sourceInfoProvider.getSourceFiles()).addAll(sourceInfoProvider.getSourceJars()).addAll(sourceInfoProvider.getSourceJarsForJarFiles()).build();
-  NestedSetBuilder<Artifact> depsHeaderMappingsBuilder=NestedSetBuilder.stableOrder();
-  NestedSetBuilder<Artifact> depsClassMappingsBuilder=NestedSetBuilder.stableOrder();
-  NestedSetBuilder<Artifact> depsDependencyMappingsBuilder=NestedSetBuilder.stableOrder();
-  for (  J2ObjcMappingFileProvider provider : getJ2ObjCMappings(ruleContext)) {
-    depsHeaderMappingsBuilder.addTransitive(provider.getHeaderMappingFiles());
-    depsClassMappingsBuilder.addTransitive(provider.getClassMappingFiles());
-    depsDependencyMappingsBuilder.addTransitive(provider.getDependencyMappingFiles());
-  }
-  NestedSet<Artifact> depsHeaderMappings=depsHeaderMappingsBuilder.build();
-  NestedSet<Artifact> depsClassMappings=depsClassMappingsBuilder.build();
-  NestedSet<Artifact> depsDependencyMappings=depsDependencyMappingsBuilder.build();
-  J2ObjcSrcsProvider.Builder srcsBuilder=new J2ObjcSrcsProvider.Builder();
-  J2ObjcMappingFileProvider j2ObjcMappingFileProvider;
+  XcodeProvider xcodeProvider;
+  ObjcCommon common;
   if (!javaInputFiles.isEmpty()) {
     J2ObjcSource j2ObjcSource=buildJ2ObjcSource(ruleContext,javaInputFiles);
-    createJ2ObjcTranspilationAction(ruleContext,depsHeaderMappings,depsClassMappings,javaInputFiles,compilationArgsProvider,j2ObjcSource);
-    NestedSet<Artifact> headerMappingFiles=NestedSetBuilder.<Artifact>stableOrder().add(j2ObjcOutputHeaderMappingFile(ruleContext)).build();
-    NestedSet<Artifact> dependencyMappingFiles=NestedSetBuilder.<Artifact>stableOrder().add(j2ObjcOutputDependencyMappingFile(ruleContext)).addTransitive(depsDependencyMappings).build();
-    srcsBuilder.addSource(j2ObjcSource);
-    j2ObjcMappingFileProvider=new J2ObjcMappingFileProvider(headerMappingFiles,depsClassMappings,dependencyMappingFiles);
+    J2ObjcMappingFileProvider depJ2ObjcMappingFileProvider=depJ2ObjcMappingFileProvider(ruleContext);
+    createJ2ObjcTranspilationAction(ruleContext,depJ2ObjcMappingFileProvider.getHeaderMappingFiles(),depJ2ObjcMappingFileProvider.getClassMappingFiles(),javaInputFiles,compilationArgsProvider,j2ObjcSource);
+    common=common(ruleContext,j2ObjcSource.getObjcSrcs(),j2ObjcSource.getObjcHdrs(),j2ObjcSource.getHeaderSearchPaths(),DEPENDENT_ATTRIBUTES);
+    xcodeProvider=xcodeProvider(ruleContext,common,j2ObjcSource.getObjcHdrs(),j2ObjcSource.getHeaderSearchPaths(),DEPENDENT_ATTRIBUTES);
+    new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common);
   }
  else {
-    j2ObjcMappingFileProvider=new J2ObjcMappingFileProvider(depsHeaderMappings,depsClassMappings,depsDependencyMappings);
+    common=common(ruleContext,ImmutableList.<Artifact>of(),ImmutableList.<Artifact>of(),ImmutableList.<PathFragment>of(),DEPENDENT_ATTRIBUTES);
+    xcodeProvider=xcodeProvider(ruleContext,common,ImmutableList.<Artifact>of(),ImmutableList.<PathFragment>of(),DEPENDENT_ATTRIBUTES);
   }
-  srcsBuilder.addTransitiveJ2ObjcSrcs(ruleContext);
-  return builder.addProvider(J2ObjcSrcsProvider.class,srcsBuilder.build()).addProvider(J2ObjcMappingFileProvider.class,j2ObjcMappingFileProvider).build();
+  return builder.addProvider(J2ObjcMappingFileProvider.class,j2ObjcMappingFileProvider(ruleContext,!javaInputFiles.isEmpty())).addProvider(ObjcProvider.class,common.getObjcProvider()).addProvider(XcodeProvider.class,xcodeProvider).build();
 }

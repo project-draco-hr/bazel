@@ -5,22 +5,26 @@
   ProtoSourcesProvider protoSourcesProvider=base.getProvider(ProtoSourcesProvider.class);
   ImmutableList<Artifact> protoSources=protoSourcesProvider.getDirectProtoSources();
   NestedSet<Artifact> transitiveImports=protoSourcesProvider.getTransitiveImports();
-  J2ObjcSrcsProvider.Builder srcsBuilder=new J2ObjcSrcsProvider.Builder();
+  XcodeProvider xcodeProvider;
   Iterable<Artifact> headerMappingFiles;
   Iterable<Artifact> classMappingFiles;
+  ObjcCommon common;
   if (protoSources.isEmpty()) {
     headerMappingFiles=ImmutableList.of();
     classMappingFiles=ImmutableList.of();
+    common=J2ObjcAspect.common(ruleContext,ImmutableList.<Artifact>of(),ImmutableList.<Artifact>of(),ImmutableList.<PathFragment>of(),DEPENDENT_ATTRIBUTES);
+    xcodeProvider=J2ObjcAspect.xcodeProvider(ruleContext,common,ImmutableList.<Artifact>of(),ImmutableList.<PathFragment>of(),DEPENDENT_ATTRIBUTES);
   }
  else {
     J2ObjcSource j2ObjcSource=j2ObjcSource(ruleContext,protoSources);
     headerMappingFiles=headerMappingFiles(ruleContext,protoSources);
     classMappingFiles=classMappingFiles(ruleContext,protoSources);
-    srcsBuilder.addSource(j2ObjcSource);
     createActions(base,ruleContext,protoSources,transitiveImports,headerMappingFiles,classMappingFiles,j2ObjcSource);
+    common=J2ObjcAspect.common(ruleContext,j2ObjcSource.getObjcSrcs(),j2ObjcSource.getObjcHdrs(),j2ObjcSource.getHeaderSearchPaths(),DEPENDENT_ATTRIBUTES);
+    xcodeProvider=J2ObjcAspect.xcodeProvider(ruleContext,common,j2ObjcSource.getObjcHdrs(),j2ObjcSource.getHeaderSearchPaths(),DEPENDENT_ATTRIBUTES);
+    new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common);
   }
-  J2ObjcSrcsProvider j2objcSrcsProvider=srcsBuilder.addTransitiveJ2ObjcSrcs(ruleContext,"deps").build();
   NestedSet<Artifact> j2ObjcTransitiveHeaderMappingFiles=j2ObjcTransitiveHeaderMappingFiles(ruleContext,headerMappingFiles);
   NestedSet<Artifact> j2ObjcTransitiveClassMappingFiles=j2ObjcTransitiveClassMappingFiles(ruleContext,classMappingFiles);
-  return new ConfiguredAspect.Builder(NAME,ruleContext).addProvider(J2ObjcSrcsProvider.class,j2objcSrcsProvider).addProvider(J2ObjcMappingFileProvider.class,new J2ObjcMappingFileProvider(j2ObjcTransitiveHeaderMappingFiles,j2ObjcTransitiveClassMappingFiles,NestedSetBuilder.<Artifact>stableOrder().build())).build();
+  return new ConfiguredAspect.Builder(NAME,ruleContext).addProvider(J2ObjcMappingFileProvider.class,new J2ObjcMappingFileProvider(j2ObjcTransitiveHeaderMappingFiles,j2ObjcTransitiveClassMappingFiles,NestedSetBuilder.<Artifact>stableOrder().build(),NestedSetBuilder.<Artifact>stableOrder().build())).addProvider(ObjcProvider.class,common.getObjcProvider()).addProvider(XcodeProvider.class,xcodeProvider).build();
 }

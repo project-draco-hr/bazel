@@ -1,0 +1,38 @@
+{
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
+  Iterable<String> libraryNames=libraryNames(objcProvider);
+  CustomCommandLine.Builder commandLine=CustomCommandLine.builder().addPath(xcrunwrapper(ruleContext).getExecutable().getExecPath());
+  if (objcProvider.is(USES_CPP)) {
+    commandLine.add(CLANG_PLUSPLUS).add("-stdlib=libc++");
+  }
+ else {
+    commandLine.add(CLANG);
+  }
+  boolean isTestTarget=TargetUtils.isTestRule(ruleContext.getRule());
+  if (objcConfiguration.shouldStripBinary() && !isTestTarget) {
+    commandLine.add("-dead_strip").add("-no_dead_strip_inits_and_terms");
+  }
+  if (objcConfiguration.shouldPrioritizeSystemLibsOverFrameworks()) {
+    commandLine.addFormatEach("-l%s",libraryNames);
+  }
+  commandLine.add(commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration,appleConfiguration)).add("-Xlinker").add("-objc_abi_version").add("-Xlinker").add("2").add("-fobjc-link-runtime").add(DEFAULT_LINKER_FLAGS).addBeforeEach("-framework",frameworkNames(objcProvider)).addBeforeEach("-weak_framework",SdkFramework.names(objcProvider.get(WEAK_SDK_FRAMEWORK)));
+  if (!objcConfiguration.shouldPrioritizeSystemLibsOverFrameworks()) {
+    commandLine.addFormatEach("-l%s",libraryNames);
+  }
+  commandLine.addExecPath("-o",linkedBinary).addExecPaths(bazelBuiltLibraries).addExecPaths(objcProvider.get(IMPORTED_LIBRARY)).addExecPaths(ccLibraries).addBeforeEach("-force_load",Artifact.toExecPaths(objcProvider.get(FORCE_LOAD_LIBRARY))).add(extraLinkArgs).add(objcProvider.get(ObjcProvider.LINKOPT)).build();
+  if (ruleContext.getConfiguration().isCodeCoverageEnabled()) {
+    commandLine.add(LINKER_COVERAGE_FLAGS);
+  }
+  if (objcProvider.is(USES_SWIFT)) {
+    commandLine.add("-L").add(AppleToolchain.swiftLibDir(appleConfiguration));
+  }
+  if (objcProvider.is(USES_SWIFT) || objcProvider.is(USES_FRAMEWORKS)) {
+    commandLine.add("-Xlinker").add("-rpath").add("-Xlinker").add("@executable_path/Frameworks");
+  }
+  if (dsymBundle.isPresent()) {
+    PathFragment dsymPath=FileSystemUtils.removeExtension(dsymBundle.get().getExecPath());
+    commandLine.add("&&").addPath(xcrunwrapper(ruleContext).getExecutable().getExecPath()).add(DSYMUTIL).add(linkedBinary.getExecPathString()).add("-o " + dsymPath).add("&& zipped_bundle=${PWD}/" + dsymBundle.get().getShellEscapedExecPathString()).add("&& cd " + dsymPath).add("&& /usr/bin/zip -q -r \"${zipped_bundle}\" .");
+  }
+  return new SingleArgCommandLine(commandLine.build());
+}

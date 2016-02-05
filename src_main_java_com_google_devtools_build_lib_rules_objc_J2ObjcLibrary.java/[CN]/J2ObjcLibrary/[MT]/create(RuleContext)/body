@@ -3,24 +3,11 @@
   if (ruleContext.hasErrors()) {
     return null;
   }
-  J2ObjcSrcsProvider j2ObjcSrcsProvider=new J2ObjcSrcsProvider.Builder().addTransitiveJ2ObjcSrcs(ruleContext).addEntryClasses(ruleContext.attributes().get("entry_classes",Type.STRING_LIST)).build();
-  ObjcProvider.Builder objcProviderBuilder=new ObjcProvider.Builder().addJ2ObjcTransitiveAndPropagate(ruleContext.getPrerequisite("$jre_emul_lib",Mode.TARGET,ObjcProvider.class)).addJ2ObjcTransitiveAndPropagate(ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProvider.class));
+  J2ObjcEntryClassProvider j2ObjcEntryClassProvider=new J2ObjcEntryClassProvider.Builder().addTransitive(ruleContext).addEntryClasses(ruleContext.attributes().get("entry_classes",Type.STRING_LIST)).build();
+  ObjcProvider.Builder objcProviderBuilder=new ObjcProvider.Builder().addTransitiveAndPropagate(ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProvider.class));
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
-  XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addDependencies(xcodeProviderBuilder,new Attribute("$jre_emul_lib",Mode.TARGET)).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET));
-  if (j2ObjcSrcsProvider.hasProtos()) {
-    objcProviderBuilder.addJ2ObjcTransitiveAndPropagate(ruleContext.getPrerequisite("$protobuf_lib",Mode.TARGET,ObjcProvider.class));
-    xcodeSupport.addDependencies(xcodeProviderBuilder,new Attribute("$protobuf_lib",Mode.TARGET));
-  }
-  for (  J2ObjcSource j2objcSource : j2ObjcSrcsProvider.getSrcs()) {
-    objcProviderBuilder.addJ2ObjcAll(ObjcProvider.HEADER,j2objcSource.getObjcHdrs());
-    objcProviderBuilder.addJ2ObjcAll(ObjcProvider.INCLUDE,j2objcSource.getHeaderSearchPaths());
-    xcodeProviderBuilder.addHeaders(j2objcSource.getObjcHdrs());
-    xcodeProviderBuilder.addUserHeaderSearchPaths(j2objcSource.getHeaderSearchPaths());
-  }
-  if (ObjcRuleClasses.objcConfiguration(ruleContext).moduleMapsEnabled()) {
-    configureModuleMap(ruleContext,objcProviderBuilder,j2ObjcSrcsProvider);
-  }
+  XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET));
   ObjcProvider objcProvider=objcProviderBuilder.build();
   xcodeSupport.addXcodeSettings(xcodeProviderBuilder,objcProvider,LIBRARY_STATIC);
-  return new RuleConfiguredTargetBuilder(ruleContext).setFilesToBuild(NestedSetBuilder.<Artifact>emptySet(STABLE_ORDER)).add(RunfilesProvider.class,RunfilesProvider.EMPTY).addProvider(J2ObjcSrcsProvider.class,j2ObjcSrcsProvider).addProvider(J2ObjcMappingFileProvider.class,ObjcRuleClasses.j2ObjcMappingFileProvider(ruleContext)).addProvider(ObjcProvider.class,objcProvider).addProvider(XcodeProvider.class,xcodeProviderBuilder.build()).build();
+  return new RuleConfiguredTargetBuilder(ruleContext).setFilesToBuild(NestedSetBuilder.<Artifact>emptySet(STABLE_ORDER)).add(RunfilesProvider.class,RunfilesProvider.EMPTY).addProvider(J2ObjcEntryClassProvider.class,j2ObjcEntryClassProvider).addProvider(J2ObjcMappingFileProvider.class,ObjcRuleClasses.j2ObjcMappingFileProvider(ruleContext)).addProvider(ObjcProvider.class,objcProvider).addProvider(XcodeProvider.class,xcodeProviderBuilder.build()).build();
 }

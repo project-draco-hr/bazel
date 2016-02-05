@@ -1,0 +1,14 @@
+{
+  ImmutableList.Builder<Artifact> libraries=new ImmutableList.Builder<>();
+  IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
+  Set<Artifact> unprunedJ2ObjcLibs=objcProvider.get(ObjcProvider.J2OBJC_LIBRARY).toSet();
+  for (  Artifact library : objcProvider.get(LIBRARY)) {
+    if (unprunedJ2ObjcLibs.contains(library)) {
+      libraries.add(intermediateArtifacts.j2objcPrunedArchive(library));
+    }
+ else {
+      libraries.add(library);
+    }
+  }
+  return NestedSetBuilder.wrap(Order.NAIVE_LINK_ORDER,libraries.build());
+}

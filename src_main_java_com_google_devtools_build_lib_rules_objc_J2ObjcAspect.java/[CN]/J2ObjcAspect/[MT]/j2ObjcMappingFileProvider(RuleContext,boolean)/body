@@ -1,0 +1,11 @@
+{
+  J2ObjcMappingFileProvider depJ2ObjcMappingFileProvider=depJ2ObjcMappingFileProvider(ruleContext);
+  J2ObjcMappingFileProvider j2ObjcMappingFileProvider=depJ2ObjcMappingFileProvider;
+  if (hasTranslatedSource) {
+    NestedSet<Artifact> headerMappingFiles=NestedSetBuilder.<Artifact>stableOrder().add(j2ObjcOutputHeaderMappingFile(ruleContext)).build();
+    NestedSet<Artifact> dependencyMappingFiles=NestedSetBuilder.<Artifact>stableOrder().add(j2ObjcOutputDependencyMappingFile(ruleContext)).addTransitive(depJ2ObjcMappingFileProvider.getDependencyMappingFiles()).build();
+    NestedSet<Artifact> archiveSourceMappingFiles=NestedSetBuilder.<Artifact>stableOrder().add(j2ObjcOutputArchiveSourceMappingFile(ruleContext)).addTransitive(depJ2ObjcMappingFileProvider.getArchiveSourceMappingFiles()).build();
+    j2ObjcMappingFileProvider=new J2ObjcMappingFileProvider(headerMappingFiles,depJ2ObjcMappingFileProvider.getClassMappingFiles(),dependencyMappingFiles,archiveSourceMappingFiles);
+  }
+  return j2ObjcMappingFileProvider;
+}

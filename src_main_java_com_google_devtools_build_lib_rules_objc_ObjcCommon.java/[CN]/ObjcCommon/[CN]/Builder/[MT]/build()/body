@@ -46,6 +46,9 @@
   for (  CompilationArtifacts artifacts : compilationArtifacts.asSet()) {
     Iterable<Artifact> allSources=Iterables.concat(artifacts.getSrcs(),artifacts.getNonArcSrcs());
     objcProvider.addAll(HEADER,artifacts.getAdditionalHdrs()).addAll(LIBRARY,artifacts.getArchive().asSet()).addAll(SOURCE,allSources);
+    if (artifacts.getArchive().isPresent() && J2ObjcLibrary.J2OBJC_SUPPORTED_RULES.contains(context.getRule().getRuleClass())) {
+      objcProvider.addAll(J2OBJC_LIBRARY,artifacts.getArchive().asSet());
+    }
     boolean usesCpp=false;
     boolean usesSwift=false;
     for (    Artifact sourceFile : Iterables.concat(artifacts.getSrcs(),artifacts.getNonArcSrcs())) {

@@ -1,0 +1,17 @@
+{
+  XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
+  XcodeSupport xcodeSupport=new XcodeSupport(ruleContext);
+  xcodeSupport.addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),LIBRARY_STATIC);
+  for (  Attribute dependentAttribute : dependentAttributes) {
+    if (ruleContext.getAttribute(dependentAttribute.getName()) != null) {
+      xcodeSupport.addDependencies(xcodeProviderBuilder,dependentAttribute);
+    }
+  }
+  if (!Iterables.isEmpty(transpiledHeaders)) {
+    xcodeProviderBuilder.addUserHeaderSearchPaths(headerSearchPaths).addCopts(ruleContext.getFragment(ObjcConfiguration.class).getCopts()).addHeaders(transpiledHeaders);
+  }
+  if (common.getCompilationArtifacts().isPresent()) {
+    xcodeProviderBuilder.setCompilationArtifacts(common.getCompilationArtifacts().get());
+  }
+  return xcodeProviderBuilder.build();
+}
