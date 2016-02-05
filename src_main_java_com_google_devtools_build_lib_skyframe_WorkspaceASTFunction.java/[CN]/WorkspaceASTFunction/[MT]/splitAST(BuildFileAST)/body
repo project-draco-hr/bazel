@@ -1,0 +1,23 @@
+{
+  ImmutableList.Builder<BuildFileAST> asts=ImmutableList.builder();
+  int prevIdx=0;
+  boolean lastIsLoad=true;
+  List<Statement> statements=ast.getStatements();
+  for (int idx=0; idx < statements.size(); idx++) {
+    Statement st=statements.get(idx);
+    if (st instanceof LoadStatement) {
+      if (!lastIsLoad) {
+        asts.add(ast.subTree(prevIdx,idx));
+        prevIdx=idx;
+      }
+      lastIsLoad=true;
+    }
+ else {
+      lastIsLoad=false;
+    }
+  }
+  if (!statements.isEmpty()) {
+    asts.add(ast.subTree(prevIdx,statements.size()));
+  }
+  return asts.build();
+}
