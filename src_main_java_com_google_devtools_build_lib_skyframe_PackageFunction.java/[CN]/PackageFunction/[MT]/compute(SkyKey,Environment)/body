@@ -71,10 +71,11 @@ if (astLookupValue == null) {
 return null;
 }
 List<Statement> preludeStatements=astLookupValue.lookupSuccessful() ? astLookupValue.getAST().getStatements() : ImmutableList.<Statement>of();
-Package.LegacyBuilder legacyPkgBuilder=loadPackage(externalPkg,replacementContents,packageId,buildFilePath,buildFileValue,defaultVisibility,preludeStatements,env);
-if (legacyPkgBuilder == null) {
+CacheEntryWithGlobDeps<Package.LegacyBuilder> packageBuilderAndGlobDeps=loadPackage(externalPkg,replacementContents,packageId,buildFilePath,buildFileValue,defaultVisibility,preludeStatements,packageLookupValue.getRoot(),env);
+if (packageBuilderAndGlobDeps == null) {
 return null;
 }
+Package.LegacyBuilder legacyPkgBuilder=packageBuilderAndGlobDeps.value;
 legacyPkgBuilder.buildPartial();
 try {
 handleLabelsCrossingSubpackagesAndPropagateInconsistentFilesystemExceptions(packageLookupValue.getRoot(),packageId,legacyPkgBuilder,env);
@@ -83,11 +84,11 @@ handleLabelsCrossingSubpackagesAndPropagateInconsistentFilesystemExceptions(pack
 packageFunctionCache.invalidate(packageId);
 throw new PackageFunctionException(e,e.isTransient() ? Transience.TRANSIENT : Transience.PERSISTENT);
 }
-Collection<Pair<String,Boolean>> globPatterns=legacyPkgBuilder.getGlobPatterns();
+Set<SkyKey> globKeys=packageBuilderAndGlobDeps.globDepKeys;
 Map<Label,Path> subincludes=legacyPkgBuilder.getSubincludes();
 boolean packageShouldBeConsideredInError;
 try {
-packageShouldBeConsideredInError=markDependenciesAndPropagateInconsistentFilesystemExceptions(env,globPatterns,subincludes,packageId,packageLookupValue.getRoot(),legacyPkgBuilder.containsErrors());
+packageShouldBeConsideredInError=markDependenciesAndPropagateInconsistentFilesystemExceptions(env,globKeys,subincludes,packageId,legacyPkgBuilder.containsErrors());
 }
  catch (InternalInconsistentFilesystemException e) {
 packageFunctionCache.invalidate(packageId);

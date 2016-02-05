@@ -1,0 +1,16 @@
+{
+  LinkedHashSet<String> matches=Sets.newLinkedHashSet();
+  for (  SkyKey includeGlobKey : includesGlobKeys) {
+    for (    PathFragment match : getGlobMatches(includeGlobKey,globValueMap)) {
+      matches.add(match.getPathString());
+    }
+  }
+  matches.addAll(delegate.fetch(delegateIncludesToken));
+  for (  SkyKey excludeGlobKey : excludesGlobKeys) {
+    for (    PathFragment match : getGlobMatches(excludeGlobKey,globValueMap)) {
+      matches.remove(match.getPathString());
+    }
+  }
+  matches.removeAll(delegate.fetch(delegateExcludesToken));
+  return Lists.newArrayList(matches);
+}

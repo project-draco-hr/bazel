@@ -1,0 +1,68 @@
+{
+  CacheEntryWithGlobDeps<Package.LegacyBuilder> packageFunctionCacheEntry=packageFunctionCache.getIfPresent(packageId);
+  if (packageFunctionCacheEntry == null) {
+    profiler.startTask(ProfilerTask.CREATE_PACKAGE,packageId.toString());
+    try {
+      CacheEntryWithGlobDeps<AstAfterPreprocessing> astCacheEntry=astCache.getIfPresent(packageId);
+      if (astCacheEntry == null) {
+        if (showLoadingProgress.get()) {
+          env.getListener().handle(Event.progress("Loading package: " + packageId));
+        }
+        Globber legacyGlobber=packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
+        SkyframeHybridGlobber skyframeGlobber=new SkyframeHybridGlobber(packageId,packageRoot,env,legacyGlobber);
+        Preprocessor.Result preprocessingResult;
+        if (replacementContents == null) {
+          Preconditions.checkNotNull(buildFileValue,packageId);
+          byte[] buildFileBytes;
+          try {
+            buildFileBytes=buildFileValue.isSpecialFile() ? FileSystemUtils.readContent(buildFilePath) : FileSystemUtils.readWithKnownFileSize(buildFilePath,buildFileValue.getSize());
+          }
+ catch (          IOException e) {
+            throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,e.getMessage()),Transience.TRANSIENT);
+          }
+          try {
+            preprocessingResult=packageFactory.preprocess(buildFilePath,packageId,buildFileBytes,skyframeGlobber);
+          }
+ catch (          IOException e) {
+            throw new PackageFunctionException(new BuildFileContainsErrorsException(packageId,"preprocessing failed" + e.getMessage(),e),Transience.TRANSIENT);
+          }
+        }
+ else {
+          ParserInputSource replacementSource=ParserInputSource.create(replacementContents,buildFilePath.asFragment());
+          preprocessingResult=Preprocessor.Result.noPreprocessing(replacementSource);
+        }
+        StoredEventHandler astParsingEventHandler=new StoredEventHandler();
+        BuildFileAST ast=PackageFactory.parseBuildFile(packageId,preprocessingResult.result,preludeStatements,astParsingEventHandler);
+        Set<SkyKey> globDepsRequested=skyframeGlobber.getGlobDepsRequested();
+        Globber legacyGlobberToStore=globDepsRequested.isEmpty() ? null : legacyGlobber;
+        astCacheEntry=new CacheEntryWithGlobDeps<>(new AstAfterPreprocessing(preprocessingResult,ast,astParsingEventHandler),globDepsRequested,legacyGlobberToStore);
+        astCache.put(packageId,astCacheEntry);
+      }
+      AstAfterPreprocessing astAfterPreprocessing=astCacheEntry.value;
+      Set<SkyKey> globDepsRequestedDuringPreprocessing=astCacheEntry.globDepKeys;
+      SkylarkImportResult importResult;
+      try {
+        importResult=discoverSkylarkImports(buildFilePath,packageId,astAfterPreprocessing,env);
+      }
+ catch (      PackageFunctionException|InterruptedException e) {
+        astCache.invalidate(packageId);
+        throw e;
+      }
+      if (importResult == null) {
+        return null;
+      }
+      astCache.invalidate(packageId);
+      Globber legacyGlobber=astCacheEntry.legacyGlobber != null ? astCacheEntry.legacyGlobber : packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
+      SkyframeHybridGlobber skyframeGlobber=new SkyframeHybridGlobber(packageId,packageRoot,env,legacyGlobber);
+      Package.LegacyBuilder pkgBuilder=packageFactory.createPackageFromPreprocessingAst(externalPkg,packageId,buildFilePath,astAfterPreprocessing,importResult.importMap,importResult.fileDependencies,defaultVisibility,skyframeGlobber);
+      Set<SkyKey> globDepsRequested=ImmutableSet.<SkyKey>builder().addAll(globDepsRequestedDuringPreprocessing).addAll(skyframeGlobber.getGlobDepsRequested()).build();
+      packageFunctionCacheEntry=new CacheEntryWithGlobDeps<>(pkgBuilder,globDepsRequested,null);
+      numPackagesLoaded.incrementAndGet();
+      packageFunctionCache.put(packageId,packageFunctionCacheEntry);
+    }
+  finally {
+      profiler.completeTask(ProfilerTask.CREATE_PACKAGE);
+    }
+  }
+  return packageFunctionCacheEntry;
+}

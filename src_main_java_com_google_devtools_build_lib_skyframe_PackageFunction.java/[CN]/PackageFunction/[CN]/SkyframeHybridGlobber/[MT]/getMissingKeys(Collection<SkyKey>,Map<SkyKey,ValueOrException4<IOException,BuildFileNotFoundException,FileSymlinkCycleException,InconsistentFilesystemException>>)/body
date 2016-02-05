@@ -1,0 +1,18 @@
+{
+  List<SkyKey> missingKeys=new ArrayList<>(globKeys.size());
+  for (  SkyKey globKey : globKeys) {
+    ValueOrException4<IOException,BuildFileNotFoundException,FileSymlinkCycleException,InconsistentFilesystemException> valueOrException=globValueMap.get(globKey);
+    if (valueOrException == null) {
+      missingKeys.add(globKey);
+    }
+    try {
+      if (valueOrException.get() == null) {
+        missingKeys.add(globKey);
+      }
+    }
+ catch (    IOException|BuildFileNotFoundException|FileSymlinkCycleException|InconsistentFilesystemException doesntMatter) {
+      continue;
+    }
+  }
+  return missingKeys;
+}

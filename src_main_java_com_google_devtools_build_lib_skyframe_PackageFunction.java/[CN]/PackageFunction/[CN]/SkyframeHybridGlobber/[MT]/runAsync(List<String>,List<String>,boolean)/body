@@ -1,0 +1,39 @@
+{
+  List<SkyKey> globKeys=new ArrayList<>(includes.size() + excludes.size());
+  LinkedHashSet<SkyKey> includesKeys=Sets.newLinkedHashSetWithExpectedSize(includes.size());
+  LinkedHashSet<SkyKey> excludesKeys=Sets.newLinkedHashSetWithExpectedSize(excludes.size());
+  Map<SkyKey,String> globKeyToIncludeStringMap=Maps.newHashMapWithExpectedSize(includes.size());
+  Map<SkyKey,String> globKeyToExcludeStringMap=Maps.newHashMapWithExpectedSize(excludes.size());
+  for (  String pattern : includes) {
+    SkyKey globKey=getGlobKey(pattern,excludeDirs);
+    globKeys.add(globKey);
+    includesKeys.add(globKey);
+    globKeyToIncludeStringMap.put(globKey,pattern);
+  }
+  for (  String pattern : excludes) {
+    SkyKey globKey=getGlobKey(pattern,excludeDirs);
+    globKeys.add(globKey);
+    excludesKeys.add(globKey);
+    globKeyToExcludeStringMap.put(globKey,pattern);
+  }
+  globDepsRequested.addAll(globKeys);
+  Map<SkyKey,ValueOrException4<IOException,BuildFileNotFoundException,FileSymlinkCycleException,InconsistentFilesystemException>> globValueMap=env.getValuesOrThrow(globKeys,IOException.class,BuildFileNotFoundException.class,FileSymlinkCycleException.class,InconsistentFilesystemException.class);
+  Collection<SkyKey> missingKeys=getMissingKeys(globKeys,globValueMap);
+  List<String> includesToDelegate=new ArrayList<>(missingKeys.size());
+  List<String> excludesToDelegate=new ArrayList<>(missingKeys.size());
+  for (  SkyKey missingKey : missingKeys) {
+    String missingIncludePattern=globKeyToIncludeStringMap.get(missingKey);
+    if (missingIncludePattern != null) {
+      includesToDelegate.add(missingIncludePattern);
+      includesKeys.remove(missingKey);
+    }
+    String missingExcludePattern=globKeyToExcludeStringMap.get(missingKey);
+    if (missingExcludePattern != null) {
+      excludesToDelegate.add(missingExcludePattern);
+      excludesKeys.remove(missingKey);
+    }
+  }
+  Token delegateIncludesToken=delegate.runAsync(includesToDelegate,ImmutableList.<String>of(),excludeDirs);
+  Token delegateExcludesToken=delegate.runAsync(excludesToDelegate,ImmutableList.<String>of(),excludeDirs);
+  return new HybridToken(globValueMap,includesKeys,excludesKeys,delegateIncludesToken,delegateExcludesToken);
+}
