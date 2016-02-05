@@ -1,6 +1,13 @@
 {
   SkyFunction.Environment env=Mockito.mock(SkyFunction.Environment.class);
   Mockito.when(env.getValue(Matchers.argThat(new SkyKeyMatchers(SkyFunctions.FILE)))).thenReturn(fakeWorkspaceFileValue);
+  Mockito.when(env.getValue(Matchers.argThat(new SkyKeyMatchers(SkyFunctions.WORKSPACE_FILE)))).then(new Answer<SkyValue>(){
+    @Override public SkyValue answer(    InvocationOnMock invocation) throws Throwable {
+      SkyKey key=(SkyKey)invocation.getArguments()[0];
+      return workspaceSkyFunc.compute(key,getEnv());
+    }
+  }
+);
   Mockito.when(env.getValue(Matchers.argThat(new SkyKeyMatchers(SkyFunctions.WORKSPACE_AST)))).then(new Answer<SkyValue>(){
     @Override public SkyValue answer(    InvocationOnMock invocation) throws Throwable {
       SkyKey key=(SkyKey)invocation.getArguments()[0];
