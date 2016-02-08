@@ -37,7 +37,14 @@ catch (  RefNotFoundException|InvalidRefNameException e) {
     throw new RepositoryFunctionException(new IOException("Invalid branch, tag, or commit: " + e.getMessage()),Transience.PERSISTENT);
   }
 catch (  GitAPIException e) {
-    throw new RepositoryFunctionException(new IOException("Error cloning repository: " + e.getMessage()),Transience.PERSISTENT);
+    StringBuilder errmsg=new StringBuilder();
+    errmsg.append(e.getMessage());
+    Throwable throwable=e;
+    while (throwable.getCause() != null) {
+      throwable=throwable.getCause();
+      errmsg.append(" caused by " + e.getMessage());
+    }
+    throw new RepositoryFunctionException(new IOException("Error cloning repository: " + errmsg),Transience.PERSISTENT);
   }
 catch (  JGitInternalException e) {
     throw new RepositoryFunctionException(new IOException(e.getMessage()),Transience.PERSISTENT);
