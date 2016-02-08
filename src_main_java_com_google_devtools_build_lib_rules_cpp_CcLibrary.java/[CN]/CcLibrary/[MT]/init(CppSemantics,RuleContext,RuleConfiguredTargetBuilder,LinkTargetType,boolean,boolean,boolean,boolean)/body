@@ -7,7 +7,8 @@
     helper.addLinkstamps(ruleContext.getPrerequisites("linkstamp",Mode.TARGET));
   }
   Artifact soImplArtifact=null;
-  boolean createDynamicLibrary=!linkStatic && appearsToHaveObjectFiles(ruleContext.attributes());
+  boolean supportsDynamicLinker=ruleContext.getFragment(CppConfiguration.class).supportsDynamicLinker();
+  boolean createDynamicLibrary=!linkStatic && appearsToHaveObjectFiles(ruleContext.attributes()) && supportsDynamicLinker;
   if (ruleContext.getRule().isAttrDefined("outs",Type.STRING_LIST)) {
     List<String> outs=ruleContext.attributes().get("outs",Type.STRING_LIST);
     if (outs.size() > 1) {
@@ -38,7 +39,11 @@
   }
   helper.setCreateDynamicLibrary(createDynamicLibrary);
   helper.setDynamicLibrary(soImplArtifact);
-  if (!createDynamicLibrary && ruleContext.attributes().isConfigurable("srcs",BuildType.LABEL_LIST)) {
+  if (!createDynamicLibrary && !supportsDynamicLinker) {
+    Artifact solibArtifact=CppHelper.getLinkedArtifact(ruleContext,LinkTargetType.DYNAMIC_LIBRARY);
+    ruleContext.registerAction(new FailAction(ruleContext.getActionOwner(),ImmutableList.of(solibArtifact),"Toolchain does not support dynamic linking"));
+  }
+ else   if (!createDynamicLibrary && ruleContext.attributes().isConfigurable("srcs",BuildType.LABEL_LIST)) {
     Artifact solibArtifact=CppHelper.getLinkedArtifact(ruleContext,LinkTargetType.DYNAMIC_LIBRARY);
     ruleContext.registerAction(new FailAction(ruleContext.getActionOwner(),ImmutableList.of(solibArtifact),"configurable \"srcs\" triggers an implicit .so output " + "even though there are no sources to compile in this configuration"));
   }

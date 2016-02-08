@@ -117,12 +117,22 @@ lipoCxxFlags.putAll(realmode,flags.getCxxFlagList());
 linkOptionsFromLipoMode.putAll(realmode,flags.getLinkerFlagList());
 }
 linkOptionsFromLinkingMode=ArrayListMultimap.create();
+boolean haveDynamicMode=false;
 for (LinkingModeFlags flags : toolchain.getLinkingModeFlagsList()) {
 LinkingMode realmode=importLinkingMode(flags.getMode());
+if (realmode == LinkingMode.DYNAMIC) {
+haveDynamicMode=true;
+}
 linkOptionsFromLinkingMode.putAll(realmode,flags.getLinkerFlagList());
 }
 this.commonLinkOptions=ImmutableList.copyOf(toolchain.getLinkerFlagList());
-dynamicLibraryLinkFlags=new FlagList(ImmutableList.copyOf(toolchain.getDynamicLibraryLinkerFlagList()),convertOptionalOptions(toolchain.getOptionalDynamicLibraryLinkerFlagList()),ImmutableList.<String>of());
+List<String> linkerFlagList=toolchain.getDynamicLibraryLinkerFlagList();
+List<CToolchain.OptionalFlag> optionalLinkerFlagList=toolchain.getOptionalDynamicLibraryLinkerFlagList();
+if (!linkerFlagList.isEmpty() || !optionalLinkerFlagList.isEmpty()) {
+haveDynamicMode=true;
+}
+this.supportsDynamicLinker=haveDynamicMode;
+dynamicLibraryLinkFlags=new FlagList(ImmutableList.copyOf(linkerFlagList),convertOptionalOptions(optionalLinkerFlagList),ImmutableList.<String>of());
 this.objcopyOptions=ImmutableList.copyOf(toolchain.getObjcopyEmbedFlagList());
 this.ldOptions=ImmutableList.copyOf(toolchain.getLdEmbedFlagList());
 this.arOptions=copyOrDefaultIfEmpty(toolchain.getArFlagList(),"rcsD");
