@@ -1,0 +1,20 @@
+{
+  final IOException exception=new IOException("boop");
+  setupRoot(new CustomInMemoryFs(){
+    @Override public FileStatus stat(    Path path,    boolean followSymlinks) throws IOException {
+      if (path.getBaseName().equals("one")) {
+        throw exception;
+      }
+      return super.stat(path,followSymlinks);
+    }
+  }
+);
+  try {
+    Artifact artifact=createTreeArtifact("outOne");
+    TreeArtifactValue value=evaluateTreeArtifact(artifact,ImmutableList.of(new PathFragment("one")));
+    fail("MissingInputFileException expected, got " + value);
+  }
+ catch (  Exception e) {
+    assertThat(Throwables.getRootCause(e).getMessage()).contains(exception.getMessage());
+  }
+}

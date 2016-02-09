@@ -1,0 +1,12 @@
+{
+  Preconditions.checkArgument(artifact.isTreeArtifact(),artifact);
+  Set<ArtifactFile> contents=outputDirectoryListings.get(artifact);
+  if (contents == null) {
+    contents=Collections.newSetFromMap(new ConcurrentHashMap<ArtifactFile,Boolean>());
+    Set<ArtifactFile> oldContents=outputDirectoryListings.putIfAbsent(artifact,contents);
+    if (oldContents != null) {
+      contents=oldContents;
+    }
+  }
+  return contents;
+}

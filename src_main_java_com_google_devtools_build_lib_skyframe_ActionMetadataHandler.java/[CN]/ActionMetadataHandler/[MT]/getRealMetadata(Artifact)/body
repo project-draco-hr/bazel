@@ -16,7 +16,14 @@
     checkInconsistentData(artifact,oldValue,value);
     return metadataFromValue(value);
   }
-  FileValue fileValue=outputArtifactData.get(artifact);
+ else   if (artifact.isTreeArtifact()) {
+    TreeArtifactValue setValue=getTreeArtifactValue(artifact);
+    if (setValue != null && setValue != TreeArtifactValue.MISSING_TREE_ARTIFACT) {
+      return setValue.getMetadata();
+    }
+    throw new FileNotFoundException(artifact + " not found");
+  }
+  FileValue fileValue=outputArtifactFileData.get(artifact);
   if (fileValue != null) {
     value=additionalOutputData.get(artifact);
     if (value != null) {
@@ -27,8 +34,6 @@
     }
     return new Metadata(Preconditions.checkNotNull(fileValue.getDigest(),artifact));
   }
-  fileValue=fileValueFromArtifact(artifact,null,tsgm);
-  FileValue oldFileValue=outputArtifactData.putIfAbsent(artifact,fileValue);
-  checkInconsistentData(artifact,oldFileValue,value);
+  fileValue=constructFileValue(artifact,null);
   return maybeStoreAdditionalData(artifact,fileValue,null);
 }

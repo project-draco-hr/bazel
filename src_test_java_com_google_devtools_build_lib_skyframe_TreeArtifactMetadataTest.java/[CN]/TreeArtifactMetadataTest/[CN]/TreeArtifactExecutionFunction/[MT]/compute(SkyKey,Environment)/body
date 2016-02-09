@@ -1,0 +1,22 @@
+{
+  Map<ArtifactFile,FileValue> fileData=new HashMap<>();
+  Map<PathFragment,FileArtifactValue> treeArtifactData=new HashMap<>();
+  Action action=(Action)skyKey.argument();
+  Artifact output=Iterables.getOnlyElement(action.getOutputs());
+  for (  PathFragment subpath : testTreeArtifactContents) {
+    try {
+      ArtifactFile suboutput=ActionInputHelper.artifactFile(output,subpath);
+      FileValue fileValue=ActionMetadataHandler.fileValueFromArtifactFile(suboutput,null,tsgm);
+      fileData.put(suboutput,fileValue);
+      byte[] digest=DigestUtils.getDigestOrFail(suboutput.getPath(),1);
+      treeArtifactData.put(suboutput.getParentRelativePath(),FileArtifactValue.createWithDigest(suboutput.getPath(),digest,fileValue.getSize()));
+    }
+ catch (    IOException e) {
+      throw new SkyFunctionException(e,Transience.TRANSIENT){
+      }
+;
+    }
+  }
+  TreeArtifactValue treeArtifactValue=TreeArtifactValue.create(treeArtifactData);
+  return new ActionExecutionValue(fileData,ImmutableMap.of(output,treeArtifactValue),ImmutableMap.<Artifact,FileArtifactValue>of());
+}

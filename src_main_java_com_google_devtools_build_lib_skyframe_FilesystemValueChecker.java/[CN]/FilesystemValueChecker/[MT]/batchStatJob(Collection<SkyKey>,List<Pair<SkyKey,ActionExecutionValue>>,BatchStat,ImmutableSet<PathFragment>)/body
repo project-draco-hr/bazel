@@ -8,9 +8,12 @@
           dirtyKeys.add(keyAndValue.getFirst());
         }
  else {
-          for (          Artifact artifact : actionValue.getAllOutputArtifactData().keySet()) {
-            if (shouldCheckArtifact(knownModifiedOutputFiles,artifact)) {
-              artifactToKeyAndValue.put(artifact,keyAndValue);
+          for (          ArtifactFile file : actionValue.getAllFileValues().keySet()) {
+            if (file instanceof Artifact) {
+              Artifact artifact=(Artifact)file;
+              if (shouldCheckArtifact(knownModifiedOutputFiles,artifact)) {
+                artifactToKeyAndValue.put(artifact,keyAndValue);
+              }
             }
           }
         }
@@ -35,9 +38,9 @@ catch (      InterruptedException e) {
         Pair<SkyKey,ActionExecutionValue> keyAndValue=artifactToKeyAndValue.get(artifact);
         ActionExecutionValue actionValue=keyAndValue.getSecond();
         SkyKey key=keyAndValue.getFirst();
-        FileValue lastKnownData=actionValue.getAllOutputArtifactData().get(artifact);
+        FileValue lastKnownData=actionValue.getAllFileValues().get(artifact);
         try {
-          FileValue newData=ActionMetadataHandler.fileValueFromArtifact(artifact,stat,tsgm);
+          FileValue newData=ActionMetadataHandler.fileValueFromArtifactFile(artifact,stat,tsgm);
           if (!newData.equals(lastKnownData)) {
             updateIntraBuildModifiedCounter(stat != null ? stat.getLastChangeTime() : -1,lastKnownData.isSymlink(),newData.isSymlink());
             modifiedOutputFilesCounter.getAndIncrement();

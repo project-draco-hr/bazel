@@ -1,11 +1,11 @@
 {
   boolean isDirty=false;
-  for (  Map.Entry<Artifact,FileValue> entry : actionValue.getAllOutputArtifactData().entrySet()) {
-    Artifact artifact=entry.getKey();
+  for (  Map.Entry<ArtifactFile,FileValue> entry : actionValue.getAllFileValues().entrySet()) {
+    ArtifactFile file=entry.getKey();
     FileValue lastKnownData=entry.getValue();
-    if (shouldCheckArtifact(knownModifiedOutputFiles,artifact)) {
+    if (shouldCheckArtifact(knownModifiedOutputFiles,file)) {
       try {
-        FileValue fileValue=ActionMetadataHandler.fileValueFromArtifact(artifact,null,tsgm);
+        FileValue fileValue=ActionMetadataHandler.fileValueFromArtifactFile(file,null,tsgm);
         if (!fileValue.equals(lastKnownData)) {
           updateIntraBuildModifiedCounter(fileValue.exists() ? fileValue.realRootedPath().asPath().getLastModifiedTime() : -1,lastKnownData.isSymlink(),fileValue.isSymlink());
           modifiedOutputFilesCounter.getAndIncrement();

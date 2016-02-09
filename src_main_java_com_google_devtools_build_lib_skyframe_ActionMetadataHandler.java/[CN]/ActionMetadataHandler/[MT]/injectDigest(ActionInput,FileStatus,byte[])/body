@@ -1,28 +1,28 @@
 {
-  if (output instanceof Artifact) {
-    Artifact artifact=(Artifact)output;
-    Preconditions.checkState(injectedArtifacts.add(artifact),artifact);
+  if (output instanceof ArtifactFile) {
+    final ArtifactFile file=(ArtifactFile)output;
+    Preconditions.checkState(injectedFiles.add(file),file);
     FileValue fileValue;
     try {
-      fileValue=fileValueFromArtifact(artifact,FileStatusWithDigestAdapter.adapt(statNoFollow),tsgm);
+      fileValue=fileValueFromArtifactFile(file,FileStatusWithDigestAdapter.adapt(statNoFollow),tsgm);
       byte[] fileDigest=fileValue.getDigest();
       if (fileDigest != null && !Arrays.equals(digest,fileDigest)) {
         BaseEncoding base16=BaseEncoding.base16();
         String digestString=(digest != null) ? base16.encode(digest) : "null";
-        String fileDigestString=(fileDigest != null) ? base16.encode(fileDigest) : "null";
-        throw new IllegalStateException("Expected digest " + digestString + " for artifact "+ artifact+ ", but got "+ fileDigestString+ " ("+ fileValue+ ")");
+        String fileDigestString=base16.encode(fileDigest);
+        throw new IllegalStateException("Expected digest " + digestString + " for artifact "+ file+ ", but got "+ fileDigestString+ " ("+ fileValue+ ")");
       }
-      outputArtifactData.put(artifact,fileValue);
+      outputArtifactFileData.put(file,fileValue);
     }
  catch (    IOException e) {
       return;
     }
     try {
-      maybeStoreAdditionalData(artifact,fileValue,digest);
+      maybeStoreAdditionalData(file,fileValue,digest);
     }
  catch (    IOException e) {
       if (fileValue.getSize() != 0) {
-        throw new IllegalStateException("Filesystem should not have been accessed while injecting data for " + artifact.prettyPrint(),e);
+        throw new IllegalStateException("Filesystem should not have been accessed while injecting data for " + file.prettyPrint(),e);
       }
     }
   }

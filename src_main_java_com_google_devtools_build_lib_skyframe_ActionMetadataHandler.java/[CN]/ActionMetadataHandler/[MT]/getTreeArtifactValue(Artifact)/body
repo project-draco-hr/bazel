@@ -1,0 +1,16 @@
+{
+  TreeArtifactValue value=outputTreeArtifactData.get(artifact);
+  if (value != null) {
+    return value;
+  }
+  Set<ArtifactFile> contents=outputDirectoryListings.get(artifact);
+  if (contents != null) {
+    value=constructTreeArtifactValue(contents);
+  }
+ else {
+    throw new UnsupportedOperationException();
+  }
+  TreeArtifactValue oldValue=outputTreeArtifactData.putIfAbsent(artifact,value);
+  checkInconsistentData(artifact,oldValue,value);
+  return value;
+}
