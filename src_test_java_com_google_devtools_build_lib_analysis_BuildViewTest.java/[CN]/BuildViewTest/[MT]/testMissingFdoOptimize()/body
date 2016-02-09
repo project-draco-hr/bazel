@@ -1,0 +1,11 @@
+{
+  useConfiguration("--fdo_optimize=//does/not/exist");
+  reporter.removeHandler(failFastHandler);
+  try {
+    update(defaultFlags().with(Flag.KEEP_GOING));
+    fail();
+  }
+ catch (  LoadingFailedException|InvalidConfigurationException e) {
+    assertContainsEvent("no such package 'does/not/exist': BUILD file not found on package path");
+  }
+}

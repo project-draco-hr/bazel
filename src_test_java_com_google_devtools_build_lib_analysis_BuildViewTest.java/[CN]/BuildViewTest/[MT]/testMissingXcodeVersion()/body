@@ -1,0 +1,12 @@
+{
+  scratch.file("xcode/BUILD");
+  useConfiguration("--xcode_version=1.2","--xcode_version_config=//xcode:does_not_exist");
+  reporter.removeHandler(failFastHandler);
+  try {
+    update(defaultFlags().with(Flag.KEEP_GOING));
+    fail();
+  }
+ catch (  LoadingFailedException|InvalidConfigurationException e) {
+    assertContainsEvent("no such target '//xcode:does_not_exist': target 'does_not_exist' not declared");
+  }
+}
