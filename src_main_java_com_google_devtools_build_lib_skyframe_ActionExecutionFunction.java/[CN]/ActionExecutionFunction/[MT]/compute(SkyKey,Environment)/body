@@ -21,7 +21,7 @@
     env.getValues(state.allInputs.keysRequested);
     Preconditions.checkState(!env.valuesMissing(),"%s %s",action,state);
   }
-  Pair<Map<Artifact,FileArtifactValue>,Map<Artifact,Collection<Artifact>>> checkedInputs=null;
+  Pair<Map<Artifact,FileArtifactValue>,Map<Artifact,Collection<ArtifactFile>>> checkedInputs=null;
   try {
     Map<SkyKey,ValueOrException2<MissingInputFileException,ActionExecutionException>> inputDeps=env.getValuesOrThrow(toKeys(state.allInputs.getAllInputs(),action.discoversInputs() ? action.getMandatoryInputs() : null),MissingInputFileException.class,ActionExecutionException.class);
     if (!sharedActionAlreadyRan && !state.hasArtifactData()) {
@@ -47,7 +47,7 @@
   if (checkedInputs != null) {
     Preconditions.checkState(!state.hasArtifactData(),"%s %s",state,action);
     state.inputArtifactData=checkedInputs.first;
-    state.expandedMiddlemen=checkedInputs.second;
+    state.expandedArtifacts=checkedInputs.second;
   }
   ActionExecutionValue result;
   try {
