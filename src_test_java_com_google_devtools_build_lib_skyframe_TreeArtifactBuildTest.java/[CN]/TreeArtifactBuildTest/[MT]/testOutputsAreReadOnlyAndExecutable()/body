@@ -1,0 +1,26 @@
+{
+  final Artifact out=createTreeArtifact("output");
+  TreeArtifactTestAction action=new TreeArtifactTestAction(out){
+    @Override public void execute(    ActionExecutionContext actionExecutionContext) throws ActionExecutionException {
+      try {
+        writeFile(out.getPath().getChild("one"),"one");
+        writeFile(out.getPath().getChild("two"),"two");
+        writeFile(out.getPath().getChild("three").getChild("four"),"three/four");
+        registerOutput(actionExecutionContext,"one");
+        registerOutput(actionExecutionContext,"two");
+        registerOutput(actionExecutionContext,"three/four");
+      }
+ catch (      Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+;
+  registerAction(action);
+  buildArtifact(action.getSoleOutput());
+  checkDirectoryPermissions(out.getPath());
+  checkFilePermissions(out.getPath().getChild("one"));
+  checkFilePermissions(out.getPath().getChild("two"));
+  checkDirectoryPermissions(out.getPath().getChild("three"));
+  checkFilePermissions(out.getPath().getChild("three").getChild("four"));
+}
