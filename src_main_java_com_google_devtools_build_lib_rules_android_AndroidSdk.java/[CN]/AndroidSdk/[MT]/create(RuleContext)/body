@@ -1,5 +1,6 @@
 {
   FilesToRunProvider proguard=ruleContext.getFragment(JavaConfiguration.class).getProguardBinary() == null ? ruleContext.getExecutablePrerequisite("proguard",Mode.HOST) : ruleContext.getExecutablePrerequisite(":proguard",Mode.HOST);
+  String buildToolsVersion=AggregatingAttributeMapper.of(ruleContext.getRule()).get("build_tools_version",Type.STRING);
   FilesToRunProvider aidl=ruleContext.getExecutablePrerequisite("aidl",Mode.HOST);
   FilesToRunProvider aapt=ruleContext.getExecutablePrerequisite("aapt",Mode.HOST);
   FilesToRunProvider apkBuilder=ruleContext.getExecutablePrerequisite("apkbuilder",Mode.HOST);
@@ -19,5 +20,5 @@
   if (ruleContext.hasErrors()) {
     return null;
   }
-  return new RuleConfiguredTargetBuilder(ruleContext).add(AndroidSdkProvider.class,new AndroidSdkProvider(frameworkAidl,androidJar,shrinkedAndroidJar,androidJack,annotationsJar,mainDexClasses,adb,dx,mainDexListCreator,aidl,aapt,apkBuilder,proguard,zipalign,jack,jill,resourceExtractor)).add(RunfilesProvider.class,RunfilesProvider.EMPTY).setFilesToBuild(NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER)).build();
+  return new RuleConfiguredTargetBuilder(ruleContext).add(AndroidSdkProvider.class,new AndroidSdkProvider(buildToolsVersion,frameworkAidl,androidJar,shrinkedAndroidJar,androidJack,annotationsJar,mainDexClasses,adb,dx,mainDexListCreator,aidl,aapt,apkBuilder,proguard,zipalign,jack,jill,resourceExtractor)).add(RunfilesProvider.class,RunfilesProvider.EMPTY).setFilesToBuild(NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER)).build();
 }
