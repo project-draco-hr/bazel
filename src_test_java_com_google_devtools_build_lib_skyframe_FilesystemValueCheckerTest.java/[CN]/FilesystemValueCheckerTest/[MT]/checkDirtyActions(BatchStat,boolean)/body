@@ -3,8 +3,8 @@
   Artifact out2=createDerivedArtifact("pop");
   FileSystemUtils.writeContentAsLatin1(out1.getPath(),"hello");
   FileSystemUtils.writeContentAsLatin1(out2.getPath(),"fizzlepop");
-  Action action1=new TestAction(Runnables.doNothing(),ImmutableSet.<Artifact>of(),ImmutableSet.<Artifact>of(out1));
-  Action action2=new TestAction(Runnables.doNothing(),ImmutableSet.<Artifact>of(),ImmutableSet.<Artifact>of(out2));
+  Action action1=new TestAction(Runnables.doNothing(),ImmutableSet.<Artifact>of(),ImmutableSet.of(out1));
+  Action action2=new TestAction(Runnables.doNothing(),ImmutableSet.<Artifact>of(),ImmutableSet.of(out2));
   differencer.inject(ImmutableMap.<SkyKey,SkyValue>of(ActionExecutionValue.key(action1),actionValue(action1,forceDigests),ActionExecutionValue.key(action2),actionValue(action2,forceDigests)));
   assertFalse(driver.evaluate(ImmutableList.<SkyKey>of(),false,1,NullEventHandler.INSTANCE).hasError());
   assertThat(new FilesystemValueChecker(tsgm,null).getDirtyActionValues(evaluator.getValues(),batchStatter,ModifiedFileSet.EVERYTHING_MODIFIED)).isEmpty();

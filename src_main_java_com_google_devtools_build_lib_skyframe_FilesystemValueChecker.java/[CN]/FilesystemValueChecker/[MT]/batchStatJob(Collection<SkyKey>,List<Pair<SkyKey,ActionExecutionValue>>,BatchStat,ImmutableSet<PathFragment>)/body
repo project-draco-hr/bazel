@@ -1,7 +1,8 @@
 {
   return new Runnable(){
     @Override public void run(){
-      Map<Artifact,Pair<SkyKey,ActionExecutionValue>> artifactToKeyAndValue=new HashMap<>();
+      Map<ArtifactFile,Pair<SkyKey,ActionExecutionValue>> fileToKeyAndValue=new HashMap<>();
+      Map<Artifact,Pair<SkyKey,ActionExecutionValue>> treeArtifactsToKeyAndValue=new HashMap<>();
       for (      Pair<SkyKey,ActionExecutionValue> keyAndValue : shard) {
         ActionExecutionValue actionValue=keyAndValue.getSecond();
         if (actionValue == null) {
@@ -9,19 +10,19 @@
         }
  else {
           for (          ArtifactFile file : actionValue.getAllFileValues().keySet()) {
-            if (file instanceof Artifact) {
-              Artifact artifact=(Artifact)file;
-              if (shouldCheckArtifact(knownModifiedOutputFiles,artifact)) {
-                artifactToKeyAndValue.put(artifact,keyAndValue);
-              }
+            if (shouldCheckFile(knownModifiedOutputFiles,file)) {
+              fileToKeyAndValue.put(file,keyAndValue);
             }
+          }
+          for (          Artifact artifact : actionValue.getAllTreeArtifactValues().keySet()) {
+            treeArtifactsToKeyAndValue.put(artifact,keyAndValue);
           }
         }
       }
-      List<Artifact> artifacts=ImmutableList.copyOf(artifactToKeyAndValue.keySet());
+      List<ArtifactFile> files=ImmutableList.copyOf(fileToKeyAndValue.keySet());
       List<FileStatusWithDigest> stats;
       try {
-        stats=batchStatter.batchStat(true,true,Artifact.asPathFragments(artifacts));
+        stats=batchStatter.batchStat(true,true,Artifact.asPathFragments(files));
       }
  catch (      IOException e) {
         LoggingUtil.logToRemote(Level.WARNING,"Unable to process batch stat",e);
@@ -31,16 +32,16 @@
 catch (      InterruptedException e) {
         return;
       }
-      Preconditions.checkState(artifacts.size() == stats.size(),"artifacts.size() == %s stats.size() == %s",artifacts.size(),stats.size());
-      for (int i=0; i < artifacts.size(); i++) {
-        Artifact artifact=artifacts.get(i);
+      Preconditions.checkState(files.size() == stats.size(),"artifacts.size() == %s stats.size() == %s",files.size(),stats.size());
+      for (int i=0; i < files.size(); i++) {
+        ArtifactFile file=files.get(i);
         FileStatusWithDigest stat=stats.get(i);
-        Pair<SkyKey,ActionExecutionValue> keyAndValue=artifactToKeyAndValue.get(artifact);
+        Pair<SkyKey,ActionExecutionValue> keyAndValue=fileToKeyAndValue.get(file);
         ActionExecutionValue actionValue=keyAndValue.getSecond();
         SkyKey key=keyAndValue.getFirst();
-        FileValue lastKnownData=actionValue.getAllFileValues().get(artifact);
+        FileValue lastKnownData=actionValue.getAllFileValues().get(file);
         try {
-          FileValue newData=ActionMetadataHandler.fileValueFromArtifactFile(artifact,stat,tsgm);
+          FileValue newData=ActionMetadataHandler.fileValueFromArtifactFile(file,stat,tsgm);
           if (!newData.equals(lastKnownData)) {
             updateIntraBuildModifiedCounter(stat != null ? stat.getLastChangeTime() : -1,lastKnownData.isSymlink(),newData.isSymlink());
             modifiedOutputFilesCounter.getAndIncrement();
@@ -50,6 +51,19 @@ catch (      InterruptedException e) {
  catch (        IOException e) {
           modifiedOutputFilesCounter.getAndIncrement();
           dirtyKeys.add(key);
+        }
+      }
+      for (      Map.Entry<Artifact,Pair<SkyKey,ActionExecutionValue>> entry : treeArtifactsToKeyAndValue.entrySet()) {
+        Artifact artifact=entry.getKey();
+        if (treeArtifactIsDirty(entry.getKey(),entry.getValue().getSecond().getTreeArtifactValue(artifact))) {
+          Path path=artifact.getPath();
+          try {
+            updateIntraBuildModifiedCounter(path.exists() ? path.getLastModifiedTime() : -1,false,path.isSymbolicLink());
+          }
+ catch (          IOException e) {
+          }
+          modifiedOutputFilesCounter.getAndIncrement();
+          dirtyKeys.add(entry.getValue().getFirst());
         }
       }
     }

@@ -1,0 +1,31 @@
+{
+  Map<ArtifactFile,FileValue> fileData=new HashMap<>();
+  Map<Artifact,Map<ArtifactFile,FileArtifactValue>> directoryData=new HashMap<>();
+  for (  ArtifactFile output : contents) {
+    Preconditions.checkState(!(output instanceof Artifact));
+    try {
+      Map<ArtifactFile,FileArtifactValue> dirDatum=directoryData.get(output.getParent());
+      if (dirDatum == null) {
+        dirDatum=new HashMap<>();
+        directoryData.put(output.getParent(),dirDatum);
+      }
+      FileValue fileValue=ActionMetadataHandler.fileValueFromArtifactFile(output,null,tsgm);
+      byte[] digest=DigestUtils.getDigestOrFail(output.getPath(),1);
+      dirDatum.put(output,FileArtifactValue.createWithDigest(output.getPath(),digest,fileValue.getSize()));
+      fileData.put(output,fileValue);
+    }
+ catch (    IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+  Map<Artifact,TreeArtifactValue> treeArtifactData=new HashMap<>();
+  for (  Map.Entry<Artifact,Map<ArtifactFile,FileArtifactValue>> dirDatum : directoryData.entrySet()) {
+    Map<PathFragment,FileArtifactValue> artifactValues=new HashMap<>();
+    for (    Map.Entry<ArtifactFile,FileArtifactValue> dirEntry : dirDatum.getValue().entrySet()) {
+      ArtifactFile file=dirEntry.getKey();
+      artifactValues.put(file.getParentRelativePath(),dirEntry.getValue());
+    }
+    treeArtifactData.put(dirDatum.getKey(),TreeArtifactValue.create(artifactValues));
+  }
+  return new ActionExecutionValue(fileData,treeArtifactData,ImmutableMap.<Artifact,FileArtifactValue>of());
+}

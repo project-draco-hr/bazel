@@ -1,0 +1,17 @@
+{
+  for (  Path subpath : rootArtifact.getPath().getRelative(pathToExplode).getDirectoryEntries()) {
+    PathFragment canonicalSubpathFragment=pathToExplode.getChild(subpath.getBaseName()).normalize();
+    if (subpath.isDirectory()) {
+      explodeDirectory(rootArtifact,pathToExplode.getChild(subpath.getBaseName()),valuesBuilder);
+    }
+ else     if (subpath.isSymbolicLink()) {
+      throw new TreeArtifactException("A SetArtifact may not contain a symlink, found " + subpath);
+    }
+ else     if (subpath.isFile()) {
+      valuesBuilder.add(canonicalSubpathFragment);
+    }
+ else {
+      throw new IllegalStateException("Could not determine type of file " + subpath);
+    }
+  }
+}

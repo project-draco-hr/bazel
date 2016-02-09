@@ -3,7 +3,7 @@
   for (  Map.Entry<ArtifactFile,FileValue> entry : actionValue.getAllFileValues().entrySet()) {
     ArtifactFile file=entry.getKey();
     FileValue lastKnownData=entry.getValue();
-    if (shouldCheckArtifact(knownModifiedOutputFiles,file)) {
+    if (shouldCheckFile(knownModifiedOutputFiles,file)) {
       try {
         FileValue fileValue=ActionMetadataHandler.fileValueFromArtifactFile(file,null,tsgm);
         if (!fileValue.equals(lastKnownData)) {
@@ -16,6 +16,19 @@
         modifiedOutputFilesCounter.getAndIncrement();
         isDirty=true;
       }
+    }
+  }
+  for (  Map.Entry<Artifact,TreeArtifactValue> entry : actionValue.getAllTreeArtifactValues().entrySet()) {
+    Artifact artifact=entry.getKey();
+    if (treeArtifactIsDirty(artifact,entry.getValue())) {
+      Path path=artifact.getPath();
+      try {
+        updateIntraBuildModifiedCounter(path.exists() ? path.getLastModifiedTime() : -1,false,path.isSymbolicLink());
+      }
+ catch (      IOException e) {
+      }
+      modifiedOutputFilesCounter.getAndIncrement();
+      isDirty=true;
     }
   }
   return isDirty;
