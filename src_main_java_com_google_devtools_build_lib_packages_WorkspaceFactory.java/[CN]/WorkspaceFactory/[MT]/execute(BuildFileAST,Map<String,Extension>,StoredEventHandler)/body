@@ -1,13 +1,34 @@
 {
   Environment.Builder environmentBuilder=Environment.builder(mutability).setGlobals(Environment.BUILD).setEventHandler(localReporter);
   if (importedExtensions != null) {
-    environmentBuilder.setImportedExtensions(importedExtensions);
+    importMap=ImmutableMap.<String,Extension>builder().putAll(parentImportMap).putAll(importedExtensions).build();
   }
+ else {
+    importMap=parentImportMap;
+  }
+  environmentBuilder.setImportedExtensions(importMap);
   Environment workspaceEnv=environmentBuilder.setLoadingPhase().build();
   addWorkspaceFunctions(workspaceEnv,localReporter);
+  for (  Map.Entry<String,Object> binding : parentVariableBindings.entrySet()) {
+    try {
+      workspaceEnv.update(binding.getKey(),binding.getValue());
+    }
+ catch (    EvalException e) {
+      throw new IllegalStateException(e);
+    }
+  }
   if (!ast.exec(workspaceEnv,localReporter)) {
     localReporter.handle(Event.error("Error evaluating WORKSPACE file"));
   }
+  ImmutableMap.Builder<String,Object> bindingsBuilder=ImmutableMap.builder();
+  Frame globals=workspaceEnv.getGlobals();
+  for (  String s : globals.getDirectVariableNames()) {
+    Object o=globals.get(s);
+    if (!isAWorkspaceFunction(s,o)) {
+      bindingsBuilder.put(s,o);
+    }
+  }
+  variableBindings=bindingsBuilder.build();
   builder.addEvents(localReporter.getEvents());
   if (localReporter.hasErrors()) {
     builder.setContainsErrors();

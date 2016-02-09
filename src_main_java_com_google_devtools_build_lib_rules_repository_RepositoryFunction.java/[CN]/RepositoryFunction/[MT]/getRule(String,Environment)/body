@@ -1,22 +1,27 @@
 {
-  SkyKey packageKey=PackageValue.key(Label.EXTERNAL_PACKAGE_IDENTIFIER);
-  PackageValue packageValue;
-  try {
-    packageValue=(PackageValue)env.getValueOrThrow(packageKey,NoSuchPackageException.class);
-  }
- catch (  NoSuchPackageException e) {
-    throw new RepositoryFunctionException(new BuildFileNotFoundException(Label.EXTERNAL_PACKAGE_IDENTIFIER,"Could not load //external package"),Transience.PERSISTENT);
-  }
-  if (packageValue == null) {
+  SkyKey packageLookupKey=PackageLookupValue.key(Label.EXTERNAL_PACKAGE_IDENTIFIER);
+  PackageLookupValue packageLookupValue;
+  packageLookupValue=(PackageLookupValue)env.getValue(packageLookupKey);
+  if (packageLookupValue == null) {
     return null;
   }
-  Package externalPackage=packageValue.getPackage();
-  if (externalPackage.containsErrors()) {
-    throw new RepositoryFunctionException(new BuildFileContainsErrorsException(Label.EXTERNAL_PACKAGE_IDENTIFIER,"Could not load //external package"),Transience.PERSISTENT);
+  RootedPath workspacePath=RootedPath.toRootedPath(packageLookupValue.getRoot(),new PathFragment("WORKSPACE"));
+  SkyKey workspaceKey=WorkspaceFileValue.key(workspacePath);
+  do {
+    WorkspaceFileValue value=(WorkspaceFileValue)env.getValue(workspaceKey);
+    if (value == null) {
+      return null;
+    }
+    Package externalPackage=value.getPackage();
+    if (externalPackage.containsErrors()) {
+      throw new RepositoryFunctionException(new BuildFileContainsErrorsException(Label.EXTERNAL_PACKAGE_IDENTIFIER,"Could not load //external package"),Transience.PERSISTENT);
+    }
+    Rule rule=externalPackage.getRule(repository);
+    if (rule != null) {
+      return rule;
+    }
+    workspaceKey=value.next();
   }
-  Rule rule=externalPackage.getRule(repository);
-  if (rule == null) {
-    throw new RepositoryNotFoundException(repository);
-  }
-  return rule;
+ while (workspaceKey != null);
+  throw new RepositoryNotFoundException(repository);
 }

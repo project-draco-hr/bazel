@@ -6,23 +6,32 @@
     return null;
   }
   Path repoWorkspace=workspaceRoot.getRoot().getRelative(workspaceRoot.getRelativePath());
-  LegacyBuilder builder=com.google.devtools.build.lib.packages.Package.newExternalPackageBuilder(repoWorkspace,ruleClassProvider.getRunfilesPrefix());
-  try (Mutability mutability=Mutability.create("workspace %s",repoWorkspace)){
-    WorkspaceFactory parser=new WorkspaceFactory(builder,ruleClassProvider,packageFactory.getEnvironmentExtensions(),mutability,directories.getEmbeddedBinariesRoot(),directories.getWorkspace());
-    try {
-      for (      BuildFileAST ast : workspaceASTValue.getASTs()) {
-        PackageFunction.SkylarkImportResult importResult=PackageFunction.fetchImportsFromBuildFile(repoWorkspace,Label.EXTERNAL_PACKAGE_IDENTIFIER,ast,env,null);
-        if (importResult != null) {
-          parser.execute(ast,importResult.importMap);
-        }
- else {
-          return null;
-        }
-      }
-    }
- catch (    PackageFunctionException e) {
-      throw new WorkspaceFileFunctionException(e,Transience.PERSISTENT);
-    }
+  LegacyBuilder builder=Package.newExternalPackageBuilder(repoWorkspace,ruleClassProvider.getRunfilesPrefix());
+  if (workspaceASTValue.getASTs().isEmpty()) {
+    return new WorkspaceFileValue(builder.build(),ImmutableMap.<String,Extension>of(),ImmutableMap.<String,Object>of(),workspaceRoot,0,false);
   }
-   return new WorkspaceFileValue(builder.build(),workspaceRoot,0,false);
+  WorkspaceFactory parser;
+  try (Mutability mutability=Mutability.create("workspace %s",repoWorkspace)){
+    parser=new WorkspaceFactory(builder,ruleClassProvider,packageFactory.getEnvironmentExtensions(),mutability,directories.getEmbeddedBinariesRoot(),directories.getWorkspace());
+    if (key.getIndex() > 0) {
+      WorkspaceFileValue prevValue=(WorkspaceFileValue)env.getValue(WorkspaceFileValue.key(key.getPath(),key.getIndex() - 1));
+      if (prevValue == null) {
+        return null;
+      }
+      if (prevValue.next() == null) {
+        return prevValue;
+      }
+      parser.setParent(prevValue.getPackage(),prevValue.getImportMap(),prevValue.getBindings());
+    }
+    BuildFileAST ast=workspaceASTValue.getASTs().get(key.getIndex());
+    PackageFunction.SkylarkImportResult importResult=PackageFunction.fetchImportsFromBuildFile(repoWorkspace,Label.EXTERNAL_PACKAGE_IDENTIFIER,ast,env,null);
+    if (importResult == null) {
+      return null;
+    }
+    parser.execute(ast,importResult.importMap);
+  }
+ catch (  PackageFunctionException|NameConflictException e) {
+    throw new WorkspaceFileFunctionException(e,Transience.PERSISTENT);
+  }
+  return new WorkspaceFileValue(builder.build(),parser.getImportMap(),parser.getVariableBindings(),workspaceRoot,key.getIndex(),key.getIndex() < workspaceASTValue.getASTs().size() - 1);
 }
