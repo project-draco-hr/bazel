@@ -1,0 +1,12 @@
+{
+  tester.addFile("bad/BUILD","sh_binary(name = 'bad', srcs = ['bad.sh'], bash_version = '42')");
+  LoadingResult loadingResult=tester.loadKeepGoing("//bad");
+  if (runsLoadingPhase()) {
+    assertThat(loadingResult.hasTargetPatternError()).isFalse();
+    assertThat(loadingResult.hasLoadingError()).isTrue();
+  }
+ else {
+    assertThat(loadingResult.hasTargetPatternError()).isTrue();
+  }
+  tester.assertContainsEventWithFrequency("invalid value in 'bash_version' attribute",1);
+}
