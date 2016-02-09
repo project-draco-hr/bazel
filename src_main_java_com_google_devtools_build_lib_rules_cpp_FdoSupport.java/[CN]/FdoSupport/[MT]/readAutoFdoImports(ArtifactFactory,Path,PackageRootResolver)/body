@@ -3,13 +3,9 @@
   for (  String line : FileSystemUtils.iterateLinesAsLatin1(importsFile)) {
     if (!line.isEmpty()) {
       PathFragment key=new PathFragment(line.substring(0,line.indexOf(':')));
-      if (key.startsWith(genFilePath)) {
-        key=key.relativeTo(genFilePath);
-      }
       if (key.isAbsolute()) {
         throw new FdoException("Absolute paths not allowed in afdo imports file " + importsFile + ": "+ key);
       }
-      key=FileSystemUtils.replaceSegments(key,"PROTECTED","_protected",true);
       for (      String auxFile : line.substring(line.indexOf(':') + 1).split(" ")) {
         if (auxFile.length() == 0) {
           continue;
