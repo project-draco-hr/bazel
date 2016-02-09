@@ -3,7 +3,9 @@
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:simple");
   assertThat(ruleIdeInfos.size()).isEqualTo(1);
   RuleIdeInfo ruleIdeInfo=getRuleInfoAndVerifyLabel("//com/google/example:simple",ruleIdeInfos);
-  assertThat(ruleIdeInfo.getBuildFile()).isEqualTo(buildFilePath.toString());
+  if (isNativeTest()) {
+    assertThat(ruleIdeInfo.getBuildFile()).isEqualTo(buildFilePath.toString());
+  }
   assertThat(ruleIdeInfo.getKind()).isEqualTo(Kind.JAVA_LIBRARY);
   assertThat(ruleIdeInfo.getDependenciesCount()).isEqualTo(0);
   assertThat(relativePathsForSourcesOf(ruleIdeInfo)).containsExactly("com/google/example/simple/Simple.java");
