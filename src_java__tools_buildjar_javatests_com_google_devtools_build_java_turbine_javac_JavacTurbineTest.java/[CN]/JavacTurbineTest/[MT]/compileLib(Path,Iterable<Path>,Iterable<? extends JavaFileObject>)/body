@@ -1,0 +1,21 @@
+{
+  final Path outdir=temp.newFolder().toPath();
+  JavacFileManager fm=new JavacFileManager(new Context(),false,StandardCharsets.UTF_8);
+  fm.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,Collections.singleton(outdir));
+  fm.setLocationFromPaths(StandardLocation.CLASS_PATH,classpath);
+  List<String> options=Arrays.asList("-d",outdir.toString());
+  JavacTool tool=JavacTool.create();
+  JavacTask task=tool.getTask(new PrintWriter(System.err,true),fm,null,options,null,units);
+  assertThat(task.call()).isTrue();
+  try (JarOutputStream jos=new JarOutputStream(Files.newOutputStream(jar))){
+    Files.walkFileTree(outdir,new SimpleFileVisitor<Path>(){
+      @Override public FileVisitResult visitFile(      Path path,      BasicFileAttributes attrs) throws IOException {
+        JarEntry je=new JarEntry(outdir.relativize(path).toString());
+        jos.putNextEntry(je);
+        Files.copy(path,jos);
+        return FileVisitResult.CONTINUE;
+      }
+    }
+);
+  }
+ }

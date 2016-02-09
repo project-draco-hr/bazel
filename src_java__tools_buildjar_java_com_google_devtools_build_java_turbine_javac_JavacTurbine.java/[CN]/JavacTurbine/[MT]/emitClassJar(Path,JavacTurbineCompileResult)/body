@@ -1,0 +1,20 @@
+{
+  try (OutputStream fos=Files.newOutputStream(outputJar);ZipOutputStream zipOut=new ZipOutputStream(new BufferedOutputStream(fos,ZIPFILE_BUFFER_SIZE))){
+    boolean hasEntries=false;
+    for (    Map.Entry<String,OutputFileObject> entry : result.files().entrySet()) {
+      if (entry.getValue().location != StandardLocation.CLASS_OUTPUT) {
+        continue;
+      }
+      String name=entry.getKey();
+      byte[] bytes=entry.getValue().asBytes();
+      if (name.endsWith(".class")) {
+        bytes=removeCode(bytes);
+      }
+      ZipUtil.storeEntry(name,bytes,zipOut);
+      hasEntries=true;
+    }
+    if (!hasEntries) {
+      ZipUtil.storeEntry("dummy",new byte[0],zipOut);
+    }
+  }
+ }

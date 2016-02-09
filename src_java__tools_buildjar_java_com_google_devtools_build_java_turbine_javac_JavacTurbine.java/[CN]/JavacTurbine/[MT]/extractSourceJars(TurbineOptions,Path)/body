@@ -1,0 +1,22 @@
+{
+  if (turbineOptions.sourceJars().isEmpty()) {
+    return Collections.emptyList();
+  }
+  ArrayList<String> extractedSources=new ArrayList<>();
+  for (  String sourceJar : turbineOptions.sourceJars()) {
+    try (ZipFile zf=new ZipFile(sourceJar)){
+      Enumeration<? extends ZipEntry> entries=zf.entries();
+      while (entries.hasMoreElements()) {
+        ZipEntry ze=entries.nextElement();
+        if (!ze.getName().endsWith(".java")) {
+          continue;
+        }
+        Path dest=tmpdir.resolve(ze.getName());
+        Files.createDirectories(dest.getParent());
+        Files.copy(zf.getInputStream(ze),dest);
+        extractedSources.add(dest.toAbsolutePath().toString());
+      }
+    }
+   }
+  return extractedSources;
+}

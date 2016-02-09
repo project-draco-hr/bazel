@@ -1,0 +1,13 @@
+{
+  addSourceLines("MyAnnotation.java","public @interface MyAnnotation {}");
+  addSourceLines("Hello.java","@MyAnnotation","class Hello {","  public static void main(String[] args) {","    System.err.println(\"Hello World\");","  }","}");
+  optionsBuilder.setProcessors(ImmutableList.of(MyBadEncodingProcessor.class.getName()));
+  optionsBuilder.addProcessorPathEntries(ImmutableList.copyOf(Splitter.on(':').split(System.getProperty("java.class.path"))));
+  optionsBuilder.addClassPathEntries(ImmutableList.copyOf(Splitter.on(':').split(System.getProperty("java.class.path"))));
+  optionsBuilder.addSources(ImmutableList.copyOf(Iterables.transform(sources,TO_STRING)));
+  try (StringWriter sw=new StringWriter();JavacTurbine turbine=new JavacTurbine(new PrintWriter(sw,true),optionsBuilder.build())){
+    Result result=turbine.compile();
+    assertThat(result).isEqualTo(Result.ERROR);
+    assertThat(sw.toString()).contains("error reading");
+  }
+ }

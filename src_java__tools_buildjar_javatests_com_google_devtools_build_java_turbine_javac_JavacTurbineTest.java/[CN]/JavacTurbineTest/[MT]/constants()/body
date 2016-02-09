@@ -1,0 +1,9 @@
+{
+  addSourceLines("Const.java","class Const {","  public static final int A = 42;","  public static final int B = 42 + 42;","  public static final int C = new Integer(42);","  public static final int D = 42 + new Integer(42);","  public static final Integer E = 42;","  public static final String F = \"42\";","  public static final java.lang.String G = \"42\";","}");
+  compile();
+  Map<String,byte[]> outputs=collectOutputs();
+  assertThat(outputs.keySet()).containsExactly("Const.class");
+  String text=textify(outputs.get("Const.class"));
+  String[] expected={"// class version 51.0 (51)","// access flags 0x20","class Const {","","","  // access flags 0x19","  public final static I A = 42","","  // access flags 0x19","  public final static I B = 84","","  // access flags 0x19","  public final static I C","","  // access flags 0x19","  public final static I D","","  // access flags 0x19","  public final static Ljava/lang/Integer; E","","  // access flags 0x19","  public final static Ljava/lang/String; F = \"42\"","","  // access flags 0x19","  public final static Ljava/lang/String; G = \"42\"","","  // access flags 0x0","  <init>()V","}",""};
+  assertThat(text).isEqualTo(Joiner.on('\n').join(expected));
+}

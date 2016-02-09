@@ -1,0 +1,20 @@
+{
+  addSourceLines("MyAnnotation.java","public @interface MyAnnotation {}");
+  addSourceLines("Hello.java","@MyAnnotation","class Hello {","  public static void main(String[] args) {","    System.err.println(\"Hello World\");","  }","}");
+  optionsBuilder.setProcessors(ImmutableList.of(MyProcessor.class.getName()));
+  optionsBuilder.addProcessorPathEntries(ImmutableList.copyOf(Splitter.on(':').split(System.getProperty("java.class.path"))));
+  optionsBuilder.addClassPathEntries(ImmutableList.copyOf(Splitter.on(':').split(System.getProperty("java.class.path"))));
+  compile();
+  Map<String,byte[]> outputs=collectOutputs();
+  assertThat(outputs.keySet()).containsExactly("Generated.class","MyAnnotation.class","Hello.class","com/foo/hello.txt");
+{
+    String text=textify(outputs.get("Generated.class"));
+    String[] expected={"// class version 51.0 (51)","// access flags 0x20","class Generated {","","","  // access flags 0x0","  <init>()V","}",""};
+    assertThat(text).isEqualTo(Joiner.on('\n').join(expected));
+  }
+{
+    String text=textify(outputs.get("Hello.class"));
+    String[] expected={"// class version 51.0 (51)","// access flags 0x20","class Hello {","","","  @LMyAnnotation;() // invisible","","  // access flags 0x0","  <init>()V","","  // access flags 0x9","  public static main([Ljava/lang/String;)V","}",""};
+    assertThat(text).isEqualTo(Joiner.on('\n').join(expected));
+  }
+}
