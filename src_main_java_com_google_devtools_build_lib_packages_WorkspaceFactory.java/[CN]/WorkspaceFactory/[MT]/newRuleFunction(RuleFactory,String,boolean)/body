@@ -3,6 +3,9 @@
     public Object invoke(    Map<String,Object> kwargs,    FuncallExpression ast,    Environment env) throws EvalException, InterruptedException {
       try {
         Builder builder=PackageFactory.getContext(env,ast).pkgBuilder;
+        if (!allowOverride && kwargs.containsKey("name") && builder.targets.containsKey(kwargs.get("name"))) {
+          throw new EvalException(ast.getLocation(),"Cannot redefine repository after any load statement in the WORKSPACE file" + " (for repository '" + kwargs.get("name") + "')");
+        }
         RuleClass ruleClass=ruleFactory.getRuleClass(ruleClassName);
         RuleClass bindRuleClass=ruleFactory.getRuleClass("bind");
         Rule rule=builder.externalPackageData().createAndAddRepositoryRule(builder,ruleClass,bindRuleClass,kwargs,ast);
