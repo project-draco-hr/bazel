@@ -7,7 +7,11 @@
   if (ruleContext.hasErrors()) {
     return null;
   }
-  semantics.createExecutable(ruleContext,common,ccLinkParamsStore);
+  NestedSet<PathFragment> imports=common.collectImports(ruleContext,semantics);
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
+  semantics.createExecutable(ruleContext,common,ccLinkParamsStore,imports);
   Runfiles commonRunfiles=collectCommonRunfiles(ruleContext,common,semantics);
   Runfiles.Builder defaultRunfilesBuilder=new Runfiles.Builder(ruleContext.getWorkspaceName()).merge(commonRunfiles);
   semantics.collectDefaultRunfilesForBinary(ruleContext,defaultRunfilesBuilder);
@@ -21,5 +25,5 @@
   RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
   common.addCommonTransitiveInfoProviders(builder,semantics,common.getFilesToBuild());
   semantics.postInitBinary(ruleContext,runfilesSupport,common);
-  return builder.setFilesToBuild(common.getFilesToBuild()).add(RunfilesProvider.class,runfilesProvider).setRunfilesSupport(runfilesSupport,common.getExecutable()).add(CcLinkParamsProvider.class,new CcLinkParamsProvider(ccLinkParamsStore));
+  return builder.setFilesToBuild(common.getFilesToBuild()).add(RunfilesProvider.class,runfilesProvider).setRunfilesSupport(runfilesSupport,common.getExecutable()).add(CcLinkParamsProvider.class,new CcLinkParamsProvider(ccLinkParamsStore)).add(PythonImportsProvider.class,new PythonImportsProvider(imports));
 }

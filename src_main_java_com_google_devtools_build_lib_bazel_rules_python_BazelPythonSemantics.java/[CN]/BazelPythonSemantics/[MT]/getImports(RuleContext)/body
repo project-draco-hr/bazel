@@ -1,0 +1,17 @@
+{
+  List<PathFragment> result=new ArrayList<>();
+  PathFragment packageFragment=ruleContext.getLabel().getPackageIdentifier().getPathFragment();
+  for (  String importsAttr : ruleContext.attributes().get("imports",Type.STRING_LIST)) {
+    importsAttr=ruleContext.expandMakeVariables("includes",importsAttr);
+    if (importsAttr.startsWith("/")) {
+      ruleContext.attributeWarning("imports","ignoring invalid absolute path '" + importsAttr + "'");
+      continue;
+    }
+    PathFragment importsPath=packageFragment.getRelative(importsAttr).normalize();
+    if (!importsPath.isNormalized()) {
+      ruleContext.attributeError("imports","Path references a path above the execution root.");
+    }
+    result.add(importsPath);
+  }
+  return result;
+}

@@ -14,6 +14,10 @@
     }
   }
 ;
+  NestedSet<PathFragment> imports=common.collectImports(ruleContext,semantics);
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
   Runfiles.Builder runfilesBuilder=new Runfiles.Builder(ruleContext.getWorkspaceName());
   if (common.getConvertedFiles() != null) {
     runfilesBuilder.addSymlinks(common.getConvertedFiles());
@@ -26,5 +30,5 @@
   runfilesBuilder.addRunfiles(ruleContext,RunfilesProvider.DEFAULT_RUNFILES);
   RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
   common.addCommonTransitiveInfoProviders(builder,semantics,filesToBuild);
-  return builder.setFilesToBuild(filesToBuild).add(RunfilesProvider.class,RunfilesProvider.simple(runfilesBuilder.build())).add(CcLinkParamsProvider.class,new CcLinkParamsProvider(ccLinkParamsStore)).build();
+  return builder.setFilesToBuild(filesToBuild).add(RunfilesProvider.class,RunfilesProvider.simple(runfilesBuilder.build())).add(CcLinkParamsProvider.class,new CcLinkParamsProvider(ccLinkParamsStore)).add(PythonImportsProvider.class,new PythonImportsProvider(imports)).build();
 }
