@@ -7,12 +7,21 @@
     throw new FileOutsidePackageRootsException(rootedPath);
   }
   Path outputBase=pkgLocator.get().getOutputBase();
-  if (outputBase != null && !rootedPath.asPath().startsWith(pkgLocator.get().getOutputBase().getRelative(Label.EXTERNAL_PATH_PREFIX))) {
+  Path relativeExternal=pkgLocator.get().getOutputBase().getRelative(Label.EXTERNAL_PATH_PREFIX);
+  if (outputBase != null && !rootedPath.asPath().startsWith(relativeExternal)) {
     return;
   }
-  PackageValue pkgValue=(PackageValue)env.getValue(PackageValue.key(Label.EXTERNAL_PACKAGE_IDENTIFIER));
-  if (pkgValue == null) {
+  PathFragment repositoryPath=rootedPath.asPath().relativeTo(relativeExternal);
+  if (repositoryPath.segmentCount() == 0) {
     return;
   }
-  Preconditions.checkState(!pkgValue.getPackage().containsErrors());
+  String repositoryName=repositoryPath.getSegment(0);
+  try {
+    RepositoryFunction.getRule(repositoryName,env);
+  }
+ catch (  RepositoryFunction.RepositoryNotFoundException ex) {
+  }
+catch (  RepositoryFunction.RepositoryFunctionException ex) {
+    throw new IllegalStateException("Repository " + repositoryName + " cannot be resolved for path "+ rootedPath,ex);
+  }
 }
