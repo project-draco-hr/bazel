@@ -1,0 +1,12 @@
+{
+  scratch.file("z/a/BUILD","py_library(name='a', visibility=['//nonexistent:nothing'])");
+  scratch.file("z/b/BUILD","py_library(name='b', deps=['//z/a:a'])");
+  reporter.removeHandler(failFastHandler);
+  try {
+    update("//z/b:b");
+    fail();
+  }
+ catch (  LoadingFailedException|ViewCreationFailedException expected) {
+    assertContainsEvent("no such package 'nonexistent'");
+  }
+}

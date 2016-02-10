@@ -1,0 +1,12 @@
+{
+  scratch.file("z/a/BUILD","package(default_visibility=['//b'])","py_library(name='alib')");
+  scratch.file("z/b/BUILD","py_library(name='b', deps=['//z/a:alib'])");
+  reporter.removeHandler(failFastHandler);
+  try {
+    update("//z/b:b");
+    fail();
+  }
+ catch (  LoadingFailedException|ViewCreationFailedException expected) {
+    assertContainsEvent("no such package 'b'");
+  }
+}
