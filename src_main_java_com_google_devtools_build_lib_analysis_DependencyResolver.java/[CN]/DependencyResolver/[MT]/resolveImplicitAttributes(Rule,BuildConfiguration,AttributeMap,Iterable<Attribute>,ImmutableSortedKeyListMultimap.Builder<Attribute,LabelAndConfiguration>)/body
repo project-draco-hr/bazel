@@ -8,6 +8,7 @@
     if (attribute.getType() == BuildType.LABEL) {
       Label label=mappedAttributes.contains(attribute.getName()) ? attributeMap.get(attribute.getName(),BuildType.LABEL) : BuildType.LABEL.cast(attribute.getDefaultValue(rule));
       if (label != null) {
+        label=ruleLabel.resolveRepositoryRelative(label);
         builder.put(attribute,LabelAndConfiguration.of(label,configuration));
       }
     }
@@ -16,9 +17,6 @@
       if (mappedAttributes.contains(attribute.getName())) {
         labelList=new ArrayList<>();
         for (        Label label : attributeMap.get(attribute.getName(),BuildType.LABEL_LIST)) {
-          if (attribute.getName().equals("$config_dependencies")) {
-            label=ruleLabel.resolveRepositoryRelative(label);
-          }
           labelList.add(label);
         }
       }
@@ -26,6 +24,7 @@
         labelList=BuildType.LABEL_LIST.cast(attribute.getDefaultValue(rule));
       }
       for (      Label label : labelList) {
+        label=ruleLabel.resolveRepositoryRelative(label);
         builder.put(attribute,LabelAndConfiguration.of(label,configuration));
       }
     }
