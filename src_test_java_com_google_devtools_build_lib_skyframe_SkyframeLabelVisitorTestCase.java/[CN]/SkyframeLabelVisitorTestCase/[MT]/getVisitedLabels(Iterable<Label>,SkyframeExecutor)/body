@@ -1,0 +1,30 @@
+{
+  final WalkableGraph graph=new DelegatingWalkableGraph(((InMemoryMemoizingEvaluator)skyframeExecutor.getEvaluatorForTesting()).getGraphForTesting());
+  List<SkyKey> startingKeys=new ArrayList<>();
+  for (  Label label : startingLabels) {
+    startingKeys.add(TransitiveTargetValue.key(label));
+  }
+  Iterable<SkyKey> nodesToVisit=new ArrayList<>(startingKeys);
+  Set<SkyKey> visitedNodes=new HashSet<>();
+  while (!Iterables.isEmpty(nodesToVisit)) {
+    List<SkyKey> existingNodes=new ArrayList<>();
+    for (    SkyKey key : nodesToVisit) {
+      if (graph.exists(key) && graph.getValue(key) != null && visitedNodes.add(key)) {
+        existingNodes.add(key);
+      }
+    }
+    nodesToVisit=Iterables.filter(Iterables.concat(graph.getDirectDeps(existingNodes).values()),new Predicate<SkyKey>(){
+      @Override public boolean apply(      SkyKey skyKey){
+        return skyKey.functionName().equals(SkyFunctions.TRANSITIVE_TARGET);
+      }
+    }
+);
+  }
+  visitedNodes.addAll(startingKeys);
+  return ImmutableSet.copyOf(Collections2.transform(visitedNodes,new Function<SkyKey,Label>(){
+    @Override public Label apply(    SkyKey skyKey){
+      return (Label)skyKey.argument();
+    }
+  }
+));
+}

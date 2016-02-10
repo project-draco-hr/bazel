@@ -1,7 +1,13 @@
 {
-  assertEquals(asLabelSet(expectedLabels),getVisitedTargets(startingTargets));
+  Set<Label> visitedLabels=getVisitedLabels(Iterables.transform(startingTargets,new Function<Target,Label>(){
+    @Override public Label apply(    Target target){
+      return target.getLabel();
+    }
+  }
+),getSkyframeExecutor());
+  assertThat(visitedLabels).containsExactlyElementsIn(asLabelSet(expectedLabels));
   Set<PathFragment> expectedPkgs=new HashSet<>();
-  for (  Label label : getVisitedTargets(startingTargets)) {
+  for (  Label label : visitedLabels) {
     expectedPkgs.add(label.getPackageFragment());
   }
   assertEquals(expectedPkgs,getVisitedPackageNames(startingTargets));
