@@ -1,0 +1,41 @@
+{
+  if (remoteWorkExecutor == null) {
+    return false;
+  }
+  try {
+    ListenableFuture<RemoteWorkExecutor.Response> future=remoteWorkExecutor.submit(execRoot,actionCache,actionOutputKey,arguments,inputs,environment,outputs,timeout);
+    RemoteWorkExecutor.Response response=future.get(timeout,TimeUnit.SECONDS);
+    if (!response.success()) {
+      String exception="";
+      if (!response.getException().isEmpty()) {
+        exception=" (" + response.getException() + ")";
+      }
+      eventHandler.handle(Event.warn(mnemonic + " failed to execute work remotely" + exception+ ", running locally"));
+      return false;
+    }
+    if (response.getOut() != null) {
+      outErr.printOut(response.getOut());
+    }
+    if (response.getErr() != null) {
+      outErr.printErr(response.getErr());
+    }
+  }
+ catch (  ExecutionException e) {
+    eventHandler.handle(Event.warn(mnemonic + " failed to execute work remotely (" + e+ "), running locally"));
+    return false;
+  }
+catch (  TimeoutException e) {
+    eventHandler.handle(Event.warn(mnemonic + " timed out executing work remotely (" + e+ "), running locally"));
+    return false;
+  }
+catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+    eventHandler.handle(Event.warn(mnemonic + " remote work interrupted (" + e+ ")"));
+    return false;
+  }
+catch (  WorkTooLargeException e) {
+    eventHandler.handle(Event.warn(mnemonic + " cannot be run remotely (" + e+ ")"));
+    return false;
+  }
+  return writeActionOutput(mnemonic,actionOutputKey,eventHandler,false);
+}
