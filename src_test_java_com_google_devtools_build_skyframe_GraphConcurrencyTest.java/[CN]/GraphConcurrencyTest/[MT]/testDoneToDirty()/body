@@ -13,7 +13,7 @@
     entry.setValue(new StringValue("bar"),startingVersion);
   }
   assertNotNull(graph.get(key("foo" + 0)));
-  graph=getGraph(startingVersion.next());
+  graph=getGraph(getNextVersion(startingVersion));
   assertNotNull(graph.get(key("foo" + 0)));
   ExecutorService pool1=Executors.newFixedThreadPool(numThreads);
   ExecutorService pool2=Executors.newFixedThreadPool(numThreads);
@@ -39,7 +39,7 @@
         entry.markRebuildingAndGetAllRemainingDirtyDirectDeps();
         addTemporaryDirectDep(entry,key("dep"));
         entry.signalDep();
-        entry.setValue(new StringValue("bar" + keyNum),startingVersion.next());
+        entry.setValue(new StringValue("bar" + keyNum),getNextVersion(startingVersion));
       }
     }
 ;
@@ -53,7 +53,7 @@
         }
         NodeEntry entry=graph.get(key("foo" + keyNum));
         assertNotNull(entry);
-        assertThat(entry.getVersion()).isAnyOf(startingVersion,startingVersion.next());
+        assertThat(entry.getVersion()).isAnyOf(startingVersion,getNextVersion(startingVersion));
         getCountDownLatch.countDown();
       }
     }
@@ -82,7 +82,7 @@
         getBatchCountDownLatch.countDown();
         assertThat(batchMap).hasSize(batch.size());
         for (        NodeEntry entry : batchMap.values()) {
-          assertThat(entry.getVersion()).isAnyOf(startingVersion,startingVersion.next());
+          assertThat(entry.getVersion()).isAnyOf(startingVersion,getNextVersion(startingVersion));
         }
       }
     }
@@ -96,7 +96,7 @@
   for (int i=0; i < numKeys; i++) {
     NodeEntry entry=graph.get(key("foo" + i));
     assertThat(entry.getValue()).isEqualTo(new StringValue("bar" + i));
-    assertThat(entry.getVersion()).isEqualTo(startingVersion.next());
+    assertThat(entry.getVersion()).isEqualTo(getNextVersion(startingVersion));
     for (    SkyKey key : entry.getReverseDeps()) {
       assertEquals(key("rdep"),key);
     }
