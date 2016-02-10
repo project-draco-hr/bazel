@@ -1,0 +1,11 @@
+{
+  tester.addFile("base/BUILD","cc_library(name = 'hello', srcs = ['hello.cc', '//bad:bad.cc'])");
+  tester.useLoadingOptions("--compile_one_dependency");
+  try {
+    tester.load("base/hello.cc");
+    fail();
+  }
+ catch (  TargetParsingException expected) {
+    tester.assertContainsError("no such package 'bad'");
+  }
+}

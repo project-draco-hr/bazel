@@ -33,8 +33,19 @@
       builder.merge(asTargets);
     }
   }
+  ResolvedTargets<Target> result=builder.build();
   if (compileOneDependency) {
-    throw new UnsupportedOperationException();
+    TargetProvider targetProvider=new EnvironmentBackedRecursivePackageProvider(env);
+    try {
+      return new CompileOneDependencyTransformer(targetProvider).transformCompileOneDependency(env.getListener(),result);
+    }
+ catch (    MissingDepException e) {
+      return null;
+    }
+catch (    TargetParsingException e) {
+      env.getListener().handle(Event.error(e.getMessage()));
+      return ResolvedTargets.failed();
+    }
   }
-  return builder.build();
+  return result;
 }

@@ -7,7 +7,7 @@
   Rule fallbackRule=null;
   for (  Rule rule : orderedRuleList) {
     try {
-      if (SrcTargetUtil.getSrcTargets(eventHandler,rule,pkgManager).contains(target)) {
+      if (SrcTargetUtil.getSrcTargets(eventHandler,rule,targetProvider).contains(target)) {
         if (rule.getRuleClassObject().isPreferredDependency(target.getName())) {
           return rule;
         }
@@ -46,11 +46,12 @@ catch (    InterruptedException e) {
     throw new TargetParsingException("Couldn't find dependency on target '" + target.getLabel() + "'");
   }
   try {
-    if (!SrcTargetUtil.getSrcTargets(eventHandler,result,pkgManager).isEmpty()) {
+    if (!SrcTargetUtil.getSrcTargets(eventHandler,result,targetProvider).isEmpty()) {
       return result;
     }
   }
  catch (  NoSuchThingException e) {
+    eventHandler.handle(Event.error(e.getMessage()));
     throw new TargetParsingException("Couldn't find dependency on target '" + target.getLabel() + "'");
   }
 catch (  InterruptedException e) {
