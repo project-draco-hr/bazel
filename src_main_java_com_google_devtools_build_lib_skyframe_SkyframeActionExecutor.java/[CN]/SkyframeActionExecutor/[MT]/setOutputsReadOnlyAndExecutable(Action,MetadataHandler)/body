@@ -1,11 +1,12 @@
 {
   Preconditions.checkState(!action.getActionType().isMiddleman());
   for (  Artifact output : action.getOutputs()) {
-    if (output.isTreeArtifact()) {
-      setTreeReadOnlyAndExecutable(metadataHandler,output,PathFragment.EMPTY_FRAGMENT);
+    Path path=output.getPath();
+    if (metadataHandler.isInjected(output)) {
+      continue;
     }
- else {
-      setPathReadOnlyAndExecutable(metadataHandler,output);
+    if (path.isFile(Symlinks.NOFOLLOW)) {
+      path.chmod(0555);
     }
   }
 }

@@ -3,28 +3,12 @@
   if (value != null) {
     return value;
   }
-  Set<ArtifactFile> registeredContents=outputDirectoryListings.get(artifact);
-  if (registeredContents != null) {
-    Set<PathFragment> paths=null;
-    try {
-      paths=TreeArtifactValue.explodeDirectory(artifact);
-    }
- catch (    TreeArtifactException e) {
-      throw new IllegalStateException(e);
-    }
-    Set<ArtifactFile> diskFiles=ActionInputHelper.asArtifactFiles(artifact,paths);
-    if (!diskFiles.equals(registeredContents)) {
-      Set<ArtifactFile> missingFiles=Sets.difference(registeredContents,diskFiles);
-      if (!missingFiles.isEmpty()) {
-        throw new IllegalStateException("Output file " + missingFiles.iterator().next() + " was registered, but not present on disk");
-      }
-      Set<ArtifactFile> extraFiles=Sets.difference(diskFiles,registeredContents);
-      throw new IllegalStateException("File " + extraFiles.iterator().next().getParentRelativePath() + ", present in TreeArtifact "+ artifact+ ", was not registered");
-    }
-    value=constructTreeArtifactValue(registeredContents);
+  Set<ArtifactFile> contents=outputDirectoryListings.get(artifact);
+  if (contents != null) {
+    value=constructTreeArtifactValue(contents);
   }
  else {
-    value=constructTreeArtifactValueFromFilesystem(artifact);
+    throw new UnsupportedOperationException();
   }
   TreeArtifactValue oldValue=outputTreeArtifactData.putIfAbsent(artifact,value);
   checkInconsistentData(artifact,oldValue,value);
