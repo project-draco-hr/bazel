@@ -11,21 +11,27 @@
     Artifact input=ArtifactValue.artifact(depsEntry.getKey());
     try {
       ArtifactValue value=(ArtifactValue)depsEntry.getValue().get();
-      if (populateInputData && value instanceof AggregatingArtifactValue) {
-        AggregatingArtifactValue aggregatingValue=(AggregatingArtifactValue)value;
-        for (        Pair<Artifact,FileArtifactValue> entry : aggregatingValue.getInputs()) {
-          inputArtifactData.put(entry.first,entry.second);
-        }
-        inputArtifactData.put(input,aggregatingValue.getSelfData());
-        expandedArtifacts.put(input,Collections2.transform(aggregatingValue.getInputs(),new Function<Pair<Artifact,FileArtifactValue>,ArtifactFile>(){
-          @Override public ArtifactFile apply(          Pair<Artifact,FileArtifactValue> pair){
-            return pair.first;
+      if (populateInputData) {
+        if (value instanceof AggregatingArtifactValue) {
+          AggregatingArtifactValue aggregatingValue=(AggregatingArtifactValue)value;
+          for (          Pair<Artifact,FileArtifactValue> entry : aggregatingValue.getInputs()) {
+            inputArtifactData.put(entry.first,entry.second);
           }
+          inputArtifactData.put(input,aggregatingValue.getSelfData());
+          ImmutableList.Builder<ArtifactFile> expansionBuilder=ImmutableList.builder();
+          for (          Pair<Artifact,FileArtifactValue> pair : aggregatingValue.getInputs()) {
+            expansionBuilder.add(pair.first);
+          }
+          expandedArtifacts.put(input,expansionBuilder.build());
         }
-));
-      }
- else       if (populateInputData && value instanceof FileArtifactValue) {
-        inputArtifactData.put(input,(FileArtifactValue)value);
+ else         if (value instanceof TreeArtifactValue) {
+          TreeArtifactValue setValue=(TreeArtifactValue)value;
+          expandedArtifacts.put(input,ActionInputHelper.asArtifactFiles(input,setValue.getChildPaths()));
+          inputArtifactData.put(input,setValue.getSelfData());
+        }
+ else         if (value instanceof FileArtifactValue) {
+          inputArtifactData.put(input,(FileArtifactValue)value);
+        }
       }
     }
  catch (    MissingInputFileException e) {

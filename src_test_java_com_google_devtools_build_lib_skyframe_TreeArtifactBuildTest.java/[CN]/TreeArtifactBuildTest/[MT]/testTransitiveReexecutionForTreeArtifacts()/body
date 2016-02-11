@@ -1,0 +1,25 @@
+{
+  WriteInputToFilesAction actionOne=new WriteInputToFilesAction(buttonOne,in,outOneFileOne,outOneFileTwo);
+  registerAction(actionOne);
+  CopyTreeAction actionTwo=new CopyTreeAction(buttonTwo,ImmutableList.of(outOneFileOne,outOneFileTwo),ImmutableList.of(outTwoFileOne,outTwoFileTwo));
+  registerAction(actionTwo);
+  buttonOne.pressed=buttonTwo.pressed=false;
+  buildArtifact(outTwo);
+  assertTrue(buttonOne.pressed);
+  assertTrue(buttonTwo.pressed);
+  buttonOne.pressed=buttonTwo.pressed=false;
+  writeFile(in,"modified_input");
+  buildArtifact(outTwo);
+  assertTrue(buttonOne.pressed);
+  assertTrue(buttonTwo.pressed);
+  buttonOne.pressed=buttonTwo.pressed=false;
+  writeFile(outOneFileOne,"modified_output");
+  buildArtifact(outTwo);
+  assertTrue(buttonOne.pressed);
+  assertFalse(buttonTwo.pressed);
+  buttonOne.pressed=buttonTwo.pressed=false;
+  writeFile(outTwoFileOne,"more_modified_output");
+  buildArtifact(outTwo);
+  assertFalse(buttonOne.pressed);
+  assertTrue(buttonTwo.pressed);
+}

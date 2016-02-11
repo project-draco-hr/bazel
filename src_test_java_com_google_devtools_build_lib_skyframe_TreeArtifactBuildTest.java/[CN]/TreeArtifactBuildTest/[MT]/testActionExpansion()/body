@@ -1,0 +1,14 @@
+{
+  WriteInputToFilesAction action=new WriteInputToFilesAction(in,outOneFileOne,outOneFileTwo);
+  CopyTreeAction actionTwo=new CopyTreeAction(ImmutableList.of(outOneFileOne,outOneFileTwo),ImmutableList.of(outTwoFileOne,outTwoFileTwo)){
+    @Override public void executeTestBehavior(    ActionExecutionContext actionExecutionContext) throws ActionExecutionException {
+      super.executeTestBehavior(actionExecutionContext);
+      Collection<ActionInput> expanded=ActionInputHelper.expandArtifacts(ImmutableList.of(outOne),actionExecutionContext.getArtifactExpander());
+      assertThat(expanded).containsExactly(outOneFileOne,outOneFileTwo);
+    }
+  }
+;
+  registerAction(action);
+  registerAction(actionTwo);
+  buildArtifact(outTwo);
+}
