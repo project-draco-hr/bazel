@@ -4,18 +4,14 @@
   }
   Collection<Path> entries=from.getDirectoryEntries();
   for (  Path entry : entries) {
-    if (entry.isDirectory(Symlinks.NOFOLLOW)) {
+    if (entry.isFile()) {
+      Path newEntry=to.getChild(entry.getBaseName());
+      copyFile(entry,newEntry);
+    }
+ else {
       Path subDir=to.getChild(entry.getBaseName());
       subDir.createDirectory();
       copyTreesBelow(entry,subDir);
-    }
- else     if (entry.isSymbolicLink()) {
-      Path newLink=to.getChild(entry.getBaseName());
-      newLink.createSymbolicLink(entry.readSymbolicLinkUnchecked());
-    }
- else {
-      Path newEntry=to.getChild(entry.getBaseName());
-      copyFile(entry,newEntry);
     }
   }
 }

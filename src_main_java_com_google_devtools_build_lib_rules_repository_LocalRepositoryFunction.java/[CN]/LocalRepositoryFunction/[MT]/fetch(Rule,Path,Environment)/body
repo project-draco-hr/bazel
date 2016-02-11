@@ -2,17 +2,10 @@
   AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(rule);
   PathFragment pathFragment=new PathFragment(mapper.get("path",Type.STRING));
   try {
-    FileSystem fs=outputDirectory.getFileSystem();
-    if (fs.supportsSymbolicLinksNatively()) {
-      outputDirectory.createSymbolicLink(pathFragment);
-    }
- else {
-      FileSystemUtils.createDirectoryAndParents(outputDirectory);
-      FileSystemUtils.copyTreesBelow(fs.getPath(getTargetPath(rule,getWorkspace())),outputDirectory);
-    }
+    outputDirectory.createSymbolicLink(pathFragment);
   }
  catch (  IOException e) {
-    throw new RepositoryFunctionException(new IOException("Could not create symlink to repository " + pathFragment + ": "+ e.getMessage()),Transience.TRANSIENT);
+    throw new RepositoryFunctionException(new IOException("Could not create symlink to repository " + pathFragment + ": "+ e.getMessage(),e),Transience.TRANSIENT);
   }
   FileValue repositoryValue=getRepositoryDirectory(outputDirectory,env);
   if (repositoryValue == null) {
