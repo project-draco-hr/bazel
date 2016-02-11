@@ -8,7 +8,7 @@
   ImmutableList<TransitiveInfoCollection> targets=ImmutableList.<TransitiveInfoCollection>builder().addAll(ruleContext.getPrerequisites("deps",Mode.TARGET)).addAll(ruleContext.getPrerequisites("exports",Mode.TARGET)).build();
   final JavaCommon common=new JavaCommon(ruleContext,semantics,targets,targets,targets);
   semantics.checkRule(ruleContext,common);
-  JavaCompilationHelper helper=new JavaCompilationHelper(ruleContext,semantics,ImmutableList.<String>of(),new JavaTargetAttributes.Builder(semantics));
+  BaseJavaCompilationHelper helper=new BaseJavaCompilationHelper(ruleContext);
   ImmutableBiMap.Builder<Artifact,Artifact> compilationToRuntimeJarMapBuilder=ImmutableBiMap.builder();
   ImmutableList<Artifact> interfaceJars=processWithIjar(jars,helper,compilationToRuntimeJarMapBuilder);
   common.setJavaCompilationArtifacts(collectJavaArtifacts(jars,interfaceJars));
@@ -32,7 +32,7 @@
   NestedSetBuilder<Artifact> filesBuilder=NestedSetBuilder.stableOrder();
   filesBuilder.addAll(jars);
   ImmutableBiMap<Artifact,Artifact> compilationToRuntimeJarMap=compilationToRuntimeJarMapBuilder.build();
-  semantics.addProviders(ruleContext,common,ImmutableList.<String>of(),null,srcJar,null,null,compilationToRuntimeJarMap,helper,filesBuilder,ruleBuilder);
+  semantics.addProviders(ruleContext,common,ImmutableList.<String>of(),null,srcJar,null,null,compilationToRuntimeJarMap,filesBuilder,ruleBuilder);
   NestedSet<Artifact> filesToBuild=filesBuilder.build();
   JavaSourceInfoProvider javaSourceInfoProvider=new JavaSourceInfoProvider.Builder().setJarFiles(jars).setSourceJarsForJarFiles(srcJars).build();
   JavaRuleOutputJarsProvider.Builder ruleOutputJarsProvider=JavaRuleOutputJarsProvider.builder();
