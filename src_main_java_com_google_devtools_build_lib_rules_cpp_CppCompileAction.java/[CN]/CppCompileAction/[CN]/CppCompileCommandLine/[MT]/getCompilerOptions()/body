@@ -20,6 +20,9 @@
     options.add("-D" + CppConfiguration.FDO_STAMP_MACRO + "=\""+ fdoBuildStamp+ "\"");
   }
   addFilteredOptions(options,featureConfiguration.getCommandLine(getActionName(),variables));
+  if (cppConfiguration.useFission()) {
+    options.add("-gsplit-dwarf");
+  }
   options.addAll(copts);
   options.addAll(toolchain.getUnfilteredCompilerOptions(features));
   options.add("-frandom-seed=" + outputFile.getExecPathString());
@@ -38,9 +41,6 @@
   }
  else   if (FileType.contains(outputFile,CppFileTypes.PREPROCESSED_C,CppFileTypes.PREPROCESSED_CPP,CppFileTypes.PIC_PREPROCESSED_C,CppFileTypes.PIC_PREPROCESSED_CPP)) {
     options.add("-E");
-  }
-  if (cppConfiguration.useFission()) {
-    options.add("-gsplit-dwarf");
   }
   if (usePic) {
     options.add("-fPIC");
