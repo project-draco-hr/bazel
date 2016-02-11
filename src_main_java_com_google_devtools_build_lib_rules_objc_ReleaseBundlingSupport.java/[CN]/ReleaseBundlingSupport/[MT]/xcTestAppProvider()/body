@@ -1,4 +1,7 @@
 {
   ObjcProvider partialObjcProvider=new ObjcProvider.Builder().addTransitiveAndPropagate(ObjcProvider.HEADER,objcProvider).addTransitiveAndPropagate(ObjcProvider.INCLUDE,objcProvider).addTransitiveAndPropagate(ObjcProvider.DEFINE,objcProvider).addTransitiveAndPropagate(ObjcProvider.SDK_DYLIB,objcProvider).addTransitiveAndPropagate(ObjcProvider.SDK_FRAMEWORK,objcProvider).addTransitiveAndPropagate(ObjcProvider.SOURCE,objcProvider).addTransitiveAndPropagate(ObjcProvider.WEAK_SDK_FRAMEWORK,objcProvider).addTransitiveAndPropagate(ObjcProvider.FRAMEWORK_DIR,objcProvider).addTransitiveAndPropagate(ObjcProvider.FRAMEWORK_FILE,objcProvider).build();
-  return new XcTestAppProvider(intermediateArtifacts.combinedArchitectureBinary(),ruleContext.getImplicitOutputArtifact(IPA),partialObjcProvider);
+  Iterable<Artifact> linkedArtifacts=objcProvider.get(ObjcProvider.LIBRARY);
+  Iterable<Artifact> linkedImportedLibraries=objcProvider.get(ObjcProvider.IMPORTED_LIBRARY);
+  Iterable<Artifact> forceLoadLibraries=objcProvider.get(ObjcProvider.FORCE_LOAD_LIBRARY);
+  return new XcTestAppProvider(intermediateArtifacts.combinedArchitectureBinary(),ruleContext.getImplicitOutputArtifact(IPA),partialObjcProvider,linkedArtifacts,linkedImportedLibraries,forceLoadLibraries);
 }

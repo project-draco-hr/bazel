@@ -1,0 +1,10 @@
+{
+  Iterable<Artifact> librariesToLink=objcProvider.get(LIBRARY);
+  Iterable<Artifact> importedLibrariesToLink=objcProvider.get(IMPORTED_LIBRARY);
+  Iterable<Artifact> forceLoadLibrariesToLink=objcProvider.get(FORCE_LOAD_LIBRARY);
+  XcTestAppProvider xcTestAppProvider=ruleContext.getPrerequisite(IosTest.XCTEST_APP,Mode.TARGET,XcTestAppProvider.class);
+  librariesToLink=Sets.difference(objcProvider.get(LIBRARY).toSet(),ImmutableSet.copyOf(xcTestAppProvider.getLinkedLibraries()));
+  importedLibrariesToLink=Sets.difference(objcProvider.get(IMPORTED_LIBRARY).toSet(),ImmutableSet.copyOf(xcTestAppProvider.getLinkedImportedLibraries()));
+  forceLoadLibrariesToLink=Sets.difference(objcProvider.get(FORCE_LOAD_LIBRARY).toSet(),ImmutableSet.copyOf(xcTestAppProvider.getForceLoadLibraries()));
+  return new LibrariesToLink(librariesToLink,importedLibrariesToLink,forceLoadLibrariesToLink);
+}
