@@ -1,10 +1,11 @@
 {
-  FileValue buildFileValue=getBuildFileValue(rule,env);
-  if (env.valuesMissing()) {
+  NewRepositoryBuildFileHandler buildFileHandler=new NewRepositoryBuildFileHandler(getWorkspace());
+  if (!buildFileHandler.prepareBuildFile(rule,env)) {
     return null;
   }
   createDirectory(outputDirectory,rule);
   GitCloner.clone(rule,outputDirectory,env.getListener());
   createWorkspaceFile(outputDirectory,rule);
-  return symlinkBuildFile(buildFileValue,outputDirectory);
+  buildFileHandler.finishBuildFile(outputDirectory);
+  return RepositoryDirectoryValue.create(outputDirectory);
 }

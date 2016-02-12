@@ -1,6 +1,6 @@
 {
-  FileValue buildFileValue=getBuildFileValue(rule,env);
-  if (env.valuesMissing()) {
+  NewRepositoryBuildFileHandler buildFileHandler=new NewRepositoryBuildFileHandler(getWorkspace());
+  if (!buildFileHandler.prepareBuildFile(rule,env)) {
     return null;
   }
   try {
@@ -18,5 +18,6 @@
   }
   decompressed=DecompressorValue.decompress(DecompressorDescriptor.builder().setTargetKind(rule.getTargetKind()).setTargetName(rule.getName()).setArchivePath(downloadedPath).setRepositoryPath(outputDirectory).setPrefix(prefix).build());
   createWorkspaceFile(decompressed,rule);
-  return symlinkBuildFile(buildFileValue,outputDirectory);
+  buildFileHandler.finishBuildFile(outputDirectory);
+  return RepositoryDirectoryValue.create(outputDirectory);
 }

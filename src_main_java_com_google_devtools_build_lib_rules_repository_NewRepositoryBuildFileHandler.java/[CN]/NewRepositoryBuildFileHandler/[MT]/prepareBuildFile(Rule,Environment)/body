@@ -1,0 +1,23 @@
+{
+  AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(rule);
+  boolean hasBuildFile=mapper.isAttributeValueExplicitlySpecified("build_file");
+  boolean hasBuildFileContent=mapper.isAttributeValueExplicitlySpecified("build_file_content");
+  if (hasBuildFile && hasBuildFileContent) {
+    String error=String.format("Rule %s cannot have both a 'build_file' and 'build_file_content' attribute",rule);
+    throw new RepositoryFunctionException(new EvalException(rule.getLocation(),error),Transience.PERSISTENT);
+  }
+ else   if (hasBuildFile) {
+    buildFileValue=getBuildFileValue(rule,env);
+    if (env.valuesMissing()) {
+      return false;
+    }
+  }
+ else   if (hasBuildFileContent) {
+    buildFileContent=mapper.get("build_file_content",Type.STRING);
+  }
+ else {
+    String error=String.format("Rule %s requires a 'build_file' or 'build_file_content' attribute",rule);
+    throw new RepositoryFunctionException(new EvalException(rule.getLocation(),error),Transience.PERSISTENT);
+  }
+  return true;
+}
