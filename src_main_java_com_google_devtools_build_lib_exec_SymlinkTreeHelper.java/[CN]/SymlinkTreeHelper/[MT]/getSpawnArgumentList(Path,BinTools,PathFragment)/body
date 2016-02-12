@@ -1,7 +1,13 @@
 {
   PathFragment path=binTools.getExecPath(BUILD_RUNFILES);
   Preconditions.checkNotNull(path,BUILD_RUNFILES + " not found in embedded tools");
-  List<String> args=Lists.newArrayList(execRoot.getRelative(path).getPathString());
+  List<String> args=Lists.newArrayList();
+  if (OS.getCurrent() == OS.WINDOWS) {
+    args.add(shExecutable.getPathString());
+    args.add("-c");
+    args.add("$0 $*");
+  }
+  args.add(execRoot.getRelative(path).getPathString());
   if (filesetTree) {
     args.add("--allow_relative");
     args.add("--use_metadata");
