@@ -1,0 +1,21 @@
+{
+  Preconditions.checkArgument(keys.length > 0);
+  touchCacheFile();
+  List<String> keyList=ImmutableList.copyOf(keys);
+  Iterable<String> cacheContents=FileSystemUtils.readLines(cacheFilePath,StandardCharsets.UTF_8);
+  for (  String cacheLine : cacheContents) {
+    if (cacheLine.isEmpty()) {
+      continue;
+    }
+    List<String> cacheEntry=Splitter.on(':').splitToList(cacheLine);
+    List<String> cacheKeys=cacheEntry.subList(0,cacheEntry.size() - 1);
+    String cacheValue=cacheEntry.get(cacheEntry.size() - 1);
+    if (keyList.size() != cacheKeys.size()) {
+      throw new IllegalStateException(String.format("cache file %s is malformed. Expected %s keys. line: '%s'",cacheFilePath,keyList.size(),cacheLine));
+    }
+    if (keyList.equals(cacheKeys)) {
+      return cacheValue;
+    }
+  }
+  return null;
+}
