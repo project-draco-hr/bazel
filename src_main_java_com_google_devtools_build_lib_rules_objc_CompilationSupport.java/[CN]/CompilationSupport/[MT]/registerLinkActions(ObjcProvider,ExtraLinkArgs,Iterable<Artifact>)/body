@@ -1,4 +1,19 @@
 {
-  LibrariesToLink defaultLibrariesToLink=LibrariesToLink.defaultLibraries(objcProvider);
-  return registerLinkActions(objcProvider,extraLinkArgs,extraLinkInputs,defaultLibrariesToLink);
+  IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
+  Optional<Artifact> dsymBundle;
+  if (ObjcRuleClasses.objcConfiguration(ruleContext).generateDebugSymbols()) {
+    registerDsymActions();
+    dsymBundle=Optional.of(intermediateArtifacts.dsymBundle());
+  }
+ else {
+    dsymBundle=Optional.absent();
+  }
+  Iterable<Artifact> prunedJ2ObjcArchives=ImmutableList.<Artifact>of();
+  if (stripJ2ObjcDeadCode()) {
+    J2ObjcEntryClassProvider provider=J2ObjcEntryClassProvider.buildFrom(ruleContext);
+    registerJ2ObjcDeadCodeRemovalActions(objcProvider,provider.getEntryClasses());
+    prunedJ2ObjcArchives=j2objcPrunedLibraries(objcProvider);
+  }
+  registerLinkAction(objcProvider,extraLinkArgs,extraLinkInputs,dsymBundle,prunedJ2ObjcArchives);
+  return this;
 }
