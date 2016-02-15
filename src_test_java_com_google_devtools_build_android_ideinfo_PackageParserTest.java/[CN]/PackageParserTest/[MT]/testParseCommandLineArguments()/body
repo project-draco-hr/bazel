@@ -1,8 +1,9 @@
 {
-  String[] args=new String[]{"--output_manifest","/tmp/out.manifest","--sources",Joiner.on(":").join(",java/com/google/Foo.java,/usr/local/google/code","bin,java/com/google/Bla.java,/usr/local/_tmp/code/bin")};
+  String[] args=new String[]{"--output_manifest","/tmp/out.manifest","--sources_absolute_paths","/path/test1.java:/path/test2.java","--sources_execution_paths","/path/test1.java:/path/test2.java"};
   PackageParser.PackageParserOptions options=PackageParser.parseArgs(args);
   assertThat(options.outputManifest.toString()).isEqualTo("/tmp/out.manifest");
-  assertThat(options.sources).hasSize(2);
-  assertThat(options.sources.get(0)).isEqualTo(ArtifactLocation.newBuilder().setRootPath("/usr/local/google/code").setRelativePath("java/com/google/Foo.java").setIsSource(true).build());
-  assertThat(options.sources.get(1)).isEqualTo(ArtifactLocation.newBuilder().setRootPath("/usr/local/_tmp/code/bin").setRootExecutionPathFragment("bin").setRelativePath("java/com/google/Bla.java").setIsSource(false).build());
+  assertThat(options.sourcesAbsolutePaths).hasSize(2);
+  assertThat(options.sourcesExecutionPaths).hasSize(2);
+  assertThat(options.sourcesAbsolutePaths.get(0).toString()).isEqualTo("/path/test1.java");
+  assertThat(options.sourcesAbsolutePaths.get(1).toString()).isEqualTo("/path/test2.java");
 }
