@@ -1,11 +1,13 @@
 {
+  ImmutableMap.Builder<Path,Path> result=new ImmutableMap.Builder<>();
+  result.putAll(mountUsualUnixDirs());
   MountMap mounts=new MountMap();
-  mounts.putAll(mountUsualUnixDirs());
-  mounts.putAll(withRecursedDirs(setupBlazeUtils()));
-  mounts.putAll(withRecursedDirs(mountRunfilesFromManifests(spawn)));
-  mounts.putAll(withRecursedDirs(mountRunfilesFromSuppliers(spawn)));
-  mounts.putAll(withRecursedDirs(mountFilesFromFilesetManifests(spawn,executionContext)));
-  mounts.putAll(withRecursedDirs(mountInputs(spawn,executionContext)));
-  mounts.putAll(withRecursedDirs(mountRunUnderCommand(spawn)));
-  return validateMounts(withResolvedSymlinks(mounts));
+  mounts.putAll(setupBlazeUtils());
+  mounts.putAll(mountRunfilesFromManifests(spawn));
+  mounts.putAll(mountRunfilesFromSuppliers(spawn));
+  mounts.putAll(mountFilesFromFilesetManifests(spawn,executionContext));
+  mounts.putAll(mountInputs(spawn,executionContext));
+  mounts.putAll(mountRunUnderCommand(spawn));
+  result.putAll(finalizeMounts(mounts));
+  return result.build();
 }
