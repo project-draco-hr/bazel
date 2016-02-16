@@ -7,8 +7,11 @@
     throw new FileOutsidePackageRootsException(rootedPath);
   }
   Path outputBase=pkgLocator.get().getOutputBase();
-  Path relativeExternal=pkgLocator.get().getOutputBase().getRelative(Label.EXTERNAL_PATH_PREFIX);
-  if (outputBase != null && !rootedPath.asPath().startsWith(relativeExternal)) {
+  if (outputBase == null) {
+    return;
+  }
+  Path relativeExternal=outputBase.getRelative(Label.EXTERNAL_PATH_PREFIX);
+  if (!rootedPath.asPath().startsWith(relativeExternal)) {
     return;
   }
   PathFragment repositoryPath=rootedPath.asPath().relativeTo(relativeExternal);
