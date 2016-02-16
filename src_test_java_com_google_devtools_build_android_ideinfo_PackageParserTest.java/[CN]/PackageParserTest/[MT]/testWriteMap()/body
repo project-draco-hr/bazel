@@ -1,9 +1,12 @@
 {
-  Map<Path,String> map=ImmutableMap.of(Paths.get("/java/com/google/Bla.java"),"com.google",Paths.get("/java/com/other/Foo.java"),"com.other");
-  parser.writeManifest(map,Paths.get("/java/com/google/test.manifest"));
+  Map<ArtifactLocation,String> map=ImmutableMap.of(DUMMY_SOURCE_ARTIFACT,"com.google",DUMMY_DERIVED_ARTIFACT,"com.other");
+  parser.writeManifest(map,Paths.get("/java/com/google/test.manifest"),false);
   String writtenString=mockIoProvider.writer.toString();
-  assertThat(writtenString).contains("absolute_path: \"/java/com/google/Bla.java\"");
+  assertThat(writtenString).contains(String.format("root_path: \"%s\"",DUMMY_SOURCE_ARTIFACT.getRootPath()));
+  assertThat(writtenString).contains(String.format("relative_path: \"%s\"",DUMMY_SOURCE_ARTIFACT.getRelativePath()));
   assertThat(writtenString).contains("package_string: \"com.google\"");
-  assertThat(writtenString).contains("absolute_path: \"/java/com/other/Foo.java\"");
+  assertThat(writtenString).contains(String.format("root_path: \"%s\"",DUMMY_DERIVED_ARTIFACT.getRootPath()));
+  assertThat(writtenString).contains(String.format("root_execution_path_fragment: \"%s\"",DUMMY_DERIVED_ARTIFACT.getRootExecutionPathFragment()));
+  assertThat(writtenString).contains(String.format("relative_path: \"%s\"",DUMMY_DERIVED_ARTIFACT.getRelativePath()));
   assertThat(writtenString).contains("package_string: \"com.other\"");
 }
