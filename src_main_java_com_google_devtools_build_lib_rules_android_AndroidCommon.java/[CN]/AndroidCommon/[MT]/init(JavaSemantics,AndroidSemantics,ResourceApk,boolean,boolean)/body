@@ -13,6 +13,9 @@
       createJarJarActions(attributes,resourceApk.getResourceDependencies().getResources(),resourceApk.getPrimaryResource().getJavaPackage(),resourceClassJar);
     }
   }
+  if (disallowDepsWithoutSrcs(ruleContext.getRule().getRuleClass()) && ruleContext.attributes().get("srcs",BuildType.LABEL_LIST).isEmpty() && ruleContext.attributes().get("idl_srcs",BuildType.LABEL_LIST).isEmpty()&& !ruleContext.attributes().get("deps",BuildType.LABEL_LIST).isEmpty()) {
+    ruleContext.attributeError("deps","deps not allowed without srcs; move to exports?");
+  }
   JavaCompilationHelper helper=initAttributes(attributes,javaSemantics);
   if (ruleContext.hasErrors()) {
     return null;
