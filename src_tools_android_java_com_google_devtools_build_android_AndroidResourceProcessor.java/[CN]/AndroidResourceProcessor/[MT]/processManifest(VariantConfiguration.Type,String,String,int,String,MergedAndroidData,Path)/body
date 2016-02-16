@@ -1,7 +1,9 @@
 {
+  ManifestMerger2.MergeType mergeType=variantType == VariantConfiguration.Type.DEFAULT ? ManifestMerger2.MergeType.APPLICATION : ManifestMerger2.MergeType.LIBRARY;
+  String newManifestPackage=variantType == VariantConfiguration.Type.DEFAULT ? applicationId : customPackageForR;
   if (versionCode != -1 || versionName != null || newManifestPackage != null) {
-    Path androidManifest=Files.createDirectories(workingDirectory).resolve("AndroidManifest.xml");
-    @SuppressWarnings("unchecked") Invoker<?> manifestMergerInvoker=ManifestMerger2.newMerger(primaryData.getManifestFile(),stdLogger,mergeType);
+    Files.createDirectories(processedManifest.getParent());
+    @SuppressWarnings("unchecked") Invoker<?> manifestMergerInvoker=ManifestMerger2.newMerger(primaryData.getManifest().toFile(),stdLogger,mergeType);
     if (newManifestPackage != null) {
       manifestMergerInvoker.setOverride(SystemProperty.PACKAGE,newManifestPackage);
     }
@@ -19,10 +21,10 @@
 switch (mergingReport.getResult()) {
 case WARNING:
         mergingReport.log(stdLogger);
-      writeMergedManifest(mergingReport,androidManifest);
+      writeMergedManifest(mergingReport,processedManifest);
     break;
 case SUCCESS:
-  writeMergedManifest(mergingReport,androidManifest);
+  writeMergedManifest(mergingReport,processedManifest);
 break;
 case ERROR:
 mergingReport.log(stdLogger);
@@ -34,7 +36,7 @@ throw new RuntimeException("Unhandled result type : " + mergingReport.getResult(
  catch (IOException|SAXException|ParserConfigurationException|MergeFailureException e) {
 Throwables.propagate(e);
 }
-return androidManifest;
+return new MergedAndroidData(primaryData.getResourceDir(),primaryData.getAssetDir(),processedManifest);
 }
-return primaryData.getManifestFile().toPath();
+return primaryData;
 }
