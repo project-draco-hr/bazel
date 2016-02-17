@@ -4,12 +4,18 @@
   if (rule == null) {
     return null;
   }
-  RepositoryFunction handler=handlers.get(rule.getRuleClass());
+  RepositoryFunction handler;
+  if (rule.getRuleClassObject().isSkylark()) {
+    handler=skylarkHandler;
+  }
+ else {
+    handler=handlers.get(rule.getRuleClass());
+  }
   if (handler == null) {
     throw new RepositoryFunctionException(new EvalException(Location.fromFile(directories.getWorkspace().getRelative("WORKSPACE")),"Could not find handler for " + rule),Transience.PERSISTENT);
   }
   Path repoRoot=RepositoryFunction.getExternalRepositoryDirectory(directories).getRelative(rule.getName());
-  if (handler.isLocal()) {
+  if (handler.isLocal(rule)) {
     setupRepositoryRoot(repoRoot);
     return handler.fetch(rule,repoRoot,env);
   }

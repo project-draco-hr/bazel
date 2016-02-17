@@ -1,0 +1,14 @@
+{
+  this.rule=rule;
+  this.outputDirectory=outputDirectory;
+  AggregatingAttributeMapper attrs=AggregatingAttributeMapper.of(rule);
+  ImmutableMap.Builder<String,Object> attrBuilder=new ImmutableMap.Builder<>();
+  for (  String name : attrs.getAttributeNames()) {
+    if (!name.equals("$local")) {
+      Type<?> type=attrs.getAttributeType(name);
+      Object val=attrs.get(name,type);
+      attrBuilder.put(attributeToSkylark(name),val == null ? Runtime.NONE : SkylarkType.convertToSkylark(val,null));
+    }
+  }
+  attrObject=new SkylarkClassObject(attrBuilder.build(),"No such attribute '%s'");
+}
