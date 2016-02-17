@@ -1,0 +1,19 @@
+{
+  if (stats.isEmpty()) {
+    return false;
+  }
+  JCStatement stat=stats.get(0);
+  if (stat.getKind() != Kind.EXPRESSION_STATEMENT) {
+    return false;
+  }
+  JCExpression expr=((JCExpressionStatement)stat).getExpression();
+  if (expr.getKind() != Kind.METHOD_INVOCATION) {
+    return false;
+  }
+  JCExpression select=((JCMethodInvocation)expr).getMethodSelect();
+  if (select.getKind() != Kind.IDENTIFIER) {
+    return false;
+  }
+  Name name=((JCIdent)select).getName();
+  return name.contentEquals("this") || name.contentEquals("super");
+}
