@@ -1,11 +1,8 @@
 {
   Object o=ident.eval(env);
-  if (!(o instanceof Map)) {
+  if (!(o instanceof SkylarkDict)) {
     throw new EvalException(loc,"can only assign an element in a dictionary, not in a '" + EvalUtils.getDataTypeName(o) + "'");
   }
-  Map<?,?> dict=(Map<?,?>)o;
-  Map<Object,Object> result=new LinkedHashMap<>(dict.size() + 1);
-  result.putAll(dict);
-  result.put(key,value);
-  env.update(ident.getName(),ImmutableMap.copyOf(result));
+  SkylarkDict<Object,Object> dict=(SkylarkDict<Object,Object>)o;
+  dict.put(key,value,loc,env);
 }
