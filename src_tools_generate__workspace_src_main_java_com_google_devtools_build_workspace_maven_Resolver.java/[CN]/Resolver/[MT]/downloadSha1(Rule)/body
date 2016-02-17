@@ -1,0 +1,13 @@
+{
+  String sha1Url=getSha1Url(rule.getUrl(),rule.getArtifact().getExtension());
+  try {
+    HttpURLConnection connection=(HttpURLConnection)new URL(sha1Url).openConnection();
+    connection.setInstanceFollowRedirects(true);
+    connection.connect();
+    return CharStreams.toString(new InputStreamReader(connection.getInputStream(),Charset.defaultCharset())).trim();
+  }
+ catch (  IOException e) {
+    handler.handle(Event.warn("Failed to download the sha1 at " + sha1Url));
+  }
+  return null;
+}
