@@ -1,7 +1,8 @@
 {
   final Stopwatch timer=Stopwatch.createStarted();
-  OptionsParser optionsParser=OptionsParser.newOptionsParser(Options.class);
+  OptionsParser optionsParser=OptionsParser.newOptionsParser(Options.class,AaptConfigOptions.class);
   optionsParser.parseAndExitUponError(args);
+  aaptConfigOptions=optionsParser.getOptions(AaptConfigOptions.class);
   options=optionsParser.getOptions(Options.class);
   FileSystem fileSystem=FileSystems.getDefault();
   Path working=fileSystem.getPath("").toAbsolutePath();
@@ -23,12 +24,12 @@
     LOGGER.fine(String.format("Setup finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     final ImmutableList<DirectoryModifier> modifiers=ImmutableList.of(new PackedResourceTarExpander(expandedOut,working),new FileDeDuplicator(Hashing.murmur3_128(),deduplicatedOut,working));
     List<DependencyAndroidData> data=ImmutableSet.<DependencyAndroidData>builder().addAll(options.directData).addAll(options.transitiveData).build().asList();
-    final MergedAndroidData mergedData=resourceProcessor.mergeData(options.primaryData,data,mergedResources,mergedAssets,modifiers,useAaptCruncher() ? new AaptCruncher(options.aapt.toString(),new CommandLineRunner(STD_LOGGER)) : null,true);
+    final MergedAndroidData mergedData=resourceProcessor.mergeData(options.primaryData,data,mergedResources,mergedAssets,modifiers,useAaptCruncher() ? new AaptCruncher(aaptConfigOptions.aapt.toString(),new CommandLineRunner(STD_LOGGER)) : null,true);
     LOGGER.fine(String.format("Merging finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     final DensityFilteredAndroidData filteredData=mergedData.filter(new DensitySpecificResourceFilter(options.densities,filteredResources,mergedResources),new DensitySpecificManifestProcessor(options.densities,densityManifest));
     LOGGER.fine(String.format("Density filtering finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     final MergedAndroidData processedManifestData=resourceProcessor.processManifest(options.packageType,options.packageForR,options.applicationId,options.versionCode,options.versionName,filteredData,processedManifest);
-    resourceProcessor.processResources(options.aapt,options.androidJar,options.buildToolsVersion,options.packageType,options.debug,options.packageForR,new FlagAaptOptions(),options.resourceConfigs,processedManifestData,data,generatedSources,options.packagePath,options.proguardOutput);
+    resourceProcessor.processResources(aaptConfigOptions.aapt,aaptConfigOptions.androidJar,aaptConfigOptions.buildToolsVersion,options.packageType,aaptConfigOptions.debug,options.packageForR,new FlagAaptOptions(aaptConfigOptions),aaptConfigOptions.resourceConfigs,processedManifestData,data,generatedSources,options.packagePath,options.proguardOutput,options.resourcesOutput != null ? filteredData.getResourceDir().resolve("values").resolve("public.xml") : null);
     LOGGER.fine(String.format("appt finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     if (options.manifestOutput != null) {
       resourceProcessor.copyManifestToOutput(processedManifestData,options.manifestOutput);
@@ -41,6 +42,9 @@
     }
     if (options.symbolsTxtOut != null) {
       resourceProcessor.copyRToOutput(generatedSources,options.symbolsTxtOut,VariantConfiguration.Type.LIBRARY == options.packageType);
+    }
+    if (options.resourcesOutput != null) {
+      createResourcesZip(processedManifestData,options.resourcesOutput);
     }
     LOGGER.fine(String.format("Packaging finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
   }
