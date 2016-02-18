@@ -1,7 +1,7 @@
 {
-  String artifact=Rule.name(groupId,artifactId);
-  if (artifactToUrl.containsKey(artifact)) {
-    return artifactToUrl.get(artifact);
+  String ruleName=Rule.name(groupId,artifactId);
+  if (ruleNameToModelSource.containsKey(ruleName)) {
+    return ruleNameToModelSource.get(ruleName);
   }
   for (  Repository repository : repositories) {
     UrlModelSource modelSource=getModelSource(repository.getUrl(),groupId,artifactId,version);
@@ -9,9 +9,9 @@
       return modelSource;
     }
   }
-  List<String> urls=Lists.newArrayList();
+  List<String> attemptedUrls=Lists.newArrayList();
   for (  Repository repository : repositories) {
-    urls.add(repository.getUrl());
+    attemptedUrls.add(repository.getUrl());
   }
-  throw new UnresolvableModelException("Could not find any repositories that knew how to " + "resolve " + groupId + ":"+ artifactId+ ":"+ version+ " (checked "+ Joiner.on(", ").join(urls)+ ")",groupId,artifactId,version);
+  throw new UnresolvableModelException("Could not find any repositories that knew how to " + "resolve " + groupId + ":"+ artifactId+ ":"+ version+ " (checked "+ Joiner.on(", ").join(attemptedUrls)+ ")",groupId,artifactId,version);
 }

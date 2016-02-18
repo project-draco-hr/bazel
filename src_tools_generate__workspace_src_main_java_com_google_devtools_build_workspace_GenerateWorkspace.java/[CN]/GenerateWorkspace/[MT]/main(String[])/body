@@ -2,13 +2,14 @@
   OptionsParser parser=OptionsParser.newOptionsParser(GenerateWorkspaceOptions.class);
   parser.parseAndExitUponError(args);
   GenerateWorkspaceOptions options=parser.getOptions(GenerateWorkspaceOptions.class);
-  if (options.mavenProjects.isEmpty() && options.bazelProjects.isEmpty()) {
+  if (options.mavenProjects.isEmpty() && options.bazelProjects.isEmpty() && options.artifacts.isEmpty()) {
     printUsage(parser);
     return;
   }
   GenerateWorkspace workspaceFileGenerator=new GenerateWorkspace(options.outputDir);
   workspaceFileGenerator.generateFromWorkspace(options.bazelProjects);
   workspaceFileGenerator.generateFromPom(options.mavenProjects);
+  workspaceFileGenerator.generateFromArtifacts(options.artifacts);
   if (!workspaceFileGenerator.hasErrors()) {
     workspaceFileGenerator.writeResults();
   }

@@ -14,7 +14,7 @@
   for (  Repository repo : model.getRepositories()) {
     modelResolver.addRepository(repo);
   }
-  for (  org.apache.maven.model.Dependency dependency : model.getDependencies()) {
+  for (  Dependency dependency : model.getDependencies()) {
     if (!dependency.getScope().equals(COMPILE_SCOPE)) {
       continue;
     }
@@ -25,7 +25,7 @@
       continue;
     }
     try {
-      Rule artifactRule=new Rule(dependency);
+      Rule artifactRule=new Rule(getArtifact(dependency),dependency.getExclusions());
       HashSet<String> localDepExclusions=new HashSet<>(exclusions);
       localDepExclusions.addAll(artifactRule.getExclusions());
       boolean isNewDependency=addArtifact(artifactRule,model.toString());
@@ -48,7 +48,7 @@
         rootDependencies.add(artifactRule);
       }
     }
- catch (    UnresolvableModelException|Rule.InvalidRuleException e) {
+ catch (    UnresolvableModelException|InvalidArtifactCoordinateException e) {
       handler.handle(Event.error("Could not resolve dependency " + dependency.getGroupId() + ":"+ dependency.getArtifactId()+ ":"+ dependency.getVersion()+ ": "+ e.getMessage()));
     }
   }
