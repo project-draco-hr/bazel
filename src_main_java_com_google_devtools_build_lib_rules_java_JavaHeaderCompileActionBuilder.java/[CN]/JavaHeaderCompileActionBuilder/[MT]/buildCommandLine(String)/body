@@ -1,0 +1,48 @@
+{
+  CustomCommandLine.Builder result=CustomCommandLine.builder();
+  result.addExecPath("--output",outputJar);
+  if (outputDepsProto != null) {
+    result.addExecPath("--output_deps",outputDepsProto);
+  }
+  result.add("--temp_dir").addPath(tempDirectory);
+  result.addJoinExecPaths("--classpath",hostPathSeparator,classpathEntries);
+  result.addJoinExecPaths("--bootclasspath",hostPathSeparator,bootclasspathEntries);
+  if (!processorNames.isEmpty()) {
+    result.add("--processors",processorNames);
+  }
+  if (!processorPath.isEmpty()) {
+    result.addJoinExecPaths("--processorpath",hostPathSeparator,processorPath);
+  }
+  result.addExecPaths("--sources",sourceFiles);
+  if (!sourceJars.isEmpty()) {
+    result.addExecPaths("--source_jars",sourceJars);
+  }
+  result.add("--javacopts",javacOpts);
+  if (ruleKind != null) {
+    result.add("--rule_kind");
+    result.add(ruleKind);
+  }
+  if (targetLabel != null) {
+    result.add("--target_label");
+    if (targetLabel.getPackageIdentifier().getRepository().isDefault()) {
+      result.add(targetLabel.toString());
+    }
+ else {
+      result.add("@" + targetLabel);
+    }
+  }
+  if (strictJavaDeps != BuildConfiguration.StrictDepsMode.OFF) {
+    result.add("--strict_java_deps");
+    result.add(strictJavaDeps.toString());
+    result.add(new CustomMultiArgv(){
+      @Override public Iterable<String> argv(){
+        return JavaCompileAction.addJarsToTargets(classpathEntries,directJars);
+      }
+    }
+);
+    if (!compileTimeDependencyArtifacts.isEmpty()) {
+      result.addExecPaths("--deps_artifacts",compileTimeDependencyArtifacts);
+    }
+  }
+  return result.build();
+}

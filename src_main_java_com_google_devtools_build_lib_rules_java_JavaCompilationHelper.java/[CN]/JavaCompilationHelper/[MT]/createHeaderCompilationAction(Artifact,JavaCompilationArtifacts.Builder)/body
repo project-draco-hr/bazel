@@ -1,0 +1,25 @@
+{
+  Artifact headerJar=getAnalysisEnvironment().getDerivedArtifact(FileSystemUtils.replaceExtension(runtimeJar.getRootRelativePath(),"-hjar.jar"),runtimeJar.getRoot());
+  Artifact headerDeps=getAnalysisEnvironment().getDerivedArtifact(FileSystemUtils.replaceExtension(runtimeJar.getRootRelativePath(),"-hjar.jdeps"),runtimeJar.getRoot());
+  JavaTargetAttributes attributes=getAttributes();
+  JavaHeaderCompileActionBuilder builder=new JavaHeaderCompileActionBuilder(getRuleContext());
+  builder.addSourceFiles(attributes.getSourceFiles());
+  builder.addSourceJars(attributes.getSourceJars());
+  builder.setClasspathEntries(attributes.getCompileTimeClassPath());
+  builder.addAllBootclasspathEntries(getBootclasspathOrDefault());
+  builder.addAllExtClasspathEntries(getExtdirInputs());
+  builder.addProcessorPaths(attributes.getProcessorPath());
+  builder.addProcessorNames(attributes.getProcessorNames());
+  builder.setJavacOpts(getJavacOpts());
+  builder.setTempDirectory(tempDir(headerJar));
+  builder.setOutputJar(headerJar);
+  builder.setOutputDepsProto(headerDeps);
+  builder.setStrictJavaDeps(attributes.getStrictJavaDeps());
+  builder.addCompileTimeDependencyArtifacts(attributes.getCompileTimeDependencyArtifacts());
+  builder.addDirectJars(attributes.getDirectJars());
+  builder.setRuleKind(attributes.getRuleKind());
+  builder.setTargetLabel(attributes.getTargetLabel());
+  builder.build();
+  artifactBuilder.setCompileTimeDependencies(headerDeps);
+  return headerJar;
+}

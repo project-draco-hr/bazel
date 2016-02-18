@@ -1,5 +1,14 @@
 {
-  Artifact jar=getJavaConfiguration().getUseIjars() ? createIjarAction(runtimeJar,false) : runtimeJar;
+  Artifact jar;
+  if (shouldUseHeaderCompilation()) {
+    jar=createHeaderCompilationAction(runtimeJar,builder);
+  }
+ else   if (getJavaConfiguration().getUseIjars()) {
+    jar=createIjarAction(runtimeJar,false);
+  }
+ else {
+    jar=runtimeJar;
+  }
   builder.addCompileTimeJar(jar);
   return jar;
 }

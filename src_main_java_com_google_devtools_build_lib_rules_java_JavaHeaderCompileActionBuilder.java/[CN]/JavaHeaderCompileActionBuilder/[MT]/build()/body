@@ -1,0 +1,38 @@
+{
+  checkNotNull(outputDepsProto,"outputDepsProto must not be null");
+  checkNotNull(sourceFiles,"sourceFiles must not be null");
+  checkNotNull(sourceJars,"sourceJars must not be null");
+  checkNotNull(classpathEntries,"classpathEntries must not be null");
+  checkNotNull(bootclasspathEntries,"bootclasspathEntries must not be null");
+  checkNotNull(tempDirectory,"tempDirectory must not be null");
+  checkNotNull(strictJavaDeps,"strictJavaDeps must not be null");
+  checkNotNull(directJars,"directJars must not be null");
+  checkNotNull(compileTimeDependencyArtifacts,"compileTimeDependencyArtifacts must not be null");
+  checkNotNull(javacOpts,"javacOpts must not be null");
+  checkNotNull(processorPath,"processorPath must not be null");
+  checkNotNull(processorNames,"processorNames must not be null");
+  SpawnAction.Builder builder=new SpawnAction.Builder();
+  builder.addOutput(outputJar);
+  if (outputDepsProto != null) {
+    builder.addOutput(outputDepsProto);
+  }
+  builder.useParameterFile(ParameterFileType.SHELL_QUOTED);
+  builder.setCommandLine(buildCommandLine(ruleContext.getConfiguration().getHostPathSeparator()));
+  builder.addTransitiveInputs(JavaCompilationHelper.getHostJavabaseInputs(ruleContext));
+  builder.addInputs(classpathEntries);
+  builder.addInputs(bootclasspathEntries);
+  builder.addInputs(processorPath);
+  builder.addInputs(sourceJars);
+  builder.addInputs(sourceFiles);
+  builder.addInputs(directJars);
+  builder.addInputs(compileTimeDependencyArtifacts);
+  Artifact langtools=ruleContext.getPrerequisiteArtifact("$java_langtools",Mode.HOST);
+  builder.addTool(langtools);
+  List<String> jvmArgs=ImmutableList.<String>builder().addAll(JavaToolchainProvider.getDefaultJavacJvmOptions(ruleContext)).add("-Xbootclasspath/p:" + langtools.getExecPath().getPathString()).build();
+  builder.setJarExecutable(ruleContext.getHostConfiguration().getFragment(Jvm.class).getJavaExecutable(),JavaToolchainProvider.getHeaderCompilerJar(ruleContext),jvmArgs);
+  builder.setResources(RESOURCE_SET);
+  builder.setMnemonic("Turbine");
+  int count=sourceFiles.size() + sourceJars.size();
+  builder.setProgressMessage("Compiling Java headers " + outputJar.prettyPrint() + " ("+ count+ " files)");
+  ruleContext.registerAction(builder.build(ruleContext));
+}
