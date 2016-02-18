@@ -43,8 +43,9 @@
       TerminationStatus status=((AbnormalTerminationException)e).getResult().getTerminationStatus();
       timedOut=!status.exited() && (status.getTerminatingSignal() == 14);
     }
-    String message=CommandFailureUtils.describeCommandFailure(verboseFailures,spawnArguments,env,cwd.getPath());
-    throw new UserExecException(message,e,timedOut);
+    String message=CommandFailureUtils.describeCommandFailure(verboseFailures,commandLineArgs,env,cwd.getPath());
+    String finalMsg=(sandboxDebug && verboseFailures) ? SANDBOX_TIP + message : message;
+    throw new UserExecException(finalMsg,e,timedOut);
   }
  finally {
     copyOutputs(outputs);
