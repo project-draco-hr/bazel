@@ -1,0 +1,15 @@
+{
+  setUpContexForRule("test");
+  SkylarkRepositoryContext.setPathEnvironment("/bin","/path/sbin",".");
+  scratch.file("/bin/true").setExecutable(true);
+  scratch.file("/path/sbin/true").setExecutable(true);
+  scratch.file("/path/sbin/false").setExecutable(true);
+  scratch.file("/path/bin/undef").setExecutable(true);
+  scratch.file("/path/bin/def").setExecutable(true);
+  scratch.file("/bin/undef");
+  assertThat(context.which("anything")).isEqualTo(Runtime.NONE);
+  assertThat(context.which("def")).isEqualTo(Runtime.NONE);
+  assertThat(context.which("undef")).isEqualTo(Runtime.NONE);
+  assertThat(context.which("true").toString()).isEqualTo("/bin/true");
+  assertThat(context.which("false").toString()).isEqualTo("/path/sbin/false");
+}

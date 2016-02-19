@@ -1,0 +1,19 @@
+{
+  if (program.contains("/") || program.contains("\\")) {
+    throw new EvalException(Location.BUILTIN,"Program argument of which() may not contains a / or a \\ ('" + program + "' given)");
+  }
+  for (  String p : pathEnv) {
+    PathFragment fragment=new PathFragment(p);
+    if (fragment.isAbsolute()) {
+      Path path=outputDirectory.getFileSystem().getPath(fragment).getChild(program);
+      try {
+        if (path.exists() && path.isExecutable()) {
+          return new SkylarkPath(path);
+        }
+      }
+ catch (      IOException e) {
+      }
+    }
+  }
+  return Runtime.NONE;
+}
