@@ -1,0 +1,34 @@
+{
+  Path packageDirPath=scratch.file("foo/BUILD","exports_files(glob(['*.txt']))").getParentDirectory();
+  scratch.file("foo/existing.txt");
+  FileSystemUtils.ensureSymbolicLink(packageDirPath.getChild("dangling.txt"),"nope");
+  getSkyframeExecutor().preparePackageLoading(new PathPackageLocator(outputBase,ImmutableList.of(rootDirectory)),ConstantRuleVisibility.PUBLIC,true,7,"",UUID.randomUUID());
+  SkyKey skyKey=PackageValue.key(PackageIdentifier.parse("foo"));
+  PackageValue value=validPackage(skyKey);
+  assertFalse(value.getPackage().containsErrors());
+  assertThat(value.getPackage().getTarget("existing.txt").getName()).isEqualTo("existing.txt");
+  try {
+    value.getPackage().getTarget("dangling.txt");
+    fail();
+  }
+ catch (  NoSuchTargetException expected) {
+  }
+  scratch.overwriteFile("foo/BUILD","exports_files(glob(['*.txt'])),","#some-irrelevant-comment");
+  getSkyframeExecutor().invalidateFilesUnderPathForTesting(reporter,ModifiedFileSet.builder().modify(new PathFragment("foo/BUILD")).build(),rootDirectory);
+  value=validPackage(skyKey);
+  assertFalse(value.getPackage().containsErrors());
+  assertThat(value.getPackage().getTarget("existing.txt").getName()).isEqualTo("existing.txt");
+  try {
+    value.getPackage().getTarget("dangling.txt");
+    fail();
+  }
+ catch (  NoSuchTargetException expected) {
+  }
+  scratch.file("foo/nope");
+  getSkyframeExecutor().invalidateFilesUnderPathForTesting(reporter,ModifiedFileSet.builder().modify(new PathFragment("foo/nope")).build(),rootDirectory);
+  PackageValue newValue=validPackage(skyKey);
+  assertFalse(newValue.getPackage().containsErrors());
+  assertThat(newValue.getPackage().getTarget("existing.txt").getName()).isEqualTo("existing.txt");
+  assertThat(newValue.getPackage().getTarget("dangling.txt").getName()).isEqualTo("dangling.txt");
+  assertThat(newValue.getPackage()).isNotSameAs(value.getPackage());
+}
