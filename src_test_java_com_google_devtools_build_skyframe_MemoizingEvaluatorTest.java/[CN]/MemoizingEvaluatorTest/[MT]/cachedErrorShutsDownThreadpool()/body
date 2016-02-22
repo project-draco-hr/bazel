@@ -1,0 +1,12 @@
+{
+  SkyKey cachedErrorKey=GraphTester.skyKey("error");
+  tester.getOrCreate(cachedErrorKey).setHasError(true);
+  assertThat(tester.evalAndGetError(cachedErrorKey)).isNotNull();
+  SkyKey topKey=GraphTester.skyKey("top");
+  tester.getOrCreate(topKey).addDependency(cachedErrorKey).setComputedValue(CONCATENATE);
+  SkyKey newErrorKey=GraphTester.skyKey("newError");
+  tester.getOrCreate(newErrorKey).setBuilder(new ChainedFunction.Builder().setWaitForException(true).setWaitToFinish(new CountDownLatch(0)).setValue(null).build());
+  EvaluationResult<StringValue> result=tester.eval(false,newErrorKey,topKey);
+  assertThatEvaluationResult(result).hasError();
+  assertThatEvaluationResult(result).hasErrorEntryForKeyThat(newErrorKey).isNull();
+}
