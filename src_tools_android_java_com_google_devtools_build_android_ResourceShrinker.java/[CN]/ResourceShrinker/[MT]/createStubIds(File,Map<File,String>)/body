@@ -1,0 +1,20 @@
+{
+  if (values.exists()) {
+    String xml=rewritten.get(values);
+    if (xml == null) {
+      xml=Files.toString(values,UTF_8);
+    }
+    Document document=XmlUtils.parseDocument(xml,true);
+    Element root=document.getDocumentElement();
+    for (    Resource resource : resources) {
+      if (resource.type == ResourceType.ID && !resource.hasDefault) {
+        Element item=document.createElement(TAG_ITEM);
+        item.setAttribute(ATTR_TYPE,resource.type.getName());
+        item.setAttribute(ATTR_NAME,resource.name);
+        root.appendChild(item);
+      }
+    }
+    String formatted=XmlPrettyPrinter.prettyPrint(document,xml.endsWith("\n"));
+    rewritten.put(values,formatted);
+  }
+}

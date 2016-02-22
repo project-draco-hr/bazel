@@ -1,0 +1,42 @@
+{
+  final Stopwatch timer=Stopwatch.createStarted();
+  OptionsParser optionsParser=OptionsParser.newOptionsParser(Options.class,AaptConfigOptions.class);
+  optionsParser.parseAndExitUponError(args);
+  aaptConfigOptions=optionsParser.getOptions(AaptConfigOptions.class);
+  options=optionsParser.getOptions(Options.class);
+  AndroidResourceProcessor resourceProcessor=new AndroidResourceProcessor(stdLogger);
+  try {
+    Path working=Files.createTempDirectory("resource_shrinker_tmp");
+    working.toFile().deleteOnExit();
+    final Path resourceFiles=working.resolve("resource_files");
+    final Path shrunkResources=working.resolve("shrunk_resources");
+    List<String> resourcePackages=getManifestPackages(options.primaryManifest,options.dependencyManifests);
+    try (ZipInputStream zin=new ZipInputStream(new FileInputStream(options.resourcesZip.toFile()))){
+      ZipEntry entry;
+      while ((entry=zin.getNextEntry()) != null) {
+        if (!entry.isDirectory()) {
+          Path output=resourceFiles.resolve(entry.getName());
+          Files.createDirectories(output.getParent());
+          try (FileOutputStream fos=new FileOutputStream(output.toFile())){
+            ByteStreams.copy(zin,fos);
+          }
+         }
+      }
+    }
+     ResourceShrinker resourceShrinker=new ResourceShrinker(resourcePackages,options.rTxt,options.shrunkJar,options.primaryManifest,resourceFiles.resolve("res"));
+    resourceShrinker.shrink(shrunkResources);
+    logger.fine(String.format("Shrinking resources finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    resourceProcessor.processResources(aaptConfigOptions.aapt,aaptConfigOptions.androidJar,aaptConfigOptions.buildToolsVersion,VariantConfiguration.Type.DEFAULT,aaptConfigOptions.debug,null,new FlagAaptOptions(aaptConfigOptions),aaptConfigOptions.resourceConfigs,new MergedAndroidData(shrunkResources,resourceFiles.resolve("assets"),options.primaryManifest),ImmutableList.<DependencyAndroidData>of(),null,options.shrunkApk,null,null);
+    if (options.shrunkResources != null) {
+      resourceProcessor.createResourcesZip(shrunkResources,resourceFiles.resolve("assets"),options.shrunkResources);
+    }
+    logger.fine(String.format("Packing resources finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+  }
+ catch (  Exception e) {
+    logger.log(Level.SEVERE,"Error shrinking resources",e);
+    throw e;
+  }
+ finally {
+    resourceProcessor.shutdown();
+  }
+}

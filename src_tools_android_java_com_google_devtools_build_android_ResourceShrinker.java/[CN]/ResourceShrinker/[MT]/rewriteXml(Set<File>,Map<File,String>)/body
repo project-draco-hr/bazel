@@ -1,0 +1,14 @@
+{
+  for (  File file : rewrite) {
+    String xml=Files.toString(file,UTF_8);
+    Document document=XmlUtils.parseDocument(xml,true);
+    Element root=document.getDocumentElement();
+    if (root != null && TAG_RESOURCES.equals(root.getTagName())) {
+      List<String> removed=Lists.newArrayList();
+      stripUnused(root,removed);
+      logger.fine("Removed " + removed.size() + " unused resources from "+ file+ ":\n  "+ Joiner.on(", ").join(removed));
+      String formatted=XmlPrettyPrinter.prettyPrint(document,xml.endsWith("\n"));
+      rewritten.put(file,formatted);
+    }
+  }
+}

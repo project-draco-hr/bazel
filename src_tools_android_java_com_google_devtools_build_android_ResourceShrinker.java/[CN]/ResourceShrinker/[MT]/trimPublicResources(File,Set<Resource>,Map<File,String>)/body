@@ -1,0 +1,29 @@
+{
+  if (publicXml.exists()) {
+    String xml=rewritten.get(publicXml);
+    if (xml == null) {
+      xml=Files.toString(publicXml,UTF_8);
+    }
+    Document document=XmlUtils.parseDocument(xml,true);
+    Element root=document.getDocumentElement();
+    if (root != null && TAG_RESOURCES.equals(root.getTagName())) {
+      NodeList children=root.getChildNodes();
+      for (int i=children.getLength() - 1; i >= 0; i--) {
+        Node child=children.item(i);
+        if (child.getNodeType() == Node.ELEMENT_NODE) {
+          Element resourceElement=(Element)child;
+          ResourceType type=ResourceType.getEnum(resourceElement.getAttribute(ATTR_TYPE));
+          String name=resourceElement.getAttribute(ATTR_NAME);
+          if (type != null && name != null) {
+            Resource resource=getResource(type,name);
+            if (resource != null && deleted.contains(resource)) {
+              root.removeChild(child);
+            }
+          }
+        }
+      }
+    }
+    String formatted=XmlPrettyPrinter.prettyPrint(document,xml.endsWith("\n"));
+    rewritten.put(publicXml,formatted);
+  }
+}
