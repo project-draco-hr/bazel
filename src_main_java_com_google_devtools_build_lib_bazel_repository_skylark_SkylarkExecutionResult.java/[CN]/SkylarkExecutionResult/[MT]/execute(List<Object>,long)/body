@@ -1,0 +1,19 @@
+{
+  try {
+    String[] argsArray=new String[args.size()];
+    for (int i=0; i < args.size(); i++) {
+      Object arg=args.get(i);
+      if (!(arg instanceof String || arg instanceof SkylarkPath)) {
+        throw new EvalException(Location.BUILTIN,"Argument " + i + " of execute is neither a path nor a string.");
+      }
+      argsArray[i]=arg.toString();
+    }
+    CommandResult result=new Command(argsArray).execute(new byte[]{},timeout,false);
+    String stdout=new String(result.getStdout(),StandardCharsets.UTF_8);
+    String stderr=new String(result.getStderr(),StandardCharsets.UTF_8);
+    return new SkylarkExecutionResult(result.getTerminationStatus().getExitCode(),stdout,stderr);
+  }
+ catch (  CommandException e) {
+    return new SkylarkExecutionResult(256,"",e.getMessage());
+  }
+}
