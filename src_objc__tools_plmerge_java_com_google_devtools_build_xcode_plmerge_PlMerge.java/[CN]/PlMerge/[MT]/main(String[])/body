@@ -3,22 +3,17 @@
   OptionsParser parser=OptionsParser.newOptionsParser(PlMergeOptions.class);
   parser.parse(args);
   PlMergeOptions options=parser.getOptions(PlMergeOptions.class);
-  MergingArguments data=null;
-  if (usingControlProtobuf(options)) {
-    InputStream in=Files.newInputStream(fileSystem.getPath(options.controlPath));
-    Control control=Control.parseFrom(in);
-    validateControl(control);
-    data=new MergingArguments(control);
+  if (options.controlPath == null) {
+    missingArg("control");
   }
- else   if (usingCommandLineArgs(options)) {
-    data=new MergingArguments(options);
+  InputStream in=Files.newInputStream(fileSystem.getPath(options.controlPath));
+  Control control=Control.parseFrom(in);
+  validateControl(control);
+  PlistMerging merging=PlistMerging.from(control,new KeysToRemoveIfEmptyString("CFBundleIconFile","NSPrincipalClass"));
+  String primaryBundleId=Strings.emptyToNull(control.getPrimaryBundleId());
+  String fallbackBundleId=Strings.emptyToNull(control.getFallbackBundleId());
+  if (primaryBundleId != null || fallbackBundleId != null) {
+    merging.setBundleIdentifier(primaryBundleId,fallbackBundleId);
   }
- else {
-    missingArg("Either --control or --out_file and at least one --source_file");
-  }
-  PlistMerging merging=PlistMerging.from(data,new KeysToRemoveIfEmptyString("CFBundleIconFile","NSPrincipalClass"));
-  if (data.getPrimaryBundleId() != null || data.getFallbackBundleId() != null) {
-    merging.setBundleIdentifier(data.getPrimaryBundleId(),data.getFallbackBundleId());
-  }
-  merging.writePlist(fileSystem.getPath(data.getOutFile()));
+  merging.writePlist(fileSystem.getPath(control.getOutFile()));
 }

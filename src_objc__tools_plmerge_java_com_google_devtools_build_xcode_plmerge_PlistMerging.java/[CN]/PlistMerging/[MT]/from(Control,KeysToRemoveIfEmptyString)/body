@@ -1,17 +1,12 @@
 {
+  FileSystem fileSystem=FileSystems.getDefault();
   ImmutableList.Builder<Path> sourceFilePathsBuilder=new Builder<>();
   for (  String pathString : control.getSourceFileList()) {
     sourceFilePathsBuilder.add(fileSystem.getPath(pathString));
   }
-  sourceFilePaths=sourceFilePathsBuilder.build();
   ImmutableList.Builder<Path> immutableSourceFilePathsBuilder=new Builder<>();
   for (  String pathString : control.getImmutableSourceFileList()) {
     immutableSourceFilePathsBuilder.add(fileSystem.getPath(pathString));
   }
-  immutableSourceFilePaths=immutableSourceFilePathsBuilder.build();
-  outFile=control.getOutFile();
-  variableSubstitutions=control.getVariableSubstitutionMap();
-  primaryBundleId=Strings.emptyToNull(control.getPrimaryBundleId());
-  fallbackBundleId=Strings.emptyToNull(control.getFallbackBundleId());
-  executableName=Strings.emptyToNull(control.getExecutableName());
+  return from(sourceFilePathsBuilder.build(),immutableSourceFilePathsBuilder.build(),control.getVariableSubstitutionMap(),keysToRemoveIfEmptyString,Strings.emptyToNull(control.getExecutableName()));
 }
