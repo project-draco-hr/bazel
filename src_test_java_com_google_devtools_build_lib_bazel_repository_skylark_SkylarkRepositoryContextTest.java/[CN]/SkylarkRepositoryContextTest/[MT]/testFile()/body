@@ -1,0 +1,30 @@
+{
+  setUpContexForRule("test");
+  context.createFile(context.path("foobar"));
+  context.createFile(context.path("foo/bar"),"foobar");
+  context.createFile(context.path("bar/foo/bar"));
+  testOutputFile(outputDirectory.getChild("foobar"),"");
+  testOutputFile(outputDirectory.getRelative("foo/bar"),"foobar");
+  testOutputFile(outputDirectory.getRelative("bar/foo/bar"),"");
+  try {
+    context.createFile(context.path("/absolute"));
+    fail("Expected error on creating path outside of the output directory");
+  }
+ catch (  RepositoryFunctionException ex) {
+    assertThat(ex.getCause().getMessage()).isEqualTo("Cannot write outside of the output directory for path /absolute");
+  }
+  try {
+    context.createFile(context.path("../somepath"));
+    fail("Expected error on creating path outside of the output directory");
+  }
+ catch (  RepositoryFunctionException ex) {
+    assertThat(ex.getCause().getMessage()).isEqualTo("Cannot write outside of the output directory for path /somepath");
+  }
+  try {
+    context.createFile(context.path("foo/../../somepath"));
+    fail("Expected error on creating path outside of the output directory");
+  }
+ catch (  RepositoryFunctionException ex) {
+    assertThat(ex.getCause().getMessage()).isEqualTo("Cannot write outside of the output directory for path /somepath");
+  }
+}
