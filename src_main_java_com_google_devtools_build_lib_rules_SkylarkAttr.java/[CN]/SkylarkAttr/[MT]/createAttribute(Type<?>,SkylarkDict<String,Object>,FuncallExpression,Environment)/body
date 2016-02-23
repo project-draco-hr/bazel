@@ -51,7 +51,21 @@
     builder.allowedValues(new AllowedValueSet(values));
   }
   if (containsNonNoneKey(arguments,PROVIDERS_ARG)) {
-    builder.mandatoryProviders(SkylarkList.castSkylarkListOrNoneToList(arguments.get(PROVIDERS_ARG),String.class,PROVIDERS_ARG));
+    Object obj=arguments.get(PROVIDERS_ARG);
+    SkylarkType.checkType(obj,SkylarkList.class,PROVIDERS_ARG);
+    boolean isSingleListOfStr=true;
+    for (    Object o : (SkylarkList)obj) {
+      isSingleListOfStr=o instanceof String;
+      if (!isSingleListOfStr) {
+        break;
+      }
+    }
+    if (isSingleListOfStr) {
+      builder.mandatoryProviders(((SkylarkList<?>)obj).getContents(String.class,PROVIDERS_ARG));
+    }
+ else {
+      builder.mandatoryProvidersList(getProvidersList((SkylarkList)obj));
+    }
   }
   if (containsNonNoneKey(arguments,CONFIGURATION_ARG)) {
     builder.cfg((ConfigurationTransition)arguments.get(CONFIGURATION_ARG));

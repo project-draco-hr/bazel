@@ -1,0 +1,16 @@
+{
+  List<List<String>> providersList=new ArrayList<>();
+  String errorMsg="Illegal argument: element in '%s' is of unexpected type. " + "Should be list of string, but got %s. " + "Notice: one single list of string as 'providers' is still supported.";
+  for (  Object o : skylarkList) {
+    if (!(o instanceof SkylarkList)) {
+      throw new EvalException(null,String.format(errorMsg,PROVIDERS_ARG,EvalUtils.getDataTypeName(o,true)));
+    }
+    for (    Object value : (SkylarkList)o) {
+      if (!(value instanceof String)) {
+        throw new EvalException(null,String.format(errorMsg,PROVIDERS_ARG,"list with an element of type " + EvalUtils.getDataTypeNameFromClass(value.getClass())));
+      }
+    }
+    providersList.add(((SkylarkList<?>)o).getContents(String.class,PROVIDERS_ARG));
+  }
+  return providersList;
+}
