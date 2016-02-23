@@ -2,7 +2,7 @@
   BaseFunction function=rule.getRuleClassObject().getConfiguredTargetFunction();
   try (Mutability mutability=Mutability.create("skylark repository")){
     com.google.devtools.build.lib.syntax.Environment buildEnv=com.google.devtools.build.lib.syntax.Environment.builder(mutability).setGlobals(rule.getRuleClassObject().getRuleDefinitionEnvironment().getGlobals()).setSkylark().setEventHandler(env.getListener()).build();
-    SkylarkRepositoryContext skylarkRepositoryContext=new SkylarkRepositoryContext(rule,outputDirectory);
+    SkylarkRepositoryContext skylarkRepositoryContext=new SkylarkRepositoryContext(rule,outputDirectory,getClientEnvironment());
     Object retValue=function.call(ImmutableList.<Object>of(skylarkRepositoryContext),ImmutableMap.<String,Object>of(),null,buildEnv);
     if (retValue != Runtime.NONE) {
       throw new RepositoryFunctionException(new EvalException(rule.getLocation(),"Call to repository rule " + rule.getName() + " returned a non-None value, None expected."),Transience.PERSISTENT);
