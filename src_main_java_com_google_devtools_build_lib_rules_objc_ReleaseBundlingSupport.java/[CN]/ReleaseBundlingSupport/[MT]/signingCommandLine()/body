@@ -1,0 +1,13 @@
+{
+  ImmutableList.Builder<String> dirsToSign=new ImmutableList.Builder<>();
+  String bundleDir=ShellUtils.shellEscape(bundling.getBundleDir());
+  if (objcProvider.is(USES_SWIFT)) {
+    dirsToSign.add(bundleDir + "/Frameworks/*");
+  }
+  dirsToSign.add(bundleDir);
+  StringBuilder codesignCommandLineBuilder=new StringBuilder();
+  for (  String dir : dirsToSign.build()) {
+    codesignCommandLineBuilder.append(codesignCommand("${t}/" + dir)).append(" && ");
+  }
+  return codesignCommandLineBuilder.toString();
+}

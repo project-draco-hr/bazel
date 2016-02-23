@@ -1,0 +1,30 @@
+{
+  Artifact processedIpa=ruleContext.getImplicitOutputArtifact(IPA);
+  Artifact unprocessedIpa=intermediateArtifacts.unprocessedIpa();
+  boolean processingNeeded=false;
+  NestedSetBuilder<Artifact> inputs=NestedSetBuilder.<Artifact>stableOrder().add(unprocessedIpa);
+  String actionCommandLine="set -e && " + "t=$(mktemp -d -t signing_intermediate) && " + "trap \"rm -rf ${t}\" EXIT && "+ "signed_ipa=${PWD}/" + processedIpa.getShellEscapedExecPathString() + " && "+ "/usr/bin/unzip -qq "+ unprocessedIpa.getShellEscapedExecPathString()+ " -d ${t} && ";
+  FilesToRunProvider processor=attributes.ipaPostProcessor();
+  if (processor != null) {
+    processingNeeded=true;
+    actionCommandLine+=processor.getExecutable().getShellEscapedExecPathString() + " ${t} && ";
+  }
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
+  if (appleConfiguration.getBundlingPlatform() == Platform.IOS_DEVICE) {
+    processingNeeded=true;
+    registerEntitlementsActions();
+    actionCommandLine+=signingCommandLine();
+    inputs.add(attributes.provisioningProfile()).add(intermediateArtifacts.entitlements());
+  }
+  actionCommandLine+="cd ${t} && /usr/bin/zip -q -r \"${signed_ipa}\" .";
+  if (processingNeeded) {
+    SpawnAction.Builder processAction=ObjcRuleClasses.spawnBashOnDarwinActionBuilder(actionCommandLine).setMnemonic("ObjcProcessIpa").setProgressMessage("Processing iOS IPA: " + ruleContext.getLabel()).addTransitiveInputs(inputs.build()).addOutput(processedIpa);
+    if (processor != null) {
+      processAction.addTool(processor);
+    }
+    ruleContext.registerAction(processAction.build(ruleContext));
+  }
+ else {
+    ruleContext.registerAction(new SymlinkAction(ruleContext.getActionOwner(),unprocessedIpa,processedIpa,"Processing IPA"));
+  }
+}

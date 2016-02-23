@@ -3,25 +3,13 @@
   registerCombineArchitecturesAction();
   registerTransformAndCopyBreakpadFilesAction();
   registerSwiftStdlibActionsIfNecessary();
-  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
-  Artifact ipaOutput=ruleContext.getImplicitOutputArtifact(IPA);
-  Artifact maybeSignedIpa;
-  if (appleConfiguration.getBundlingPlatform() == Platform.IOS_SIMULATOR) {
-    maybeSignedIpa=ipaOutput;
-  }
- else   if (attributes.provisioningProfile() == null) {
-    throw new IllegalStateException(DEVICE_NO_PROVISIONING_PROFILE);
-  }
- else {
-    maybeSignedIpa=registerBundleSigningActions(ipaOutput);
-  }
   registerEmbedLabelPlistAction();
   registerEnvironmentPlistAction();
   registerAutomaticPlistAction();
   if (ObjcRuleClasses.useLaunchStoryboard(ruleContext,bundling.getMinimumOsVersion())) {
     registerLaunchStoryboardPlistAction();
   }
-  BundleMergeControlBytes bundleMergeControlBytes=new BundleMergeControlBytes(bundling,maybeSignedIpa,appleConfiguration,bundleSupport.targetDeviceFamilies());
-  registerBundleMergeActions(maybeSignedIpa,bundling.getBundleContentArtifacts(),bundleMergeControlBytes);
+  registerBundleMergeActions();
+  registerPostProcessAndSigningActions();
   return this;
 }
