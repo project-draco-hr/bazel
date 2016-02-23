@@ -61,16 +61,22 @@ synchronized (interruptLock) {
           }
         }
         idleChecker.busy();
+        List<String> request=null;
         try {
+          request=extractRequest(requestIo);
           cmdNum.incrementAndGet();
           inAction.set(true);
-          executeRequest(requestIo);
+          if (request != null) {
+            executeRequest(request,requestIo);
+          }
         }
   finally {
           inAction.set(false);
+          if (request != null) {
 synchronized (interruptLock) {
-            allowingInterrupt.set(false);
-            Thread.interrupted();
+              allowingInterrupt.set(false);
+              Thread.interrupted();
+            }
           }
           requestIo.shutdown();
           if (rpcService.isShutdown()) {
