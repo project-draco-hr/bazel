@@ -3,5 +3,13 @@
   for (  Entry<String,String> docVariable : docVariables.entrySet()) {
     expandedDoc=expandedDoc.replace("${" + docVariable.getKey() + "}",expandBuiltInVariables(docVariable.getKey(),docVariable.getValue()));
   }
+  if (linkExpander != null) {
+    try {
+      expandedDoc=linkExpander.expand(expandedDoc);
+    }
+ catch (    IllegalArgumentException e) {
+      throw new BuildEncyclopediaDocException(fileName,startLineCount,e.getMessage());
+    }
+  }
   return expandedDoc;
 }
