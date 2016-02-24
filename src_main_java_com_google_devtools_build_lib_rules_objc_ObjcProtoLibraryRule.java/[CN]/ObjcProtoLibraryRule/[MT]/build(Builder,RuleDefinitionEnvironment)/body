@@ -1,8 +1,23 @@
 {
-  return builder.requiresConfigurationFragments(ObjcConfiguration.class,AppleConfiguration.class).override(attr("deps",LABEL_LIST).allowedRuleClasses("proto_library","filegroup").legacyAllowAnyFileType()).add(attr(OPTIONS_FILE_ATTR,LABEL).legacyAllowAnyFileType().singleArtifact().cfg(HOST)).add(attr(OUTPUT_CPP_ATTR,BOOLEAN).value(false)).add(attr(PER_PROTO_INCLUDES,BOOLEAN).value(false)).add(attr(COMPILE_PROTOS_ATTR,LABEL).allowedFileTypes(FileType.of(".py")).cfg(HOST).singleArtifact().value(env.getToolsLabel("//tools/objc:compile_protos"))).add(attr(PROTO_SUPPORT_ATTR,LABEL).legacyAllowAnyFileType().cfg(HOST).value(env.getToolsLabel("//tools/objc:proto_support"))).add(attr(USE_OBJC_HEADER_NAMES_ATTR,BOOLEAN).value(false)).add(attr(LIBPROTOBUF_ATTR,LABEL).allowedRuleClasses("objc_library").value(new ComputedDefault(OUTPUT_CPP_ATTR){
+  return builder.requiresConfigurationFragments(ObjcConfiguration.class,AppleConfiguration.class).override(attr("deps",LABEL_LIST).allowedRuleClasses("proto_library","filegroup").legacyAllowAnyFileType()).add(attr(OPTIONS_FILE_ATTR,LABEL).legacyAllowAnyFileType().singleArtifact().cfg(HOST)).add(attr(OUTPUT_CPP_ATTR,BOOLEAN).value(false)).add(attr(USE_OBJC_HEADER_NAMES_ATTR,BOOLEAN).value(false)).add(attr(PER_PROTO_INCLUDES_ATTR,BOOLEAN).value(false)).add(attr(PORTABLE_PROTO_FILTERS_ATTR,LABEL_LIST).legacyAllowAnyFileType().allowedRuleClasses("filegroup").cfg(HOST)).add(attr(PROTO_COMPILER_ATTR,LABEL).allowedFileTypes(FileType.of(".py")).cfg(HOST).singleArtifact().value(new ComputedDefault(PORTABLE_PROTO_FILTERS_ATTR){
     @Override public Object getDefault(    AttributeMap rule){
-      return rule.get(OUTPUT_CPP_ATTR,Type.BOOLEAN) ? env.getLabel("//external:objc_proto_cpp_lib") : env.getLabel("//external:objc_proto_lib");
+      return rule.isAttributeValueExplicitlySpecified(PORTABLE_PROTO_FILTERS_ATTR) ? env.getToolsLabel("//tools/objc:protobuf_compiler") : env.getToolsLabel("//tools/objc:compile_protos");
     }
   }
-)).add(attr("$xcodegen",LABEL).cfg(HOST).exec().value(env.getToolsLabel("//tools/objc:xcodegen"))).build();
+)).add(attr(PROTO_COMPILER_SUPPORT_ATTR,LABEL).legacyAllowAnyFileType().cfg(HOST).value(new ComputedDefault(PORTABLE_PROTO_FILTERS_ATTR){
+    @Override public Object getDefault(    AttributeMap rule){
+      return rule.isAttributeValueExplicitlySpecified(PORTABLE_PROTO_FILTERS_ATTR) ? env.getToolsLabel("//tools/objc:protobuf_compiler_support") : env.getToolsLabel("//tools/objc:proto_support");
+    }
+  }
+)).add(attr(PROTO_LIB_ATTR,LABEL).allowedRuleClasses("objc_library").value(new ComputedDefault(PORTABLE_PROTO_FILTERS_ATTR,OUTPUT_CPP_ATTR){
+    @Override public Object getDefault(    AttributeMap rule){
+      if (rule.isAttributeValueExplicitlySpecified(PORTABLE_PROTO_FILTERS_ATTR)) {
+        return env.getLabel("//external:objc_protobuf_lib");
+      }
+ else {
+        return rule.get(OUTPUT_CPP_ATTR,Type.BOOLEAN) ? env.getLabel("//external:objc_proto_cpp_lib") : env.getLabel("//external:objc_proto_lib");
+      }
+    }
+  }
+)).add(attr(XCODE_GEN_ATTR,LABEL).cfg(HOST).exec().value(env.getToolsLabel("//tools/objc:xcodegen"))).build();
 }
