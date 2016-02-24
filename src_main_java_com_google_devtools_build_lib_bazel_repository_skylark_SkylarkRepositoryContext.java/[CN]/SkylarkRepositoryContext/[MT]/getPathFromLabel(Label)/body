@@ -1,0 +1,27 @@
+{
+  SkyKey pkgSkyKey=PackageLookupValue.key(label.getPackageIdentifier());
+  PackageLookupValue pkgLookupValue=(PackageLookupValue)env.getValue(pkgSkyKey);
+  if (pkgLookupValue == null) {
+    return null;
+  }
+  if (!pkgLookupValue.packageExists()) {
+    throw new EvalException(Location.BUILTIN,"Unable to load package for " + label + ": not found.");
+  }
+  Path packageRoot=pkgLookupValue.getRoot();
+  RootedPath rootedPath=RootedPath.toRootedPath(packageRoot,label.toPathFragment());
+  SkyKey fileSkyKey=FileValue.key(rootedPath);
+  FileValue fileValue=null;
+  try {
+    fileValue=(FileValue)env.getValueOrThrow(fileSkyKey,IOException.class,FileSymlinkException.class,InconsistentFilesystemException.class);
+  }
+ catch (  IOException|FileSymlinkException|InconsistentFilesystemException e) {
+    throw new EvalException(Location.BUILTIN,new IOException(e));
+  }
+  if (fileValue == null) {
+    return null;
+  }
+  if (!fileValue.isFile()) {
+    throw new EvalException(Location.BUILTIN,"Not a file: " + rootedPath.asPath().getPathString());
+  }
+  return new SkylarkPath(rootedPath.asPath());
+}

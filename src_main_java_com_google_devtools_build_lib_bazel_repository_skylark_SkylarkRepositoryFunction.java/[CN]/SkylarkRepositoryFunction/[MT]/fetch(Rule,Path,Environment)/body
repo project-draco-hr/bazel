@@ -2,13 +2,24 @@
   BaseFunction function=rule.getRuleClassObject().getConfiguredTargetFunction();
   try (Mutability mutability=Mutability.create("skylark repository")){
     com.google.devtools.build.lib.syntax.Environment buildEnv=com.google.devtools.build.lib.syntax.Environment.builder(mutability).setGlobals(rule.getRuleClassObject().getRuleDefinitionEnvironment().getGlobals()).setSkylark().setEventHandler(env.getListener()).build();
-    SkylarkRepositoryContext skylarkRepositoryContext=new SkylarkRepositoryContext(rule,outputDirectory,getClientEnvironment());
+    SkylarkRepositoryContext skylarkRepositoryContext=new SkylarkRepositoryContext(rule,outputDirectory,env,getClientEnvironment());
     Object retValue=function.call(ImmutableList.<Object>of(skylarkRepositoryContext),ImmutableMap.<String,Object>of(),null,buildEnv);
     if (retValue != Runtime.NONE) {
       throw new RepositoryFunctionException(new EvalException(rule.getLocation(),"Call to repository rule " + rule.getName() + " returned a non-None value, None expected."),Transience.PERSISTENT);
     }
   }
  catch (  EvalException e) {
+    if (e.getCause() instanceof SkylarkRepositoryMissingDependencyException) {
+      try {
+        if (outputDirectory.exists()) {
+          FileSystemUtils.deleteTree(outputDirectory);
+        }
+      }
+ catch (      IOException e1) {
+        throw new RepositoryFunctionException(e1,Transience.TRANSIENT);
+      }
+      return null;
+    }
     throw new RepositoryFunctionException(e,Transience.TRANSIENT);
   }
   FileValue repositoryValue=getRepositoryDirectory(outputDirectory,env);
