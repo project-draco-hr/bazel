@@ -1,0 +1,18 @@
+{
+  String newLocation=connection.getHeaderField("Location");
+  if (newLocation == null) {
+    throw new IOException("Remote returned " + statusCode + " but did not return location header.");
+  }
+  URL newUrl;
+  try {
+    newUrl=new URL(newLocation);
+  }
+ catch (  MalformedURLException e) {
+    throw new IOException("Remote returned invalid location header: " + newLocation);
+  }
+  String newProtocol=newUrl.getProtocol();
+  if (!("http".equals(newProtocol) || "https".equals(newProtocol))) {
+    throw new IOException("Remote returned invalid location header: " + newLocation);
+  }
+  return newUrl;
+}
