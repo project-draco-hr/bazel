@@ -6,10 +6,22 @@
       outErr.getOutputStream().write((event + "\n").getBytes(StandardCharsets.UTF_8));
       outErr.getOutputStream().flush();
     }
-    addProgressBar();
-    terminal.flush();
-  }
- catch (  IOException e) {
-    LOG.warning("IO Error writing to output stream: " + e);
-  }
+ else {
+switch (event.getKind()) {
+case STDOUT:
+case STDERR:
+        terminal.flush();
+      OutputStream stream=event.getKind() == EventKind.STDOUT ? outErr.getOutputStream() : outErr.getErrorStream();
+    stream.write(event.getMessageBytes());
+  stream.write(new byte[]{10,13});
+stream.flush();
+break;
+}
+}
+addProgressBar();
+terminal.flush();
+}
+ catch (IOException e) {
+LOG.warning("IO Error writing to output stream: " + e);
+}
 }
