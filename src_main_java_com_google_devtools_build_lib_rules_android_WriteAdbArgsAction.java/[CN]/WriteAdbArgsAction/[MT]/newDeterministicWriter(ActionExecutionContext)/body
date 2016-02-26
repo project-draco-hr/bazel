@@ -1,0 +1,30 @@
+{
+  Options options=ctx.getExecutor().getOptions().getOptions(Options.class);
+  final List<String> args=options.adbArgs;
+  final String adb=options.adb;
+  final int adbJobs=options.adbJobs;
+  final String incrementalInstallVerbosity=options.incrementalInstallVerbosity;
+  final StartType start=options.start;
+  final String userHomeDirectory=ctx.getExecutor().getContext(WriteAdbArgsActionContext.class).getUserHomeDirectory();
+  return new DeterministicWriter(){
+    @Override public void writeOutputFile(    OutputStream out) throws IOException {
+      PrintStream ps=new PrintStream(out,false,"UTF-8");
+      if (!adb.isEmpty()) {
+        ps.printf("--adb=%s\n",adb);
+      }
+      for (      String arg : args) {
+        ps.printf("--extra_adb_arg=%s\n",arg);
+      }
+      ps.printf("--adb_jobs=%d\n",adbJobs);
+      if (!incrementalInstallVerbosity.isEmpty()) {
+        ps.printf("--verbosity=%s\n",incrementalInstallVerbosity);
+      }
+      ps.printf("--start=%s\n",start.name().toLowerCase());
+      if (userHomeDirectory != null) {
+        ps.printf("--user_home_dir=%s\n",userHomeDirectory);
+      }
+      ps.flush();
+    }
+  }
+;
+}
