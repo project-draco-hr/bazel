@@ -1,0 +1,16 @@
+{
+  SkylarkPath p=getPath("file()",path);
+  try {
+    checkInOutputDirectory(p);
+    makeDirectories(p.path);
+    try (OutputStream stream=p.path.getOutputStream()){
+      stream.write(content.getBytes(StandardCharsets.UTF_8));
+    }
+     if (executable) {
+      p.path.setExecutable(true);
+    }
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(e,Transience.TRANSIENT);
+  }
+}

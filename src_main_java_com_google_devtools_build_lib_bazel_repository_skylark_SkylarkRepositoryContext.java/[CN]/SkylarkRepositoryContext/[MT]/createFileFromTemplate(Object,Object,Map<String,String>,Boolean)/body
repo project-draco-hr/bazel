@@ -1,0 +1,21 @@
+{
+  SkylarkPath p=getPath("template()",path);
+  SkylarkPath t=getPath("template()",template);
+  try {
+    checkInOutputDirectory(p);
+    makeDirectories(p.path);
+    String tpl=FileSystemUtils.readContent(t.path,StandardCharsets.UTF_8);
+    for (    Map.Entry<String,String> substitution : substitutions.entrySet()) {
+      tpl=StringUtilities.replaceAllLiteral(tpl,substitution.getKey(),substitution.getValue());
+    }
+    try (OutputStream stream=p.path.getOutputStream()){
+      stream.write(tpl.getBytes(StandardCharsets.UTF_8));
+    }
+     if (executable) {
+      p.path.setExecutable(true);
+    }
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(e,Transience.TRANSIENT);
+  }
+}
