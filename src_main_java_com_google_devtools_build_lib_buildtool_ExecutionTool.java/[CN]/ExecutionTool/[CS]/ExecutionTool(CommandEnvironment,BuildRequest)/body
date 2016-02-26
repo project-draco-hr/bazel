@@ -9,8 +9,8 @@
     @Override public Map<String,String> getSpawnActionContexts(){
       return ImmutableMap.of();
     }
-    @Override public Map<Class<? extends ActionContext>,String> getActionContexts(){
-      return ImmutableMap.<Class<? extends ActionContext>,String>builder().put(FilesetActionContext.class,"").put(WorkspaceStatusAction.Context.class,"").put(SymlinkTreeActionContext.class,"").build();
+    @Override public Multimap<Class<? extends ActionContext>,String> getActionContexts(){
+      return ImmutableMultimap.<Class<? extends ActionContext>,String>builder().put(FilesetActionContext.class,"").put(WorkspaceStatusAction.Context.class,"").put(SymlinkTreeActionContext.class,"").build();
     }
   }
 );
@@ -22,7 +22,7 @@
       }
       spawnStrategyMap.put(entry.getKey(),context);
     }
-    for (    Map.Entry<Class<? extends ActionContext>,String> entry : consumer.getActionContexts().entrySet()) {
+    for (    Map.Entry<Class<? extends ActionContext>,String> entry : consumer.getActionContexts().entries()) {
       ActionContext context=strategyConverter.getStrategy(entry.getKey(),entry.getValue());
       if (context == null) {
         throw makeExceptionForInvalidStrategyValue(entry.getValue(),strategyConverter.getUserFriendlyName(entry.getKey()),strategyConverter.getValidValues(entry.getKey()));
