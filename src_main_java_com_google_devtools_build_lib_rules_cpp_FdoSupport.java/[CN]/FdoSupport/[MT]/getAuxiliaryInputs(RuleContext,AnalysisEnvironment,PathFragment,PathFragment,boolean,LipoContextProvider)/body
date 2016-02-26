@@ -9,7 +9,7 @@
     env.registerAction(new FdoStubAction(ruleContext.getActionOwner(),artifact));
     auxiliaryInputs.add(artifact);
     if (lipoContextProvider != null) {
-      auxiliaryInputs.addAll(getAutoFdoImports(sourceExecPath));
+      auxiliaryInputs.addAll(getAutoFdoImports(ruleContext,sourceExecPath,lipoContextProvider));
     }
     return auxiliaryInputs.build();
   }
@@ -19,18 +19,24 @@
     Label lipoLabel=ruleContext.getLabel();
     auxiliaryInputs.addAll(getGcdaArtifactsForObjectFileName(ruleContext,env,objectName,lipoLabel));
     if (lipoContextProvider != null) {
-      for (      Artifact importedFile : getImports(getNonLipoObjDir(ruleContext,lipoLabel),objectName)) {
-        if (CppFileTypes.COVERAGE_DATA.matches(importedFile.getFilename())) {
-          Artifact gcdaArtifact=getGcdaArtifactsForGcdaPath(ruleContext,env,importedFile.getExecPath());
+      for (      PathFragment importedFile : getImports(getNonLipoObjDir(ruleContext,lipoLabel),objectName)) {
+        if (CppFileTypes.COVERAGE_DATA.matches(importedFile.getBaseName())) {
+          Artifact gcdaArtifact=getGcdaArtifactsForGcdaPath(ruleContext,env,importedFile);
           if (gcdaArtifact == null) {
-            ruleContext.ruleError(String.format(".gcda file %s is not in the FDO zip (referenced by source file %s)",importedFile.getExecPath(),sourceName));
+            ruleContext.ruleError(String.format(".gcda file %s is not in the FDO zip (referenced by source file %s)",importedFile,sourceName));
           }
  else {
             auxiliaryInputs.add(gcdaArtifact);
           }
         }
  else {
-          auxiliaryInputs.add(importedFile);
+          Artifact importedArtifact=lipoContextProvider.getSourceArtifactMap().get(importedFile);
+          if (importedArtifact != null) {
+            auxiliaryInputs.add(importedArtifact);
+          }
+ else {
+            ruleContext.ruleError(String.format("cannot find source file '%s' referenced from '%s'",importedFile,objectName));
+          }
         }
       }
     }

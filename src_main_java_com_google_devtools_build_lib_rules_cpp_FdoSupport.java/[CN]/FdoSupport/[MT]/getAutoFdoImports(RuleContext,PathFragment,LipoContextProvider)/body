@@ -1,0 +1,16 @@
+{
+  Preconditions.checkState(isLipoEnabled());
+  ImmutableCollection<PathFragment> afdoImports=imports.get(sourceExecPath);
+  Preconditions.checkState(afdoImports != null,"AutoFDO import data missing for %s",sourceExecPath);
+  ImmutableList.Builder<Artifact> result=ImmutableList.builder();
+  for (  PathFragment afdoImport : afdoImports) {
+    Artifact afdoArtifact=lipoContextProvider.getSourceArtifactMap().get(afdoImport);
+    if (afdoArtifact != null) {
+      result.add(afdoArtifact);
+    }
+ else {
+      ruleContext.ruleError(String.format("cannot find source file '%s' referenced from '%s'",afdoImport,sourceExecPath));
+    }
+  }
+  return result.build();
+}
