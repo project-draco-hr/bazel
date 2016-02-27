@@ -1,0 +1,11 @@
+{
+  AndroidSdkProvider sdk=AndroidSdkProvider.fromRuleContext(ruleContext);
+  List<String> preprocessedArgs=new ArrayList<>();
+  for (  String idlImport : transitiveIdlImportData.getTransitiveIdlImportRoots()) {
+    preprocessedArgs.add("-I" + idlImport);
+  }
+  preprocessedArgs.add("-p" + sdk.getFrameworkAidl().getExecPathString());
+  for (  Entry<Artifact,Artifact> entry : translatedIdlSources.entrySet()) {
+    createAndroidIdlAction(ruleContext,entry.getKey(),transitiveIdlImportData.getTransitiveIdlImports(),entry.getValue(),preprocessedArgs);
+  }
+}
