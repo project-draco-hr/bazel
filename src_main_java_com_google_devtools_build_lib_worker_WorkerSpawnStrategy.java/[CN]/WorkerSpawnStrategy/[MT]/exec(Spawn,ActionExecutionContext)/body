@@ -1,15 +1,9 @@
 {
   Executor executor=actionExecutionContext.getExecutor();
   EventHandler eventHandler=executor.getEventHandler();
+  StandaloneSpawnStrategy standaloneStrategy=Preconditions.checkNotNull(executor.getContext(StandaloneSpawnStrategy.class));
   if (executor.reportsSubcommands()) {
     executor.reportSubcommand(Label.print(spawn.getOwner().getLabel()) + " [" + spawn.getResourceOwner().prettyPrint()+ "]",spawn.asShellCommand(executor.getExecRoot()));
-  }
-  if (!incrementalHeuristic.shouldUseWorkers()) {
-    if (options.workerVerbose) {
-      eventHandler.handle(Event.info(REASON_HEURISTIC));
-    }
-    standaloneStrategy.exec(spawn,actionExecutionContext);
-    return;
   }
   if (!Iterables.getLast(spawn.getArguments()).startsWith("@")) {
     if (options.workerVerbose) {
