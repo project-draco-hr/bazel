@@ -1,0 +1,61 @@
+{
+  if (Strings.isNullOrEmpty(proxyAddress)) {
+    return Proxy.NO_PROXY;
+  }
+  Pattern urlPattern=Pattern.compile("^(https?)://(([^:@]+?)(?::([^@]+?))?@)?([^:]+)(?::(\\d+))?$");
+  Matcher matcher=urlPattern.matcher(proxyAddress);
+  if (!matcher.matches()) {
+    throw new IOException("Proxy address " + proxyAddress + " is not a valid URL");
+  }
+  final String protocol=matcher.group(1);
+  final String idAndPassword=matcher.group(2);
+  final String username=matcher.group(3);
+  final String password=matcher.group(4);
+  final String hostname=matcher.group(5);
+  final String portRaw=matcher.group(6);
+  String cleanProxyAddress=proxyAddress;
+  if (idAndPassword != null) {
+    cleanProxyAddress=proxyAddress.replace(idAndPassword,"");
+  }
+  boolean https;
+switch (protocol) {
+case "https":
+    https=true;
+  break;
+case "http":
+https=false;
+break;
+default :
+throw new IOException("Invalid proxy protocol for " + cleanProxyAddress);
+}
+int port=https ? 443 : 80;
+if (portRaw != null) {
+try {
+port=Integer.parseInt(portRaw);
+}
+ catch (NumberFormatException e) {
+throw new IOException("Error parsing proxy port: " + cleanProxyAddress);
+}
+}
+System.setProperty("https.proxyHost",hostname);
+System.setProperty("https.proxyPort",Integer.toString(port));
+System.setProperty("http.proxyHost",hostname);
+System.setProperty("http.proxyPort",Integer.toString(port));
+if (username != null) {
+if (password == null) {
+throw new IOException("No password given for proxy " + cleanProxyAddress);
+}
+final String decodedPassword=URLDecoder.decode(password,"UTF-8");
+System.setProperty("http.proxyUser",username);
+System.setProperty("http.proxyPassword",decodedPassword);
+System.setProperty("https.proxyUser",username);
+System.setProperty("https.proxyPassword",decodedPassword);
+Authenticator.setDefault(new Authenticator(){
+@Override public PasswordAuthentication getPasswordAuthentication(){
+return new PasswordAuthentication(username,decodedPassword.toCharArray());
+}
+}
+);
+}
+return new Proxy(Proxy.Type.HTTP,new InetSocketAddress(hostname,port));
+}
