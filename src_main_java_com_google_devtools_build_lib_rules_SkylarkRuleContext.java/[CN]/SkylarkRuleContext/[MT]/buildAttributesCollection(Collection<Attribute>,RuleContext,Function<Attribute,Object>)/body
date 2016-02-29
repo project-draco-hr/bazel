@@ -4,6 +4,7 @@
   Builder<Artifact,FilesToRunProvider> executableRunfilesbuilder=new Builder<>();
   Builder<String,Object> fileBuilder=new Builder<>();
   Builder<String,Object> filesBuilder=new Builder<>();
+  HashSet<Artifact> seenExecutables=new HashSet<>();
   for (  Attribute a : attributes) {
     Type<?> type=a.getType();
     Object val=attributeValueExtractor.apply(a);
@@ -17,7 +18,10 @@
       if (provider != null && provider.getExecutable() != null) {
         Artifact executable=provider.getExecutable();
         executableBuilder.put(skyname,executable);
-        executableRunfilesbuilder.put(executable,provider);
+        if (!seenExecutables.contains(executable)) {
+          executableRunfilesbuilder.put(executable,provider);
+          seenExecutables.add(executable);
+        }
       }
  else {
         executableBuilder.put(skyname,Runtime.NONE);
