@@ -1,28 +1,9 @@
 {
   Path tempMergedPlist=Files.createTempFile(tempDir,null,INFOPLIST_FILENAME);
   Path tempPkgInfo=Files.createTempFile(tempDir,null,PKGINFO_FILENAME);
-  if (control.hasBundleInfoPlistFile() && !control.getSourcePlistFileList().isEmpty()) {
-    throw new IllegalArgumentException(BOTH_ARGS_ERR);
-  }
   if (control.hasBundleInfoPlistFile()) {
     Path bundleInfoPlist=fileSystem.getPath(control.getBundleInfoPlistFile());
-    new PlistMerging(PlistMerging.readPlistFile(bundleInfoPlist)).setBundleIdentifier(control.hasPrimaryBundleIdentifier() ? control.getPrimaryBundleIdentifier() : null,control.hasFallbackBundleIdentifier() ? control.getFallbackBundleIdentifier() : null).write(tempMergedPlist,tempPkgInfo);
-  }
- else {
-    ImmutableList.Builder<Path> sourcePlistFilesBuilder=new ImmutableList.Builder<>();
-    for (    String sourcePlist : control.getSourcePlistFileList()) {
-      sourcePlistFilesBuilder.add(fileSystem.getPath(sourcePlist));
-    }
-    ImmutableList<Path> sourcePlistFiles=sourcePlistFilesBuilder.build();
-    ImmutableMap.Builder<String,String> substitutionMap=ImmutableMap.builder();
-    for (    VariableSubstitution substitution : control.getVariableSubstitutionList()) {
-      substitutionMap.put(substitution.getName(),substitution.getValue());
-    }
-    PlistMerging plistMerging=PlistMerging.from(sourcePlistFiles,PlistMerging.automaticEntries(control.getTargetDeviceFamilyList(),platformFromName(control.getPlatform()),control.getSdkVersion(),control.getMinimumOsVersion()),substitutionMap.build(),new KeysToRemoveIfEmptyString("CFBundleIconFile","NSPrincipalClass"),null);
-    if (control.hasExecutableName()) {
-      plistMerging.setExecutableName(control.getExecutableName());
-    }
-    plistMerging.setBundleIdentifier(control.hasPrimaryBundleIdentifier() ? control.getPrimaryBundleIdentifier() : null,control.hasFallbackBundleIdentifier() ? control.getFallbackBundleIdentifier() : null).write(tempMergedPlist,tempPkgInfo);
+    new PlistMerging(PlistMerging.readPlistFile(bundleInfoPlist)).setBundleIdentifier(control.hasPrimaryBundleIdentifier() ? control.getPrimaryBundleIdentifier() : null,control.hasFallbackBundleIdentifier() ? control.getFallbackBundleIdentifier() : null).writePlist(tempMergedPlist).writePkgInfo(tempPkgInfo);
   }
   bundleRoot=joinPath(bundleRoot,control.getBundleRoot());
   packagedFilesBuilder.add(new ZipInputEntry(tempMergedPlist,joinPath(bundleRoot,INFOPLIST_FILENAME)));
@@ -32,9 +13,6 @@
   for (  BundleFile bundleFile : control.getBundleFileList()) {
     int externalFileAttribute=bundleFile.hasExternalFileAttribute() ? bundleFile.getExternalFileAttribute() : ZipInputEntry.DEFAULT_EXTERNAL_FILE_ATTRIBUTE;
     packagedFilesBuilder.add(new ZipInputEntry(fileSystem.getPath(bundleFile.getSourceFile()),joinPath(bundleRoot,bundleFile.getBundlePath()),externalFileAttribute));
-  }
-  for (  String mergeZip : control.getMergeWithoutNamePrefixZipList()) {
-    mergeZipsBuilder.add(MergeZip.newBuilder().setSourcePath(mergeZip).build());
   }
   mergeZipsBuilder.addAll(control.getMergeZipList());
   for (  Control nestedControl : control.getNestedBundleList()) {
