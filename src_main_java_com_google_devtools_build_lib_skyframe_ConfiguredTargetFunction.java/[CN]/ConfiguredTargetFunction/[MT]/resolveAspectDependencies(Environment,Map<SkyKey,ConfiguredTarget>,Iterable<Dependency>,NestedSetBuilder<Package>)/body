@@ -2,8 +2,8 @@
   ListMultimap<SkyKey,ConfiguredAspect> result=ArrayListMultimap.create();
   Set<SkyKey> aspectKeys=new HashSet<>();
   for (  Dependency dep : deps) {
-    for (    Aspect depAspect : dep.getAspects()) {
-      aspectKeys.add(createAspectKey(dep.getLabel(),dep.getConfiguration(),depAspect));
+    for (    Entry<Aspect,BuildConfiguration> depAspect : dep.getAspectConfigurations().entrySet()) {
+      aspectKeys.add(createAspectKey(dep.getLabel(),depAspect.getValue(),dep.getConfiguration(),depAspect.getKey()));
     }
   }
   Map<SkyKey,ValueOrException2<AspectCreationException,NoSuchThingException>> depAspects=env.getValuesOrThrow(aspectKeys,AspectCreationException.class,NoSuchThingException.class);
@@ -13,17 +13,17 @@
       continue;
     }
     ConfiguredTarget depConfiguredTarget=configuredTargetMap.get(depKey);
-    for (    Aspect depAspect : dep.getAspects()) {
-      if (!aspectMatchesConfiguredTarget(depConfiguredTarget,depAspect)) {
+    for (    Entry<Aspect,BuildConfiguration> depAspect : dep.getAspectConfigurations().entrySet()) {
+      if (!aspectMatchesConfiguredTarget(depConfiguredTarget,depAspect.getKey())) {
         continue;
       }
-      SkyKey aspectKey=createAspectKey(dep.getLabel(),dep.getConfiguration(),depAspect);
+      SkyKey aspectKey=createAspectKey(dep.getLabel(),depAspect.getValue(),dep.getConfiguration(),depAspect.getKey());
       AspectValue aspectValue=null;
       try {
         aspectValue=(AspectValue)depAspects.get(aspectKey).get();
       }
  catch (      NoSuchThingException e) {
-        throw new AspectCreationException(String.format("Evaluation of aspect %s on %s failed: %s",depAspect.getDefinition().getName(),dep.getLabel(),e.toString()));
+        throw new AspectCreationException(String.format("Evaluation of aspect %s on %s failed: %s",depAspect.getKey().getDefinition().getName(),dep.getLabel(),e.toString()));
       }
       if (aspectValue == null) {
         return null;
