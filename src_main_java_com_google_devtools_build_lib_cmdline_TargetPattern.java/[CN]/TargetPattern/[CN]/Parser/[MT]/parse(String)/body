@@ -15,11 +15,11 @@
     }
     pattern=pattern.substring(pkgStart);
   }
-  final boolean isAbsolute=pattern.startsWith("//");
-  pattern=isAbsolute ? pattern.substring(2) : absolutize(pattern);
-  if (pattern.startsWith("/")) {
-    throw new TargetParsingException("not a relative path or label: '" + pattern + "'");
+  if (!VALID_SLASH_PREFIX.matcher(pattern).lookingAt()) {
+    throw new TargetParsingException("not a valid absolute pattern (absolute target patterns " + "must start with exactly two slashes): '" + pattern + "'");
   }
+  final boolean wasOriginallyAbsolute=pattern.startsWith("//");
+  pattern=absolutize(pattern).substring(2);
   if (pattern.isEmpty()) {
     throw new TargetParsingException("the empty string is not a valid target");
   }
@@ -59,7 +59,7 @@
  catch (    LabelSyntaxException e) {
       throw new TargetParsingException("Invalid package name '" + packagePart + "': "+ e.getMessage());
     }
-    return new TargetsInPackage(originalPattern,relativeDirectory,packageIdentifier,targetPart,isAbsolute,true,true);
+    return new TargetsInPackage(originalPattern,relativeDirectory,packageIdentifier,targetPart,wasOriginallyAbsolute,true,true);
   }
   if (ALL_TARGETS_IN_SUFFIXES.contains(targetPart)) {
     PackageIdentifier packageIdentifier;
@@ -69,9 +69,9 @@
  catch (    LabelSyntaxException e) {
       throw new TargetParsingException("Invalid package name '" + packagePart + "': "+ e.getMessage());
     }
-    return new TargetsInPackage(originalPattern,relativeDirectory,packageIdentifier,targetPart,isAbsolute,false,true);
+    return new TargetsInPackage(originalPattern,relativeDirectory,packageIdentifier,targetPart,wasOriginallyAbsolute,false,true);
   }
-  if (includesRepo || isAbsolute || pattern.contains(":")) {
+  if (includesRepo || wasOriginallyAbsolute || pattern.contains(":")) {
     PackageIdentifier packageIdentifier;
     String fullLabel=repository.getName() + "//" + pattern;
     try {
