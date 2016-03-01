@@ -1,11 +1,17 @@
 {
-  BugReport.sendBugReport(throwable,Arrays.asList(args));
-  BugReport.printBug(OutErr.SYSTEM_OUT_ERR,throwable);
-  System.err.println("Blaze crash in async thread:");
-  throwable.printStackTrace();
-  int exitCode=getExitCodeForThrowable(throwable);
-  if (runtime != null) {
-    runtime.notifyCommandComplete(exitCode);
+  if (alreadyHandlingCrash.compareAndSet(false,true)) {
+    int exitCode=getExitCodeForThrowable(throwable);
+    try {
+      logCrash(throwable,args);
+      if (runtime != null) {
+        runtime.notifyCommandComplete(exitCode);
+      }
+    }
+  finally {
+      Runtime.getRuntime().halt(exitCode);
+    }
   }
-  Runtime.getRuntime().halt(exitCode);
+ else {
+    logCrash(throwable,args);
+  }
 }
