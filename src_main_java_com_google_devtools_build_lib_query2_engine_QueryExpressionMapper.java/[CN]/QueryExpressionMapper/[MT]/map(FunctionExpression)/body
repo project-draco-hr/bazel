@@ -1,0 +1,22 @@
+{
+  boolean changed=false;
+  ImmutableList.Builder<Argument> mappedArgumentBuilder=ImmutableList.builder();
+  for (  Argument argument : functionExpression.getArgs()) {
+switch (argument.getType()) {
+case EXPRESSION:
+{
+        QueryExpression expr=argument.getExpression();
+        QueryExpression mappedExpression=expr.getMapped(this);
+        mappedArgumentBuilder.add(Argument.of(mappedExpression));
+        if (expr != mappedExpression) {
+          changed=true;
+        }
+        break;
+      }
+default :
+    mappedArgumentBuilder.add(argument);
+  break;
+}
+}
+return changed ? new FunctionExpression(functionExpression.getFunction(),mappedArgumentBuilder.build()) : functionExpression;
+}
