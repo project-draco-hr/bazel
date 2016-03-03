@@ -11,7 +11,7 @@ class ChildFunction implements SkyFunction {
   }
 class ParentFunction implements SkyFunction {
     @Override public SkyValue compute(    SkyKey skyKey,    Environment env){
-      SkyValue dep=env.getValue(new SkyKey(childType,"billy the kid"));
+      SkyValue dep=env.getValue(SkyKey.create(childType,"billy the kid"));
       if (dep == null) {
         return null;
       }
@@ -24,7 +24,7 @@ class ParentFunction implements SkyFunction {
   ImmutableMap<SkyFunctionName,SkyFunction> skyFunctions=ImmutableMap.of(childType,new ChildFunction(),parentType,new ParentFunction());
   ParallelEvaluator evaluator=makeEvaluator(new InMemoryGraph(),skyFunctions,false);
   try {
-    evaluator.eval(ImmutableList.of(new SkyKey(parentType,"octodad")));
+    evaluator.eval(ImmutableList.of(SkyKey.create(parentType,"octodad")));
     fail();
   }
  catch (  RuntimeException e) {

@@ -1,15 +1,15 @@
 {
-  CycleInfo cycle=new CycleInfo(ImmutableList.of(new SkyKey(SkyFunctionName.create("PATH"),1234)),ImmutableList.of(new SkyKey(SkyFunctionName.create("CYCLE"),4321)));
+  CycleInfo cycle=new CycleInfo(ImmutableList.of(SkyKey.create(SkyFunctionName.create("PATH"),1234)),ImmutableList.of(SkyKey.create(SkyFunctionName.create("CYCLE"),4321)));
   ErrorInfo cycleErrorInfo=ErrorInfo.fromCycle(cycle);
   Exception exception1=new IOException("ehhhhh");
-  SkyKey causeOfException1=new SkyKey(SkyFunctionName.create("CAUSE1"),1234);
+  SkyKey causeOfException1=SkyKey.create(SkyFunctionName.create("CAUSE1"),1234);
   DummySkyFunctionException dummyException1=new DummySkyFunctionException(exception1,true,false);
   ErrorInfo exceptionErrorInfo1=ErrorInfo.fromException(new ReifiedSkyFunctionException(dummyException1,causeOfException1),false);
   Exception exception2=new IOException("blahhhhh");
-  SkyKey causeOfException2=new SkyKey(SkyFunctionName.create("CAUSE2"),5678);
+  SkyKey causeOfException2=SkyKey.create(SkyFunctionName.create("CAUSE2"),5678);
   DummySkyFunctionException dummyException2=new DummySkyFunctionException(exception2,false,true);
   ErrorInfo exceptionErrorInfo2=ErrorInfo.fromException(new ReifiedSkyFunctionException(dummyException2,causeOfException2),false);
-  SkyKey currentKey=new SkyKey(SkyFunctionName.create("CURRENT"),9876);
+  SkyKey currentKey=SkyKey.create(SkyFunctionName.create("CURRENT"),9876);
   ErrorInfo errorInfo=ErrorInfo.fromChildErrors(currentKey,ImmutableList.of(cycleErrorInfo,exceptionErrorInfo1,exceptionErrorInfo2));
   assertThat(errorInfo.getRootCauses()).containsExactly(causeOfException1,causeOfException2);
   assertThat(errorInfo.getException()).isSameAs(exception1);
