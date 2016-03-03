@@ -1,0 +1,20 @@
+'A simple test runner for docker (experimental).'
+import copy
+import os
+import os.path
+import shlex
+import StringIO
+import subprocess
+import sys
+import threading
+from third_party.py import gflags
+gflags.DEFINE_multistring('image', [], 'The list of additional docker image to load (path to a docker_build target), optional.')
+gflags.DEFINE_string('main', None, 'The main image to run (path to a docker_build target), mandatory.')
+gflags.MarkFlagAsRequired('main')
+gflags.DEFINE_string('cmd', None, 'A command to provide to the docker image, optional (default: use the entrypoint).')
+gflags.DEFINE_string('docker', 'docker', 'Path to the docker client binary.')
+gflags.DEFINE_boolean('verbose', True, 'Be verbose.')
+FLAGS = gflags.FLAGS
+LOCAL_IMAGE_PREFIX = 'bazel/docker_test:'
+if (__name__ == '__main__'):
+    sys.exit(main(FLAGS(sys.argv)))

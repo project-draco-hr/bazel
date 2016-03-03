@@ -1,0 +1,15 @@
+def main(unused_argv):
+    tags = load_images(([FLAGS.main] + FLAGS.image))
+    if (None in tags):
+        cleanup_images(tags)
+        return (-1)
+    try:
+        containers = run_images(tags[1:])
+        ret = (-1)
+        if (None not in containers):
+            print '### Running main container ###'
+            ret = execute(([FLAGS.docker, 'run', '--rm', '--attach=STDOUT', '--attach=STDERR', tags[0]] + ([] if (FLAGS.cmd is None) else shlex.split(FLAGS.cmd))))
+    finally:
+        cleanup_containers(containers)
+        cleanup_images(tags)
+    return ret

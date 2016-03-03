@@ -1,0 +1,15 @@
+def execute(command, stdout=sys.stdout, stderr=sys.stderr, env=None):
+    'Execute a command while redirecting its output streams.'
+    if FLAGS.verbose:
+        print ("Executing '%s'" % ' '.join(command))
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+    t1 = threading.Thread(target=_copy_stream, args=[p.stdout, stdout])
+    t2 = threading.Thread(target=_copy_stream, args=[p.stderr, stderr])
+    t1.daemon = True
+    t2.daemon = True
+    t1.start()
+    t2.start()
+    p.wait()
+    t1.join()
+    t2.join()
+    return p.returncode

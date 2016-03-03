@@ -1,0 +1,12 @@
+def load_image(image):
+    'Load a docker image using the runner provided by docker_build.'
+    tag = (LOCAL_IMAGE_PREFIX + image.replace('/', '_'))
+    err = StringIO.StringIO()
+    env = copy.deepcopy(os.environ)
+    env['DOCKER'] = FLAGS.docker
+    ret = execute([image, tag], stderr=err, env=env)
+    if (ret != 0):
+        sys.stderr.write(('Error loading image %s (return code: %s):\n' % (image, ret)))
+        sys.stderr.write(err.getvalue())
+        return None
+    return tag
