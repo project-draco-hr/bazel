@@ -1,8 +1,13 @@
 {
   for (  TransitiveInfoCollection dep : deps) {
-    PythonSourcesProvider provider=dep.getProvider(PythonSourcesProvider.class);
+    SkylarkProviders providers=dep.getProvider(SkylarkProviders.class);
+    SkylarkClassObject provider=null;
+    if (providers != null) {
+      provider=providers.getValue(PYTHON_SKYLARK_PROVIDER_NAME,SkylarkClassObject.class);
+    }
     if (provider != null) {
-      if (provider.usesSharedLibraries()) {
+      Boolean isUsingSharedLibrary=provider.getValue(IS_USING_SHARED_LIBRARY,Boolean.class);
+      if (Boolean.TRUE.equals(isUsingSharedLibrary)) {
         return true;
       }
     }

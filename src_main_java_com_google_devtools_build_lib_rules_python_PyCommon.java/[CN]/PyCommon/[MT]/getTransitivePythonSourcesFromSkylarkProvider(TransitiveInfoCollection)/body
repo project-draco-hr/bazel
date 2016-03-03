@@ -1,0 +1,26 @@
+{
+  SkylarkClassObject pythonSkylarkProvider=null;
+  SkylarkProviders skylarkProviders=dep.getProvider(SkylarkProviders.class);
+  try {
+    if (skylarkProviders != null) {
+      pythonSkylarkProvider=skylarkProviders.getValue(PYTHON_SKYLARK_PROVIDER_NAME,SkylarkClassObject.class);
+    }
+    if (pythonSkylarkProvider != null) {
+      Object sourceFiles=pythonSkylarkProvider.getValue(TRANSITIVE_PYTHON_SRCS);
+      String errorType;
+      if (sourceFiles == null) {
+        errorType="null";
+      }
+ else {
+        errorType=EvalUtils.getDataTypeNameFromClass(sourceFiles.getClass());
+      }
+      String errorMsg="Illegal Argument: attribute '%s' in provider '%s' is " + "of unexpected type. Should be a set, but got a '%s'";
+      NestedSet<Artifact> pythonSourceFiles=SkylarkType.cast(sourceFiles,SkylarkNestedSet.class,Artifact.class,null,errorMsg,TRANSITIVE_PYTHON_SRCS,PYTHON_SKYLARK_PROVIDER_NAME,errorType).getSet(Artifact.class);
+      return pythonSourceFiles;
+    }
+  }
+ catch (  EvalException e) {
+    ruleContext.ruleError(e.getMessage());
+  }
+  return null;
+}
