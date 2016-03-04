@@ -9,11 +9,12 @@
       argsArray[i]=arg.toString();
     }
     CommandResult result=new Command(argsArray).execute(new byte[]{},timeout,false);
-    String stdout=new String(result.getStdout(),StandardCharsets.UTF_8);
-    String stderr=new String(result.getStderr(),StandardCharsets.UTF_8);
-    return new SkylarkExecutionResult(result.getTerminationStatus().getExitCode(),stdout,stderr);
+    return new SkylarkExecutionResult(result);
   }
- catch (  CommandException e) {
+ catch (  BadExitStatusException e) {
+    return new SkylarkExecutionResult(e.getResult());
+  }
+catch (  CommandException e) {
     return new SkylarkExecutionResult(256,"",e.getMessage());
   }
 }
