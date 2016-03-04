@@ -12,14 +12,20 @@
 switch (event.getKind()) {
 case STDOUT:
 case STDERR:
-        clearProgressBar();
-      terminal.flush();
-    OutputStream stream=event.getKind() == EventKind.STDOUT ? outErr.getOutputStream() : outErr.getErrorStream();
-  stream.write(event.getMessageBytes());
-stream.write(new byte[]{10,13});
+        if (!buildComplete) {
+          clearProgressBar();
+          terminal.flush();
+        }
+      OutputStream stream=event.getKind() == EventKind.STDOUT ? outErr.getOutputStream() : outErr.getErrorStream();
+    stream.write(event.getMessageBytes());
+  if (!buildComplete) {
+    stream.write(new byte[]{10,13});
+  }
 stream.flush();
+if (!buildComplete) {
 addProgressBar();
 terminal.flush();
+}
 break;
 case ERROR:
 case WARNING:
