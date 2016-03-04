@@ -9,7 +9,19 @@
     terminalWriter.append(status + ":").normal().append(" " + additionalMessage);
     return;
   }
-  String statusMessage=" " + actionsCompleted + " actions completed, "+ (actionsStarted - actionsCompleted)+ " actions running";
-  terminalWriter.okStatus().append("Building:").normal().append(" " + statusMessage);
-  sampleOldestActions(terminalWriter);
+  if (executionProgressReceiver != null) {
+    terminalWriter.okStatus().append(executionProgressReceiver.getProgressString());
+  }
+ else {
+    terminalWriter.okStatus().append("Building:");
+  }
+  if (runningActions.size() == 1) {
+    String statusMessage="running action: " + runningActions.peekFirst();
+    terminalWriter.normal().append(" " + statusMessage);
+  }
+ else {
+    String statusMessage=" " + runningActions.size() + " actions running";
+    terminalWriter.normal().append(" " + statusMessage);
+    sampleOldestActions(terminalWriter);
+  }
 }
