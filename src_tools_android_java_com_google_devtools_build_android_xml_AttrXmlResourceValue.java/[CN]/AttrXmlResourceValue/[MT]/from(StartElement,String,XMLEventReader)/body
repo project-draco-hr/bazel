@@ -1,0 +1,52 @@
+{
+  Set<String> formatNames=new HashSet<>();
+  if (format != null) {
+    Collections.addAll(formatNames,format.split("\\|"));
+  }
+  XMLEvent nextTag=XmlResourceValues.peekNextTag(eventReader);
+  if (nextTag != null && nextTag.isStartElement()) {
+    formatNames.add(nextTag.asStartElement().getName().getLocalPart().toLowerCase());
+  }
+  Map<String,XmlResourceValue> formats=new HashMap<>();
+  for (  String formatName : formatNames) {
+switch (formatName) {
+case FLAG:
+      Map<String,String> flags=readSubValues(eventReader,TAG_FLAG);
+    endAttrElement(eventReader);
+  formats.put(formatName,AttrFlagXmlValue.of(flags));
+break;
+case ENUM:
+Map<String,String> enums=readSubValues(eventReader,TAG_ENUM);
+endAttrElement(eventReader);
+formats.put(formatName,AttrEnumXmlValue.of(enums));
+break;
+case REFERENCE:
+formats.put(formatName,AttrReferenceXmlValue.of());
+break;
+case COLOR:
+formats.put(formatName,AttrColorXmlValue.of());
+break;
+case BOOLEAN:
+formats.put(formatName,AttrBooleanXmlValue.of());
+break;
+case DIMENSION:
+formats.put(formatName,AttrDimensionXmlValue.of());
+break;
+case FLOAT:
+formats.put(formatName,AttrFloatXmlValue.of());
+break;
+case INTEGER:
+formats.put(formatName,AttrIntegerXmlValue.of());
+break;
+case STRING:
+formats.put(formatName,AttrStringXmlValue.of());
+break;
+case FRACTION:
+formats.put(formatName,AttrFractionXmlValue.of());
+break;
+default :
+throw new XMLStreamException(String.format("Unexpected attr format: %S",formatName),attr.getLocation());
+}
+}
+return of(formats);
+}

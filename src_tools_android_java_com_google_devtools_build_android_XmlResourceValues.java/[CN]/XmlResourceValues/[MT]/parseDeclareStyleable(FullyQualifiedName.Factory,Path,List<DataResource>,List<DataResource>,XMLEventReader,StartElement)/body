@@ -1,0 +1,13 @@
+{
+  String styleableName=getElementName(start);
+  List<String> members=new ArrayList<>();
+  for (XMLEvent element=eventReader.nextTag(); !isEndTag(element,TAG_DECLARE_STYLEABLE); element=eventReader.nextTag()) {
+    if (isStartTag(element,TAG_ATTR)) {
+      StartElement attr=element.asStartElement();
+      members.add(getElementName(attr));
+      String attrName=getElementName(attr);
+      overwritable.add(XmlDataResource.of(fqnFactory.create(ResourceType.ATTR,attrName),path,parseAttr(eventReader,start)));
+    }
+  }
+  nonOverwritable.add(XmlDataResource.of(fqnFactory.create(ResourceType.STYLEABLE,styleableName),path,StyleableXmlResourceValue.of(members)));
+}

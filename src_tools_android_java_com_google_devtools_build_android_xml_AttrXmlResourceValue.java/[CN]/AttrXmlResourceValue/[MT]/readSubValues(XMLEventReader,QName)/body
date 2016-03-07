@@ -1,0 +1,12 @@
+{
+  Map<String,String> enumValue=new HashMap<>();
+  while (reader.hasNext() && XmlResourceValues.isTag(XmlResourceValues.peekNextTag(reader),subTagType)) {
+    StartElement element=reader.nextEvent().asStartElement();
+    enumValue.put(XmlResourceValues.getElementName(element),XmlResourceValues.getElementValue(element));
+    XMLEvent endTag=reader.nextEvent();
+    if (!XmlResourceValues.isEndTag(endTag,subTagType)) {
+      throw new XMLStreamException(String.format("Unexpected [%s]; Expected %s",endTag,"</enum>"),endTag.getLocation());
+    }
+  }
+  return enumValue;
+}
