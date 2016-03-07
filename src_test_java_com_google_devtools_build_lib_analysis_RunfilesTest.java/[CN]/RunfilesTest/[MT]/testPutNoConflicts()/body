@@ -1,0 +1,15 @@
+{
+  Root root=Root.asSourceRoot(scratch.resolve("/workspace"));
+  PathFragment pathA=new PathFragment("a");
+  PathFragment pathB=new PathFragment("b");
+  PathFragment pathC=new PathFragment("c");
+  Artifact artifactA=new Artifact(new PathFragment("a"),root);
+  Artifact artifactB=new Artifact(new PathFragment("b"),root);
+  Map<PathFragment,Artifact> map=new LinkedHashMap<>();
+  Runfiles.ConflictChecker checker=new Runfiles.ConflictChecker(Runfiles.ConflictPolicy.WARN,reporter,null);
+  checker.put(map,pathA,artifactA);
+  checker.put(map,pathB,artifactB);
+  checker.put(map,pathC,artifactA);
+  assertThat(map.entrySet()).containsExactly(Maps.immutableEntry(pathA,artifactA),Maps.immutableEntry(pathB,artifactB),Maps.immutableEntry(pathC,artifactA)).inOrder();
+  assertNoEvents();
+}

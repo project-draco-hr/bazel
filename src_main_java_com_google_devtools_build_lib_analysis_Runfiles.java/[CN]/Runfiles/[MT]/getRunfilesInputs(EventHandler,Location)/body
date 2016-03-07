@@ -1,7 +1,8 @@
 {
-  Map<PathFragment,Artifact> manifest=getSymlinksAsMap();
+  ConflictChecker checker=new ConflictChecker(conflictPolicy,eventHandler,location);
+  Map<PathFragment,Artifact> manifest=getSymlinksAsMap(checker);
   for (  Artifact artifact : getUnconditionalArtifactsWithoutMiddlemen()) {
-    manifest.put(artifact.getRootRelativePath(),artifact);
+    checker.put(manifest,artifact.getRootRelativePath(),artifact);
   }
   for (  Runfiles.PruningManifest pruningManifest : getPruningManifests()) {
     Map<String,Artifact> allowedRunfiles=new HashMap<>();
@@ -13,28 +14,27 @@
       while ((line=reader.readLine()) != null) {
         Artifact artifact=allowedRunfiles.get(line);
         if (artifact != null) {
-          manifest.put(artifact.getRootRelativePath(),artifact);
+          checker.put(manifest,artifact.getRootRelativePath(),artifact);
         }
       }
     }
    }
   manifest=filterListForObscuringSymlinks(eventHandler,location,manifest);
   for (  PathFragment extraPath : emptyFilesSupplier.getExtraPaths(manifest.keySet())) {
-    manifest.put(extraPath,null);
+    checker.put(manifest,extraPath,null);
   }
-  PathFragment path=new PathFragment(suffix);
-  Map<PathFragment,Artifact> result=new HashMap<>();
+  PathFragment suffixPath=new PathFragment(suffix);
+  Map<PathFragment,Artifact> rootManifest=new HashMap<>();
   for (  Map.Entry<PathFragment,Artifact> entry : manifest.entrySet()) {
-    result.put(path.getRelative(entry.getKey()),entry.getValue());
+    checker.put(rootManifest,suffixPath.getRelative(entry.getKey()),entry.getValue());
   }
-  for (  Map.Entry<PathFragment,Artifact> entry : getRootSymlinksAsMap().entrySet()) {
+  if (conflictPolicy == ConflictPolicy.IGNORE) {
+    checker=new ConflictChecker(ConflictPolicy.WARN,eventHandler,location);
+  }
+  for (  Map.Entry<PathFragment,Artifact> entry : getRootSymlinksAsMap(checker).entrySet()) {
     PathFragment mappedPath=entry.getKey();
     Artifact mappedArtifact=entry.getValue();
-    if (result.put(mappedPath,mappedArtifact) != null) {
-      if (eventHandler != null) {
-        eventHandler.handle(Event.warn(location,"overwrote " + mappedPath + " symlink mapping "+ "with root symlink to "+ mappedArtifact));
-      }
-    }
+    checker.put(rootManifest,mappedPath,mappedArtifact);
   }
-  return result;
+  return rootManifest;
 }
