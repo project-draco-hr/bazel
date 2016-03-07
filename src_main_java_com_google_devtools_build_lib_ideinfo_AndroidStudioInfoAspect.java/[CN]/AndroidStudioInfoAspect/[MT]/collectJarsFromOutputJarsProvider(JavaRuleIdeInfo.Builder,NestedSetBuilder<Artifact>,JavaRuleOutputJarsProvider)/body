@@ -1,23 +1,8 @@
 {
-  LibraryArtifact.Builder jarsBuilder=LibraryArtifact.newBuilder();
   for (  OutputJar outputJar : outputJarsProvider.getOutputJars()) {
-    Artifact classJar=outputJar.getClassJar();
-    if (classJar != null) {
-      jarsBuilder.setJar(makeArtifactLocation(classJar));
-      addResolveArtifact(ideResolveArtifacts,classJar);
-    }
-    Artifact iJar=outputJar.getIJar();
-    if (iJar != null) {
-      jarsBuilder.setInterfaceJar(makeArtifactLocation(iJar));
-      addResolveArtifact(ideResolveArtifacts,iJar);
-    }
-    Artifact srcJar=outputJar.getSrcJar();
-    if (srcJar != null) {
-      jarsBuilder.setSourceJar(makeArtifactLocation(srcJar));
-      addResolveArtifact(ideResolveArtifacts,srcJar);
-    }
-    if (classJar != null) {
-      builder.addJars(jarsBuilder.build());
+    LibraryArtifact libraryArtifact=makeLibraryArtifact(ideResolveArtifacts,outputJar.getClassJar(),outputJar.getIJar(),outputJar.getSrcJar());
+    if (libraryArtifact != null) {
+      builder.addJars(libraryArtifact);
     }
   }
 }
