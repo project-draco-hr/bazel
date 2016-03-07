@@ -3,7 +3,7 @@
   Artifact unprocessedIpa=intermediateArtifacts.unprocessedIpa();
   boolean processingNeeded=false;
   NestedSetBuilder<Artifact> inputs=NestedSetBuilder.<Artifact>stableOrder().add(unprocessedIpa);
-  String actionCommandLine="set -e && " + "t=$(mktemp -d -t signing_intermediate) && " + "trap \"rm -rf ${t}\" EXIT && "+ "signed_ipa=${PWD}/" + processedIpa.getShellEscapedExecPathString() + " && "+ "/usr/bin/unzip -qq "+ unprocessedIpa.getShellEscapedExecPathString()+ " -d ${t} && ";
+  String actionCommandLine="set -e && " + "t=$(mktemp -d \"${TMPDIR:-/tmp}/signing_intermediate.XXXXXX\") && " + "trap \"rm -rf ${t}\" EXIT && "+ "signed_ipa=${PWD}/" + processedIpa.getShellEscapedExecPathString() + " && "+ "/usr/bin/unzip -qq "+ unprocessedIpa.getShellEscapedExecPathString()+ " -d ${t} && ";
   FilesToRunProvider processor=attributes.ipaPostProcessor();
   if (processor != null) {
     processingNeeded=true;
