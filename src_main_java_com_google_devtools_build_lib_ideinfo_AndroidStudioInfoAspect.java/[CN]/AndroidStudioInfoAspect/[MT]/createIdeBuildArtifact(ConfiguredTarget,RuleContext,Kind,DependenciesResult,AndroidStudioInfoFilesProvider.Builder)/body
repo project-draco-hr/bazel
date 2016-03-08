@@ -17,12 +17,12 @@
     JavaRuleIdeInfo javaRuleIdeInfo=makeJavaRuleIdeInfo(base,ruleContext,ideResolveArtifacts,packageManifest);
     outputBuilder.setJavaRuleIdeInfo(javaRuleIdeInfo);
   }
-  if (ruleKind == Kind.ANDROID_LIBRARY || ruleKind == Kind.ANDROID_BINARY || ruleKind == Kind.ANDROID_TEST) {
-    outputBuilder.setAndroidRuleIdeInfo(makeAndroidRuleIdeInfo(base,ideResolveArtifacts));
+  if (ruleKind == Kind.ANDROID_LIBRARY || ruleKind == Kind.ANDROID_BINARY || ruleKind == Kind.ANDROID_TEST || ruleKind == Kind.ANDROID_RESOURCES) {
+    outputBuilder.setAndroidRuleIdeInfo(makeAndroidRuleIdeInfo(base,dependenciesResult,ideResolveArtifacts));
   }
   AndroidStudioInfoFilesProvider provider=providerBuilder.build();
-  outputBuilder.addAllDependencies(transform(directDependencies,LABEL_TO_STRING));
-  outputBuilder.addAllRuntimeDeps(transform(runtimeDeps,LABEL_TO_STRING));
+  outputBuilder.addAllDependencies(transform(dependenciesResult.deps,LABEL_TO_STRING));
+  outputBuilder.addAllRuntimeDeps(transform(dependenciesResult.runtimeDeps,LABEL_TO_STRING));
   outputBuilder.addAllTags(base.getTarget().getAssociatedRule().getRuleTags());
   final RuleIdeInfo ruleIdeInfo=outputBuilder.build();
   ruleContext.registerAction(makeProtoWriteAction(ruleContext.getActionOwner(),ruleIdeInfo,ideInfoFile));

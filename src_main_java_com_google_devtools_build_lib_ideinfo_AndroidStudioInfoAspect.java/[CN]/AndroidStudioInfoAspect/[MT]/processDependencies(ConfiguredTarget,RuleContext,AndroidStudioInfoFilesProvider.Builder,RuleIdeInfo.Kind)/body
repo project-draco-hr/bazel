@@ -35,14 +35,18 @@
       runtimeDepsBuilder.add(dep.getLabel());
     }
   }
+  @Nullable TransitiveInfoCollection resources=ruleContext.attributes().has("resources",BuildType.LABEL) ? ruleContext.getPrerequisite("resources",Mode.TARGET) : null;
   ImmutableList.Builder<TransitiveInfoCollection> prerequisitesBuilder=ImmutableList.builder();
   prerequisitesBuilder.addAll(directDeps);
   prerequisitesBuilder.addAll(runtimeDeps);
+  if (resources != null) {
+    prerequisitesBuilder.add(resources);
+  }
   List<TransitiveInfoCollection> prerequisites=prerequisitesBuilder.build();
   for (  AndroidStudioInfoFilesProvider depProvider : AnalysisUtils.getProviders(prerequisites,AndroidStudioInfoFilesProvider.class)) {
     providerBuilder.ideInfoFilesBuilder().addTransitive(depProvider.getIdeInfoFiles());
     providerBuilder.ideInfoTextFilesBuilder().addTransitive(depProvider.getIdeInfoTextFiles());
     providerBuilder.ideResolveFilesBuilder().addTransitive(depProvider.getIdeResolveFiles());
   }
-  return new DependenciesResult(dependencies,runtimeDepsBuilder.build());
+  return new DependenciesResult(dependencies,runtimeDepsBuilder.build(),resources != null ? resources.getLabel() : null);
 }
