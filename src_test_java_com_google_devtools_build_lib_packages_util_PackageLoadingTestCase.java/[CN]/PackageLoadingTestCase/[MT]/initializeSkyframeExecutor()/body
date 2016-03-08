@@ -1,5 +1,16 @@
 {
-  ruleClassProvider=TestRuleClassProvider.getRuleClassProvider();
+  List<RuleDefinition> extraRules=getExtraRules();
+  if (!extraRules.isEmpty()) {
+    ConfiguredRuleClassProvider.Builder builder=new ConfiguredRuleClassProvider.Builder();
+    TestRuleClassProvider.addStandardRules(builder);
+    for (    RuleDefinition def : extraRules) {
+      builder.addRuleDefinition(def);
+    }
+    ruleClassProvider=builder.build();
+  }
+ else {
+    ruleClassProvider=TestRuleClassProvider.getRuleClassProvider();
+  }
   skyframeExecutor=createSkyframeExecutor(getEnvironmentExtensions(),Preprocessor.Factory.Supplier.NullSupplier.INSTANCE,ConstantRuleVisibility.PUBLIC,"");
   setUpSkyframe(parsePackageCacheOptions());
 }
