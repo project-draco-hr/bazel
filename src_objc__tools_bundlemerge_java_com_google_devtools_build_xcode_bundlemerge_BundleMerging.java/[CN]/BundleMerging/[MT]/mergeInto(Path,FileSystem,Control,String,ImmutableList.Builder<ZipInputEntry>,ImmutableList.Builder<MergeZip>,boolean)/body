@@ -1,14 +1,14 @@
 {
-  Path tempMergedPlist=Files.createTempFile(tempDir,null,INFOPLIST_FILENAME);
-  Path tempPkgInfo=Files.createTempFile(tempDir,null,PKGINFO_FILENAME);
+  bundleRoot=joinPath(bundleRoot,control.getBundleRoot());
   if (control.hasBundleInfoPlistFile()) {
+    Path tempMergedPlist=Files.createTempFile(tempDir,null,INFOPLIST_FILENAME);
+    Path tempPkgInfo=Files.createTempFile(tempDir,null,PKGINFO_FILENAME);
     Path bundleInfoPlist=fileSystem.getPath(control.getBundleInfoPlistFile());
     new PlistMerging(PlistMerging.readPlistFile(bundleInfoPlist)).setBundleIdentifier(control.hasPrimaryBundleIdentifier() ? control.getPrimaryBundleIdentifier() : null,control.hasFallbackBundleIdentifier() ? control.getFallbackBundleIdentifier() : null).writePlist(tempMergedPlist).writePkgInfo(tempPkgInfo);
-  }
-  bundleRoot=joinPath(bundleRoot,control.getBundleRoot());
-  packagedFilesBuilder.add(new ZipInputEntry(tempMergedPlist,joinPath(bundleRoot,INFOPLIST_FILENAME)));
-  if (includePkgInfo) {
-    packagedFilesBuilder.add(new ZipInputEntry(tempPkgInfo,joinPath(bundleRoot,PKGINFO_FILENAME)));
+    packagedFilesBuilder.add(new ZipInputEntry(tempMergedPlist,joinPath(bundleRoot,INFOPLIST_FILENAME)));
+    if (includePkgInfo) {
+      packagedFilesBuilder.add(new ZipInputEntry(tempPkgInfo,joinPath(bundleRoot,PKGINFO_FILENAME)));
+    }
   }
   for (  BundleFile bundleFile : control.getBundleFileList()) {
     int externalFileAttribute=bundleFile.hasExternalFileAttribute() ? bundleFile.getExternalFileAttribute() : ZipInputEntry.DEFAULT_EXTERNAL_FILE_ATTRIBUTE;
