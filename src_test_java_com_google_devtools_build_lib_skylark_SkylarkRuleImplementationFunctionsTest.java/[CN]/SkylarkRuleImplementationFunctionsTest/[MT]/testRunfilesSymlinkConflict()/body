@@ -1,0 +1,7 @@
+{
+  Object result=evalRuleContextCode("artifacts = ruleContext.files.srcs","prefix = ruleContext.workspace_name + '/' if ruleContext.workspace_name else ''","ruleContext.runfiles(","root_symlinks = {prefix + 'sym1': artifacts[0]},","symlinks = {'sym1': artifacts[1]})");
+  Runfiles runfiles=(Runfiles)result;
+  reporter.removeHandler(failFastHandler);
+  runfiles.getRunfilesInputs(reporter,null);
+  assertContainsEvent("ERROR <no location>: overwrote runfile");
+}
