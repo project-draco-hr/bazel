@@ -5,28 +5,28 @@
   final Thread mainThread=Thread.currentThread();
   final Object interruptLock=new Object();
   InterruptSignalHandler sigintHandler=new InterruptSignalHandler(){
-    @Override public void run(){
+    @Override protected void onSignal(){
       LOG.severe("User interrupt");
 synchronized (interruptLock) {
         if (allowingInterrupt.get()) {
           mainThread.interrupt();
         }
       }
-      Runnable interruptWatcher=new Runnable(){
-        @Override public void run(){
-          try {
-            long originalCmd=cmdNum.get();
-            Thread.sleep(10 * 1000);
-            if (inAction.get() && cmdNum.get() == originalCmd) {
-              ThreadUtils.warnAboutSlowInterrupt();
+      if (inAction.get()) {
+        Runnable interruptWatcher=new Runnable(){
+          @Override public void run(){
+            try {
+              long originalCmd=cmdNum.get();
+              Thread.sleep(10 * 1000);
+              if (inAction.get() && cmdNum.get() == originalCmd) {
+                ThreadUtils.warnAboutSlowInterrupt();
+              }
+            }
+ catch (            InterruptedException e) {
             }
           }
- catch (          InterruptedException e) {
-          }
         }
-      }
 ;
-      if (inAction.get()) {
         Thread interruptWatcherThread=new Thread(interruptWatcher,"interrupt-watcher-" + cmdNum);
         interruptWatcherThread.setDaemon(true);
         interruptWatcherThread.start();
