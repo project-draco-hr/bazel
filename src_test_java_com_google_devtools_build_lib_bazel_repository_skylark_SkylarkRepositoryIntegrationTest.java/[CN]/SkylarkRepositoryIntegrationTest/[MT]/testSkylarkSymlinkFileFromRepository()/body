@@ -2,7 +2,7 @@
   scratch.file("/repo2/bar.txt","filegroup(name='bar', srcs=['foo.txt'], path='foo')");
   scratch.file("/repo2/BUILD");
   scratch.file("/repo2/WORKSPACE");
-  scratch.file("def.bzl","def _impl(ctx):","  ctx.symlink(Label('@repo2//:bar.txt'), 'BUILD')","  ctx.file('foo.txt', 'foo')","","repo = repository_rule(","    implementation=_impl,","    local=True)");
+  scratch.file("def.bzl","def _impl(repository_ctx):","  repository_ctx.symlink(Label('@repo2//:bar.txt'), 'BUILD')","  repository_ctx.file('foo.txt', 'foo')","","repo = repository_rule(","    implementation=_impl,","    local=True)");
   scratch.file(rootDirectory.getRelative("BUILD").getPathString());
   scratch.overwriteFile(rootDirectory.getRelative("WORKSPACE").getPathString(),"local_repository(name='repo2', path='/repo2')","load('//:def.bzl', 'repo')","repo(name='foo')");
   invalidatePackages();
