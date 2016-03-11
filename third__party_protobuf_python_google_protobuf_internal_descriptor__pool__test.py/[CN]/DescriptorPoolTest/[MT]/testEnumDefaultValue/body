@@ -1,0 +1,14 @@
+def testEnumDefaultValue(self):
+    "Test the default value of enums which don't start at zero."
+
+    def _CheckDefaultValue(file_descriptor):
+        default_value = file_descriptor.message_types_by_name['DescriptorPoolTest1'].fields_by_name['nested_enum'].default_value
+        self.assertEqual(default_value, descriptor_pool_test1_pb2.DescriptorPoolTest1.BETA)
+    _CheckDefaultValue(descriptor_pool_test1_pb2.DESCRIPTOR)
+    file_descriptor = symbol_database.Default().pool.FindFileByName('google/protobuf/internal/descriptor_pool_test1.proto')
+    self.assertIs(file_descriptor, descriptor_pool_test1_pb2.DESCRIPTOR)
+    _CheckDefaultValue(file_descriptor)
+    descriptor_proto = descriptor_pb2.FileDescriptorProto.FromString(descriptor_pool_test1_pb2.DESCRIPTOR.serialized_pb)
+    self.pool.Add(descriptor_proto)
+    file_descriptor = self.pool.FindFileByName('google/protobuf/internal/descriptor_pool_test1.proto')
+    _CheckDefaultValue(file_descriptor)

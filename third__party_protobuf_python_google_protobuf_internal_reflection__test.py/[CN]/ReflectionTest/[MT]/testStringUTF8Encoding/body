@@ -1,0 +1,13 @@
+def testStringUTF8Encoding(self):
+    proto = unittest_pb2.TestAllTypes()
+    self.assertRaises(TypeError, setattr, proto, 'optional_bytes', u'unicode object')
+    self.assertEqual(type(proto.optional_string), six.text_type)
+    proto.optional_string = six.text_type('Testing')
+    self.assertEqual(proto.optional_string, str('Testing'))
+    proto.optional_string = str('Testing')
+    self.assertEqual(proto.optional_string, six.text_type('Testing'))
+    self.assertRaises(ValueError, setattr, proto, 'optional_string', 'a\x80a')
+    utf8_bytes = u'\u0422\u0435\u0441\u0442'.encode('utf-8')
+    proto.optional_string = utf8_bytes
+    proto.optional_string = u'\u0422\u0435\u0441\u0442'
+    proto.optional_string = 'abc'

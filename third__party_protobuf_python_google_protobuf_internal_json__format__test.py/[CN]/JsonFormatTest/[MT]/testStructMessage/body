@@ -1,0 +1,16 @@
+def testStructMessage(self):
+    message = json_format_proto3_pb2.TestStruct()
+    message.value['name'] = 'Jim'
+    message.value['age'] = 10
+    message.value['attend'] = True
+    message.value['email'] = None
+    message.value.get_or_create_struct('address')['city'] = 'SFO'
+    message.value['address']['house_number'] = 1024
+    struct_list = message.value.get_or_create_list('list')
+    struct_list.extend([6, 'seven', True, False, None])
+    struct_list.add_struct()['subkey2'] = 9
+    message.repeated_value.add()['age'] = 11
+    message.repeated_value.add()
+    self.assertEqual(json.loads(json_format.MessageToJson(message, False)), json.loads('{  "value": {    "address": {      "city": "SFO",       "house_number": 1024    },     "age": 10,     "name": "Jim",     "attend": true,     "email": null,     "list": [6, "seven", true, false, null, {"subkey2": 9}]  },  "repeatedValue": [{"age": 11}, {}]}'))
+    parsed_message = json_format_proto3_pb2.TestStruct()
+    self.CheckParseBack(message, parsed_message)

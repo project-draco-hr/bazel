@@ -1,0 +1,26 @@
+def testSerializeUninitialized(self):
+    proto = unittest_pb2.TestRequired()
+    self._CheckRaises(message.EncodeError, proto.SerializeToString, 'Message protobuf_unittest.TestRequired is missing required fields: a,b,c')
+    partial = proto.SerializePartialToString()
+    proto2 = unittest_pb2.TestRequired()
+    self.assertFalse(proto2.HasField('a'))
+    proto2.ParseFromString(partial)
+    self.assertFalse(proto2.HasField('a'))
+    proto.a = 1
+    self._CheckRaises(message.EncodeError, proto.SerializeToString, 'Message protobuf_unittest.TestRequired is missing required fields: b,c')
+    partial = proto.SerializePartialToString()
+    proto.b = 2
+    self._CheckRaises(message.EncodeError, proto.SerializeToString, 'Message protobuf_unittest.TestRequired is missing required fields: c')
+    partial = proto.SerializePartialToString()
+    proto.c = 3
+    serialized = proto.SerializeToString()
+    partial = proto.SerializePartialToString()
+    proto2 = unittest_pb2.TestRequired()
+    self.assertEqual(len(serialized), proto2.MergeFromString(serialized))
+    self.assertEqual(1, proto2.a)
+    self.assertEqual(2, proto2.b)
+    self.assertEqual(3, proto2.c)
+    self.assertEqual(len(partial), proto2.MergeFromString(partial))
+    self.assertEqual(1, proto2.a)
+    self.assertEqual(2, proto2.b)
+    self.assertEqual(3, proto2.c)

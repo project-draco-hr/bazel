@@ -1,0 +1,10 @@
+def testPrintExotic(self, message_module):
+    message = message_module.TestAllTypes()
+    message.repeated_int64.append((-9223372036854775808))
+    message.repeated_uint64.append(18446744073709551615L)
+    message.repeated_double.append(123.456)
+    message.repeated_double.append(1.23e+22)
+    message.repeated_double.append(1.23e-18)
+    message.repeated_string.append('\x00\x01\x07\x08\x0c\n\r\t\x0b\\\'"')
+    message.repeated_string.append(u'\xfc\ua71f')
+    self.CompareToGoldenText(self.RemoveRedundantZeros(text_format.MessageToString(message)), 'repeated_int64: -9223372036854775808\nrepeated_uint64: 18446744073709551615\nrepeated_double: 123.456\nrepeated_double: 1.23e+22\nrepeated_double: 1.23e-18\nrepeated_string: "\\000\\001\\007\\010\\014\\n\\r\\t\\013\\\\\\\'\\""\nrepeated_string: "\\303\\274\\352\\234\\237"\n')

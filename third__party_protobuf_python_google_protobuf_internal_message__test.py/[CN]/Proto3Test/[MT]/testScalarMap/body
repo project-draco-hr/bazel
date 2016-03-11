@@ -1,0 +1,30 @@
+def testScalarMap(self):
+    msg = map_unittest_pb2.TestMap()
+    self.assertEqual(0, len(msg.map_int32_int32))
+    self.assertFalse((5 in msg.map_int32_int32))
+    msg.map_int32_int32[(-123)] = (-456)
+    msg.map_int64_int64[(- (2 ** 33))] = (- (2 ** 34))
+    msg.map_uint32_uint32[123] = 456
+    msg.map_uint64_uint64[(2 ** 33)] = (2 ** 34)
+    msg.map_string_string['abc'] = '123'
+    msg.map_int32_enum[888] = 2
+    self.assertEqual([], msg.FindInitializationErrors())
+    self.assertEqual(1, len(msg.map_string_string))
+    with self.assertRaises(TypeError):
+        msg.map_string_string[123] = '123'
+    self.assertEqual(1, len(msg.map_string_string))
+    with self.assertRaises(TypeError):
+        msg.map_string_string['123'] = 123
+    serialized = msg.SerializeToString()
+    msg2 = map_unittest_pb2.TestMap()
+    msg2.ParseFromString(serialized)
+    with self.assertRaises(TypeError):
+        msg2.map_string_string[123] = '123'
+    with self.assertRaises(TypeError):
+        msg2.map_string_string['123'] = 123
+    self.assertEqual((-456), msg2.map_int32_int32[(-123)])
+    self.assertEqual((- (2 ** 34)), msg2.map_int64_int64[(- (2 ** 33))])
+    self.assertEqual(456, msg2.map_uint32_uint32[123])
+    self.assertEqual((2 ** 34), msg2.map_uint64_uint64[(2 ** 33)])
+    self.assertEqual('123', msg2.map_string_string['abc'])
+    self.assertEqual(2, msg2.map_int32_enum[888])

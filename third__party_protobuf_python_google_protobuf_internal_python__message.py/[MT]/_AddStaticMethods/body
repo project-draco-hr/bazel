@@ -1,0 +1,19 @@
+def _AddStaticMethods(cls):
+
+    def RegisterExtension(extension_handle):
+        extension_handle.containing_type = cls.DESCRIPTOR
+        _AttachFieldHelpers(cls, extension_handle)
+        actual_handle = cls._extensions_by_number.setdefault(extension_handle.number, extension_handle)
+        if (actual_handle is not extension_handle):
+            raise AssertionError(('Extensions "%s" and "%s" both try to extend message type "%s" with field number %d.' % (extension_handle.full_name, actual_handle.full_name, cls.DESCRIPTOR.full_name, extension_handle.number)))
+        cls._extensions_by_name[extension_handle.full_name] = extension_handle
+        handle = extension_handle
+        if _IsMessageSetExtension(handle):
+            cls._extensions_by_name[extension_handle.message_type.full_name] = extension_handle
+    cls.RegisterExtension = staticmethod(RegisterExtension)
+
+    def FromString(s):
+        message = cls()
+        message.MergeFromString(s)
+        return message
+    cls.FromString = staticmethod(FromString)

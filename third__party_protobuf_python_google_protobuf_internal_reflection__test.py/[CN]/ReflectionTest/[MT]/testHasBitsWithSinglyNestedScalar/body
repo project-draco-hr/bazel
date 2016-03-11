@@ -1,0 +1,29 @@
+def testHasBitsWithSinglyNestedScalar(self):
+
+    def TestCompositeHasBits(composite_field_name, scalar_field_name):
+        proto = unittest_pb2.TestAllTypes()
+        composite_field = getattr(proto, composite_field_name)
+        original_scalar_value = getattr(composite_field, scalar_field_name)
+        self.assertEqual(0, original_scalar_value)
+        self.assertTrue((not composite_field.HasField(scalar_field_name)))
+        self.assertTrue((not proto.HasField(composite_field_name)))
+        new_val = 20
+        setattr(composite_field, scalar_field_name, new_val)
+        self.assertEqual(new_val, getattr(composite_field, scalar_field_name))
+        old_composite_field = composite_field
+        self.assertTrue(composite_field.HasField(scalar_field_name))
+        self.assertTrue(proto.HasField(composite_field_name))
+        proto.ClearField(composite_field_name)
+        composite_field = getattr(proto, composite_field_name)
+        self.assertTrue((not composite_field.HasField(scalar_field_name)))
+        self.assertTrue((not proto.HasField(composite_field_name)))
+        self.assertEqual(0, getattr(composite_field, scalar_field_name))
+        self.assertTrue((old_composite_field is not composite_field))
+        setattr(old_composite_field, scalar_field_name, new_val)
+        self.assertTrue((not composite_field.HasField(scalar_field_name)))
+        self.assertTrue((not proto.HasField(composite_field_name)))
+        self.assertEqual(0, getattr(composite_field, scalar_field_name))
+    TestCompositeHasBits('optionalgroup', 'a')
+    TestCompositeHasBits('optional_nested_message', 'bb')
+    TestCompositeHasBits('optional_foreign_message', 'c')
+    TestCompositeHasBits('optional_import_message', 'd')

@@ -1,0 +1,11 @@
+def testTopLevelExtensionsForRepeatedScalar(self):
+    extendee_proto = unittest_pb2.TestAllExtensions()
+    extension = unittest_pb2.repeated_string_extension
+    self.assertEqual(0, len(extendee_proto.Extensions[extension]))
+    extendee_proto.Extensions[extension].append('foo')
+    self.assertEqual(['foo'], extendee_proto.Extensions[extension])
+    string_list = extendee_proto.Extensions[extension]
+    extendee_proto.ClearExtension(extension)
+    self.assertEqual(0, len(extendee_proto.Extensions[extension]))
+    self.assertTrue((string_list is not extendee_proto.Extensions[extension]))
+    self.assertRaises(TypeError, operator.setitem, extendee_proto.Extensions, extension, 'a')

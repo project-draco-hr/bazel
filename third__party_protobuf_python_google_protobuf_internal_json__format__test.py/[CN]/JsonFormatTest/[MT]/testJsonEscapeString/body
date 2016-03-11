@@ -1,0 +1,13 @@
+def testJsonEscapeString(self):
+    message = json_format_proto3_pb2.TestMessage()
+    if (sys.version_info[0] < 3):
+        message.string_value = '&\n<"\r>\x08\t\x0c\\\x01/\xe2\x80\xa8\xe2\x80\xa9'
+    else:
+        message.string_value = '&\n<"\r>\x08\t\x0c\\\x01/'
+        message.string_value += '\xe2\x80\xa8\xe2\x80\xa9'.decode('utf-8')
+    self.assertEqual(json_format.MessageToJson(message), '{\n  "stringValue": "&\\n<\\"\\r>\\b\\t\\f\\\\\\u0001/\\u2028\\u2029"\n}')
+    parsed_message = json_format_proto3_pb2.TestMessage()
+    self.CheckParseBack(message, parsed_message)
+    text = u'{"int32Value": "1"}'
+    json_format.Parse(text, message)
+    self.assertEqual(message.int32_value, 1)

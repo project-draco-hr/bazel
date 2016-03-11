@@ -1,0 +1,23 @@
+def testCacheInvalidationForNonrepeatedMessage(self):
+    self.proto.optional_foreign_message.c = 1
+    self.assertEqual(5, self.proto.ByteSize())
+    self.proto.optional_foreign_message.c = 128
+    self.assertEqual(6, self.proto.ByteSize())
+    self.proto.optional_foreign_message.ClearField('c')
+    self.assertEqual(3, self.proto.ByteSize())
+    self.proto.ClearField('optional_foreign_message')
+    self.assertEqual(0, self.proto.ByteSize())
+    if (api_implementation.Type() == 'python'):
+        child = self.proto.optional_foreign_message
+        self.proto.ClearField('optional_foreign_message')
+        child.c = 128
+        self.assertEqual(0, self.proto.ByteSize())
+    extension = more_extensions_pb2.optional_message_extension
+    child = self.extended_proto.Extensions[extension]
+    self.assertEqual(0, self.extended_proto.ByteSize())
+    child.foreign_message_int = 1
+    self.assertEqual(4, self.extended_proto.ByteSize())
+    child.foreign_message_int = 128
+    self.assertEqual(5, self.extended_proto.ByteSize())
+    self.extended_proto.ClearExtension(extension)
+    self.assertEqual(0, self.extended_proto.ByteSize())

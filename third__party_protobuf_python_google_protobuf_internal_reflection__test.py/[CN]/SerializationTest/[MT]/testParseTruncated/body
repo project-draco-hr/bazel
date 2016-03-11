@@ -1,0 +1,19 @@
+def testParseTruncated(self):
+    if (api_implementation.Type() != 'python'):
+        return
+    first_proto = unittest_pb2.TestAllTypes()
+    test_util.SetAllFields(first_proto)
+    serialized = first_proto.SerializeToString()
+    for truncation_point in range((len(serialized) + 1)):
+        try:
+            second_proto = unittest_pb2.TestAllTypes()
+            unknown_fields = unittest_pb2.TestEmptyMessage()
+            pos = second_proto._InternalParse(serialized, 0, truncation_point)
+            self.assertEqual(truncation_point, pos)
+            try:
+                pos2 = unknown_fields._InternalParse(serialized, 0, truncation_point)
+                self.assertEqual(truncation_point, pos2)
+            except message.DecodeError:
+                self.fail('Parsing unknown fields failed when parsing known fields did not.')
+        except message.DecodeError:
+            self.assertRaises(message.DecodeError, unknown_fields._InternalParse, serialized, 0, truncation_point)

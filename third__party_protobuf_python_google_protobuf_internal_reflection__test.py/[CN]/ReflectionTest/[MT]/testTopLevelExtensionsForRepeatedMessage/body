@@ -1,0 +1,14 @@
+def testTopLevelExtensionsForRepeatedMessage(self):
+    extendee_proto = unittest_pb2.TestAllExtensions()
+    extension = unittest_pb2.repeatedgroup_extension
+    self.assertEqual(0, len(extendee_proto.Extensions[extension]))
+    group = extendee_proto.Extensions[extension].add()
+    group.a = 23
+    self.assertEqual(23, extendee_proto.Extensions[extension][0].a)
+    group.a = 42
+    self.assertEqual(42, extendee_proto.Extensions[extension][0].a)
+    group_list = extendee_proto.Extensions[extension]
+    extendee_proto.ClearExtension(extension)
+    self.assertEqual(0, len(extendee_proto.Extensions[extension]))
+    self.assertTrue((group_list is not extendee_proto.Extensions[extension]))
+    self.assertRaises(TypeError, operator.setitem, extendee_proto.Extensions, extension, 'a')

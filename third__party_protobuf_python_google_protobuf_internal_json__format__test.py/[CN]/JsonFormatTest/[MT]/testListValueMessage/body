@@ -1,0 +1,12 @@
+def testListValueMessage(self):
+    message = json_format_proto3_pb2.TestListValue()
+    message.value.values.add().number_value = 11.1
+    message.value.values.add().null_value = 0
+    message.value.values.add().bool_value = True
+    message.value.values.add().string_value = 'hello'
+    message.value.values.add().struct_value['name'] = 'Jim'
+    message.repeated_value.add().values.add().number_value = 1
+    message.repeated_value.add()
+    self.assertEqual(json.loads(json_format.MessageToJson(message, False)), json.loads('{"value": [11.1, null, true, "hello", {"name": "Jim"}]\n,"repeatedValue": [[1], []]}'))
+    parsed_message = json_format_proto3_pb2.TestListValue()
+    self.CheckParseBack(message, parsed_message)

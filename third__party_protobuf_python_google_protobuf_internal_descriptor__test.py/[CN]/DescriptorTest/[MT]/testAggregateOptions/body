@@ -1,0 +1,20 @@
+def testAggregateOptions(self):
+    file_descriptor = unittest_custom_options_pb2.DESCRIPTOR
+    message_descriptor = unittest_custom_options_pb2.AggregateMessage.DESCRIPTOR
+    field_descriptor = message_descriptor.fields_by_name['fieldname']
+    enum_descriptor = unittest_custom_options_pb2.AggregateEnum.DESCRIPTOR
+    enum_value_descriptor = enum_descriptor.values_by_name['VALUE']
+    service_descriptor = unittest_custom_options_pb2.AggregateService.DESCRIPTOR
+    method_descriptor = service_descriptor.FindMethodByName('Method')
+    file_options = file_descriptor.GetOptions().Extensions[unittest_custom_options_pb2.fileopt]
+    self.assertEqual(100, file_options.i)
+    self.assertEqual('FileAnnotation', file_options.s)
+    self.assertEqual('NestedFileAnnotation', file_options.sub.s)
+    self.assertEqual('FileExtensionAnnotation', file_options.file.Extensions[unittest_custom_options_pb2.fileopt].s)
+    self.assertEqual('EmbeddedMessageSetElement', file_options.mset.Extensions[unittest_custom_options_pb2.AggregateMessageSetElement.message_set_extension].s)
+    self.assertEqual('MessageAnnotation', message_descriptor.GetOptions().Extensions[unittest_custom_options_pb2.msgopt].s)
+    self.assertEqual('FieldAnnotation', field_descriptor.GetOptions().Extensions[unittest_custom_options_pb2.fieldopt].s)
+    self.assertEqual('EnumAnnotation', enum_descriptor.GetOptions().Extensions[unittest_custom_options_pb2.enumopt].s)
+    self.assertEqual('EnumValueAnnotation', enum_value_descriptor.GetOptions().Extensions[unittest_custom_options_pb2.enumvalopt].s)
+    self.assertEqual('ServiceAnnotation', service_descriptor.GetOptions().Extensions[unittest_custom_options_pb2.serviceopt].s)
+    self.assertEqual('MethodAnnotation', method_descriptor.GetOptions().Extensions[unittest_custom_options_pb2.methodopt].s)

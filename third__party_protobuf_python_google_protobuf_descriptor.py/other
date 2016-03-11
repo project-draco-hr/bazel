@@ -1,0 +1,23 @@
+'Descriptors essentially contain exactly the information found in a .proto\nfile, in types that make this information accessible in Python.\n'
+__author__ = 'robinson@google.com (Will Robinson)'
+import six
+from google.protobuf.internal import api_implementation
+_USE_C_DESCRIPTORS = False
+if (api_implementation.Type() == 'cpp'):
+    import os
+    import uuid
+    from google.protobuf.pyext import _message
+    _USE_C_DESCRIPTORS = getattr(_message, '_USE_C_DESCRIPTORS', False)
+if _USE_C_DESCRIPTORS:
+
+
+    class DescriptorMetaclass(type):
+
+        def __instancecheck__(cls, obj):
+            if super(DescriptorMetaclass, cls).__instancecheck__(obj):
+                return True
+            if isinstance(obj, cls._C_DESCRIPTOR_CLASS):
+                return True
+            return False
+else:
+    DescriptorMetaclass = type

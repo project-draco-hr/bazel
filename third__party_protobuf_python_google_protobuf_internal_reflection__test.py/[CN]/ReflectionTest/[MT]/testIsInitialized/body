@@ -1,0 +1,44 @@
+def testIsInitialized(self):
+    proto = unittest_pb2.TestAllTypes()
+    self.assertInitialized(proto)
+    proto = unittest_pb2.TestAllExtensions()
+    self.assertInitialized(proto)
+    proto = unittest_pb2.TestRequired()
+    self.assertNotInitialized(proto)
+    proto.a = proto.b = proto.c = 2
+    self.assertInitialized(proto)
+    proto = unittest_pb2.TestRequiredForeign()
+    self.assertInitialized(proto)
+    proto.optional_message.a = 1
+    self.assertNotInitialized(proto)
+    proto.optional_message.b = 0
+    proto.optional_message.c = 0
+    self.assertInitialized(proto)
+    message1 = proto.repeated_message.add()
+    self.assertNotInitialized(proto)
+    message1.a = message1.b = message1.c = 0
+    self.assertInitialized(proto)
+    proto = unittest_pb2.TestAllExtensions()
+    extension = unittest_pb2.TestRequired.multi
+    message1 = proto.Extensions[extension].add()
+    message2 = proto.Extensions[extension].add()
+    self.assertNotInitialized(proto)
+    message1.a = 1
+    message1.b = 1
+    message1.c = 1
+    self.assertNotInitialized(proto)
+    message2.a = 2
+    message2.b = 2
+    message2.c = 2
+    self.assertInitialized(proto)
+    proto = unittest_pb2.TestAllExtensions()
+    extension = unittest_pb2.TestRequired.single
+    proto.Extensions[extension].a = 1
+    self.assertNotInitialized(proto)
+    proto.Extensions[extension].b = 2
+    proto.Extensions[extension].c = 3
+    self.assertInitialized(proto)
+    errors = []
+    proto = unittest_pb2.TestRequired()
+    self.assertFalse(proto.IsInitialized(errors))
+    self.assertEqual(errors, ['a', 'b', 'c'])

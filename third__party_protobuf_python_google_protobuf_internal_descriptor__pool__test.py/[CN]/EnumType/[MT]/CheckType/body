@@ -1,0 +1,14 @@
+def CheckType(self, test, msg_desc, name, file_desc):
+    enum_desc = msg_desc.enum_types_by_name[name]
+    test.assertEqual(name, enum_desc.name)
+    expected_enum_full_name = '.'.join([msg_desc.full_name, name])
+    test.assertEqual(expected_enum_full_name, enum_desc.full_name)
+    test.assertEqual(msg_desc, enum_desc.containing_type)
+    test.assertEqual(file_desc, enum_desc.file)
+    for (index, (value, number)) in enumerate(self.values):
+        value_desc = enum_desc.values_by_name[value]
+        test.assertEqual(value, value_desc.name)
+        test.assertEqual(index, value_desc.index)
+        test.assertEqual(number, value_desc.number)
+        test.assertEqual(enum_desc, value_desc.type)
+        test.assertIn(value, msg_desc.enum_values_by_name)

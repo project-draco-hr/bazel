@@ -1,0 +1,79 @@
+def testMergeMessage(self):
+    src = unittest_pb2.TestAllTypes()
+    test_util.SetAllFields(src)
+    for field in src.DESCRIPTOR.fields:
+        if field.containing_oneof:
+            continue
+        field_name = field.name
+        dst = unittest_pb2.TestAllTypes()
+        mask = field_mask_pb2.FieldMask()
+        mask.paths.append(field_name)
+        mask.MergeMessage(src, dst)
+        msg = unittest_pb2.TestAllTypes()
+        if (field.label == descriptor.FieldDescriptor.LABEL_REPEATED):
+            repeated_src = getattr(src, field_name)
+            repeated_msg = getattr(msg, field_name)
+            if (field.cpp_type == descriptor.FieldDescriptor.CPPTYPE_MESSAGE):
+                for item in repeated_src:
+                    repeated_msg.add().CopyFrom(item)
+            else:
+                repeated_msg.extend(repeated_src)
+        elif (field.cpp_type == descriptor.FieldDescriptor.CPPTYPE_MESSAGE):
+            getattr(msg, field_name).CopyFrom(getattr(src, field_name))
+        else:
+            setattr(msg, field_name, getattr(src, field_name))
+        self.assertEqual(msg, dst)
+    nested_src = unittest_pb2.NestedTestAllTypes()
+    nested_dst = unittest_pb2.NestedTestAllTypes()
+    nested_src.child.payload.optional_int32 = 1234
+    nested_src.child.child.payload.optional_int32 = 5678
+    mask = field_mask_pb2.FieldMask()
+    mask.FromJsonString('child.payload')
+    mask.MergeMessage(nested_src, nested_dst)
+    self.assertEqual(1234, nested_dst.child.payload.optional_int32)
+    self.assertEqual(0, nested_dst.child.child.payload.optional_int32)
+    mask.FromJsonString('child.child.payload')
+    mask.MergeMessage(nested_src, nested_dst)
+    self.assertEqual(1234, nested_dst.child.payload.optional_int32)
+    self.assertEqual(5678, nested_dst.child.child.payload.optional_int32)
+    nested_dst.Clear()
+    mask.FromJsonString('child.child.payload')
+    mask.MergeMessage(nested_src, nested_dst)
+    self.assertEqual(0, nested_dst.child.payload.optional_int32)
+    self.assertEqual(5678, nested_dst.child.child.payload.optional_int32)
+    nested_dst.Clear()
+    mask.FromJsonString('child')
+    mask.MergeMessage(nested_src, nested_dst)
+    self.assertEqual(1234, nested_dst.child.payload.optional_int32)
+    self.assertEqual(5678, nested_dst.child.child.payload.optional_int32)
+    nested_dst.Clear()
+    nested_dst.child.payload.optional_int64 = 4321
+    mask.FromJsonString('child.payload')
+    mask.MergeMessage(nested_src, nested_dst)
+    self.assertEqual(1234, nested_dst.child.payload.optional_int32)
+    self.assertEqual(4321, nested_dst.child.payload.optional_int64)
+    mask.FromJsonString('child.payload')
+    mask.MergeMessage(nested_src, nested_dst, True, False)
+    self.assertEqual(1234, nested_dst.child.payload.optional_int32)
+    self.assertEqual(0, nested_dst.child.payload.optional_int64)
+    nested_dst.payload.optional_int32 = 1234
+    self.assertTrue(nested_dst.HasField('payload'))
+    mask.FromJsonString('payload')
+    mask.MergeMessage(nested_src, nested_dst)
+    self.assertTrue(nested_dst.HasField('payload'))
+    nested_dst.Clear()
+    nested_dst.payload.optional_int32 = 1234
+    mask.FromJsonString('payload')
+    mask.MergeMessage(nested_src, nested_dst, True, False)
+    self.assertFalse(nested_dst.HasField('payload'))
+    nested_src.payload.repeated_int32.append(1234)
+    nested_dst.payload.repeated_int32.append(5678)
+    mask.FromJsonString('payload.repeated_int32')
+    mask.MergeMessage(nested_src, nested_dst)
+    self.assertEqual(2, len(nested_dst.payload.repeated_int32))
+    self.assertEqual(5678, nested_dst.payload.repeated_int32[0])
+    self.assertEqual(1234, nested_dst.payload.repeated_int32[1])
+    mask.FromJsonString('payload.repeated_int32')
+    mask.MergeMessage(nested_src, nested_dst, False, True)
+    self.assertEqual(1, len(nested_dst.payload.repeated_int32))
+    self.assertEqual(1234, nested_dst.payload.repeated_int32[0])

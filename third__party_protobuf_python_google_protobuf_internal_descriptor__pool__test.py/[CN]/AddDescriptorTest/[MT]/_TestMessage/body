@@ -1,0 +1,10 @@
+def _TestMessage(self, prefix):
+    pool = descriptor_pool.DescriptorPool()
+    pool.AddDescriptor(unittest_pb2.TestAllTypes.DESCRIPTOR)
+    self.assertEqual('protobuf_unittest.TestAllTypes', pool.FindMessageTypeByName((prefix + 'protobuf_unittest.TestAllTypes')).full_name)
+    with self.assertRaises(KeyError):
+        pool.FindMessageTypeByName((prefix + 'protobuf_unittest.TestAllTypes.NestedMessage'))
+    pool.AddDescriptor(unittest_pb2.TestAllTypes.NestedMessage.DESCRIPTOR)
+    self.assertEqual('protobuf_unittest.TestAllTypes.NestedMessage', pool.FindMessageTypeByName((prefix + 'protobuf_unittest.TestAllTypes.NestedMessage')).full_name)
+    self.assertEqual('google/protobuf/unittest.proto', pool.FindFileByName('google/protobuf/unittest.proto').name)
+    self.assertEqual('google/protobuf/unittest.proto', pool.FindFileContainingSymbol((prefix + 'protobuf_unittest.TestAllTypes.NestedMessage')).name)

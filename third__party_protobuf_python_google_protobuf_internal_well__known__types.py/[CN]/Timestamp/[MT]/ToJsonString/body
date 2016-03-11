@@ -1,0 +1,15 @@
+def ToJsonString(self):
+    "Converts Timestamp to RFC 3339 date string format.\n\n    Returns:\n      A string converted from timestamp. The string is always Z-normalized\n      and uses 3, 6 or 9 fractional digits as required to represent the\n      exact time. Example of the return format: '1972-01-01T10:00:20.021Z'\n    "
+    nanos = (self.nanos % _NANOS_PER_SECOND)
+    total_sec = (self.seconds + ((self.nanos - nanos) // _NANOS_PER_SECOND))
+    seconds = (total_sec % _SECONDS_PER_DAY)
+    days = ((total_sec - seconds) // _SECONDS_PER_DAY)
+    dt = (datetime(1970, 1, 1) + timedelta(days, seconds))
+    result = dt.isoformat()
+    if ((nanos % 1000000000.0) == 0):
+        return (result + 'Z')
+    if ((nanos % 1000000.0) == 0):
+        return (result + ('.%03dZ' % (nanos / 1000000.0)))
+    if ((nanos % 1000.0) == 0):
+        return (result + ('.%06dZ' % (nanos / 1000.0)))
+    return (result + ('.%09dZ' % nanos))

@@ -1,0 +1,33 @@
+def testParsingMerge(self):
+    'Check the merge behavior when a required or optional field appears\n    multiple times in the input.'
+    messages = [unittest_pb2.TestAllTypes(), unittest_pb2.TestAllTypes(), unittest_pb2.TestAllTypes()]
+    messages[0].optional_int32 = 1
+    messages[1].optional_int64 = 2
+    messages[2].optional_int32 = 3
+    messages[2].optional_string = 'hello'
+    merged_message = unittest_pb2.TestAllTypes()
+    merged_message.optional_int32 = 3
+    merged_message.optional_int64 = 2
+    merged_message.optional_string = 'hello'
+    generator = unittest_pb2.TestParsingMerge.RepeatedFieldsGenerator()
+    generator.field1.extend(messages)
+    generator.field2.extend(messages)
+    generator.field3.extend(messages)
+    generator.ext1.extend(messages)
+    generator.ext2.extend(messages)
+    generator.group1.add().field1.MergeFrom(messages[0])
+    generator.group1.add().field1.MergeFrom(messages[1])
+    generator.group1.add().field1.MergeFrom(messages[2])
+    generator.group2.add().field1.MergeFrom(messages[0])
+    generator.group2.add().field1.MergeFrom(messages[1])
+    generator.group2.add().field1.MergeFrom(messages[2])
+    data = generator.SerializeToString()
+    parsing_merge = unittest_pb2.TestParsingMerge()
+    parsing_merge.ParseFromString(data)
+    self.assertEqual(parsing_merge.required_all_types, merged_message)
+    self.assertEqual(parsing_merge.optional_all_types, merged_message)
+    self.assertEqual(parsing_merge.optionalgroup.optional_group_all_types, merged_message)
+    self.assertEqual(parsing_merge.Extensions[unittest_pb2.TestParsingMerge.optional_ext], merged_message)
+    self.assertEqual(len(parsing_merge.repeated_all_types), 3)
+    self.assertEqual(len(parsing_merge.repeatedgroup), 3)
+    self.assertEqual(len(parsing_merge.Extensions[unittest_pb2.TestParsingMerge.repeated_ext]), 3)

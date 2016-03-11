@@ -1,0 +1,8 @@
+def __setitem__(self, extension_handle, value):
+    'If extension_handle specifies a non-repeated, scalar extension\n    field, sets the value of that field.\n    '
+    _VerifyExtensionHandle(self._extended_message, extension_handle)
+    if ((extension_handle.label == _FieldDescriptor.LABEL_REPEATED) or (extension_handle.cpp_type == _FieldDescriptor.CPPTYPE_MESSAGE)):
+        raise TypeError(('Cannot assign to extension "%s" because it is a repeated or composite type.' % extension_handle.full_name))
+    type_checker = type_checkers.GetTypeChecker(extension_handle)
+    self._extended_message._fields[extension_handle] = type_checker.CheckValue(value)
+    self._extended_message._Modified()

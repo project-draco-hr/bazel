@@ -1,0 +1,31 @@
+def testMessageSetWireFormat(self):
+    proto = message_set_extensions_pb2.TestMessageSet()
+    extension_message1 = message_set_extensions_pb2.TestMessageSetExtension1
+    extension_message2 = message_set_extensions_pb2.TestMessageSetExtension2
+    extension1 = extension_message1.message_set_extension
+    extension2 = extension_message2.message_set_extension
+    extension3 = message_set_extensions_pb2.message_set_extension3
+    proto.Extensions[extension1].i = 123
+    proto.Extensions[extension2].str = 'foo'
+    proto.Extensions[extension3].text = 'bar'
+    serialized = proto.SerializeToString()
+    raw = unittest_mset_pb2.RawMessageSet()
+    self.assertEqual(False, raw.DESCRIPTOR.GetOptions().message_set_wire_format)
+    self.assertEqual(len(serialized), raw.MergeFromString(serialized))
+    self.assertEqual(3, len(raw.item))
+    message1 = message_set_extensions_pb2.TestMessageSetExtension1()
+    self.assertEqual(len(raw.item[0].message), message1.MergeFromString(raw.item[0].message))
+    self.assertEqual(123, message1.i)
+    message2 = message_set_extensions_pb2.TestMessageSetExtension2()
+    self.assertEqual(len(raw.item[1].message), message2.MergeFromString(raw.item[1].message))
+    self.assertEqual('foo', message2.str)
+    message3 = message_set_extensions_pb2.TestMessageSetExtension3()
+    self.assertEqual(len(raw.item[2].message), message3.MergeFromString(raw.item[2].message))
+    self.assertEqual('bar', message3.text)
+    proto2 = message_set_extensions_pb2.TestMessageSet()
+    self.assertEqual(len(serialized), proto2.MergeFromString(serialized))
+    self.assertEqual(123, proto2.Extensions[extension1].i)
+    self.assertEqual('foo', proto2.Extensions[extension2].str)
+    self.assertEqual('bar', proto2.Extensions[extension3].text)
+    self.assertEqual(proto2.ByteSize(), len(serialized))
+    self.assertEqual(proto.ByteSize(), len(serialized))

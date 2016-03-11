@@ -1,0 +1,16 @@
+def _AddByteSizeMethod(message_descriptor, cls):
+    'Helper for _AddMessageMethods().'
+
+    def ByteSize(self):
+        if (not self._cached_byte_size_dirty):
+            return self._cached_byte_size
+        size = 0
+        for (field_descriptor, field_value) in self.ListFields():
+            size += field_descriptor._sizer(field_value)
+        for (tag_bytes, value_bytes) in self._unknown_fields:
+            size += (len(tag_bytes) + len(value_bytes))
+        self._cached_byte_size = size
+        self._cached_byte_size_dirty = False
+        self._listener_for_children.dirty = False
+        return size
+    cls.ByteSize = ByteSize

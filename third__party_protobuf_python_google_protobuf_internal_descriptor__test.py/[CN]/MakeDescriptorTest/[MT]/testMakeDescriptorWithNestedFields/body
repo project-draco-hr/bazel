@@ -1,0 +1,35 @@
+def testMakeDescriptorWithNestedFields(self):
+    file_descriptor_proto = descriptor_pb2.FileDescriptorProto()
+    file_descriptor_proto.name = 'Foo2'
+    message_type = file_descriptor_proto.message_type.add()
+    message_type.name = file_descriptor_proto.name
+    nested_type = message_type.nested_type.add()
+    nested_type.name = 'Sub'
+    enum_type = nested_type.enum_type.add()
+    enum_type.name = 'FOO'
+    enum_type_val = enum_type.value.add()
+    enum_type_val.name = 'BAR'
+    enum_type_val.number = 3
+    field = message_type.field.add()
+    field.number = 1
+    field.name = 'uint64_field'
+    field.label = descriptor.FieldDescriptor.LABEL_REQUIRED
+    field.type = descriptor.FieldDescriptor.TYPE_UINT64
+    field = message_type.field.add()
+    field.number = 2
+    field.name = 'nested_message_field'
+    field.label = descriptor.FieldDescriptor.LABEL_REQUIRED
+    field.type = descriptor.FieldDescriptor.TYPE_MESSAGE
+    field.type_name = 'Sub'
+    enum_field = nested_type.field.add()
+    enum_field.number = 2
+    enum_field.name = 'bar_field'
+    enum_field.label = descriptor.FieldDescriptor.LABEL_REQUIRED
+    enum_field.type = descriptor.FieldDescriptor.TYPE_ENUM
+    enum_field.type_name = 'Foo2.Sub.FOO'
+    result = descriptor.MakeDescriptor(message_type)
+    self.assertEqual(result.fields[0].cpp_type, descriptor.FieldDescriptor.CPPTYPE_UINT64)
+    self.assertEqual(result.fields[1].cpp_type, descriptor.FieldDescriptor.CPPTYPE_MESSAGE)
+    self.assertEqual(result.fields[1].message_type.containing_type, result)
+    self.assertEqual(result.nested_types[0].fields[0].full_name, 'Foo2.Sub.bar_field')
+    self.assertEqual(result.nested_types[0].fields[0].enum_type, result.nested_types[0].enum_types[0])

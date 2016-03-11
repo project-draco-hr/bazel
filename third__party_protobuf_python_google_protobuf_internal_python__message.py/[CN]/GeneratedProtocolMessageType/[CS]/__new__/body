@@ -1,0 +1,10 @@
+def __new__(cls, name, bases, dictionary):
+    "Custom allocation for runtime-generated class types.\n\n    We override __new__ because this is apparently the only place\n    where we can meaningfully set __slots__ on the class we're creating(?).\n    (The interplay between metaclasses and slots is not very well-documented).\n\n    Args:\n      name: Name of the class (ignored, but required by the\n        metaclass protocol).\n      bases: Base classes of the class we're constructing.\n        (Should be message.Message).  We ignore this field, but\n        it's required by the metaclass protocol\n      dictionary: The class dictionary of the class we're\n        constructing.  dictionary[_DESCRIPTOR_KEY] must contain\n        a Descriptor object describing this protocol message\n        type.\n\n    Returns:\n      Newly-allocated class.\n    "
+    descriptor = dictionary[GeneratedProtocolMessageType._DESCRIPTOR_KEY]
+    if (descriptor.full_name in well_known_types.WKTBASES):
+        bases += (well_known_types.WKTBASES[descriptor.full_name],)
+    _AddClassAttributesForNestedExtensions(descriptor, dictionary)
+    _AddSlots(descriptor, dictionary)
+    superclass = super(GeneratedProtocolMessageType, cls)
+    new_class = superclass.__new__(cls, name, bases, dictionary)
+    return new_class

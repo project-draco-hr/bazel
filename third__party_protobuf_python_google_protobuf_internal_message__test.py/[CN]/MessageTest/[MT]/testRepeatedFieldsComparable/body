@@ -1,0 +1,25 @@
+def testRepeatedFieldsComparable(self, message_module):
+    m1 = message_module.TestAllTypes()
+    m2 = message_module.TestAllTypes()
+    m1.repeated_int32.append(0)
+    m1.repeated_int32.append(1)
+    m1.repeated_int32.append(2)
+    m2.repeated_int32.append(0)
+    m2.repeated_int32.append(1)
+    m2.repeated_int32.append(2)
+    m1.repeated_nested_message.add().bb = 1
+    m1.repeated_nested_message.add().bb = 2
+    m1.repeated_nested_message.add().bb = 3
+    m2.repeated_nested_message.add().bb = 1
+    m2.repeated_nested_message.add().bb = 2
+    m2.repeated_nested_message.add().bb = 3
+    if (sys.version_info >= (3,)):
+        return
+    _ = (m1 < m2)
+    _ = (m1.repeated_nested_message < m2.repeated_nested_message)
+    self.assertEqual(cmp(m1, m2), 0)
+    self.assertEqual(cmp(m1.repeated_int32, m2.repeated_int32), 0)
+    self.assertEqual(cmp(m1.repeated_int32, [0, 1, 2]), 0)
+    self.assertEqual(cmp(m1.repeated_nested_message, m2.repeated_nested_message), 0)
+    with self.assertRaises(TypeError):
+        cmp(m1.repeated_nested_message, m2.repeated_nested_message[:])

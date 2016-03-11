@@ -1,0 +1,25 @@
+def testScalarMapDefaults(self):
+    msg = map_unittest_pb2.TestMap()
+    self.assertFalse(((-123) in msg.map_int32_int32))
+    self.assertFalse(((- (2 ** 33)) in msg.map_int64_int64))
+    self.assertFalse((123 in msg.map_uint32_uint32))
+    self.assertFalse(((2 ** 33) in msg.map_uint64_uint64))
+    self.assertFalse(('abc' in msg.map_string_string))
+    self.assertFalse((888 in msg.map_int32_enum))
+    self.assertEqual(0, msg.map_int32_int32[(-123)])
+    self.assertEqual(0, msg.map_int64_int64[(- (2 ** 33))])
+    self.assertEqual(0, msg.map_uint32_uint32[123])
+    self.assertEqual(0, msg.map_uint64_uint64[(2 ** 33)])
+    self.assertEqual('', msg.map_string_string['abc'])
+    self.assertEqual(0, msg.map_int32_enum[888])
+    self.assertTrue(((-123) in msg.map_int32_int32))
+    self.assertTrue(((- (2 ** 33)) in msg.map_int64_int64))
+    self.assertTrue((123 in msg.map_uint32_uint32))
+    self.assertTrue(((2 ** 33) in msg.map_uint64_uint64))
+    self.assertTrue(('abc' in msg.map_string_string))
+    self.assertTrue((888 in msg.map_int32_enum))
+    self.assertIsInstance(msg.map_string_string['abc'], six.text_type)
+    with self.assertRaises(TypeError):
+        msg.map_string_string[123]
+    with self.assertRaises(TypeError):
+        (123 in msg.map_string_string)

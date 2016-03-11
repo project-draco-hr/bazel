@@ -1,0 +1,16 @@
+def testSortingRepeatedCompositeFieldsStable(self, message_module):
+    'Check passing a custom comparator to sort a repeated composite field.'
+    message = message_module.TestAllTypes()
+    message.repeated_nested_message.add().bb = 21
+    message.repeated_nested_message.add().bb = 20
+    message.repeated_nested_message.add().bb = 13
+    message.repeated_nested_message.add().bb = 33
+    message.repeated_nested_message.add().bb = 11
+    message.repeated_nested_message.add().bb = 24
+    message.repeated_nested_message.add().bb = 10
+    message.repeated_nested_message.sort(key=(lambda z: (z.bb // 10)))
+    self.assertEqual([13, 11, 10, 21, 20, 24, 33], [n.bb for n in message.repeated_nested_message])
+    pb = message.SerializeToString()
+    message.Clear()
+    message.MergeFromString(pb)
+    self.assertEqual([13, 11, 10, 21, 20, 24, 33], [n.bb for n in message.repeated_nested_message])

@@ -1,0 +1,13 @@
+def testNestedExtensions(self):
+    extendee_proto = unittest_pb2.TestAllExtensions()
+    extension = unittest_pb2.TestRequired.single
+    self.assertTrue((not extendee_proto.HasExtension(extension)))
+    required = extendee_proto.Extensions[extension]
+    self.assertEqual(0, required.a)
+    self.assertTrue((not extendee_proto.HasExtension(extension)))
+    required.a = 23
+    self.assertEqual(23, extendee_proto.Extensions[extension].a)
+    self.assertTrue(extendee_proto.HasExtension(extension))
+    extendee_proto.ClearExtension(extension)
+    self.assertTrue((required is not extendee_proto.Extensions[extension]))
+    self.assertTrue((not extendee_proto.HasExtension(extension)))

@@ -1,0 +1,17 @@
+def testSingleScalarBoundsChecking(self):
+
+    def TestMinAndMaxIntegers(field_name, expected_min, expected_max):
+        pb = unittest_pb2.TestAllTypes()
+        setattr(pb, field_name, expected_min)
+        self.assertEqual(expected_min, getattr(pb, field_name))
+        setattr(pb, field_name, expected_max)
+        self.assertEqual(expected_max, getattr(pb, field_name))
+        self.assertRaises(ValueError, setattr, pb, field_name, (expected_min - 1))
+        self.assertRaises(ValueError, setattr, pb, field_name, (expected_max + 1))
+    TestMinAndMaxIntegers('optional_int32', (- (1 << 31)), ((1 << 31) - 1))
+    TestMinAndMaxIntegers('optional_uint32', 0, 4294967295)
+    TestMinAndMaxIntegers('optional_int64', (- (1 << 63)), ((1 << 63) - 1))
+    TestMinAndMaxIntegers('optional_uint64', 0, 18446744073709551615L)
+    pb = unittest_pb2.TestAllTypes()
+    pb.optional_nested_enum = 1
+    self.assertEqual(1, pb.optional_nested_enum)

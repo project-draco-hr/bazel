@@ -1,0 +1,37 @@
+def _MergeScalarField(tokenizer, message, field, allow_multiple_scalars):
+    'Merges a single protocol message scalar field into a message.\n\n  Args:\n    tokenizer: A tokenizer to parse the field value.\n    message: A protocol message to record the data.\n    field: The descriptor of the field to be merged.\n    allow_multiple_scalars: Determines if repeated values for a non-repeated\n      field are permitted, e.g., the string "foo: 1 foo: 2" for a\n      required/optional field named "foo".\n\n  Raises:\n    ParseError: In case of text parsing problems.\n    RuntimeError: On runtime errors.\n  '
+    value = None
+    if (field.type in (descriptor.FieldDescriptor.TYPE_INT32, descriptor.FieldDescriptor.TYPE_SINT32, descriptor.FieldDescriptor.TYPE_SFIXED32)):
+        value = tokenizer.ConsumeInt32()
+    elif (field.type in (descriptor.FieldDescriptor.TYPE_INT64, descriptor.FieldDescriptor.TYPE_SINT64, descriptor.FieldDescriptor.TYPE_SFIXED64)):
+        value = tokenizer.ConsumeInt64()
+    elif (field.type in (descriptor.FieldDescriptor.TYPE_UINT32, descriptor.FieldDescriptor.TYPE_FIXED32)):
+        value = tokenizer.ConsumeUint32()
+    elif (field.type in (descriptor.FieldDescriptor.TYPE_UINT64, descriptor.FieldDescriptor.TYPE_FIXED64)):
+        value = tokenizer.ConsumeUint64()
+    elif (field.type in (descriptor.FieldDescriptor.TYPE_FLOAT, descriptor.FieldDescriptor.TYPE_DOUBLE)):
+        value = tokenizer.ConsumeFloat()
+    elif (field.type == descriptor.FieldDescriptor.TYPE_BOOL):
+        value = tokenizer.ConsumeBool()
+    elif (field.type == descriptor.FieldDescriptor.TYPE_STRING):
+        value = tokenizer.ConsumeString()
+    elif (field.type == descriptor.FieldDescriptor.TYPE_BYTES):
+        value = tokenizer.ConsumeByteString()
+    elif (field.type == descriptor.FieldDescriptor.TYPE_ENUM):
+        value = tokenizer.ConsumeEnum(field)
+    else:
+        raise RuntimeError(('Unknown field type %d' % field.type))
+    if (field.label == descriptor.FieldDescriptor.LABEL_REPEATED):
+        if field.is_extension:
+            message.Extensions[field].append(value)
+        else:
+            getattr(message, field.name).append(value)
+    elif field.is_extension:
+        if ((not allow_multiple_scalars) and message.HasExtension(field)):
+            raise tokenizer.ParseErrorPreviousToken(('Message type "%s" should not have multiple "%s" extensions.' % (message.DESCRIPTOR.full_name, field.full_name)))
+        else:
+            message.Extensions[field] = value
+    elif ((not allow_multiple_scalars) and message.HasField(field.name)):
+        raise tokenizer.ParseErrorPreviousToken(('Message type "%s" should not have multiple "%s" fields.' % (message.DESCRIPTOR.full_name, field.name)))
+    else:
+        setattr(message, field.name, value)

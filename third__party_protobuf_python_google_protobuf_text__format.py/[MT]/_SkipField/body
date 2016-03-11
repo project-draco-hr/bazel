@@ -1,0 +1,12 @@
+def _SkipField(tokenizer):
+    'Skips over a complete field (name and value/message).\n\n  Args:\n    tokenizer: A tokenizer to parse the field name and values.\n  '
+    if tokenizer.TryConsume('['):
+        tokenizer.ConsumeIdentifier()
+        while tokenizer.TryConsume('.'):
+            tokenizer.ConsumeIdentifier()
+        tokenizer.Consume(']')
+    else:
+        tokenizer.ConsumeIdentifier()
+    _SkipFieldContents(tokenizer)
+    if (not tokenizer.TryConsume(',')):
+        tokenizer.TryConsume(';')

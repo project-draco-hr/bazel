@@ -1,0 +1,8 @@
+def testPrintRawUtf8String(self, message_module):
+    message = message_module.TestAllTypes()
+    message.repeated_string.append(u'\xfc\ua71f')
+    text = text_format.MessageToString(message, as_utf8=True)
+    self.CompareToGoldenText(text, 'repeated_string: "\xc3\xbc\xea\x9c\x9f"\n')
+    parsed_message = message_module.TestAllTypes()
+    text_format.Parse(text, parsed_message)
+    self.assertEqual(message, parsed_message, ('\n%s != %s' % (message, parsed_message)))

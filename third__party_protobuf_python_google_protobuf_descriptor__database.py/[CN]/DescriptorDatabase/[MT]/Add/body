@@ -1,0 +1,14 @@
+def Add(self, file_desc_proto):
+    'Adds the FileDescriptorProto and its types to this database.\n\n    Args:\n      file_desc_proto: The FileDescriptorProto to add.\n    Raises:\n      DescriptorDatabaseException: if an attempt is made to add a proto\n        with the same name but different definition than an exisiting\n        proto in the database.\n    '
+    proto_name = file_desc_proto.name
+    if (proto_name not in self._file_desc_protos_by_file):
+        self._file_desc_protos_by_file[proto_name] = file_desc_proto
+    elif (self._file_desc_protos_by_file[proto_name] != file_desc_proto):
+        raise DescriptorDatabaseConflictingDefinitionError(('%s already added, but with different descriptor.' % proto_name))
+    package = file_desc_proto.package
+    for message in file_desc_proto.message_type:
+        self._file_desc_protos_by_symbol.update(((name, file_desc_proto) for name in _ExtractSymbols(message, package)))
+    for enum in file_desc_proto.enum_type:
+        self._file_desc_protos_by_symbol['.'.join((package, enum.name))] = file_desc_proto
+    for extension in file_desc_proto.extension:
+        self._file_desc_protos_by_symbol['.'.join((package, extension.name))] = file_desc_proto

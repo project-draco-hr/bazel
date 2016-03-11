@@ -1,0 +1,9 @@
+def testOneofNestedMergeFrom(self, message_module):
+    m = message_module.NestedTestAllTypes()
+    m.payload.oneof_uint32 = 11
+    m2 = message_module.NestedTestAllTypes()
+    m2.payload.oneof_bytes = 'bb'
+    m2.child.payload.oneof_bytes = 'bb'
+    m2.MergeFrom(m)
+    self.assertEqual('oneof_uint32', m2.payload.WhichOneof('oneof_field'))
+    self.assertEqual('oneof_bytes', m2.child.payload.WhichOneof('oneof_field'))

@@ -1,0 +1,21 @@
+def testCacheInvalidationForRepeatedMessage(self):
+    child0 = self.proto.repeated_foreign_message.add()
+    self.assertEqual(3, self.proto.ByteSize())
+    self.proto.repeated_foreign_message.add()
+    self.assertEqual(6, self.proto.ByteSize())
+    child0.c = 1
+    self.assertEqual(8, self.proto.ByteSize())
+    self.proto.ClearField('repeated_foreign_message')
+    self.assertEqual(0, self.proto.ByteSize())
+    extension = more_extensions_pb2.repeated_message_extension
+    child_list = self.extended_proto.Extensions[extension]
+    child0 = child_list.add()
+    self.assertEqual(2, self.extended_proto.ByteSize())
+    child_list.add()
+    self.assertEqual(4, self.extended_proto.ByteSize())
+    child0.foreign_message_int = 1
+    self.assertEqual(6, self.extended_proto.ByteSize())
+    child0.ClearField('foreign_message_int')
+    self.assertEqual(4, self.extended_proto.ByteSize())
+    self.extended_proto.ClearExtension(extension)
+    self.assertEqual(0, self.extended_proto.ByteSize())

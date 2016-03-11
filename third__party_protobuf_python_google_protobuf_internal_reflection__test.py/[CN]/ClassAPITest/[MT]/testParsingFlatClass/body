@@ -1,0 +1,10 @@
+def testParsingFlatClass(self):
+    'Test that the generated class can parse a flat message.'
+    file_descriptor = descriptor_pb2.FileDescriptorProto()
+    file_descriptor.ParseFromString(self._GetSerializedFileDescriptor('B'))
+    msg_descriptor = descriptor.MakeDescriptor(file_descriptor.message_type[0])
+    msg_class = reflection.MakeClass(msg_descriptor)
+    msg = msg_class()
+    msg_str = 'flat: 0 flat: 1 flat: 2 '
+    text_format.Merge(msg_str, msg)
+    self.assertEqual(msg.flat, [0, 1, 2])

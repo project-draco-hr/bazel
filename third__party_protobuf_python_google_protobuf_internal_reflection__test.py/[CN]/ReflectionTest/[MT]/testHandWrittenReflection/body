@@ -1,0 +1,16 @@
+def testHandWrittenReflection(self):
+    if (api_implementation.Type() != 'python'):
+        return
+    FieldDescriptor = descriptor.FieldDescriptor
+    foo_field_descriptor = FieldDescriptor(name='foo_field', full_name='MyProto.foo_field', index=0, number=1, type=FieldDescriptor.TYPE_INT64, cpp_type=FieldDescriptor.CPPTYPE_INT64, label=FieldDescriptor.LABEL_OPTIONAL, default_value=0, containing_type=None, message_type=None, enum_type=None, is_extension=False, extension_scope=None, options=descriptor_pb2.FieldOptions())
+    mydescriptor = descriptor.Descriptor(name='MyProto', full_name='MyProto', filename='ignored', containing_type=None, nested_types=[], enum_types=[], fields=[foo_field_descriptor], extensions=[], options=descriptor_pb2.MessageOptions())
+
+
+    class MyProtoClass(six.with_metaclass(reflection.GeneratedProtocolMessageType, message.Message)):
+        DESCRIPTOR = mydescriptor
+    myproto_instance = MyProtoClass()
+    self.assertEqual(0, myproto_instance.foo_field)
+    self.assertTrue((not myproto_instance.HasField('foo_field')))
+    myproto_instance.foo_field = 23
+    self.assertEqual(23, myproto_instance.foo_field)
+    self.assertTrue(myproto_instance.HasField('foo_field'))

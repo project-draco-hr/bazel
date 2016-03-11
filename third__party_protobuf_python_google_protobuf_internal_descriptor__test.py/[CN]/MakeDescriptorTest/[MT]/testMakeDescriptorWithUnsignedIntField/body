@@ -1,0 +1,23 @@
+def testMakeDescriptorWithUnsignedIntField(self):
+    file_descriptor_proto = descriptor_pb2.FileDescriptorProto()
+    file_descriptor_proto.name = 'Foo'
+    message_type = file_descriptor_proto.message_type.add()
+    message_type.name = file_descriptor_proto.name
+    enum_type = message_type.enum_type.add()
+    enum_type.name = 'FOO'
+    enum_type_val = enum_type.value.add()
+    enum_type_val.name = 'BAR'
+    enum_type_val.number = 3
+    field = message_type.field.add()
+    field.number = 1
+    field.name = 'uint64_field'
+    field.label = descriptor.FieldDescriptor.LABEL_REQUIRED
+    field.type = descriptor.FieldDescriptor.TYPE_UINT64
+    enum_field = message_type.field.add()
+    enum_field.number = 2
+    enum_field.name = 'bar_field'
+    enum_field.label = descriptor.FieldDescriptor.LABEL_REQUIRED
+    enum_field.type = descriptor.FieldDescriptor.TYPE_ENUM
+    enum_field.type_name = 'Foo.FOO'
+    result = descriptor.MakeDescriptor(message_type)
+    self.assertEqual(result.fields[0].cpp_type, descriptor.FieldDescriptor.CPPTYPE_UINT64)

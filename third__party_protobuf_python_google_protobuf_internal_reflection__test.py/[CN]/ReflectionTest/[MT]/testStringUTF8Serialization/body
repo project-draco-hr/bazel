@@ -1,0 +1,28 @@
+def testStringUTF8Serialization(self):
+    proto = message_set_extensions_pb2.TestMessageSet()
+    extension_message = message_set_extensions_pb2.TestMessageSetExtension2
+    extension = extension_message.message_set_extension
+    test_utf8 = u'\u0422\u0435\u0441\u0442'
+    test_utf8_bytes = test_utf8.encode('utf-8')
+    proto.Extensions[extension].str = test_utf8
+    serialized = proto.SerializeToString()
+    self.assertEqual(proto.ByteSize(), len(serialized))
+    raw = unittest_mset_pb2.RawMessageSet()
+    bytes_read = raw.MergeFromString(serialized)
+    self.assertEqual(len(serialized), bytes_read)
+    message2 = message_set_extensions_pb2.TestMessageSetExtension2()
+    self.assertEqual(1, len(raw.item))
+    self.assertEqual(raw.item[0].type_id, 98418634)
+    self.assertTrue(raw.item[0].message.endswith(test_utf8_bytes))
+    bytes_read = message2.MergeFromString(raw.item[0].message)
+    self.assertEqual(len(raw.item[0].message), bytes_read)
+    self.assertEqual(type(message2.str), six.text_type)
+    self.assertEqual(message2.str, test_utf8)
+    badbytes = raw.item[0].message.replace(test_utf8_bytes, (len(test_utf8_bytes) * '\xff'))
+    unicode_decode_failed = False
+    try:
+        message2.MergeFromString(badbytes)
+    except UnicodeDecodeError:
+        unicode_decode_failed = True
+    string_field = message2.str
+    self.assertTrue((unicode_decode_failed or (type(string_field) is bytes)))

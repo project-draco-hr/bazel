@@ -1,0 +1,21 @@
+def testExtensionEquality(self):
+    first_proto = unittest_pb2.TestAllExtensions()
+    second_proto = unittest_pb2.TestAllExtensions()
+    self.assertEqual(first_proto, second_proto)
+    test_util.SetAllExtensions(first_proto)
+    self.assertNotEqual(first_proto, second_proto)
+    test_util.SetAllExtensions(second_proto)
+    self.assertEqual(first_proto, second_proto)
+    first_proto.Extensions[unittest_pb2.optional_int32_extension] += 1
+    self.assertNotEqual(first_proto, second_proto)
+    first_proto.Extensions[unittest_pb2.optional_int32_extension] -= 1
+    self.assertEqual(first_proto, second_proto)
+    first_proto.ClearExtension(unittest_pb2.optional_int32_extension)
+    second_proto.Extensions[unittest_pb2.optional_int32_extension] = 0
+    self.assertNotEqual(first_proto, second_proto)
+    first_proto.Extensions[unittest_pb2.optional_int32_extension] = 0
+    self.assertEqual(first_proto, second_proto)
+    first_proto = unittest_pb2.TestAllExtensions()
+    second_proto = unittest_pb2.TestAllExtensions()
+    self.assertEqual(0, first_proto.Extensions[unittest_pb2.optional_int32_extension])
+    self.assertEqual(first_proto, second_proto)

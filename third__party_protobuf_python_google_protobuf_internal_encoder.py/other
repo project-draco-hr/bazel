@@ -1,0 +1,24 @@
+'Code for encoding protocol message primitives.\n\nContains the logic for encoding every logical protocol field type\ninto one of the 5 physical wire types.\n\nThis code is designed to push the Python interpreter\'s performance to the\nlimits.\n\nThe basic idea is that at startup time, for every field (i.e. every\nFieldDescriptor) we construct two functions:  a "sizer" and an "encoder".  The\nsizer takes a value of this field\'s type and computes its byte size.  The\nencoder takes a writer function and a value.  It encodes the value into byte\nstrings and invokes the writer function to write those strings.  Typically the\nwriter function is the write() method of a BytesIO.\n\nWe try to do as much work as possible when constructing the writer and the\nsizer rather than when calling them.  In particular:\n* We copy any needed global functions to local variables, so that we do not need\n  to do costly global table lookups at runtime.\n* Similarly, we try to do any attribute lookups at startup time if possible.\n* Every field\'s tag is encoded to bytes at startup, since it can\'t change at\n  runtime.\n* Whatever component of the field size we can compute at startup, we do.\n* We *avoid* sharing code if doing so would make the code slower and not sharing\n  does not burden us too much.  For example, encoders for repeated fields do\n  not just call the encoders for singular fields in a loop because this would\n  add an extra function call overhead for every loop iteration; instead, we\n  manually inline the single-value encoder into the loop.\n* If a Python function lacks a return statement, Python actually generates\n  instructions to pop the result of the last statement off the stack, push\n  None onto the stack, and then return that.  If we really don\'t care what\n  value is returned, then we can save two instructions by returning the\n  result of the last statement.  It looks funny but it helps.\n* We assume that type and bounds checking has happened at a higher level.\n'
+__author__ = 'kenton@google.com (Kenton Varda)'
+import struct
+import six
+from google.protobuf.internal import wire_format
+_POS_INF = inf
+_NEG_INF = (- _POS_INF)
+Int32Sizer = Int64Sizer = EnumSizer = _SimpleSizer(_SignedVarintSize)
+UInt32Sizer = UInt64Sizer = _SimpleSizer(_VarintSize)
+SInt32Sizer = SInt64Sizer = _ModifiedSizer(_SignedVarintSize, wire_format.ZigZagEncode)
+Fixed32Sizer = SFixed32Sizer = FloatSizer = _FixedSizer(4)
+Fixed64Sizer = SFixed64Sizer = DoubleSizer = _FixedSizer(8)
+BoolSizer = _FixedSizer(1)
+_EncodeVarint = _VarintEncoder()
+_EncodeSignedVarint = _SignedVarintEncoder()
+Int32Encoder = Int64Encoder = EnumEncoder = _SimpleEncoder(wire_format.WIRETYPE_VARINT, _EncodeSignedVarint, _SignedVarintSize)
+UInt32Encoder = UInt64Encoder = _SimpleEncoder(wire_format.WIRETYPE_VARINT, _EncodeVarint, _VarintSize)
+SInt32Encoder = SInt64Encoder = _ModifiedEncoder(wire_format.WIRETYPE_VARINT, _EncodeVarint, _VarintSize, wire_format.ZigZagEncode)
+Fixed32Encoder = _StructPackEncoder(wire_format.WIRETYPE_FIXED32, '<I')
+Fixed64Encoder = _StructPackEncoder(wire_format.WIRETYPE_FIXED64, '<Q')
+SFixed32Encoder = _StructPackEncoder(wire_format.WIRETYPE_FIXED32, '<i')
+SFixed64Encoder = _StructPackEncoder(wire_format.WIRETYPE_FIXED64, '<q')
+FloatEncoder = _FloatingPointEncoder(wire_format.WIRETYPE_FIXED32, '<f')
+DoubleEncoder = _FloatingPointEncoder(wire_format.WIRETYPE_FIXED64, '<d')

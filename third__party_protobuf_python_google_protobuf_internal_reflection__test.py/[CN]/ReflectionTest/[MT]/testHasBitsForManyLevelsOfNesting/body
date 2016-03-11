@@ -1,0 +1,14 @@
+def testHasBitsForManyLevelsOfNesting(self):
+    recursive_proto = unittest_pb2.TestMutualRecursionA()
+    self.assertTrue((not recursive_proto.HasField('bb')))
+    self.assertEqual(0, recursive_proto.bb.a.bb.a.bb.optional_int32)
+    self.assertTrue((not recursive_proto.HasField('bb')))
+    recursive_proto.bb.a.bb.a.bb.optional_int32 = 5
+    self.assertEqual(5, recursive_proto.bb.a.bb.a.bb.optional_int32)
+    self.assertTrue(recursive_proto.HasField('bb'))
+    self.assertTrue(recursive_proto.bb.HasField('a'))
+    self.assertTrue(recursive_proto.bb.a.HasField('bb'))
+    self.assertTrue(recursive_proto.bb.a.bb.HasField('a'))
+    self.assertTrue(recursive_proto.bb.a.bb.a.HasField('bb'))
+    self.assertTrue((not recursive_proto.bb.a.bb.a.bb.HasField('a')))
+    self.assertTrue(recursive_proto.bb.a.bb.a.bb.HasField('optional_int32'))

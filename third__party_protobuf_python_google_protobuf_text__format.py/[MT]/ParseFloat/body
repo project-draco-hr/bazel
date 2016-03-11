@@ -1,0 +1,17 @@
+def ParseFloat(text):
+    "Parse a floating point number.\n\n  Args:\n    text: Text to parse.\n\n  Returns:\n    The number parsed.\n\n  Raises:\n    ValueError: If a floating point number couldn't be parsed.\n  "
+    try:
+        return float(text)
+    except ValueError:
+        if _FLOAT_INFINITY.match(text):
+            if (text[0] == '-'):
+                return float('-inf')
+            else:
+                return float('inf')
+        elif _FLOAT_NAN.match(text):
+            return float('nan')
+        else:
+            try:
+                return float(text.rstrip('f'))
+            except ValueError:
+                raise ValueError(("Couldn't parse float: %s" % text))

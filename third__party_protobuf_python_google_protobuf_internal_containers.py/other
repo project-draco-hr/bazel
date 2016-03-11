@@ -1,0 +1,115 @@
+"Contains container classes to represent different protocol buffer types.\n\nThis file defines container classes which represent categories of protocol\nbuffer field types which need extra maintenance. Currently these categories\nare:\n  - Repeated scalar fields - These are all repeated fields which aren't\n    composite (e.g. they are of simple types like int32, string, etc).\n  - Repeated composite fields - Repeated fields which are composite. This\n    includes groups and nested messages.\n"
+__author__ = 'petar@google.com (Petar Petrov)'
+import collections
+import sys
+if (sys.version_info[0] < 3):
+
+
+    class Mapping(object):
+        __slots__ = ()
+
+        def get(self, key, default=None):
+            try:
+                return self[key]
+            except KeyError:
+                return default
+
+        def __contains__(self, key):
+            try:
+                self[key]
+            except KeyError:
+                return False
+            else:
+                return True
+
+        def iterkeys(self):
+            return iter(self)
+
+        def itervalues(self):
+            for key in self:
+                yield self[key]
+
+        def iteritems(self):
+            for key in self:
+                yield (key, self[key])
+
+        def keys(self):
+            return list(self)
+
+        def items(self):
+            return [(key, self[key]) for key in self]
+
+        def values(self):
+            return [self[key] for key in self]
+        __hash__ = None
+
+        def __eq__(self, other):
+            if (not isinstance(other, collections.Mapping)):
+                return NotImplemented
+            return (dict(self.items()) == dict(other.items()))
+
+        def __ne__(self, other):
+            return (not (self == other))
+
+
+    class MutableMapping(Mapping):
+        __slots__ = ()
+        __marker = object()
+
+        def pop(self, key, default=__marker):
+            try:
+                value = self[key]
+            except KeyError:
+                if (default is self.__marker):
+                    raise
+                return default
+            else:
+                del self[key]
+                return value
+
+        def popitem(self):
+            try:
+                key = next(iter(self))
+            except StopIteration:
+                raise KeyError
+            value = self[key]
+            del self[key]
+            return (key, value)
+
+        def clear(self):
+            try:
+                while True:
+                    self.popitem()
+            except KeyError:
+                pass
+
+        def update(*args, **kwds):
+            if (len(args) > 2):
+                raise TypeError('update() takes at most 2 positional arguments ({} given)'.format(len(args)))
+            elif (not args):
+                raise TypeError('update() takes at least 1 argument (0 given)')
+            self = args[0]
+            other = (args[1] if (len(args) >= 2) else ())
+            if isinstance(other, Mapping):
+                for key in other:
+                    self[key] = other[key]
+            elif hasattr(other, 'keys'):
+                for key in other.keys():
+                    self[key] = other[key]
+            else:
+                for (key, value) in other:
+                    self[key] = value
+            for (key, value) in kwds.items():
+                self[key] = value
+
+        def setdefault(self, key, default=None):
+            try:
+                return self[key]
+            except KeyError:
+                self[key] = default
+            return default
+    collections.Mapping.register(Mapping)
+    collections.MutableMapping.register(MutableMapping)
+else:
+    MutableMapping = collections.MutableMapping
+collections.MutableSequence.register(BaseContainer)

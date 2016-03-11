@@ -1,0 +1,13 @@
+def testMergePackedFromStringWhenSomeFieldsAlreadySet(self):
+    first_proto = unittest_pb2.TestPackedTypes()
+    first_proto.packed_int32.extend([1, 2])
+    first_proto.packed_double.append(3.0)
+    serialized = first_proto.SerializeToString()
+    second_proto = unittest_pb2.TestPackedTypes()
+    second_proto.packed_int32.append(3)
+    second_proto.packed_double.extend([1.0, 2.0])
+    second_proto.packed_sint32.append(4)
+    self.assertEqual(len(serialized), second_proto.MergeFromString(serialized))
+    self.assertEqual([3, 1, 2], second_proto.packed_int32)
+    self.assertEqual([1.0, 2.0, 3.0], second_proto.packed_double)
+    self.assertEqual([4], second_proto.packed_sint32)

@@ -1,0 +1,10 @@
+def testParsingNestedClass(self):
+    'Test that the generated class can parse a nested message.'
+    file_descriptor = descriptor_pb2.FileDescriptorProto()
+    file_descriptor.ParseFromString(self._GetSerializedFileDescriptor('C'))
+    msg_descriptor = descriptor.MakeDescriptor(file_descriptor.message_type[0])
+    msg_class = reflection.MakeClass(msg_descriptor)
+    msg = msg_class()
+    msg_str = 'bar {  baz {    deep: 4  }}'
+    text_format.Merge(msg_str, msg)
+    self.assertEqual(msg.bar.baz.deep, 4)

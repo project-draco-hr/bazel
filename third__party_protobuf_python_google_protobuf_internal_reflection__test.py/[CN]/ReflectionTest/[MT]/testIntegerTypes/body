@@ -1,0 +1,24 @@
+def testIntegerTypes(self):
+
+    def TestGetAndDeserialize(field_name, value, expected_type):
+        proto = unittest_pb2.TestAllTypes()
+        setattr(proto, field_name, value)
+        self.assertIsInstance(getattr(proto, field_name), expected_type)
+        proto2 = unittest_pb2.TestAllTypes()
+        proto2.ParseFromString(proto.SerializeToString())
+        self.assertIsInstance(getattr(proto2, field_name), expected_type)
+    TestGetAndDeserialize('optional_int32', 1, int)
+    TestGetAndDeserialize('optional_int32', (1 << 30), int)
+    TestGetAndDeserialize('optional_uint32', (1 << 30), int)
+    try:
+        integer_64 = long
+    except NameError:
+        integer_64 = int
+    if (struct.calcsize('L') == 4):
+        TestGetAndDeserialize('optional_uint32', (1 << 31), long)
+    else:
+        TestGetAndDeserialize('optional_uint32', (1 << 31), int)
+    TestGetAndDeserialize('optional_int64', (1 << 30), integer_64)
+    TestGetAndDeserialize('optional_int64', (1 << 60), integer_64)
+    TestGetAndDeserialize('optional_uint64', (1 << 30), integer_64)
+    TestGetAndDeserialize('optional_uint64', (1 << 60), integer_64)

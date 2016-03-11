@@ -1,0 +1,6 @@
+def _GetSerializedFileDescriptor(self, name):
+    'Get a serialized representation of a test FileDescriptorProto.\n\n    Args:\n      name: All calls to this must use a unique message name, to avoid\n          collisions in the cpp descriptor pool.\n    Returns:\n      A string containing the serialized form of a test FileDescriptorProto.\n    '
+    file_descriptor_str = (('message_type {  name: "' + name) + '"  field {    name: "flat"    number: 1    label: LABEL_REPEATED    type: TYPE_UINT32  }  field {    name: "bar"    number: 2    label: LABEL_OPTIONAL    type: TYPE_MESSAGE    type_name: "Bar"  }  nested_type {    name: "Bar"    field {      name: "baz"      number: 3      label: LABEL_OPTIONAL      type: TYPE_MESSAGE      type_name: "Baz"    }    nested_type {      name: "Baz"      enum_type {        name: "deep_enum"        value {          name: "VALUE_A"          number: 0        }      }      field {        name: "deep"        number: 4        label: LABEL_OPTIONAL        type: TYPE_UINT32      }    }  }}')
+    file_descriptor = descriptor_pb2.FileDescriptorProto()
+    text_format.Merge(file_descriptor_str, file_descriptor)
+    return file_descriptor.SerializeToString()

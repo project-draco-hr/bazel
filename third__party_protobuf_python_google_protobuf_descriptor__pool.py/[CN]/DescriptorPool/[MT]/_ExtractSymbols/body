@@ -1,0 +1,8 @@
+def _ExtractSymbols(self, descriptors):
+    'Pulls out all the symbols from descriptor protos.\n\n    Args:\n      descriptors: The messages to extract descriptors from.\n    Yields:\n      A two element tuple of the type name and descriptor object.\n    '
+    for desc in descriptors:
+        yield (_PrefixWithDot(desc.full_name), desc)
+        for symbol in self._ExtractSymbols(desc.nested_types):
+            yield symbol
+        for enum in desc.enum_types:
+            yield (_PrefixWithDot(enum.full_name), enum)

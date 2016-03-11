@@ -1,0 +1,79 @@
+def _MergeField(tokenizer, message, allow_multiple_scalars, allow_unknown_extension=False):
+    'Merges a single protocol message field into a message.\n\n  Args:\n    tokenizer: A tokenizer to parse the field name and values.\n    message: A protocol message to record the data.\n    allow_multiple_scalars: Determines if repeated values for a non-repeated\n      field are permitted, e.g., the string "foo: 1 foo: 2" for a\n      required/optional field named "foo".\n    allow_unknown_extension: if True, skip over missing extensions and keep\n      parsing\n\n  Raises:\n    ParseError: In case of text parsing problems.\n  '
+    message_descriptor = message.DESCRIPTOR
+    if (hasattr(message_descriptor, 'syntax') and (message_descriptor.syntax == 'proto3')):
+        allow_multiple_scalars = True
+    if tokenizer.TryConsume('['):
+        name = [tokenizer.ConsumeIdentifier()]
+        while tokenizer.TryConsume('.'):
+            name.append(tokenizer.ConsumeIdentifier())
+        name = '.'.join(name)
+        if (not message_descriptor.is_extendable):
+            raise tokenizer.ParseErrorPreviousToken(('Message type "%s" does not have extensions.' % message_descriptor.full_name))
+        field = message.Extensions._FindExtensionByName(name)
+        if (not field):
+            if allow_unknown_extension:
+                field = None
+            else:
+                raise tokenizer.ParseErrorPreviousToken(('Extension "%s" not registered.' % name))
+        elif (message_descriptor != field.containing_type):
+            raise tokenizer.ParseErrorPreviousToken(('Extension "%s" does not extend message type "%s".' % (name, message_descriptor.full_name)))
+        tokenizer.Consume(']')
+    else:
+        name = tokenizer.ConsumeIdentifier()
+        field = message_descriptor.fields_by_name.get(name, None)
+        if (not field):
+            field = message_descriptor.fields_by_name.get(name.lower(), None)
+            if (field and (field.type != descriptor.FieldDescriptor.TYPE_GROUP)):
+                field = None
+        if (field and (field.type == descriptor.FieldDescriptor.TYPE_GROUP) and (field.message_type.name != name)):
+            field = None
+        if (not field):
+            raise tokenizer.ParseErrorPreviousToken(('Message type "%s" has no field named "%s".' % (message_descriptor.full_name, name)))
+    if (field and (field.cpp_type == descriptor.FieldDescriptor.CPPTYPE_MESSAGE)):
+        is_map_entry = _IsMapEntry(field)
+        tokenizer.TryConsume(':')
+        if tokenizer.TryConsume('<'):
+            end_token = '>'
+        else:
+            tokenizer.Consume('{')
+            end_token = '}'
+        if (field.label == descriptor.FieldDescriptor.LABEL_REPEATED):
+            if field.is_extension:
+                sub_message = message.Extensions[field].add()
+            elif is_map_entry:
+                sub_message = field.message_type._concrete_class()
+            else:
+                sub_message = getattr(message, field.name).add()
+        else:
+            if field.is_extension:
+                sub_message = message.Extensions[field]
+            else:
+                sub_message = getattr(message, field.name)
+            sub_message.SetInParent()
+        while (not tokenizer.TryConsume(end_token)):
+            if tokenizer.AtEnd():
+                raise tokenizer.ParseErrorPreviousToken(('Expected "%s".' % end_token))
+            _MergeField(tokenizer, sub_message, allow_multiple_scalars, allow_unknown_extension)
+        if is_map_entry:
+            value_cpptype = field.message_type.fields_by_name['value'].cpp_type
+            if (value_cpptype == descriptor.FieldDescriptor.CPPTYPE_MESSAGE):
+                value = getattr(message, field.name)[sub_message.key]
+                value.MergeFrom(sub_message.value)
+            else:
+                getattr(message, field.name)[sub_message.key] = sub_message.value
+    elif field:
+        tokenizer.Consume(':')
+        if ((field.label == descriptor.FieldDescriptor.LABEL_REPEATED) and tokenizer.TryConsume('[')):
+            while True:
+                _MergeScalarField(tokenizer, message, field, allow_multiple_scalars)
+                if tokenizer.TryConsume(']'):
+                    break
+                tokenizer.Consume(',')
+        else:
+            _MergeScalarField(tokenizer, message, field, allow_multiple_scalars)
+    else:
+        assert allow_unknown_extension
+        _SkipFieldContents(tokenizer)
+    if (not tokenizer.TryConsume(',')):
+        tokenizer.TryConsume(';')

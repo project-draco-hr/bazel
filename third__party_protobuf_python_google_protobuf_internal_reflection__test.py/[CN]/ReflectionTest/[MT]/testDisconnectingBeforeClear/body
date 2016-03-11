@@ -1,0 +1,24 @@
+def testDisconnectingBeforeClear(self):
+    proto = unittest_pb2.TestAllTypes()
+    nested = proto.optional_nested_message
+    proto.Clear()
+    self.assertTrue((nested is not proto.optional_nested_message))
+    nested.bb = 23
+    self.assertTrue((not proto.HasField('optional_nested_message')))
+    self.assertEqual(0, proto.optional_nested_message.bb)
+    proto = unittest_pb2.TestAllTypes()
+    nested = proto.optional_nested_message
+    nested.bb = 5
+    foreign = proto.optional_foreign_message
+    foreign.c = 6
+    proto.Clear()
+    self.assertTrue((nested is not proto.optional_nested_message))
+    self.assertTrue((foreign is not proto.optional_foreign_message))
+    self.assertEqual(5, nested.bb)
+    self.assertEqual(6, foreign.c)
+    nested.bb = 15
+    foreign.c = 16
+    self.assertFalse(proto.HasField('optional_nested_message'))
+    self.assertEqual(0, proto.optional_nested_message.bb)
+    self.assertFalse(proto.HasField('optional_foreign_message'))
+    self.assertEqual(0, proto.optional_foreign_message.c)

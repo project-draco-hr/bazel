@@ -1,0 +1,41 @@
+def _AttachFieldHelpers(cls, field_descriptor):
+    is_repeated = (field_descriptor.label == _FieldDescriptor.LABEL_REPEATED)
+    is_packable = (is_repeated and wire_format.IsTypePackable(field_descriptor.type))
+    if (not is_packable):
+        is_packed = False
+    elif (field_descriptor.containing_type.syntax == 'proto2'):
+        is_packed = (field_descriptor.has_options and field_descriptor.GetOptions().packed)
+    else:
+        has_packed_false = (field_descriptor.has_options and field_descriptor.GetOptions().HasField('packed') and (field_descriptor.GetOptions().packed == False))
+        is_packed = (not has_packed_false)
+    is_map_entry = _IsMapField(field_descriptor)
+    if is_map_entry:
+        field_encoder = encoder.MapEncoder(field_descriptor)
+        sizer = encoder.MapSizer(field_descriptor)
+    elif _IsMessageSetExtension(field_descriptor):
+        field_encoder = encoder.MessageSetItemEncoder(field_descriptor.number)
+        sizer = encoder.MessageSetItemSizer(field_descriptor.number)
+    else:
+        field_encoder = type_checkers.TYPE_TO_ENCODER[field_descriptor.type](field_descriptor.number, is_repeated, is_packed)
+        sizer = type_checkers.TYPE_TO_SIZER[field_descriptor.type](field_descriptor.number, is_repeated, is_packed)
+    field_descriptor._encoder = field_encoder
+    field_descriptor._sizer = sizer
+    field_descriptor._default_constructor = _DefaultValueConstructorForField(field_descriptor)
+
+    def AddDecoder(wiretype, is_packed):
+        tag_bytes = encoder.TagBytes(field_descriptor.number, wiretype)
+        decode_type = field_descriptor.type
+        if ((decode_type == _FieldDescriptor.TYPE_ENUM) and type_checkers.SupportsOpenEnums(field_descriptor)):
+            decode_type = _FieldDescriptor.TYPE_INT32
+        oneof_descriptor = None
+        if (field_descriptor.containing_oneof is not None):
+            oneof_descriptor = field_descriptor
+        if is_map_entry:
+            is_message_map = _IsMessageMapField(field_descriptor)
+            field_decoder = decoder.MapDecoder(field_descriptor, _GetInitializeDefaultForMap(field_descriptor), is_message_map)
+        else:
+            field_decoder = type_checkers.TYPE_TO_DECODER[decode_type](field_descriptor.number, is_repeated, is_packed, field_descriptor, field_descriptor._default_constructor)
+        cls._decoders_by_tag[tag_bytes] = (field_decoder, oneof_descriptor)
+    AddDecoder(type_checkers.FIELD_TYPE_TO_WIRE_TYPE[field_descriptor.type], False)
+    if (is_repeated and wire_format.IsTypePackable(field_descriptor.type)):
+        AddDecoder(wire_format.WIRETYPE_LENGTH_DELIMITED, True)

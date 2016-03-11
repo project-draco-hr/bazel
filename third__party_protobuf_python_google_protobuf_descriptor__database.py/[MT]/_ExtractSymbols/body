@@ -1,0 +1,9 @@
+def _ExtractSymbols(desc_proto, package):
+    'Pulls out all the symbols from a descriptor proto.\n\n  Args:\n    desc_proto: The proto to extract symbols from.\n    package: The package containing the descriptor type.\n\n  Yields:\n    The fully qualified name found in the descriptor.\n  '
+    message_name = '.'.join((package, desc_proto.name))
+    yield message_name
+    for nested_type in desc_proto.nested_type:
+        for symbol in _ExtractSymbols(nested_type, message_name):
+            yield symbol
+    for enum_type in desc_proto.enum_type:
+        yield '.'.join((message_name, enum_type.name))

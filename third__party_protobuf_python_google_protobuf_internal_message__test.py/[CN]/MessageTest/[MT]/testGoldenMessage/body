@@ -1,0 +1,12 @@
+def testGoldenMessage(self, message_module):
+    if (message_module is unittest_pb2):
+        golden_data = test_util.GoldenFileData('golden_message_oneof_implemented')
+    else:
+        golden_data = test_util.GoldenFileData('golden_message_proto3')
+    golden_message = message_module.TestAllTypes()
+    golden_message.ParseFromString(golden_data)
+    if (message_module is unittest_pb2):
+        test_util.ExpectAllFieldsSet(self, golden_message)
+    self.assertEqual(golden_data, golden_message.SerializeToString())
+    golden_copy = copy.deepcopy(golden_message)
+    self.assertEqual(golden_data, golden_copy.SerializeToString())

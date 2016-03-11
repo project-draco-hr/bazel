@@ -1,0 +1,18 @@
+def CheckType(self, test, containing_type_desc, name, file_desc):
+    if (containing_type_desc is None):
+        desc = file_desc.message_types_by_name[name]
+        expected_full_name = '.'.join([file_desc.package, name])
+    else:
+        desc = containing_type_desc.nested_types_by_name[name]
+        expected_full_name = '.'.join([containing_type_desc.full_name, name])
+    test.assertEqual(name, desc.name)
+    test.assertEqual(expected_full_name, desc.full_name)
+    test.assertEqual(containing_type_desc, desc.containing_type)
+    test.assertEqual(desc.file, file_desc)
+    test.assertEqual(self.is_extendable, desc.is_extendable)
+    for (name, subtype) in self.type_dict.items():
+        subtype.CheckType(test, desc, name, file_desc)
+    for (index, (name, field)) in enumerate(self.field_list):
+        field.CheckField(test, desc, name, index)
+    for (index, (name, field)) in enumerate(self.extensions):
+        field.CheckField(test, desc, name, index)
