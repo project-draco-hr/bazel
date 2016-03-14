@@ -1,0 +1,15 @@
+{
+  String messageFast="Running quick action";
+  String messageSlow="Running slow action";
+  Action fastAction=mockAction(messageFast,"foo/fast");
+  Action slowAction=mockAction(messageSlow,"bar/slow");
+  ExperimentalStateTracker stateTracker=new ExperimentalStateTracker();
+  stateTracker.actionStarted(new ActionStartedEvent(fastAction,123456789));
+  stateTracker.actionStarted(new ActionStartedEvent(slowAction,123456999));
+  stateTracker.actionCompletion(new ActionCompletionEvent(20,fastAction));
+  LoggingTerminalWriter terminalWriter=new LoggingTerminalWriter();
+  stateTracker.writeProgressBar(terminalWriter);
+  String output=terminalWriter.getWritten();
+  assertFalse("Completed action '" + messageFast + "' should not be present in output: "+ output,output.contains(messageFast));
+  assertTrue("Only running action '" + messageSlow + "' should be present in output: "+ output,output.contains(messageSlow));
+}
