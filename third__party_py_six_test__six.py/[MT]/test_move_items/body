@@ -1,0 +1,23 @@
+@py.test.mark.parametrize('item_name', [item.name for item in six._moved_attributes])
+def test_move_items(item_name):
+    'Ensure that everything loads correctly.'
+    try:
+        item = getattr(six.moves, item_name)
+        if isinstance(item, types.ModuleType):
+            __import__(('six.moves.' + item_name))
+    except AttributeError:
+        if ((item_name == 'zip_longest') and (sys.version_info < (2, 6))):
+            py.test.skip('zip_longest only available on 2.6+')
+    except ImportError:
+        if ((item_name == 'winreg') and (not sys.platform.startswith('win'))):
+            py.test.skip('Windows only module')
+        if item_name.startswith('tkinter'):
+            if (not have_tkinter):
+                py.test.skip('requires tkinter')
+            if ((item_name == 'tkinter_ttk') and (sys.version_info[:2] <= (2, 6))):
+                py.test.skip('ttk only available on 2.7+')
+        if (item_name.startswith('dbm_gnu') and (not have_gdbm)):
+            py.test.skip('requires gdbm')
+        raise
+    if (sys.version_info[:2] >= (2, 6)):
+        assert (item_name in dir(six.moves))

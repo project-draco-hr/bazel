@@ -1,0 +1,12 @@
+def load_module(self, fullname):
+    try:
+        return sys.modules[fullname]
+    except KeyError:
+        pass
+    mod = self.__get_module(fullname)
+    if isinstance(mod, MovedModule):
+        mod = mod._resolve()
+    else:
+        mod.__loader__ = self
+    sys.modules[fullname] = mod
+    return mod
