@@ -3,13 +3,14 @@
   idlHelper=new AndroidIdlHelper(ruleContext,classJar);
   JavaTargetAttributes.Builder attributes=javaCommon.initCommon(idlHelper.getIdlGeneratedJavaSources(),androidSemantics.getJavacArguments()).setBootClassPath(ImmutableList.of(AndroidSdkProvider.fromRuleContext(ruleContext).getAndroidJar()));
   JavaCompilationArtifacts.Builder artifactsBuilder=new JavaCompilationArtifacts.Builder();
+  ImmutableList.Builder<Artifact> jarsProducedForRuntime=ImmutableList.builder();
   NestedSetBuilder<Artifact> filesBuilder=NestedSetBuilder.<Artifact>stableOrder();
   Artifact resourcesJar=resourceApk.getResourceJavaSrcJar();
   if (resourcesJar != null) {
     filesBuilder.add(resourcesJar);
-    compileResources(javaSemantics,resourcesJar,artifactsBuilder,attributes,filesBuilder);
+    compileResources(javaSemantics,resourcesJar,artifactsBuilder,attributes,filesBuilder,jarsProducedForRuntime);
     if (resourceApk.isLegacy()) {
-      createJarJarActions(attributes,resourceApk.getResourceDependencies().getResources(),resourceApk.getPrimaryResource().getJavaPackage(),resourceClassJar);
+      createJarJarActions(attributes,jarsProducedForRuntime,resourceApk.getResourceDependencies().getResources(),resourceApk.getPrimaryResource().getJavaPackage(),resourceClassJar);
     }
   }
   JavaCompilationHelper helper=initAttributes(attributes,javaSemantics);
@@ -30,5 +31,6 @@
   if (ruleContext.hasErrors()) {
     return null;
   }
+  this.jarsProducedForRuntime=jarsProducedForRuntime.add(classJar).build();
   return helper.getAttributes();
 }
