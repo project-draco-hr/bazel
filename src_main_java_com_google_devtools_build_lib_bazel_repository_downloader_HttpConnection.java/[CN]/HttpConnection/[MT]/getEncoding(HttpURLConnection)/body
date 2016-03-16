@@ -1,0 +1,34 @@
+{
+  String encoding=connection.getContentEncoding();
+  if (encoding != null) {
+    if (Charset.availableCharsets().containsKey(encoding)) {
+      try {
+        return Charset.forName(encoding);
+      }
+ catch (      IllegalArgumentException|UnsupportedOperationException e) {
+        throw new IOException("Got invalid encoding from " + connection.getURL() + ": "+ encoding);
+      }
+    }
+ else {
+      throw new IOException("Got unavailable encoding from " + connection.getURL() + ": "+ encoding);
+    }
+  }
+  encoding=connection.getContentType();
+  if (encoding == null) {
+    return StandardCharsets.UTF_8;
+  }
+  try {
+    MediaType mediaType=MediaType.parse(encoding);
+    if (mediaType == null) {
+      return StandardCharsets.UTF_8;
+    }
+    Optional<Charset> charset=mediaType.charset();
+    if (charset.isPresent()) {
+      return charset.get();
+    }
+  }
+ catch (  IllegalArgumentException|IllegalStateException e) {
+    throw new IOException("Got invalid encoding from " + connection.getURL() + ": "+ encoding);
+  }
+  return StandardCharsets.UTF_8;
+}
