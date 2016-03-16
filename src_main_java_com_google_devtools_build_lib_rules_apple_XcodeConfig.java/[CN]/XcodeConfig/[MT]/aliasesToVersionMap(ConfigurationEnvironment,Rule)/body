@@ -6,16 +6,16 @@
     xcodeVersionRuleListBuilder.add(new XcodeVersionRuleData(label,xcodeVersionRule));
   }
   ImmutableList<XcodeVersionRuleData> xcodeVersionRules=xcodeVersionRuleListBuilder.build();
-  Map<String,DottedVersion> aliasesToVersionMap=Maps.newLinkedHashMap();
+  Map<String,XcodeVersionRuleData> aliasesToXcodeRules=Maps.newLinkedHashMap();
   for (  XcodeVersionRuleData xcodeVersionRule : xcodeVersionRules) {
     for (    String alias : xcodeVersionRule.getAliases()) {
-      if (aliasesToVersionMap.put(alias,xcodeVersionRule.getVersion()) != null) {
+      if (aliasesToXcodeRules.put(alias,xcodeVersionRule) != null) {
         configErrorDuplicateAlias(alias,xcodeVersionRules);
       }
     }
-    if (aliasesToVersionMap.put(xcodeVersionRule.getVersion().toString(),xcodeVersionRule.getVersion()) != null) {
+    if (aliasesToXcodeRules.put(xcodeVersionRule.getVersion().toString(),xcodeVersionRule) != null) {
       configErrorDuplicateAlias(xcodeVersionRule.getVersion().toString(),xcodeVersionRules);
     }
   }
-  return aliasesToVersionMap;
+  return aliasesToXcodeRules;
 }

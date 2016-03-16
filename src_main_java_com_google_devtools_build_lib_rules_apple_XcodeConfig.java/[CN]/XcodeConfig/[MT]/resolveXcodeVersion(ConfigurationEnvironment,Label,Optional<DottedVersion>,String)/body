@@ -1,10 +1,13 @@
 {
   Rule xcodeConfigRule=getRuleForLabel(xcodeConfigLabel,"xcode_config",env,errorDescription);
-  DottedVersion dottedVersion=resolveExplicitlyDefinedVersion(env,xcodeConfigRule,xcodeVersionOverrideFlag);
-  if (dottedVersion != null) {
-    return Optional.of(dottedVersion);
+  XcodeVersionRuleData xcodeVersion=resolveExplicitlyDefinedVersion(env,xcodeConfigRule,xcodeVersionOverrideFlag);
+  if (xcodeVersion != null) {
+    return xcodeVersion.getXcodeVersionProperties();
+  }
+ else   if (xcodeVersionOverrideFlag.isPresent()) {
+    return new XcodeVersionProperties(xcodeVersionOverrideFlag.get());
   }
  else {
-    return xcodeVersionOverrideFlag;
+    return XcodeVersionProperties.unknownXcodeVersionProperties();
   }
 }
