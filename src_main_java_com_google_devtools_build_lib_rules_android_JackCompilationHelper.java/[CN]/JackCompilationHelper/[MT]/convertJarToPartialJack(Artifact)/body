@@ -1,5 +1,9 @@
 {
   Artifact result=ruleContext.getUniqueDirectoryArtifact(PARTIAL_JACK_DIRECTORY,FileSystemUtils.replaceExtension(jar.getRootRelativePath(),".jack"),ruleContext.getBinOrGenfilesDirectory());
-  ruleContext.registerAction(new SpawnAction.Builder().setExecutable(jillBinary).addArgument(JILL_OUTPUT).addOutputArgument(result).addInputArgument(jar).setProgressMessage("Converting " + jar.getExecPath().getBaseName() + " to Jack library with Jill").setMnemonic("AndroidJill").build(ruleContext));
+  SpawnAction.Builder builder=new SpawnAction.Builder().setExecutable(jillBinary);
+  if (useTolerant) {
+    builder.addArgument(TOLERANT);
+  }
+  ruleContext.registerAction(builder.addArgument(JILL_OUTPUT).addOutputArgument(result).addInputArgument(jar).setProgressMessage("Converting " + jar.getExecPath().getBaseName() + " to Jack library with Jill").setMnemonic("AndroidJill").build(ruleContext));
   return result;
 }

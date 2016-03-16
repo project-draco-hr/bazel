@@ -14,11 +14,12 @@
   Artifact frameworkAidl=ruleContext.getPrerequisiteArtifact("framework_aidl",Mode.HOST);
   Artifact androidJar=ruleContext.getPrerequisiteArtifact("android_jar",Mode.HOST);
   Artifact shrinkedAndroidJar=ruleContext.getPrerequisiteArtifact("shrinked_android_jar",Mode.HOST);
-  Artifact androidJack=ruleContext.getPrerequisiteArtifact("android_jack",Mode.HOST);
+  NestedSet<Artifact> androidBaseClasspathForJack=convertClasspathJarsToJack(ruleContext,jack,jill,resourceExtractor,ImmutableList.of(androidJar));
+  NestedSet<Artifact> javaBaseClasspathForJack=convertClasspathJarsToJack(ruleContext,jack,jill,resourceExtractor,BaseJavaCompilationHelper.getBootClasspath(ruleContext,JavaToolchainProvider.fromRuleContext(ruleContext),""));
   Artifact annotationsJar=ruleContext.getPrerequisiteArtifact("annotations_jar",Mode.HOST);
   Artifact mainDexClasses=ruleContext.getPrerequisiteArtifact("main_dex_classes",Mode.HOST);
   if (ruleContext.hasErrors()) {
     return null;
   }
-  return new RuleConfiguredTargetBuilder(ruleContext).add(AndroidSdkProvider.class,new AndroidSdkProvider(buildToolsVersion,frameworkAidl,androidJar,shrinkedAndroidJar,androidJack,annotationsJar,mainDexClasses,adb,dx,mainDexListCreator,aidl,aapt,apkBuilder,proguard,zipalign,jack,jill,resourceExtractor)).add(RunfilesProvider.class,RunfilesProvider.EMPTY).setFilesToBuild(NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER)).build();
+  return new RuleConfiguredTargetBuilder(ruleContext).add(AndroidSdkProvider.class,new AndroidSdkProvider(buildToolsVersion,frameworkAidl,androidJar,shrinkedAndroidJar,androidBaseClasspathForJack,javaBaseClasspathForJack,annotationsJar,mainDexClasses,adb,dx,mainDexListCreator,aidl,aapt,apkBuilder,proguard,zipalign,jack,jill,resourceExtractor)).add(RunfilesProvider.class,RunfilesProvider.EMPTY).setFilesToBuild(NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER)).build();
 }

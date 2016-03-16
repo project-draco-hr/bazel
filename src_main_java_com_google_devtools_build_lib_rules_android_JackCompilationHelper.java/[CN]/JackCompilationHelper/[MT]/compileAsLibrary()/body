@@ -15,16 +15,18 @@
   }
 );
   NestedSet<Artifact> transitiveClasspath=new NestedSetBuilder<Artifact>(Order.NAIVE_LINK_ORDER).addAll(Iterables.transform(classpathJars,nonLibraryFileConverter)).addTransitive(classpathJacks).build();
-  NestedSet<Artifact> classpath=new NestedSetBuilder<Artifact>(Order.NAIVE_LINK_ORDER).add(androidBaseLibraryForJack).addTransitive(transitiveClasspath).build();
+  NestedSet<Artifact> classpath=new NestedSetBuilder<Artifact>(Order.NAIVE_LINK_ORDER).addTransitive(baseClasspath).addTransitive(transitiveClasspath).build();
   NestedSetBuilder<Artifact> exports=new NestedSetBuilder<>(Order.NAIVE_LINK_ORDER);
   NestedSetBuilder<Artifact> dexContents=new NestedSetBuilder<>(Order.NAIVE_LINK_ORDER);
-  if (javaSources.isEmpty() && sourceJars.isEmpty() && resources.isEmpty()) {
-    buildEmptyJackAction();
-  }
+  if (outputArtifact != null) {
+    if (javaSources.isEmpty() && sourceJars.isEmpty() && resources.isEmpty()) {
+      buildEmptyJackAction();
+    }
  else {
-    buildJackAction(javaSources,sourceJars,resources,classpath);
-    exports.add(outputArtifact);
-    dexContents.add(outputArtifact);
+      buildJackAction(javaSources,sourceJars,resources,classpath);
+      exports.add(outputArtifact);
+      dexContents.add(outputArtifact);
+    }
   }
   exports.addAll(Iterables.transform(exportedJars,nonLibraryFileConverter)).addTransitive(exportedJacks).addTransitive(transitiveClasspath);
   dexContents.addAll(Iterables.transform(dexJars,nonLibraryFileConverter)).addTransitive(dexJacks);

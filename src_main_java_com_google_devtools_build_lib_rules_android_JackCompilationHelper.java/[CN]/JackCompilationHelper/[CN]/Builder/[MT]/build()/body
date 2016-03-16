@@ -1,10 +1,8 @@
 {
   Preconditions.checkNotNull(ruleContext);
-  Preconditions.checkNotNull(androidSdk);
   boolean useSanityChecks=ruleContext.getFragment(AndroidConfiguration.class).isJackSanityChecked();
-  FilesToRunProvider jackBinary=androidSdk.getJack();
-  FilesToRunProvider jillBinary=androidSdk.getJill();
-  FilesToRunProvider resourceExtractorBinary=androidSdk.getResourceExtractor();
-  Artifact androidBaseLibraryForJack=androidSdk.getAndroidJack();
-  return new JackCompilationHelper(ruleContext,useSanityChecks,Preconditions.checkNotNull(resourceExtractorBinary),Preconditions.checkNotNull(jackBinary),Preconditions.checkNotNull(jillBinary),Preconditions.checkNotNull(androidBaseLibraryForJack),Preconditions.checkNotNull(outputArtifact),ImmutableSet.copyOf(javaSources),ImmutableSet.copyOf(sourceJars),ImmutableMap.copyOf(resources),processorClasspathJars.build(),ImmutableSet.copyOf(processorNames),exportedJackLibraries.build(),ImmutableSet.copyOf(exportedNonLibraryFiles),classpathJackLibraries.build(),ImmutableSet.copyOf(classpathNonLibraryFiles),dexJacks.build(),ImmutableSet.copyOf(dexJars));
+  if (!javaSources.isEmpty() || !sourceJars.isEmpty() || !resources.isEmpty()) {
+    Preconditions.checkNotNull(outputArtifact);
+  }
+  return new JackCompilationHelper(ruleContext,useSanityChecks,useTolerant,Preconditions.checkNotNull(resourceExtractorBinary),Preconditions.checkNotNull(jackBinary),Preconditions.checkNotNull(jillBinary),Preconditions.checkNotNull(baseClasspath),outputArtifact,ImmutableSet.copyOf(javaSources),ImmutableSet.copyOf(sourceJars),ImmutableMap.copyOf(resources),processorClasspathJars.build(),ImmutableSet.copyOf(processorNames),exportedJackLibraries.build(),ImmutableSet.copyOf(exportedNonLibraryFiles),classpathJackLibraries.build(),ImmutableSet.copyOf(classpathNonLibraryFiles),dexJacks.build(),ImmutableSet.copyOf(dexJars));
 }
