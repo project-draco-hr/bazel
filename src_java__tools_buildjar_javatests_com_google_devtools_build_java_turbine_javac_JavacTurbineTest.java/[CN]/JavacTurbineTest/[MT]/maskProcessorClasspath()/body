@@ -1,0 +1,20 @@
+{
+  addSourceLines("MyAnnotation.java","public @interface MyAnnotation {}");
+  addSourceLines("Hello.java","@MyAnnotation class Hello {}");
+  Path processorJar=temp.newFile("libprocessor.jar").toPath();
+  try (OutputStream os=Files.newOutputStream(processorJar);JarOutputStream jos=new JarOutputStream(os)){
+    String classFileName=HostClasspathProcessor.class.getName().replace('.','/') + ".class";
+    jos.putNextEntry(new JarEntry(classFileName));
+    try (InputStream is=getClass().getClassLoader().getResourceAsStream(classFileName)){
+      ByteStreams.copy(is,jos);
+    }
+   }
+   optionsBuilder.setProcessors(ImmutableList.of(HostClasspathProcessor.class.getName()));
+  optionsBuilder.addProcessorPathEntries(ImmutableList.of(processorJar.toString()));
+  optionsBuilder.addClassPathEntries(ImmutableList.<String>of());
+  compile();
+  Map<String,byte[]> outputs=collectOutputs();
+  assertThat(outputs.keySet()).contains("result.txt");
+  String text=new String(outputs.get("result.txt"),StandardCharsets.UTF_8);
+  assertThat(text).contains("java.lang.NoClassDefFoundError:" + " com/google/devtools/build/java/turbine/javac/JavacTurbine");
+}

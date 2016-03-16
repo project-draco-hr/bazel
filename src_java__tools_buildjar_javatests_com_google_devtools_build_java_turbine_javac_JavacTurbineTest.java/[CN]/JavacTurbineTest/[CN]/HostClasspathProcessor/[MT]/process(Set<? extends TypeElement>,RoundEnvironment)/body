@@ -1,0 +1,26 @@
+{
+  if (!first) {
+    return false;
+  }
+  first=false;
+  String message;
+  try {
+    JavacTurbine.class.toString();
+    message="ok";
+  }
+ catch (  Throwable e) {
+    StringWriter stringWriter=new StringWriter();
+    e.printStackTrace(new PrintWriter(stringWriter));
+    message=stringWriter.toString();
+  }
+  try {
+    FileObject fileObject=processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT,"","result.txt");
+    try (OutputStream os=fileObject.openOutputStream()){
+      os.write(message.getBytes(StandardCharsets.UTF_8));
+    }
+   }
+ catch (  IOException e) {
+    throw new IOError(e);
+  }
+  return false;
+}
