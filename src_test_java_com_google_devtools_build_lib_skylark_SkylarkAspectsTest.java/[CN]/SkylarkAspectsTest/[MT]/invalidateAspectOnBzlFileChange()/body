@@ -1,0 +1,7 @@
+{
+  scratch.file("test/build_defs.bzl",aspectBzlFile("'deps'"));
+  scratch.file("test/BUILD","load('build_defs', 'repro', 'repro_no_aspect')","repro_no_aspect(name = 'r0')","repro_no_aspect(name = 'r1', deps = [':r0'])","repro(name = 'r2', deps = [':r1'])");
+  buildTargetAndCheckRuleInfo("//test:r0","//test:r1");
+  scratch.overwriteFile("test/build_defs.bzl",aspectBzlFile(""));
+  buildTargetAndCheckRuleInfo("//test:r1");
+}

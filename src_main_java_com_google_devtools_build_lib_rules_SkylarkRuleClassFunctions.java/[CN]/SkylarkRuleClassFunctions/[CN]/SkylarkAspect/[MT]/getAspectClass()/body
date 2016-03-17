@@ -1,4 +1,13 @@
 {
-  Preconditions.checkState(isExported());
-  return new SkylarkAspectClassImpl(this);
+  Preconditions.checkArgument(isExported(),"Skylark aspects must be exported");
+  SkylarkAspectClass.Builder builder=new SkylarkAspectClass.Builder();
+  builder.setExtensionLabel(getExtensionLabel());
+  builder.setExportedName(getExportedName());
+  builder.addAttrAspects(attributeAspects);
+  for (  Pair<String,Descriptor> attribute : attributes) {
+    builder.addAttribute(attribute.second.getAttributeBuilder().build(attribute.first));
+  }
+  builder.addConfigurationFragments(fragments);
+  builder.addHostConfigurationFragments(hostFragments);
+  return builder.build();
 }
