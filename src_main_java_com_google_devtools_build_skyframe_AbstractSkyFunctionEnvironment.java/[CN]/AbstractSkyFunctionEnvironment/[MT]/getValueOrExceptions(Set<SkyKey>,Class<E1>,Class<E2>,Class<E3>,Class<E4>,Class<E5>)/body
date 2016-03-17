@@ -5,39 +5,42 @@
   SkyFunctionException.validateExceptionType(exceptionClass4);
   SkyFunctionException.validateExceptionType(exceptionClass5);
   Map<SkyKey,ValueOrUntypedException> valueOrExceptions=getValueOrUntypedExceptions(depKeys);
-  ImmutableMap.Builder<SkyKey,ValueOrException5<E1,E2,E3,E4,E5>> builder=ImmutableMap.builder();
-  for (  SkyKey depKey : depKeys) {
-    ValueOrUntypedException voe=valueOrExceptions.get(depKey);
+  for (  ValueOrUntypedException voe : valueOrExceptions.values()) {
     SkyValue value=voe.getValue();
-    if (value != null) {
-      builder.put(depKey,ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofValue(value));
-      continue;
-    }
-    Exception e=voe.getException();
-    if (e != null) {
-      if (exceptionClass1.isInstance(e)) {
-        builder.put(depKey,ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofExn1(exceptionClass1.cast(e)));
-        continue;
-      }
-      if (exceptionClass2.isInstance(e)) {
-        builder.put(depKey,ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofExn2(exceptionClass2.cast(e)));
-        continue;
-      }
-      if (exceptionClass3.isInstance(e)) {
-        builder.put(depKey,ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofExn3(exceptionClass3.cast(e)));
-        continue;
-      }
-      if (exceptionClass4.isInstance(e)) {
-        builder.put(depKey,ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofExn4(exceptionClass4.cast(e)));
-        continue;
-      }
-      if (exceptionClass5.isInstance(e)) {
-        builder.put(depKey,ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofExn5(exceptionClass5.cast(e)));
-        continue;
+    if (value == null) {
+      Exception e=voe.getException();
+      if (e == null || (!exceptionClass1.isInstance(e) && !exceptionClass2.isInstance(e) && !exceptionClass3.isInstance(e)&& !exceptionClass4.isInstance(e)&& !exceptionClass5.isInstance(e))) {
+        valuesMissing=true;
+        break;
       }
     }
-    valuesMissing=true;
-    builder.put(depKey,ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofNullValue());
   }
-  return builder.build();
+  return Maps.transformValues(valueOrExceptions,new Function<ValueOrUntypedException,ValueOrException5<E1,E2,E3,E4,E5>>(){
+    @Override public ValueOrException5<E1,E2,E3,E4,E5> apply(    ValueOrUntypedException voe){
+      SkyValue value=voe.getValue();
+      if (value != null) {
+        return ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofValue(value);
+      }
+      Exception e=voe.getException();
+      if (e != null) {
+        if (exceptionClass1.isInstance(e)) {
+          return ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofExn1(exceptionClass1.cast(e));
+        }
+        if (exceptionClass2.isInstance(e)) {
+          return ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofExn2(exceptionClass2.cast(e));
+        }
+        if (exceptionClass3.isInstance(e)) {
+          return ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofExn3(exceptionClass3.cast(e));
+        }
+        if (exceptionClass4.isInstance(e)) {
+          return ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofExn4(exceptionClass4.cast(e));
+        }
+        if (exceptionClass5.isInstance(e)) {
+          return ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofExn5(exceptionClass5.cast(e));
+        }
+      }
+      return ValueOrExceptionUtils.<E1,E2,E3,E4,E5>ofNullValue();
+    }
+  }
+);
 }
