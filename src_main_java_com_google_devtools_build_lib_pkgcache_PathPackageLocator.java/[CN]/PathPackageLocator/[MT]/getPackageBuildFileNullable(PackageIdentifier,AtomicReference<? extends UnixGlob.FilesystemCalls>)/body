@@ -1,8 +1,9 @@
 {
-  if (packageIdentifier.getRepository().isDefault()) {
+  Preconditions.checkArgument(!packageIdentifier.getRepository().isDefault());
+  if (packageIdentifier.getRepository().isMain()) {
     return getFilePath(packageIdentifier.getPackageFragment().getRelative("BUILD"),cache);
   }
- else   if (!packageIdentifier.getRepository().isDefault()) {
+ else {
     Verify.verify(outputBase != null,String.format("External package '%s' needs to be loaded but this PathPackageLocator instance does not " + "support external packages",packageIdentifier));
     Path buildFile=outputBase.getRelative(packageIdentifier.getPathFragment()).getRelative("BUILD");
     FileStatus stat=cache.get().statNullable(buildFile,Symlinks.FOLLOW);
@@ -12,8 +13,5 @@
  else {
       return null;
     }
-  }
- else {
-    return null;
   }
 }

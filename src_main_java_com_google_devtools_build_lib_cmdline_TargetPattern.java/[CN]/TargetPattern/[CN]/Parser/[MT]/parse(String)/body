@@ -1,7 +1,7 @@
 {
   String originalPattern=pattern;
   final boolean includesRepo=pattern.startsWith("@");
-  RepositoryName repository=PackageIdentifier.DEFAULT_REPOSITORY_NAME;
+  RepositoryName repository=null;
   if (includesRepo) {
     int pkgStart=pattern.indexOf("//");
     if (pkgStart < 0) {
@@ -34,6 +34,14 @@
   }
   if (packagePart.endsWith("/")) {
     throw new TargetParsingException("The package part of '" + originalPattern + "' should not end in a slash");
+  }
+  if (repository == null) {
+    if (packagePart.startsWith(Label.EXTERNAL_PACKAGE_NAME.toString())) {
+      repository=PackageIdentifier.DEFAULT_REPOSITORY_NAME;
+    }
+ else {
+      repository=PackageIdentifier.MAIN_REPOSITORY_NAME;
+    }
   }
   if (packagePart.endsWith("/...")) {
     String realPackagePart=removeSuffix(packagePart,"/...");

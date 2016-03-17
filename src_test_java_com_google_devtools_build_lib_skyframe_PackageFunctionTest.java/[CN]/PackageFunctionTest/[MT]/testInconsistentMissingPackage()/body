@@ -8,12 +8,12 @@
   scratch.file("/root2/foo/BUILD");
   scratch.file("/root2/foo/sub");
   getSkyframeExecutor().preparePackageLoading(new PathPackageLocator(outputBase,ImmutableList.of(root1,root2)),ConstantRuleVisibility.PUBLIC,true,7,"",UUID.randomUUID());
-  SkyKey pkgLookupKey=PackageLookupValue.key(PackageIdentifier.parse("foo"));
+  SkyKey pkgLookupKey=PackageLookupValue.key(PackageIdentifier.parse("@//foo"));
   EvaluationResult<PackageLookupValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),pkgLookupKey,false,reporter);
   assertFalse(result.hasError());
   assertEquals(root2,result.get(pkgLookupKey).getRoot());
   scratch.file("/root1/foo/BUILD");
-  SkyKey skyKey=PackageValue.key(PackageIdentifier.parse("pkg"));
+  SkyKey skyKey=PackageValue.key(PackageIdentifier.parse("@//pkg"));
   result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),skyKey,false,reporter);
   assertTrue(result.hasError());
   Throwable exception=result.getError(skyKey).getException();

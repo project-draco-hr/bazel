@@ -1,0 +1,20 @@
+{
+  String repo=defaultToMain ? "@" : PackageIdentifier.DEFAULT_REPOSITORY;
+  int packageStartPos=absName.indexOf("//");
+  if (packageStartPos > 0) {
+    repo=absName.substring(0,packageStartPos);
+    absName=absName.substring(packageStartPos);
+  }
+  try {
+    LabelValidator.PackageAndTarget labelParts=LabelValidator.parseAbsoluteLabel(absName);
+    PackageIdentifier pkgIdWithoutRepo=validate(labelParts.getPackageName(),labelParts.getTargetName());
+    PathFragment packageFragment=pkgIdWithoutRepo.getPackageFragment();
+    if (repo.isEmpty() && ABSOLUTE_PACKAGE_NAMES.contains(packageFragment)) {
+      repo="@";
+    }
+    return new Label(PackageIdentifier.create(repo,packageFragment),labelParts.getTargetName());
+  }
+ catch (  BadLabelException e) {
+    throw new LabelSyntaxException(e.getMessage());
+  }
+}

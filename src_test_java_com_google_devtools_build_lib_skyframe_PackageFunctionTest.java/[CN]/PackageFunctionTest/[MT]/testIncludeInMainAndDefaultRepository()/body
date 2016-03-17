@@ -1,0 +1,13 @@
+{
+  scratch.file("foo/BUILD","subinclude('//baz:a')");
+  scratch.file("bar/BUILD","subinclude('@//baz:a')");
+  scratch.file("baz/BUILD","exports_files(['a'])");
+  scratch.file("baz/a");
+  getSkyframeExecutor().preparePackageLoading(new PathPackageLocator(outputBase,ImmutableList.of(rootDirectory)),ConstantRuleVisibility.PUBLIC,true,7,"",UUID.randomUUID());
+  SkyKey fooKey=PackageValue.key(PackageIdentifier.parse("@//foo"));
+  PackageValue fooValue=validPackage(fooKey);
+  assertThat(fooValue.getPackage().getSubincludeLabels()).containsExactly(Label.parseAbsolute("//baz:a"));
+  SkyKey barKey=PackageValue.key(PackageIdentifier.parse("@//bar"));
+  PackageValue barValue=validPackage(barKey);
+  assertThat(barValue.getPackage().getSubincludeLabels()).containsExactly(Label.parseAbsolute("@//baz:a"));
+}

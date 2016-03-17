@@ -1,6 +1,9 @@
 {
   CppConfigurationLoader loader=loader("major_version: \"v17\"" + "minor_version: \"0\"" + "default_target_cpu: \"cpu\""+ "default_toolchain {"+ "  cpu: \"piii\""+ "  toolchain_identifier: \"default-libs\""+ "}"+ "default_toolchain {"+ "  cpu: \"k8\""+ "  toolchain_identifier: \"custom-libs\""+ "}"+ "toolchain {"+ "  toolchain_identifier: \"default-libs\""+ "  host_system_name: \"host-system-name\""+ "  target_system_name: \"target-system-name\""+ "  target_cpu: \"piii\""+ "  target_libc: \"target-libc\""+ "  compiler: \"compiler\""+ "  abi_version: \"abi-version\""+ "  abi_libc_version: \"abi-libc-version\""+ "  supports_embedded_runtimes: true"+ "}\n"+ "toolchain {"+ "  toolchain_identifier: \"custom-libs\""+ "  host_system_name: \"host-system-name\""+ "  target_system_name: \"target-system-name\""+ "  target_cpu: \"k8\""+ "  target_libc: \"target-libc\""+ "  compiler: \"compiler\""+ "  abi_version: \"abi-version\""+ "  abi_libc_version: \"abi-libc-version\""+ "  supports_embedded_runtimes: true"+ "  static_runtimes_filegroup: \"static-group\""+ "  dynamic_runtimes_filegroup: \"dynamic-group\""+ "}\n");
-  final PackageIdentifier ctTop=MockCcSupport.getMockCrosstoolsTop();
+  PackageIdentifier ctTop=MockCcSupport.getMockCrosstoolsTop();
+  if (ctTop.getRepository().isDefault()) {
+    ctTop=PackageIdentifier.createInMainRepo(ctTop.getPackageFragment());
+  }
   CppConfiguration defaultLibs=create(loader,"--cpu=piii");
   assertEquals(Label.create(ctTop,"static-runtime-libs-piii"),defaultLibs.getStaticRuntimeLibsLabel());
   assertEquals(Label.create(ctTop,"dynamic-runtime-libs-piii"),defaultLibs.getDynamicRuntimeLibsLabel());

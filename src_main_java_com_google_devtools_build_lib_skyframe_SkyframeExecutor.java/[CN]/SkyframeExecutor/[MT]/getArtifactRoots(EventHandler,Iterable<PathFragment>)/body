@@ -3,7 +3,7 @@
   for (  PathFragment execPath : execPaths) {
     PathFragment parent=Preconditions.checkNotNull(execPath.getParentDirectory(),"Must pass in files, not root directory");
     Preconditions.checkArgument(!parent.isAbsolute(),execPath);
-    packageKeys.add(ContainingPackageLookupValue.key(PackageIdentifier.createInDefaultRepo(parent)));
+    packageKeys.add(ContainingPackageLookupValue.key(PackageIdentifier.createInMainRepo(parent)));
   }
   EvaluationResult<ContainingPackageLookupValue> result;
   try {
@@ -24,7 +24,7 @@ synchronized (valueLookupLock) {
   }
   Map<PathFragment,Root> roots=new HashMap<>();
   for (  PathFragment execPath : execPaths) {
-    ContainingPackageLookupValue value=result.get(ContainingPackageLookupValue.key(PackageIdentifier.createInDefaultRepo(execPath.getParentDirectory())));
+    ContainingPackageLookupValue value=result.get(ContainingPackageLookupValue.key(PackageIdentifier.createInMainRepo(execPath.getParentDirectory())));
     if (value.hasContainingPackage()) {
       roots.put(execPath,Root.asSourceRoot(value.getContainingPackageRoot()));
     }
