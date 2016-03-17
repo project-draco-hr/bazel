@@ -1,0 +1,49 @@
+{
+  AndroidDataSet primary=AndroidDataSet.from(primaryData);
+  ResourceMap primaryMap=ResourceMap.from(primary);
+  ResourceMap directMap=ResourceMap.from(direct);
+  ResourceMap transitiveMap=ResourceMap.from(transitive);
+  List<DataResource> overwritableDeps=new ArrayList<>();
+  Set<MergeConflict> conflicts=new HashSet<>();
+  conflicts.addAll(primaryMap.conflicts);
+  for (  MergeConflict conflict : directMap.conflicts) {
+    if (allowPrimaryOverrideAll && primaryMap.containsOverwritable(conflict.fullyQualifiedName())) {
+      continue;
+    }
+    conflicts.add(conflict);
+  }
+  for (  MergeConflict conflict : transitiveMap.conflicts) {
+    if (allowPrimaryOverrideAll && primaryMap.containsOverwritable(conflict.fullyQualifiedName())) {
+      continue;
+    }
+    conflicts.add(conflict);
+  }
+  for (  Map.Entry<FullyQualifiedName,DataResource> entry : directMap.iterateOverwritableEntries()) {
+    if (!primaryMap.containsOverwritable(entry.getKey())) {
+      overwritableDeps.add(entry.getValue());
+    }
+  }
+  for (  Map.Entry<FullyQualifiedName,DataResource> entry : transitiveMap.iterateOverwritableEntries()) {
+    if (primaryMap.containsOverwritable(entry.getKey()) && allowPrimaryOverrideAll) {
+      continue;
+    }
+    if (directMap.containsOverwritable(entry.getKey())) {
+      conflicts.add(directMap.foundConflict(entry.getKey(),entry.getValue()));
+    }
+ else     if (primaryMap.containsOverwritable(entry.getKey())) {
+      conflicts.add(primaryMap.foundConflict(entry.getKey(),entry.getValue()));
+    }
+ else {
+      overwritableDeps.add(entry.getValue());
+    }
+  }
+  if (!conflicts.isEmpty()) {
+    List<String> messages=new ArrayList<>();
+    for (    MergeConflict conflict : conflicts) {
+      messages.add(conflict.toConflictMessage());
+    }
+    throw new MergingException(Joiner.on("\n").join(messages));
+  }
+  Collections.sort(overwritableDeps);
+  return UnwrittenMergedAndroidData.of(primaryData.getManifest(),primary,AndroidDataSet.of(overwritableDeps,ImmutableList.copyOf(directMap.mergeNonOverwritable(transitiveMap))));
+}
