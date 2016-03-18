@@ -1,5 +1,6 @@
 {
   final ImmutableList<Label> gcov=ImmutableList.of(env.getToolsLabel("//tools/objc:gcov"));
+  final Label mcov=env.getToolsLabel("//tools/objc:mcov");
   return builder.requiresConfigurationFragments(ObjcConfiguration.class,J2ObjcConfiguration.class,AppleConfiguration.class).setImplicitOutputsFunction(ImplicitOutputsFunction.fromFunctions(ReleaseBundlingSupport.IPA,XcodeSupport.PBXPROJ)).add(attr(IosTest.TARGET_DEVICE,LABEL).allowedFileTypes().allowedRuleClasses("ios_device").value(env.getToolsLabel("//tools/objc/sim_devices:default"))).add(attr(IosTest.IS_XCTEST_ATTR,BOOLEAN).value(true)).add(attr(IosTest.XCTEST_APP_ATTR,LABEL).value(new ComputedDefault(IosTest.IS_XCTEST_ATTR){
     @Override public Object getDefault(    AttributeMap rule){
       return rule.get(IosTest.IS_XCTEST_ATTR,Type.BOOLEAN) ? env.getLabel("//tools/objc:xctest_app") : null;
@@ -16,6 +17,14 @@
         return ImmutableList.of();
       }
       return gcov;
+    }
+  }
+)).add(attr(IosTest.MCOV_TOOL_ATTR,LABEL).cfg(HOST).value(new LateBoundLabel<BuildConfiguration>(mcov){
+    @Override public Label getDefault(    Rule rule,    AttributeMap attributes,    BuildConfiguration configuration){
+      if (!configuration.isCodeCoverageEnabled()) {
+        return null;
+      }
+      return mcov;
     }
   }
 )).build();
