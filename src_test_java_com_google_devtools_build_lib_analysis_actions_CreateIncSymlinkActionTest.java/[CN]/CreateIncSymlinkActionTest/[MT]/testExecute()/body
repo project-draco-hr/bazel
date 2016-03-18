@@ -1,0 +1,14 @@
+{
+  Path outputDir=rootDirectory.getRelative("out");
+  outputDir.createDirectory();
+  Root root=Root.asDerivedRoot(rootDirectory,outputDir);
+  Path symlink=rootDirectory.getRelative("out/a");
+  Artifact a=new Artifact(symlink,root);
+  Artifact b=new Artifact(new PathFragment("b"),root);
+  CreateIncSymlinkAction action=new CreateIncSymlinkAction(NULL_ACTION_OWNER,ImmutableMap.of(a,b));
+  action.execute(null);
+  symlink.stat(Symlinks.NOFOLLOW);
+  assertTrue(symlink.isSymbolicLink());
+  assertEquals(symlink.readSymbolicLink(),b.getPath().asFragment());
+  assertFalse(rootDirectory.getRelative("a").exists());
+}
