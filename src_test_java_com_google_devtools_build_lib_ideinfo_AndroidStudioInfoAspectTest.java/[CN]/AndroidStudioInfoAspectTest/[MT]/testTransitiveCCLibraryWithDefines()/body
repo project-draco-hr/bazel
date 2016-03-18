@@ -1,0 +1,12 @@
+{
+  scratch.file("com/google/example/BUILD","cc_library(","    name = 'lib2',","    srcs = ['lib2/lib2.cc'],","    hdrs = ['lib2/lib2.h'],","    defines = ['COMPLEX_IMPL'],",")","cc_library(","    name = 'lib1',","    srcs = ['lib1/lib1.cc'],","    hdrs = ['lib1/lib1.h'],","    defines = ['VERSION2'],","    deps = [':lib2'],",")");
+  Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:lib1");
+  assertThat(ruleIdeInfos.size()).isEqualTo(3);
+  RuleIdeInfo lib1=getRuleInfoAndVerifyLabel("//com/google/example:lib1",ruleIdeInfos);
+  assertThat(lib1.hasCRuleIdeInfo()).isTrue();
+  CRuleIdeInfo cRuleIdeInfo=lib1.getCRuleIdeInfo();
+  assertThat(cRuleIdeInfo.getRuleDefineList()).containsExactly("VERSION2");
+  ProtocolStringList transDefineList=cRuleIdeInfo.getTransitiveDefineList();
+  assertThat(transDefineList).contains("VERSION2");
+  assertThat(transDefineList).contains("COMPLEX_IMPL");
+}

@@ -1,0 +1,24 @@
+{
+  BuildConfiguration configuration=base.getConfiguration();
+  if (configuration != null) {
+    CppConfiguration cppConfiguration=configuration.getFragment(CppConfiguration.class);
+    if (cppConfiguration != null) {
+      CToolchainIdeInfo.Builder builder=CToolchainIdeInfo.newBuilder();
+      ImmutableSet<String> features=ruleContext.getFeatures();
+      builder.setTargetName(cppConfiguration.getTargetGnuSystemName());
+      builder.addAllBaseCompilerOption(cppConfiguration.getCompilerOptions(features));
+      builder.addAllCOption(cppConfiguration.getCOptions());
+      builder.addAllCppOption(cppConfiguration.getCxxOptions(features));
+      builder.addAllLinkOption(cppConfiguration.getLinkOptions());
+      builder.addAllUnfilteredCompilerOption(cppConfiguration.getUnfilteredCompilerOptions(features));
+      builder.setPreprocessorExecutable(cppConfiguration.getCpreprocessorExecutable().getSafePathString());
+      builder.setCppExecutable(cppConfiguration.getCppExecutable().getSafePathString());
+      List<PathFragment> builtInIncludeDirectories=cppConfiguration.getBuiltInIncludeDirectories();
+      for (      PathFragment builtInIncludeDirectory : builtInIncludeDirectories) {
+        builder.addBuiltInIncludeDirectory(builtInIncludeDirectory.getSafePathString());
+      }
+      return builder.build();
+    }
+  }
+  return null;
+}

@@ -1,0 +1,33 @@
+{
+  scratch.file("com/google/example/BUILD","cc_library(","    name = 'lib2',","    srcs = ['lib2/lib2.cc'],","    hdrs = ['lib2/lib2.h'],","    includes = ['baz/lib'],",")","cc_library(","    name = 'lib1',","    srcs = ['lib1/lib1.cc'],","    hdrs = ['lib1/lib1.h'],","    includes = ['foo/bar'],","    deps = [':lib2'],",")");
+  Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:lib1");
+  assertThat(ruleIdeInfos.size()).isEqualTo(3);
+  RuleIdeInfo lib1=getRuleInfoAndVerifyLabel("//com/google/example:lib1",ruleIdeInfos);
+  assertThat(lib1.hasCRuleIdeInfo()).isTrue();
+  CRuleIdeInfo cRuleIdeInfo=lib1.getCRuleIdeInfo();
+  assertThat(cRuleIdeInfo.getRuleIncludeList()).containsExactly("foo/bar");
+  Entry<String,RuleIdeInfo> toolchainEntry=getCcToolchainRuleAndVerifyThereIsOnlyOne(ruleIdeInfos);
+  RuleIdeInfo toolchainInfo=toolchainEntry.getValue();
+  assertThat(toolchainInfo.hasCToolchainIdeInfo()).isTrue();
+  CToolchainIdeInfo cToolchainIdeInfo=toolchainInfo.getCToolchainIdeInfo();
+  ProtocolStringList builtInIncludeDirectoryList=cToolchainIdeInfo.getBuiltInIncludeDirectoryList();
+  assertThat(builtInIncludeDirectoryList).doesNotContain("foo/bar");
+  assertThat(builtInIncludeDirectoryList).doesNotContain("baz/lib");
+  assertThat(builtInIncludeDirectoryList).doesNotContain("com/google/example/foo/bar");
+  assertThat(builtInIncludeDirectoryList).doesNotContain("com/google/example/baz/lib");
+  ProtocolStringList transIncludeDirList=cRuleIdeInfo.getTransitiveIncludeDirectoryList();
+  assertThat(transIncludeDirList).doesNotContain("foo/bar");
+  assertThat(transIncludeDirList).doesNotContain("baz/lib");
+  assertThat(transIncludeDirList).doesNotContain("com/google/example/foo/bar");
+  assertThat(transIncludeDirList).doesNotContain("com/google/example/baz/lib");
+  ProtocolStringList transQuoteIncludeDirList=cRuleIdeInfo.getTransitiveQuoteIncludeDirectoryList();
+  assertThat(transQuoteIncludeDirList).doesNotContain("foo/bar");
+  assertThat(transQuoteIncludeDirList).doesNotContain("baz/lib");
+  assertThat(transQuoteIncludeDirList).doesNotContain("com/google/example/foo/bar");
+  assertThat(transQuoteIncludeDirList).doesNotContain("com/google/example/baz/lib");
+  ProtocolStringList transSysIncludeDirList=cRuleIdeInfo.getTransitiveSystemIncludeDirectoryList();
+  assertThat(transSysIncludeDirList).doesNotContain("foo/bar");
+  assertThat(transSysIncludeDirList).doesNotContain("baz/lib");
+  assertThat(transSysIncludeDirList).contains("com/google/example/foo/bar");
+  assertThat(transSysIncludeDirList).contains("com/google/example/baz/lib");
+}
