@@ -1,0 +1,44 @@
+{
+  final List<SkyKey> packageKeys=new ArrayList<>();
+  if (forFiles) {
+    for (    PathFragment execPath : execPaths) {
+      PathFragment parent=Preconditions.checkNotNull(execPath.getParentDirectory(),"Must pass in files, not root directory");
+      Preconditions.checkArgument(!parent.isAbsolute(),execPath);
+      packageKeys.add(ContainingPackageLookupValue.key(PackageIdentifier.createInMainRepo(parent)));
+    }
+  }
+ else {
+    for (    PathFragment execPath : execPaths) {
+      Preconditions.checkArgument(!execPath.isAbsolute(),execPath);
+      packageKeys.add(ContainingPackageLookupValue.key(PackageIdentifier.createInMainRepo(execPath)));
+    }
+  }
+  EvaluationResult<ContainingPackageLookupValue> result;
+  try {
+    result=callUninterruptibly(new Callable<EvaluationResult<ContainingPackageLookupValue>>(){
+      @Override public EvaluationResult<ContainingPackageLookupValue> call() throws InterruptedException {
+synchronized (valueLookupLock) {
+          return buildDriver.evaluate(packageKeys,true,1,eventHandler);
+        }
+      }
+    }
+);
+  }
+ catch (  Exception e) {
+    throw new IllegalStateException(e);
+  }
+  if (result.hasError()) {
+    throw new PackageRootResolutionException("Exception encountered determining package roots",result.getError().getException());
+  }
+  Map<PathFragment,Root> roots=new HashMap<>();
+  for (  PathFragment execPath : execPaths) {
+    ContainingPackageLookupValue value=result.get(ContainingPackageLookupValue.key(PackageIdentifier.createInMainRepo(forFiles ? execPath.getParentDirectory() : execPath)));
+    if (value.hasContainingPackage()) {
+      roots.put(execPath,Root.asSourceRoot(value.getContainingPackageRoot()));
+    }
+ else {
+      roots.put(execPath,null);
+    }
+  }
+  return roots;
+}
