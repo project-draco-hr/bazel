@@ -7,6 +7,7 @@
   TimestampGranularityMonitor timestampMonitor=new TimestampGranularityMonitor(clock);
   Preprocessor.Factory.Supplier preprocessorFactorySupplier=null;
   SkyframeExecutorFactory skyframeExecutorFactory=null;
+  QueryEnvironmentFactory queryEnvironmentFactory=null;
   for (  BlazeModule module : blazeModules) {
     module.blazeStartup(startupOptionsProvider,BlazeVersionInfo.instance(),instanceId,directories,clock);
     Preprocessor.Factory.Supplier modulePreprocessorFactorySupplier=module.getPreprocessorFactorySupplier();
@@ -19,9 +20,17 @@
       Preconditions.checkState(skyframeExecutorFactory == null,"At most one skyframe factory supported. But found two: %s and %s",skyFactory,skyframeExecutorFactory);
       skyframeExecutorFactory=skyFactory;
     }
+    QueryEnvironmentFactory queryEnvFactory=module.getQueryEnvironmentFactory();
+    if (queryEnvFactory != null) {
+      Preconditions.checkState(queryEnvironmentFactory == null,"At most one query environment factory supported. But found two: %s and %s",queryEnvFactory,queryEnvironmentFactory);
+      queryEnvironmentFactory=queryEnvFactory;
+    }
   }
   if (skyframeExecutorFactory == null) {
     skyframeExecutorFactory=new SequencedSkyframeExecutorFactory();
+  }
+  if (queryEnvironmentFactory == null) {
+    queryEnvironmentFactory=new QueryEnvironmentFactory();
   }
   if (preprocessorFactorySupplier == null) {
     preprocessorFactorySupplier=Preprocessor.Factory.Supplier.NullSupplier.INSTANCE;
@@ -100,5 +109,5 @@
     }
   }
   invocationPolicy=createInvocationPolicyFromModules(invocationPolicy,blazeModules);
-  return new BlazeRuntime(directories,workspaceStatusActionFactory,skyframeExecutor,pkgFactory,ruleClassProvider,configurationFactory,clock,startupOptionsProvider,ImmutableList.copyOf(blazeModules),timestampMonitor,eventBusExceptionHandler,binTools,projectFileProvider,invocationPolicy,commands);
+  return new BlazeRuntime(directories,workspaceStatusActionFactory,skyframeExecutor,queryEnvironmentFactory,pkgFactory,ruleClassProvider,configurationFactory,clock,startupOptionsProvider,ImmutableList.copyOf(blazeModules),timestampMonitor,eventBusExceptionHandler,binTools,projectFileProvider,invocationPolicy,commands);
 }

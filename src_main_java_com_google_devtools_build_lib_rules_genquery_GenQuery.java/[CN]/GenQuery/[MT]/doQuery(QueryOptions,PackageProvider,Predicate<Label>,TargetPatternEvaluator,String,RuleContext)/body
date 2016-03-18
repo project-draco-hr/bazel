@@ -7,7 +7,8 @@
     settings.add(Setting.NO_NODEP_DEPS);
     ImmutableList<OutputFormatter> outputFormatters=QUERY_OUTPUT_FORMATTERS.get(ruleContext.getAnalysisEnvironment().getSkyframeEnv());
     formatter=OutputFormatter.getFormatter(Preconditions.checkNotNull(outputFormatters),queryOptions.outputFormat);
-    queryResult=(DigraphQueryEvalResult<Target>)AbstractBlazeQueryEnvironment.newQueryEnvironment(null,null,packageProvider,evaluator,false,ruleContext.attributes().get("strict",Type.BOOLEAN),!QueryOutputUtils.shouldStreamResults(queryOptions,formatter),ImmutableList.<String>of(),4,labelFilter,getEventHandler(ruleContext),settings,ImmutableList.<QueryFunction>of(),null).evaluateQuery(query,targets);
+    BlazeQueryEnvironment queryEnvironment=(BlazeQueryEnvironment)QUERY_ENVIRONMENT_FACTORY.create(null,null,packageProvider,evaluator,false,ruleContext.attributes().get("strict",Type.BOOLEAN),!QueryOutputUtils.shouldStreamResults(queryOptions,formatter),ImmutableList.<String>of(),4,labelFilter,getEventHandler(ruleContext),settings,ImmutableList.<QueryFunction>of(),null);
+    queryResult=(DigraphQueryEvalResult<Target>)queryEnvironment.evaluateQuery(query,targets);
   }
  catch (  SkyframeRestartQueryException e) {
     return null;
