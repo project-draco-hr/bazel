@@ -1,0 +1,16 @@
+{
+  Builder builder=new SpawnAction.Builder().addInput(programJar).addInputs(libraryJars).addInputs(proguardSpecs).setExecutable(proguard).setMnemonic("Proguard").addArgument("-injars").addArgument(programJar.getExecPathString()).addArgument("-outjars").addArgument(proguardOutputJar.getExecPathString());
+  for (  Artifact libraryJar : libraryJars) {
+    builder.addArgument("-libraryjars").addArgument(libraryJar.getExecPathString());
+  }
+  if (proguardMapping != null) {
+    builder.addInput(proguardMapping).addArgument("-applymapping").addArgument(proguardMapping.getExecPathString());
+  }
+  for (  Artifact proguardSpec : proguardSpecs) {
+    builder.addArgument("@" + proguardSpec.getExecPathString());
+  }
+  if (proguardOutputMap != null) {
+    builder.addArgument("-printmapping").addArgument(proguardOutputMap.getExecPathString());
+  }
+  return builder;
+}
