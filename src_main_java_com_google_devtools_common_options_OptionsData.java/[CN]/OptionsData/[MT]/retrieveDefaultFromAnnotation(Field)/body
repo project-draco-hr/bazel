@@ -1,13 +1,12 @@
 {
   Option annotation=optionField.getAnnotation(Option.class);
   if (annotation.allowMultiple()) {
-    return Collections.emptyList();
+    String[] defaultMultipleValueString=OptionsParserImpl.getDefaultMultipleOptionString(optionField);
+    ImmutableList.Builder<Object> builder=new ImmutableList.Builder<>();
+    for (    String element : defaultMultipleValueString) {
+      builder.add(convertDefaultValueFromAnnotation(element,optionField));
+    }
+    return builder.build();
   }
-  String defaultValueString=OptionsParserImpl.getDefaultOptionString(optionField);
-  try {
-    return OptionsParserImpl.isSpecialNullDefault(defaultValueString,optionField) ? null : OptionsParserImpl.findConverter(optionField).convert(defaultValueString);
-  }
- catch (  OptionsParsingException e) {
-    throw new IllegalStateException("OptionsParsingException while " + "retrieving default for " + optionField.getName() + ": "+ e.getMessage());
-  }
+  return convertDefaultValueFromAnnotation(OptionsParserImpl.getDefaultOptionString(optionField),optionField);
 }
