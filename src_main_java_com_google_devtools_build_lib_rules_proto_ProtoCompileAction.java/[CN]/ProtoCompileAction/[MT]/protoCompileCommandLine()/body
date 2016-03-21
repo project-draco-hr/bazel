@@ -4,16 +4,7 @@
     arguments.add(charSequence);
   }
   arguments.add(ruleContext.getFragment(ProtoConfiguration.class).protocOpts());
-  arguments.add(new CustomMultiArgv(){
-    @Override public Iterable<String> argv(){
-      ImmutableList.Builder<String> builder=ImmutableList.builder();
-      for (      Artifact artifact : supportData.getTransitiveImports()) {
-        builder.add("-I" + artifact.getRootRelativePath().getPathString() + "="+ artifact.getExecPathString());
-      }
-      return builder.build();
-    }
-  }
-);
+  arguments.add(new ProtoCommandLineArgv(supportData.getTransitiveImports()));
   for (  Artifact src : supportData.getDirectProtoSources()) {
     arguments.addPath(src.getRootRelativePath());
   }
