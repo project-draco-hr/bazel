@@ -1,7 +1,7 @@
 {
   Artifact strippedJar=AndroidBinary.getDxArtifact(ruleContext,"main_dex_intermediate.jar");
   AndroidSdkProvider sdk=AndroidSdkProvider.fromRuleContext(ruleContext);
-  SpawnAction.Builder streamlinedBuilder=new SpawnAction.Builder().addOutput(strippedJar).setExecutable(sdk.getProguard()).setProgressMessage("Generating streamlined input jar for main dex classes list").setMnemonic("MainDexClassesIntermediate").addArgument("-injars").addInputArgument(jar).addArgument("-libraryjars").addInputArgument(sdk.getShrinkedAndroidJar()).addArgument("-outjars").addArgument(strippedJar.getExecPathString()).addArgument("-dontwarn").addArgument("-dontnote").addArgument("-dontoptimize").addArgument("-dontobfuscate").addArgument("-dontpreverify");
+  SpawnAction.Builder streamlinedBuilder=new SpawnAction.Builder().addOutput(strippedJar).setExecutable(sdk.getProguard()).setProgressMessage("Generating streamlined input jar for main dex classes list").setMnemonic("MainDexClassesIntermediate").addArgument("-forceprocessing").addArgument("-injars").addInputArgument(jar).addArgument("-libraryjars").addInputArgument(sdk.getShrinkedAndroidJar()).addArgument("-outjars").addArgument(strippedJar.getExecPathString()).addArgument("-dontwarn").addArgument("-dontnote").addArgument("-dontoptimize").addArgument("-dontobfuscate").addArgument("-dontpreverify");
   List<Artifact> specs=ruleContext.getPrerequisiteArtifacts("main_dex_proguard_specs",Mode.TARGET).list();
   if (specs.isEmpty()) {
     specs=ImmutableList.of(sdk.getMainDexClasses());
