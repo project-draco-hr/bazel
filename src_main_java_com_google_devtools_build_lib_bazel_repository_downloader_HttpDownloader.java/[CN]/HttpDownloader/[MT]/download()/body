@@ -1,13 +1,19 @@
 {
   URL url=new URL(urlString);
-  String filename=new PathFragment(url.getPath()).getBaseName();
-  if (filename.isEmpty()) {
-    filename="temp";
+  Path destination;
+  if (type == null) {
+    destination=outputDirectory;
   }
-  if (!type.isEmpty()) {
-    filename+="." + type;
+ else {
+    String filename=new PathFragment(url.getPath()).getBaseName();
+    if (filename.isEmpty()) {
+      filename="temp";
+    }
+ else     if (!type.isEmpty()) {
+      filename+="." + type;
+    }
+    destination=outputDirectory.getRelative(filename);
   }
-  Path destination=outputDirectory.getRelative(filename);
   if (!sha256.isEmpty()) {
     try {
       String currentSha256=getHash(Hashing.sha256().newHasher(),destination);

@@ -1,0 +1,14 @@
+{
+  SkylarkPath outputPath=getPath("download_and_extract()",output);
+  checkInOutputDirectory(outputPath);
+  Path downloadedPath=HttpDownloader.download(url,sha256,type,outputPath.getPath(),env.getListener());
+  DecompressorValue.decompress(DecompressorDescriptor.builder().setTargetKind(rule.getTargetKind()).setTargetName(rule.getName()).setArchivePath(downloadedPath).setRepositoryPath(outputPath.getPath()).setPrefix(stripPrefix).build());
+  try {
+    if (downloadedPath.exists()) {
+      downloadedPath.delete();
+    }
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(new IOException("Couldn't delete temporary file (" + downloadedPath.getPathString() + ")",e),Transience.TRANSIENT);
+  }
+}
