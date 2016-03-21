@@ -6,5 +6,10 @@
     entitlementsNeedingSubstitution=intermediateArtifacts.appendExtensionForEntitlementArtifact(".entitlements_with_variables");
     registerExtractEntitlementsAction(entitlementsNeedingSubstitution);
   }
-  registerEntitlementsVariableSubstitutionAction(entitlementsNeedingSubstitution,teamPrefixFile);
+  Artifact substitutedEntitlements=intermediateArtifacts.entitlements();
+  if (attributes.extraEntitlements() != null) {
+    substitutedEntitlements=intermediateArtifacts.appendExtensionForEntitlementArtifact(".substituted");
+    registerMergeEntitlementsAction(substitutedEntitlements,attributes.extraEntitlements());
+  }
+  registerEntitlementsVariableSubstitutionAction(entitlementsNeedingSubstitution,teamPrefixFile,substitutedEntitlements);
 }
