@@ -1,12 +1,12 @@
 {
-  ImmutableMap.Builder<SkyKey,ValueWithMetadata> builder=ImmutableMap.builder();
+  ImmutableMap.Builder<SkyKey,SkyValue> builder=ImmutableMap.builder();
   ArrayList<SkyKey> missingKeys=new ArrayList<>(keys.size());
   for (  SkyKey key : keys) {
     NodeEntry entry=directDeps.get(key);
     if (entry != null) {
-      ValueWithMetadata valueWithMetadata=maybeWrapValueFromError(key,entry,bubbleErrorInfo);
-      if (valueWithMetadata != null) {
-        builder.put(key,valueWithMetadata);
+      SkyValue value=maybeGetValueFromError(key,entry,bubbleErrorInfo);
+      if (value != NULL_MARKER) {
+        builder.put(key,value);
       }
     }
  else {
@@ -15,10 +15,7 @@
   }
   Map<SkyKey,NodeEntry> missingEntries=graph.getBatch(missingKeys);
   for (  SkyKey key : missingKeys) {
-    ValueWithMetadata valueWithMetadata=maybeWrapValueFromError(key,missingEntries.get(key),bubbleErrorInfo);
-    if (valueWithMetadata != null) {
-      builder.put(key,valueWithMetadata);
-    }
+    builder.put(key,maybeGetValueFromError(key,missingEntries.get(key),bubbleErrorInfo));
   }
   return builder.build();
 }

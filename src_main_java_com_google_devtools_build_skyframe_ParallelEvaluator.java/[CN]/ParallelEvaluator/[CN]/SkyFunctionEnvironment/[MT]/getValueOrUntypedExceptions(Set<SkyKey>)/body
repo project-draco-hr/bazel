@@ -1,56 +1,59 @@
 {
   checkActive();
-  Map<SkyKey,ValueWithMetadata> values=getValuesMaybeFromError(depKeys,bubbleErrorInfo);
-  ImmutableMap.Builder<SkyKey,ValueOrUntypedException> builder=ImmutableMap.builder();
-  for (  SkyKey depKey : depKeys) {
-    Preconditions.checkState(!depKey.equals(ErrorTransienceValue.KEY));
-    ValueWithMetadata value=values.get(depKey);
-    if (value == null) {
-      valuesMissing=true;
-      if (bubbleErrorInfo != null) {
-        builder.put(depKey,ValueOrExceptionUtils.ofNull());
-        continue;
-      }
+  Preconditions.checkState(!depKeys.contains(ErrorTransienceValue.KEY),"Error transience key cannot be in requested deps of %s",skyKey);
+  Map<SkyKey,SkyValue> values=getValuesMaybeFromError(depKeys,bubbleErrorInfo);
+  for (  Map.Entry<SkyKey,SkyValue> depEntry : values.entrySet()) {
+    SkyKey depKey=depEntry.getKey();
+    SkyValue depValue=depEntry.getValue();
+    if (depValue == NULL_MARKER) {
       if (directDeps.containsKey(depKey)) {
         throw new IllegalStateException("Undone key " + depKey + " was already in deps of "+ skyKey+ "( dep: "+ graph.get(depKey)+ ", parent: "+ graph.get(skyKey));
       }
-      addDep(depKey);
       valuesMissing=true;
-      builder.put(depKey,ValueOrExceptionUtils.ofNull());
+      addDep(depKey);
       continue;
     }
-    if (!directDeps.containsKey(depKey)) {
-      addDep(depKey);
-    }
-    replayingNestedSetEventVisitor.visit(value.getTransitiveEvents());
-    ErrorInfo errorInfo=value.getErrorInfo();
+    ErrorInfo errorInfo=ValueWithMetadata.getMaybeErrorInfo(depEntry.getValue());
     if (errorInfo != null) {
       childErrorInfos.add(errorInfo);
-    }
-    if (value.getValue() != null && (keepGoing || errorInfo == null)) {
-      builder.put(depKey,ValueOrExceptionUtils.ofValueUntyped(value.getValue()));
-      continue;
-    }
-    Preconditions.checkNotNull(errorInfo,"%s %s %s",skyKey,depKey,value);
-    if (!keepGoing && errorInfo.getException() != null && bubbleErrorInfo == null) {
-      if (depErrorKey == null) {
-        depErrorKey=depKey;
+      if (bubbleErrorInfo != null) {
+        Thread.currentThread().interrupt();
       }
-      valuesMissing=true;
-      builder.put(depKey,ValueOrExceptionUtils.ofNull());
-      continue;
+      if ((!keepGoing && bubbleErrorInfo == null) || errorInfo.getException() == null) {
+        valuesMissing=true;
+        if (depErrorKey == null) {
+          depErrorKey=depKey;
+        }
+      }
     }
-    if (bubbleErrorInfo != null) {
-      Thread.currentThread().interrupt();
+    if (!directDeps.containsKey(depKey)) {
+      if (bubbleErrorInfo == null) {
+        addDep(depKey);
+      }
+      replayingNestedSetEventVisitor.visit(ValueWithMetadata.getEvents(depValue));
     }
-    if (errorInfo.getException() != null) {
-      Exception e=errorInfo.getException();
-      builder.put(depKey,ValueOrExceptionUtils.ofExn(e));
-      continue;
-    }
-    Preconditions.checkState(!Iterables.isEmpty(errorInfo.getCycleInfo()),"%s %s %s %s",skyKey,depKey,errorInfo,value);
-    valuesMissing=true;
-    builder.put(depKey,ValueOrExceptionUtils.ofNull());
   }
-  return builder.build();
+  return Maps.transformValues(values,new Function<SkyValue,ValueOrUntypedException>(){
+    @Override public ValueOrUntypedException apply(    SkyValue maybeWrappedValue){
+      if (maybeWrappedValue == NULL_MARKER) {
+        return ValueOrExceptionUtils.ofNull();
+      }
+      SkyValue justValue=ValueWithMetadata.justValue(maybeWrappedValue);
+      ErrorInfo errorInfo=ValueWithMetadata.getMaybeErrorInfo(maybeWrappedValue);
+      if (justValue != null && (keepGoing || errorInfo == null)) {
+        return ValueOrExceptionUtils.ofValueUntyped(justValue);
+      }
+      Preconditions.checkNotNull(errorInfo,"%s %s",skyKey,maybeWrappedValue);
+      Exception exception=errorInfo.getException();
+      if (!keepGoing && exception != null && bubbleErrorInfo == null) {
+        return ValueOrExceptionUtils.ofNull();
+      }
+      if (exception != null) {
+        return ValueOrExceptionUtils.ofExn(exception);
+      }
+      Preconditions.checkState(!Iterables.isEmpty(errorInfo.getCycleInfo()),"%s %s %s",skyKey,errorInfo,maybeWrappedValue);
+      return ValueOrExceptionUtils.ofNull();
+    }
+  }
+);
 }

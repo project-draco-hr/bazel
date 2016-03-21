@@ -6,12 +6,17 @@
   }
   if (storedEventFilter.storeEvents()) {
     Set<SkyKey> depKeys=graph.get(skyKey).getTemporaryDirectDeps();
-    Map<SkyKey,ValueWithMetadata> deps=getValuesMaybeFromError(depKeys,bubbleErrorInfo);
+    Map<SkyKey,SkyValue> deps=getValuesMaybeFromError(depKeys,bubbleErrorInfo);
     if (!missingChildren && depKeys.size() != deps.size()) {
       throw new IllegalStateException("Missing keys for " + skyKey + ": "+ Sets.difference(depKeys,deps.keySet())+ ", "+ graph.get(skyKey));
     }
-    for (    ValueWithMetadata value : deps.values()) {
-      eventBuilder.addTransitive(value.getTransitiveEvents());
+    for (    SkyValue value : deps.values()) {
+      if (value == NULL_MARKER) {
+        Preconditions.checkState(missingChildren,"Missing dep in %s for %s",depKeys,skyKey);
+      }
+ else {
+        eventBuilder.addTransitive(ValueWithMetadata.getEvents(value));
+      }
     }
   }
   return eventBuilder.build();
