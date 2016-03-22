@@ -1,0 +1,31 @@
+{
+  Preconditions.checkState(!Strings.isNullOrEmpty(ruleContext.attributes().get("bundle_id",Type.STRING)),"requires a bundle_id value");
+  String primaryBundleId=null;
+  String fallbackBundleId=null;
+  Artifact provisioningProfile;
+  if (ruleContext.attributes().isAttributeValueExplicitlySpecified("bundle_id")) {
+    primaryBundleId=ruleContext.attributes().get("bundle_id",Type.STRING);
+  }
+ else {
+    fallbackBundleId=ruleContext.attributes().get("bundle_id",Type.STRING);
+  }
+  Artifact explicitProvisioningProfile=ruleContext.getPrerequisiteArtifact("provisioning_profile",Mode.TARGET);
+  if (explicitProvisioningProfile != null) {
+    provisioningProfile=explicitProvisioningProfile;
+  }
+ else {
+    provisioningProfile=ruleContext.getPrerequisiteArtifact(":default_provisioning_profile",Mode.TARGET);
+  }
+  ImmutableSet<TargetDeviceFamily> families=null;
+  List<String> rawFamilies=ruleContext.attributes().get("families",Type.STRING_LIST);
+  try {
+    families=ImmutableSet.copyOf(TargetDeviceFamily.fromNamesInRule(rawFamilies));
+  }
+ catch (  InvalidFamilyNameException|RepeatedFamilyNameException e) {
+    families=ImmutableSet.of();
+  }
+  if (families.isEmpty()) {
+    ruleContext.attributeError("families",INVALID_FAMILIES_ERROR);
+  }
+  return new ReleaseBundling.Builder().setIpaArtifact(ruleContext.getImplicitOutputArtifact(ReleaseBundlingSupport.IPA)).setBundleId(ruleContext.attributes().get("bundle_id",Type.STRING)).setPrimaryBundleId(primaryBundleId).setFallbackBundleId(fallbackBundleId).setAppIcon(Strings.emptyToNull(ruleContext.attributes().get("app_icon",Type.STRING))).setLaunchImage(Strings.emptyToNull(ruleContext.attributes().get("launch_image",Type.STRING))).setLaunchStoryboard(ruleContext.getPrerequisiteArtifact("launch_storyboard",Mode.TARGET)).setProvisioningProfile(provisioningProfile).setProvisioningProfileAttributeName("provisioning_profile").setTargetDeviceFamilies(families).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).build();
+}

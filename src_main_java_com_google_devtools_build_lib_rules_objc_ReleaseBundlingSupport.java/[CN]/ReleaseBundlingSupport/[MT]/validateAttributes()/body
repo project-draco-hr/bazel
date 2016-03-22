@@ -1,18 +1,15 @@
 {
   if (!objcProvider.hasAssetCatalogs()) {
-    if (attributes.appIcon() != null) {
-      ruleContext.attributeError("app_icon",String.format(NO_ASSET_CATALOG_ERROR_FORMAT,attributes.appIcon()));
+    if (releaseBundling.getAppIcon() != null) {
+      ruleContext.attributeError("app_icon",String.format(NO_ASSET_CATALOG_ERROR_FORMAT,releaseBundling.getAppIcon()));
     }
-    if (attributes.launchImage() != null) {
-      ruleContext.attributeError("launch_image",String.format(NO_ASSET_CATALOG_ERROR_FORMAT,attributes.launchImage()));
+    if (releaseBundling.getLaunchImage() != null) {
+      ruleContext.attributeError("launch_image",String.format(NO_ASSET_CATALOG_ERROR_FORMAT,releaseBundling.getLaunchImage()));
     }
-  }
-  if (bundleSupport.targetDeviceFamilies().isEmpty()) {
-    ruleContext.attributeError("families",INVALID_FAMILIES_ERROR);
   }
   AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
-  if (attributes.provisioningProfile() == null && appleConfiguration.getBundlingPlatform() != Platform.IOS_SIMULATOR) {
-    ruleContext.attributeError("provisioning_profile",DEVICE_NO_PROVISIONING_PROFILE);
+  if (releaseBundling.getProvisioningProfile() == null && appleConfiguration.getBundlingPlatform() != Platform.IOS_SIMULATOR) {
+    ruleContext.attributeError(releaseBundling.getProvisioningProfileAttrName(),DEVICE_NO_PROVISIONING_PROFILE);
   }
   return this;
 }

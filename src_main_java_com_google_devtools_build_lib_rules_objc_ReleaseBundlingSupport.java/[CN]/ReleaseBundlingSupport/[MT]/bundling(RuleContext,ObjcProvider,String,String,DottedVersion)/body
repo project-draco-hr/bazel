@@ -2,21 +2,20 @@
   ImmutableList<BundleableFile> extraBundleFiles;
   AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   if (appleConfiguration.getBundlingPlatform() == Platform.IOS_DEVICE) {
-    extraBundleFiles=ImmutableList.of(new BundleableFile(new Attributes(ruleContext).provisioningProfile(),PROVISIONING_PROFILE_BUNDLE_FILE));
+    extraBundleFiles=ImmutableList.of(new BundleableFile(releaseBundling.getProvisioningProfile(),PROVISIONING_PROFILE_BUNDLE_FILE));
   }
  else {
     extraBundleFiles=ImmutableList.of();
   }
-  String primaryBundleId=null;
-  String fallbackBundleId=null;
-  if (ruleContext.attributes().isAttributeValueExplicitlySpecified("bundle_id")) {
-    primaryBundleId=ruleContext.attributes().get("bundle_id",Type.STRING);
+  Bundling.Builder bundling=new Builder().setName(bundleName).setArchitecture(appleConfiguration.getDependencySingleArchitecture()).setBundleDirFormat(bundleDirFormat).addExtraBundleFiles(extraBundleFiles).setObjcProvider(objcProvider).setIntermediateArtifacts(intermediateArtifacts).setPrimaryBundleId(releaseBundling.getPrimaryBundleId()).setFallbackBundleId(releaseBundling.getFallbackBundleId()).setMinimumOsVersion(minimumOsVersion).setArtifactPrefix(releaseBundling.getArtifactPrefix()).setTargetDeviceFamilies(releaseBundling.getTargetDeviceFamilies());
+  if (releaseBundling.getInfoPlistsFromRule() != null) {
+    bundling.addInfoplistInputs(releaseBundling.getInfoPlistsFromRule());
   }
  else {
-    fallbackBundleId=ruleContext.attributes().get("bundle_id",Type.STRING);
+    bundling.addInfoplistInputFromRule(ruleContext);
   }
-  Bundling.Builder bundling=new Builder().setName(bundleName).setArchitecture(appleConfiguration.getDependencySingleArchitecture()).setBundleDirFormat(bundleDirFormat).addExtraBundleFiles(extraBundleFiles).setObjcProvider(objcProvider).addInfoplistInputFromRule(ruleContext).addInfoplistInput(getGeneratedVersionPlist()).addInfoplistInput(getGeneratedEnvironmentPlist()).setAutomaticEntriesInfoplistInput(getGeneratedAutomaticPlist()).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).setPrimaryBundleId(primaryBundleId).setFallbackBundleId(fallbackBundleId).setMinimumOsVersion(minimumOsVersion);
-  if (attributes.launchStoryboard() != null) {
+  bundling.setAutomaticEntriesInfoplistInput(getGeneratedAutomaticPlist()).addInfoplistInput(getGeneratedVersionPlist()).addInfoplistInput(getGeneratedEnvironmentPlist()).addInfoplistInputs(releaseBundling.getInfoplistInputs());
+  if (releaseBundling.getLaunchStoryboard() != null) {
     bundling.addInfoplistInput(getLaunchStoryboardPlist());
   }
   return bundling.build();

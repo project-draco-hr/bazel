@@ -6,7 +6,7 @@
     identity='"' + signingCertName + '"';
   }
  else {
-    identity="$(PLIST=$(mktemp -t cert.plist) && trap \"rm ${PLIST}\" EXIT && " + extractPlistCommand(attributes.provisioningProfile()) + " > ${PLIST} && "+ "/usr/libexec/PlistBuddy -c 'Print DeveloperCertificates:0' ${PLIST} | "+ "openssl x509 -inform DER -noout -fingerprint | "+ "cut -d= -f2 | sed -e 's#:##g')";
+    identity="$(PLIST=$(mktemp -t cert.plist) && trap \"rm ${PLIST}\" EXIT && " + extractPlistCommand(releaseBundling.getProvisioningProfile()) + " > ${PLIST} && "+ "/usr/libexec/PlistBuddy -c 'Print DeveloperCertificates:0' ${PLIST} | "+ "openssl x509 -inform DER -noout -fingerprint | "+ "cut -d= -f2 | sed -e 's#:##g')";
   }
   return String.format("/usr/bin/codesign --force --sign %s --entitlements %s %s",identity,entitlements.getShellEscapedExecPathString(),appDir);
 }

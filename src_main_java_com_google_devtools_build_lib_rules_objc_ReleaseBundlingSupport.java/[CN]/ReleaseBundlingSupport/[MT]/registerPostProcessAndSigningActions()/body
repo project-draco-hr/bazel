@@ -1,5 +1,5 @@
 {
-  Artifact processedIpa=ruleContext.getImplicitOutputArtifact(IPA);
+  Artifact processedIpa=releaseBundling.getIpaArtifact();
   Artifact unprocessedIpa=intermediateArtifacts.unprocessedIpa();
   boolean processingNeeded=false;
   NestedSetBuilder<Artifact> inputs=NestedSetBuilder.<Artifact>stableOrder().add(unprocessedIpa);
@@ -14,7 +14,7 @@
     processingNeeded=true;
     registerEntitlementsActions();
     actionCommandLine+=signingCommandLine();
-    inputs.add(attributes.provisioningProfile()).add(intermediateArtifacts.entitlements());
+    inputs.add(releaseBundling.getProvisioningProfile()).add(intermediateArtifacts.entitlements());
   }
   actionCommandLine+="cd ${t} && /usr/bin/zip -q -r \"${signed_ipa}\" .";
   if (processingNeeded) {
