@@ -1,11 +1,18 @@
 {
+  int start=0;
   out.write(getLatin("Hello, stdout."));
   out.flush();
+  assertMessage(multiplexed.toByteArray(),start,"Hello, stdout.");
+  start=multiplexed.toByteArray().length;
   err.write(getLatin("Hello, stderr."));
   err.flush();
+  assertMessage(multiplexed.toByteArray(),start,"Hello, stderr.");
+  start=multiplexed.toByteArray().length;
   ctl.write(getLatin("Hello, control."));
   ctl.flush();
+  assertMessage(multiplexed.toByteArray(),start,"Hello, control.");
+  start=multiplexed.toByteArray().length;
   out.write(getLatin("... and back!"));
   out.flush();
-  assertEquals(joinLines("@1@","Hello, stdout.","@2@","Hello, stderr.","@3@","Hello, control.","@1@","... and back!",""),getLatin(multiplexed.toByteArray()));
+  assertMessage(multiplexed.toByteArray(),start,"... and back!");
 }
