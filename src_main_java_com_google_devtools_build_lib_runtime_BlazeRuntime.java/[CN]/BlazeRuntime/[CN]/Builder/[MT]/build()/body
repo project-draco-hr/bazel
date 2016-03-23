@@ -4,7 +4,6 @@
   Clock clock=(this.clock == null) ? BlazeClock.instance() : this.clock;
   UUID instanceId=(this.instanceId == null) ? UUID.randomUUID() : this.instanceId;
   Preconditions.checkNotNull(clock);
-  TimestampGranularityMonitor timestampMonitor=new TimestampGranularityMonitor(clock);
   Preprocessor.Factory.Supplier preprocessorFactorySupplier=null;
   SkyframeExecutorFactory skyframeExecutorFactory=null;
   QueryEnvironmentFactory queryEnvironmentFactory=null;
@@ -96,7 +95,7 @@
     customDirtinessCheckers.addAll(module.getCustomDirtinessCheckers());
   }
   final PackageFactory pkgFactory=new PackageFactory(ruleClassProvider,platformRegexps,extensions,BlazeVersionInfo.instance().getVersion());
-  SkyframeExecutor skyframeExecutor=skyframeExecutorFactory.create(pkgFactory,timestampMonitor,directories,binTools,workspaceStatusActionFactory,ruleClassProvider.getBuildInfoFactories(),diffAwarenessFactories,allowedMissingInputs,preprocessorFactorySupplier,skyFunctions.build(),precomputedValues.build(),customDirtinessCheckers.build());
+  SkyframeExecutor skyframeExecutor=skyframeExecutorFactory.create(pkgFactory,directories,binTools,workspaceStatusActionFactory,ruleClassProvider.getBuildInfoFactories(),diffAwarenessFactories,allowedMissingInputs,preprocessorFactorySupplier,skyFunctions.build(),precomputedValues.build(),customDirtinessCheckers.build());
   if (configurationFactory == null) {
     configurationFactory=new ConfigurationFactory(ruleClassProvider.getConfigurationCollectionFactory(),ruleClassProvider.getConfigurationFragments());
   }
@@ -109,5 +108,5 @@
     }
   }
   invocationPolicy=createInvocationPolicyFromModules(invocationPolicy,blazeModules);
-  return new BlazeRuntime(directories,workspaceStatusActionFactory,skyframeExecutor,queryEnvironmentFactory,pkgFactory,ruleClassProvider,configurationFactory,clock,startupOptionsProvider,ImmutableList.copyOf(blazeModules),timestampMonitor,eventBusExceptionHandler,binTools,projectFileProvider,invocationPolicy,commands);
+  return new BlazeRuntime(directories,workspaceStatusActionFactory,skyframeExecutor,queryEnvironmentFactory,pkgFactory,ruleClassProvider,configurationFactory,clock,startupOptionsProvider,ImmutableList.copyOf(blazeModules),eventBusExceptionHandler,binTools,projectFileProvider,invocationPolicy,commands);
 }

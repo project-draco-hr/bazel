@@ -3,12 +3,13 @@
     dropConfiguredTargetsNow(eventHandler);
     lastAnalysisDiscarded=false;
   }
+  TimestampGranularityMonitor tsgm=this.tsgm.get();
   Differencer.Diff diff;
   if (modifiedFileSet.treatEverythingAsModified()) {
     diff=new FilesystemValueChecker(tsgm,null).getDirtyKeys(memoizingEvaluator.getValues(),new BasicFilesystemDirtinessChecker());
   }
  else {
-    diff=getDiff(modifiedFileSet.modifiedSourceFiles(),pathEntry);
+    diff=getDiff(tsgm,modifiedFileSet.modifiedSourceFiles(),pathEntry);
   }
   syscalls.set(newPerBuildSyscallCache(42));
   recordingDiffer.invalidate(diff.changedKeysWithoutNewValues());
