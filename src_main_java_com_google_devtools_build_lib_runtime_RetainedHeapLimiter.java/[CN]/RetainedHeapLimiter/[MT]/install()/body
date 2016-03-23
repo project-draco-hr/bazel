@@ -1,0 +1,20 @@
+{
+  Preconditions.checkState(!installed,"RetainedHeapLimiter installed twice");
+  installed=true;
+  List<GarbageCollectorMXBean> gcbeans=ManagementFactory.getGarbageCollectorMXBeans();
+  boolean foundTenured=false;
+  for (  GarbageCollectorMXBean gcbean : gcbeans) {
+    boolean collectsTenured=false;
+    for (    String name : gcbean.getMemoryPoolNames()) {
+      collectsTenured|=isTenuredSpace(name);
+    }
+    if (collectsTenured) {
+      foundTenured=true;
+      NotificationEmitter emitter=(NotificationEmitter)gcbean;
+      emitter.addNotificationListener(this,null,null);
+    }
+  }
+  if (!foundTenured) {
+    throw new IllegalStateException("Can't find tenured space; update this class for a new collector");
+  }
+}

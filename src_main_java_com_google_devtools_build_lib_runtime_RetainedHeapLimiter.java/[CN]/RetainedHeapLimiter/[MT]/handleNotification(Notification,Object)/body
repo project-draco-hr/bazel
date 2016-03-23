@@ -1,0 +1,29 @@
+{
+  if (!notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
+    return;
+  }
+  GarbageCollectionNotificationInfo info=GarbageCollectionNotificationInfo.from((CompositeData)notification.getUserData());
+  Map<String,MemoryUsage> spaces=info.getGcInfo().getMemoryUsageAfterGc();
+  for (  Map.Entry<String,MemoryUsage> entry : spaces.entrySet()) {
+    if (isTenuredSpace(entry.getKey())) {
+      MemoryUsage space=entry.getValue();
+      if (space.getMax() == 0) {
+        continue;
+      }
+      long percentUsed=100 * space.getUsed() / space.getMax();
+      if (percentUsed > occupiedHeapPercentageThreshold) {
+        if (info.getGcCause().equals("System.gc()") && !throwingOom.getAndSet(true)) {
+          String exitMsg=String.format("RetainedHeapLimiter forcing exit due to GC thrashing: tenured space " + "%s out of %s (>%s%%) occupied after back-to-back full GCs",space.getUsed(),space.getMax(),occupiedHeapPercentageThreshold);
+          System.err.println(exitMsg);
+          LOG.info(exitMsg);
+          BugReport.handleCrash(new OutOfMemoryError(exitMsg));
+        }
+ else         if (System.currentTimeMillis() - lastTriggeredGcInMilliseconds > MIN_TIME_BETWEEN_TRIGGERED_GC_MILLISECONDS) {
+          LOG.info("Triggering a full GC with " + space.getUsed() + " out of "+ space.getMax()+ " used");
+          System.gc();
+          lastTriggeredGcInMilliseconds=System.currentTimeMillis();
+        }
+      }
+    }
+  }
+}
