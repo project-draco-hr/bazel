@@ -78,12 +78,12 @@
   EventHandler handler=createEventHandler(outErr,eventHandlerOptions);
   Reporter reporter=env.getReporter();
   reporter.addHandler(handler);
-  env.getEventBus().register(handler);
   EventHandler ansiAllowingHandler=null;
   if (!eventHandlerOptions.useColor()) {
     ansiAllowingHandler=createEventHandler(colorfulOutErr,eventHandlerOptions);
     reporter.registerAnsiAllowingHandler(handler,ansiAllowingHandler);
   }
+  env.getEventBus().register(ansiAllowingHandler == null ? handler : ansiAllowingHandler);
   try {
     OutErr reporterOutErr=reporter.getOutErr();
     System.setOut(new PrintStream(reporterOutErr.getOutputStream(),true));
