@@ -4,8 +4,14 @@
   }
   NestedSetBuilder<Artifact> builder=NestedSetBuilder.stableOrder();
   for (  DepsContext depsContext : depsContexts) {
-    builder.addTransitive(depsContext.topLevelHeaderModules);
-    builder.addTransitive(depsContext.impliedHeaderModules);
+    if (usePic) {
+      builder.addTransitive(depsContext.picTopLevelHeaderModules);
+      builder.addTransitive(depsContext.picImpliedHeaderModules);
+    }
+ else {
+      builder.addTransitive(depsContext.topLevelHeaderModules);
+      builder.addTransitive(depsContext.impliedHeaderModules);
+    }
     builder.addTransitive(depsContext.directModuleMaps);
     if (provideTransitiveModuleMaps) {
       builder.addTransitive(depsContext.transitiveModuleMaps);

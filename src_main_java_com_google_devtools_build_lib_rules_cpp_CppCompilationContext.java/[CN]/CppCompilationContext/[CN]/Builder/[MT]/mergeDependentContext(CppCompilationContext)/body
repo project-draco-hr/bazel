@@ -10,22 +10,26 @@
   pregreppedHdrs.addTransitive(otherContext.getPregreppedHeaders());
   NestedSet<Artifact> othersTransitiveModuleMaps=otherContext.getTransitiveModuleMaps();
   NestedSet<Artifact> othersDirectModuleMaps=otherContext.getDirectModuleMaps();
-  NestedSet<Artifact> othersTopLevelHeaderModules=otherContext.getTopLevelHeaderModules();
+  NestedSet<Artifact> othersTopLevelHeaderModules=otherContext.getTopLevelHeaderModules(false);
+  NestedSet<Artifact> othersPicTopLevelHeaderModules=otherContext.getTopLevelHeaderModules(true);
   transitiveModuleMaps.addTransitive(othersTransitiveModuleMaps);
   transitiveModuleMaps.addTransitive(othersDirectModuleMaps);
   transitiveHeaderModuleSrcs.addTransitive(otherContext.getTransitiveHeaderModuleSrcs());
-  impliedHeaderModules.addTransitive(otherContext.getImpliedHeaderModules());
+  impliedHeaderModules.addTransitive(otherContext.getImpliedHeaderModules(false));
+  picImpliedHeaderModules.addTransitive(otherContext.getImpliedHeaderModules(true));
   topLevelHeaderModules.addTransitive(othersTopLevelHeaderModules);
+  picTopLevelHeaderModules.addTransitive(othersPicTopLevelHeaderModules);
   if (otherContext.getCppModuleMap() != null) {
     directModuleMaps.add(otherContext.getCppModuleMap().getArtifact());
   }
   if (otherContext.getHeaderModule() != null || otherContext.getPicHeaderModule() != null) {
     impliedHeaderModules.addTransitive(othersTopLevelHeaderModules);
+    picImpliedHeaderModules.addTransitive(othersPicTopLevelHeaderModules);
     if (otherContext.getHeaderModule() != null) {
       topLevelHeaderModules.add(otherContext.getHeaderModule());
     }
     if (otherContext.getPicHeaderModule() != null) {
-      topLevelHeaderModules.add(otherContext.getPicHeaderModule());
+      picTopLevelHeaderModules.add(otherContext.getPicHeaderModule());
     }
     transitiveHeaderModuleSrcs.addTransitive(otherContext.getHeaderModuleSrcs());
   }
