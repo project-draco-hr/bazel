@@ -1,0 +1,18 @@
+{
+  if (tree.sym == null) {
+    return ProcessorDependencyMode.DEFAULT;
+  }
+  Generated generated=tree.sym.getAnnotation(Generated.class);
+  if (generated == null) {
+    return ProcessorDependencyMode.DEFAULT;
+  }
+  for (  String value : generated.value()) {
+    if (value.startsWith(DAGGER_PROCESSOR_PREFIX)) {
+      return ProcessorDependencyMode.EXEMPT_NORECORD;
+    }
+    if (exemptGenerators.contains(value)) {
+      return ProcessorDependencyMode.EXEMPT_RECORD;
+    }
+  }
+  return ProcessorDependencyMode.DEFAULT;
+}
