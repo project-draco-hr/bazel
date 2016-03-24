@@ -1,15 +1,22 @@
 {
-  Map<FullyQualifiedName,DataResource> overwritingResourceMap=new HashMap<>();
+  Map<DataKey,DataResource> overwritingResourceMap=new HashMap<>();
+  Map<DataKey,DataAsset> assets=new HashMap<>();
   Set<MergeConflict> conflicts=new HashSet<>();
+  Map<DataKey,DataResource> nonOverwritingResourceMap=new HashMap<>();
   for (  DataResource resource : data.getOverwritingResources()) {
-    if (overwritingResourceMap.containsKey(resource.fullyQualifiedName())) {
-      conflicts.add(MergeConflict.between(resource.fullyQualifiedName(),overwritingResourceMap.get(resource.fullyQualifiedName()),resource));
+    if (overwritingResourceMap.containsKey(resource.dataKey())) {
+      conflicts.add(MergeConflict.between(resource.dataKey(),overwritingResourceMap.get(resource.dataKey()),resource));
     }
-    overwritingResourceMap.put(resource.fullyQualifiedName(),resource);
+    overwritingResourceMap.put(resource.dataKey(),resource);
   }
-  Map<FullyQualifiedName,DataResource> nonOverwritingResourceMap=new HashMap<>();
   for (  DataResource resource : data.getNonOverwritingResources()) {
-    nonOverwritingResourceMap.put(resource.fullyQualifiedName(),resource);
+    nonOverwritingResourceMap.put(resource.dataKey(),resource);
   }
-  return new ResourceMap(overwritingResourceMap,conflicts,nonOverwritingResourceMap);
+  for (  DataAsset asset : data.getAssets()) {
+    if (assets.containsKey(asset.dataKey())) {
+      conflicts.add(MergeConflict.between(asset.dataKey(),assets.get(asset.dataKey()),asset));
+    }
+    assets.put(asset.dataKey(),asset);
+  }
+  return new ResourceMap(overwritingResourceMap,conflicts,nonOverwritingResourceMap,assets);
 }
