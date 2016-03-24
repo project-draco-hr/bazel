@@ -1,6 +1,13 @@
 {
   if (!Files.isDirectory(path)) {
-    assets.add(FileDataResource.of(dataKeyFactory.create(path),path));
+    RelativeAssetPath key=dataKeyFactory.create(path);
+    FileDataResource asset=FileDataResource.of(key,path);
+    if (assets.containsKey(key)) {
+      conflicts.add(MergeConflict.between(key,assets.get(key),asset));
+    }
+ else {
+      assets.put(key,asset);
+    }
   }
   return super.visitFile(path,attrs);
 }

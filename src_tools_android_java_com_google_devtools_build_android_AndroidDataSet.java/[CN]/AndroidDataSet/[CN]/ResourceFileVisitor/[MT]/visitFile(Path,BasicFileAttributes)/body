@@ -2,10 +2,19 @@
   try {
     if (!Files.isDirectory(path)) {
       if (inValuesSubtree) {
-        XmlDataResource.fromPath(xmlInputFactory,path,fqnFactory,overwritingResources,nonOverwritingResources);
+        List<DataResource> targetOverwritableResources=new ArrayList<>();
+        List<DataResource> targetNonOverwritableResources=new ArrayList<>();
+        XmlDataResource.fromPath(xmlInputFactory,path,fqnFactory,targetOverwritableResources,targetNonOverwritableResources);
+        for (        DataResource dataResource : targetOverwritableResources) {
+          putOverwritingResource(dataResource);
+        }
+        for (        DataResource dataResource : targetNonOverwritableResources) {
+          nonOverwritingResources.put(dataResource.dataKey(),dataResource);
+        }
       }
  else {
-        overwritingResources.add(FileDataResource.fromPath(path,fqnFactory));
+        DataResource dataResource=FileDataResource.fromPath(path,fqnFactory);
+        putOverwritingResource(dataResource);
       }
     }
   }

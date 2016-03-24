@@ -1,3 +1,22 @@
 {
-  return new AndroidDataSet(ImmutableList.copyOf(overwritingResources),ImmutableList.copyOf(nonOverwritingResources),ImmutableList.copyOf(assets));
+  Map<DataKey,DataAsset> assets=new HashMap<>();
+  Map<DataKey,DataResource> overwritingResources=new HashMap<>();
+  Map<DataKey,DataResource> nonOverwritingResources=new HashMap<>();
+  ImmutableSet.Builder<MergeConflict> conflicts=ImmutableSet.builder();
+  for (  DataAsset asset : assetList) {
+    if (assets.containsKey(asset.dataKey())) {
+      conflicts.add(MergeConflict.between(asset.dataKey(),assets.get(asset.dataKey()),asset));
+    }
+    assets.put(asset.dataKey(),asset);
+  }
+  for (  DataResource resource : overwritingResourcesList) {
+    if (overwritingResources.containsKey(resource.dataKey())) {
+      conflicts.add(MergeConflict.between(resource.dataKey(),overwritingResources.get(resource.dataKey()),resource));
+    }
+    overwritingResources.put(resource.dataKey(),resource);
+  }
+  for (  DataResource resource : nonOverwritingResourcesList) {
+    nonOverwritingResources.put(resource.dataKey(),resource);
+  }
+  return of(conflicts.build(),ImmutableMap.copyOf(overwritingResources),ImmutableMap.copyOf(nonOverwritingResources),ImmutableMap.copyOf(assets));
 }
