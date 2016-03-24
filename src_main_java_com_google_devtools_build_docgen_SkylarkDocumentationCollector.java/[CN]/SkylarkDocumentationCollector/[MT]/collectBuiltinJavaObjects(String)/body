@@ -9,5 +9,13 @@
   collectBuiltinModule(modules,JavaSkylarkApiProvider.class);
   collectBuiltinModule(modules,JavaRuleOutputJarsProvider.OutputJar.class);
   collectBuiltinModule(modules,AndroidSkylarkApiProvider.class);
+  for (  String c : clazz) {
+    try {
+      collectBuiltinModule(modules,SkylarkDocumentationCollector.class.getClassLoader().loadClass(c));
+    }
+ catch (    ClassNotFoundException e) {
+      System.err.println("SkylarkModule class " + c + " could not be found, ignoring...");
+    }
+  }
   return modules;
 }

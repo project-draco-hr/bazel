@@ -5,5 +5,13 @@
   for (  Class<?> moduleClass : SkylarkModules.MODULES) {
     collectBuiltinDoc(modules,moduleClass.getDeclaredFields());
   }
+  for (  String c : clazz) {
+    try {
+      collectBuiltinDoc(modules,SkylarkDocumentationCollector.class.getClassLoader().loadClass(c).getDeclaredFields());
+    }
+ catch (    ClassNotFoundException e) {
+      System.err.println("SkylarkModule class " + c + " could not be found, ignoring...");
+    }
+  }
   return modules;
 }
