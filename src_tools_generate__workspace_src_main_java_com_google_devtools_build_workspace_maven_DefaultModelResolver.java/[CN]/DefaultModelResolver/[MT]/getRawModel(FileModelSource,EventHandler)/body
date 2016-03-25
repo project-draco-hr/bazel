@@ -1,0 +1,15 @@
+{
+  DefaultModelBuildingRequest request=new DefaultModelBuildingRequest();
+  request.setModelResolver(this);
+  request.setModelSource(fileModelSource);
+  Model model;
+  try {
+    ModelBuildingResult result=modelBuilder.build(request);
+    model=result.getRawModel();
+  }
+ catch (  ModelBuildingException|IllegalArgumentException e) {
+    handler.handle(Event.error("Unable to resolve raw Maven model from " + fileModelSource.getLocation() + ": "+ e.getMessage()));
+    return null;
+  }
+  return model;
+}

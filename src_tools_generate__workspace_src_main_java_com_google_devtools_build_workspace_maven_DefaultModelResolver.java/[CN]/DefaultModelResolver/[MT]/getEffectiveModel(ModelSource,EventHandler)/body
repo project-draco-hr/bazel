@@ -1,0 +1,15 @@
+{
+  DefaultModelBuildingRequest request=new DefaultModelBuildingRequest();
+  request.setModelResolver(this);
+  request.setModelSource(modelSource);
+  Model model;
+  try {
+    ModelBuildingResult result=modelBuilder.build(request);
+    model=result.getEffectiveModel();
+  }
+ catch (  ModelBuildingException|IllegalArgumentException e) {
+    handler.handle(Event.error("Unable to resolve Maven model from " + modelSource.getLocation() + ": "+ e.getMessage()));
+    return null;
+  }
+  return model;
+}
