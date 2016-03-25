@@ -1,0 +1,10 @@
+{
+  Rule rule=new Rule(new DefaultArtifact("x:y:1.2.3"));
+  Rule dep1=new Rule(new DefaultArtifact("dep:dep1:4.5.6"));
+  rule.addDependency(dep1);
+  Rule dep2=new Rule(new DefaultArtifact("dep:dep2:7.8.9"));
+  rule.addDependency(dep2);
+  Set<Rule> rules=ImmutableSet.of(rule,dep1,dep2);
+  String content=getBuildFileContent(ImmutableList.<String>of(),rules);
+  assertThat(content).contains("java_library(\n" + "    name = \"x_y\",\n" + "    visibility = [\"//visibility:public\"],\n"+ "    exports = [\n"+ "        \"@x_y//jar\",\n"+ "        \"@dep_dep1//jar\",\n"+ "        \"@dep_dep2//jar\",\n"+ "    ],\n"+ ")");
+}

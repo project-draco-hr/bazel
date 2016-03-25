@@ -9,8 +9,9 @@
     buildFile=outputDir.getRelative(date + ".BUILD").getPathFile();
   }
   try (PrintStream workspaceStream=new PrintStream(workspaceFile);PrintStream buildStream=new PrintStream(buildFile)){
-    resolver.writeWorkspace(workspaceStream);
-    resolver.writeBuild(buildStream);
+    ResultWriter writer=new ResultWriter(inputs,resolver.getRules());
+    writer.writeWorkspace(workspaceStream);
+    writer.writeBuild(buildStream);
   }
  catch (  IOException e) {
     handler.handle(Event.error("Could not write WORKSPACE and BUILD files to " + outputDir + ": "+ e.getMessage()));
