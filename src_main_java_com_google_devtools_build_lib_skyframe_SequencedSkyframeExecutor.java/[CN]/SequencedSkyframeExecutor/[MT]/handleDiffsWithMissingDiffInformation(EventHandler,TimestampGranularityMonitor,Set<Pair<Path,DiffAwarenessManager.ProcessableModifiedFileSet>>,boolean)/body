@@ -1,0 +1,20 @@
+{
+  ExternalFilesKnowledge externalFilesKnowledge=externalFilesHelper.getExternalFilesKnowledge();
+  if (pathEntriesWithoutDiffInformation.isEmpty() && Iterables.isEmpty(customDirtinessCheckers) && ((!externalFilesKnowledge.anyOutputFilesSeen || !checkOutputFiles) && !externalFilesKnowledge.anyNonOutputExternalFilesSeen)) {
+    return;
+  }
+  buildDriver.evaluate(ImmutableList.<SkyKey>of(),false,DEFAULT_THREAD_COUNT,eventHandler);
+  FilesystemValueChecker fsvc=new FilesystemValueChecker(tsgm,null);
+  Set<Path> diffPackageRootsUnderWhichToCheck=new HashSet<>();
+  for (  Pair<Path,DiffAwarenessManager.ProcessableModifiedFileSet> pair : pathEntriesWithoutDiffInformation) {
+    diffPackageRootsUnderWhichToCheck.add(pair.getFirst());
+  }
+  ExternalFilesHelper tmpExternalFilesHelper=externalFilesHelper.cloneWithFreshExternalFilesKnowledge();
+  EnumSet fileTypesToCheck=checkOutputFiles ? EnumSet.of(FileType.EXTERNAL_MUTABLE,FileType.EXTERNAL_REPO,FileType.OUTPUT) : EnumSet.of(FileType.EXTERNAL_MUTABLE,FileType.EXTERNAL_REPO);
+  Differencer.Diff diff=fsvc.getDirtyKeys(memoizingEvaluator.getValues(),new UnionDirtinessChecker(Iterables.concat(customDirtinessCheckers,ImmutableList.<SkyValueDirtinessChecker>of(new ExternalDirtinessChecker(tmpExternalFilesHelper,fileTypesToCheck),new MissingDiffDirtinessChecker(diffPackageRootsUnderWhichToCheck)))));
+  handleChangedFiles(diffPackageRootsUnderWhichToCheck,diff);
+  for (  Pair<Path,DiffAwarenessManager.ProcessableModifiedFileSet> pair : pathEntriesWithoutDiffInformation) {
+    pair.getSecond().markProcessed();
+  }
+  externalFilesHelper.setExternalFilesKnowledge(tmpExternalFilesHelper.getExternalFilesKnowledge());
+}

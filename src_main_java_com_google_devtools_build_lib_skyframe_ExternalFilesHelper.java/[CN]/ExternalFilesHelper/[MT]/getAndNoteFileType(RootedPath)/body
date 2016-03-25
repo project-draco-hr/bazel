@@ -1,0 +1,24 @@
+{
+  PathPackageLocator packageLocator=pkgLocator.get();
+  if (packageLocator.getPathEntries().contains(rootedPath.getRoot())) {
+    return FileType.INTERNAL;
+  }
+  Path outputBase=packageLocator.getOutputBase();
+  if (outputBase == null) {
+    anyNonOutputExternalFilesSeen=true;
+    return FileType.EXTERNAL_MUTABLE;
+  }
+  if (rootedPath.asPath().startsWith(outputBase)) {
+    Path externalRepoDir=outputBase.getRelative(Label.EXTERNAL_PATH_PREFIX);
+    if (rootedPath.asPath().startsWith(externalRepoDir)) {
+      anyNonOutputExternalFilesSeen=true;
+      return FileType.EXTERNAL_REPO;
+    }
+ else {
+      anyOutputFilesSeen=true;
+      return FileType.OUTPUT;
+    }
+  }
+  anyNonOutputExternalFilesSeen=true;
+  return FileType.EXTERNAL_MUTABLE;
+}

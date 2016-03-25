@@ -1,3 +1,11 @@
 {
-  return Objects.equal(super.createNewValue(skyKey,tsgm),oldValue) ? SkyValueDirtinessChecker.DirtyResult.notDirty(oldValue) : SkyValueDirtinessChecker.DirtyResult.dirty(oldValue);
+  SkyValue newValue=super.createNewValue(skyKey,tsgm);
+  if (Objects.equal(newValue,oldValue)) {
+    return SkyValueDirtinessChecker.DirtyResult.notDirty(oldValue);
+  }
+  FileType fileType=externalFilesHelper.getAndNoteFileType((RootedPath)skyKey.argument());
+  if (fileType == FileType.EXTERNAL_REPO) {
+    return SkyValueDirtinessChecker.DirtyResult.dirty(oldValue);
+  }
+  return SkyValueDirtinessChecker.DirtyResult.dirtyWithNewValue(oldValue,newValue);
 }
