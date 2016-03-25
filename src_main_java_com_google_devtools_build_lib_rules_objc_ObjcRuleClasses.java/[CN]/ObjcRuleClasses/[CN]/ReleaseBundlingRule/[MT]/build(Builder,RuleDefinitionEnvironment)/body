@@ -1,22 +1,22 @@
 {
-  return builder.add(attr("entitlements",LABEL).legacyAllowAnyFileType()).add(attr(":extra_entitlements",LABEL).singleArtifact().value(new LateBoundLabel<BuildConfiguration>(ObjcConfiguration.class){
+  return builder.add(attr(ENTITLEMENTS_ATTR,LABEL).legacyAllowAnyFileType()).add(attr(EXTRA_ENTITLEMENTS_ATTR,LABEL).singleArtifact().value(new LateBoundLabel<BuildConfiguration>(ObjcConfiguration.class){
     @Override public Label getDefault(    Rule rule,    AttributeMap attributes,    BuildConfiguration configuration){
       return configuration.getFragment(ObjcConfiguration.class).getExtraEntitlements();
     }
   }
-)).add(attr("provisioning_profile",LABEL).singleArtifact().allowedFileTypes(FileType.of(".mobileprovision"))).add(attr(":default_provisioning_profile",LABEL).singleArtifact().allowedFileTypes(FileType.of(".mobileprovision")).value(new LateBoundLabel<BuildConfiguration>(ObjcConfiguration.class){
+)).add(attr(PROVISIONING_PROFILE_ATTR,LABEL).singleArtifact().allowedFileTypes(FileType.of(".mobileprovision"))).add(attr(DEFAULT_PROVISIONING_PROFILE_ATTR,LABEL).singleArtifact().allowedFileTypes(FileType.of(".mobileprovision")).value(new LateBoundLabel<BuildConfiguration>(ObjcConfiguration.class){
     @Override public Label getDefault(    Rule rule,    AttributeMap attributes,    BuildConfiguration configuration){
       AppleConfiguration appleConfiguration=configuration.getFragment(AppleConfiguration.class);
       if (appleConfiguration.getBundlingPlatform() != Platform.IOS_DEVICE) {
         return null;
       }
-      if (rule.isAttributeValueExplicitlySpecified("provisioning_profile")) {
+      if (rule.isAttributeValueExplicitlySpecified(PROVISIONING_PROFILE_ATTR)) {
         return null;
       }
       return appleConfiguration.getDefaultProvisioningProfileLabel();
     }
   }
-)).add(attr("app_icon",STRING)).add(attr("launch_image",STRING)).add(attr("launch_storyboard",LABEL).direct_compile_time_input().allowedFileTypes(FileTypeSet.of(XIB_TYPE,STORYBOARD_TYPE))).add(attr("bundle_id",STRING).value(new Attribute.ComputedDefault(){
+)).add(attr(APP_ICON_ATTR,STRING)).add(attr(LAUNCH_IMAGE_ATTR,STRING)).add(attr(LAUNCH_STORYBOARD_ATTR,LABEL).direct_compile_time_input().allowedFileTypes(FileTypeSet.of(XIB_TYPE,STORYBOARD_TYPE))).add(attr(BUNDLE_ID_ATTR,STRING).value(new Attribute.ComputedDefault(){
     @Override public Object getDefault(    AttributeMap rule){
       return "example." + rule.getName();
     }

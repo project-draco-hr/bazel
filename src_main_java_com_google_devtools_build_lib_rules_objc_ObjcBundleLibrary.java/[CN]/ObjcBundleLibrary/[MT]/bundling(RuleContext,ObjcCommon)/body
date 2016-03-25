@@ -3,7 +3,7 @@
   ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
   AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   ImmutableSet<TargetDeviceFamily> families=null;
-  List<String> rawFamilies=ruleContext.attributes().get("families",Type.STRING_LIST);
+  List<String> rawFamilies=ruleContext.attributes().get(FAMILIES_ATTR,Type.STRING_LIST);
   try {
     families=ImmutableSet.copyOf(TargetDeviceFamily.fromNamesInRule(rawFamilies));
   }
@@ -11,7 +11,7 @@
     families=ImmutableSet.of();
   }
   if (families.isEmpty()) {
-    ruleContext.attributeError("families",ReleaseBundling.INVALID_FAMILIES_ERROR);
+    ruleContext.attributeError(FAMILIES_ATTR,ReleaseBundling.INVALID_FAMILIES_ERROR);
   }
   return new Bundling.Builder().setName(ruleContext.getLabel().getName()).setArchitecture(appleConfiguration.getIosCpu()).setBundleDirFormat("%s.bundle").setObjcProvider(common.getObjcProvider()).addInfoplistInputFromRule(ruleContext).setIntermediateArtifacts(intermediateArtifacts).setMinimumOsVersion(objcConfiguration.getMinimumOs()).setTargetDeviceFamilies(families).build();
 }
