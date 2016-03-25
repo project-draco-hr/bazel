@@ -5,6 +5,7 @@
   ExecutionTool executionTool=null;
   LoadingResult loadingResult=null;
   BuildConfigurationCollection configurations=null;
+  boolean catastrophe=false;
   try {
     env.getEventBus().post(new BuildStartingEvent(env.getOutputFileSystem(),request));
     LOG.info("Build identifier: " + request.getId());
@@ -44,17 +45,24 @@
   }
  catch (  RuntimeException e) {
     request.getOutErr().printErrLn("Unhandled exception thrown during build; message: " + e.getMessage());
+    catastrophe=true;
+    throw e;
+  }
+catch (  Error e) {
+    catastrophe=true;
     throw e;
   }
  finally {
-    long versionWindow=request.getViewOptions().versionWindowForDirtyNodeGc;
-    if (versionWindow != -1) {
-      runtime.getSkyframeExecutor().deleteOldNodes(versionWindow);
+    if (!catastrophe) {
+      long versionWindow=request.getViewOptions().versionWindowForDirtyNodeGc;
+      if (versionWindow != -1) {
+        runtime.getSkyframeExecutor().deleteOldNodes(versionWindow);
+      }
+      if (executionTool != null) {
+        executionTool.shutdown();
+      }
+      env.getEventBus().post(new BuildInfoEvent(runtime.getworkspaceStatusActionFactory().createDummyWorkspaceStatus()));
     }
-    if (executionTool != null) {
-      executionTool.shutdown();
-    }
-    env.getEventBus().post(new BuildInfoEvent(runtime.getworkspaceStatusActionFactory().createDummyWorkspaceStatus()));
   }
   if (loadingResult != null && loadingResult.hasTargetPatternError()) {
     throw new BuildFailedException("execution phase successful, but there were errors " + "parsing the target pattern");
