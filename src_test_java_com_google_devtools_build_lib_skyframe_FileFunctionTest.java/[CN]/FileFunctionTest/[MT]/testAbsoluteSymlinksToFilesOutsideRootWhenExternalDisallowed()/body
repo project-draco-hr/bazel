@@ -5,5 +5,6 @@
   SkyKey key=skyKey("a");
   EvaluationResult<SkyValue> result=driver.evaluate(ImmutableList.of(key),false,DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
   assertTrue(result.hasError());
-  assertThat(result.getError(key).getException()).isInstanceOf(FileOutsidePackageRootsException.class);
+  assertThatEvaluationResult(result).hasErrorEntryForKeyThat(key).hasExceptionThat().isInstanceOf(SymlinkOutsidePackageRootsException.class);
+  assertThatEvaluationResult(result).hasErrorEntryForKeyThat(key).hasExceptionThat().hasMessage("Encountered symlink [/root]/[a] linking to external mutable [/]/[outsideroot]");
 }

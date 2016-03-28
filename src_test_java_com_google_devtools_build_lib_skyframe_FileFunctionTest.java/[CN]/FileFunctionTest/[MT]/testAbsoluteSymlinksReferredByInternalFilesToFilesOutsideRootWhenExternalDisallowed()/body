@@ -1,10 +1,10 @@
 {
-  file("../outsideroot");
-  symlink("a","../outsideroot");
+  file("/outsideroot/src/foo/bar");
+  symlink("/root/src","/outsideroot/src");
   SequentialBuildDriver driver=makeDriver(true);
-  SkyKey key=skyKey("a");
+  SkyKey key=skyKey("/root/src/foo/bar");
   EvaluationResult<SkyValue> result=driver.evaluate(ImmutableList.of(key),false,DEFAULT_THREAD_COUNT,NullEventHandler.INSTANCE);
   assertTrue(result.hasError());
   assertThatEvaluationResult(result).hasErrorEntryForKeyThat(key).hasExceptionThat().isInstanceOf(SymlinkOutsidePackageRootsException.class);
-  assertThatEvaluationResult(result).hasErrorEntryForKeyThat(key).hasExceptionThat().hasMessage("Encountered symlink [/root]/[a] linking to external mutable [/]/[outsideroot]");
+  assertThatEvaluationResult(result).hasErrorEntryForKeyThat(key).hasExceptionThat().hasMessage("Encountered symlink [/root]/[src] linking to external mutable [/]/[outsideroot/src]");
 }

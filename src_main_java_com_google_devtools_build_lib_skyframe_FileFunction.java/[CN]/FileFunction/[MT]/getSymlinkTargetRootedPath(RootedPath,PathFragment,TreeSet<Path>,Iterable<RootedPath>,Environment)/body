@@ -47,5 +47,10 @@
     }
     throw new FileFunctionException(Preconditions.checkNotNull(fse,rootedPath));
   }
-  return resolveFromAncestors(symlinkTargetRootedPath,env);
+  try {
+    return resolveFromAncestors(symlinkTargetRootedPath,env);
+  }
+ catch (  FileOutsidePackageRootsException e) {
+    throw new FileFunctionException(new SymlinkOutsidePackageRootsException(rootedPath,symlinkTargetRootedPath),Transience.PERSISTENT);
+  }
 }

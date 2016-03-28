@@ -4,14 +4,26 @@
   FileStateValue realFileStateValue=null;
   PathFragment relativePath=rootedPath.getRelativePath();
   if (!relativePath.equals(PathFragment.EMPTY_FRAGMENT)) {
-    Pair<RootedPath,FileStateValue> resolvedState=resolveFromAncestors(rootedPath,env);
+    Pair<RootedPath,FileStateValue> resolvedState=null;
+    try {
+      resolvedState=resolveFromAncestors(rootedPath,env);
+    }
+ catch (    FileOutsidePackageRootsException e) {
+      throw new FileFunctionException(new FileOutsidePackageRootsException(rootedPath),Transience.PERSISTENT);
+    }
     if (resolvedState == null) {
       return null;
     }
     realRootedPath=resolvedState.getFirst();
     realFileStateValue=resolvedState.getSecond();
   }
-  FileStateValue fileStateValue=(FileStateValue)env.getValue(FileStateValue.key(rootedPath));
+  FileStateValue fileStateValue=null;
+  try {
+    fileStateValue=(FileStateValue)env.getValueOrThrow(FileStateValue.key(rootedPath),FileOutsidePackageRootsException.class);
+  }
+ catch (  FileOutsidePackageRootsException e) {
+    throw new FileFunctionException(new FileOutsidePackageRootsException(rootedPath),Transience.PERSISTENT);
+  }
   if (fileStateValue == null) {
     return null;
   }
