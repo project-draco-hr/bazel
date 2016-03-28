@@ -1,0 +1,29 @@
+{
+  FeatureConfiguration featureConfiguration=CcCommon.configureFeatures(ruleContext);
+  PathFragment packageFragment=ruleContext.getPackageDirectory();
+  String expandedIncSymlinkAttr=ruleContext.attributes().get("prefix",Type.STRING);
+  PathFragment includeDirectory=new PathFragment("_").getRelative(ruleContext.getTarget().getName());
+  PathFragment includePath=ruleContext.getConfiguration().getIncludeDirectory().getExecPath().getRelative(packageFragment).getRelative(includeDirectory);
+  PathFragment prefixFragment=packageFragment.getRelative(expandedIncSymlinkAttr);
+  if (!prefixFragment.isNormalized()) {
+    ruleContext.attributeWarning("prefix","should not contain '.' or '..' elements");
+  }
+  ImmutableSortedMap.Builder<Artifact,Artifact> virtualArtifactMapBuilder=ImmutableSortedMap.orderedBy(Artifact.EXEC_PATH_COMPARATOR);
+  prefixFragment=prefixFragment.normalize();
+  ImmutableList<Artifact> hdrs=ruleContext.getPrerequisiteArtifacts("hdrs",Mode.TARGET).list();
+  for (  Artifact src : hdrs) {
+    if (!src.getRootRelativePath().startsWith(prefixFragment)) {
+      ruleContext.attributeError("hdrs",src + " does not start with '" + prefixFragment.getPathString()+ "'");
+      return null;
+    }
+    PathFragment suffix=src.getRootRelativePath().relativeTo(prefixFragment);
+    PathFragment virtualPath=includeDirectory.getRelative(packageFragment).getRelative(suffix);
+    Artifact virtualArtifact=ruleContext.getPackageRelativeArtifact(virtualPath,ruleContext.getConfiguration().getIncludeDirectory());
+    virtualArtifactMapBuilder.put(virtualArtifact,src);
+  }
+  ImmutableSortedMap<Artifact,Artifact> virtualArtifactMap=virtualArtifactMapBuilder.build();
+  ruleContext.registerAction(new CreateIncSymlinkAction(ruleContext.getActionOwner(),virtualArtifactMap));
+  CcLibraryHelper.Info info=new CcLibraryHelper(ruleContext,semantics,featureConfiguration).addIncludeDirs(Arrays.asList(includePath)).addPublicHeaders(virtualArtifactMap.keySet()).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).build();
+  InstrumentedFilesProvider instrumentedFilesProvider=new CcCommon(ruleContext).getInstrumentedFilesProvider(new ArrayList<Artifact>(),true);
+  return new RuleConfiguredTargetBuilder(ruleContext).addProviders(info.getProviders()).addSkylarkTransitiveInfo(CcSkylarkApiProvider.NAME,new CcSkylarkApiProvider()).addOutputGroups(info.getOutputGroups()).add(InstrumentedFilesProvider.class,instrumentedFilesProvider).add(RunfilesProvider.class,RunfilesProvider.simple(Runfiles.EMPTY)).build();
+}
