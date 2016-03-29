@@ -1,10 +1,15 @@
 {
-  NestedSetBuilder<Artifact> debugSymbolBuilder=NestedSetBuilder.<Artifact>stableOrder().addTransitive(objcProvider.get(ObjcProvider.DEBUG_SYMBOLS));
-  for (  Artifact breakpadFile : getBreakpadFiles().values()) {
-    filesToBuild.add(breakpadFile);
-  }
-  if (linkedBinary == LinkedBinary.LOCAL_AND_DEPENDENCIES && ObjcRuleClasses.objcConfiguration(ruleContext).generateDebugSymbols()) {
-    debugSymbolBuilder.add(intermediateArtifacts.dsymPlist()).add(intermediateArtifacts.dsymSymbol()).add(intermediateArtifacts.breakpadSym());
+  NestedSetBuilder<Artifact> debugSymbolBuilder=NestedSetBuilder.<Artifact>stableOrder();
+  if (ObjcRuleClasses.objcConfiguration(ruleContext).generateDebugSymbols()) {
+    filesToBuild.addAll(getBreakpadFiles().values());
+    filesToBuild.addAll(getDsymFiles().values());
+    Artifact cpuPlist=getAnyCpuSpecificDsymPlist();
+    if (cpuPlist != null) {
+      filesToBuild.add(intermediateArtifacts.dsymPlist());
+    }
+    if (linkedBinary == LinkedBinary.LOCAL_AND_DEPENDENCIES) {
+      debugSymbolBuilder.add(intermediateArtifacts.dsymPlist()).add(intermediateArtifacts.dsymSymbol()).add(intermediateArtifacts.breakpadSym());
+    }
   }
   filesToBuild.add(releaseBundling.getIpaArtifact()).addTransitive(debugSymbolBuilder.build());
   return this;
