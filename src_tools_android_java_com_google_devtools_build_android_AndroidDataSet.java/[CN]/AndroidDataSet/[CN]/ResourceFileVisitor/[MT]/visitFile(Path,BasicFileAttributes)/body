@@ -2,21 +2,12 @@
   try {
     if (!Files.isDirectory(path)) {
       if (inValuesSubtree) {
-        List<DataResource> targetOverwritableResources=new ArrayList<>();
-        List<DataResource> targetNonOverwritableResources=new ArrayList<>();
-        XmlDataResource.fromPath(xmlInputFactory,path,fqnFactory,targetOverwritableResources,targetNonOverwritableResources);
-        for (        DataResource dataResource : targetOverwritableResources) {
-          putOverwritingResource(dataResource);
-        }
-        for (        DataResource dataResource : targetNonOverwritableResources) {
-          if (!nonOverwritingResources.containsKey(dataResource.dataKey())) {
-            nonOverwritingResources.put(dataResource.dataKey(),dataResource);
-          }
-        }
+        XmlDataResource.fromPath(xmlInputFactory,path,fqnFactory,overwritingConsumer,nonOverwritingConsumer);
       }
  else {
-        DataResource dataResource=FileDataResource.fromPath(path,fqnFactory);
-        putOverwritingResource(dataResource);
+        String rawFqn=deriveRawFullyQualifiedName(path);
+        FullyQualifiedName key=fqnFactory.parse(rawFqn);
+        overwritingConsumer.consume(key,FileDataResource.of(key,path));
       }
     }
   }

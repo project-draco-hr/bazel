@@ -1,8 +1,8 @@
 {
-  Map<DataKey,DataResource> overwritingResources=new HashMap<>();
-  Map<DataKey,DataResource> nonOverwritingResources=new HashMap<>();
+  final Map<DataKey,DataResource> overwritingResources=new HashMap<>();
+  final Map<DataKey,DataResource> nonOverwritingResources=new HashMap<>();
   final Map<DataKey,DataAsset> assets=new HashMap<>();
-  Set<MergeConflict> conflicts=new HashSet<>();
-  final ResourceFileVisitor resourceVisitor=new ResourceFileVisitor(conflicts,overwritingResources,nonOverwritingResources);
+  final Set<MergeConflict> conflicts=new HashSet<>();
+  final ResourceFileVisitor resourceVisitor=new ResourceFileVisitor(new OverwritableConsumer<>(overwritingResources,conflicts),new NonOverwritableConsumer(nonOverwritingResources));
   return new AndroidDataSetBuildingPathWalker(conflicts,assets,overwritingResources,nonOverwritingResources,resourceVisitor);
 }
