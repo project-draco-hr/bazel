@@ -1,0 +1,17 @@
+{
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  List<String> copts=Lists.newArrayList(FluentIterable.concat(objcConfiguration.getCopts(),attributes.copts()));
+  for (  String copt : copts) {
+    if (copt.contains("-fmodules-cache-path")) {
+      ruleContext.ruleWarning(MODULES_CACHE_PATH_WARNING);
+    }
+  }
+  if (attributes.enableModules()) {
+    copts.add("-fmodules");
+  }
+  if (copts.contains("-fmodules")) {
+    String cachePath=ruleContext.getConfiguration().getGenfilesFragment() + "/" + OBJC_MODULE_CACHE_DIR_NAME;
+    copts.add("-fmodules-cache-path=" + cachePath);
+  }
+  return copts;
+}
