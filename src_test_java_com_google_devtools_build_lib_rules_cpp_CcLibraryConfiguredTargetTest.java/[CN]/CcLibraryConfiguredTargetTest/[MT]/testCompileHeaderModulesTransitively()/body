@@ -16,7 +16,7 @@
   CppCompileAction cObjectAction=(CppCompileAction)getGeneratingAction(cObjectArtifact);
   assertThat(getNonSystemModuleMaps(cObjectAction.getInputs())).containsExactly(getGenfilesArtifact("b.cppmap","//module:b"),getGenfilesArtifact("c.cppmap","//nomodule:e"));
   assertThat(getHeaderModules(cObjectAction.getInputs())).containsExactly(getBinArtifact("_objs/b/module/b.pic.pcm","//module:b"));
-  assertThat(cObjectAction.getIncludeScannerSources()).containsExactly(getSourceArtifact("nomodule/c.cc"),getSourceArtifact("module/b.h"));
+  assertThat(cObjectAction.getIncludeScannerSources()).containsExactly(getSourceArtifact("nomodule/c.cc"));
   assertThat(cObjectAction.getMainIncludeScannerSource()).isEqualTo(getSourceArtifact("nomodule/c.cc"));
   assertThat(getHeaderModuleFlags(cObjectAction.getCompilerOptions())).isEmpty();
   getConfiguredTarget("//nomodule:d");
@@ -25,13 +25,13 @@
   CppCompileAction dObjectAction=(CppCompileAction)getGeneratingAction(dObjectArtifact);
   assertThat(getNonSystemModuleMaps(dObjectAction.getInputs())).containsExactly(getGenfilesArtifact("c.cppmap","//nomodule:c"),getGenfilesArtifact("d.cppmap","//nomodule:d"));
   assertThat(getHeaderModules(dObjectAction.getInputs())).containsExactly(getBinArtifact("_objs/b/module/b.pic.pcm","//module:b"));
-  assertThat(dObjectAction.getIncludeScannerSources()).containsExactly(getSourceArtifact("module/b.h"),getSourceArtifact("nomodule/d.cc"));
+  assertThat(dObjectAction.getIncludeScannerSources()).containsExactly(getSourceArtifact("nomodule/d.cc"));
   assertThat(getHeaderModuleFlags(dObjectAction.getCompilerOptions())).isEmpty();
   getConfiguredTarget("//module:j");
   Artifact jObjectArtifact=getBinArtifact("_objs/j/module/j.pic.o","//module:j");
   CppCompileAction jObjectAction=(CppCompileAction)getGeneratingAction(jObjectArtifact);
   assertThat(getHeaderModules(jObjectAction.getInputs())).containsExactly(getBinArtifact("_objs/b/module/b.pic.pcm","//module:b"),getBinArtifact("_objs/g/module/g.pic.pcm","//module:g"));
-  assertThat(jObjectAction.getIncludeScannerSources()).containsExactly(getSourceArtifact("module/j.cc"),getSourceArtifact("module/b.h"),getSourceArtifact("module/g.h"));
+  assertThat(jObjectAction.getIncludeScannerSources()).containsExactly(getSourceArtifact("module/j.cc"));
   assertThat(jObjectAction.getMainIncludeScannerSource()).isEqualTo(getSourceArtifact("module/j.cc"));
   assertThat(getHeaderModuleFlags(jObjectAction.getCompilerOptions())).containsExactly("b.pic.pcm","g.pic.pcm");
 }
