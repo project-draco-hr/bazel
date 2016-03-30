@@ -16,14 +16,33 @@
     Method mGetInstance=clazz.getDeclaredMethod("getInstance");
     mGetInstance.setAccessible(true);
     Object resourcesManager=mGetInstance.invoke(null);
-    Field mAssets=Resources.class.getDeclaredField("mAssets");
-    mAssets.setAccessible(true);
-    Field fMActiveResources=clazz.getDeclaredField("mActiveResources");
-    fMActiveResources.setAccessible(true);
-    @SuppressWarnings("unchecked") ArrayMap<?,WeakReference<Resources>> arrayMap=(ArrayMap<?,WeakReference<Resources>>)fMActiveResources.get(resourcesManager);
-    for (    WeakReference<Resources> wr : arrayMap.values()) {
+    Collection<WeakReference<Resources>> references;
+    try {
+      Field fMActiveResources=clazz.getDeclaredField("mActiveResources");
+      fMActiveResources.setAccessible(true);
+      ArrayMap<?,WeakReference<Resources>> arrayMap=(ArrayMap<?,WeakReference<Resources>>)fMActiveResources.get(resourcesManager);
+      references=arrayMap.values();
+    }
+ catch (    NoSuchFieldException e) {
+      Field mResourceReferences=clazz.getDeclaredField("mResourceReferences");
+      mResourceReferences.setAccessible(true);
+      references=(Collection<WeakReference<Resources>>)mResourceReferences.get(resourcesManager);
+    }
+    for (    WeakReference<Resources> wr : references) {
       Resources resources=wr.get();
-      mAssets.set(resources,newAssetManager);
+      try {
+        Field mAssets=Resources.class.getDeclaredField("mAssets");
+        mAssets.setAccessible(true);
+        mAssets.set(resources,newAssetManager);
+      }
+ catch (      NoSuchFieldException e) {
+        Field mResourcesImplField=Resources.class.getDeclaredField("mResourcesImpl");
+        mResourcesImplField.setAccessible(true);
+        Object mResourceImpl=mResourcesImplField.get(resources);
+        Field implAssets=mResourceImpl.getClass().getDeclaredField("mAssets");
+        implAssets.setAccessible(true);
+        implAssets.set(mResourceImpl,newAssetManager);
+      }
       resources.updateConfiguration(resources.getConfiguration(),resources.getDisplayMetrics());
     }
   }
