@@ -1,0 +1,39 @@
+{
+  if (srcLabels.contains(source)) {
+    return true;
+  }
+  for (  Label label : srcLabels) {
+    if (!visitedRuleLabels.add(label)) {
+      continue;
+    }
+    Target target=null;
+    try {
+      target=targetProvider.getTarget(eventHandler,label);
+    }
+ catch (    NoSuchThingException e) {
+    }
+catch (    InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new TargetParsingException("interrupted");
+    }
+    if (target == null || target instanceof FileTarget) {
+      continue;
+    }
+    Rule targetRule=target.getAssociatedRule();
+    if ("filegroup".equals(targetRule.getRuleClass())) {
+      RawAttributeMapper attributeMapper=RawAttributeMapper.of(targetRule);
+      Collection<Label> srcs=attributeMapper.getMergedValues("srcs",BuildType.LABEL_LIST);
+      if (listContainsFile(eventHandler,srcs,source,visitedRuleLabels)) {
+        return true;
+      }
+    }
+ else     if ("genrule".equals(targetRule.getRuleClass())) {
+      for (      OutputFile file : targetRule.getOutputFiles()) {
+        if (file.getLabel().equals(source)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}

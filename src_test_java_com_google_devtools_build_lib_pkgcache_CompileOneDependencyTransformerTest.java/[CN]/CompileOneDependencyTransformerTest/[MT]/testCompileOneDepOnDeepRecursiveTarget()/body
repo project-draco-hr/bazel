@@ -1,6 +1,5 @@
 {
-  scratch.file("recursive/BUILD","filegroup(name = 'x', srcs = ['foox', ':y'])","filegroup(name = 'y', srcs = ['fooy', ':z'])","filegroup(name = 'z', srcs = ['fooz', ':x'])");
-  ResolvedTargets<Target> result=parseCompileOneDep("//recursive:foox","//recursive:fooy","//recursive:fooz");
-  assertFalse(result.hasError());
-  assertThat(result.getTargets()).hasSize(1);
+  scratch.file("recursive/BUILD","filegroup(name = 'x', srcs = ['foox.cc', ':y'])","filegroup(name = 'y', srcs = ['fooy.cc', ':z'])","filegroup(name = 'z', srcs = ['fooz.cc', ':x'])","cc_library(name = 'cc', srcs = [':x'])");
+  Set<Label> result=parseListCompileOneDep("//recursive:foox.cc","//recursive:fooy.cc","//recursive:fooy.cc");
+  assertThat(result).containsExactlyElementsIn(labels("//recursive:cc"));
 }

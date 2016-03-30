@@ -1,0 +1,13 @@
+{
+  RawAttributeMapper attributeMapper=RawAttributeMapper.of(rule);
+  Set<Label> labels=new TreeSet<>();
+  for (  String attrName : attributeMapper.getAttributeNames()) {
+    if (!attributeMapper.getAttributeDefinition(attrName).isDirectCompileTimeInput()) {
+      continue;
+    }
+    if (rule.isAttrDefined(attrName,BuildType.LABEL_LIST)) {
+      labels.addAll(attributeMapper.getMergedValues(attrName,BuildType.LABEL_LIST));
+    }
+  }
+  return labels;
+}

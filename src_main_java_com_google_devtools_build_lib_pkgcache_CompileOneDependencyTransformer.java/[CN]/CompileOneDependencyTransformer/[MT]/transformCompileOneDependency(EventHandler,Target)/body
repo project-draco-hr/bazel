@@ -2,60 +2,25 @@
   if (!(target instanceof FileTarget)) {
     throw new TargetParsingException("--compile_one_dependency target '" + target.getLabel() + "' must be a file");
   }
-  Package pkg=target.getPackage();
-  Iterable<Rule> orderedRuleList=getOrderedRuleList(pkg);
-  Rule fallbackRule=null;
-  for (  Rule rule : orderedRuleList) {
-    try {
-      if (SrcTargetUtil.getSrcTargets(eventHandler,rule,targetProvider).contains(target)) {
-        if (rule.getRuleClassObject().isPreferredDependency(target.getName())) {
-          return rule;
-        }
- else         if (fallbackRule == null) {
-          fallbackRule=rule;
-        }
-      }
-    }
- catch (    NoSuchThingException e) {
-    }
-catch (    InterruptedException e) {
-      throw new TargetParsingException("interrupted");
-    }
-  }
   Rule result=null;
-  BinaryPredicate<Rule,Attribute> directCompileTimeInput=new BinaryPredicate<Rule,Attribute>(){
-    @Override public boolean apply(    Rule rule,    Attribute attribute){
-      return DependencyFilter.DIRECT_COMPILE_TIME_INPUT.apply(rule,attribute) && !rule.isConfigurableAttribute(attribute.getName());
-    }
-  }
-;
+  Iterable<Rule> orderedRuleList=getOrderedRuleList(target.getPackage());
   for (  Rule rule : orderedRuleList) {
-    if (rule.getLabels(directCompileTimeInput).contains(target.getLabel())) {
+    Set<Label> labels=getInputLabels(rule);
+    if (listContainsFile(eventHandler,labels,target.getLabel(),Sets.<Label>newHashSet())) {
       if (rule.getRuleClassObject().isPreferredDependency(target.getName())) {
         result=rule;
+        break;
       }
- else       if (fallbackRule == null) {
-        fallbackRule=rule;
+      if (result == null) {
+        result=rule;
       }
     }
   }
   if (result == null) {
-    result=fallbackRule;
-  }
-  if (result == null) {
     throw new TargetParsingException("Couldn't find dependency on target '" + target.getLabel() + "'");
   }
-  try {
-    if (!SrcTargetUtil.getSrcTargets(eventHandler,result,targetProvider).isEmpty()) {
-      return result;
-    }
-  }
- catch (  NoSuchThingException e) {
-    eventHandler.handle(Event.error(e.getMessage()));
-    throw new TargetParsingException("Couldn't find dependency on target '" + target.getLabel() + "'");
-  }
-catch (  InterruptedException e) {
-    throw new TargetParsingException("interrupted");
+  if (!RawAttributeMapper.of(result).getMergedValues("srcs",BuildType.LABEL_LIST).isEmpty()) {
+    return result;
   }
   for (  Rule rule : orderedRuleList) {
     RawAttributeMapper attributes=RawAttributeMapper.of(rule);
