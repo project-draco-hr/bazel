@@ -6,13 +6,13 @@
     }
     try (AutoProfiler p=profiledAndLogged("Loading action cache",ProfilerTask.INFO,LOG)){
       try {
-        actionCache=new CompactPersistentActionCache(getCacheDirectory(),clock);
+        actionCache=new CompactPersistentActionCache(getCacheDirectory(),runtime.getClock());
       }
  catch (      IOException e) {
         LOG.log(Level.WARNING,"Failed to load action cache: " + e.getMessage(),e);
         LoggingUtil.logToRemote(Level.WARNING,"Failed to load action cache: " + e.getMessage(),e);
         reporter.handle(Event.error("Error during action cache initialization: " + e.getMessage() + ". Corrupted files were renamed to '"+ getCacheDirectory()+ "/*.bad'. "+ "Blaze will now reset action cache data, causing a full rebuild"));
-        actionCache=new CompactPersistentActionCache(getCacheDirectory(),clock);
+        actionCache=new CompactPersistentActionCache(getCacheDirectory(),runtime.getClock());
       }
     }
    }

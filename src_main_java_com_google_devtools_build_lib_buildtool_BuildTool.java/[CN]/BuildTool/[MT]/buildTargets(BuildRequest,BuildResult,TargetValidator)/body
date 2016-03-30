@@ -20,7 +20,7 @@
         throw new InvalidConfigurationException("The experimental setting to select multiple CPUs is only supported for 'build' and " + "'test' right now!");
       }
     }
-    configurations=runtime.getSkyframeExecutor().createConfigurations(env.getReporter(),runtime.getConfigurationFactory(),buildOptions,env.getDirectories(),request.getMultiCpus(),request.getViewOptions().keepGoing);
+    configurations=env.getSkyframeExecutor().createConfigurations(env.getReporter(),runtime.getConfigurationFactory(),buildOptions,env.getDirectories(),request.getMultiCpus(),request.getViewOptions().keepGoing);
     env.getEventBus().post(new ConfigurationsCreatedEvent(configurations));
     env.throwPendingException();
     if (configurations.getTargetConfigurations().size() == 1) {
@@ -35,7 +35,7 @@
     checkTargetEnvironmentRestrictions(analysisResult.getTargetsToBuild(),bridge);
     reportTargets(analysisResult);
     if (needsExecutionPhase(request.getBuildOptions())) {
-      runtime.getSkyframeExecutor().injectTopLevelContext(request.getTopLevelArtifactContext());
+      env.getSkyframeExecutor().injectTopLevelContext(request.getTopLevelArtifactContext());
       executionTool.executeBuild(request.getId(),analysisResult,result,configurations,transformPackageRoots(analysisResult.getPackageRoots()));
     }
     String delayedErrorMsg=analysisResult.getError();
@@ -56,7 +56,7 @@ catch (  Error e) {
     if (!catastrophe) {
       long versionWindow=request.getViewOptions().versionWindowForDirtyNodeGc;
       if (versionWindow != -1) {
-        runtime.getSkyframeExecutor().deleteOldNodes(versionWindow);
+        env.getSkyframeExecutor().deleteOldNodes(versionWindow);
       }
       if (executionTool != null) {
         executionTool.shutdown();

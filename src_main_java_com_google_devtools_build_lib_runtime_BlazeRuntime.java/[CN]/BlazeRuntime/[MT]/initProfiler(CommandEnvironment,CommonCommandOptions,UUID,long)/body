@@ -4,7 +4,7 @@
   ProfiledTaskKinds profiledTasks=ProfiledTaskKinds.NONE;
   try {
     if (options.profilePath != null) {
-      Path profilePath=getWorkspace().getRelative(options.profilePath);
+      Path profilePath=env.getWorkspace().getRelative(options.profilePath);
       recordFullProfilerData=options.recordFullProfilerData;
       out=new BufferedOutputStream(profilePath.getOutputStream(),1024 * 1024);
       env.getReporter().handle(Event.info("Writing profile data to '" + profilePath + "'"));
@@ -16,7 +16,7 @@
       profiledTasks=ProfiledTaskKinds.SLOWEST;
     }
     if (profiledTasks != ProfiledTaskKinds.NONE) {
-      Profiler.instance().start(profiledTasks,out,"Blaze profile for " + getOutputBase() + " at "+ new Date()+ ", build ID: "+ buildID,recordFullProfilerData,clock,execStartTimeNanos);
+      Profiler.instance().start(profiledTasks,out,"Blaze profile for " + env.getOutputBase() + " at "+ new Date()+ ", build ID: "+ buildID,recordFullProfilerData,clock,execStartTimeNanos);
       return true;
     }
   }
