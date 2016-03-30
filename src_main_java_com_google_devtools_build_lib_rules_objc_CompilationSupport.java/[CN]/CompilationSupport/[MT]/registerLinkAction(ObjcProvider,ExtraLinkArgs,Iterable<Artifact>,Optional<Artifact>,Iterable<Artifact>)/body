@@ -4,10 +4,19 @@
   Artifact binaryToLink=objcConfiguration.shouldStripBinary() ? intermediateArtifacts.unstrippedSingleArchitectureBinary() : intermediateArtifacts.strippedSingleArchitectureBinary();
   ImmutableList<Artifact> ccLibraries=ccLibraries(objcProvider);
   NestedSet<Artifact> bazelBuiltLibraries=Iterables.isEmpty(prunedJ2ObjcArchives) ? objcProvider.get(LIBRARY) : substituteJ2ObjcPrunedLibraries(objcProvider);
-  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext).setMnemonic("ObjcLink").setShellCommand(ImmutableList.of("/bin/bash","-c")).setCommandLine(linkCommandLine(extraLinkArgs,objcProvider,binaryToLink,dsymBundle,ccLibraries,bazelBuiltLibraries)).addOutput(binaryToLink).addOutputs(dsymBundle.asSet()).addTransitiveInputs(bazelBuiltLibraries).addTransitiveInputs(objcProvider.get(IMPORTED_LIBRARY)).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(ccLibraries).addInputs(extraLinkInputs).addInputs(prunedJ2ObjcArchives).addInput(xcrunwrapper(ruleContext).getExecutable()).build(ruleContext));
+  CommandLine commandLine=linkCommandLine(extraLinkArgs,objcProvider,binaryToLink,dsymBundle,ccLibraries,bazelBuiltLibraries);
+  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext).setMnemonic("ObjcLink").setShellCommand(ImmutableList.of("/bin/bash","-c")).setCommandLine(new SingleArgCommandLine(commandLine)).addOutput(binaryToLink).addOutputs(dsymBundle.asSet()).addTransitiveInputs(bazelBuiltLibraries).addTransitiveInputs(objcProvider.get(IMPORTED_LIBRARY)).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(ccLibraries).addInputs(extraLinkInputs).addInputs(prunedJ2ObjcArchives).addInput(xcrunwrapper(ruleContext).getExecutable()).build(ruleContext));
   if (objcConfiguration.shouldStripBinary()) {
-    boolean isTestTarget=TargetUtils.isTestRule(ruleContext.getRule());
-    Iterable<String> stripArgs=isTestTarget ? ImmutableList.of("-S") : ImmutableList.<String>of();
+    final Iterable<String> stripArgs;
+    if (TargetUtils.isTestRule(ruleContext.getRule())) {
+      stripArgs=ImmutableList.of("-S");
+    }
+ else     if (isDynamicLib(commandLine)) {
+      stripArgs=ImmutableList.of("-x");
+    }
+ else {
+      stripArgs=ImmutableList.<String>of();
+    }
     Artifact strippedBinary=intermediateArtifacts.strippedSingleArchitectureBinary();
     ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext).setMnemonic("ObjcBinarySymbolStrip").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(symbolStripCommandLine(stripArgs,binaryToLink,strippedBinary)).addOutput(strippedBinary).addInput(binaryToLink).build(ruleContext));
   }
