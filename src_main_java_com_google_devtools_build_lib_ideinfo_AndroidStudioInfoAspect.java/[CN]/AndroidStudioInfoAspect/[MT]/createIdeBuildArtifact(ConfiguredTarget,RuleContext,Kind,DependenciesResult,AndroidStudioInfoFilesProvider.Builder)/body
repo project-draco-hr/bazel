@@ -13,11 +13,11 @@
   outputBuilder.setBuildFile(ruleContext.getRule().getPackage().getBuildFile().getPath().toString());
   outputBuilder.setBuildFileArtifactLocation(makeArtifactLocation(ruleContext.getRule().getPackage()));
   outputBuilder.setKind(ruleKind);
-  if (ruleKind == Kind.JAVA_LIBRARY || ruleKind == Kind.JAVA_IMPORT || ruleKind == Kind.JAVA_TEST || ruleKind == Kind.JAVA_BINARY || ruleKind == Kind.ANDROID_LIBRARY || ruleKind == Kind.ANDROID_BINARY || ruleKind == Kind.ANDROID_TEST || ruleKind == Kind.ANDROID_ROBOELECTRIC_TEST || ruleKind == Kind.PROTO_LIBRARY || ruleKind == Kind.JAVA_PLUGIN) {
+  if (JAVA_OUTPUT_RULES.contains(ruleKind)) {
     JavaRuleIdeInfo javaRuleIdeInfo=makeJavaRuleIdeInfo(base,ruleContext,ideResolveArtifacts,packageManifest);
     outputBuilder.setJavaRuleIdeInfo(javaRuleIdeInfo);
   }
-  if (ruleKind == Kind.CC_BINARY || ruleKind == Kind.CC_LIBRARY || ruleKind == Kind.CC_TEST || ruleKind == Kind.CC_INC_LIBRARY) {
+  if (CC_RULES.contains(ruleKind)) {
     CRuleIdeInfo cRuleIdeInfo=makeCRuleIdeInfo(base,ruleContext);
     outputBuilder.setCRuleIdeInfo(cRuleIdeInfo);
   }
@@ -27,7 +27,7 @@
       outputBuilder.setCToolchainIdeInfo(cToolchainIdeInfo);
     }
   }
-  if (ruleKind == Kind.ANDROID_LIBRARY || ruleKind == Kind.ANDROID_BINARY || ruleKind == Kind.ANDROID_TEST || ruleKind == Kind.ANDROID_RESOURCES) {
+  if (ANDROID_RULES.contains(ruleKind)) {
     outputBuilder.setAndroidRuleIdeInfo(makeAndroidRuleIdeInfo(base,dependenciesResult,ideResolveArtifacts));
   }
   AndroidStudioInfoFilesProvider provider=providerBuilder.build();
