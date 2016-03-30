@@ -29,7 +29,7 @@
     return exitCausingException.getExitCode().getNumericExitCode();
   }
   try {
-    Path commandLog=getCommandLogPath(runtime.getOutputBase());
+    Path commandLog=getCommandLogPath(env.getOutputBase());
     commandLog.delete();
     logOutputStream=commandLog.getOutputStream();
     outErr=tee(outErr,OutErr.create(logOutputStream,logOutputStream));
@@ -37,7 +37,7 @@
  catch (  IOException ioException) {
     LoggingUtil.logToRemote(Level.WARNING,"Unable to delete or open command.log",ioException);
   }
-  ExitCode result=checkCwdInWorkspace(commandAnnotation,commandName,outErr);
+  ExitCode result=checkCwdInWorkspace(env,commandAnnotation,commandName,outErr);
   if (result != ExitCode.SUCCESS) {
     return result.getNumericExitCode();
   }
