@@ -1,0 +1,9 @@
+{
+  addSourceLines("Hello.java","class Hello {}");
+  optionsBuilder.addAllJavacOpts(Arrays.asList("-NOT_AN_OPTION"));
+  StringWriter errOutput=new StringWriter();
+  try (JavacTurbine turbine=new JavacTurbine(new PrintWriter(errOutput,true),optionsBuilder.build())){
+    assertThat(turbine.compile()).isEqualTo(Result.ERROR);
+  }
+   assertThat(errOutput.toString()).contains("invalid flag: -NOT_AN_OPTION");
+}
