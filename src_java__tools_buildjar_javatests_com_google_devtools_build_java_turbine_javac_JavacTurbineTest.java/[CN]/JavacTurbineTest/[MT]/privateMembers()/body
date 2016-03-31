@@ -1,0 +1,9 @@
+{
+  addSourceLines("Hello.java","class Hello {","  private void f() {}","  private int x;","}");
+  compile();
+  Map<String,byte[]> outputs=collectOutputs();
+  assertThat(outputs.keySet()).containsExactly("Hello.class");
+  String text=textify(outputs.get("Hello.class"));
+  String[] expected={"// class version 51.0 (51)","// access flags 0x20","class Hello {","","","  // access flags 0x0","  <init>()V","}",""};
+  assertThat(text).isEqualTo(Joiner.on('\n').join(expected));
+}
