@@ -4,8 +4,8 @@
   Artifact binaryToLink=objcConfiguration.shouldStripBinary() ? intermediateArtifacts.unstrippedSingleArchitectureBinary() : intermediateArtifacts.strippedSingleArchitectureBinary();
   ImmutableList<Artifact> ccLibraries=ccLibraries(objcProvider);
   NestedSet<Artifact> bazelBuiltLibraries=Iterables.isEmpty(prunedJ2ObjcArchives) ? objcProvider.get(LIBRARY) : substituteJ2ObjcPrunedLibraries(objcProvider);
-  CommandLine commandLine=linkCommandLine(extraLinkArgs,objcProvider,binaryToLink,dsymBundle,ccLibraries,bazelBuiltLibraries);
-  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext).setMnemonic("ObjcLink").setShellCommand(ImmutableList.of("/bin/bash","-c")).setCommandLine(new SingleArgCommandLine(commandLine)).addOutput(binaryToLink).addOutputs(dsymBundle.asSet()).addTransitiveInputs(bazelBuiltLibraries).addTransitiveInputs(objcProvider.get(IMPORTED_LIBRARY)).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(ccLibraries).addInputs(extraLinkInputs).addInputs(prunedJ2ObjcArchives).addInput(xcrunwrapper(ruleContext).getExecutable()).build(ruleContext));
+  CommandLine commandLine=linkCommandLine(extraLinkArgs,objcProvider,binaryToLink,dsymBundle,ccLibraries,bazelBuiltLibraries,linkmap);
+  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext).setMnemonic("ObjcLink").setShellCommand(ImmutableList.of("/bin/bash","-c")).setCommandLine(new SingleArgCommandLine(commandLine)).addOutput(binaryToLink).addOutputs(dsymBundle.asSet()).addOutputs(linkmap.asSet()).addTransitiveInputs(bazelBuiltLibraries).addTransitiveInputs(objcProvider.get(IMPORTED_LIBRARY)).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(ccLibraries).addInputs(extraLinkInputs).addInputs(prunedJ2ObjcArchives).addInput(xcrunwrapper(ruleContext).getExecutable()).build(ruleContext));
   if (objcConfiguration.shouldStripBinary()) {
     final Iterable<String> stripArgs;
     if (TargetUtils.isTestRule(ruleContext.getRule())) {

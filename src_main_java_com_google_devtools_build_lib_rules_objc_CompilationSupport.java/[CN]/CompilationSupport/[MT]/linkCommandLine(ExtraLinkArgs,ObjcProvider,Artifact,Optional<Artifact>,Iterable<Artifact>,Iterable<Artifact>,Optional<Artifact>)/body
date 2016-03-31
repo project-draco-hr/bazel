@@ -33,6 +33,9 @@
   for (  String linkopt : attributes.linkopts()) {
     commandLine.add("-Wl," + linkopt);
   }
+  if (linkmap.isPresent()) {
+    commandLine.add("-Xlinker -map").add("-Xlinker " + linkmap.get().getExecPath());
+  }
   if (dsymBundle.isPresent()) {
     PathFragment dsymPath=FileSystemUtils.removeExtension(dsymBundle.get().getExecPath());
     commandLine.add("&&").addPath(xcrunwrapper(ruleContext).getExecutable().getExecPath()).add(DSYMUTIL).add(linkedBinary.getExecPathString()).add("-o " + dsymPath).add("&& zipped_bundle=${PWD}/" + dsymBundle.get().getShellEscapedExecPathString()).add("&& cd " + dsymPath).add("&& /usr/bin/zip -q -r \"${zipped_bundle}\" .");

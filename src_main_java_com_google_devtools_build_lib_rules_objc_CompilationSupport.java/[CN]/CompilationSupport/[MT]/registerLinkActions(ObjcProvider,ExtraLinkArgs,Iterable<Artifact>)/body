@@ -1,6 +1,7 @@
 {
   IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   Optional<Artifact> dsymBundle;
+  Optional<Artifact> linkmap;
   if (ObjcRuleClasses.objcConfiguration(ruleContext).generateDebugSymbols()) {
     registerDsymActions();
     dsymBundle=Optional.of(intermediateArtifacts.dsymBundle());
@@ -14,6 +15,12 @@
     registerJ2ObjcDeadCodeRemovalActions(objcProvider,provider.getEntryClasses());
     prunedJ2ObjcArchives=j2objcPrunedLibraries(objcProvider);
   }
-  registerLinkAction(objcProvider,extraLinkArgs,extraLinkInputs,dsymBundle,prunedJ2ObjcArchives);
+  if (ObjcRuleClasses.objcConfiguration(ruleContext).generateLinkmap()) {
+    linkmap=Optional.of(intermediateArtifacts.linkmap());
+  }
+ else {
+    linkmap=Optional.absent();
+  }
+  registerLinkAction(objcProvider,extraLinkArgs,extraLinkInputs,dsymBundle,prunedJ2ObjcArchives,linkmap);
   return this;
 }
