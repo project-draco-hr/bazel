@@ -17,13 +17,15 @@
   Path repoRoot=RepositoryFunction.getExternalRepositoryDirectory(directories).getRelative(rule.getName());
   if (handler.isLocal(rule)) {
     setupRepositoryRoot(repoRoot);
-    return handler.fetch(rule,repoRoot,env);
+    return handler.fetch(rule,repoRoot,directories,env);
   }
   byte[] ruleSpecificData=handler.getRuleSpecificMarkerData(rule,env);
   if (ruleSpecificData == null) {
     return null;
   }
-  boolean markerUpToDate=handler.isFilesystemUpToDate(rule,ruleSpecificData);
+  byte[] ruleKey=computeRuleKey(rule,ruleSpecificData);
+  Path markerPath=getMarkerPath(directories,rule);
+  boolean markerUpToDate=isFilesystemUpToDate(markerPath,ruleKey);
   if (markerUpToDate && repoRoot.exists()) {
     RepositoryFunction.getRepositoryDirectory(repoRoot,env);
     if (env.valuesMissing()) {
@@ -33,11 +35,11 @@
   }
   if (isFetch.get()) {
     setupRepositoryRoot(repoRoot);
-    SkyValue result=handler.fetch(rule,repoRoot,env);
+    SkyValue result=handler.fetch(rule,repoRoot,directories,env);
     if (env.valuesMissing()) {
       return null;
     }
-    handler.writeMarkerFile(rule,ruleSpecificData);
+    writeMarkerFile(markerPath,ruleKey);
     return result;
   }
   if (!repoRoot.exists()) {

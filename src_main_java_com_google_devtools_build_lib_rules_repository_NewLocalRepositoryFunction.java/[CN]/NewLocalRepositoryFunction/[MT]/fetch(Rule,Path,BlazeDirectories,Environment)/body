@@ -1,0 +1,13 @@
+{
+  NewRepositoryBuildFileHandler buildFileHandler=new NewRepositoryBuildFileHandler(directories.getWorkspace());
+  if (!buildFileHandler.prepareBuildFile(rule,env)) {
+    return null;
+  }
+  prepareLocalRepositorySymlinkTree(rule,outputDirectory);
+  PathFragment pathFragment=getTargetPath(rule,directories.getWorkspace());
+  if (!symlinkLocalRepositoryContents(outputDirectory,directories.getOutputBase().getFileSystem().getPath(pathFragment))) {
+    return null;
+  }
+  buildFileHandler.finishBuildFile(outputDirectory);
+  return RepositoryDirectoryValue.create(outputDirectory);
+}
