@@ -1,3 +1,15 @@
 {
-  return createConfigurations(false,args);
+  optionsParser=OptionsParser.newOptionsParser(Iterables.concat(Arrays.asList(ExecutionOptions.class,BuildRequest.BuildRequestOptions.class),ruleClassProvider.getConfigurationOptions()));
+  List<String> configurationArgs=new ArrayList<>();
+  configurationArgs.add("--stamp");
+  configurationArgs.add("--experimental_extended_sanity_checks");
+  configurationArgs.addAll(getAnalysisMock().getOptionOverrides());
+  optionsParser.parse(configurationArgs);
+  optionsParser.parse(args);
+  InvocationPolicyEnforcer optionsPolicyEnforcer=new InvocationPolicyEnforcer(TestConstants.TEST_INVOCATION_POLICY);
+  optionsPolicyEnforcer.enforce(optionsParser,"");
+  BuildOptions buildOptions=ruleClassProvider.createBuildOptions(optionsParser);
+  ensureTargetsVisited(buildOptions.getAllLabels().values());
+  skyframeExecutor.invalidateConfigurationCollection();
+  return skyframeExecutor.createConfigurations(reporter,configurationFactory,buildOptions,directories,ImmutableSet.<String>of(),false);
 }
