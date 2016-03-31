@@ -1,0 +1,11 @@
+{
+  addSourceLines("Hello.java","@Deprecated class Hello {}");
+  optionsBuilder.setProcessors(ImmutableList.of(NoSuchFileProcessor.class.getName()));
+  optionsBuilder.addProcessorPathEntries(ImmutableList.copyOf(Splitter.on(':').split(System.getProperty("java.class.path"))));
+  optionsBuilder.addSources(ImmutableList.copyOf(Iterables.transform(sources,TO_STRING)));
+  StringWriter errOutput=new StringWriter();
+  try (JavacTurbine turbine=new JavacTurbine(new PrintWriter(errOutput,true),optionsBuilder.build())){
+    assertThat(turbine.compile()).isEqualTo(Result.ERROR);
+  }
+   assertThat(errOutput.toString()).contains("FileNotFoundException: /NO_SUCH_FILE");
+}
