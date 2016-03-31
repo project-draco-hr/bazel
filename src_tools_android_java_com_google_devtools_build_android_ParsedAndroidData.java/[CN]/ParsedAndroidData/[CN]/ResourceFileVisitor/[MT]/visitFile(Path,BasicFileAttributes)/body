@@ -1,0 +1,18 @@
+{
+  try {
+    if (!Files.isDirectory(path)) {
+      if (inValuesSubtree) {
+        DataResourceXml.fromPath(xmlInputFactory,path,fqnFactory,overwritingConsumer,nonOverwritingConsumer);
+      }
+ else {
+        String rawFqn=deriveRawFullyQualifiedName(path);
+        FullyQualifiedName key=fqnFactory.parse(rawFqn);
+        overwritingConsumer.consume(key,DataValueFile.of(path));
+      }
+    }
+  }
+ catch (  IllegalArgumentException|XMLStreamException e) {
+    errors.add(e);
+  }
+  return super.visitFile(path,attrs);
+}
