@@ -19,7 +19,7 @@
   }
  else   if (importString.startsWith("/")) {
     if (importString.endsWith(".bzl")) {
-      throw new SkylarkImportSyntaxException(BZL_EXT_IMPLICIT_MSG);
+      throw new SkylarkImportSyntaxException(INVALID_PATH_SYNTAX);
     }
     PathFragment importPath=new PathFragment(importString + ".bzl");
     return new AbsolutePathImport(importString,importPath);
@@ -36,11 +36,8 @@
     return new RelativeLabelImport(importString,importTarget);
   }
  else {
-    if (importString.endsWith(".bzl")) {
-      throw new SkylarkImportSyntaxException(BZL_EXT_IMPLICIT_MSG);
-    }
-    if (importString.contains("/")) {
-      throw new SkylarkImportSyntaxException(RELATIVE_PATH_NO_SUBDIRS_MSG);
+    if (importString.endsWith(".bzl") || importString.contains("/")) {
+      throw new SkylarkImportSyntaxException(INVALID_PATH_SYNTAX);
     }
     String importTarget=importString + ".bzl";
     String maybeErrMsg=LabelValidator.validateTargetName(importTarget);
