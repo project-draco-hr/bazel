@@ -63,15 +63,19 @@ catch (  AbruptExitException e) {
  else {
     callback=new AggregateAllOutputFormatterCallback<>();
   }
+  boolean catastrophe=true;
   try {
     callback.start();
     result=queryEnv.evaluateQuery(expr,callback);
+    catastrophe=false;
   }
  catch (  QueryException e) {
+    catastrophe=false;
     env.getReporter().handle(Event.error(e.getMessage() == null ? e.toString() : e.getMessage()));
     return ExitCode.ANALYSIS_FAILURE;
   }
 catch (  InterruptedException e) {
+    catastrophe=false;
     IOException ioException=callback.getIoException();
     if (ioException == null || ioException instanceof ClosedByInterruptException) {
       env.getReporter().handle(Event.error("query interrupted"));
@@ -83,19 +87,22 @@ catch (  InterruptedException e) {
     }
   }
 catch (  IOException e) {
+    catastrophe=false;
     env.getReporter().handle(Event.error("I/O error: " + e.getMessage()));
     return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
   }
  finally {
-    if (streamResults) {
-      output.flush();
-    }
-    try {
-      callback.close();
-    }
- catch (    IOException e) {
-      env.getReporter().handle(Event.error("I/O error: " + e.getMessage()));
-      return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
+    if (!catastrophe) {
+      if (streamResults) {
+        output.flush();
+      }
+      try {
+        callback.close();
+      }
+ catch (      IOException e) {
+        env.getReporter().handle(Event.error("I/O error: " + e.getMessage()));
+        return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
+      }
     }
   }
   env.getEventBus().post(new NoBuildEvent());
