@@ -1,0 +1,25 @@
+def pb_field_t(self, prev_field_name):
+    u'Return the pb_field_t initializer to use in the constant array.\n        prev_field_name is the name of the previous field or None.\n        '
+    if (self.rules == u'ONEOF'):
+        result = (u'    PB_ONEOF_FIELD(%s, ' % self.union_name)
+    else:
+        result = u'    PB_FIELD('
+    result += (u'%3d, ' % self.tag)
+    result += (u'%-8s, ' % self.pbtype)
+    result += (u'%s, ' % self.rules)
+    result += (u'%-8s, ' % self.allocation)
+    result += (u'%s, ' % (u'FIRST' if (not prev_field_name) else u'OTHER'))
+    result += (u'%s, ' % self.struct_name)
+    result += (u'%s, ' % self.name)
+    result += (u'%s, ' % (prev_field_name or self.name))
+    if (self.pbtype == u'MESSAGE'):
+        result += (u'&%s_fields)' % self.submsgname)
+    elif (self.default is None):
+        result += u'0)'
+    elif ((self.pbtype in [u'BYTES', u'STRING']) and (self.allocation != u'STATIC')):
+        result += u'0)'
+    elif (self.rules == u'OPTEXT'):
+        result += u'0)'
+    else:
+        result += (u'&%s_default)' % (self.struct_name + self.name))
+    return result

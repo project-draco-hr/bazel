@@ -1,0 +1,12 @@
+def fields_definition(self):
+    result = (u'const pb_field_t %s_fields[%d] = {\n' % (self.name, (self.count_all_fields() + 1)))
+    prev = None
+    for field in self.ordered_fields:
+        result += field.pb_field_t(prev)
+        result += u',\n'
+        if isinstance(field, OneOf):
+            prev = ((field.name + u'.') + field.fields[(-1)].name)
+        else:
+            prev = field.name
+    result += u'    PB_LAST_FIELD\n};'
+    return result

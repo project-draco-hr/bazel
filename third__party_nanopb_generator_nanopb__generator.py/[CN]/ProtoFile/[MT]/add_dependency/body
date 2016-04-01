@@ -1,0 +1,18 @@
+def add_dependency(self, other):
+    for enum in other.enums:
+        self.dependencies[str(enum.names)] = enum
+    for msg in other.messages:
+        self.dependencies[str(msg.name)] = msg
+    for enum in other.enums:
+        if (not enum.options.long_names):
+            for message in self.messages:
+                for field in message.fields:
+                    if (field.default in enum.value_longnames):
+                        idx = enum.value_longnames.index(field.default)
+                        field.default = enum.values[idx][0]
+    for enum in other.enums:
+        if (not enum.has_negative()):
+            for message in self.messages:
+                for field in message.fields:
+                    if ((field.pbtype == u'ENUM') and (field.ctype == enum.names)):
+                        field.pbtype = u'UENUM'

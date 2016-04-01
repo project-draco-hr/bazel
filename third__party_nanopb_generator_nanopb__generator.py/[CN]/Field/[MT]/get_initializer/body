@@ -1,0 +1,57 @@
+def get_initializer(self, null_init, inner_init_only=False):
+    u"Return literal expression for this field's default value.\n        null_init: If True, initialize to a 0 value instead of default from .proto\n        inner_init_only: If True, exclude initialization for any count/has fields\n        "
+    inner_init = None
+    if (self.pbtype == u'MESSAGE'):
+        if null_init:
+            inner_init = (u'%s_init_zero' % self.ctype)
+        else:
+            inner_init = (u'%s_init_default' % self.ctype)
+    elif ((self.default is None) or null_init):
+        if (self.pbtype == u'STRING'):
+            inner_init = u'""'
+        elif (self.pbtype == u'BYTES'):
+            inner_init = u'{0, {0}}'
+        elif (self.pbtype in (u'ENUM', u'UENUM')):
+            inner_init = (u'(%s)0' % self.ctype)
+        else:
+            inner_init = u'0'
+    elif (self.pbtype == u'STRING'):
+        inner_init = self.default.replace(u'"', u'\\"')
+        inner_init = ((u'"' + inner_init) + u'"')
+    elif (self.pbtype == u'BYTES'):
+        data = [(u'0x%02x' % ord(c)) for c in self.default]
+        if (len(data) == 0):
+            inner_init = u'{0, {0}}'
+        else:
+            inner_init = (u'{%d, {%s}}' % (len(data), u','.join(data)))
+    elif (self.pbtype in [u'FIXED32', u'UINT32']):
+        inner_init = (str(self.default) + u'u')
+    elif (self.pbtype in [u'FIXED64', u'UINT64']):
+        inner_init = (str(self.default) + u'ull')
+    elif (self.pbtype in [u'SFIXED64', u'INT64']):
+        inner_init = (str(self.default) + u'll')
+    else:
+        inner_init = str(self.default)
+    if inner_init_only:
+        return inner_init
+    outer_init = None
+    if (self.allocation == u'STATIC'):
+        if (self.rules == u'REPEATED'):
+            outer_init = u'0, {'
+            outer_init += u', '.join(([inner_init] * self.max_count))
+            outer_init += u'}'
+        elif (self.rules == u'OPTIONAL'):
+            outer_init = (u'false, ' + inner_init)
+        else:
+            outer_init = inner_init
+    elif (self.allocation == u'POINTER'):
+        if (self.rules == u'REPEATED'):
+            outer_init = u'0, NULL'
+        else:
+            outer_init = u'NULL'
+    elif (self.allocation == u'CALLBACK'):
+        if (self.pbtype == u'EXTENSION'):
+            outer_init = u'NULL'
+        else:
+            outer_init = u'{{NULL}, NULL}'
+    return outer_init

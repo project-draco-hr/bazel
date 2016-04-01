@@ -1,0 +1,28 @@
+def encoded_size(self, dependencies):
+    u'Return the maximum size that this field can take when encoded,\n        including the field tag. If the size cannot be determined, returns\n        None.'
+    if (self.allocation != u'STATIC'):
+        return None
+    if (self.pbtype == u'MESSAGE'):
+        encsize = None
+        if (str(self.submsgname) in dependencies):
+            submsg = dependencies[str(self.submsgname)]
+            encsize = submsg.encoded_size(dependencies)
+            if (encsize is not None):
+                encsize += varint_max_size(encsize.upperlimit())
+        if (encsize is None):
+            encsize = EncodedSize((self.submsgname + u'size'))
+            encsize += 5
+    elif (self.pbtype in [u'ENUM', u'UENUM']):
+        if (str(self.ctype) in dependencies):
+            enumtype = dependencies[str(self.ctype)]
+            encsize = enumtype.encoded_size()
+        else:
+            encsize = 10
+    elif (self.enc_size is None):
+        raise RuntimeError((u'Could not determine encoded size for %s.%s' % (self.struct_name, self.name)))
+    else:
+        encsize = EncodedSize(self.enc_size)
+    encsize += varint_max_size((self.tag << 3))
+    if (self.rules == u'REPEATED'):
+        encsize *= self.max_count
+    return encsize

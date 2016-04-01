@@ -1,0 +1,31 @@
+def parse_file(filename, fdesc, options):
+    u'Parse a single file. Returns a ProtoFile instance.'
+    toplevel_options = nanopb_pb2.NanoPBOptions()
+    for s in options.settings:
+        text_format.Merge(s, toplevel_options)
+    if (not fdesc):
+        data = open(filename, u'rb').read()
+        fdesc = descriptor.FileDescriptorSet.FromString(data).file[0]
+    had_abspath = False
+    try:
+        optfilename = (options.options_file % os.path.splitext(filename)[0])
+    except TypeError:
+        optfilename = options.options_file
+        had_abspath = True
+    paths = ([u'.'] + options.options_path)
+    for p in paths:
+        if os.path.isfile(os.path.join(p, optfilename)):
+            optfilename = os.path.join(p, optfilename)
+            if options.verbose:
+                sys.stderr.write(((u'Reading options from ' + optfilename) + u'\n'))
+            Globals.separate_options = read_options_file(open(optfilename, u'rU'))
+            break
+    else:
+        if (options.verbose or had_abspath):
+            sys.stderr.write(((u'Options file not found: ' + optfilename) + u'\n'))
+        Globals.separate_options = []
+    Globals.matched_namemasks = set()
+    file_options = get_nanopb_suboptions(fdesc, toplevel_options, Names([filename]))
+    f = ProtoFile(fdesc, file_options)
+    f.optfilename = optfilename
+    return f

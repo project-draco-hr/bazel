@@ -1,0 +1,11 @@
+def iterate_messages(desc, names=Names()):
+    u'Recursively find all messages. For each, yield name, DescriptorProto.'
+    if hasattr(desc, u'message_type'):
+        submsgs = desc.message_type
+    else:
+        submsgs = desc.nested_type
+    for submsg in submsgs:
+        sub_names = (names + submsg.name)
+        yield (sub_names, submsg)
+        for x in iterate_messages(submsg, sub_names):
+            yield x

@@ -1,0 +1,26 @@
+def get_nanopb_suboptions(subdesc, options, name):
+    u'Get copy of options, and merge information from subdesc.'
+    new_options = nanopb_pb2.NanoPBOptions()
+    new_options.CopyFrom(options)
+    dotname = u'.'.join(name.parts)
+    for (namemask, options) in Globals.separate_options:
+        if fnmatch(dotname, namemask):
+            Globals.matched_namemasks.add(namemask)
+            new_options.MergeFrom(options)
+    if isinstance(subdesc.options, descriptor.FieldOptions):
+        ext_type = nanopb_pb2.nanopb
+    elif isinstance(subdesc.options, descriptor.FileOptions):
+        ext_type = nanopb_pb2.nanopb_fileopt
+    elif isinstance(subdesc.options, descriptor.MessageOptions):
+        ext_type = nanopb_pb2.nanopb_msgopt
+    elif isinstance(subdesc.options, descriptor.EnumOptions):
+        ext_type = nanopb_pb2.nanopb_enumopt
+    else:
+        raise Exception(u'Unknown options type')
+    if subdesc.options.HasExtension(ext_type):
+        ext = subdesc.options.Extensions[ext_type]
+        new_options.MergeFrom(ext)
+    if Globals.verbose_options:
+        sys.stderr.write(((u'Options for ' + dotname) + u': '))
+        sys.stderr.write((text_format.MessageToString(new_options) + u'\n'))
+    return new_options

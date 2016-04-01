@@ -1,0 +1,11 @@
+def largest_field_value(self):
+    u'Determine if this field needs 16bit or 32bit pb_field_t structure to compile properly.\n        Returns numeric value or a C-expression for assert.'
+    check = []
+    if (self.pbtype == u'MESSAGE'):
+        if ((self.rules == u'REPEATED') and (self.allocation == u'STATIC')):
+            check.append((u'pb_membersize(%s, %s[0])' % (self.struct_name, self.name)))
+        elif (self.rules == u'ONEOF'):
+            check.append((u'pb_membersize(%s, %s.%s)' % (self.struct_name, self.union_name, self.name)))
+        else:
+            check.append((u'pb_membersize(%s, %s)' % (self.struct_name, self.name)))
+    return FieldMaxSize([self.tag, self.max_size, self.max_count], check, (u'%s.%s' % (self.struct_name, self.name)))

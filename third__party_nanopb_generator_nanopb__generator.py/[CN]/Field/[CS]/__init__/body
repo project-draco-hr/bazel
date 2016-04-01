@@ -1,0 +1,82 @@
+def __init__(self, struct_name, desc, field_options):
+    u'desc is FieldDescriptorProto'
+    self.tag = desc.number
+    self.struct_name = struct_name
+    self.union_name = None
+    self.name = desc.name
+    self.default = None
+    self.max_size = None
+    self.max_count = None
+    self.array_decl = u''
+    self.enc_size = None
+    self.ctype = None
+    if field_options.HasField(u'max_size'):
+        self.max_size = field_options.max_size
+    if field_options.HasField(u'max_count'):
+        self.max_count = field_options.max_count
+    if desc.HasField(u'default_value'):
+        self.default = desc.default_value
+    can_be_static = True
+    if (desc.label == FieldD.LABEL_REQUIRED):
+        self.rules = u'REQUIRED'
+    elif (desc.label == FieldD.LABEL_OPTIONAL):
+        self.rules = u'OPTIONAL'
+    elif (desc.label == FieldD.LABEL_REPEATED):
+        self.rules = u'REPEATED'
+        if (self.max_count is None):
+            can_be_static = False
+        else:
+            self.array_decl = (u'[%d]' % self.max_count)
+    else:
+        raise NotImplementedError(desc.label)
+    if ((desc.type == FieldD.TYPE_STRING) and (self.max_size is None)):
+        can_be_static = False
+    if ((desc.type == FieldD.TYPE_BYTES) and (self.max_size is None)):
+        can_be_static = False
+    if (field_options.type == nanopb_pb2.FT_DEFAULT):
+        if can_be_static:
+            field_options.type = nanopb_pb2.FT_STATIC
+        else:
+            field_options.type = nanopb_pb2.FT_CALLBACK
+    if ((field_options.type == nanopb_pb2.FT_STATIC) and (not can_be_static)):
+        raise Exception((u'Field %s is defined as static, but max_size or max_count is not given.' % self.name))
+    if (field_options.type == nanopb_pb2.FT_STATIC):
+        self.allocation = u'STATIC'
+    elif (field_options.type == nanopb_pb2.FT_POINTER):
+        self.allocation = u'POINTER'
+    elif (field_options.type == nanopb_pb2.FT_CALLBACK):
+        self.allocation = u'CALLBACK'
+    else:
+        raise NotImplementedError(field_options.type)
+    if (desc.type in datatypes):
+        (self.ctype, self.pbtype, self.enc_size, isa) = datatypes[desc.type]
+        if (isa and (field_options.int_size != nanopb_pb2.IS_DEFAULT)):
+            self.ctype = intsizes[field_options.int_size]
+            if ((desc.type == FieldD.TYPE_UINT32) or (desc.type == FieldD.TYPE_UINT64)):
+                self.ctype = (u'u' + self.ctype)
+    elif (desc.type == FieldD.TYPE_ENUM):
+        self.pbtype = u'ENUM'
+        self.ctype = names_from_type_name(desc.type_name)
+        if (self.default is not None):
+            self.default = (self.ctype + self.default)
+        self.enc_size = None
+    elif (desc.type == FieldD.TYPE_STRING):
+        self.pbtype = u'STRING'
+        self.ctype = u'char'
+        if (self.allocation == u'STATIC'):
+            self.ctype = u'char'
+            self.array_decl += (u'[%d]' % self.max_size)
+            self.enc_size = (varint_max_size(self.max_size) + self.max_size)
+    elif (desc.type == FieldD.TYPE_BYTES):
+        self.pbtype = u'BYTES'
+        if (self.allocation == u'STATIC'):
+            self.ctype = ((self.struct_name + self.name) + u't')
+            self.enc_size = (varint_max_size(self.max_size) + self.max_size)
+        elif (self.allocation == u'POINTER'):
+            self.ctype = u'pb_bytes_array_t'
+    elif (desc.type == FieldD.TYPE_MESSAGE):
+        self.pbtype = u'MESSAGE'
+        self.ctype = self.submsgname = names_from_type_name(desc.type_name)
+        self.enc_size = None
+    else:
+        raise NotImplementedError(desc.type)

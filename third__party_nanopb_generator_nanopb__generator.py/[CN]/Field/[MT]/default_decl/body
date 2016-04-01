@@ -1,0 +1,18 @@
+def default_decl(self, declaration_only=False):
+    u"Return definition for this field's default value."
+    if (self.default is None):
+        return None
+    ctype = self.ctype
+    default = self.get_initializer(False, True)
+    array_decl = u''
+    if (self.pbtype == u'STRING'):
+        if (self.allocation != u'STATIC'):
+            return None
+        array_decl = (u'[%d]' % self.max_size)
+    elif (self.pbtype == u'BYTES'):
+        if (self.allocation != u'STATIC'):
+            return None
+    if declaration_only:
+        return (u'extern const %s %s_default%s;' % (ctype, (self.struct_name + self.name), array_decl))
+    else:
+        return (u'const %s %s_default%s = %s;' % (ctype, (self.struct_name + self.name), array_decl, default))

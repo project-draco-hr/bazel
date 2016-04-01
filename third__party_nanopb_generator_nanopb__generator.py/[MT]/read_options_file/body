@@ -1,0 +1,23 @@
+def read_options_file(infile):
+    u'Parse a separate options file to list:\n        [(namemask, options), ...]\n    '
+    results = []
+    data = infile.read()
+    data = re.sub(u'/\\*.*?\\*/', u'', data, flags=re.MULTILINE)
+    data = re.sub(u'//.*?$', u'', data, flags=re.MULTILINE)
+    data = re.sub(u'#.*?$', u'', data, flags=re.MULTILINE)
+    for (i, line) in enumerate(data.split(u'\n')):
+        line = line.strip()
+        if (not line):
+            continue
+        parts = line.split(None, 1)
+        if (len(parts) < 2):
+            sys.stderr.write((((u'%s:%d: ' % (infile.name, (i + 1))) + u'Option lines should have space between field name and options. ') + (u"Skipping line: '%s'\n" % line)))
+            continue
+        opts = nanopb_pb2.NanoPBOptions()
+        try:
+            text_format.Merge(parts[1], opts)
+        except Exception as e:
+            sys.stderr.write((((u'%s:%d: ' % (infile.name, (i + 1))) + (u"Unparseable option line: '%s'. " % line)) + (u'Error: %s\n' % str(e))))
+            continue
+        results.append((parts[0], opts))
+    return results

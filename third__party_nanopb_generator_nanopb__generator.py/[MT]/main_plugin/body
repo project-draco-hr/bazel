@@ -1,0 +1,34 @@
+def main_plugin():
+    u'Main function when invoked as a protoc plugin.'
+    import io, sys
+    if (sys.platform == u'win32'):
+        import os, msvcrt
+        msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+    data = io.open(sys.stdin.fileno(), u'rb').read()
+    request = plugin_pb2.CodeGeneratorRequest.FromString(data)
+    try:
+        params = str(request.parameter)
+    except UnicodeEncodeError:
+        params = request.parameter
+    import shlex
+    args = shlex.split(params)
+    (options, dummy) = optparser.parse_args(args)
+    Globals.verbose_options = options.verbose
+    response = plugin_pb2.CodeGeneratorResponse()
+    import os.path
+    options.options_path.append(os.path.dirname(request.file_to_generate[0]))
+    other_files = {}
+    for fdesc in request.proto_file:
+        other_files[fdesc.name] = parse_file(fdesc.name, fdesc, options)
+    for filename in request.file_to_generate:
+        for fdesc in request.proto_file:
+            if (fdesc.name == filename):
+                results = process_file(filename, fdesc, options, other_files)
+                f = response.file.add()
+                f.name = results[u'headername']
+                f.content = results[u'headerdata']
+                f = response.file.add()
+                f.name = results[u'sourcename']
+                f.content = results[u'sourcedata']
+    io.open(sys.stdout.fileno(), u'wb').write(response.SerializeToString())

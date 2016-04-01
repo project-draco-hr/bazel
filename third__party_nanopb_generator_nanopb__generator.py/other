@@ -1,0 +1,56 @@
+from __future__ import unicode_literals
+u'Generate header file for nanopb from a ProtoBuf FileDescriptorSet.'
+nanopb_version = u'nanopb-0.3.5-dev'
+import sys
+import re
+from functools import reduce
+try:
+    import google, distutils.util
+    import pkg_resources
+except:
+    pass
+try:
+    import google.protobuf.text_format as text_format
+    import google.protobuf.descriptor_pb2 as descriptor
+except:
+    sys.stderr.write((u"\n         *************************************************************\n         *** Could not import the Google protobuf Python libraries ***\n         *** Try installing package 'python-protobuf' or similar.  ***\n         *************************************************************\n    " + u'\n'))
+    raise
+try:
+    import proto.nanopb_pb2 as nanopb_pb2
+    import proto.plugin_pb2 as plugin_pb2
+except:
+    sys.stderr.write((u"\n         ********************************************************************\n         *** Failed to import the protocol definitions for generator.     ***\n         *** You have to run 'make' in the nanopb/generator/proto folder. ***\n         ********************************************************************\n    " + u'\n'))
+    raise
+import time
+import os.path
+FieldD = descriptor.FieldDescriptorProto
+datatypes = {FieldD.TYPE_BOOL: (u'bool', u'BOOL', 1, False), FieldD.TYPE_DOUBLE: (u'double', u'DOUBLE', 8, False), FieldD.TYPE_FIXED32: (u'uint32_t', u'FIXED32', 4, False), FieldD.TYPE_FIXED64: (u'uint64_t', u'FIXED64', 8, False), FieldD.TYPE_FLOAT: (u'float', u'FLOAT', 4, False), FieldD.TYPE_INT32: (u'int32_t', u'INT32', 10, True), FieldD.TYPE_INT64: (u'int64_t', u'INT64', 10, True), FieldD.TYPE_SFIXED32: (u'int32_t', u'SFIXED32', 4, False), FieldD.TYPE_SFIXED64: (u'int64_t', u'SFIXED64', 8, False), FieldD.TYPE_SINT32: (u'int32_t', u'SINT32', 5, True), FieldD.TYPE_SINT64: (u'int64_t', u'SINT64', 10, True), FieldD.TYPE_UINT32: (u'uint32_t', u'UINT32', 5, True), FieldD.TYPE_UINT64: (u'uint64_t', u'UINT64', 10, True), }
+intsizes = {nanopb_pb2.IS_8: u'int8_t', nanopb_pb2.IS_16: u'int16_t', nanopb_pb2.IS_32: u'int32_t', nanopb_pb2.IS_64: u'int64_t', }
+try:
+    strtypes = (unicode, str)
+except NameError:
+    strtypes = (str,)
+assert (varint_max_size((-1)) == 10)
+assert (varint_max_size(0) == 1)
+assert (varint_max_size(127) == 1)
+assert (varint_max_size(128) == 2)
+from fnmatch import fnmatch
+import sys
+import os.path
+from optparse import OptionParser
+optparser = OptionParser(usage=u'Usage: nanopb_generator.py [options] file.pb ...', epilog=(u"Compile file.pb from file.proto by: 'protoc -ofile.pb file.proto'. " + u'Output will be written to file.pb.h and file.pb.c.'))
+optparser.add_option(u'-x', dest=u'exclude', metavar=u'FILE', action=u'append', default=[], help=u'Exclude file from generated #include list.')
+optparser.add_option(u'-e', u'--extension', dest=u'extension', metavar=u'EXTENSION', default=u'.pb', help=u"Set extension to use instead of '.pb' for generated files. [default: %default]")
+optparser.add_option(u'-f', u'--options-file', dest=u'options_file', metavar=u'FILE', default=u'%s.options', help=u'Set name of a separate generator options file.')
+optparser.add_option(u'-I', u'--options-path', dest=u'options_path', metavar=u'DIR', action=u'append', default=[], help=u'Search for .options files additionally in this path')
+optparser.add_option(u'-Q', u'--generated-include-format', dest=u'genformat', metavar=u'FORMAT', default=u'#include "%s"\n', help=u'Set format string to use for including other .pb.h files. [default: %default]')
+optparser.add_option(u'-L', u'--library-include-format', dest=u'libformat', metavar=u'FORMAT', default=u'#include <%s>\n', help=u'Set format string to use for including the nanopb pb.h header. [default: %default]')
+optparser.add_option(u'-T', u'--no-timestamp', dest=u'notimestamp', action=u'store_true', default=False, help=u"Don't add timestamp to .pb.h and .pb.c preambles")
+optparser.add_option(u'-q', u'--quiet', dest=u'quiet', action=u'store_true', default=False, help=u"Don't print anything except errors.")
+optparser.add_option(u'-v', u'--verbose', dest=u'verbose', action=u'store_true', default=False, help=u'Print more information.')
+optparser.add_option(u'-s', dest=u'settings', metavar=u'OPTION:VALUE', action=u'append', default=[], help=u'Set generator option (max_size, max_count etc.).')
+if (__name__ == u'__main__'):
+    if ((u'protoc-gen-' in sys.argv[0]) or (u'--protoc-plugin' in sys.argv)):
+        main_plugin()
+    else:
+        main_cli()

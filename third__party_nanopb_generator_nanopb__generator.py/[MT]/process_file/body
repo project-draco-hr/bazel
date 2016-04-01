@@ -1,0 +1,20 @@
+def process_file(filename, fdesc, options, other_files={}):
+    u"Process a single file.\n    filename: The full path to the .proto or .pb source file, as string.\n    fdesc: The loaded FileDescriptorSet, or None to read from the input file.\n    options: Command line options as they come from OptionsParser.\n\n    Returns a dict:\n        {'headername': Name of header file,\n         'headerdata': Data for the .h header file,\n         'sourcename': Name of the source code file,\n         'sourcedata': Data for the .c source code file\n        }\n    "
+    f = parse_file(filename, fdesc, options)
+    for dep in f.fdesc.dependency:
+        if (dep in other_files):
+            f.add_dependency(other_files[dep])
+    noext = os.path.splitext(filename)[0]
+    headername = ((noext + options.extension) + u'.h')
+    sourcename = ((noext + options.extension) + u'.c')
+    headerbasename = os.path.basename(headername)
+    excludes = ([u'nanopb.proto', u'google/protobuf/descriptor.proto'] + options.exclude)
+    includes = [d for d in f.fdesc.dependency if (d not in excludes)]
+    headerdata = u''.join(f.generate_header(includes, headerbasename, options))
+    sourcedata = u''.join(f.generate_source(headerbasename, options))
+    unmatched = [n for (n, o) in Globals.separate_options if (n not in Globals.matched_namemasks)]
+    if (unmatched and (not options.quiet)):
+        sys.stderr.write(((((u'Following patterns in ' + f.optfilename) + u' did not match any fields: ') + u', '.join(unmatched)) + u'\n'))
+        if (not Globals.verbose_options):
+            sys.stderr.write(u'Use  protoc --nanopb-out=-v:.   to see a list of the field names.\n')
+    return {u'headername': headername, u'headerdata': headerdata, u'sourcename': sourcename, u'sourcedata': sourcedata, }

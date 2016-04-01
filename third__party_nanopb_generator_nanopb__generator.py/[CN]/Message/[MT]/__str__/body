@@ -1,0 +1,13 @@
+def __str__(self):
+    result = (u'typedef struct _%s {\n' % self.name)
+    if (not self.ordered_fields):
+        result += u'    uint8_t dummy_field;'
+    result += u'\n'.join([str(f) for f in self.ordered_fields])
+    result += u'\n}'
+    if self.packed:
+        result += u' pb_packed'
+    result += (u' %s;' % self.name)
+    if self.packed:
+        result = (u'PB_PACKED_STRUCT_START\n' + result)
+        result += u'\nPB_PACKED_STRUCT_END'
+    return result

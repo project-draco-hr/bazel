@@ -1,0 +1,20 @@
+def __str__(self):
+    result = u''
+    if (self.allocation == u'POINTER'):
+        if (self.rules == u'REPEATED'):
+            result += ((u'    pb_size_t ' + self.name) + u'_count;\n')
+        if (self.pbtype == u'MESSAGE'):
+            result += (u'    struct _%s *%s;' % (self.ctype, self.name))
+        elif ((self.rules == u'REPEATED') and (self.pbtype in [u'STRING', u'BYTES'])):
+            result += (u'    %s **%s;' % (self.ctype, self.name))
+        else:
+            result += (u'    %s *%s;' % (self.ctype, self.name))
+    elif (self.allocation == u'CALLBACK'):
+        result += (u'    pb_callback_t %s;' % self.name)
+    else:
+        if ((self.rules == u'OPTIONAL') and (self.allocation == u'STATIC')):
+            result += ((u'    bool has_' + self.name) + u';\n')
+        elif ((self.rules == u'REPEATED') and (self.allocation == u'STATIC')):
+            result += ((u'    pb_size_t ' + self.name) + u'_count;\n')
+        result += (u'    %s %s%s;' % (self.ctype, self.name, self.array_decl))
+    return result
