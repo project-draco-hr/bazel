@@ -1,0 +1,25 @@
+{
+  Optional<Artifact> dsymBundleZip;
+  Optional<Artifact> linkmap;
+  if (ObjcRuleClasses.objcConfiguration(ruleContext).generateDebugSymbols()) {
+    registerDsymActions(dsymOutputType);
+    dsymBundleZip=Optional.of(intermediateArtifacts.tempDsymBundleZip(dsymOutputType));
+  }
+ else {
+    dsymBundleZip=Optional.absent();
+  }
+  Iterable<Artifact> prunedJ2ObjcArchives=ImmutableList.<Artifact>of();
+  if (stripJ2ObjcDeadCode()) {
+    J2ObjcEntryClassProvider provider=J2ObjcEntryClassProvider.buildFrom(ruleContext);
+    registerJ2ObjcDeadCodeRemovalActions(objcProvider,provider.getEntryClasses());
+    prunedJ2ObjcArchives=j2objcPrunedLibraries(objcProvider);
+  }
+  if (ObjcRuleClasses.objcConfiguration(ruleContext).generateLinkmap()) {
+    linkmap=Optional.of(intermediateArtifacts.linkmap());
+  }
+ else {
+    linkmap=Optional.absent();
+  }
+  registerLinkAction(objcProvider,extraLinkArgs,extraLinkInputs,dsymBundleZip,prunedJ2ObjcArchives,linkmap);
+  return this;
+}

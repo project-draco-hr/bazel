@@ -12,7 +12,7 @@
   if (ruleContext.hasErrors()) {
     return null;
   }
-  CompilationSupport compilationSupport=new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common).addXcodeSettings(xcodeProviderBuilder,common).registerLinkActions(objcProvider,getExtraLinkArgs(ruleContext),ImmutableList.<Artifact>of()).validateAttributes();
+  CompilationSupport compilationSupport=new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common).addXcodeSettings(xcodeProviderBuilder,common).registerLinkActions(objcProvider,getExtraLinkArgs(ruleContext),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
   if (ruleContext.hasErrors()) {
     return null;
   }
@@ -23,7 +23,7 @@ case YES:
     ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
   AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
 ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,objcProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES,ReleaseBundlingSupport.APP_BUNDLE_DIR_FORMAT,objcConfiguration.getMinimumOs());
-releaseBundlingSupport.registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateResources().validateAttributes();
+releaseBundlingSupport.registerActions(DsymOutputType.APP).addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild,DsymOutputType.APP).validateResources().validateAttributes();
 xcTestAppProvider=Optional.of(releaseBundlingSupport.xcTestAppProvider());
 if (appleConfiguration.getBundlingPlatform() == Platform.IOS_SIMULATOR) {
 Artifact runnerScript=intermediateArtifacts.runnerScript();

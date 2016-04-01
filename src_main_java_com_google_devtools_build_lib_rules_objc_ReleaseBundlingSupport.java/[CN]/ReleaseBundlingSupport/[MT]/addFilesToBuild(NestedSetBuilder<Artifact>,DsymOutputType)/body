@@ -1,0 +1,19 @@
+{
+  NestedSetBuilder<Artifact> debugSymbolBuilder=NestedSetBuilder.<Artifact>stableOrder();
+  for (  Artifact linkmapFile : getLinkmapFiles().values()) {
+    filesToBuild.add(linkmapFile);
+  }
+  if (ObjcRuleClasses.objcConfiguration(ruleContext).generateDebugSymbols()) {
+    filesToBuild.addAll(getBreakpadFiles().values());
+    filesToBuild.addAll(getDsymFiles(dsymOutputType).values());
+    Artifact cpuPlist=getAnyCpuSpecificDsymPlist();
+    if (cpuPlist != null) {
+      filesToBuild.add(intermediateArtifacts.dsymPlist(dsymOutputType));
+    }
+    if (linkedBinary == LinkedBinary.LOCAL_AND_DEPENDENCIES) {
+      debugSymbolBuilder.add(intermediateArtifacts.dsymPlist(dsymOutputType)).add(intermediateArtifacts.dsymSymbol(dsymOutputType)).add(intermediateArtifacts.breakpadSym());
+    }
+  }
+  filesToBuild.add(releaseBundling.getIpaArtifact()).addTransitive(debugSymbolBuilder.build());
+  return this;
+}

@@ -28,9 +28,9 @@
     bundleFormat=ReleaseBundlingSupport.XCTEST_BUNDLE_DIR_FORMAT;
     filesToBuild.add(testApp.getIpa());
   }
-  new CompilationSupport(ruleContext).registerLinkActions(common.getObjcProvider(),extraLinkArgs,extraLinkInputs).registerCompileAndArchiveActions(common).addXcodeSettings(xcodeProviderBuilder,common).validateAttributes();
+  new CompilationSupport(ruleContext).registerLinkActions(common.getObjcProvider(),extraLinkArgs,extraLinkInputs,DsymOutputType.TEST).registerCompileAndArchiveActions(common).addXcodeSettings(xcodeProviderBuilder,common).validateAttributes();
   ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  new ReleaseBundlingSupport(ruleContext,common.getObjcProvider(),LinkedBinary.LOCAL_AND_DEPENDENCIES,bundleFormat,objcConfiguration.getMinimumOs()).registerActions().addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild).validateResources().validateAttributes();
+  new ReleaseBundlingSupport(ruleContext,common.getObjcProvider(),LinkedBinary.LOCAL_AND_DEPENDENCIES,bundleFormat,objcConfiguration.getMinimumOs()).registerActions(DsymOutputType.TEST).addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild,DsymOutputType.TEST).validateResources().validateAttributes();
   new ResourceSupport(ruleContext).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
   new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),productType).addDependencies(xcodeProviderBuilder,new Attribute("bundles",Mode.TARGET)).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET)).addNonPropagatedDependencies(xcodeProviderBuilder,new Attribute("non_propagated_deps",Mode.TARGET)).addFilesToBuild(filesToBuild).registerActions(xcodeProviderBuilder.build());
   XcodeProvider xcodeProvider=xcodeProviderBuilder.build();
