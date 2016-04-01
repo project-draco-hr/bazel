@@ -21,6 +21,11 @@
   JavacTurbineCompileRequest.Builder requestBuilder=JavacTurbineCompileRequest.builder().setJavacOptions(argbuilder.build()).setBootClassPath(asPaths(turbineOptions.bootClassPath())).setProcessorClassPath(processorpath);
   StrictJavaDeps strictDepsMode=StrictJavaDeps.valueOf(turbineOptions.strictDepsMode());
   DependencyModule dependencyModule=buildDependencyModule(turbineOptions,strictDepsMode);
+  if (sources.isEmpty()) {
+    emitClassJar(Paths.get(turbineOptions.outputFile()),ImmutableMap.<String,OutputFileObject>of());
+    dependencyModule.emitDependencyInformation("",true);
+    return Result.OK_WITH_REDUCED_CLASSPATH;
+  }
   Result result=Result.ERROR;
   JavacTurbineCompileResult compileResult;
   List<String> actualClasspath;
@@ -62,7 +67,7 @@
     out.println(compileResult.output());
     return result;
   }
-  emitClassJar(Paths.get(turbineOptions.outputFile()),compileResult);
+  emitClassJar(Paths.get(turbineOptions.outputFile()),compileResult.files());
   dependencyModule.emitDependencyInformation(CLASSPATH_JOINER.join(actualClasspath),compileResult.success());
   return result;
 }
