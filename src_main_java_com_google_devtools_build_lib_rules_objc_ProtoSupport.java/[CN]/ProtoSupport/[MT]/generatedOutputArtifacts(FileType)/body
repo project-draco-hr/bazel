@@ -1,16 +1,20 @@
 {
   ImmutableList.Builder<Artifact> builder=new ImmutableList.Builder<>();
   for (  Artifact protoFile : getFilteredProtos()) {
+    String protoFileName=FileSystemUtils.removeExtension(protoFile.getFilename());
     String generatedOutputName;
     if (attributes.outputsCpp()) {
-      generatedOutputName=protoFile.getFilename();
+      generatedOutputName=protoFileName;
+    }
+ else     if (attributes.usesProtobufLibrary()) {
+      generatedOutputName=generateProtobufFilename(protoFileName);
     }
  else {
-      String lowerUnderscoreBaseName=protoFile.getFilename().replace('-','_').toLowerCase();
+      String lowerUnderscoreBaseName=protoFileName.replace('-','_').toLowerCase();
       generatedOutputName=LOWER_UNDERSCORE.to(UPPER_CAMEL,lowerUnderscoreBaseName);
     }
     PathFragment generatedFilePath=new PathFragment(protoFile.getRootRelativePath().getParentDirectory(),new PathFragment(generatedOutputName));
-    PathFragment outputFile=FileSystemUtils.replaceExtension(generatedFilePath,newFileType.getExtensions().get(0),".proto");
+    PathFragment outputFile=FileSystemUtils.appendExtension(generatedFilePath,newFileType.getExtensions().get(0));
     if (outputFile != null) {
       builder.add(ruleContext.getUniqueDirectoryArtifact(UNIQUE_DIRECTORY_NAME,outputFile,ruleContext.getBinOrGenfilesDirectory()));
     }

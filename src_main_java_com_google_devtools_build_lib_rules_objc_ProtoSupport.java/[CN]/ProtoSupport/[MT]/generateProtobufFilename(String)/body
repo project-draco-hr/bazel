@@ -1,0 +1,57 @@
+{
+  boolean lastCharWasDigit=false;
+  boolean lastCharWasUpper=false;
+  boolean lastCharWasLower=false;
+  StringBuilder currentSegment=new StringBuilder();
+  ArrayList<String> segments=new ArrayList<>();
+  for (int i=0; i < protoFilename.length(); i++) {
+    char currentChar=protoFilename.charAt(i);
+    if (CharMatcher.javaDigit().matches(currentChar)) {
+      if (!lastCharWasDigit) {
+        segments.add(currentSegment.toString());
+        currentSegment=new StringBuilder();
+      }
+      currentSegment.append(currentChar);
+      lastCharWasDigit=true;
+      lastCharWasUpper=false;
+      lastCharWasLower=false;
+    }
+ else     if (CharMatcher.javaLowerCase().matches(currentChar)) {
+      if (!lastCharWasLower && !lastCharWasUpper) {
+        segments.add(currentSegment.toString());
+        currentSegment=new StringBuilder();
+      }
+      currentSegment.append(currentChar);
+      lastCharWasDigit=false;
+      lastCharWasUpper=false;
+      lastCharWasLower=true;
+    }
+ else     if (CharMatcher.javaUpperCase().matches(currentChar)) {
+      if (!lastCharWasUpper) {
+        segments.add(currentSegment.toString());
+        currentSegment=new StringBuilder();
+      }
+      currentSegment.append(Character.toLowerCase(currentChar));
+      lastCharWasDigit=false;
+      lastCharWasUpper=true;
+      lastCharWasLower=false;
+    }
+ else {
+      lastCharWasDigit=false;
+      lastCharWasUpper=false;
+      lastCharWasLower=false;
+    }
+  }
+  segments.add(currentSegment.toString());
+  ruleContext.ruleWarning(segments.toString());
+  StringBuilder casedSegments=new StringBuilder();
+  for (  String segment : segments) {
+    if (UPPERCASE_SEGMENTS.contains(segment)) {
+      casedSegments.append(segment.toUpperCase());
+    }
+ else {
+      casedSegments.append(LOWER_UNDERSCORE.to(UPPER_CAMEL,segment));
+    }
+  }
+  return casedSegments.toString();
+}
