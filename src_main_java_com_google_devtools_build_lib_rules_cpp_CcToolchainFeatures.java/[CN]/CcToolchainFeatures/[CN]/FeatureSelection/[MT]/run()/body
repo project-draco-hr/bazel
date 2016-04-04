@@ -2,12 +2,15 @@
   for (  Feature feature : requestedFeatures) {
     enableAllImpliedBy(feature);
   }
-  disableUnsupportedFeatures();
-  ImmutableList.Builder<Feature> enabledFeaturesInOrder=ImmutableList.builder();
-  for (  Feature feature : features) {
-    if (enabled.contains(feature)) {
-      enabledFeaturesInOrder.add(feature);
+  disableUnsupportedActivatables();
+  ImmutableList.Builder<CrosstoolSelectable> enabledActivatablesInOrderBuilder=ImmutableList.builder();
+  for (  CrosstoolSelectable selectable : selectables) {
+    if (enabled.contains(selectable)) {
+      enabledActivatablesInOrderBuilder.add(selectable);
     }
   }
-  return new FeatureConfiguration(enabledFeaturesInOrder.build());
+  ImmutableList<CrosstoolSelectable> enabledActivatablesInOrder=enabledActivatablesInOrderBuilder.build();
+  Iterable<Feature> enabledFeaturesInOrder=Iterables.filter(enabledActivatablesInOrder,Feature.class);
+  Iterable<ActionConfig> enabledActionConfigsInOrder=Iterables.filter(enabledActivatablesInOrder,ActionConfig.class);
+  return new FeatureConfiguration(enabledFeaturesInOrder,enabledActionConfigsInOrder,actionConfigsByActionName);
 }

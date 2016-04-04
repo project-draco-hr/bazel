@@ -1,0 +1,12 @@
+{
+  CcToolchainFeatures toolchainFeatures=buildFeatures("action_config {","  config_name: 'action-a'","  action_name: 'action-a'","  tool {","    tool_path: 'toolchain/feature-a'","    with_feature: { feature: 'feature-a' }","  }","}","feature {","  name: 'feature-a'","}","feature {","  name: 'activates-action-a'","  implies: 'action-a'","}");
+  PathFragment crosstoolPath=new PathFragment("crosstool/");
+  FeatureConfiguration noFeaturesConfiguration=toolchainFeatures.getFeatureConfiguration("activates-action-a");
+  try {
+    noFeaturesConfiguration.getToolPathFragmentForAction("action-a",crosstoolPath);
+    fail("Expected IllegalArgumentException");
+  }
+ catch (  IllegalArgumentException e) {
+    assertThat(e.getMessage()).contains("Matching tool for action action-a not found for given feature configuration");
+  }
+}
