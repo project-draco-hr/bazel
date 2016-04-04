@@ -1,10 +1,10 @@
 {
   if (finalJarIsDerived) {
-    return IncrementalDexing.OFF;
+    return ImmutableSet.of();
   }
-  IncrementalDexing result=AndroidCommon.getAndroidConfig(ruleContext).getIncrementalDexing();
-  if (result != IncrementalDexing.OFF && Iterables.any(dexopts,new FlagMatcher(AndroidCommon.getAndroidConfig(ruleContext).getTargetDexoptsThatPreventIncrementalDexing()))) {
-    result=IncrementalDexing.OFF;
+  ImmutableSet<AndroidBinaryType> result=AndroidCommon.getAndroidConfig(ruleContext).getIncrementalDexingBinaries();
+  if (!result.isEmpty() && Iterables.any(dexopts,new FlagMatcher(AndroidCommon.getAndroidConfig(ruleContext).getTargetDexoptsThatPreventIncrementalDexing()))) {
+    result=ImmutableSet.of();
   }
   return result;
 }
