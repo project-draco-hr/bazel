@@ -1,0 +1,20 @@
+{
+  return builder.add(attr(WATCH_EXT_BUNDLE_ID_ATTR,STRING).value(new Attribute.ComputedDefault(){
+    @Override public Object getDefault(    AttributeMap rule){
+      return "example.ext." + rule.getName();
+    }
+  }
+)).add(attr(WATCH_EXT_ENTITLEMENTS_ATTR,LABEL).allowedFileTypes(ENTITLEMENTS_TYPE)).add(attr(WATCH_EXT_FAMILIES_ATTR,STRING_LIST).value(ImmutableList.of(TargetDeviceFamily.IPHONE.getNameInRule()))).add(attr(WATCH_EXT_INFOPLISTS_ATTR,BuildType.LABEL_LIST).allowedFileTypes(PLIST_TYPE)).add(attr(WATCH_EXT_PROVISIONING_PROFILE_ATTR,LABEL).singleArtifact().allowedFileTypes(FileType.of(".mobileprovision"))).add(attr(WATCH_EXT_DEFAULT_PROVISIONING_PROFILE_ATTR,LABEL).singleArtifact().allowedFileTypes(FileType.of(".mobileprovision")).value(new LateBoundLabel<BuildConfiguration>(ObjcConfiguration.class){
+    @Override public Label getDefault(    Rule rule,    AttributeMap attributes,    BuildConfiguration configuration){
+      AppleConfiguration appleConfiguration=configuration.getFragment(AppleConfiguration.class);
+      if (appleConfiguration.getBundlingPlatform() != Platform.IOS_DEVICE) {
+        return null;
+      }
+      if (rule.isAttributeValueExplicitlySpecified(WATCH_EXT_PROVISIONING_PROFILE_ATTR)) {
+        return null;
+      }
+      return appleConfiguration.getDefaultProvisioningProfileLabel();
+    }
+  }
+)).add(attr(WATCH_EXT_RESOURCES_ATTR,LABEL_LIST).legacyAllowAnyFileType().direct_compile_time_input()).add(attr(WATCH_EXT_STRUCTURED_RESOURCES_ATTR,LABEL_LIST).legacyAllowAnyFileType().direct_compile_time_input()).add(attr(WATCH_EXT_STRINGS_ATTR,LABEL_LIST).allowedFileTypes(STRINGS_TYPE).direct_compile_time_input()).build();
+}

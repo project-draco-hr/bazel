@@ -1,0 +1,10 @@
+{
+  for (  Attribute attribute : dependencyAttributes) {
+    objcProviderBuilder.addTransitiveAndPropagate(ruleContext.getPrerequisites(attribute.getName(),attribute.getAccessMode(),ObjcProvider.class));
+  }
+  if (WatchUtils.isBuildingForWatchOS1Version(watchOSVersion)) {
+    objcProviderBuilder.add(MERGE_ZIP,watchApplicationBundle);
+  }
+  objcProviderBuilder.addAll(GENERAL_RESOURCE_FILE,attributes.resources()).addAll(GENERAL_RESOURCE_FILE,attributes.strings()).addAll(GENERAL_RESOURCE_DIR,ObjcCommon.xcodeStructuredResourceDirs(attributes.structuredResources())).addAll(BUNDLE_FILE,BundleableFile.flattenedRawResourceFiles(attributes.resources())).addAll(BUNDLE_FILE,BundleableFile.structuredRawResourceFiles(attributes.structuredResources())).addAll(STRINGS,attributes.strings());
+  return objcProviderBuilder.build();
+}

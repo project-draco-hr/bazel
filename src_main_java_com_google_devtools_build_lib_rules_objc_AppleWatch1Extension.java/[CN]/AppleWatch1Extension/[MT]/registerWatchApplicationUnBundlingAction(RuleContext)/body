@@ -1,0 +1,7 @@
+{
+  Artifact watchApplicationIpa=watchApplicationIpaArtifact(ruleContext);
+  Artifact watchApplicationBundle=watchApplicationBundle(ruleContext);
+  String workingDirectory=watchApplicationBundle.getExecPathString().substring(0,watchApplicationBundle.getExecPathString().lastIndexOf('/'));
+  ImmutableList<String> command=ImmutableList.of("mkdir -p " + workingDirectory,"&&",String.format("/usr/bin/unzip -q %s -d %s",watchApplicationIpa.getExecPathString(),workingDirectory),"&&",String.format("cd %s/Payload",workingDirectory),"&&",String.format("/usr/bin/zip -q -r -0 ../%s *",watchApplicationBundle.getFilename()));
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setProgressMessage("Extracting watch app: " + ruleContext.getLabel()).setShellCommand(ImmutableList.of("/bin/bash","-c",Joiner.on(" ").join(command))).addInput(watchApplicationIpa).addOutput(watchApplicationBundle).build(ruleContext));
+}

@@ -1,15 +1,15 @@
 {
   Artifact teamPrefixFile=intermediateArtifacts.appendExtensionForEntitlementArtifact(".team_prefix_file");
   registerExtractTeamPrefixAction(teamPrefixFile);
-  Artifact entitlementsNeedingSubstitution=attributes.entitlements();
+  Artifact entitlementsNeedingSubstitution=releaseBundling.getEntitlements();
   if (entitlementsNeedingSubstitution == null) {
     entitlementsNeedingSubstitution=intermediateArtifacts.appendExtensionForEntitlementArtifact(".entitlements_with_variables");
     registerExtractEntitlementsAction(entitlementsNeedingSubstitution);
   }
   Artifact substitutedEntitlements=intermediateArtifacts.entitlements();
-  if (attributes.extraEntitlements() != null) {
+  if (releaseBundling.getExtraEntitlements() != null) {
     substitutedEntitlements=intermediateArtifacts.appendExtensionForEntitlementArtifact(".substituted");
-    registerMergeEntitlementsAction(substitutedEntitlements,attributes.extraEntitlements());
+    registerMergeEntitlementsAction(substitutedEntitlements,releaseBundling.getExtraEntitlements());
   }
   registerEntitlementsVariableSubstitutionAction(entitlementsNeedingSubstitution,teamPrefixFile,substitutedEntitlements);
 }

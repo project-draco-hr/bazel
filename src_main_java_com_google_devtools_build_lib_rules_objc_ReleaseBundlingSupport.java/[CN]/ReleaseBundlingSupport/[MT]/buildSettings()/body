@@ -6,10 +6,16 @@
   if (releaseBundling.getLaunchImage() != null) {
     buildSettings.add(XcodeprojBuildSetting.newBuilder().setName("ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME").setValue(releaseBundling.getLaunchImage()).build());
   }
-  ImmutableSet<TargetDeviceFamily> families=bundleSupport.targetDeviceFamilies();
+  ImmutableSet<TargetDeviceFamily> families;
+  if (bundleSupport.isBuildingForWatch()) {
+    families=ImmutableSet.of(TargetDeviceFamily.WATCH);
+  }
+ else {
+    families=bundleSupport.targetDeviceFamilies();
+  }
   Iterable<Integer> familyIndexes=families.isEmpty() ? ImmutableList.<Integer>of() : UI_DEVICE_FAMILY_VALUES.get(families);
   buildSettings.add(XcodeprojBuildSetting.newBuilder().setName("TARGETED_DEVICE_FAMILY").setValue(Joiner.on(',').join(familyIndexes)).build());
-  Artifact entitlements=attributes.entitlements();
+  Artifact entitlements=releaseBundling.getEntitlements();
   if (entitlements != null) {
     buildSettings.add(XcodeprojBuildSetting.newBuilder().setName("CODE_SIGN_ENTITLEMENTS").setValue("$(WORKSPACE_ROOT)/" + entitlements.getExecPathString()).build());
   }

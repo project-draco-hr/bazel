@@ -1,0 +1,26 @@
+{
+  WatchUtils.addXcodeSettings(ruleContext,xcodeProviderBuilder);
+  registerWatchExtensionAutomaticPlistAction();
+  ObjcProvider objcProvider=objcProvider(objcProviderBuilder);
+  ImmutableSet<TargetDeviceFamily> families=attributes.families();
+  if (families.isEmpty()) {
+    ruleContext.attributeError(FAMILIES_ATTR,ReleaseBundling.INVALID_FAMILIES_ERROR);
+  }
+  ReleaseBundling.Builder releaseBundling=new ReleaseBundling.Builder().setIpaArtifact(ipaArtifact).setBundleId(attributes.bundleId()).setProvisioningProfile(attributes.provisioningProfile()).setProvisioningProfileAttributeName(WATCH_EXT_PROVISIONING_PROFILE_ATTR).setTargetDeviceFamilies(families).setIntermediateArtifacts(intermediateArtifacts).setInfoPlistsFromRule(attributes.infoPlists()).addInfoplistInput(watchExtensionAutomaticPlist()).setEntitlements(attributes.entitlements());
+  if (attributes.isBundleIdExplicitySpecified()) {
+    releaseBundling.setPrimaryBundleId(attributes.bundleId());
+  }
+ else {
+    releaseBundling.setFallbackBundleId(attributes.bundleId());
+  }
+  ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,objcProvider,LinkedBinary.DEPENDENCIES_ONLY,ReleaseBundlingSupport.EXTENSION_BUNDLE_DIR_FORMAT,bundleName,WatchUtils.determineMinimumOsVersion(ObjcRuleClasses.objcConfiguration(ruleContext).getMinimumOs()),releaseBundling.build());
+  releaseBundlingSupport.registerActions(DsymOutputType.APP).addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild,DsymOutputType.APP).validateResources().validateAttributes();
+  XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addFilesToBuild(filesToBuild).addXcodeSettings(xcodeProviderBuilder,objcProvider,watchOSVersion.getExtensionXcodeProductType(),ruleContext.getFragment(AppleConfiguration.class).getDependencySingleArchitecture(),configurationDistinguisher).addDummySource(xcodeProviderBuilder);
+  for (  Attribute attribute : dependencyAttributes) {
+    xcodeSupport.addDependencies(xcodeProviderBuilder,attribute);
+  }
+  if (WatchUtils.isBuildingForWatchOS1Version(watchOSVersion)) {
+    xcodeProviderBuilder.addPropagatedDependencies(ImmutableList.of(watchApplicationXcodeProvider));
+    xcodeSupport.registerActions(xcodeProviderBuilder.build());
+  }
+}
