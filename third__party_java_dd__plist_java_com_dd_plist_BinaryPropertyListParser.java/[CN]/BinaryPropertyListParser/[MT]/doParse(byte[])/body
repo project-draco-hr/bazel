@@ -10,15 +10,14 @@
     throw new IllegalArgumentException("Unsupported binary property list format: v" + majorVersion + "."+ minorVersion+ ". "+ "Version 1.0 and later are not yet supported.");
   }
   byte[] trailer=copyOfRange(bytes,bytes.length - 32,bytes.length);
-  offsetSize=(int)parseUnsignedInt(trailer,6,7);
+  int offsetSize=(int)parseUnsignedInt(trailer,6,7);
   objectRefSize=(int)parseUnsignedInt(trailer,7,8);
-  numObjects=(int)parseUnsignedInt(trailer,8,16);
-  topObject=(int)parseUnsignedInt(trailer,16,24);
-  offsetTableOffset=(int)parseUnsignedInt(trailer,24,32);
+  int numObjects=(int)parseUnsignedInt(trailer,8,16);
+  int topObject=(int)parseUnsignedInt(trailer,16,24);
+  int offsetTableOffset=(int)parseUnsignedInt(trailer,24,32);
   offsetTable=new int[numObjects];
   for (int i=0; i < numObjects; i++) {
-    byte[] offsetBytes=copyOfRange(bytes,offsetTableOffset + i * offsetSize,offsetTableOffset + (i + 1) * offsetSize);
-    offsetTable[i]=(int)parseUnsignedInt(offsetBytes);
+    offsetTable[i]=(int)parseUnsignedInt(bytes,offsetTableOffset + i * offsetSize,offsetTableOffset + (i + 1) * offsetSize);
   }
   return parseObject(topObject);
 }

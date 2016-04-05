@@ -1,11 +1,15 @@
 {
   byte[] magicBytes=new byte[8];
   int b;
+  long index=-1;
+  boolean bom=false;
   do {
     if (is.markSupported())     is.mark(16);
     b=is.read();
+    index++;
+    bom=index < 3 && ((index == 0 && b == 0xEF) || (bom && ((index == 1 && b == 0xBB) || (index == 2 && b == 0xBF))));
   }
- while (b != -1 && b == ' ' || b == '\t' || b == '\r' || b == '\n' || b == '\f');
+ while (b != -1 && b == ' ' || b == '\t' || b == '\r' || b == '\n' || b == '\f' || bom);
   magicBytes[0]=(byte)b;
   int read=is.read(magicBytes,1,7);
   int type=determineType(new String(magicBytes,0,read));

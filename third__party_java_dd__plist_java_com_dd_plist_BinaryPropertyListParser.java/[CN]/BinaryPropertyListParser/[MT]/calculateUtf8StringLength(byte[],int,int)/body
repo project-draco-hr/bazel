@@ -1,0 +1,34 @@
+{
+  int length=0;
+  for (int i=0; i < numCharacters; i++) {
+    int tempOffset=offset + length;
+    if (bytes.length <= tempOffset) {
+      return numCharacters;
+    }
+    if (bytes[tempOffset] < 0x80) {
+      length++;
+    }
+    if (bytes[tempOffset] < 0xC2) {
+      return numCharacters;
+    }
+ else     if (bytes[tempOffset] < 0xE0) {
+      if ((bytes[tempOffset + 1] & 0xC0) != 0x80) {
+        return numCharacters;
+      }
+      length+=2;
+    }
+ else     if (bytes[tempOffset] < 0xF0) {
+      if ((bytes[tempOffset + 1] & 0xC0) != 0x80 || (bytes[tempOffset + 2] & 0xC0) != 0x80) {
+        return numCharacters;
+      }
+      length+=3;
+    }
+ else     if (bytes[tempOffset] < 0xF5) {
+      if ((bytes[tempOffset + 1] & 0xC0) != 0x80 || (bytes[tempOffset + 2] & 0xC0) != 0x80 || (bytes[tempOffset + 3] & 0xC0) != 0x80) {
+        return numCharacters;
+      }
+      length+=4;
+    }
+  }
+  return length;
+}
