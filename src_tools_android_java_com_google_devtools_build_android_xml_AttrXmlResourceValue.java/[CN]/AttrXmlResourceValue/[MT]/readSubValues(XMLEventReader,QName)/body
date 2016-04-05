@@ -1,12 +1,12 @@
 {
-  Map<String,String> enumValue=new HashMap<>();
+  Builder<String,String> builder=ImmutableMap.builder();
   while (reader.hasNext() && XmlResourceValues.isTag(XmlResourceValues.peekNextTag(reader),subTagType)) {
     StartElement element=reader.nextEvent().asStartElement();
-    enumValue.put(XmlResourceValues.getElementName(element),XmlResourceValues.getElementValue(element));
+    builder.put(XmlResourceValues.getElementName(element),XmlResourceValues.getElementValue(element));
     XMLEvent endTag=reader.nextEvent();
     if (!XmlResourceValues.isEndTag(endTag,subTagType)) {
       throw new XMLStreamException(String.format("Unexpected [%s]; Expected %s",endTag,"</enum>"),endTag.getLocation());
     }
   }
-  return enumValue;
+  return builder.build();
 }
