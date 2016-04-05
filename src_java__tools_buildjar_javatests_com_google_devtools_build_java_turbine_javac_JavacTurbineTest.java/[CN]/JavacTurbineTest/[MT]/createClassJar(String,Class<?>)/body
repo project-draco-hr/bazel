@@ -1,0 +1,13 @@
+{
+  Path jarPath=temp.newFile(jarName).toPath();
+  try (OutputStream os=Files.newOutputStream(jarPath);JarOutputStream jos=new JarOutputStream(os)){
+    for (    Class<?> clazz : classes) {
+      String classFileName=clazz.getName().replace('.','/') + ".class";
+      jos.putNextEntry(new JarEntry(classFileName));
+      try (InputStream is=getClass().getClassLoader().getResourceAsStream(classFileName)){
+        ByteStreams.copy(is,jos);
+      }
+     }
+  }
+   return jarPath;
+}

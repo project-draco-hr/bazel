@@ -19,6 +19,9 @@
   sources.addAll(extractSourceJars(turbineOptions,tmpdir));
   argbuilder.addAll(sources);
   JavacTurbineCompileRequest.Builder requestBuilder=JavacTurbineCompileRequest.builder().setJavacOptions(argbuilder.build()).setBootClassPath(asPaths(turbineOptions.bootClassPath())).setProcessorClassPath(processorpath);
+  if (!Collections.disjoint(turbineOptions.processors(),turbineOptions.blacklistedProcessors())) {
+    requestBuilder.setPrune(Prune.NO);
+  }
   StrictJavaDeps strictDepsMode=StrictJavaDeps.valueOf(turbineOptions.strictDepsMode());
   DependencyModule dependencyModule=buildDependencyModule(turbineOptions,strictDepsMode);
   if (sources.isEmpty()) {
