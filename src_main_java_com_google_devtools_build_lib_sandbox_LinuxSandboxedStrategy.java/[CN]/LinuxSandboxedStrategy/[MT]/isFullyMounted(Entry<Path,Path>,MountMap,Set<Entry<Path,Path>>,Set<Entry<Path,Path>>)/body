@@ -1,0 +1,35 @@
+{
+  if (fullyMountedDirectories.contains(directory)) {
+    return true;
+  }
+ else   if (notFullyMountedDirectories.contains(directory)) {
+    return false;
+  }
+ else {
+    boolean result=true;
+    for (    Dirent entry : directory.getValue().readdir(Symlinks.NOFOLLOW)) {
+      Path entryKey=directory.getKey().getChild(entry.getName());
+      Path entryValue=directory.getValue().getChild(entry.getName());
+      if (entry.getType() == Dirent.Type.DIRECTORY) {
+        if (!isFullyMounted(new SimpleImmutableEntry<Path,Path>(entryKey,entryValue),mounts,fullyMountedDirectories,notFullyMountedDirectories)) {
+          result=false;
+          break;
+        }
+      }
+ else {
+        Path mountsValue=mounts.get(entryKey);
+        if (mountsValue == null || !mountsValue.equals(entryValue)) {
+          result=false;
+          break;
+        }
+      }
+    }
+    if (result) {
+      fullyMountedDirectories.add(directory);
+    }
+ else {
+      notFullyMountedDirectories.add(directory);
+    }
+    return result;
+  }
+}

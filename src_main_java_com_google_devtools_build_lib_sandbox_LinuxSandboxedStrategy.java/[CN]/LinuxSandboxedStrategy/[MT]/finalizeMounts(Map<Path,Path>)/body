@@ -1,18 +1,35 @@
 {
+  Set<Entry<Path,Path>> fullyMountedDirectories=new HashSet<>();
   MountMap finalizedMounts=new MountMap();
   for (  Entry<Path,Path> mount : mounts.entrySet()) {
     Path target=mount.getKey();
     Path source=mount.getValue();
     FileStatus stat=source.statNullable(Symlinks.NOFOLLOW);
     if (stat != null && stat.isDirectory()) {
+      fullyMountedDirectories.add(new SimpleImmutableEntry<Path,Path>(target,source));
       for (      Path subSource : FileSystemUtils.traverseTree(source,Predicates.alwaysTrue())) {
         Path subTarget=target.getRelative(subSource.relativeTo(source));
-        finalizeMountPath(finalizedMounts,subTarget,subSource,subSource.statNullable(Symlinks.NOFOLLOW));
+        FileStatus subStat=subSource.statNullable(Symlinks.NOFOLLOW);
+        if (subStat.isDirectory()) {
+          fullyMountedDirectories.add(new SimpleImmutableEntry<Path,Path>(subTarget,subSource));
+        }
+        finalizeMountPath(finalizedMounts,subTarget,subSource,subStat);
       }
     }
  else {
       finalizeMountPath(finalizedMounts,target,source,stat);
     }
   }
-  return finalizedMounts;
+  MountMap deduplicatedMounts=new MountMap();
+  Set<Entry<Path,Path>> notFullyMountedDirectories=new HashSet<>();
+  for (  Entry<Path,Path> mount : finalizedMounts.entrySet()) {
+    Entry<Path,Path> parent=new SimpleImmutableEntry<>(mount.getKey().getParentDirectory(),mount.getValue().getParentDirectory());
+    if (!parent.getKey().equals(parent.getValue()) || !isFullyMounted(parent,finalizedMounts,fullyMountedDirectories,notFullyMountedDirectories)) {
+      deduplicatedMounts.put(mount.getKey(),mount.getValue());
+    }
+  }
+  for (  Entry<Path,Path> mount : fullyMountedDirectories) {
+    deduplicatedMounts.put(mount.getKey(),mount.getValue());
+  }
+  return deduplicatedMounts;
 }
