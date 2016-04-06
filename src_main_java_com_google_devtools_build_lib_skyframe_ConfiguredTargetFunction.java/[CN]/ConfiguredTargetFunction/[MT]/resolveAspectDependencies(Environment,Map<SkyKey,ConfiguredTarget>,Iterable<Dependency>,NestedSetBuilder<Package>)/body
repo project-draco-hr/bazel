@@ -2,8 +2,8 @@
   ListMultimap<SkyKey,ConfiguredAspect> result=ArrayListMultimap.create();
   Set<SkyKey> aspectKeys=new HashSet<>();
   for (  Dependency dep : deps) {
-    for (    Entry<Aspect,BuildConfiguration> depAspect : dep.getAspectConfigurations().entrySet()) {
-      aspectKeys.add(createAspectKey(dep.getLabel(),depAspect.getValue(),dep.getConfiguration(),depAspect.getKey()));
+    for (    Entry<AspectDescriptor,BuildConfiguration> depAspect : dep.getAspectConfigurations().entrySet()) {
+      aspectKeys.add(createAspectKey(dep.getLabel(),depAspect.getValue(),dep.getConfiguration(),depAspect.getKey().getAspectClass(),depAspect.getKey().getParameters()));
     }
   }
   Map<SkyKey,ValueOrException2<AspectCreationException,NoSuchThingException>> depAspects=env.getValuesOrThrow(aspectKeys,AspectCreationException.class,NoSuchThingException.class);
@@ -13,20 +13,20 @@
       continue;
     }
     ConfiguredTarget depConfiguredTarget=configuredTargetMap.get(depKey);
-    for (    Entry<Aspect,BuildConfiguration> depAspect : dep.getAspectConfigurations().entrySet()) {
-      if (!aspectMatchesConfiguredTarget(depConfiguredTarget,depAspect.getKey())) {
-        continue;
-      }
-      SkyKey aspectKey=createAspectKey(dep.getLabel(),depAspect.getValue(),dep.getConfiguration(),depAspect.getKey());
+    for (    Entry<AspectDescriptor,BuildConfiguration> depAspect : dep.getAspectConfigurations().entrySet()) {
+      SkyKey aspectKey=createAspectKey(dep.getLabel(),depAspect.getValue(),dep.getConfiguration(),depAspect.getKey().getAspectClass(),depAspect.getKey().getParameters());
       AspectValue aspectValue=null;
       try {
         aspectValue=(AspectValue)depAspects.get(aspectKey).get();
       }
  catch (      NoSuchThingException e) {
-        throw new AspectCreationException(String.format("Evaluation of aspect %s on %s failed: %s",depAspect.getKey().getDefinition().getName(),dep.getLabel(),e.toString()));
+        throw new AspectCreationException(String.format("Evaluation of aspect %s on %s failed: %s",depAspect.getKey().getAspectClass().getName(),dep.getLabel(),e.toString()));
       }
       if (aspectValue == null) {
         return null;
+      }
+      if (!aspectMatchesConfiguredTarget(depConfiguredTarget,aspectValue.getAspect())) {
+        continue;
       }
       result.put(depKey,aspectValue.getConfiguredAspect());
       transitivePackages.addTransitive(aspectValue.getTransitivePackages());

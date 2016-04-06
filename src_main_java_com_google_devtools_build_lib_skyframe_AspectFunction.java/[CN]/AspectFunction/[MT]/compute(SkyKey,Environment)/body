@@ -8,7 +8,7 @@
   if (key.getAspectClass() instanceof NativeAspectClass<?>) {
     NativeAspectClass<?> nativeAspectClass=(NativeAspectClass<?>)key.getAspectClass();
     aspectFactory=(ConfiguredAspectFactory)nativeAspectClass.newInstance();
-    aspect=new Aspect(nativeAspectClass,key.getParameters());
+    aspect=Aspect.forNative(nativeAspectClass,key.getParameters());
   }
  else   if (key.getAspectClass() instanceof SkylarkAspectClass) {
     SkylarkAspectClass skylarkAspectClass=(SkylarkAspectClass)key.getAspectClass();
@@ -23,7 +23,7 @@
       return null;
     }
     aspectFactory=new SkylarkAspectFactory(skylarkAspect.getName(),skylarkAspect);
-    aspect=new Aspect(skylarkAspect.getAspectClass(),key.getParameters());
+    aspect=Aspect.forSkylark(skylarkAspect.getAspectClass(),skylarkAspect.getAspectClass().getDefinition(),key.getParameters());
   }
  else {
     throw new IllegalStateException();
