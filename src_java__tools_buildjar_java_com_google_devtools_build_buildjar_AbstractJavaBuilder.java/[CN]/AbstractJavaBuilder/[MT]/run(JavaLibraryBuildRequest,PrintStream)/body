@@ -1,18 +1,19 @@
 {
-  boolean successful=false;
+  Result result=Result.ERROR;
   try {
-    compileJavaLibrary(build,err);
-    buildJar(build);
-    if (!build.getProcessors().isEmpty()) {
-      if (build.getGeneratedSourcesOutputJar() != null) {
-        buildGensrcJar(build,err);
+    result=compileJavaLibrary(build,err);
+    if (result.isOK()) {
+      buildJar(build);
+      if (!build.getProcessors().isEmpty()) {
+        if (build.getGeneratedSourcesOutputJar() != null) {
+          buildGensrcJar(build,err);
+        }
       }
     }
-    successful=true;
   }
   finally {
-    build.getDependencyModule().emitDependencyInformation(build.getClassPath(),successful);
+    build.getDependencyModule().emitDependencyInformation(build.getClassPath(),result.isOK());
     build.getProcessingModule().emitManifestProto();
-    shutdown(err);
   }
+  return result;
 }
