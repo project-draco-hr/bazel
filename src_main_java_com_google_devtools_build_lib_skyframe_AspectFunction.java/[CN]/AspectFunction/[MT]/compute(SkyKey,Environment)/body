@@ -4,8 +4,11 @@
   NestedSetBuilder<Label> transitiveRootCauses=NestedSetBuilder.stableOrder();
   AspectKey key=(AspectKey)skyKey.argument();
   ConfiguredAspectFactory aspectFactory;
+  Aspect aspect;
   if (key.getAspectClass() instanceof NativeAspectClass<?>) {
-    aspectFactory=(ConfiguredAspectFactory)((NativeAspectClass<?>)key.getAspectClass()).newInstance();
+    NativeAspectClass<?> nativeAspectClass=(NativeAspectClass<?>)key.getAspectClass();
+    aspectFactory=(ConfiguredAspectFactory)nativeAspectClass.newInstance();
+    aspect=new Aspect(nativeAspectClass,key.getParameters());
   }
  else   if (key.getAspectClass() instanceof SkylarkAspectClass) {
     SkylarkAspectClass skylarkAspectClass=(SkylarkAspectClass)key.getAspectClass();
@@ -20,6 +23,7 @@
       return null;
     }
     aspectFactory=new SkylarkAspectFactory(skylarkAspect.getName(),skylarkAspect);
+    aspect=new Aspect(skylarkAspect.getAspectClass(),key.getParameters());
   }
  else {
     throw new IllegalStateException();
@@ -63,14 +67,14 @@
     if (configConditions == null) {
       return null;
     }
-    ListMultimap<Attribute,ConfiguredTarget> depValueMap=ConfiguredTargetFunction.computeDependencies(env,resolver,originalTargetAndAspectConfiguration,key.getAspect(),configConditions,ruleClassProvider,view.getHostConfiguration(originalTargetAndAspectConfiguration.getConfiguration()),transitivePackages,transitiveRootCauses);
+    ListMultimap<Attribute,ConfiguredTarget> depValueMap=ConfiguredTargetFunction.computeDependencies(env,resolver,originalTargetAndAspectConfiguration,aspect,configConditions,ruleClassProvider,view.getHostConfiguration(originalTargetAndAspectConfiguration.getConfiguration()),transitivePackages,transitiveRootCauses);
     if (depValueMap == null) {
       return null;
     }
     if (!transitiveRootCauses.isEmpty()) {
       throw new AspectFunctionException(new AspectCreationException("Loading failed",transitiveRootCauses.build()));
     }
-    return createAspect(env,key,aspectFactory,associatedTarget,key.getAspectConfiguration(),configConditions,depValueMap,transitivePackages);
+    return createAspect(env,key,aspect,aspectFactory,associatedTarget,key.getAspectConfiguration(),configConditions,depValueMap,transitivePackages);
   }
  catch (  DependencyEvaluationException e) {
     if (e.getCause() instanceof ConfiguredValueCreationException) {
