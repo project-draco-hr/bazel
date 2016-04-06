@@ -1,0 +1,28 @@
+{
+  CustomCommandLine.Builder result=CustomCommandLine.builder();
+  if (langPluginName == null) {
+    if (langParameter != null) {
+      result.add(langParameter);
+    }
+  }
+ else {
+    FilesToRunProvider langPluginTarget=getLangPluginTarget();
+    Supplier<String> langPluginParameter1=langPluginParameter == null ? langPluginParameterSupplier : Suppliers.ofInstance(langPluginParameter);
+    Preconditions.checkArgument(langParameter == null);
+    Preconditions.checkArgument(langPluginParameter1 != null);
+    result.add(String.format("--plugin=protoc-gen-%s=%s",langPrefix,langPluginTarget.getExecutable().getExecPathString()));
+    result.add(new LazyLangPluginFlag(langPrefix,langPluginParameter1));
+  }
+  result.add(ruleContext.getFragment(ProtoConfiguration.class).protocOpts());
+  result.add(new ProtoCommandLineArgv(supportData.getTransitiveImports()));
+  for (  Artifact src : supportData.getDirectProtoSources()) {
+    result.addPath(src.getRootRelativePath());
+  }
+  if (!hasServices) {
+    result.add("--disallow_services");
+  }
+  if (additionalCommandLineArguments != null) {
+    result.add(additionalCommandLineArguments);
+  }
+  return result;
+}

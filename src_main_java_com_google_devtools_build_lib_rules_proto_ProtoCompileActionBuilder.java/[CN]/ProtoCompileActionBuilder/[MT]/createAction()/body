@@ -1,0 +1,21 @@
+{
+  SpawnAction.Builder result=new SpawnAction.Builder().addTransitiveInputs(supportData.getTransitiveImports());
+  if (supportData.getUsedDirectDeps() != null) {
+    result.addInput(supportData.getUsedDirectDeps());
+  }
+  FilesToRunProvider langPluginTarget=getLangPluginTarget();
+  if (langPluginTarget != null) {
+    result.addTool(langPluginTarget);
+  }
+  FilesToRunProvider compilerTarget=ruleContext.getExecutablePrerequisite("$compiler",RuleConfiguredTarget.Mode.HOST);
+  if (ruleContext.hasErrors()) {
+    throw new MissingPrerequisiteException();
+  }
+  if (this.additionalTools != null) {
+    for (    FilesToRunProvider tool : additionalTools) {
+      result.addTool(tool);
+    }
+  }
+  result.addOutputs(outputs).setResources(GENPROTO_RESOURCE_SET).useDefaultShellEnvironment().setExecutable(compilerTarget).setCommandLine(createProtoCompilerCommandLine().build()).setProgressMessage("Generating " + language + " proto_library "+ ruleContext.getLabel()).setMnemonic(MNEMONIC);
+  return result;
+}
