@@ -1,0 +1,34 @@
+{
+  FdoMode fdoMode;
+  if (fdoProfile != null && isAutoFdo(fdoProfile.getBaseName())) {
+    fdoMode=FdoMode.AUTO_FDO;
+  }
+ else   if (fdoProfile != null && isLLVMFdo(fdoProfile.getBaseName())) {
+    fdoMode=FdoMode.LLVM_FDO;
+  }
+ else   if (fdoProfile != null) {
+    fdoMode=FdoMode.VANILLA;
+  }
+ else {
+    fdoMode=FdoMode.OFF;
+  }
+  if (fdoProfile == null) {
+    lipoMode=LipoMode.OFF;
+  }
+  Root fdoRoot=(fdoProfile == null) ? null : Root.asDerivedRoot(execRoot,execRoot.getRelative("blaze-fdo"));
+  PathFragment fdoRootExecPath=fdoProfile == null ? null : fdoRoot.getExecPath().getRelative(FileSystemUtils.removeExtension(new PathFragment("_fdo").getChild(fdoProfile.getBaseName())));
+  if (fdoProfile != null) {
+    if (lipoMode != LipoMode.OFF) {
+      PrecomputedValue.dependOnBuildId(env);
+    }
+ else {
+      Path path=fdoMode == FdoMode.AUTO_FDO ? getAutoFdoImportsPath(fdoProfile) : fdoProfile;
+      env.getValue(FileValue.key(RootedPath.toRootedPathMaybeUnderRoot(path,ImmutableList.of(execRoot))));
+    }
+  }
+  if (env.valuesMissing()) {
+    return null;
+  }
+  FdoZipContents fdoZipContents=extractFdoZip(fdoMode,lipoMode,execRoot,fdoProfile,fdoRootExecPath);
+  return new FdoSupport(fdoMode,lipoMode,fdoRoot,fdoRootExecPath,fdoInstrument,fdoProfile,fdoZipContents);
+}

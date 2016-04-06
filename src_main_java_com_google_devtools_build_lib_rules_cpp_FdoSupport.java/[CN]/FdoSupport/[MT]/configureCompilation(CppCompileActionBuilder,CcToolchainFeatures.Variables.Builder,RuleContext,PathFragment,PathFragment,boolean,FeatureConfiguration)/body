@@ -1,6 +1,6 @@
 {
   LipoContextProvider lipoInputProvider=CppHelper.getLipoContextProvider(ruleContext);
-  Preconditions.checkArgument(lipoInputProvider == null || isLipoEnabled());
+  Preconditions.checkArgument(lipoInputProvider == null || lipoMode != LipoMode.OFF);
   if ((fdoInstrument == null) && (fdoRoot == null)) {
     return;
   }
@@ -16,11 +16,11 @@
     builder.addMandatoryInputs(auxiliaryInputs);
     if (!Iterables.isEmpty(auxiliaryInputs)) {
       if (featureConfiguration.isEnabled(CppRuleClasses.AUTOFDO)) {
-        buildVariables.addVariable("fdo_profile_path",getAutoProfilePath().getPathString());
+        buildVariables.addVariable("fdo_profile_path",getAutoProfilePath(fdoProfile,fdoRootExecPath).getPathString());
       }
       if (featureConfiguration.isEnabled(CppRuleClasses.FDO_OPTIMIZE)) {
-        if (useLLVMFdo) {
-          buildVariables.addVariable("fdo_profile_path",getLLVMProfilePath().getPathString());
+        if (fdoMode == FdoMode.LLVM_FDO) {
+          buildVariables.addVariable("fdo_profile_path",getLLVMProfilePath(fdoProfile,fdoRootExecPath).getPathString());
         }
  else {
           buildVariables.addVariable("fdo_profile_path",fdoRootExecPath.getPathString());

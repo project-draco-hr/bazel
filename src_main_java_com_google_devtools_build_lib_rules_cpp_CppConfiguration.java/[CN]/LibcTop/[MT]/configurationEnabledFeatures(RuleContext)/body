@@ -1,13 +1,13 @@
 {
   ImmutableSet.Builder<String> requestedFeatures=ImmutableSet.builder();
-  FdoSupport fdoSupport=getFdoSupport();
-  if (fdoSupport.getFdoInstrument() != null) {
+  if (cppOptions.fdoInstrument != null) {
     requestedFeatures.add(CppRuleClasses.FDO_INSTRUMENT);
   }
-  if (fdoSupport.getFdoOptimizeProfile() != null && !fdoSupport.isAutoFdoEnabled()) {
+  boolean isFdo=fdoZip != null && compilationMode == CompilationMode.OPT;
+  if (isFdo && !CppFileTypes.GCC_AUTO_PROFILE.matches(fdoZip)) {
     requestedFeatures.add(CppRuleClasses.FDO_OPTIMIZE);
   }
-  if (fdoSupport.isAutoFdoEnabled()) {
+  if (isFdo && CppFileTypes.GCC_AUTO_PROFILE.matches(fdoZip)) {
     requestedFeatures.add(CppRuleClasses.AUTOFDO);
   }
   if (isLipoOptimizationOrInstrumentation()) {

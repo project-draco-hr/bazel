@@ -1,7 +1,18 @@
 {
+  if (!zipPath.exists()) {
+    throw new FileNotFoundException(String.format("File '%s' does not exist",zipPath));
+  }
   File file=zipPath.getPathFile();
   if (!file.exists()) {
-    throw new FileNotFoundException(String.format("File '%s' does not exist",zipPath));
+    tempFile=File.createTempFile("bazel.test.",".tmp");
+    file=tempFile;
+    byte[] contents=FileSystemUtils.readContent(zipPath);
+    try (OutputStream os=new FileOutputStream(tempFile)){
+      os.write(contents);
+    }
+   }
+ else {
+    tempFile=null;
   }
   if (!file.isFile()) {
     throw new IOException(String.format("'%s' is not a file",zipPath));
@@ -11,4 +22,5 @@
   }
   this.zipFile=new ZipFile(file);
   this.paths=populatePathTree();
+  this.open=true;
 }

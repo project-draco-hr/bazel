@@ -1,4 +1,19 @@
 {
+  CppConfiguration cppConfiguration=ruleContext.getFragment(CppConfiguration.class);
+  Path fdoZip=ruleContext.getConfiguration().getCompilationMode() == CompilationMode.OPT ? cppConfiguration.getFdoZip() : null;
+  SkyKey fdoKey=FdoSupportValue.key(cppConfiguration.getLipoMode(),fdoZip,cppConfiguration.getFdoInstrument());
+  SkyFunction.Environment skyframeEnv=ruleContext.getAnalysisEnvironment().getSkyframeEnv();
+  FdoSupportValue fdoSupport;
+  try {
+    fdoSupport=(FdoSupportValue)skyframeEnv.getValueOrThrow(fdoKey,FdoException.class,IOException.class);
+  }
+ catch (  FdoException|IOException e) {
+    ruleContext.ruleError("cannot initialize FDO: " + e.getMessage());
+    return null;
+  }
+  if (skyframeEnv.valuesMissing()) {
+    return null;
+  }
   final Label label=ruleContext.getLabel();
   final NestedSet<Artifact> crosstool=ruleContext.getPrerequisite("all_files",Mode.HOST).getProvider(FileProvider.class).getFilesToBuild();
   final NestedSet<Artifact> crosstoolMiddleman=getFiles(ruleContext,"all_files");
@@ -11,7 +26,6 @@
   String purposePrefix=Actions.escapeLabel(label) + "_";
   String runtimeSolibDirBase="_solib_" + "_" + Actions.escapeLabel(label);
   final PathFragment runtimeSolibDir=ruleContext.getConfiguration().getBinFragment().getRelative(runtimeSolibDirBase);
-  CppConfiguration cppConfiguration=ruleContext.getFragment(CppConfiguration.class);
   TransitiveInfoCollection staticRuntimeLibDep=selectDep(ruleContext,"static_runtime_libs",cppConfiguration.getStaticRuntimeLibsLabel());
   final NestedSet<Artifact> staticRuntimeLinkInputs;
   final Artifact staticRuntimeLinkMiddleman;
@@ -64,7 +78,7 @@
   boolean supportsParamFiles=ruleContext.attributes().get("supports_param_files",BOOLEAN);
   boolean supportsHeaderParsing=ruleContext.attributes().get("supports_header_parsing",BOOLEAN);
   CcToolchainProvider provider=new CcToolchainProvider(Preconditions.checkNotNull(ruleContext.getFragment(CppConfiguration.class)),crosstool,fullInputsForCrosstool(ruleContext,crosstoolMiddleman),compile,strip,objcopy,fullInputsForLink(ruleContext,link),dwp,libcLink,staticRuntimeLinkInputs,staticRuntimeLinkMiddleman,dynamicRuntimeLinkInputs,dynamicRuntimeLinkMiddleman,runtimeSolibDir,context,supportsParamFiles,supportsHeaderParsing,getBuildVariables(ruleContext),getBuiltinIncludes(ruleContext));
-  RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext).add(CcToolchainProvider.class,provider).setFilesToBuild(new NestedSetBuilder<Artifact>(Order.STABLE_ORDER).build()).add(RunfilesProvider.class,RunfilesProvider.simple(Runfiles.EMPTY));
+  RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext).add(CcToolchainProvider.class,provider).add(FdoSupportProvider.class,new FdoSupportProvider(fdoSupport.getFdoSupport())).setFilesToBuild(new NestedSetBuilder<Artifact>(Order.STABLE_ORDER).build()).add(RunfilesProvider.class,RunfilesProvider.simple(Runfiles.EMPTY));
   License outputLicense=ruleContext.getRule().getToolOutputLicense(ruleContext.attributes());
   if (outputLicense != null && outputLicense != License.NO_LICENSE) {
     final NestedSet<TargetLicense> license=NestedSetBuilder.create(Order.STABLE_ORDER,new TargetLicense(ruleContext.getLabel(),outputLicense));

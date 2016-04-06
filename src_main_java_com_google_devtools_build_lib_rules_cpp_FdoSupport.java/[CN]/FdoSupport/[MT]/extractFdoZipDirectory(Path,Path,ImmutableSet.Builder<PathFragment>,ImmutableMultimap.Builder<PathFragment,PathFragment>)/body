@@ -1,0 +1,21 @@
+{
+  for (  Path sourceFile : sourceDir.getDirectoryEntries()) {
+    Path targetFile=targetDir.getRelative(sourceFile.getBaseName());
+    if (sourceFile.isDirectory()) {
+      targetFile.createDirectory();
+      extractFdoZipDirectory(sourceFile,targetFile,gcdaFilesBuilder,importsBuilder);
+    }
+ else {
+      if (CppFileTypes.COVERAGE_DATA.matches(sourceFile)) {
+        FileSystemUtils.copyFile(sourceFile,targetFile);
+        gcdaFilesBuilder.add(sourceFile.relativeTo(sourceFile.getFileSystem().getRootDirectory()));
+      }
+ else       if (CppFileTypes.COVERAGE_DATA_IMPORTS.matches(sourceFile)) {
+        readCoverageImports(sourceFile,importsBuilder);
+      }
+ else {
+        throw new FdoException("FDO ZIP file contained a file of unknown type: " + sourceFile);
+      }
+    }
+  }
+}

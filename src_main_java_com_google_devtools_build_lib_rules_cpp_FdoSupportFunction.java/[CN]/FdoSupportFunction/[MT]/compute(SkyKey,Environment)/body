@@ -1,0 +1,22 @@
+{
+  BlazeDirectories blazeDirectories=PrecomputedValue.BLAZE_DIRECTORIES.get(env);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  Path execRoot=blazeDirectories.getExecRoot();
+  FdoSupportValue.Key key=(FdoSupportValue.Key)skyKey.argument();
+  FdoSupport fdoSupport;
+  try {
+    fdoSupport=FdoSupport.create(env,key.getFdoInstrument(),key.getFdoZip(),key.getLipoMode(),execRoot);
+    if (env.valuesMissing()) {
+      return null;
+    }
+  }
+ catch (  FdoException e) {
+    throw new FdoSkyException(e,Transience.PERSISTENT);
+  }
+catch (  IOException e) {
+    throw new FdoSkyException(e,Transience.TRANSIENT);
+  }
+  return new FdoSupportValue(fdoSupport);
+}

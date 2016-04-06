@@ -2,9 +2,9 @@
   if (fdoProfile == null) {
     return ImmutableSet.of();
   }
- else   if (useAutoFdo || useLLVMFdo) {
+ else   if (fdoMode == FdoMode.AUTO_FDO || fdoMode == FdoMode.LLVM_FDO) {
     ImmutableSet.Builder<Artifact> auxiliaryInputs=ImmutableSet.builder();
-    PathFragment profileRootRelativePath=(useLLVMFdo) ? getLLVMProfileRootRelativePath() : getAutoProfileRootRelativePath();
+    PathFragment profileRootRelativePath=fdoMode == FdoMode.LLVM_FDO ? getLLVMProfileRootRelativePath(fdoProfile) : getAutoProfileRootRelativePath(fdoProfile);
     Artifact artifact=env.getDerivedArtifact(fdoPath.getRelative(profileRootRelativePath),fdoRoot);
     env.registerAction(new FdoStubAction(ruleContext.getActionOwner(),artifact));
     auxiliaryInputs.add(artifact);
