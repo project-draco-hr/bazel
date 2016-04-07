@@ -1,0 +1,13 @@
+{
+  ImmutableList<ImmutableList<String>> blazercOpts=ImmutableList.of(ImmutableList.of("--rc_source=/doesnt/matter/0/bazelrc","--default_override=0:common=--stringoption=common","--default_override=0:common=--numoption=42"),ImmutableList.of("--rc_source=/doesnt/matter/1/bazelrc","--default_override=0:reportall=--stringoption=reportall"),ImmutableList.of("--rc_source=/doesnt/matter/2/bazelrc","--default_override=0:reportallinherited=--stringoption=reportallinherited"));
+  for (  List<ImmutableList<String>> e : Collections2.permutations(blazercOpts)) {
+    outErr.reset();
+    BlazeCommandDispatcher dispatch=new BlazeCommandDispatcher(runtime,reportNum,reportAll,reportAllInherited);
+    List<String> cmdLine=Lists.newArrayList("reportallinherited");
+    List<String> orderedOpts=ImmutableList.copyOf(Iterables.concat(e));
+    cmdLine.addAll(orderedOpts);
+    dispatch.exec(cmdLine,outErr);
+    String out=outErr.outAsLatin1();
+    assertEquals(String.format("The more specific option should override, irrespective of source file or order. %s",orderedOpts),"42 reportallinherited",out);
+  }
+}

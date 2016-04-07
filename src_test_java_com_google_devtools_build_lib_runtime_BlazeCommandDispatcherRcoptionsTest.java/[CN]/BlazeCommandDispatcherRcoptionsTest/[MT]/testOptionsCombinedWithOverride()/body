@@ -1,0 +1,9 @@
+{
+  List<String> blazercOpts=ImmutableList.of("--rc_source=/etc/bazelrc","--default_override=0:common=--stringoption=foo","--default_override=0:common=--numoption=42","--rc_source=/home/jrluser/.blazerc","--default_override=1:common=--numoption=99");
+  BlazeCommandDispatcher dispatch=new BlazeCommandDispatcher(runtime,reportNum,reportAll);
+  List<String> cmdLine=Lists.newArrayList("reportall");
+  cmdLine.addAll(blazercOpts);
+  dispatch.exec(cmdLine,outErr);
+  String out=outErr.outAsLatin1();
+  assertEquals("The more specific rc-file should override","99 foo",out);
+}
