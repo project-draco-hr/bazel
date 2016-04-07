@@ -1,12 +1,24 @@
 {
-  String iosVersionAttribute=context.attributes().get("ios_version",STRING);
+  AppleConfiguration appleConfiguration=context.getFragment(AppleConfiguration.class);
+  String iosVersionAttribute=context.attributes().get(IosDeviceRule.IOS_VERSION_ATTR_NAME,STRING);
+  XcodeVersionProperties xcodeVersionProperties=context.getPrerequisite(IosDeviceRule.XCODE_ATTR_NAME,Mode.TARGET,XcodeVersionProperties.class);
+  DottedVersion xcodeVersion=null;
+  if (xcodeVersionProperties != null && xcodeVersionProperties.getXcodeVersion().isPresent()) {
+    xcodeVersion=xcodeVersionProperties.getXcodeVersion().get();
+  }
+ else   if (appleConfiguration.getXcodeVersion().isPresent()) {
+    xcodeVersion=appleConfiguration.getXcodeVersion().get();
+  }
   DottedVersion iosVersion;
   if (!Strings.isNullOrEmpty(iosVersionAttribute)) {
     iosVersion=DottedVersion.fromString(iosVersionAttribute);
   }
- else {
-    iosVersion=context.getFragment(AppleConfiguration.class).getSdkVersionForPlatform(Platform.IOS_SIMULATOR);
+ else   if (xcodeVersionProperties != null) {
+    iosVersion=xcodeVersionProperties.getDefaultIosSdkVersion();
   }
-  IosDeviceProvider provider=new IosDeviceProvider.Builder().setType(context.attributes().get("type",STRING)).setIosVersion(iosVersion).setLocale(context.attributes().get("locale",STRING)).build();
+ else {
+    iosVersion=appleConfiguration.getSdkVersionForPlatform(Platform.IOS_SIMULATOR);
+  }
+  IosDeviceProvider provider=new IosDeviceProvider.Builder().setType(context.attributes().get(IosDeviceRule.TYPE_ATTR_NAME,STRING)).setIosVersion(iosVersion).setLocale(context.attributes().get(IosDeviceRule.LOCALE_ATTR_NAME,STRING)).setXcodeVersion(xcodeVersion).build();
   return new RuleConfiguredTargetBuilder(context).add(RunfilesProvider.class,RunfilesProvider.EMPTY).add(IosDeviceProvider.class,provider).add(IosTestSubstitutionProvider.class,provider.iosTestSubstitutionProvider()).build();
 }
