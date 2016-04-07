@@ -2,7 +2,10 @@
   int start=token.left;
   Token blockToken=token;
   syncTo(EnumSet.of(TokenKind.COLON,TokenKind.EOF));
-  if (parsingMode != PYTHON) {
+  if (blockToken.kind == TokenKind.ELSE && parsingMode == SKYLARK) {
+    reportError(lexer.createLocation(blockToken.left,blockToken.right),"syntax error at 'else': not allowed here.");
+  }
+ else   if (parsingMode != PYTHON) {
     String msg=ILLEGAL_BLOCK_KEYWORDS.containsKey(blockToken.kind) ? String.format("%ss are not supported.",ILLEGAL_BLOCK_KEYWORDS.get(blockToken.kind)) : "This is not supported in BUILD files. Move the block to a .bzl file and load it";
     reportError(lexer.createLocation(start,token.right),String.format("syntax error at '%s': %s",blockToken,msg));
   }
