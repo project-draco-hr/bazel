@@ -1,0 +1,36 @@
+def Run(self, argv):
+    "Runs the linker using the passed clang/gcc style argument list.\n\n    Args:\n      argv: List of arguments\n\n    Returns:\n      The return code of the link.\n\n    Raises:\n      ValueError: if target architecture or compile mode isn't specified\n    "
+    tool = 'lib'
+    default_args = ['/nologo']
+    parser = msvc_tools.ArgParser(self, argv, LINKPATTERNS)
+    name = ''
+    for arg in parser.options:
+        if ('/OUT:' in arg):
+            name = arg[5:]
+            break
+    if (not name):
+        raise msvc_tools.Error('No output file name specified!')
+    if ((len(parser.options) == 2) and parser.options[0].startswith('/OUT') and parser.options[1].startswith('/M')):
+        with open(name, 'w'):
+            os.utime(name, None)
+    else:
+        if (os.path.splitext(name)[1] not in ['.a', '.lo', '.so']):
+            tool = 'link'
+            if (not parser.target_arch):
+                raise ValueError('Must specify target architecture (-m32 or -m64)')
+            if (parser.target_arch == 'x64'):
+                default_args.append('/MACHINE:X64')
+            else:
+                default_args.append('/MACHINE:X86')
+            default_args += ['/SUBSYSTEM:CONSOLE']
+            for arg in parser.options:
+                if arg.endswith('.o'):
+                    break
+            else:
+                if (not parser.compilation_mode):
+                    raise ValueError('Must specify compilation mode (-Xcompilation-mode={dbg,fastbuild,opt})')
+                if (parser.compilation_mode == 'dbg'):
+                    default_args.insert(0, 'libcmtd.lib')
+                else:
+                    default_args.insert(0, 'libcmt.lib')
+        return self.RunBinary(tool, (default_args + parser.options), parser.target_arch, parser)
