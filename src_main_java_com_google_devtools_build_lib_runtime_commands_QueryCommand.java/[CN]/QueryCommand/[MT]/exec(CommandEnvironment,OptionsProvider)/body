@@ -122,7 +122,10 @@ catch (    IOException e) {
       return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
     }
  finally {
-      output.flush();
+      if (output.checkError()) {
+        env.getReporter().handle(Event.error("I/O error while writing query output"));
+        return ExitCode.LOCAL_ENVIRONMENTAL_ERROR;
+      }
     }
   }
   if (result.isEmpty()) {
