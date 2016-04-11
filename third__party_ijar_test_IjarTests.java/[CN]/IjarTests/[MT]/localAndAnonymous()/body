@@ -1,0 +1,8 @@
+{
+  Map<String,byte[]> lib=readJar("third_party/ijar/test/liblocal_and_anonymous_lib.jar");
+  Map<String,byte[]> ijar=readJar("third_party/ijar/test/local_and_anonymous-interface.jar");
+  assertThat(lib.keySet()).containsExactly("LocalAndAnonymous$1.class","LocalAndAnonymous$2.class","LocalAndAnonymous$1LocalClass.class","LocalAndAnonymous.class","LocalAndAnonymous$NestedClass.class","LocalAndAnonymous$InnerClass.class","LocalAndAnonymous$PrivateInnerClass.class");
+  assertThat(ijar.keySet()).containsExactly("LocalAndAnonymous.class","LocalAndAnonymous$NestedClass.class","LocalAndAnonymous$InnerClass.class","LocalAndAnonymous$PrivateInnerClass.class");
+  assertThat(innerClasses(lib.get("LocalAndAnonymous.class"))).isEqualTo(ImmutableMap.<String,String>builder().put("LocalAndAnonymous$1","null").put("LocalAndAnonymous$2","null").put("LocalAndAnonymous$1LocalClass","null").put("LocalAndAnonymous$InnerClass","LocalAndAnonymous").put("LocalAndAnonymous$NestedClass","LocalAndAnonymous").put("LocalAndAnonymous$PrivateInnerClass","LocalAndAnonymous").build());
+  assertThat(innerClasses(ijar.get("LocalAndAnonymous.class"))).containsExactly("LocalAndAnonymous$InnerClass","LocalAndAnonymous","LocalAndAnonymous$NestedClass","LocalAndAnonymous","LocalAndAnonymous$PrivateInnerClass","LocalAndAnonymous");
+}
