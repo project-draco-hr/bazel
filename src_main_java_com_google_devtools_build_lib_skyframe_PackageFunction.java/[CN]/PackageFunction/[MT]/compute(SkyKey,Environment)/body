@@ -10,7 +10,7 @@
     throw new PackageFunctionException(e,Transience.PERSISTENT);
   }
 catch (  InconsistentFilesystemException e) {
-    throw new PackageFunctionException(new InternalInconsistentFilesystemException(packageId,e),Transience.PERSISTENT);
+    throw new PackageFunctionException(new NoSuchPackageException(packageId,e.getMessage(),e),Transience.PERSISTENT);
   }
   if (packageLookupValue == null) {
     return null;
@@ -65,7 +65,7 @@ try {
 astLookupValue=(ASTFileLookupValue)env.getValueOrThrow(astLookupKey,ErrorReadingSkylarkExtensionException.class,InconsistentFilesystemException.class);
 }
  catch (ErrorReadingSkylarkExtensionException|InconsistentFilesystemException e) {
-throw new PackageFunctionException(new BadPreludeFileException(packageId,e.getMessage()),Transience.PERSISTENT);
+throw new PackageFunctionException(new NoSuchPackageException(packageId,"Error encountered while reading the prelude file: " + e.getMessage()),Transience.PERSISTENT);
 }
 if (astLookupValue == null) {
 return null;
@@ -82,7 +82,7 @@ handleLabelsCrossingSubpackagesAndPropagateInconsistentFilesystemExceptions(pack
 }
  catch (InternalInconsistentFilesystemException e) {
 packageFunctionCache.invalidate(packageId);
-throw new PackageFunctionException(e,e.isTransient() ? Transience.TRANSIENT : Transience.PERSISTENT);
+throw new PackageFunctionException(e.toNoSuchPackageException(),e.isTransient() ? Transience.TRANSIENT : Transience.PERSISTENT);
 }
 Set<SkyKey> globKeys=packageBuilderAndGlobDeps.globDepKeys;
 Map<Label,Path> subincludes=legacyPkgBuilder.getSubincludes();
@@ -92,7 +92,7 @@ packageShouldBeConsideredInError=markDependenciesAndPropagateInconsistentFilesys
 }
  catch (InternalInconsistentFilesystemException e) {
 packageFunctionCache.invalidate(packageId);
-throw new PackageFunctionException(e,e.isTransient() ? Transience.TRANSIENT : Transience.PERSISTENT);
+throw new PackageFunctionException(e.toNoSuchPackageException(),e.isTransient() ? Transience.TRANSIENT : Transience.PERSISTENT);
 }
 if (env.valuesMissing()) {
 return null;
