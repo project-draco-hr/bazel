@@ -42,30 +42,6 @@ catch (  IOException|FileSymlinkException e) {
     throw new IllegalStateException(e);
   }
   TVisitor visitor=getInitialVisitor();
-  if (pkgLookupValue.packageExists()) {
-    if (pkgLookupValue.getRoot().equals(root)) {
-      Package pkg=null;
-      try {
-        PackageValue pkgValue=(PackageValue)env.getValueOrThrow(PackageValue.key(packageId),NoSuchPackageException.class);
-        if (pkgValue == null) {
-          return null;
-        }
-        pkg=pkgValue.getPackage();
-        if (pkg.containsErrors()) {
-          env.getListener().handle(Event.error("package contains errors: " + rootRelativePath.getPathString()));
-        }
-      }
- catch (      NoSuchPackageException e) {
-        env.getListener().handle(Event.error("package contains errors: " + rootRelativePath.getPathString()));
-      }
-      if (pkg != null) {
-        visitor.visitPackageValue(pkg,env);
-        if (env.valuesMissing()) {
-          return null;
-        }
-      }
-    }
-  }
   DirectoryListingValue dirListingValue;
   try {
     dirListingValue=(DirectoryListingValue)Preconditions.checkNotNull(pkgLookupAndDirectoryListingDeps.get(dirListingKey).get(),"%s %s",recursivePkgKey,dirListingKey);
@@ -98,7 +74,38 @@ catch (  NoSuchPackageException e) {
     RootedPath subdirectoryRootedPath=RootedPath.toRootedPath(root,subdirectory);
     childDeps.add(getSkyKeyForSubdirectory(recursivePkgKey.getRepository(),subdirectoryRootedPath,excludedSubdirectoriesBeneathThisSubdirectory));
   }
-  Map<SkyKey,SkyValue> subdirectorySkyValues=env.getValues(childDeps);
+  Map<SkyKey,SkyValue> subdirectorySkyValues;
+  if (pkgLookupValue.packageExists() && pkgLookupValue.getRoot().equals(root)) {
+    SkyKey packageKey=PackageValue.key(packageId);
+    Map<SkyKey,ValueOrException<NoSuchPackageException>> dependentSkyValues=env.getValuesOrThrow(Iterables.concat(childDeps,ImmutableList.of(packageKey)),NoSuchPackageException.class);
+    if (env.valuesMissing()) {
+      return null;
+    }
+    Package pkg=null;
+    try {
+      PackageValue pkgValue=(PackageValue)dependentSkyValues.get(packageKey).get();
+      if (pkgValue == null) {
+        return null;
+      }
+      pkg=pkgValue.getPackage();
+      if (pkg.containsErrors()) {
+        env.getListener().handle(Event.error("package contains errors: " + rootRelativePath.getPathString()));
+      }
+    }
+ catch (    NoSuchPackageException e) {
+      env.getListener().handle(Event.error("package contains errors: " + rootRelativePath.getPathString()));
+    }
+    if (pkg != null) {
+      visitor.visitPackageValue(pkg,env);
+      if (env.valuesMissing()) {
+        return null;
+      }
+    }
+    subdirectorySkyValues=Maps.transformValues(Maps.filterKeys(dependentSkyValues,Predicates.not(Predicates.equalTo(packageKey))),GET_SKYVALUE);
+  }
+ else {
+    subdirectorySkyValues=env.getValues(childDeps);
+  }
   if (env.valuesMissing()) {
     return null;
   }
