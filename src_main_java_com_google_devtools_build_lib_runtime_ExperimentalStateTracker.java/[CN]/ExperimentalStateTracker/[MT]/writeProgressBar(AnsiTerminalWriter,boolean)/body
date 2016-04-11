@@ -1,0 +1,41 @@
+{
+  if (status != null) {
+    if (ok) {
+      terminalWriter.okStatus();
+    }
+ else {
+      terminalWriter.failStatus();
+    }
+    terminalWriter.append(status + ":").normal().append(" " + additionalMessage);
+    return;
+  }
+  if (loadingProgressReceiver != null) {
+    terminalWriter.okStatus().append("Loading:").normal().append(" " + loadingProgressReceiver.progressState());
+    return;
+  }
+  if (executionProgressReceiver != null) {
+    terminalWriter.okStatus().append(executionProgressReceiver.getProgressString());
+  }
+ else {
+    terminalWriter.okStatus().append("Building:");
+  }
+  if (runningActions.size() == 0) {
+    terminalWriter.normal().append(" no actions running");
+  }
+ else   if (runningActions.size() == 1) {
+    String statusMessage=describeAction(runningActions.peekFirst(),clock.nanoTime());
+    terminalWriter.normal().append(" " + statusMessage);
+  }
+ else {
+    if (shortVersion) {
+      String statusMessage=describeAction(runningActions.peekFirst(),clock.nanoTime());
+      statusMessage+=" ... (" + runningActions.size() + " actions)";
+      terminalWriter.normal().append(" " + statusMessage);
+    }
+ else {
+      String statusMessage=" " + runningActions.size() + " actions running";
+      terminalWriter.normal().append(" " + statusMessage);
+      sampleOldestActions(terminalWriter);
+    }
+  }
+}
