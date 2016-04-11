@@ -1,6 +1,10 @@
 {
-  LineCountingAnsiTerminalWriter terminalWriter=new LineCountingAnsiTerminalWriter(terminal);
-  stateTracker.writeProgressBar(new LineWrappingAnsiTerminalWriter(terminalWriter,terminalWidth - 1));
+  LineCountingAnsiTerminalWriter countingTerminalWriter=new LineCountingAnsiTerminalWriter(terminal);
+  AnsiTerminalWriter terminalWriter=countingTerminalWriter;
+  if (cursorControl) {
+    terminalWriter=new LineWrappingAnsiTerminalWriter(terminalWriter,terminalWidth - 1);
+  }
+  stateTracker.writeProgressBar(terminalWriter);
   terminalWriter.newline();
-  numLinesProgressBar=terminalWriter.getWrittenLines();
+  numLinesProgressBar=countingTerminalWriter.getWrittenLines();
 }
