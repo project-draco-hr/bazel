@@ -1,0 +1,13 @@
+{
+  ImmutableList<Class<? extends FragmentOptions>> testFragments=TestRuleClassProvider.getRuleClassProvider().getOptionFragments();
+  OptionsParser optionsParser=OptionsParser.newOptionsParser(testFragments);
+  try {
+    optionsParser.parse(args);
+    InvocationPolicyEnforcer optionsPolicyEnforcer=new InvocationPolicyEnforcer(TestConstants.TEST_INVOCATION_POLICY);
+    optionsPolicyEnforcer.enforce(optionsParser);
+  }
+ catch (  OptionsParsingException e) {
+    throw new IllegalStateException(e);
+  }
+  return BuildOptions.of(testFragments,optionsParser);
+}
