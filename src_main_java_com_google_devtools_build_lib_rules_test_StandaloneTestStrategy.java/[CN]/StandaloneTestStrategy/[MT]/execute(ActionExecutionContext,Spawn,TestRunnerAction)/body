@@ -4,16 +4,20 @@
   Path testLogPath=action.getTestLog().getPath();
   TestResultData.Builder builder=TestResultData.newBuilder();
   long startTime=executor.getClock().currentTimeMillis();
+  SpawnActionContext spawnActionContext=executor.getSpawnActionContext(action.getMnemonic());
   try {
     try {
       if (executionOptions.testOutput.equals(TestOutputFormat.STREAMED)) {
         streamed=new StreamedTestOutput(Reporter.outErrForReporter(actionExecutionContext.getExecutor().getEventHandler()),testLogPath);
       }
-      executor.getSpawnActionContext(action.getMnemonic()).exec(spawn,actionExecutionContext);
+      spawnActionContext.exec(spawn,actionExecutionContext);
       builder.setTestPassed(true).setStatus(BlazeTestStatus.PASSED).setCachable(true).setPassedLog(testLogPath.getPathString());
     }
  catch (    ExecException e) {
       builder.setTestPassed(false).setStatus(e.hasTimedOut() ? BlazeTestStatus.TIMEOUT : BlazeTestStatus.FAILED).addFailedLogs(testLogPath.getPathString());
+      if (spawnActionContext.shouldPropagateExecException()) {
+        throw e;
+      }
     }
  finally {
       long duration=executor.getClock().currentTimeMillis() - startTime;
