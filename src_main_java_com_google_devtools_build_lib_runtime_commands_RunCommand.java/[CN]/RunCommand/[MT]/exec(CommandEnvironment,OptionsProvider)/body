@@ -1,5 +1,4 @@
 {
-  BlazeRuntime runtime=env.getRuntime();
   RunOptions runOptions=options.getOptions(RunOptions.class);
   List<String> targetAndArgs=options.getResidue();
   if (targetAndArgs.isEmpty()) {
@@ -11,7 +10,7 @@
   RunUnder runUnder=options.getOptions(BuildConfiguration.Options.class).runUnder;
   OutErr outErr=env.getReporter().getOutErr();
   List<String> targets=(runUnder != null) && (runUnder.getLabel() != null) ? ImmutableList.of(targetString,runUnder.getLabel().toString()) : ImmutableList.of(targetString);
-  BuildRequest request=BuildRequest.create(this.getClass().getAnnotation(Command.class).name(),options,runtime.getStartupOptionsProvider(),targets,outErr,env.getCommandId(),env.getCommandStartTime());
+  BuildRequest request=BuildRequest.create(this.getClass().getAnnotation(Command.class).name(),options,env.getRuntime().getStartupOptionsProvider(),targets,outErr,env.getCommandId(),env.getCommandStartTime());
   currentRunUnder=runUnder;
   BuildResult result;
   try {
@@ -88,7 +87,7 @@
   PathFragment prettyExecutablePath=OutputDirectoryLinksUtils.getPrettyPath(executablePath,env.getWorkspaceName(),env.getWorkspace(),options.getOptions(BuildRequestOptions.class).getSymlinkPrefix());
   List<String> cmdLine=new ArrayList<>();
   if (runOptions.scriptPath == null) {
-    PathFragment processWrapperPath=runtime.getBinTools().getExecPath(PROCESS_WRAPPER);
+    PathFragment processWrapperPath=env.getBlazeWorkspace().getBinTools().getExecPath(PROCESS_WRAPPER);
     Preconditions.checkNotNull(processWrapperPath,PROCESS_WRAPPER + " not found in embedded tools");
     cmdLine.add(env.getExecRoot().getRelative(processWrapperPath).getPathString());
     cmdLine.add("-1");

@@ -4,35 +4,19 @@
   Clock clock=(this.clock == null) ? BlazeClock.instance() : this.clock;
   UUID instanceId=(this.instanceId == null) ? UUID.randomUUID() : this.instanceId;
   Preconditions.checkNotNull(clock);
-  Preprocessor.Factory.Supplier preprocessorFactorySupplier=null;
-  SkyframeExecutorFactory skyframeExecutorFactory=null;
-  QueryEnvironmentFactory queryEnvironmentFactory=null;
   for (  BlazeModule module : blazeModules) {
     module.blazeStartup(startupOptionsProvider,BlazeVersionInfo.instance(),instanceId,directories,clock);
-    Preprocessor.Factory.Supplier modulePreprocessorFactorySupplier=module.getPreprocessorFactorySupplier();
-    if (modulePreprocessorFactorySupplier != null) {
-      Preconditions.checkState(preprocessorFactorySupplier == null,"more than one module defines a preprocessor factory supplier");
-      preprocessorFactorySupplier=modulePreprocessorFactorySupplier;
-    }
-    SkyframeExecutorFactory skyFactory=module.getSkyframeExecutorFactory();
-    if (skyFactory != null) {
-      Preconditions.checkState(skyframeExecutorFactory == null,"At most one skyframe factory supported. But found two: %s and %s",skyFactory,skyframeExecutorFactory);
-      skyframeExecutorFactory=skyFactory;
-    }
+  }
+  QueryEnvironmentFactory queryEnvironmentFactory=null;
+  for (  BlazeModule module : blazeModules) {
     QueryEnvironmentFactory queryEnvFactory=module.getQueryEnvironmentFactory();
     if (queryEnvFactory != null) {
       Preconditions.checkState(queryEnvironmentFactory == null,"At most one query environment factory supported. But found two: %s and %s",queryEnvFactory,queryEnvironmentFactory);
       queryEnvironmentFactory=queryEnvFactory;
     }
   }
-  if (skyframeExecutorFactory == null) {
-    skyframeExecutorFactory=new SequencedSkyframeExecutorFactory();
-  }
   if (queryEnvironmentFactory == null) {
     queryEnvironmentFactory=new QueryEnvironmentFactory();
-  }
-  if (preprocessorFactorySupplier == null) {
-    preprocessorFactorySupplier=Preprocessor.Factory.Supplier.NullSupplier.INSTANCE;
   }
   ConfiguredRuleClassProvider.Builder ruleClassBuilder=new ConfiguredRuleClassProvider.Builder();
   for (  BlazeModule module : blazeModules) {
@@ -49,15 +33,6 @@
       platformRegexps=null;
     }
   }
-  Iterable<DiffAwareness.Factory> diffAwarenessFactories;
-{
-    ImmutableList.Builder<DiffAwareness.Factory> builder=new ImmutableList.Builder<>();
-    boolean watchFS=startupOptionsProvider != null && startupOptionsProvider.getOptions(BlazeServerStartupOptions.class).watchFS;
-    for (    BlazeModule module : blazeModules) {
-      builder.addAll(module.getDiffAwarenessFactories(watchFS));
-    }
-    diffAwarenessFactories=builder.build();
-  }
   Predicate<PathFragment> allowedMissingInputs=null;
   for (  BlazeModule module : blazeModules) {
     Predicate<PathFragment> modulePredicate=module.getAllowedMissingInputs();
@@ -70,32 +45,11 @@
     allowedMissingInputs=Predicates.alwaysFalse();
   }
   ConfiguredRuleClassProvider ruleClassProvider=ruleClassBuilder.build();
-  WorkspaceStatusAction.Factory workspaceStatusActionFactory=null;
-  for (  BlazeModule module : blazeModules) {
-    WorkspaceStatusAction.Factory candidate=module.getWorkspaceStatusActionFactory();
-    if (candidate != null) {
-      Preconditions.checkState(workspaceStatusActionFactory == null,"more than one module defines a workspace status action factory");
-      workspaceStatusActionFactory=candidate;
-    }
-  }
   List<PackageFactory.EnvironmentExtension> extensions=new ArrayList<>();
   for (  BlazeModule module : blazeModules) {
     extensions.add(module.getPackageEnvironmentExtension());
   }
-  ImmutableMap.Builder<SkyFunctionName,SkyFunction> skyFunctions=ImmutableMap.builder();
-  for (  BlazeModule module : blazeModules) {
-    skyFunctions.putAll(module.getSkyFunctions(directories));
-  }
-  ImmutableList.Builder<PrecomputedValue.Injected> precomputedValues=ImmutableList.builder();
-  for (  BlazeModule module : blazeModules) {
-    precomputedValues.addAll(module.getPrecomputedSkyframeValues());
-  }
-  ImmutableList.Builder<SkyValueDirtinessChecker> customDirtinessCheckers=ImmutableList.builder();
-  for (  BlazeModule module : blazeModules) {
-    customDirtinessCheckers.addAll(module.getCustomDirtinessCheckers());
-  }
-  final PackageFactory pkgFactory=new PackageFactory(ruleClassProvider,platformRegexps,extensions,BlazeVersionInfo.instance().getVersion());
-  SkyframeExecutor skyframeExecutor=skyframeExecutorFactory.create(pkgFactory,directories,binTools,workspaceStatusActionFactory,ruleClassProvider.getBuildInfoFactories(),diffAwarenessFactories,allowedMissingInputs,preprocessorFactorySupplier,skyFunctions.build(),precomputedValues.build(),customDirtinessCheckers.build());
+  PackageFactory packageFactory=new PackageFactory(ruleClassProvider,platformRegexps,extensions,BlazeVersionInfo.instance().getVersion());
   if (configurationFactory == null) {
     configurationFactory=new ConfigurationFactory(ruleClassProvider.getConfigurationCollectionFactory(),ruleClassProvider.getConfigurationFragments());
   }
@@ -108,5 +62,7 @@
     }
   }
   invocationPolicy=createInvocationPolicyFromModules(invocationPolicy,blazeModules);
-  return new BlazeRuntime(directories,workspaceStatusActionFactory,skyframeExecutor,queryEnvironmentFactory,pkgFactory,ruleClassProvider,configurationFactory,clock,startupOptionsProvider,ImmutableList.copyOf(blazeModules),eventBusExceptionHandler,binTools,projectFileProvider,invocationPolicy,commands);
+  BlazeRuntime runtime=new BlazeRuntime(queryEnvironmentFactory,packageFactory,ruleClassProvider,configurationFactory,clock,startupOptionsProvider,ImmutableList.copyOf(blazeModules),eventBusExceptionHandler,projectFileProvider,invocationPolicy,commands);
+  runtime.initWorkspace(directories,binTools);
+  return runtime;
 }
