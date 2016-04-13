@@ -1,34 +1,42 @@
 {
   Artifact ideInfoFile=derivedArtifact(base,ruleContext,ASWB_BUILD_SUFFIX);
   Artifact ideInfoTextFile=derivedArtifact(base,ruleContext,ASWB_BUILD_TEXT_SUFFIX);
-  Artifact packageManifest=createPackageManifest(base,ruleContext,ruleKind);
   providerBuilder.ideInfoFilesBuilder().add(ideInfoFile);
   providerBuilder.ideInfoTextFilesBuilder().add(ideInfoTextFile);
-  if (packageManifest != null) {
-    providerBuilder.ideInfoFilesBuilder().add(packageManifest);
-  }
   NestedSetBuilder<Artifact> ideResolveArtifacts=providerBuilder.ideResolveFilesBuilder();
   RuleIdeInfo.Builder outputBuilder=RuleIdeInfo.newBuilder();
   outputBuilder.setLabel(base.getLabel().toString());
   outputBuilder.setBuildFile(ruleContext.getRule().getPackage().getBuildFile().getPath().toString());
   outputBuilder.setBuildFileArtifactLocation(makeArtifactLocation(ruleContext.getRule().getPackage()));
-  outputBuilder.setKind(ruleKind);
-  if (JAVA_OUTPUT_RULES.contains(ruleKind)) {
-    JavaRuleIdeInfo javaRuleIdeInfo=makeJavaRuleIdeInfo(base,ruleContext,ideResolveArtifacts,packageManifest);
+  if (ruleKind != Kind.UNRECOGNIZED) {
+    outputBuilder.setKind(ruleKind);
+  }
+  outputBuilder.setKindString(ruleContext.getRule().getRuleClass());
+  JavaRuleOutputJarsProvider outputJarsProvider=base.getProvider(JavaRuleOutputJarsProvider.class);
+  if (outputJarsProvider != null) {
+    Artifact packageManifest=createPackageManifest(base,ruleContext);
+    if (packageManifest != null) {
+      providerBuilder.ideInfoFilesBuilder().add(packageManifest);
+      ruleContext.registerAction(makePackageManifestAction(ruleContext,packageManifest,getJavaSources(ruleContext)));
+    }
+    JavaRuleIdeInfo javaRuleIdeInfo=makeJavaRuleIdeInfo(base,ruleContext,outputJarsProvider,ideResolveArtifacts,packageManifest);
     outputBuilder.setJavaRuleIdeInfo(javaRuleIdeInfo);
   }
-  if (CC_RULES.contains(ruleKind)) {
-    CRuleIdeInfo cRuleIdeInfo=makeCRuleIdeInfo(base,ruleContext);
+  CppCompilationContext cppCompilationContext=base.getProvider(CppCompilationContext.class);
+  if (cppCompilationContext != null) {
+    CRuleIdeInfo cRuleIdeInfo=makeCRuleIdeInfo(base,ruleContext,cppCompilationContext);
     outputBuilder.setCRuleIdeInfo(cRuleIdeInfo);
   }
-  if (ruleKind == Kind.CC_TOOLCHAIN) {
-    CToolchainIdeInfo cToolchainIdeInfo=makeCToolchainIdeInfo(base,ruleContext);
+  CppConfiguration cppConfiguration=getCppConfiguration(base);
+  if (cppConfiguration != null) {
+    CToolchainIdeInfo cToolchainIdeInfo=makeCToolchainIdeInfo(ruleContext,cppConfiguration);
     if (cToolchainIdeInfo != null) {
       outputBuilder.setCToolchainIdeInfo(cToolchainIdeInfo);
     }
   }
-  if (ANDROID_RULES.contains(ruleKind)) {
-    outputBuilder.setAndroidRuleIdeInfo(makeAndroidRuleIdeInfo(base,dependenciesResult,ideResolveArtifacts));
+  AndroidIdeInfoProvider androidIdeInfoProvider=base.getProvider(AndroidIdeInfoProvider.class);
+  if (androidIdeInfoProvider != null) {
+    outputBuilder.setAndroidRuleIdeInfo(makeAndroidRuleIdeInfo(base,androidIdeInfoProvider,dependenciesResult,ideResolveArtifacts));
   }
   AndroidStudioInfoFilesProvider provider=providerBuilder.build();
   outputBuilder.addAllDependencies(transform(dependenciesResult.deps,LABEL_TO_STRING));
@@ -37,8 +45,5 @@
   final RuleIdeInfo ruleIdeInfo=outputBuilder.build();
   ruleContext.registerAction(makeProtoWriteAction(ruleContext.getActionOwner(),ruleIdeInfo,ideInfoFile));
   ruleContext.registerAction(makeProtoTextWriteAction(ruleContext.getActionOwner(),ruleIdeInfo,ideInfoTextFile));
-  if (packageManifest != null) {
-    ruleContext.registerAction(makePackageManifestAction(ruleContext,packageManifest,getJavaSources(ruleContext)));
-  }
   return provider;
 }

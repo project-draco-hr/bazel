@@ -1,0 +1,34 @@
+{
+  AndroidRuleIdeInfo.Builder builder=AndroidRuleIdeInfo.newBuilder();
+  if (androidIdeInfoProvider.getSignedApk() != null) {
+    builder.setApk(makeArtifactLocation(androidIdeInfoProvider.getSignedApk()));
+  }
+  Artifact manifest=androidIdeInfoProvider.getManifest();
+  if (manifest != null) {
+    builder.setManifest(makeArtifactLocation(manifest));
+    addResolveArtifact(ideResolveArtifacts,manifest);
+  }
+  for (  Artifact artifact : androidIdeInfoProvider.getApksUnderTest()) {
+    builder.addDependencyApk(makeArtifactLocation(artifact));
+  }
+  for (  SourceDirectory resourceDir : androidIdeInfoProvider.getResourceDirs()) {
+    ArtifactLocation artifactLocation=makeArtifactLocation(resourceDir);
+    builder.addResources(artifactLocation);
+  }
+  if (androidIdeInfoProvider.getJavaPackage() != null) {
+    builder.setJavaPackage(androidIdeInfoProvider.getJavaPackage());
+  }
+  boolean hasIdlSources=!androidIdeInfoProvider.getIdlSrcs().isEmpty();
+  builder.setHasIdlSources(hasIdlSources);
+  if (hasIdlSources) {
+    LibraryArtifact idlLibraryArtifact=makeLibraryArtifact(ideResolveArtifacts,androidIdeInfoProvider.getIdlClassJar(),null,androidIdeInfoProvider.getIdlSourceJar());
+    if (idlLibraryArtifact != null) {
+      builder.setIdlJar(idlLibraryArtifact);
+    }
+  }
+  builder.setGenerateResourceClass(androidIdeInfoProvider.definesAndroidResources());
+  if (dependenciesResult.resources != null) {
+    builder.setLegacyResources(dependenciesResult.resources.toString());
+  }
+  return builder.build();
+}
