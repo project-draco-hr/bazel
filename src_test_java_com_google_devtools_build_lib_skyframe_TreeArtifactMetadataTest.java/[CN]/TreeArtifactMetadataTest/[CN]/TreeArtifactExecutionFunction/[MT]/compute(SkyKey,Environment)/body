@@ -1,15 +1,15 @@
 {
-  Map<ArtifactFile,FileValue> fileData=new HashMap<>();
-  Map<PathFragment,FileArtifactValue> treeArtifactData=new HashMap<>();
+  Map<Artifact,FileValue> fileData=new HashMap<>();
+  Map<TreeFileArtifact,FileArtifactValue> treeArtifactData=new HashMap<>();
   Action action=(Action)skyKey.argument();
   Artifact output=Iterables.getOnlyElement(action.getOutputs());
   for (  PathFragment subpath : testTreeArtifactContents) {
     try {
-      ArtifactFile suboutput=ActionInputHelper.artifactFile(output,subpath);
-      FileValue fileValue=ActionMetadataHandler.fileValueFromArtifactFile(suboutput,null,null);
+      TreeFileArtifact suboutput=ActionInputHelper.treeFileArtifact(output,subpath);
+      FileValue fileValue=ActionMetadataHandler.fileValueFromArtifact(suboutput,null,null);
       fileData.put(suboutput,fileValue);
       byte[] digest=DigestUtils.getDigestOrFail(suboutput.getPath(),1);
-      treeArtifactData.put(suboutput.getParentRelativePath(),FileArtifactValue.createWithDigest(suboutput.getPath(),digest,fileValue.getSize()));
+      treeArtifactData.put(suboutput,FileArtifactValue.createWithDigest(suboutput.getPath(),digest,fileValue.getSize()));
     }
  catch (    IOException e) {
       throw new SkyFunctionException(e,Transience.TRANSIENT){

@@ -1,0 +1,28 @@
+{
+  Path path=artifact.getPath();
+  RootedPath rootedPath=RootedPath.toRootedPath(artifact.getRoot().getPath(),artifact.getRootRelativePath());
+  if (statNoFollow == null) {
+    statNoFollow=FileStatusWithDigestAdapter.adapt(path.statIfFound(Symlinks.NOFOLLOW));
+    if (statNoFollow == null) {
+      return FileValue.value(rootedPath,FileStateValue.NONEXISTENT_FILE_STATE_NODE,rootedPath,FileStateValue.NONEXISTENT_FILE_STATE_NODE);
+    }
+  }
+  Path realPath=path;
+  if (statNoFollow.isSymbolicLink()) {
+    realPath=path.resolveSymbolicLinks();
+    if (realPath.equals(path)) {
+      throw new IOException("symlink cycle");
+    }
+  }
+  RootedPath realRootedPath=RootedPath.toRootedPathMaybeUnderRoot(realPath,ImmutableList.of(artifact.getRoot().getPath()));
+  FileStateValue fileStateValue;
+  FileStateValue realFileStateValue;
+  try {
+    fileStateValue=FileStateValue.createWithStatNoFollow(rootedPath,statNoFollow,tsgm);
+    realFileStateValue=realPath.equals(path) ? fileStateValue : FileStateValue.create(realRootedPath,tsgm);
+  }
+ catch (  InconsistentFilesystemException e) {
+    throw new IOException(e);
+  }
+  return FileValue.value(rootedPath,fileStateValue,realRootedPath,realFileStateValue);
+}

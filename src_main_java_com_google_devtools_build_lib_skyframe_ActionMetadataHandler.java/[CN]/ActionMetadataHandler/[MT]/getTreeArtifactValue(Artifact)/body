@@ -3,7 +3,7 @@
   if (value != null) {
     return value;
   }
-  Set<ArtifactFile> registeredContents=outputDirectoryListings.get(artifact);
+  Set<TreeFileArtifact> registeredContents=outputDirectoryListings.get(artifact);
   if (registeredContents != null) {
     Set<PathFragment> paths=null;
     try {
@@ -12,13 +12,13 @@
  catch (    TreeArtifactException e) {
       throw new IllegalStateException(e);
     }
-    Set<ArtifactFile> diskFiles=ActionInputHelper.asArtifactFiles(artifact,paths);
+    Set<TreeFileArtifact> diskFiles=ActionInputHelper.asTreeFileArtifacts(artifact,paths);
     if (!diskFiles.equals(registeredContents)) {
-      Set<ArtifactFile> missingFiles=Sets.difference(registeredContents,diskFiles);
+      Set<TreeFileArtifact> missingFiles=Sets.difference(registeredContents,diskFiles);
       if (!missingFiles.isEmpty()) {
         throw new IllegalStateException("Output file " + missingFiles.iterator().next() + " was registered, but not present on disk");
       }
-      Set<ArtifactFile> extraFiles=Sets.difference(diskFiles,registeredContents);
+      Set<TreeFileArtifact> extraFiles=Sets.difference(diskFiles,registeredContents);
       throw new IllegalStateException("File " + extraFiles.iterator().next().getParentRelativePath() + ", present in TreeArtifact "+ artifact+ ", was not registered");
     }
     value=constructTreeArtifactValue(registeredContents);

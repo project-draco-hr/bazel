@@ -1,0 +1,16 @@
+{
+  Map<TreeFileArtifact,FileArtifactValue> values=Maps.newHashMapWithExpectedSize(contents.size());
+  for (  TreeFileArtifact treeFileArtifact : contents) {
+    FileArtifactValue cachedValue=cachedTreeFileArtifactData.get(treeFileArtifact);
+    if (cachedValue == null) {
+      FileValue fileValue=outputArtifactData.get(treeFileArtifact);
+      if (fileValue == null) {
+        fileValue=constructFileValue(treeFileArtifact,null);
+        maybeStoreAdditionalData(treeFileArtifact,fileValue,null);
+      }
+      cachedValue=Preconditions.checkNotNull(cachedTreeFileArtifactData.get(treeFileArtifact),treeFileArtifact);
+    }
+    values.put(treeFileArtifact,cachedValue);
+  }
+  return TreeArtifactValue.create(values);
+}

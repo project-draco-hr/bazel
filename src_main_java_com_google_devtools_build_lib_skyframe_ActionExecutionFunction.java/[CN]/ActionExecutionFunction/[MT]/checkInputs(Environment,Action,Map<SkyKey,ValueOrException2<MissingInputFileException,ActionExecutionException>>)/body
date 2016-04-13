@@ -5,7 +5,7 @@
   boolean populateInputData=!env.valuesMissing();
   NestedSetBuilder<Label> rootCauses=NestedSetBuilder.stableOrder();
   Map<Artifact,FileArtifactValue> inputArtifactData=new HashMap<>(populateInputData ? inputDeps.size() : 0);
-  Map<Artifact,Collection<ArtifactFile>> expandedArtifacts=new HashMap<>(populateInputData ? 128 : 0);
+  Map<Artifact,Collection<Artifact>> expandedArtifacts=new HashMap<>(populateInputData ? 128 : 0);
   ActionExecutionException firstActionExecutionException=null;
   for (  Map.Entry<SkyKey,ValueOrException2<MissingInputFileException,ActionExecutionException>> depsEntry : inputDeps.entrySet()) {
     Artifact input=ArtifactValue.artifact(depsEntry.getKey());
@@ -18,7 +18,7 @@
             inputArtifactData.put(entry.first,entry.second);
           }
           inputArtifactData.put(input,aggregatingValue.getSelfData());
-          ImmutableList.Builder<ArtifactFile> expansionBuilder=ImmutableList.builder();
+          ImmutableList.Builder<Artifact> expansionBuilder=ImmutableList.builder();
           for (          Pair<Artifact,FileArtifactValue> pair : aggregatingValue.getInputs()) {
             expansionBuilder.add(pair.first);
           }
@@ -26,7 +26,8 @@
         }
  else         if (value instanceof TreeArtifactValue) {
           TreeArtifactValue setValue=(TreeArtifactValue)value;
-          expandedArtifacts.put(input,ActionInputHelper.asArtifactFiles(input,setValue.getChildPaths()));
+          ImmutableSet<Artifact> expandedTreeArtifacts=ImmutableSet.copyOf(ActionInputHelper.asTreeFileArtifacts(input,setValue.getChildPaths()));
+          expandedArtifacts.put(input,expandedTreeArtifacts);
           inputArtifactData.put(input,setValue.getSelfData());
         }
  else         if (value instanceof FileArtifactValue) {

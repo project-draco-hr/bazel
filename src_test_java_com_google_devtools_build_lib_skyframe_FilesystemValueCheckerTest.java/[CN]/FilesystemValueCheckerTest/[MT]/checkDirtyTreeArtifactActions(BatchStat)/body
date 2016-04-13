@@ -1,12 +1,12 @@
 {
   Artifact out1=createTreeArtifact("one");
-  ArtifactFile file11=artifactFile(out1,"fizz");
+  TreeFileArtifact file11=treeFileArtifact(out1,"fizz");
   FileSystemUtils.createDirectoryAndParents(out1.getPath());
   FileSystemUtils.writeContentAsLatin1(file11.getPath(),"buzz");
   Artifact out2=createTreeArtifact("two");
   FileSystemUtils.createDirectoryAndParents(out2.getPath().getChild("subdir"));
-  ArtifactFile file21=artifactFile(out2,"moony");
-  ArtifactFile file22=artifactFile(out2,"subdir/wormtail");
+  TreeFileArtifact file21=treeFileArtifact(out2,"moony");
+  TreeFileArtifact file22=treeFileArtifact(out2,"subdir/wormtail");
   FileSystemUtils.writeContentAsLatin1(file21.getPath(),"padfoot");
   FileSystemUtils.writeContentAsLatin1(file22.getPath(),"prongs");
   Artifact outEmpty=createTreeArtifact("empty");
@@ -35,10 +35,10 @@
   FileSystemUtils.createDirectoryAndParents(outEmpty.getPath());
   FileSystemUtils.writeContentAsLatin1(file11.getPath(),"goodbye");
   assertThat(new FilesystemValueChecker(null,null).getDirtyActionValues(evaluator.getValues(),batchStatter,new ModifiedFileSet.Builder().modify(file11.getExecPath()).build())).containsExactly(ActionExecutionValue.key(action1));
-  ArtifactFile out1new=artifactFile(out1,"julius/caesar");
+  Artifact out1new=treeFileArtifact(out1,"julius/caesar");
   FileSystemUtils.createDirectoryAndParents(out1.getPath().getChild("julius"));
   FileSystemUtils.writeContentAsLatin1(out1new.getPath(),"octavian");
-  ArtifactFile outEmptyNew=artifactFile(outEmpty,"marcus");
+  Artifact outEmptyNew=treeFileArtifact(outEmpty,"marcus");
   FileSystemUtils.writeContentAsLatin1(outEmptyNew.getPath(),"aurelius");
   file21.getPath().delete();
   assertThat(new FilesystemValueChecker(null,null).getDirtyActionValues(evaluator.getValues(),batchStatter,ModifiedFileSet.EVERYTHING_MODIFIED)).containsExactly(ActionExecutionValue.key(action1),ActionExecutionValue.key(action2),ActionExecutionValue.key(actionEmpty));
