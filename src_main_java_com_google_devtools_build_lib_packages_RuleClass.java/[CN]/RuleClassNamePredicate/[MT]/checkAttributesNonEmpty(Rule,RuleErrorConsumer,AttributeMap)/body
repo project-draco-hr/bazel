@@ -1,0 +1,22 @@
+{
+  for (  String attributeName : attributes.getAttributeNames()) {
+    Attribute attr=attributes.getAttributeDefinition(attributeName);
+    if (!attr.isNonEmpty()) {
+      continue;
+    }
+    Object attributeValue=attributes.get(attributeName,attr.getType());
+    boolean isEmpty=false;
+    if (attributeValue instanceof SkylarkList) {
+      isEmpty=((SkylarkList)attributeValue).isEmpty();
+    }
+ else     if (attributeValue instanceof List<?>) {
+      isEmpty=((List<?>)attributeValue).isEmpty();
+    }
+ else     if (attributeValue instanceof Map<?,?>) {
+      isEmpty=((Map<?,?>)attributeValue).isEmpty();
+    }
+    if (isEmpty) {
+      ruleErrorConsumer.attributeError(attr.getName(),"attribute must be non empty");
+    }
+  }
+}
