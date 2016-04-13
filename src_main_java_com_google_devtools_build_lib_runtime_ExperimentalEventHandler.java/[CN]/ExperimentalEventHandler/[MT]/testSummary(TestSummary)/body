@@ -1,4 +1,26 @@
 {
-  stateTracker.testSummary(event);
-  refresh();
+  stateTracker.testSummary(summary);
+  if (summary.getStatus() != BlazeTestStatus.PASSED) {
+    try {
+      clearProgressBar();
+      setEventKindColor(EventKind.ERROR);
+      terminal.writeString("FAIL: ");
+      terminal.resetTerminal();
+      terminal.writeString(summary.getTarget().getLabel().toString());
+      crlf();
+      for (      Path logPath : summary.getFailedLogs()) {
+        terminal.writeString("      " + logPath.getPathString());
+        crlf();
+      }
+      crlf();
+      addProgressBar();
+      terminal.flush();
+    }
+ catch (    IOException e) {
+      LOG.warning("IO Error writing to output stream: " + e);
+    }
+  }
+ else {
+    refresh();
+  }
 }
