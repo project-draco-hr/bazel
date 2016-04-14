@@ -1,0 +1,20 @@
+{
+  LOG.info(BlazeRuntime.getRequestLogString(args));
+  try {
+    return dispatcher.exec(args,outErr,firstContactTime);
+  }
+ catch (  BlazeCommandDispatcher.ShutdownBlazeServerException e) {
+    if (e.getCause() != null) {
+      StringWriter message=new StringWriter();
+      message.write("Shutting down due to exception:\n");
+      PrintWriter writer=new PrintWriter(message,true);
+      e.printStackTrace(writer);
+      writer.flush();
+      LOG.severe(message.toString());
+    }
+    shutdown=true;
+    runtime.shutdown();
+    dispatcher.shutdown();
+    return e.getExitStatus();
+  }
+}
