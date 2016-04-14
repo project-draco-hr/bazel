@@ -24,10 +24,10 @@
     ImmutableMultimap<Attribute,Label> aspectsDependencies=aspectResolver.computeAspectDependencies(target,dependencyFilter);
     for (    Entry<Attribute,Collection<Label>> entry : aspectsDependencies.asMap().entrySet()) {
       Attribute attribute=entry.getKey();
-      if (!includeAttribute(rule,attribute)) {
+      Collection<Label> labels=entry.getValue();
+      if (!includeAspectAttribute(attribute,labels)) {
         continue;
       }
-      Collection<Label> labels=entry.getValue();
       Object attributeValue=getAspectAttributeValue(attribute,labels);
       Build.Attribute serializedAttribute=AttributeSerializer.getAttributeProto(attribute,attributeValue,false,false,true);
       rulePb.addAttribute(serializedAttribute);
