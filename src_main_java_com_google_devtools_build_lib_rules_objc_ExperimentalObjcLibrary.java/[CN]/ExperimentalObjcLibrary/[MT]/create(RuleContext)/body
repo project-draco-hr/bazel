@@ -1,0 +1,14 @@
+{
+  CompilationArtifacts compilationArtifacts=CompilationSupport.compilationArtifacts(ruleContext);
+  CompilationAttributes compilationAttributes=new CompilationAttributes(ruleContext);
+  ObjcCommon common=common(ruleContext,compilationAttributes,compilationArtifacts);
+  CcToolchainProvider toolchain=ruleContext.getPrerequisite(":cc_toolchain",Mode.TARGET).getProvider(CcToolchainProvider.class);
+  FeatureConfiguration featureConfiguration=toolchain.getFeatures().getFeatureConfiguration();
+  Collection<Artifact> sources=Sets.newHashSet(compilationArtifacts.getSrcs());
+  Collection<Artifact> privateHdrs=Sets.newHashSet(compilationArtifacts.getPrivateHdrs());
+  Collection<Artifact> publicHdrs=Sets.newHashSet(compilationAttributes.hdrs());
+  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,ObjcCppSemantics.INSTANCE,featureConfiguration,CcLibraryHelper.SourceCategory.CC_AND_OBJC).addSources(sources).addSources(privateHdrs).enableCompileProviders().addPublicHeaders(publicHdrs).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET));
+  CcLibraryHelper.Info info=helper.build();
+  NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().addAll(common.getCompiledArchive().asSet());
+  return ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build()).addProviders(info.getProviders()).build();
+}
