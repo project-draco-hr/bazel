@@ -9,14 +9,14 @@
   stateTracker.actionStarted(new ActionStartedEvent(fastAction,123456789));
   stateTracker.actionStarted(new ActionStartedEvent(slowAction,123456999));
   stateTracker.actionCompletion(new ActionCompletionEvent(20,fastAction));
-  LoggingTerminalWriter terminalWriter=new LoggingTerminalWriter();
+  LoggingTerminalWriter terminalWriter=new LoggingTerminalWriter(true);
   stateTracker.writeProgressBar(terminalWriter);
-  String output=terminalWriter.getWritten();
+  String output=terminalWriter.getTranscript();
   assertFalse("Completed action '" + messageFast + "' should not be present in output: "+ output,output.contains(messageFast));
   assertTrue("Only running action '" + messageSlow + "' should be present in output: "+ output,output.contains(messageSlow));
   terminalWriter=new LoggingTerminalWriter();
   stateTracker.writeProgressBar(terminalWriter,true);
-  output=terminalWriter.getWritten();
+  output=terminalWriter.getTranscript();
   assertFalse("Completed action '" + messageFast + "' should not be present in short output: "+ output,output.contains(messageFast));
   assertTrue("Only running action '" + messageSlow + "' should be present in short output: "+ output,output.contains(messageSlow));
 }
