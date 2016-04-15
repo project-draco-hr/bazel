@@ -1,0 +1,37 @@
+{
+  ManualClock clock=new ManualClock();
+  ExperimentalStateTracker stateTracker=new ExperimentalStateTracker(clock,70);
+  Action foobuildAction=mockAction("Building //src/some/very/long/path/long/long/long/long/long/long/long/foo/foobuild.jar","//src/some/very/long/path/long/long/long/long/long/long/long/foo:foobuild");
+  Action bazbuildAction=mockAction("Building //src/some/very/long/path/long/long/long/long/long/long/long/baz/bazbuild.jar","//src/some/very/long/path/long/long/long/long/long/long/long/baz:bazbuild");
+  Label bartestLabel=Label.parseAbsolute("//src/another/very/long/long/path/long/long/long/long/long/long/long/long/bars:bartest");
+  ConfiguredTarget bartestTarget=Mockito.mock(ConfiguredTarget.class);
+  when(bartestTarget.getLabel()).thenReturn(bartestLabel);
+  TestFilteringCompleteEvent filteringComplete=Mockito.mock(TestFilteringCompleteEvent.class);
+  when(filteringComplete.getTestTargets()).thenReturn(ImmutableSet.of(bartestTarget));
+  TestSummary testSummary=Mockito.mock(TestSummary.class);
+  when(testSummary.getStatus()).thenReturn(BlazeTestStatus.PASSED);
+  when(testSummary.getTarget()).thenReturn(bartestTarget);
+  if (actions >= 1) {
+    stateTracker.actionStarted(new ActionStartedEvent(foobuildAction,123456789));
+  }
+  if (actions >= 2) {
+    stateTracker.actionStarted(new ActionStartedEvent(bazbuildAction,123456900));
+  }
+  if (withTest) {
+    stateTracker.testFilteringComplete(filteringComplete);
+    stateTracker.testSummary(testSummary);
+  }
+  LoggingTerminalWriter terminalWriter=new LoggingTerminalWriter(true);
+  stateTracker.writeProgressBar(terminalWriter);
+  String output=terminalWriter.getTranscript();
+  assertTrue("Only lines with at most 70 chars should be present in the output:\n" + output,longestLine(output) <= 70);
+  if (actions >= 1) {
+    assertTrue("Running action 'foobuild' should be mentioned in output:\n" + output,output.contains("foobuild"));
+  }
+  if (actions >= 2) {
+    assertTrue("Running action 'bazbuild' should be mentioned in output:\n" + output,output.contains("bazbuild"));
+  }
+  if (withTest) {
+    assertTrue("Passed test ':bartest' should be mentioned in output:\n" + output,output.contains(":bartest"));
+  }
+}

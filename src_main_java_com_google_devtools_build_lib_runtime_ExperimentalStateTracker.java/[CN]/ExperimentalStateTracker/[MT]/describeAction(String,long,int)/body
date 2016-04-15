@@ -1,0 +1,31 @@
+{
+  Action action=actions.get(name);
+  String postfix="";
+  long nanoRuntime=nanoTime - actionNanoStartTimes.get(name);
+  long runtimeSeconds=nanoRuntime / 1000000000;
+  if (runtimeSeconds > SHOW_TIME_THRESHOLD_SECONDS) {
+    postfix=" " + runtimeSeconds + "s";
+  }
+  String message=action.getProgressMessage();
+  if (message == null) {
+    message=action.prettyPrint();
+  }
+  if (desiredWidth <= 0) {
+    return message + postfix;
+  }
+  if (message.length() + postfix.length() <= desiredWidth) {
+    return message + postfix;
+  }
+  if (action.getOwner() != null) {
+    if (action.getOwner().getLabel() != null) {
+      String shortLabel=shortenedLabelString(action.getOwner().getLabel(),desiredWidth - postfix.length());
+      if (shortLabel.length() + postfix.length() <= desiredWidth) {
+        return shortLabel + postfix;
+      }
+    }
+  }
+  if (3 * ELLIPSIS.length() <= desiredWidth) {
+    message=ELLIPSIS + suffix(message,desiredWidth - ELLIPSIS.length() - postfix.length());
+  }
+  return message + postfix;
+}

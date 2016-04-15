@@ -1,4 +1,5 @@
 {
+  PositionAwareAnsiTerminalWriter terminalWriter=new PositionAwareAnsiTerminalWriter(rawTerminalWriter);
   if (status != null) {
     if (ok) {
       terminalWriter.okStatus();
@@ -27,30 +28,31 @@
     terminalWriter.append(";");
   }
   if (runningActions.size() == 0) {
-    terminalWriter.normal().append(" no actions running");
-    maybeShowRecentTest(terminalWriter,shortVersion);
+    terminalWriter.normal().append(" no action");
+    maybeShowRecentTest(terminalWriter,shortVersion,targetWidth - terminalWriter.getPosition());
   }
  else   if (runningActions.size() == 1) {
-    String statusMessage=describeAction(runningActions.peekFirst(),clock.nanoTime());
-    if (maybeShowRecentTest(null,shortVersion)) {
-      terminalWriter.normal().append("  1 action running");
-      maybeShowRecentTest(terminalWriter,shortVersion);
+    if (maybeShowRecentTest(null,shortVersion,targetWidth - terminalWriter.getPosition())) {
+      terminalWriter.normal().append("  1 action");
+      maybeShowRecentTest(terminalWriter,shortVersion,targetWidth - terminalWriter.getPosition());
+      String statusMessage=describeAction(runningActions.peekFirst(),clock.nanoTime(),targetWidth - 4);
       terminalWriter.normal().newline().append("    " + statusMessage);
     }
  else {
+      String statusMessage=describeAction(runningActions.peekFirst(),clock.nanoTime(),targetWidth - terminalWriter.getPosition() - 1);
       terminalWriter.normal().append(" " + statusMessage);
     }
   }
  else {
     if (shortVersion) {
-      String statusMessage=describeAction(runningActions.peekFirst(),clock.nanoTime());
+      String statusMessage=describeAction(runningActions.peekFirst(),clock.nanoTime(),targetWidth - terminalWriter.getPosition());
       statusMessage+=" ... (" + runningActions.size() + " actions)";
       terminalWriter.normal().append(" " + statusMessage);
     }
  else {
-      String statusMessage="" + runningActions.size() + " actions running";
+      String statusMessage="" + runningActions.size() + " actions";
       terminalWriter.normal().append(" " + statusMessage);
-      maybeShowRecentTest(terminalWriter,shortVersion);
+      maybeShowRecentTest(terminalWriter,shortVersion,targetWidth - terminalWriter.getPosition());
       sampleOldestActions(terminalWriter);
     }
   }
