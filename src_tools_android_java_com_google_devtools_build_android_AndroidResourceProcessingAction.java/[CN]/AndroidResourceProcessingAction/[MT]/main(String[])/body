@@ -24,13 +24,13 @@
     LOGGER.fine(String.format("Setup finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     final ImmutableList<DirectoryModifier> modifiers=ImmutableList.of(new PackedResourceTarExpander(expandedOut,working),new FileDeDuplicator(Hashing.murmur3_128(),deduplicatedOut,working));
     List<DependencyAndroidData> data=ImmutableSet.<DependencyAndroidData>builder().addAll(options.directData).addAll(options.transitiveData).build().asList();
-    final MergedAndroidData mergedData=resourceProcessor.mergeData(options.primaryData,data,mergedResources,mergedAssets,modifiers,useAaptCruncher() ? new AaptCruncher(aaptConfigOptions.aapt.toString(),new CommandLineRunner(STD_LOGGER)) : null,true);
+    final MergedAndroidData mergedData=resourceProcessor.mergeData(options.primaryData,data,mergedResources,mergedAssets,modifiers,selectPngCruncher(),true);
     LOGGER.fine(String.format("Merging finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     final DensityFilteredAndroidData filteredData=mergedData.filter(new DensitySpecificResourceFilter(options.densities,filteredResources,mergedResources),new DensitySpecificManifestProcessor(options.densities,densityManifest));
     LOGGER.fine(String.format("Density filtering finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     final MergedAndroidData processedManifestData=resourceProcessor.processManifest(options.packageType,options.packageForR,options.applicationId,options.versionCode,options.versionName,filteredData,processedManifest);
     resourceProcessor.processResources(aaptConfigOptions.aapt,aaptConfigOptions.androidJar,aaptConfigOptions.buildToolsVersion,options.packageType,aaptConfigOptions.debug,options.packageForR,new FlagAaptOptions(aaptConfigOptions),aaptConfigOptions.resourceConfigs,processedManifestData,data,generatedSources,options.packagePath,options.proguardOutput,options.resourcesOutput != null ? processedManifestData.getResourceDir().resolve("values").resolve("public.xml") : null);
-    LOGGER.fine(String.format("appt finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    LOGGER.fine(String.format("aapt finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     if (options.manifestOutput != null) {
       resourceProcessor.copyManifestToOutput(processedManifestData,options.manifestOutput);
     }
