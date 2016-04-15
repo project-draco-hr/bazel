@@ -1,0 +1,12 @@
+{
+  if (!request.getCookie().equals(requestCookie)) {
+    observer.onNext(RunResponse.newBuilder().setExitCode(ExitCode.LOCAL_ENVIRONMENTAL_ERROR.getNumericExitCode()).build());
+    observer.onCompleted();
+    return;
+  }
+  OutErr rpcOutErr=OutErr.create(new RpcOutputStream(observer,StreamType.STDOUT),new RpcOutputStream(observer,StreamType.STDERR));
+  int exitCode=commandExecutor.exec(request.getArgList(),rpcOutErr,clock.currentTimeMillis());
+  RunResponse response=RunResponse.newBuilder().setCookie(responseCookie).setFinished(true).setExitCode(exitCode).build();
+  observer.onNext(response);
+  observer.onCompleted();
+}
