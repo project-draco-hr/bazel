@@ -10,7 +10,7 @@
     diffPackageRootsUnderWhichToCheck.add(pair.getFirst());
   }
   ExternalFilesHelper tmpExternalFilesHelper=externalFilesHelper.cloneWithFreshExternalFilesKnowledge();
-  EnumSet fileTypesToCheck=checkOutputFiles ? EnumSet.of(FileType.EXTERNAL_MUTABLE,FileType.EXTERNAL_REPO,FileType.OUTPUT) : EnumSet.of(FileType.EXTERNAL_MUTABLE,FileType.EXTERNAL_REPO);
+  EnumSet<FileType> fileTypesToCheck=checkOutputFiles ? EnumSet.of(FileType.EXTERNAL_MUTABLE,FileType.EXTERNAL_REPO,FileType.OUTPUT) : EnumSet.of(FileType.EXTERNAL_MUTABLE,FileType.EXTERNAL_REPO);
   Differencer.Diff diff=fsvc.getDirtyKeys(memoizingEvaluator.getValues(),new UnionDirtinessChecker(Iterables.concat(customDirtinessCheckers,ImmutableList.<SkyValueDirtinessChecker>of(new ExternalDirtinessChecker(tmpExternalFilesHelper,fileTypesToCheck),new MissingDiffDirtinessChecker(diffPackageRootsUnderWhichToCheck)))));
   handleChangedFiles(diffPackageRootsUnderWhichToCheck,diff);
   for (  Pair<Path,DiffAwarenessManager.ProcessableModifiedFileSet> pair : pathEntriesWithoutDiffInformation) {
