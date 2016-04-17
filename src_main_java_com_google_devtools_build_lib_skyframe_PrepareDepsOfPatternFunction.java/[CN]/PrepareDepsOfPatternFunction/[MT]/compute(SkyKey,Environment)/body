@@ -1,11 +1,15 @@
 {
   TargetPatternValue.TargetPatternKey patternKey=((TargetPatternValue.TargetPatternKey)key.argument());
   Preconditions.checkState(patternKey.getPolicy().equals(FilteringPolicies.NO_FILTER),patternKey.getPolicy());
+  TargetPattern parsedPattern=patternKey.getParsedPattern();
+  BlacklistedPackagePrefixesValue blacklist=(BlacklistedPackagePrefixesValue)env.getValue(BlacklistedPackagePrefixesValue.key());
+  if (blacklist == null) {
+    return null;
+  }
+  ImmutableSet<PathFragment> subdirectoriesToExclude=patternKey.getAllSubdirectoriesToExclude(blacklist.getPatterns());
+  DepsOfPatternPreparer preparer=new DepsOfPatternPreparer(env,pkgPath.get());
   try {
-    TargetPattern parsedPattern=patternKey.getParsedPattern();
-    DepsOfPatternPreparer preparer=new DepsOfPatternPreparer(env,pkgPath.get());
-    ImmutableSet<PathFragment> excludedSubdirectories=patternKey.getExcludedSubdirectories();
-    parsedPattern.eval(preparer,excludedSubdirectories,NullCallback.<Void>instance(),RuntimeException.class);
+    parsedPattern.eval(preparer,subdirectoriesToExclude,NullCallback.<Void>instance(),RuntimeException.class);
   }
  catch (  TargetParsingException e) {
     throw new PrepareDepsOfPatternFunctionException(e);
