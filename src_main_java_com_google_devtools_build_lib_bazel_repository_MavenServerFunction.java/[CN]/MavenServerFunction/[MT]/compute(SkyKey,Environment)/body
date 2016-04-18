@@ -1,14 +1,14 @@
 {
   String repository=(String)skyKey.argument();
-  Rule repositoryRule;
+  Rule repositoryRule=null;
   try {
     repositoryRule=RepositoryFunction.getRule(repository,env);
-    if (repositoryRule == null) {
-      return null;
-    }
   }
  catch (  RepositoryNotFoundException ex) {
-    repositoryRule=null;
+  }
+  BlazeDirectories directories=PrecomputedValue.BLAZE_DIRECTORIES.get(env);
+  if (env.valuesMissing()) {
+    return null;
   }
   String serverName;
   String url;
@@ -16,7 +16,7 @@
   boolean foundRepoRule=repositoryRule != null && repositoryRule.getRuleClass().equals(MavenServerRule.NAME);
   if (!foundRepoRule) {
     if (repository.equals(MavenServerValue.DEFAULT_ID)) {
-      settingsFiles=getDefaultSettingsFile(env);
+      settingsFiles=getDefaultSettingsFile(directories,env);
       serverName=MavenServerValue.DEFAULT_ID;
       url=MavenConnector.getMavenCentralRemote().getUrl();
     }
@@ -29,7 +29,7 @@
     serverName=repositoryRule.getName();
     url=mapper.get("url",Type.STRING);
     if (!mapper.has("settings_file",Type.STRING) || mapper.get("settings_file",Type.STRING).isEmpty()) {
-      settingsFiles=getDefaultSettingsFile(env);
+      settingsFiles=getDefaultSettingsFile(directories,env);
     }
  else {
       PathFragment settingsFilePath=new PathFragment(mapper.get("settings_file",Type.STRING));
