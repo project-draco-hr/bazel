@@ -4,30 +4,9 @@
   result=constructActionGraphAndPathMap(actionLookupValues,temporaryBadActionMap);
   ActionGraph actionGraph=result.first;
   SortedMap<PathFragment,Artifact> artifactPathMap=result.second;
-  Iterator<PathFragment> iter=artifactPathMap.keySet().iterator();
-  if (!iter.hasNext()) {
-    this.badActionMap=ImmutableMap.of();
-    return;
-  }
-  for (PathFragment pathJ=iter.next(); iter.hasNext(); ) {
-    PathFragment pathI=pathJ;
-    while (iter.hasNext()) {
-      pathJ=iter.next();
-      if (pathJ.startsWith(pathI)) {
-        Artifact artifactI=Preconditions.checkNotNull(artifactPathMap.get(pathI),pathI);
-        Artifact artifactJ=Preconditions.checkNotNull(artifactPathMap.get(pathJ),pathJ);
-        Action actionI=Preconditions.checkNotNull(actionGraph.getGeneratingAction(artifactI),artifactI);
-        Action actionJ=Preconditions.checkNotNull(actionGraph.getGeneratingAction(artifactJ),artifactJ);
-        if (actionI.shouldReportPathPrefixConflict(actionJ)) {
-          ArtifactPrefixConflictException exception=new ArtifactPrefixConflictException(pathI,pathJ,actionI.getOwner().getLabel(),actionJ.getOwner().getLabel());
-          temporaryBadActionMap.put(actionI,new ConflictException(exception));
-          temporaryBadActionMap.put(actionJ,new ConflictException(exception));
-        }
-      }
- else {
-        break;
-      }
-    }
+  Map<Action,ArtifactPrefixConflictException> actionsWithArtifactPrefixConflict=Actions.findArtifactPrefixConflicts(actionGraph,artifactPathMap);
+  for (  Map.Entry<Action,ArtifactPrefixConflictException> actionExceptionPair : actionsWithArtifactPrefixConflict.entrySet()) {
+    temporaryBadActionMap.put(actionExceptionPair.getKey(),new ConflictException(actionExceptionPair.getValue()));
   }
   this.badActionMap=ImmutableMap.copyOf(temporaryBadActionMap);
 }

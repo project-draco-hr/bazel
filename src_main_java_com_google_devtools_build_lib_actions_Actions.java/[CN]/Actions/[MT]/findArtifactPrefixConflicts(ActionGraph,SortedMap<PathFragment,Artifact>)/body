@@ -1,0 +1,28 @@
+{
+  if (artifactPathMap.isEmpty()) {
+    return ImmutableMap.<Action,ArtifactPrefixConflictException>of();
+  }
+  Map<Action,ArtifactPrefixConflictException> badActions=new LinkedHashMap();
+  Iterator<PathFragment> iter=artifactPathMap.keySet().iterator();
+  for (PathFragment pathJ=iter.next(); iter.hasNext(); ) {
+    PathFragment pathI=pathJ;
+    while (iter.hasNext()) {
+      pathJ=iter.next();
+      if (pathJ.startsWith(pathI)) {
+        Artifact artifactI=Preconditions.checkNotNull(artifactPathMap.get(pathI),pathI);
+        Artifact artifactJ=Preconditions.checkNotNull(artifactPathMap.get(pathJ),pathJ);
+        Action actionI=Preconditions.checkNotNull(actionGraph.getGeneratingAction(artifactI),artifactI);
+        Action actionJ=Preconditions.checkNotNull(actionGraph.getGeneratingAction(artifactJ),artifactJ);
+        if (actionI.shouldReportPathPrefixConflict(actionJ)) {
+          ArtifactPrefixConflictException exception=new ArtifactPrefixConflictException(pathI,pathJ,actionI.getOwner().getLabel(),actionJ.getOwner().getLabel());
+          badActions.put(actionI,exception);
+          badActions.put(actionJ,exception);
+        }
+      }
+ else {
+        break;
+      }
+    }
+  }
+  return ImmutableMap.copyOf(badActions);
+}
