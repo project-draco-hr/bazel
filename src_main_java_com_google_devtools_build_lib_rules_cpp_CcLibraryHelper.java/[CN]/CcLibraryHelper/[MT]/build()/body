@@ -1,13 +1,18 @@
 {
   Preconditions.checkState(ruleContext.getRule().getRuleClass().equals("cc_inc_library") || ruleContext.getRule().isAttrDefined(":lipo_context_collector",BuildType.LABEL));
   if (checkDepsGenerateCpp) {
-    for (    LanguageDependentFragment dep : AnalysisUtils.getProviders(deps,LanguageDependentFragment.class)) {
+    for (    LanguageDependentFragment dep : AnalysisUtils.getProviders(implementationDeps,LanguageDependentFragment.class)) {
       LanguageDependentFragment.Checker.depSupportsLanguage(ruleContext,dep,CppRuleClasses.LANGUAGE);
     }
   }
   CppModel model=initializeCppModel();
-  CppCompilationContext cppCompilationContext=initializeCppCompilationContext(model);
+  CppCompilationContext cppCompilationContext=initializeCppCompilationContext(model,false);
   model.setContext(cppCompilationContext);
+  CppCompilationContext interfaceCompilationContext=cppCompilationContext;
+  if (implementationDeps.size() != interfaceDeps.size()) {
+    interfaceCompilationContext=initializeCppCompilationContext(model,true);
+  }
+  model.setInterfaceContext(interfaceCompilationContext);
   boolean compileHeaderModules=featureConfiguration.isEnabled(CppRuleClasses.HEADER_MODULES);
   Preconditions.checkState(!compileHeaderModules || cppCompilationContext.getCppModuleMap() != null,"All cc rules must support module maps.");
   CcCompilationOutputs ccOutputs=model.createCcCompileActions();
@@ -24,12 +29,12 @@
   if (!(staticLibraries.isEmpty() && picStaticLibraries.isEmpty() && dynamicLibraries.isEmpty())) {
     ccLinkingOutputs=new CcLinkingOutputs.Builder().merge(ccLinkingOutputs).addStaticLibraries(staticLibraries).addPicStaticLibraries(picStaticLibraries).addDynamicLibraries(dynamicLibraries).addExecutionDynamicLibraries(dynamicLibraries).build();
   }
-  DwoArtifactsCollector dwoArtifacts=DwoArtifactsCollector.transitiveCollector(ccOutputs,deps);
+  DwoArtifactsCollector dwoArtifacts=DwoArtifactsCollector.transitiveCollector(ccOutputs,implementationDeps);
   Runfiles cppStaticRunfiles=collectCppRunfiles(ccLinkingOutputs,true);
   Runfiles cppSharedRunfiles=collectCppRunfiles(ccLinkingOutputs,false);
   Map<Class<? extends TransitiveInfoProvider>,TransitiveInfoProvider> providers=new LinkedHashMap<>();
   providers.put(CppRunfilesProvider.class,new CppRunfilesProvider(cppStaticRunfiles,cppSharedRunfiles));
-  providers.put(CppCompilationContext.class,cppCompilationContext);
+  providers.put(CppCompilationContext.class,interfaceCompilationContext);
   providers.put(CppDebugFileProvider.class,new CppDebugFileProvider(dwoArtifacts.getDwoArtifacts(),dwoArtifacts.getPicDwoArtifacts()));
   providers.put(TransitiveLipoInfoProvider.class,collectTransitiveLipoInfo(ccOutputs));
   Map<String,NestedSet<Artifact>> outputGroups=new TreeMap<>();

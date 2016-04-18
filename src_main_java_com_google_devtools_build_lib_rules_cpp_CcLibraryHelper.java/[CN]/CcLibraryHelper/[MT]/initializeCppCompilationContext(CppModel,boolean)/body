@@ -1,5 +1,5 @@
 {
-  CppCompilationContext.Builder contextBuilder=new CppCompilationContext.Builder(ruleContext);
+  CppCompilationContext.Builder contextBuilder=new CppCompilationContext.Builder(ruleContext,forInterface);
   PathFragment repositoryPath=ruleContext.getLabel().getPackageIdentifier().getRepository().getPathFragment();
   contextBuilder.addQuoteIncludeDir(repositoryPath);
   contextBuilder.addQuoteIncludeDir(ruleContext.getConfiguration().getGenfilesFragment().getRelative(repositoryPath));
@@ -9,7 +9,7 @@
   for (  PathFragment includeDir : includeDirs) {
     contextBuilder.addIncludeDir(includeDir);
   }
-  contextBuilder.mergeDependentContexts(AnalysisUtils.getProviders(deps,CppCompilationContext.class));
+  contextBuilder.mergeDependentContexts(AnalysisUtils.getProviders(forInterface ? interfaceDeps : implementationDeps,CppCompilationContext.class));
   CppHelper.mergeToolchainDependentContext(ruleContext,contextBuilder);
   contextBuilder.addDefines(defines);
   contextBuilder.addDeclaredIncludeSrcs(publicHeaders);
