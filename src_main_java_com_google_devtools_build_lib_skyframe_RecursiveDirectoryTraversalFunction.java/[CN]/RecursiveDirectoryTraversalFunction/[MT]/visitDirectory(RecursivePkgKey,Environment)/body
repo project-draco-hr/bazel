@@ -97,7 +97,15 @@ catch (  NoSuchPackageException e) {
         return null;
       }
     }
-    subdirectorySkyValues=Maps.transformValues(Maps.filterKeys(dependentSkyValues,Predicates.not(Predicates.equalTo(packageKey))),GET_SKYVALUE);
+    ImmutableMap.Builder<SkyKey,SkyValue> subdirectoryBuilder=ImmutableMap.builder();
+    for (    Map.Entry<SkyKey,ValueOrException<NoSuchPackageException>> entry : Maps.filterKeys(dependentSkyValues,Predicates.not(Predicates.equalTo(packageKey))).entrySet()) {
+      try {
+        subdirectoryBuilder.put(entry.getKey(),entry.getValue().get());
+      }
+ catch (      NoSuchPackageException e) {
+      }
+    }
+    subdirectorySkyValues=subdirectoryBuilder.build();
   }
  else {
     subdirectorySkyValues=env.getValues(childDeps);
