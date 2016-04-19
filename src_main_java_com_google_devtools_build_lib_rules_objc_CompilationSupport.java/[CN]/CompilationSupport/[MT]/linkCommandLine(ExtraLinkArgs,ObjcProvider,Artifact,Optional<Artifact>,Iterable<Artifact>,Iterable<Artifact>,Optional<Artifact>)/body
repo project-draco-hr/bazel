@@ -1,6 +1,4 @@
 {
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   Iterable<String> libraryNames=libraryNames(objcProvider);
   CustomCommandLine.Builder commandLine=CustomCommandLine.builder().addPath(xcrunwrapper(ruleContext).getExecutable().getExecPath());
   if (objcProvider.is(USES_CPP)) {
@@ -21,7 +19,7 @@
     commandLine.addExecPaths(bazelBuiltLibraries).addExecPaths(objcProvider.get(IMPORTED_LIBRARY)).addExecPaths(ccLibraries);
   }
   commandLine.addExecPath("-o",linkedBinary).addBeforeEach("-force_load",Artifact.toExecPaths(objcProvider.get(FORCE_LOAD_LIBRARY))).add(extraLinkArgs).add(objcProvider.get(ObjcProvider.LINKOPT));
-  if (ruleContext.getConfiguration().isCodeCoverageEnabled()) {
+  if (buildConfiguration.isCodeCoverageEnabled()) {
     commandLine.add(LINKER_COVERAGE_FLAGS);
   }
   if (objcProvider.is(USES_SWIFT)) {

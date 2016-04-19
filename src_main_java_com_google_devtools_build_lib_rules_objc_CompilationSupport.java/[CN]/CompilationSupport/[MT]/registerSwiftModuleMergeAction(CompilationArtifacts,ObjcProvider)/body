@@ -1,6 +1,4 @@
 {
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   ImmutableList.Builder<Artifact> moduleFiles=new ImmutableList.Builder<>();
   for (  Artifact src : compilationArtifacts.getSrcs()) {
     if (ObjcRuleClasses.SWIFT_SOURCES.matches(src.getFilename())) {
@@ -20,5 +18,5 @@
     commandLine.add("-I").add(moduleMapPath.getParentDirectory().toString());
   }
   commandLine.add(commonFrameworkFlags(objcProvider,appleConfiguration));
-  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext).setMnemonic("SwiftModuleMerge").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(commandLine.build()).addInputs(moduleFiles.build()).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addOutput(intermediateArtifacts.swiftModule()).addOutput(intermediateArtifacts.swiftHeader()).build(ruleContext));
+  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext,appleConfiguration.getIosCpuPlatform()).setMnemonic("SwiftModuleMerge").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(commandLine.build()).addInputs(moduleFiles.build()).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addOutput(intermediateArtifacts.swiftModule()).addOutput(intermediateArtifacts.swiftHeader()).build(ruleContext));
 }

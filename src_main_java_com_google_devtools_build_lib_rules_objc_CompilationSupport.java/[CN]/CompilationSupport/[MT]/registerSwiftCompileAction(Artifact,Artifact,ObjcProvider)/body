@@ -1,6 +1,4 @@
 {
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   ImmutableSet.Builder<Artifact> otherSwiftSourcesBuilder=ImmutableSet.builder();
   for (  Artifact otherSourceFile : compilationArtifacts(ruleContext).getSrcs()) {
     if (ObjcRuleClasses.SWIFT_SOURCES.matches(otherSourceFile.getFilename()) && otherSourceFile != sourceFile) {
@@ -13,7 +11,7 @@
     commandLine.add("-g");
   }
   commandLine.add("-Onone").add("-module-name").add(getModuleName()).add("-parse-as-library");
-  addSource("-primary-file",commandLine,objcConfiguration,sourceFile).addExecPaths(otherSwiftSources).addExecPath("-o",objFile).addExecPath("-emit-module-path",intermediateArtifacts.swiftModuleFile(sourceFile)).add("-Xcc").add("-I.");
+  addSource("-primary-file",commandLine,sourceFile).addExecPaths(otherSwiftSources).addExecPath("-o",objFile).addExecPath("-emit-module-path",intermediateArtifacts.swiftModuleFile(sourceFile)).add("-Xcc").add("-I.");
   for (  PathFragment directory : objcProvider.get(INCLUDE).toList()) {
     commandLine.add("-Xcc").add(String.format("-I%s",directory.toString()));
   }
@@ -29,5 +27,5 @@
     commandLine.add("-import-underlying-module");
   }
   commandLine.add(commonFrameworkFlags(objcProvider,appleConfiguration));
-  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext).setMnemonic("SwiftCompile").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(commandLine.build()).addInput(sourceFile).addInputs(otherSwiftSources).addInputs(inputHeaders.build()).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addOutput(objFile).addOutput(intermediateArtifacts.swiftModuleFile(sourceFile)).build(ruleContext));
+  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext,appleConfiguration.getIosCpuPlatform()).setMnemonic("SwiftCompile").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(commandLine.build()).addInput(sourceFile).addInputs(otherSwiftSources).addInputs(inputHeaders.build()).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addOutput(objFile).addOutput(intermediateArtifacts.swiftModuleFile(sourceFile)).build(ruleContext));
 }

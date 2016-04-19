@@ -1,6 +1,4 @@
 {
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   ImmutableList.Builder<String> coverageFlags=new ImmutableList.Builder<>();
   ImmutableList.Builder<Artifact> gcnoFiles=new ImmutableList.Builder<>();
   ImmutableList.Builder<Artifact> additionalInputs=new ImmutableList.Builder<>();
@@ -21,7 +19,7 @@
     commandLine.add("-g");
   }
   Artifact dotdFile=intermediateArtifacts.dotdFile(sourceFile);
-  commandLine.add(compileFlagsForClang(appleConfiguration)).add(commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration,appleConfiguration)).add(objcConfiguration.getCoptsForCompilationMode()).addBeforeEachPath("-iquote",ObjcCommon.userHeaderSearchPaths(ruleContext.getConfiguration())).addBeforeEachExecPath("-include",compilationArtifacts.getPchFile().asSet()).addBeforeEachPath("-I",objcProvider.get(INCLUDE)).addBeforeEachPath("-isystem",objcProvider.get(INCLUDE_SYSTEM)).add(otherFlags).addFormatEach("-D%s",objcProvider.get(DEFINE)).add(coverageFlags.build()).add(getCompileRuleCopts());
+  commandLine.add(compileFlagsForClang(appleConfiguration)).add(commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration,appleConfiguration)).add(objcConfiguration.getCoptsForCompilationMode()).addBeforeEachPath("-iquote",ObjcCommon.userHeaderSearchPaths(buildConfiguration)).addBeforeEachExecPath("-include",compilationArtifacts.getPchFile().asSet()).addBeforeEachPath("-I",objcProvider.get(INCLUDE)).addBeforeEachPath("-isystem",objcProvider.get(INCLUDE_SYSTEM)).add(otherFlags).addFormatEach("-D%s",objcProvider.get(DEFINE)).add(coverageFlags.build()).add(getCompileRuleCopts());
   PathFragment sourceExecPathFragment=sourceFile.getExecPath();
   String sourcePath=sourceExecPathFragment.getPathString();
   if (!sourceExecPathFragment.isAbsolute() && objcConfiguration.getUseAbsolutePathsForActions()) {
@@ -34,5 +32,5 @@
     }
     commandLine.add("-iquote").add(moduleMap.get().getArtifact().getExecPath().getParentDirectory().toString()).add("-fmodule-name=" + moduleMap.get().getName());
   }
-  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext).setMnemonic("ObjcCompile").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(commandLine.build()).addInput(sourceFile).addInputs(additionalInputs.build()).addOutput(objFile).addOutputs(gcnoFiles.build()).addOutput(dotdFile).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addInputs(compilationArtifacts.getPrivateHdrs()).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(compilationArtifacts.getPchFile().asSet()).build(ruleContext));
+  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext,appleConfiguration.getIosCpuPlatform()).setMnemonic("ObjcCompile").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(commandLine.build()).addInput(sourceFile).addInputs(additionalInputs.build()).addOutput(objFile).addOutputs(gcnoFiles.build()).addOutput(dotdFile).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addInputs(compilationArtifacts.getPrivateHdrs()).addTransitiveInputs(objcProvider.get(FRAMEWORK_FILE)).addInputs(compilationArtifacts.getPchFile().asSet()).build(ruleContext));
 }
