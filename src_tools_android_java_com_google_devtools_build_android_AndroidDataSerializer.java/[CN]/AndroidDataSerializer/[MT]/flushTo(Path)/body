@@ -1,0 +1,8 @@
+{
+  Preconditions.checkNotNull(manifest,"Manifest is required to serialize AndroidData.");
+  try (OutputStream outStream=new BufferedOutputStream(Files.newOutputStream(out,StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE))){
+    Header.newBuilder().setPrimaryEntries(primary.size()).setTransitiveEntries(deps.size()).setManifestPath(ProtoSource.newBuilder().setFilename(manifest.toString())).build().writeDelimitedTo(outStream);
+    writeKeyValuesTo(primary,outStream);
+    writeKeyValuesTo(deps,outStream);
+  }
+ }
