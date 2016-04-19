@@ -17,10 +17,13 @@ catch (  AbruptExitException e) {
   BlazeCommandDispatcher dispatcher=new BlazeCommandDispatcher(runtime);
   try {
     LOG.info(getRequestLogString(commandLineOptions.getOtherArgs()));
-    return dispatcher.exec(commandLineOptions.getOtherArgs(),OutErr.SYSTEM_OUT_ERR,runtime.getClock().currentTimeMillis());
+    return dispatcher.exec(commandLineOptions.getOtherArgs(),OutErr.SYSTEM_OUT_ERR,LockingMode.ERROR_OUT,"batch client",runtime.getClock().currentTimeMillis());
   }
  catch (  BlazeCommandDispatcher.ShutdownBlazeServerException e) {
     return e.getExitStatus();
+  }
+catch (  InterruptedException e) {
+    return ExitCode.INTERRUPTED.getNumericExitCode();
   }
  finally {
     runtime.shutdown();

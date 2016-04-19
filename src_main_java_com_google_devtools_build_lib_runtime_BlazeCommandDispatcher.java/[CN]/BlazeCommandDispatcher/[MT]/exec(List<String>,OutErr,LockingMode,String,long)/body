@@ -1,0 +1,41 @@
+{
+  Preconditions.checkNotNull(clientDescription);
+  if (args.isEmpty()) {
+    args=HELP_COMMAND;
+  }
+  String commandName=args.get(0);
+  if (ALL_HELP_OPTIONS.contains(commandName)) {
+    commandName="help";
+  }
+  BlazeCommand command=runtime.getCommandMap().get(commandName);
+  if (command == null) {
+    outErr.printErrLn(String.format("Command '%s' not found. Try '%s help'.",commandName,Constants.PRODUCT_NAME));
+    return ExitCode.COMMAND_LINE_ERROR.getNumericExitCode();
+  }
+synchronized (commandLock) {
+    if (currentClientDescription != null) {
+switch (lockingMode) {
+case WAIT:
+        outErr.printErrLn("Another command (" + currentClientDescription + ") is running. "+ " Waiting for it to complete...");
+      commandLock.wait();
+    break;
+case ERROR_OUT:
+  outErr.printErrLn(String.format("Another command (" + currentClientDescription + ") is "+ "running. Exiting immediately."));
+return ExitCode.COMMAND_LINE_ERROR.getNumericExitCode();
+default :
+throw new IllegalStateException();
+}
+}
+Verify.verify(currentClientDescription == null);
+currentClientDescription=clientDescription;
+}
+try {
+return execExclusively(args,outErr,firstContactTime,commandName,command);
+}
+  finally {
+synchronized (commandLock) {
+currentClientDescription=null;
+commandLock.notify();
+}
+}
+}

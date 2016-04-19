@@ -1,20 +1,8 @@
 {
+  Command commandAnnotation=command.getClass().getAnnotation(Command.class);
   long execStartTimeNanos=runtime.getClock().nanoTime();
   CommandEnvironment env=runtime.getWorkspace().initCommand();
   env.recordCommandStartTime(firstContactTime);
-  if (args.isEmpty()) {
-    args=HELP_COMMAND;
-  }
-  String commandName=args.get(0);
-  if (ALL_HELP_OPTIONS.contains(commandName)) {
-    commandName="help";
-  }
-  BlazeCommand command=runtime.getCommandMap().get(commandName);
-  if (command == null) {
-    outErr.printErrLn(String.format("Command '%s' not found. Try '%s help'.",commandName,Constants.PRODUCT_NAME));
-    return ExitCode.COMMAND_LINE_ERROR.getNumericExitCode();
-  }
-  Command commandAnnotation=command.getClass().getAnnotation(Command.class);
   AbruptExitException exitCausingException=null;
   for (  BlazeModule module : runtime.getBlazeModules()) {
     try {
