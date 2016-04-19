@@ -1,5 +1,5 @@
 {
   NestedSet<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().addAll(ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list()).addAll(ruleContext.getPrerequisiteArtifacts("deps",Mode.TARGET).list()).addAll(ruleContext.getPrerequisiteArtifacts("data",Mode.DATA).list()).build();
-  Runfiles runfiles=new Runfiles.Builder(ruleContext.getWorkspaceName()).addTransitiveArtifacts(filesToBuild).build();
+  Runfiles runfiles=new Runfiles.Builder(ruleContext.getWorkspaceName(),ruleContext.getConfiguration().legacyExternalRunfiles()).addTransitiveArtifacts(filesToBuild).build();
   return new RuleConfiguredTargetBuilder(ruleContext).setFilesToBuild(filesToBuild).addProvider(RunfilesProvider.class,RunfilesProvider.simple(runfiles)).build();
 }

@@ -2,10 +2,9 @@
   Root root=Root.asSourceRoot(scratch.resolve("/workspace"));
   PathFragment pathA=new PathFragment("a");
   Artifact artifactB=new Artifact(new PathFragment("b"),root);
-  Map<PathFragment,Artifact> map=new LinkedHashMap<>();
-  Runfiles.ConflictChecker checker=new Runfiles.ConflictChecker(Runfiles.ConflictPolicy.WARN,reporter,null);
-  checker.put(map,pathA,null);
-  checker.put(map,pathA,artifactB);
-  assertThat(map.entrySet()).containsExactly(Maps.immutableEntry(pathA,artifactB));
+  Runfiles.ManifestBuilder builder=new Runfiles.ManifestBuilder(new Runfiles.ConflictChecker(Runfiles.ConflictPolicy.WARN,reporter,null),PathFragment.EMPTY_FRAGMENT,false);
+  builder.put(runfilesPath(pathA),null);
+  builder.put(runfilesPath(pathA),artifactB);
+  assertThat(builder.build().entrySet()).containsExactly(Maps.immutableEntry(pathA,artifactB));
   checkConflictWarning();
 }

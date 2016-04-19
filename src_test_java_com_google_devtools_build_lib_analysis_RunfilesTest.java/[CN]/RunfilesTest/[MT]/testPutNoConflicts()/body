@@ -5,11 +5,10 @@
   PathFragment pathC=new PathFragment("c");
   Artifact artifactA=new Artifact(new PathFragment("a"),root);
   Artifact artifactB=new Artifact(new PathFragment("b"),root);
-  Map<PathFragment,Artifact> map=new LinkedHashMap<>();
-  Runfiles.ConflictChecker checker=new Runfiles.ConflictChecker(Runfiles.ConflictPolicy.WARN,reporter,null);
-  checker.put(map,pathA,artifactA);
-  checker.put(map,pathB,artifactB);
-  checker.put(map,pathC,artifactA);
-  assertThat(map.entrySet()).containsExactly(Maps.immutableEntry(pathA,artifactA),Maps.immutableEntry(pathB,artifactB),Maps.immutableEntry(pathC,artifactA)).inOrder();
+  Runfiles.ManifestBuilder builder=new Runfiles.ManifestBuilder(new Runfiles.ConflictChecker(Runfiles.ConflictPolicy.WARN,reporter,null),PathFragment.EMPTY_FRAGMENT,false);
+  builder.put(runfilesPath(pathA),artifactA);
+  builder.put(runfilesPath(pathB),artifactB);
+  builder.put(runfilesPath(pathC),artifactA);
+  assertThat(builder.build().entrySet()).containsExactly(Maps.immutableEntry(pathA,artifactA),Maps.immutableEntry(pathB,artifactB),Maps.immutableEntry(pathC,artifactA)).inOrder();
   assertNoEvents();
 }
