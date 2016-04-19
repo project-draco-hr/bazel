@@ -12,7 +12,7 @@
     }
   }
 ).allowedFileTypes(ObjcRuleClasses.PLIST_TYPE)).add(attr(IosTest.TEST_TARGET_DEVICE_ATTR,LABEL).allowedFileTypes().allowedRuleClasses("ios_lab_device")).add(attr(IosTest.DEVICE_ARG_ATTR,STRING_LIST)).add(attr(IosTest.PLUGINS_ATTR,LABEL_LIST).allowedFileTypes(FileType.of("_deploy.jar"))).add(attr(IosTest.TEST_TEMPLATE_ATTR,LABEL).value(env.getToolsLabel("//tools/objc:ios_test.sh.bazel_template"))).add(attr(IosTest.TEST_RUNNER_ATTR,LABEL).value(env.getToolsLabel("//tools/objc:testrunner"))).add(attr(IosTest.MEMLEAKS_DEP_ATTR,LABEL).value(env.getToolsLabel("//tools/objc/memleaks:memleaks"))).add(attr(IosTest.MEMLEAKS_PLUGIN_ATTR,LABEL).value(env.getToolsLabel("//tools/objc:memleaks_plugin"))).override(attr(IosTest.GCOV_ATTR,LABEL_LIST).cfg(HOST).value(new LateBoundLabelList<BuildConfiguration>(gcov){
-    @Override public List<Label> getDefault(    Rule rule,    AttributeMap attributes,    BuildConfiguration configuration){
+    @Override public List<Label> resolve(    Rule rule,    AttributeMap attributes,    BuildConfiguration configuration){
       if (!configuration.isCodeCoverageEnabled()) {
         return ImmutableList.of();
       }
@@ -20,7 +20,7 @@
     }
   }
 )).add(attr(IosTest.MCOV_TOOL_ATTR,LABEL).cfg(HOST).value(new LateBoundLabel<BuildConfiguration>(mcov){
-    @Override public Label getDefault(    Rule rule,    AttributeMap attributes,    BuildConfiguration configuration){
+    @Override public Label resolve(    Rule rule,    AttributeMap attributes,    BuildConfiguration configuration){
       if (!configuration.isCodeCoverageEnabled()) {
         return null;
       }
