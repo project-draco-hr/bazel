@@ -37,22 +37,7 @@
   if (result == null || ruleContext.hasErrors()) {
     return null;
   }
-  ruleContext.registerAction(new AbstractFileWriteAction(ruleContext.getActionOwner(),Collections.<Artifact>emptySet(),outputArtifact,false){
-    @Override public DeterministicWriter newDeterministicWriter(    ActionExecutionContext ctx){
-      return new DeterministicWriter(){
-        @Override public void writeOutputFile(        OutputStream out) throws IOException {
-          out.write(result);
-        }
-      }
-;
-    }
-    @Override protected String computeKey(){
-      Fingerprint f=new Fingerprint();
-      f.addBytes(result);
-      return f.hexDigestAndReset();
-    }
-  }
-);
+  ruleContext.registerAction(new QueryResultAction(ruleContext.getActionOwner(),outputArtifact,result));
   NestedSet<Artifact> filesToBuild=NestedSetBuilder.create(Order.STABLE_ORDER,outputArtifact);
   return new RuleConfiguredTargetBuilder(ruleContext).setFilesToBuild(filesToBuild).add(RunfilesProvider.class,RunfilesProvider.simple(new Runfiles.Builder(ruleContext.getWorkspaceName()).addTransitiveArtifacts(filesToBuild).build())).build();
 }
