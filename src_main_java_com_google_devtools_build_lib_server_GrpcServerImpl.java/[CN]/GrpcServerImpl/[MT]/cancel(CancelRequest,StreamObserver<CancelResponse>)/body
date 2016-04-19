@@ -1,0 +1,14 @@
+{
+  if (!request.getCookie().equals(requestCookie)) {
+    streamObserver.onCompleted();
+    return;
+  }
+synchronized (runningCommands) {
+    RunningCommand command=runningCommands.get(request.getCommandId());
+    if (command != null) {
+      command.thread.interrupt();
+    }
+  }
+  streamObserver.onNext(CancelResponse.newBuilder().setCookie(responseCookie).build());
+  streamObserver.onCompleted();
+}
