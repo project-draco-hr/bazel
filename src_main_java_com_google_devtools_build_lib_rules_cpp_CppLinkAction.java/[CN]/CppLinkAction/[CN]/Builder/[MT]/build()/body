@@ -76,5 +76,11 @@
     Action parameterFileWriteAction=new ParameterFileWriteAction(getOwner(),paramFile,linkCommandLine.paramCmdLine(),ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1);
     analysisEnvironment.registerAction(parameterFileWriteAction);
   }
-  return new CppLinkAction(getOwner(),inputsBuilder.deduplicate().build(),actionOutputs,cppConfiguration,outputLibrary,interfaceOutputLibrary,fake,isLTOIndexing,allLTOArtifacts,linkCommandLine);
+  ImmutableSet<String> executionRequirements=ImmutableSet.of();
+  if (featureConfiguration != null) {
+    if (featureConfiguration.actionIsConfigured(ACTION_NAME)) {
+      executionRequirements=featureConfiguration.getToolForAction(ACTION_NAME).getExecutionRequirements();
+    }
+  }
+  return new CppLinkAction(getOwner(),inputsBuilder.deduplicate().build(),actionOutputs,cppConfiguration,outputLibrary,interfaceOutputLibrary,fake,isLTOIndexing,allLTOArtifacts,linkCommandLine,executionRequirements);
 }
