@@ -1,0 +1,100 @@
+{
+  final AtomicBoolean inAction=new AtomicBoolean(false);
+  final AtomicBoolean allowingInterrupt=new AtomicBoolean(true);
+  final AtomicLong cmdNum=new AtomicLong();
+  final Thread mainThread=Thread.currentThread();
+  final Object interruptLock=new Object();
+  InterruptSignalHandler sigintHandler=new InterruptSignalHandler(){
+    @Override protected void onSignal(){
+      LOG.severe("User interrupt");
+synchronized (interruptLock) {
+        if (allowingInterrupt.get()) {
+          mainThread.interrupt();
+        }
+      }
+      if (inAction.get()) {
+        Runnable interruptWatcher=new Runnable(){
+          @Override public void run(){
+            try {
+              long originalCmd=cmdNum.get();
+              Thread.sleep(10 * 1000);
+              if (inAction.get() && cmdNum.get() == originalCmd) {
+                ThreadUtils.warnAboutSlowInterrupt();
+              }
+            }
+ catch (            InterruptedException e) {
+            }
+          }
+        }
+;
+        Thread interruptWatcherThread=new Thread(interruptWatcher,"interrupt-watcher-" + cmdNum);
+        interruptWatcherThread.setDaemon(true);
+        interruptWatcherThread.start();
+      }
+    }
+  }
+;
+  try {
+    while (!lameDuck) {
+      try {
+        IdleServerTasks idleChecker=new IdleServerTasks(workspaceDir);
+        idleChecker.idle();
+        RequestIo requestIo;
+        long startTime=clock.currentTimeMillis();
+        while (true) {
+          try {
+            allowingInterrupt.set(true);
+            Socket socket=serverSocket.accept();
+            long firstContactTime=clock.currentTimeMillis();
+            requestIo=new RequestIo(socket,firstContactTime);
+            break;
+          }
+ catch (          SocketTimeoutException e) {
+            long idleTime=clock.currentTimeMillis() - startTime;
+            if (lameDuck) {
+              closeServerSocket();
+              return;
+            }
+ else             if (idleTime > maxIdleMillis || (idleTime > statusCheckMillis && !idleChecker.continueProcessing(idleTime))) {
+              enterLameDuck();
+            }
+          }
+        }
+        idleChecker.busy();
+        List<String> request=null;
+        try {
+          request=extractRequest(requestIo);
+          cmdNum.incrementAndGet();
+          inAction.set(true);
+          if (request != null) {
+            executeRequest(request,requestIo);
+          }
+        }
+  finally {
+          inAction.set(false);
+          if (request != null) {
+synchronized (interruptLock) {
+              allowingInterrupt.set(false);
+              Thread.interrupted();
+            }
+          }
+          requestIo.shutdown();
+          if (rpcService.isShutdown()) {
+            return;
+          }
+        }
+      }
+ catch (      EOFException e) {
+        LOG.info("Connection to the client lost: " + e.getMessage());
+      }
+catch (      IOException e) {
+        printStack(e);
+      }
+    }
+  }
+  finally {
+    rpcService.shutdown();
+    LOG.info("Logging finished");
+    sigintHandler.uninstall();
+  }
+}

@@ -1,0 +1,22 @@
+{
+  Path socketFile=getSocketPath();
+  if (socketFile.toString().length() >= 104) {
+    Path socketLink=socketFile;
+    String tmpDir=System.getProperty("blaze.rpcserver.tmpdir","/tmp");
+    socketFile=createTempSocketDirectory(socketFile.getRelative(tmpDir)).getRelative("server.socket");
+    LOG.info("Using symlinked socket at " + socketFile);
+    socketLink.delete();
+    socketLink.createSymbolicLink(socketFile);
+    deleteAtExit(socketLink,false);
+    deleteAtExit(socketFile,true);
+  }
+ else {
+    deleteAtExit(socketFile,false);
+  }
+  ensureExclusiveAccess(socketFile);
+  LocalServerSocket serverSocket=new LocalServerSocket();
+  serverSocket.bind(new LocalSocketAddress(socketFile.getPathFile()));
+  NativePosixFiles.chmod(socketFile.getPathFile(),0600);
+  serverSocket.listen(50);
+  return serverSocket;
+}
