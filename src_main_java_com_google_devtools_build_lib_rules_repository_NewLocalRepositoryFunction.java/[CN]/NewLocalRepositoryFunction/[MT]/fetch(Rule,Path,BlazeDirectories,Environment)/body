@@ -3,11 +3,20 @@
   if (!buildFileHandler.prepareBuildFile(rule,env)) {
     return null;
   }
-  prepareLocalRepositorySymlinkTree(rule,outputDirectory);
   PathFragment pathFragment=getTargetPath(rule,directories.getWorkspace());
   if (!symlinkLocalRepositoryContents(outputDirectory,directories.getOutputBase().getFileSystem().getPath(pathFragment))) {
     return null;
   }
   buildFileHandler.finishBuildFile(outputDirectory);
+  Path workspaceFile=outputDirectory.getRelative("WORKSPACE");
+  if (workspaceFile.exists()) {
+    try {
+      workspaceFile.delete();
+    }
+ catch (    IOException e) {
+      throw new RepositoryFunctionException(e,SkyFunctionException.Transience.TRANSIENT);
+    }
+  }
+  createWorkspaceFile(outputDirectory,rule);
   return RepositoryDirectoryValue.create(outputDirectory);
 }
