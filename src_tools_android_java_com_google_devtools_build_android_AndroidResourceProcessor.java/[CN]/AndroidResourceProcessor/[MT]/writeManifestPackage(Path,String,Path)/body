@@ -1,0 +1,37 @@
+{
+  if (Strings.isNullOrEmpty(customPackage)) {
+    return manifest;
+  }
+  try {
+    Files.createDirectories(output.getParent());
+    XMLEventReader reader=XMLInputFactory.newInstance().createXMLEventReader(Files.newInputStream(manifest),UTF_8.name());
+    XMLEventWriter writer=XMLOutputFactory.newInstance().createXMLEventWriter(Files.newOutputStream(output),UTF_8.name());
+    XMLEventFactory eventFactory=XMLEventFactory.newInstance();
+    while (reader.hasNext()) {
+      XMLEvent event=reader.nextEvent();
+      if (event.isStartElement() && event.asStartElement().getName().toString().equalsIgnoreCase("manifest")) {
+        StartElement element=event.asStartElement();
+        @SuppressWarnings("unchecked") Iterator<Attribute> attributes=element.getAttributes();
+        ImmutableList.Builder<Attribute> newAttributes=ImmutableList.builder();
+        while (attributes.hasNext()) {
+          Attribute attr=attributes.next();
+          if (attr.getName().toString().equalsIgnoreCase("package")) {
+            newAttributes.add(eventFactory.createAttribute("package",customPackage));
+          }
+ else {
+            newAttributes.add(attr);
+          }
+        }
+        writer.add(eventFactory.createStartElement(element.getName(),newAttributes.build().iterator(),element.getNamespaces()));
+      }
+ else {
+        writer.add(event);
+      }
+    }
+    writer.flush();
+  }
+ catch (  XMLStreamException|FactoryConfigurationError|IOException e) {
+    throw new RuntimeException(e);
+  }
+  return output;
+}

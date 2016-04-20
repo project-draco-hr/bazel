@@ -1,0 +1,20 @@
+{
+  if (input.isEmpty()) {
+    return ImmutableMap.of();
+  }
+  Map<String,String> map=new LinkedHashMap<>();
+  for (  String entry : input.split("(?<!\\\\)\\,")) {
+    String[] entryFields=entry.split("(?<!\\\\)\\:",-1);
+    if (entryFields.length < 2) {
+      throw new OptionsParsingException(String.format("Dictionary entry [%s] does not contain both a key and a value.",entry));
+    }
+ else     if (entryFields.length > 2) {
+      throw new OptionsParsingException(String.format("Dictionary entry [%s] contains too many fields.",entry));
+    }
+ else     if (map.containsKey(entryFields[0])) {
+      throw new OptionsParsingException(String.format("Dictionary already contains the key [%s].",entryFields[0]));
+    }
+    map.put(entryFields[0].replace("\\:",":").replace("\\,",","),entryFields[1].replace("\\:",":").replace("\\,",","));
+  }
+  return ImmutableMap.copyOf(map);
+}

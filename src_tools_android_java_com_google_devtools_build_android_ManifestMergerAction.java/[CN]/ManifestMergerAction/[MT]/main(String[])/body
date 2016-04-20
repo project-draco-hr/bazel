@@ -1,0 +1,26 @@
+{
+  OptionsParser optionsParser=OptionsParser.newOptionsParser(Options.class);
+  optionsParser.parseAndExitUponError(args);
+  options=optionsParser.getOptions(Options.class);
+  final AndroidResourceProcessor resourceProcessor=new AndroidResourceProcessor(stdLogger);
+  try {
+    Path mergedManifest;
+    if (options.mergeType == MergeType.APPLICATION) {
+      mergedManifest=resourceProcessor.mergeManifest(options.manifest,options.mergeeManifests,options.mergeType,options.manifestValues,options.manifestOutput);
+    }
+ else {
+      mergedManifest=resourceProcessor.writeManifestPackage(options.manifest,options.customPackage,options.manifestOutput);
+    }
+    if (!mergedManifest.equals(options.manifestOutput)) {
+      Files.copy(options.manifest,options.manifestOutput,StandardCopyOption.REPLACE_EXISTING);
+    }
+    Files.setLastModifiedTime(options.manifestOutput,FileTime.fromMillis(0L));
+  }
+ catch (  IOException e) {
+    logger.log(SEVERE,"Error during merging manifests",e);
+    throw e;
+  }
+ finally {
+    resourceProcessor.shutdown();
+  }
+}

@@ -1,0 +1,47 @@
+{
+  if (mergeeManifests.isEmpty() && values.isEmpty()) {
+    return manifest;
+  }
+  Invoker<?> manifestMerger=ManifestMerger2.newMerger(manifest.toFile(),stdLogger,mergeType);
+  if (mergeType == MergeType.APPLICATION) {
+    manifestMerger.withFeatures(Feature.REMOVE_TOOLS_DECLARATIONS);
+  }
+  for (  Path mergeeManifest : mergeeManifests) {
+    manifestMerger.addLibraryManifest(mergeeManifest.toFile());
+  }
+  Map<String,String> placeholders=new HashMap<>(values);
+  for (  SystemProperty property : SystemProperty.values()) {
+    if (values.containsKey(SYSTEM_PROPERTY_NAMES.get(property))) {
+      manifestMerger.setOverride(property,values.get(SYSTEM_PROPERTY_NAMES.get(property)));
+      if (property == SystemProperty.PACKAGE) {
+        placeholders.remove(PlaceholderHandler.APPLICATION_ID);
+        placeholders.remove(PlaceholderHandler.PACKAGE_NAME);
+      }
+    }
+  }
+  placeholders.remove(PlaceholderHandler.PACKAGE_NAME);
+  manifestMerger.setPlaceHolderValues(placeholders);
+  try {
+    MergingReport mergingReport=manifestMerger.merge();
+switch (mergingReport.getResult()) {
+case WARNING:
+      mergingReport.log(stdLogger);
+    Files.createDirectories(output.getParent());
+  writeMergedManifest(mergingReport,output);
+break;
+case SUCCESS:
+Files.createDirectories(output.getParent());
+writeMergedManifest(mergingReport,output);
+break;
+case ERROR:
+mergingReport.log(stdLogger);
+throw new RuntimeException(mergingReport.getReportString());
+default :
+throw new RuntimeException("Unhandled result type : " + mergingReport.getResult());
+}
+}
+ catch (SAXException|ParserConfigurationException|MergeFailureException e) {
+throw new RuntimeException(e);
+}
+return output;
+}
