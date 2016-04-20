@@ -20,9 +20,6 @@
     add(TestProvider.class,initializeTestProvider(filesToRunProvider));
   }
   ExtraActionArtifactsProvider extraActionsProvider=createExtraActionProvider(actionsWithoutExtraAction,ruleContext);
-  if (mandatoryStampFiles != null && !mandatoryStampFiles.isEmpty()) {
-    extraActionsProvider=ExtraActionArtifactsProvider.create(extraActionsProvider.getExtraActionArtifacts(),NestedSetBuilder.fromNestedSet(extraActionsProvider.getTransitiveExtraActionArtifacts()).add(ExtraArtifactSet.of(ruleContext.getLabel(),mandatoryStampFiles)).build());
-  }
   add(ExtraActionArtifactsProvider.class,extraActionsProvider);
   if (!outputGroupBuilders.isEmpty()) {
     ImmutableMap.Builder<String,NestedSet<Artifact>> outputGroups=ImmutableMap.builder();
@@ -31,5 +28,5 @@
     }
     add(OutputGroupProvider.class,new OutputGroupProvider(outputGroups.build()));
   }
-  return new RuleConfiguredTarget(ruleContext,mandatoryStampFiles,skylarkProviders.build(),providers);
+  return new RuleConfiguredTarget(ruleContext,skylarkProviders.build(),providers);
 }
