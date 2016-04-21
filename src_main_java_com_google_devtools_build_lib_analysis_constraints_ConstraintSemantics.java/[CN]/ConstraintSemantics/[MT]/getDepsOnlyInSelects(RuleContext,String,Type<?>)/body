@@ -1,0 +1,13 @@
+{
+  Rule rule=ruleContext.getRule();
+  if (!rule.isConfigurableAttribute(attr) || !BuildType.isLabelType(attrType)) {
+    return ImmutableSet.of();
+  }
+  Set<Label> unconditionalDeps=new LinkedHashSet<>();
+  Set<Label> selectableDeps=new LinkedHashSet<>();
+  BuildType.SelectorList<?> selectList=(BuildType.SelectorList<?>)RawAttributeMapper.of(rule).getRawAttributeValue(rule,attr);
+  for (  BuildType.Selector<?> select : selectList.getSelectors()) {
+    addSelectValuesToSet(select,select.isUnconditional() ? unconditionalDeps : selectableDeps);
+  }
+  return Sets.difference(selectableDeps,unconditionalDeps);
+}

@@ -1,0 +1,15 @@
+{
+  Set<EnvironmentGroup> refinedGroups=new LinkedHashSet<>();
+  for (  EnvironmentWithGroup envWithGroup : refinedEnvironmentsSoFar) {
+    refinedEnvironments.put(envWithGroup.group(),envWithGroup.environment());
+    refinedGroups.add(envWithGroup.group());
+  }
+  Set<EnvironmentGroup> newlyEmptyGroups=groupsWithEnvironmentsRemoved.isEmpty() ? ImmutableSet.of() : Sets.difference(groupsWithEnvironmentsRemoved,refinedGroups);
+  if (!newlyEmptyGroups.isEmpty()) {
+    Set<Label> groupsAsLabels=new LinkedHashSet<>();
+    for (    EnvironmentGroup group : newlyEmptyGroups) {
+      groupsAsLabels.add(group.getLabel());
+    }
+    ruleContext.ruleError("all environments have been refined out of the following groups: " + Joiner.on(", ").join(groupsAsLabels));
+  }
+}

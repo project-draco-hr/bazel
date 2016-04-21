@@ -1,5 +1,7 @@
 {
   Set<TransitiveInfoCollection> depsToCheck=new LinkedHashSet<>();
+  Set<TransitiveInfoCollection> selectOnlyDeps=new LinkedHashSet<>();
+  Set<TransitiveInfoCollection> depsOutsideSelects=new LinkedHashSet<>();
   AttributeMap attributes=ruleContext.attributes();
   for (  String attr : attributes.getAttributeNames()) {
     Attribute attrDef=attributes.getAttributeDefinition(attr);
@@ -9,14 +11,23 @@
         continue;
       }
     }
+    Set<Label> selectOnlyDepsForThisAttribute=getDepsOnlyInSelects(ruleContext,attr,attrType);
     for (    TransitiveInfoCollection dep : ruleContext.getPrerequisites(attr,RuleConfiguredTarget.Mode.DONT_CHECK)) {
       if (dep instanceof OutputFileConfiguredTarget) {
         dep=((OutputFileConfiguredTarget)dep).getGeneratingRule();
       }
       if (dep.getProvider(SupportedEnvironmentsProvider.class) != null) {
         depsToCheck.add(dep);
+        if (!selectOnlyDepsForThisAttribute.contains(dep.getLabel())) {
+          depsOutsideSelects.add(dep);
+        }
       }
     }
   }
-  return depsToCheck;
+  for (  TransitiveInfoCollection dep : depsToCheck) {
+    if (!depsOutsideSelects.contains(dep)) {
+      selectOnlyDeps.add(dep);
+    }
+  }
+  return new DepsToCheck(depsToCheck,selectOnlyDeps);
 }

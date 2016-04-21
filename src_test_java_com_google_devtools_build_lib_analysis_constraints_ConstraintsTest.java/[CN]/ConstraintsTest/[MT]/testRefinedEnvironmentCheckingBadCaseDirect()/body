@@ -1,0 +1,9 @@
+{
+  new EnvironmentGroupMaker("buildenv/foo").setEnvironments("a","b").setDefaults().make();
+  writeDepsForSelectTests();
+  scratch.file("hello/BUILD","cc_library(","    name = 'lib',","    srcs = [],","    deps = select({","        '//config:a': ['//deps:dep_a'],","        '//config:b': ['//deps:dep_b'],","    }),","    compatible_with = ['//buildenv/foo:b'])");
+  useConfiguration("--define","mode=a");
+  reporter.removeHandler(failFastHandler);
+  assertNull(getConfiguredTarget("//hello:lib"));
+  assertContainsEvent("//hello:lib: all environments have been refined out of the following" + " groups: //buildenv/foo:foo");
+}

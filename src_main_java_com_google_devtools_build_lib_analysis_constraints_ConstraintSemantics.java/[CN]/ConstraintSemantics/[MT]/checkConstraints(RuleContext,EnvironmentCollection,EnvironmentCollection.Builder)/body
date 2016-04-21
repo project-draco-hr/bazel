@@ -1,0 +1,32 @@
+{
+  Set<EnvironmentWithGroup> refinedEnvironmentsSoFar=new LinkedHashSet<>();
+  refinedEnvironmentsSoFar.addAll(staticEnvironments.getGroupedEnvironments());
+  Set<EnvironmentGroup> groupsWithEnvironmentsRemoved=new LinkedHashSet<>();
+  Map<Label,EnvironmentWithGroup> labelsToEnvironments=new HashMap<>();
+  for (  EnvironmentWithGroup envWithGroup : staticEnvironments.getGroupedEnvironments()) {
+    labelsToEnvironments.put(envWithGroup.environment(),envWithGroup);
+  }
+  DepsToCheck depsToCheck=getConstraintCheckedDependencies(ruleContext);
+  for (  TransitiveInfoCollection dep : depsToCheck.allDeps()) {
+    SupportedEnvironmentsProvider depEnvironments=dep.getProvider(SupportedEnvironmentsProvider.class);
+    if (!depsToCheck.isSelectOnly(dep)) {
+      Collection<Label> unsupportedEnvironments=getUnsupportedEnvironments(depEnvironments.getStaticEnvironments(),staticEnvironments);
+      if (!unsupportedEnvironments.isEmpty()) {
+        ruleContext.ruleError("dependency " + dep.getLabel() + " doesn't support expected environment"+ (unsupportedEnvironments.size() == 1 ? "" : "s")+ ": "+ Joiner.on(", ").join(unsupportedEnvironments));
+      }
+    }
+    for (    Label refinedEnvironmentToPrune : getUnsupportedEnvironments(depEnvironments.getRefinedEnvironments(),staticEnvironments)) {
+      EnvironmentWithGroup envToPrune=labelsToEnvironments.get(refinedEnvironmentToPrune);
+      if (envToPrune == null) {
+        for (        EnvironmentWithGroup defaultEnv : getDefaults(refinedEnvironmentToPrune,depEnvironments.getRefinedEnvironments())) {
+          refinedEnvironmentsSoFar.add(defaultEnv);
+          labelsToEnvironments.put(defaultEnv.environment(),defaultEnv);
+        }
+        envToPrune=Verify.verifyNotNull(labelsToEnvironments.get(refinedEnvironmentToPrune));
+      }
+      refinedEnvironmentsSoFar.remove(envToPrune);
+      groupsWithEnvironmentsRemoved.add(envToPrune.group());
+    }
+  }
+  checkRefinedEnvironmentConstraints(ruleContext,groupsWithEnvironmentsRemoved,refinedEnvironmentsSoFar,refinedEnvironments);
+}

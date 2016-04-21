@@ -1,6 +1,7 @@
 {
   new EnvironmentGroupMaker("buildenv/foo").setEnvironments("a","b").setDefaults().make();
-  scratch.file("hello/BUILD","config_setting(name = 'setting', values = {'compilation_mode': 'fastbuild'})","sh_library(","    name = 'shlib',","    srcs = select({","        ':setting': ['shlib.sh'],","    }),","    compatible_with = ['//buildenv/foo:a'])");
+  scratch.file("hello/BUILD","sh_library(","    name = 'shlib',","    srcs = select({","        '//config:a': ['shlib.sh'],","    }),","    compatible_with = ['//buildenv/foo:a'])");
+  useConfiguration("--define","mode=a");
   assertNotNull(getConfiguredTarget("//hello:shlib"));
   assertNoEvents();
 }

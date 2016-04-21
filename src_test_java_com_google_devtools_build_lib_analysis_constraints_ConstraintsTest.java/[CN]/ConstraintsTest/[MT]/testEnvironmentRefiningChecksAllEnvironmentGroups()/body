@@ -1,0 +1,10 @@
+{
+  new EnvironmentGroupMaker("buildenv/foo").setEnvironments("a","b").setDefaults().make();
+  new EnvironmentGroupMaker("buildenv/bar").setEnvironments("c","d").setDefaults().make();
+  scratch.file("deps/BUILD","cc_library(","    name = 'dep_a',","    srcs = [],","    restricted_to = ['//buildenv/foo:a', '//buildenv/bar:d'])","cc_library(","    name = 'dep_b',","    srcs = [],","    restricted_to = ['//buildenv/foo:b', '//buildenv/bar:c'])");
+  scratch.file("hello/BUILD","cc_library(","    name = 'lib',","    srcs = [],","    deps = select({","        '//config:a': ['//deps:dep_a'],","        '//config:b': ['//deps:dep_b'],","    }),","    compatible_with = ['//buildenv/foo:a', '//buildenv/bar:c'])");
+  useConfiguration("--define","mode=a");
+  reporter.removeHandler(failFastHandler);
+  assertNull(getConfiguredTarget("//hello:lib"));
+  assertContainsEvent("//hello:lib: all environments have been refined out of the following" + " groups: //buildenv/bar:bar");
+}
