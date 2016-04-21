@@ -17,7 +17,7 @@
   optionsBuilder.setTargetLabel("//my:target");
   addSourceLines("Hello.java","class Hello {","  public static A a = new A();","  public static void main(String[] args) {","    A a = null;","    B b = null;","    C c = null;","    D d = null;","  }","}");
   optionsBuilder.addSources(ImmutableList.copyOf(Iterables.transform(sources,TO_STRING)));
-  try (JavacTurbine turbine=new JavacTurbine(optionsBuilder.build())){
+  try (JavacTurbine turbine=new JavacTurbine(new PrintWriter(System.err),optionsBuilder.build())){
     assertThat(turbine.compile()).isEqualTo(Result.OK_WITH_REDUCED_CLASSPATH);
     Context context=turbine.context;
     JavacFileManager fm=(JavacFileManager)context.get(JavaFileManager.class);

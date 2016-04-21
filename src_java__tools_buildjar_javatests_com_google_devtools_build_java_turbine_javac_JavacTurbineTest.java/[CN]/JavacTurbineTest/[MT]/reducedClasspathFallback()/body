@@ -17,7 +17,7 @@
   optionsBuilder.setTargetLabel("//my:target");
   addSourceLines("Hello.java","class Hello {","  public static final int CONST = A.CONST;","  public static void main(String[] args) {}","}");
   optionsBuilder.addSources(ImmutableList.copyOf(Iterables.transform(sources,TO_STRING)));
-  try (JavacTurbine turbine=new JavacTurbine(optionsBuilder.build())){
+  try (JavacTurbine turbine=new JavacTurbine(new PrintWriter(System.err),optionsBuilder.build())){
     assertThat(turbine.compile()).isEqualTo(Result.OK_WITH_FULL_CLASSPATH);
     Context context=turbine.context;
     JavacFileManager fm=(JavacFileManager)context.get(JavaFileManager.class);
