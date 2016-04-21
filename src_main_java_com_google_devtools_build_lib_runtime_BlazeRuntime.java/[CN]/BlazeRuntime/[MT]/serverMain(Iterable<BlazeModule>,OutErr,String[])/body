@@ -1,6 +1,14 @@
 {
+  InterruptSignalHandler sigintHandler=null;
   try {
-    RPCServer blazeServer=createBlazeRPCServer(modules,Arrays.asList(args));
+    final RPCServer blazeServer=createBlazeRPCServer(modules,Arrays.asList(args));
+    sigintHandler=new InterruptSignalHandler(){
+      @Override protected void onSignal(){
+        LOG.severe("User interrupt");
+        blazeServer.interrupt();
+      }
+    }
+;
     blazeServer.serve();
     return ExitCode.SUCCESS.getNumericExitCode();
   }
@@ -15,5 +23,10 @@ catch (  IOException e) {
 catch (  AbruptExitException e) {
     outErr.printErr(e.getMessage());
     return e.getExitCode().getNumericExitCode();
+  }
+ finally {
+    if (sigintHandler != null) {
+      sigintHandler.uninstall();
+    }
   }
 }

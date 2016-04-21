@@ -1,39 +1,4 @@
 {
-  final AtomicBoolean inAction=new AtomicBoolean(false);
-  final AtomicBoolean allowingInterrupt=new AtomicBoolean(true);
-  final AtomicLong cmdNum=new AtomicLong();
-  final Thread mainThread=Thread.currentThread();
-  final Object interruptLock=new Object();
-  InterruptSignalHandler sigintHandler=new InterruptSignalHandler(){
-    @Override protected void onSignal(){
-      LOG.severe("User interrupt");
-synchronized (interruptLock) {
-        if (allowingInterrupt.get()) {
-          mainThread.interrupt();
-        }
-      }
-      if (inAction.get()) {
-        Runnable interruptWatcher=new Runnable(){
-          @Override public void run(){
-            try {
-              long originalCmd=cmdNum.get();
-              Thread.sleep(10 * 1000);
-              if (inAction.get() && cmdNum.get() == originalCmd) {
-                ThreadUtils.warnAboutSlowInterrupt();
-              }
-            }
- catch (            InterruptedException e) {
-            }
-          }
-        }
-;
-        Thread interruptWatcherThread=new Thread(interruptWatcher,"interrupt-watcher-" + cmdNum);
-        interruptWatcherThread.setDaemon(true);
-        interruptWatcherThread.start();
-      }
-    }
-  }
-;
   try {
     while (!lameDuck) {
       try {
@@ -95,6 +60,5 @@ catch (      IOException e) {
   finally {
     rpcService.shutdown();
     LOG.info("Logging finished");
-    sigintHandler.uninstall();
   }
 }

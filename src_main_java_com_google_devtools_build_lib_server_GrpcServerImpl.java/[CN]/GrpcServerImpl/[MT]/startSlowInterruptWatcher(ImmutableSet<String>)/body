@@ -1,0 +1,25 @@
+{
+  if (commandIds.isEmpty()) {
+    return;
+  }
+  Runnable interruptWatcher=new Runnable(){
+    @Override public void run(){
+      try {
+        boolean ok;
+        Thread.sleep(10 * 1000);
+synchronized (runningCommands) {
+          ok=Collections.disjoint(commandIds,runningCommands.keySet());
+        }
+        if (!ok) {
+          ThreadUtils.warnAboutSlowInterrupt();
+        }
+      }
+ catch (      InterruptedException e) {
+      }
+    }
+  }
+;
+  Thread interruptWatcherThread=new Thread(interruptWatcher,"interrupt-watcher-" + interruptCounter.incrementAndGet());
+  interruptWatcherThread.setDaemon(true);
+  interruptWatcherThread.start();
+}
