@@ -1,7 +1,7 @@
 {
   final JavaCommon common=new JavaCommon(ruleContext,semantics);
   DeployArchiveBuilder deployArchiveBuilder=new DeployArchiveBuilder(semantics,ruleContext);
-  Runfiles.Builder runfilesBuilder=new Runfiles.Builder(ruleContext.getWorkspaceName());
+  Runfiles.Builder runfilesBuilder=new Runfiles.Builder(ruleContext.getWorkspaceName(),ruleContext.getConfiguration().legacyExternalRunfiles());
   List<String> jvmFlags=new ArrayList<>();
   JavaTargetAttributes.Builder attributesBuilder=common.initCommon();
   attributesBuilder.addClassPathResources(ruleContext.getPrerequisiteArtifacts("classpath_resources",Mode.TARGET).list());
@@ -102,7 +102,7 @@
     }
     runfilesSupport=RunfilesSupport.withExecutable(ruleContext,defaultRunfiles,executable,extraArgs);
   }
-  RunfilesProvider runfilesProvider=RunfilesProvider.withData(defaultRunfiles,new Runfiles.Builder(ruleContext.getWorkspaceName()).merge(runfilesSupport).build());
+  RunfilesProvider runfilesProvider=RunfilesProvider.withData(defaultRunfiles,new Runfiles.Builder(ruleContext.getWorkspaceName(),ruleContext.getConfiguration().legacyExternalRunfiles()).merge(runfilesSupport).build());
   ImmutableList<String> deployManifestLines=getDeployManifestLines(ruleContext,originalMainClass);
   deployArchiveBuilder.setOutputJar(runProguard ? ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_MERGED_JAR) : deployJar).setJavaStartClass(mainClass).setDeployManifestLines(deployManifestLines).setAttributes(attributes).addRuntimeJars(javaArtifacts.getRuntimeJars()).setIncludeBuildData(true).setRunfilesMiddleman(runProguard || runfilesSupport == null ? null : runfilesSupport.getRunfilesMiddleman()).setCompression(runProguard ? UNCOMPRESSED : COMPRESSED).setLauncher(launcher).build();
   Artifact unstrippedDeployJar=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_UNSTRIPPED_BINARY_DEPLOY_JAR);
