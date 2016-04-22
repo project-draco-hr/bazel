@@ -1,5 +1,7 @@
 {
   boolean hasImplicitCcOutputs=ruleClassProvider.getRuleClassMap().get("cc_library").getImplicitOutputsFunction() != ImplicitOutputsFunction.NONE;
+  scratch.file("BUILD","filegroup(name = 'fg', srcs = glob(['*.cc']))");
+  scratch.file("foo.cc");
   scratch.file("foo/BUILD","cc_library(name = 'foo1', srcs = [ 'foo1.cc' ], hdrs = [ 'foo1.h' ])","exports_files(['baz/bang'])");
   scratch.file("foo/bar/BUILD","cc_library(name = 'bar1', alwayslink = 1)","cc_library(name = 'bar2')","exports_files(['wiz/bang', 'wiz/all', 'baz', 'baz/bang', 'undeclared.h'])");
   scratch.file("otherrules/BUILD","test_suite(name = 'suite1')","filegroup(name='group', srcs=['suite/somefile'])","exports_files(['suite/somefile'])","cc_library(name = 'wiz', linkstatic = 1)");
@@ -9,9 +11,11 @@
   rulesBeneathFoo=labels("//foo:foo1","//foo/bar:bar1","//foo/bar:bar2");
   rulesBeneathFooBar=labels("//foo/bar:bar1","//foo/bar:bar2");
   rulesBeneathOtherrules=labels("//otherrules:suite1","//otherrules:wiz","//otherrules:group");
+  rulesInTopLevelPackage=labels("//:fg");
   rulesInFoo=labels("//foo:foo1");
   rulesInFooBar=labels("//foo/bar:bar1","//foo/bar:bar2");
   rulesInOtherrules=rulesBeneathOtherrules;
+  targetsInTopLevelPackage=labels("//:BUILD","//:foo.cc","//:fg");
   targetsInFoo=labels("//foo:foo1","//foo:foo1","//foo:foo1.cc","//foo:foo1.h","//foo:BUILD","//foo:baz/bang");
   if (hasImplicitCcOutputs) {
     targetsInFoo.addAll(labels("//foo:libfoo1.a","//foo:libfoo1.so"));
