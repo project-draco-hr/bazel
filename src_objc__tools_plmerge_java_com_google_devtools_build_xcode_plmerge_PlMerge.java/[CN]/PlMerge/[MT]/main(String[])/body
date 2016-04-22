@@ -15,5 +15,15 @@
   if (primaryBundleId != null || fallbackBundleId != null) {
     merging.setBundleIdentifier(primaryBundleId,fallbackBundleId);
   }
-  merging.writePlist(fileSystem.getPath(control.getOutFile()));
+  Path outputPath=fileSystem.getPath(control.getOutFile());
+switch (control.getOutputFormat()) {
+case BINARY:
+    merging.writePlist(outputPath);
+  break;
+case XML:
+merging.writeXmlPlist(outputPath);
+break;
+default :
+throw new IllegalArgumentException(String.format("Unknown output format in the control file: %s",control.getOutputFormat()));
+}
 }
