@@ -3,9 +3,10 @@
   PathFragment pathA=new PathFragment("a");
   Artifact artifactB=new Artifact(new PathFragment("b"),root);
   Artifact artifactC=new Artifact(new PathFragment("c"),root);
-  Runfiles.ManifestBuilder builder=new Runfiles.ManifestBuilder(new Runfiles.ConflictChecker(Runfiles.ConflictPolicy.WARN,null,null),PathFragment.EMPTY_FRAGMENT,false);
-  builder.put(runfilesPath(pathA),artifactB);
-  builder.put(runfilesPath(pathA),artifactC);
-  assertThat(builder.build().entrySet()).containsExactly(Maps.immutableEntry(pathA,artifactC));
+  Map<PathFragment,Artifact> map=new LinkedHashMap<>();
+  Runfiles.ConflictChecker checker=new Runfiles.ConflictChecker(Runfiles.ConflictPolicy.WARN,null,null);
+  checker.put(map,pathA,artifactB);
+  checker.put(map,pathA,artifactC);
+  assertThat(map.entrySet()).containsExactly(Maps.immutableEntry(pathA,artifactC));
   assertNoEvents();
 }

@@ -1,7 +1,6 @@
 {
   List<PathFragment> result=new ArrayList<>();
-  PathFragment packageFragment=ruleContext.getLabel().getPackageIdentifier().getRunfilesPath();
-  packageFragment=new PathFragment(ruleContext.getWorkspaceName()).getRelative(packageFragment);
+  PathFragment packageFragment=ruleContext.getLabel().getPackageIdentifier().getPathFragment();
   for (  String importsAttr : ruleContext.attributes().get("imports",Type.STRING_LIST)) {
     importsAttr=ruleContext.expandMakeVariables("includes",importsAttr);
     if (importsAttr.startsWith("/")) {
@@ -10,7 +9,7 @@
     }
     PathFragment importsPath=packageFragment.getRelative(importsAttr).normalize();
     if (!importsPath.isNormalized()) {
-      ruleContext.attributeError("imports","Path " + importsAttr + " references a path above the execution root");
+      ruleContext.attributeError("imports","Path references a path above the execution root.");
     }
     result.add(importsPath);
   }

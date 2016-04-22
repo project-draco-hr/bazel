@@ -1,8 +1,8 @@
 {
-  ManifestBuilder builder=new ManifestBuilder(new ConflictChecker(conflictPolicy,eventHandler,location),suffix,legacyRepositoryStructure);
-  builder.putSymlinks(symlinks);
+  ConflictChecker checker=new ConflictChecker(conflictPolicy,eventHandler,location);
+  Map<PathFragment,Artifact> manifest=getSymlinksAsMap(checker);
   for (  Artifact artifact : getUnconditionalArtifactsWithoutMiddlemen()) {
-    builder.put(RunfilesPath.resolve(artifact.getRootRelativePath(),suffix),artifact);
+    checker.put(manifest,artifact.getRootRelativePath(),artifact);
   }
   for (  Runfiles.PruningManifest pruningManifest : getPruningManifests()) {
     Map<String,Artifact> allowedRunfiles=new HashMap<>();
@@ -14,18 +14,27 @@
       while ((line=reader.readLine()) != null) {
         Artifact artifact=allowedRunfiles.get(line);
         if (artifact != null) {
-          builder.put(RunfilesPath.resolve(artifact.getRootRelativePath(),suffix),artifact);
+          checker.put(manifest,artifact.getRootRelativePath(),artifact);
         }
       }
     }
    }
-  builder.filterListForObscuringSymlinks(eventHandler,location);
-  for (  PathFragment extraPath : emptyFilesSupplier.getExtraPaths(builder.getPaths())) {
-    builder.put(RunfilesPath.alreadyResolved(extraPath,suffix),null);
+  manifest=filterListForObscuringSymlinks(eventHandler,location,manifest);
+  for (  PathFragment extraPath : emptyFilesSupplier.getExtraPaths(manifest.keySet())) {
+    checker.put(manifest,extraPath,null);
+  }
+  PathFragment suffixPath=new PathFragment(suffix);
+  Map<PathFragment,Artifact> rootManifest=new HashMap<>();
+  for (  Map.Entry<PathFragment,Artifact> entry : manifest.entrySet()) {
+    checker.put(rootManifest,suffixPath.getRelative(entry.getKey()),entry.getValue());
   }
   if (conflictPolicy == ConflictPolicy.IGNORE) {
-    builder.resetConflictPolicy(new ConflictChecker(ConflictPolicy.WARN,eventHandler,location));
+    checker=new ConflictChecker(ConflictPolicy.WARN,eventHandler,location);
   }
-  builder.putRootSymlinks(rootSymlinks);
-  return builder.build();
+  for (  Map.Entry<PathFragment,Artifact> entry : getRootSymlinksAsMap(checker).entrySet()) {
+    PathFragment mappedPath=entry.getKey();
+    Artifact mappedArtifact=entry.getValue();
+    checker.put(rootManifest,mappedPath,mappedArtifact);
+  }
+  return rootManifest;
 }

@@ -13,14 +13,14 @@
   }
   semantics.createExecutable(ruleContext,common,ccLinkParamsStore,imports);
   Runfiles commonRunfiles=collectCommonRunfiles(ruleContext,common,semantics);
-  Runfiles.Builder defaultRunfilesBuilder=new Runfiles.Builder(ruleContext.getWorkspaceName(),ruleContext.getConfiguration().legacyExternalRunfiles()).merge(commonRunfiles);
+  Runfiles.Builder defaultRunfilesBuilder=new Runfiles.Builder(ruleContext.getWorkspaceName()).merge(commonRunfiles);
   semantics.collectDefaultRunfilesForBinary(ruleContext,defaultRunfilesBuilder);
   Runfiles defaultRunfiles=defaultRunfilesBuilder.build();
   RunfilesSupport runfilesSupport=RunfilesSupport.withExecutable(ruleContext,defaultRunfiles,common.getExecutable(),ruleContext.shouldCreateRunfilesSymlinks());
   if (ruleContext.hasErrors()) {
     return null;
   }
-  Runfiles dataRunfiles=new Runfiles.Builder(ruleContext.getWorkspaceName(),ruleContext.getConfiguration().legacyExternalRunfiles()).merge(commonRunfiles).addArtifact(runfilesSupport.getRunfilesMiddleman()).build();
+  Runfiles dataRunfiles=new Runfiles.Builder(ruleContext.getWorkspaceName()).merge(commonRunfiles).addArtifact(runfilesSupport.getRunfilesMiddleman()).build();
   RunfilesProvider runfilesProvider=RunfilesProvider.withData(defaultRunfiles,dataRunfiles);
   RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
   common.addCommonTransitiveInfoProviders(builder,semantics,common.getFilesToBuild());

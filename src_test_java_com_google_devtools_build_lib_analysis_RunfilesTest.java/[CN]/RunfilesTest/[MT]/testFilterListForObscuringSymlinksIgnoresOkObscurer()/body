@@ -1,10 +1,10 @@
 {
-  Runfiles.ManifestBuilder obscuringMap=new Runfiles.ManifestBuilder(null,PathFragment.EMPTY_FRAGMENT,false);
+  Map<PathFragment,Artifact> obscuringMap=new HashMap<>();
   PathFragment pathA=new PathFragment("a");
   Root root=Root.asSourceRoot(scratch.resolve("/workspace"));
   Artifact artifactA=new Artifact(new PathFragment("a"),root);
-  obscuringMap.put(runfilesPath("a"),artifactA);
-  obscuringMap.put(runfilesPath("a/b"),new Artifact(new PathFragment("a/b"),root));
-  assertThat(obscuringMap.filterListForObscuringSymlinks(reporter,null).build().entrySet()).containsExactly(Maps.immutableEntry(pathA,artifactA)).inOrder();
+  obscuringMap.put(pathA,artifactA);
+  obscuringMap.put(new PathFragment("a/b"),new Artifact(new PathFragment("a/b"),root));
+  assertThat(Runfiles.filterListForObscuringSymlinks(reporter,null,obscuringMap).entrySet()).containsExactly(Maps.immutableEntry(pathA,artifactA)).inOrder();
   assertNoEvents();
 }

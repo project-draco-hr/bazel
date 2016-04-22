@@ -1,22 +1,17 @@
 {
   Fingerprint f=new Fingerprint();
   f.addString(GUID);
-  f.addBoolean(runfiles.getLegacyExternalRunfiles());
-  Map<PathFragment,Artifact> symlinks=runfiles.getSymlinksAsMap();
+  Map<PathFragment,Artifact> symlinks=runfiles.getSymlinksAsMap(null);
   f.addInt(symlinks.size());
   for (  Map.Entry<PathFragment,Artifact> symlink : symlinks.entrySet()) {
     f.addPath(symlink.getKey());
-    if (symlink.getValue() != null) {
-      f.addPath(symlink.getValue().getPath());
-    }
+    f.addPath(symlink.getValue().getPath());
   }
   Map<PathFragment,Artifact> rootSymlinks=runfiles.getRootSymlinksAsMap(null);
   f.addInt(rootSymlinks.size());
   for (  Map.Entry<PathFragment,Artifact> rootSymlink : rootSymlinks.entrySet()) {
     f.addPath(rootSymlink.getKey());
-    if (rootSymlink.getValue() != null) {
-      f.addPath(rootSymlink.getValue().getPath());
-    }
+    f.addPath(rootSymlink.getValue().getPath());
   }
   for (  Artifact artifact : runfiles.getArtifactsWithoutMiddlemen()) {
     f.addPath(artifact.getRootRelativePath());
