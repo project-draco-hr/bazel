@@ -1,8 +1,8 @@
 {
   Map<Artifact,Label> map=Maps.newLinkedHashMap();
-  Iterable<FileProvider> providers=ruleContext.getPrerequisites("srcs",Mode.TARGET,FileProvider.class);
-  for (  FileProvider provider : providers) {
-    for (    Artifact artifact : provider.getFilesToBuild()) {
+  Iterable<? extends TransitiveInfoCollection> providers=ruleContext.getPrerequisitesIf("srcs",Mode.TARGET,FileProvider.class);
+  for (  TransitiveInfoCollection provider : providers) {
+    for (    Artifact artifact : provider.getProvider(FileProvider.class).getFilesToBuild()) {
       Label oldLabel=map.put(artifact,provider.getLabel());
       boolean isHeader=CppFileTypes.CPP_HEADER.matches(artifact.getExecPath());
       if (!isHeader && SourceCategory.CC_AND_OBJC.getSourceTypes().matches(artifact.getExecPathString()) && oldLabel != null && !oldLabel.equals(provider.getLabel())) {
