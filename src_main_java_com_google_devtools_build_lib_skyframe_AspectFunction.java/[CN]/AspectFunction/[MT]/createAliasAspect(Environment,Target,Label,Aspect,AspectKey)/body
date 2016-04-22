@@ -1,0 +1,9 @@
+{
+  SkyKey depKey=AspectValue.key(aliasLabel,originalKey.getAspectConfiguration(),originalKey.getBaseConfiguration(),originalKey.getAspectClass(),originalKey.getParameters());
+  AspectValue real=(AspectValue)env.getValue(depKey);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  NestedSet<Package> transitivePackages=NestedSetBuilder.<Package>stableOrder().addTransitive(real.getTransitivePackages()).add(originalTarget.getPackage()).build();
+  return new AspectValue(originalKey,aspect,originalTarget.getLabel(),originalTarget.getLocation(),ConfiguredAspect.forAlias(real.getConfiguredAspect()),ImmutableList.<Action>of(),transitivePackages);
+}

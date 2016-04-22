@@ -1,0 +1,32 @@
+{
+  if (Iterables.isEmpty(aspects)) {
+    return base;
+  }
+  Set<Class<? extends TransitiveInfoProvider>> providers=new HashSet<>();
+  ImmutableSet<Class<? extends TransitiveInfoProvider>> baseProviders=ImmutableSet.copyOf(providers);
+  OutputGroupProvider mergedOutputGroupProvider=OutputGroupProvider.merge(getAllProviders(base,aspects,OutputGroupProvider.class));
+  SkylarkProviders mergedSkylarkProviders=SkylarkProviders.merge(getAllProviders(base,aspects,SkylarkProviders.class));
+  ExtraActionArtifactsProvider mergedExtraActionProviders=ExtraActionArtifactsProvider.merge(getAllProviders(base,aspects,ExtraActionArtifactsProvider.class));
+  Map<Class<? extends TransitiveInfoProvider>,TransitiveInfoProvider> aspectProviders=new LinkedHashMap<>();
+  if (mergedOutputGroupProvider != null) {
+    aspectProviders.put(OutputGroupProvider.class,mergedOutputGroupProvider);
+  }
+  if (mergedSkylarkProviders != null) {
+    aspectProviders.put(SkylarkProviders.class,mergedSkylarkProviders);
+  }
+  if (mergedExtraActionProviders != null) {
+    aspectProviders.put(ExtraActionArtifactsProvider.class,mergedExtraActionProviders);
+  }
+  for (  ConfiguredAspect aspect : aspects) {
+    for (    Map.Entry<Class<? extends TransitiveInfoProvider>,TransitiveInfoProvider> entry : aspect.getProviders().entrySet()) {
+      if (OutputGroupProvider.class.equals(entry.getKey()) || SkylarkProviders.class.equals(entry.getKey()) || ExtraActionArtifactsProvider.class.equals(entry.getKey())) {
+        continue;
+      }
+      if (base.getProvider(entry.getKey()) != null || aspectProviders.containsKey(entry.getKey())) {
+        throw new IllegalStateException("Provider " + entry.getKey() + " provided twice");
+      }
+      aspectProviders.put(entry.getKey(),entry.getValue());
+    }
+  }
+  return new MergedConfiguredTarget(base,ImmutableMap.copyOf(aspectProviders));
+}

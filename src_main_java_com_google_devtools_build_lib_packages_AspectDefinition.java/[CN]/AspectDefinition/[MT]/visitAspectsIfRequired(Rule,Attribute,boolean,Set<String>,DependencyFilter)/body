@@ -1,0 +1,13 @@
+{
+  if (advertisedProviders.isEmpty() && !canHaveAnyProvider) {
+    return ImmutableMultimap.of();
+  }
+  LinkedHashMultimap<Attribute,Label> result=LinkedHashMultimap.create();
+  for (  Aspect candidateClass : attribute.getAspects(from)) {
+    if (!canHaveAnyProvider && !advertisedProviders.containsAll(candidateClass.getDefinition().getRequiredProviderNames())) {
+      continue;
+    }
+    addAllAttributesOfAspect(from,result,candidateClass,dependencyFilter);
+  }
+  return ImmutableMultimap.copyOf(result);
+}
