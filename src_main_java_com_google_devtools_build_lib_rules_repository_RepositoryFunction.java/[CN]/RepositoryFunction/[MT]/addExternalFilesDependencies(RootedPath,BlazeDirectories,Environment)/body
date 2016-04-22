@@ -1,0 +1,32 @@
+{
+  Path externalRepoDir=getExternalRepositoryDirectory(directories);
+  PathFragment repositoryPath=rootedPath.asPath().relativeTo(externalRepoDir);
+  if (repositoryPath.segmentCount() == 0) {
+    return;
+  }
+  String repositoryName=repositoryPath.getSegment(0);
+  Rule repositoryRule;
+  try {
+    repositoryRule=RepositoryFunction.getRule(repositoryName,env);
+  }
+ catch (  RepositoryFunction.RepositoryNotFoundException ex) {
+    return;
+  }
+catch (  RepositoryFunction.RepositoryFunctionException ex) {
+    throw new IllegalStateException("Repository " + repositoryName + " cannot be resolved for path "+ rootedPath,ex);
+  }
+  if (repositoryRule == null) {
+    return;
+  }
+  if (repositoryRule.getRuleClass().equals(NewLocalRepositoryRule.NAME) && repositoryPath.segmentCount() == 1) {
+    PathFragment pathDir=RepositoryFunction.getTargetPath(repositoryRule,directories.getWorkspace());
+    FileSystem fs=directories.getWorkspace().getFileSystem();
+    SkyKey dirKey=DirectoryListingValue.key(RootedPath.toRootedPath(fs.getRootDirectory(),fs.getPath(pathDir)));
+    try {
+      env.getValueOrThrow(dirKey,IOException.class,FileSymlinkException.class,InconsistentFilesystemException.class);
+    }
+ catch (    FileSymlinkException|InconsistentFilesystemException e) {
+      throw new IOException(e.getMessage());
+    }
+  }
+}

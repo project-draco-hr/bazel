@@ -4,7 +4,20 @@
     return null;
   }
   PathFragment pathFragment=getTargetPath(rule,directories.getWorkspace());
-  if (!symlinkLocalRepositoryContents(outputDirectory,directories.getOutputBase().getFileSystem().getPath(pathFragment))) {
+  FileSystem fs=directories.getOutputBase().getFileSystem();
+  Path path=fs.getPath(pathFragment);
+  SkyKey dirKey=DirectoryListingValue.key(RootedPath.toRootedPath(fs.getRootDirectory(),path));
+  DirectoryListingValue directoryValue;
+  try {
+    directoryValue=(DirectoryListingValue)env.getValueOrThrow(dirKey,InconsistentFilesystemException.class);
+  }
+ catch (  InconsistentFilesystemException e) {
+    throw new RepositoryFunctionException(new IOException(e),SkyFunctionException.Transience.PERSISTENT);
+  }
+  if (directoryValue == null) {
+    return null;
+  }
+  if (!symlinkLocalRepositoryContents(outputDirectory,fs.getPath(pathFragment))) {
     return null;
   }
   buildFileHandler.finishBuildFile(outputDirectory);
@@ -18,5 +31,5 @@
     }
   }
   createWorkspaceFile(outputDirectory,rule);
-  return RepositoryDirectoryValue.create(outputDirectory);
+  return RepositoryDirectoryValue.createWithSourceDirectory(outputDirectory,directoryValue);
 }

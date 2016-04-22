@@ -10,18 +10,5 @@
     return;
   }
   Preconditions.checkState(externalFileAction == ExternalFileAction.DEPEND_ON_EXTERNAL_PKG_FOR_EXTERNAL_REPO_FILES,externalFileAction);
-  Path externalRepoDir=pkgLocator.get().getOutputBase().getRelative(Label.EXTERNAL_PATH_PREFIX);
-  PathFragment repositoryPath=rootedPath.asPath().relativeTo(externalRepoDir);
-  if (repositoryPath.segmentCount() == 0) {
-    return;
-  }
-  String repositoryName=repositoryPath.getSegment(0);
-  try {
-    RepositoryFunction.getRule(repositoryName,env);
-  }
- catch (  RepositoryFunction.RepositoryNotFoundException ex) {
-  }
-catch (  RepositoryFunction.RepositoryFunctionException ex) {
-    throw new IllegalStateException("Repository " + repositoryName + " cannot be resolved for path "+ rootedPath,ex);
-  }
+  RepositoryFunction.addExternalFilesDependencies(rootedPath,directories,env);
 }
