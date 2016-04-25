@@ -1,0 +1,32 @@
+{
+synchronized (runningCommands) {
+    boolean idle=runningCommands.isEmpty();
+    boolean wasIdle=false;
+    long shutdownTime=-1;
+    while (true) {
+      if (!wasIdle && idle) {
+        shutdownTime=System.currentTimeMillis() + ((long)maxIdleSeconds) * 1000;
+      }
+      try {
+        if (idle) {
+          Verify.verify(shutdownTime > 0);
+          long waitTime=shutdownTime - System.currentTimeMillis();
+          if (waitTime > 0) {
+            runningCommands.wait(waitTime);
+          }
+        }
+ else {
+          runningCommands.wait();
+        }
+      }
+ catch (      InterruptedException e) {
+      }
+      wasIdle=idle;
+      idle=runningCommands.isEmpty();
+      if (wasIdle && idle && System.currentTimeMillis() >= shutdownTime) {
+        break;
+      }
+    }
+  }
+  server.shutdownNow();
+}

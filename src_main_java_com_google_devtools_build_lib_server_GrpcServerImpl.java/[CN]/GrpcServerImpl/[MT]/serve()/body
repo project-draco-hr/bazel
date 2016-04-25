@@ -3,6 +3,16 @@
   InetAddress loopbackAddress=InetAddress.getLoopbackAddress();
   server=NettyServerBuilder.forAddress(new InetSocketAddress(loopbackAddress,port)).addService(CommandServerGrpc.bindService(this)).build();
   server.start();
+  if (maxIdleSeconds > 0) {
+    Thread timeoutThread=new Thread(new Runnable(){
+      @Override public void run(){
+        timeoutThread();
+      }
+    }
+);
+    timeoutThread.setDaemon(true);
+    timeoutThread.start();
+  }
   serving=true;
   if (port == 0) {
     port=getActualServerPort();
