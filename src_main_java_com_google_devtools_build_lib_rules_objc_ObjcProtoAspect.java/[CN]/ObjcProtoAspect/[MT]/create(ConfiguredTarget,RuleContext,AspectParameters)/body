@@ -1,0 +1,21 @@
+{
+  ConfiguredAspect.Builder aspectBuilder=new ConfiguredAspect.Builder(NAME,ruleContext);
+  ObjcConfiguration objcConfiguration=ruleContext.getFragment(ObjcConfiguration.class);
+  if (!objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
+    return aspectBuilder.build();
+  }
+  ObjcProtoProvider.Builder aspectObjcProtoProvider=new ObjcProtoProvider.Builder();
+  Iterable<ObjcProtoProvider> depObjcProtoProviders=ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProtoProvider.class);
+  aspectObjcProtoProvider.addTransitive(depObjcProtoProviders);
+  if (ruleContext.attributes().has(ObjcProtoLibraryRule.PORTABLE_PROTO_FILTERS_ATTR,LABEL_LIST)) {
+    aspectObjcProtoProvider.addPortableProtoFilters(PrerequisiteArtifacts.nestedSet(ruleContext,ObjcProtoLibraryRule.PORTABLE_PROTO_FILTERS_ATTR,Mode.HOST));
+    Iterable<ProtoSourcesProvider> protoProviders=ruleContext.getPrerequisites("deps",Mode.TARGET,ProtoSourcesProvider.class);
+    for (    ProtoSourcesProvider protoProvider : protoProviders) {
+      aspectObjcProtoProvider.addProtoSources(protoProvider.getTransitiveProtoSources());
+    }
+  }
+  if (!aspectObjcProtoProvider.isEmpty()) {
+    aspectBuilder.addProvider(ObjcProtoProvider.class,aspectObjcProtoProvider.build());
+  }
+  return aspectBuilder.build();
+}
