@@ -1,11 +1,17 @@
 {
-  if (updateThread != null) {
-    updateThread.interrupt();
+  Thread threadToWaitFor=null;
+synchronized (this) {
+    if (updateThread != null) {
+      threadToWaitFor=updateThread;
+      updateThread=null;
+    }
+  }
+  if (threadToWaitFor != null) {
+    threadToWaitFor.interrupt();
     try {
-      updateThread.join();
+      threadToWaitFor.join();
     }
  catch (    InterruptedException e) {
     }
-    updateThread=null;
   }
 }

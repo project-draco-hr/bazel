@@ -1,17 +1,19 @@
 {
   long nowMillis=clock.currentTimeMillis();
   if (lastRefreshMillis + minimalDelayMillis < nowMillis) {
-    try {
-      if (progressBarNeedsRefresh || timeBasedRefresh()) {
-        progressBarNeedsRefresh=false;
-        lastRefreshMillis=nowMillis;
-        clearProgressBar();
-        addProgressBar();
-        terminal.flush();
+synchronized (this) {
+      try {
+        if (progressBarNeedsRefresh || timeBasedRefresh()) {
+          progressBarNeedsRefresh=false;
+          lastRefreshMillis=nowMillis;
+          clearProgressBar();
+          addProgressBar();
+          terminal.flush();
+        }
       }
-    }
- catch (    IOException e) {
-      LOG.warning("IO Error writing to output stream: " + e);
+ catch (      IOException e) {
+        LOG.warning("IO Error writing to output stream: " + e);
+      }
     }
     if (!stateTracker.progressBarTimeDependent()) {
       stopUpdateThread();
