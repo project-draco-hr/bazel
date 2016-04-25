@@ -1,0 +1,15 @@
+{
+  for (  Map.Entry<PathFragment,Artifact> entry : inputManifest.entrySet()) {
+    PathFragment path=entry.getKey();
+    if (isUnderWorkspace(path)) {
+      sawWorkspaceName=true;
+      checker.put(manifest,workspaceName.getRelative(path),entry.getValue());
+    }
+ else {
+      if (legacyExternalRunfiles) {
+        checker.put(manifest,workspaceName.getRelative(path),entry.getValue());
+      }
+      checker.put(manifest,getExternalPath(path),entry.getValue());
+    }
+  }
+}

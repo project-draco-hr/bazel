@@ -23,17 +23,11 @@
   for (  PathFragment extraPath : emptyFilesSupplier.getExtraPaths(manifest.keySet())) {
     checker.put(manifest,extraPath,null);
   }
-  Map<PathFragment,Artifact> rootManifest=new HashMap<>();
-  for (  Map.Entry<PathFragment,Artifact> entry : manifest.entrySet()) {
-    checker.put(rootManifest,suffix.getRelative(entry.getKey()),entry.getValue());
-  }
+  ManifestBuilder builder=new ManifestBuilder(suffix,legacyExternalRunfiles);
+  builder.addUnderWorkspace(manifest,checker);
   if (conflictPolicy == ConflictPolicy.IGNORE) {
     checker=new ConflictChecker(ConflictPolicy.WARN,eventHandler,location);
   }
-  for (  Map.Entry<PathFragment,Artifact> entry : getRootSymlinksAsMap(checker).entrySet()) {
-    PathFragment mappedPath=entry.getKey();
-    Artifact mappedArtifact=entry.getValue();
-    checker.put(rootManifest,mappedPath,mappedArtifact);
-  }
-  return rootManifest;
+  builder.add(getRootSymlinksAsMap(checker),checker);
+  return builder.build();
 }
