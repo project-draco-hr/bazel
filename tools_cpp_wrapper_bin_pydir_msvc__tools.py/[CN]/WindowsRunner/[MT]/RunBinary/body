@@ -12,7 +12,18 @@ def RunBinary(self, binary, args, build_arch, parser):
     build_env = self.SetupEnvironment(build_arch)
     output_filter = re.compile((('(' + ')|('.join(filters)) + ')'))
     includes_filter = re.compile('Note: including file:\\s+(.*)')
-    cmd = ([binary] + args)
+    if parser.params_file:
+        try:
+            params_file = open(parser.params_file, 'w')
+            for arg in args:
+                params_file.write((arg + '\n'))
+            params_file.close()
+        except IOError as e:
+            print 'Could not open', parser.params_file, 'for writing:', str(e)
+            exit((-1))
+        cmd = ([binary] + [('@' + os.path.normpath(parser.params_file))])
+    else:
+        cmd = ([binary] + args)
     proc = subprocess.Popen(cmd, env=build_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     deps = []
     for line in proc.stdout:
