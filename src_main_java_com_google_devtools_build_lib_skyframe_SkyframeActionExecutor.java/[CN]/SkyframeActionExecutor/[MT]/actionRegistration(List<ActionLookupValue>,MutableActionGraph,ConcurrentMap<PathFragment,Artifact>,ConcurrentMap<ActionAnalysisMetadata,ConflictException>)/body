@@ -1,0 +1,24 @@
+{
+  return new Runnable(){
+    @Override public void run(){
+      for (      ActionLookupValue value : values) {
+        Set<ActionAnalysisMetadata> registeredActions=new HashSet<>();
+        for (        Map.Entry<Artifact,ActionAnalysisMetadata> entry : value.getMapForConsistencyCheck().entrySet()) {
+          ActionAnalysisMetadata action=entry.getValue();
+          if (registeredActions.add(action)) {
+            try {
+              actionGraph.registerAction(action);
+            }
+ catch (            ActionConflictException e) {
+              Exception oldException=badActionMap.put(action,new ConflictException(e));
+              Preconditions.checkState(oldException == null,"%s | %s | %s",action,e,oldException);
+              continue;
+            }
+          }
+          artifactPathMap.put(entry.getKey().getExecPath(),entry.getKey());
+        }
+      }
+    }
+  }
+;
+}

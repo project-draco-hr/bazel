@@ -1,8 +1,14 @@
 {
   Preconditions.checkNotNull(artifact);
-  Action action=mutableActionGraph.getGeneratingAction(artifact);
-  if (action != null) {
-    return action;
+  ActionAnalysisMetadata action=mutableActionGraph.getGeneratingAction(artifact);
+  if (action == null) {
+    action=getActionGraph().getGeneratingAction(artifact);
   }
-  return getActionGraph().getGeneratingAction(artifact);
+  if (action != null) {
+    Preconditions.checkState(action instanceof Action,"%s is not a proper Action object",action.prettyPrint());
+    return (Action)action;
+  }
+ else {
+    return null;
+  }
 }

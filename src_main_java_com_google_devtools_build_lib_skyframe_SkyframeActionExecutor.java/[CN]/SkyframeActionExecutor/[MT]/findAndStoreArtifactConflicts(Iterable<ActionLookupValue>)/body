@@ -1,11 +1,11 @@
 {
-  ConcurrentMap<Action,ConflictException> temporaryBadActionMap=new ConcurrentHashMap<>();
+  ConcurrentMap<ActionAnalysisMetadata,ConflictException> temporaryBadActionMap=new ConcurrentHashMap<>();
   Pair<ActionGraph,SortedMap<PathFragment,Artifact>> result;
   result=constructActionGraphAndPathMap(actionLookupValues,temporaryBadActionMap);
   ActionGraph actionGraph=result.first;
   SortedMap<PathFragment,Artifact> artifactPathMap=result.second;
-  Map<Action,ArtifactPrefixConflictException> actionsWithArtifactPrefixConflict=Actions.findArtifactPrefixConflicts(actionGraph,artifactPathMap);
-  for (  Map.Entry<Action,ArtifactPrefixConflictException> actionExceptionPair : actionsWithArtifactPrefixConflict.entrySet()) {
+  Map<ActionAnalysisMetadata,ArtifactPrefixConflictException> actionsWithArtifactPrefixConflict=Actions.findArtifactPrefixConflicts(actionGraph,artifactPathMap);
+  for (  Map.Entry<ActionAnalysisMetadata,ArtifactPrefixConflictException> actionExceptionPair : actionsWithArtifactPrefixConflict.entrySet()) {
     temporaryBadActionMap.put(actionExceptionPair.getKey(),new ConflictException(actionExceptionPair.getValue()));
   }
   this.badActionMap=ImmutableMap.copyOf(temporaryBadActionMap);

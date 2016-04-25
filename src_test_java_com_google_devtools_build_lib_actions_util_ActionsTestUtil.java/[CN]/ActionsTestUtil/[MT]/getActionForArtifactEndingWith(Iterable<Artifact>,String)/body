@@ -1,4 +1,14 @@
 {
   Artifact a=getFirstArtifactEndingWith(artifacts,suffix);
-  return a != null ? actionGraph.getGeneratingAction(a) : null;
+  if (a == null) {
+    return null;
+  }
+  ActionAnalysisMetadata action=actionGraph.getGeneratingAction(a);
+  if (action != null) {
+    Preconditions.checkState(action instanceof Action,"%s is not a proper Action object",action.prettyPrint());
+    return (Action)action;
+  }
+ else {
+    return null;
+  }
 }

@@ -1,0 +1,14 @@
+{
+  Map<Artifact,ActionAnalysisMetadata> generatingActions=new HashMap<>();
+  for (  ActionAnalysisMetadata action : actions) {
+    for (    Artifact artifact : action.getOutputs()) {
+      ActionAnalysisMetadata previousAction=generatingActions.put(artifact,action);
+      if (previousAction != null && previousAction != action) {
+        if (!allowSharedAction || !Actions.canBeShared(previousAction,action)) {
+          throw new ActionConflictException(artifact,previousAction,action);
+        }
+      }
+    }
+  }
+  return generatingActions;
+}

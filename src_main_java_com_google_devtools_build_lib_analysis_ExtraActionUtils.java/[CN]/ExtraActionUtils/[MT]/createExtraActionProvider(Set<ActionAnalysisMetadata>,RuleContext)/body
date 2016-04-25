@@ -1,0 +1,25 @@
+{
+  BuildConfiguration configuration=ruleContext.getConfiguration();
+  if (configuration.isHostConfiguration()) {
+    return ExtraActionArtifactsProvider.EMPTY;
+  }
+  ImmutableList<Artifact> extraActionArtifacts=ImmutableList.of();
+  NestedSetBuilder<ExtraArtifactSet> builder=NestedSetBuilder.stableOrder();
+  List<Label> actionListenerLabels=configuration.getActionListeners();
+  if (!actionListenerLabels.isEmpty() && ruleContext.attributes().getAttributeDefinition(":action_listener") != null) {
+    ExtraActionsVisitor visitor=new ExtraActionsVisitor(ruleContext,computeMnemonicsToExtraActionMap(ruleContext));
+    for (    ActionAnalysisMetadata action : ImmutableList.copyOf(ruleContext.getAnalysisEnvironment().getRegisteredActions())) {
+      if (!actionsWithoutExtraAction.contains(action)) {
+        visitor.maybeAddExtraAction(action);
+      }
+    }
+    extraActionArtifacts=visitor.getAndResetExtraArtifacts();
+    if (!extraActionArtifacts.isEmpty()) {
+      builder.add(ExtraArtifactSet.of(ruleContext.getLabel(),extraActionArtifacts));
+    }
+  }
+  for (  ExtraActionArtifactsProvider provider : AnalysisUtils.getProviders(ruleContext.getConfiguredTargetMap().values(),ExtraActionArtifactsProvider.class)) {
+    builder.addTransitive(provider.getTransitiveExtraActionArtifacts());
+  }
+  return ExtraActionArtifactsProvider.create(NestedSetBuilder.<Artifact>stableOrder().addAll(extraActionArtifacts).build(),builder.build());
+}

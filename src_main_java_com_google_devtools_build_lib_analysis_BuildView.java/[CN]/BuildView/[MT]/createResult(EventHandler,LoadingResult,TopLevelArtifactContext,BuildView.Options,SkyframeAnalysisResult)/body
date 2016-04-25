@@ -18,7 +18,7 @@
     CoverageReportActionsWrapper actionsWrapper;
     actionsWrapper=coverageReportActionFactory.createCoverageReportActionsWrapper(eventHandler,directories,allTargetsToTest,baselineCoverageArtifacts,getArtifactFactory(),CoverageReportValue.ARTIFACT_OWNER);
     if (actionsWrapper != null) {
-      ImmutableList<Action> actions=actionsWrapper.getActions();
+      ImmutableList<ActionAnalysisMetadata> actions=actionsWrapper.getActions();
       skyframeExecutor.injectCoverageReportData(actions);
       artifactsToBuild.addAll(actionsWrapper.getCoverageOutputs());
     }
@@ -27,7 +27,7 @@
   String error=loadingResult.hasLoadingError() || skyframeAnalysisResult.hasLoadingError() ? "execution phase succeeded, but there were loading phase errors" : skyframeAnalysisResult.hasAnalysisError() ? "execution phase succeeded, but not all targets were analyzed" : null;
   final WalkableGraph graph=skyframeAnalysisResult.getWalkableGraph();
   final ActionGraph actionGraph=new ActionGraph(){
-    @Nullable @Override public Action getGeneratingAction(    Artifact artifact){
+    @Nullable @Override public ActionAnalysisMetadata getGeneratingAction(    Artifact artifact){
       ArtifactOwner artifactOwner=artifact.getArtifactOwner();
       if (artifactOwner instanceof ActionLookupValue.ActionLookupKey) {
         SkyKey key=ActionLookupValue.key((ActionLookupValue.ActionLookupKey)artifactOwner);

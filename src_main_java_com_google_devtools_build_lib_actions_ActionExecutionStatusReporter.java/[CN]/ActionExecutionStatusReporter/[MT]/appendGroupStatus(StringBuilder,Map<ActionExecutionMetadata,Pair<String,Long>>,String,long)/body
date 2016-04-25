@@ -1,0 +1,26 @@
+{
+  List<Pair<Long,ActionExecutionMetadata>> actions=new ArrayList<>();
+  for (  Map.Entry<ActionExecutionMetadata,Pair<String,Long>> entry : statusMap.entrySet()) {
+    if (entry.getValue().first.equals(status)) {
+      actions.add(Pair.of(entry.getValue().second,entry.getKey()));
+    }
+  }
+  if (actions.isEmpty()) {
+    return;
+  }
+  Collections.sort(actions,Pair.<Long,ActionExecutionMetadata>compareByFirst());
+  buffer.append("\n      " + status + ":");
+  boolean truncateList=actions.size() > MAX_LINES;
+  for (  Pair<Long,ActionExecutionMetadata> entry : actions.subList(0,truncateList ? MAX_LINES - 1 : actions.size())) {
+    String message=entry.second.getProgressMessage();
+    if (message == null) {
+      message=entry.second.prettyPrint();
+    }
+    buffer.append("\n        ").append(message);
+    long runTime=(currentTime - entry.first) / 1000000000L;
+    buffer.append(", ").append(runTime).append(" s");
+  }
+  if (truncateList) {
+    buffer.append("\n        ... ").append(actions.size() - MAX_LINES + 1).append(" more jobs");
+  }
+}
