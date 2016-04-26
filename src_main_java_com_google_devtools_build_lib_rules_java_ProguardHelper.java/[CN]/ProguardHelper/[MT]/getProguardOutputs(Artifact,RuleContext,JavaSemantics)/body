@@ -1,0 +1,12 @@
+{
+  JavaOptimizationMode optMode=getJavaOptimizationMode(ruleContext);
+  boolean mappingRequested=genProguardMapping(ruleContext.attributes());
+  Artifact proguardOutputMap=null;
+  Artifact proguardOutputProtoMap=null;
+  if (mappingRequested || optMode.alwaysGenerateOutputMapping()) {
+    proguardOutputMap=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_PROGUARD_MAP);
+    proguardOutputProtoMap=semantics.getProtoMapping(ruleContext);
+  }
+  Artifact proguardConfigOutput=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_PROGUARD_CONFIG);
+  return new ProguardOutput(outputJar,proguardOutputMap,proguardOutputProtoMap,proguardConfigOutput);
+}
