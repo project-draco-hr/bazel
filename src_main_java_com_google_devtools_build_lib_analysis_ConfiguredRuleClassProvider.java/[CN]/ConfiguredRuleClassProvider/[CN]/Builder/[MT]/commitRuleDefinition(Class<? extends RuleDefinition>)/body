@@ -1,5 +1,5 @@
 {
-  RuleDefinition instance=checkNotNull(ruleDefinitionInstanceCache.get(definitionClass),"addRuleDefinition(new %s()) should be called before build()",definitionClass.getName());
+  RuleDefinition instance=checkNotNull(ruleDefinitionMap.get(definitionClass.getName()),"addRuleDefinition(new %s()) should be called before build()",definitionClass.getName());
   RuleDefinition.Metadata metadata=instance.getMetadata();
   checkArgument(ruleClassMap.get(metadata.name()) == null,metadata.name());
   List<Class<? extends RuleDefinition>> ancestors=metadata.ancestors();
@@ -21,6 +21,6 @@
   RuleClass ruleClass=instance.build(builder,this);
   ruleMap.put(definitionClass,ruleClass);
   ruleClassMap.put(ruleClass.getName(),ruleClass);
-  ruleDefinitionMap.put(ruleClass.getName(),definitionClass);
+  ruleDefinitionMap.put(ruleClass.getName(),instance);
   return ruleClass;
 }
