@@ -7,9 +7,16 @@
     registerExtractEntitlementsAction(entitlementsNeedingSubstitution);
   }
   Artifact substitutedEntitlements=intermediateArtifacts.entitlements();
-  if (releaseBundling.getExtraEntitlements() != null) {
+  if (attributes.extraEntitlements() != null || includeDebugEntitlements()) {
     substitutedEntitlements=intermediateArtifacts.appendExtensionForEntitlementArtifact(".substituted");
-    registerMergeEntitlementsAction(substitutedEntitlements,releaseBundling.getExtraEntitlements());
+    NestedSetBuilder<Artifact> entitlements=NestedSetBuilder.<Artifact>stableOrder().add(substitutedEntitlements);
+    if (attributes.extraEntitlements() != null) {
+      entitlements.add(attributes.extraEntitlements());
+    }
+    if (includeDebugEntitlements()) {
+      entitlements.add(attributes.deviceDebugEntitlements());
+    }
+    registerMergeEntitlementsAction(entitlements.build());
   }
   registerEntitlementsVariableSubstitutionAction(entitlementsNeedingSubstitution,teamPrefixFile,substitutedEntitlements);
 }

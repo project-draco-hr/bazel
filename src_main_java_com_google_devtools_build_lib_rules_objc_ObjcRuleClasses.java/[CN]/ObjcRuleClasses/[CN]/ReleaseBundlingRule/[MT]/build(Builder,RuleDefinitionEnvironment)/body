@@ -1,10 +1,10 @@
 {
-  return builder.add(attr(ENTITLEMENTS_ATTR,LABEL).allowedFileTypes(ENTITLEMENTS_TYPE)).add(attr(EXTRA_ENTITLEMENTS_ATTR,LABEL).singleArtifact().value(new LateBoundLabel<BuildConfiguration>(ObjcConfiguration.class){
+  return builder.add(attr(ENTITLEMENTS_ATTR,LABEL).allowedFileTypes(ENTITLEMENTS_TYPE)).add(attr(EXTRA_ENTITLEMENTS_ATTR,LABEL).singleArtifact().cfg(HOST).value(new LateBoundLabel<BuildConfiguration>(ObjcConfiguration.class){
     @Override public Label resolve(    Rule rule,    AttributeMap attributes,    BuildConfiguration configuration){
       return configuration.getFragment(ObjcConfiguration.class).getExtraEntitlements();
     }
   }
-).allowedFileTypes(ENTITLEMENTS_TYPE)).add(attr(PROVISIONING_PROFILE_ATTR,LABEL).singleArtifact().allowedFileTypes(FileType.of(".mobileprovision"))).add(attr(DEFAULT_PROVISIONING_PROFILE_ATTR,LABEL).singleArtifact().allowedFileTypes(FileType.of(".mobileprovision")).value(new LateBoundLabel<BuildConfiguration>(ObjcConfiguration.class){
+).allowedFileTypes(ENTITLEMENTS_TYPE)).add(attr(DEBUG_ENTITLEMENTS_ATTR,LABEL).singleArtifact().cfg(HOST).value(env.getToolsLabel("//tools/objc:device_debug_entitlements.plist"))).add(attr(PROVISIONING_PROFILE_ATTR,LABEL).singleArtifact().allowedFileTypes(FileType.of(".mobileprovision"))).add(attr(DEFAULT_PROVISIONING_PROFILE_ATTR,LABEL).singleArtifact().allowedFileTypes(FileType.of(".mobileprovision")).value(new LateBoundLabel<BuildConfiguration>(ObjcConfiguration.class){
     @Override public Label resolve(    Rule rule,    AttributeMap attributes,    BuildConfiguration configuration){
       AppleConfiguration appleConfiguration=configuration.getFragment(AppleConfiguration.class);
       if (appleConfiguration.getBundlingPlatform() != Platform.IOS_DEVICE) {
