@@ -6,11 +6,11 @@
     }
   }
   ImmutableSet<Artifact> otherSwiftSources=otherSwiftSourcesBuilder.build();
-  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder().add(SWIFT).add("-frontend").add("-emit-object").add("-target").add(swiftTarget(appleConfiguration)).add("-sdk").add(AppleToolchain.sdkDir()).add("-enable-objc-interop");
+  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder().add(SWIFT).add("-frontend").add("-emit-object").add("-target").add(swiftTarget(appleConfiguration)).add("-sdk").add(AppleToolchain.sdkDir()).add("-enable-objc-interop").add(objcConfiguration.getSwiftCoptsForCompilationMode());
   if (objcConfiguration.generateDebugSymbols()) {
     commandLine.add("-g");
   }
-  commandLine.add("-Onone").add("-module-name").add(getModuleName()).add("-parse-as-library");
+  commandLine.add("-module-name").add(getModuleName()).add("-parse-as-library");
   addSource("-primary-file",commandLine,sourceFile).addExecPaths(otherSwiftSources).addExecPath("-o",objFile).addExecPath("-emit-module-path",intermediateArtifacts.swiftModuleFile(sourceFile)).add("-Xcc").add("-I.");
   for (  PathFragment directory : objcProvider.get(INCLUDE).toList()) {
     commandLine.add("-Xcc").add(String.format("-I%s",directory.toString()));
