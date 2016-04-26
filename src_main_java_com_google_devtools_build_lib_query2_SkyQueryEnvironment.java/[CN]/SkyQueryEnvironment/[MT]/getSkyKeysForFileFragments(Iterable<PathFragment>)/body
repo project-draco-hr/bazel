@@ -5,21 +5,29 @@
     currentToOriginal.put(pathFragment,pathFragment);
   }
   while (!currentToOriginal.isEmpty()) {
-    Map<SkyKey,PathFragment> keys=new HashMap<>();
-    for (    PathFragment pathFragment : currentToOriginal.keySet()) {
-      keys.put(PackageLookupValue.key(PackageIdentifier.createInMainRepo(pathFragment)),pathFragment);
+    Multimap<SkyKey,PathFragment> packageLookupKeysToOriginal=ArrayListMultimap.create();
+    Multimap<SkyKey,PathFragment> packageLookupKeysToCurrent=ArrayListMultimap.create();
+    for (    Entry<PathFragment,PathFragment> entry : currentToOriginal.entries()) {
+      PathFragment current=entry.getKey();
+      PathFragment original=entry.getValue();
+      for (      SkyKey packageLookupKey : getPkgLookupKeysForFile(original,current)) {
+        packageLookupKeysToOriginal.put(packageLookupKey,original);
+        packageLookupKeysToCurrent.put(packageLookupKey,current);
+      }
     }
-    Map<SkyKey,SkyValue> lookupValues=graph.getSuccessfulValues(keys.keySet());
+    Map<SkyKey,SkyValue> lookupValues=graph.getSuccessfulValues(packageLookupKeysToOriginal.keySet());
     for (    Map.Entry<SkyKey,SkyValue> entry : lookupValues.entrySet()) {
+      SkyKey packageLookupKey=entry.getKey();
       PackageLookupValue packageLookupValue=(PackageLookupValue)entry.getValue();
       if (packageLookupValue.packageExists()) {
-        PathFragment dir=keys.get(entry.getKey());
-        Collection<PathFragment> originalFiles=currentToOriginal.get(dir);
+        Collection<PathFragment> originalFiles=packageLookupKeysToOriginal.get(packageLookupKey);
         Preconditions.checkState(!originalFiles.isEmpty(),entry);
         for (        PathFragment fileName : originalFiles) {
           result.add(FileValue.key(RootedPath.toRootedPath(packageLookupValue.getRoot(),fileName)));
         }
-        currentToOriginal.removeAll(dir);
+        for (        PathFragment current : packageLookupKeysToCurrent.get(packageLookupKey)) {
+          currentToOriginal.removeAll(current);
+        }
       }
     }
     Multimap<PathFragment,PathFragment> newCurrentToOriginal=ArrayListMultimap.create();
