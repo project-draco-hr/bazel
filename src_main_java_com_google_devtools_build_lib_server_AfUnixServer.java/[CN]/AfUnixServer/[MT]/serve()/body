@@ -44,21 +44,27 @@ synchronized (interruptLock) {
             }
           }
           requestIo.shutdown();
-          if (rpcService.isShutdown()) {
-            return;
-          }
-        }
-      }
- catch (      EOFException e) {
-        LOG.info("Connection to the client lost: " + e.getMessage());
-      }
-catch (      IOException e) {
-        printStack(e);
-      }
-    }
+switch (rpcService.getShutdown()) {
+case NONE:
+            break;
+case CLEAN:
+          return;
+case EXPUNGE:
+        disableShutdownHooks();
+      return;
   }
+}
+}
+ catch (EOFException e) {
+LOG.info("Connection to the client lost: " + e.getMessage());
+}
+catch (IOException e) {
+printStack(e);
+}
+}
+}
   finally {
-    rpcService.shutdown();
-    LOG.info("Logging finished");
-  }
+rpcService.shutdown(ShutdownMethod.CLEAN);
+LOG.info("Logging finished");
+}
 }

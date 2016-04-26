@@ -1,12 +1,13 @@
 {
-  if (isShutdown) {
+  if (shutdown != ShutdownMethod.NONE) {
     throw new IllegalStateException("Received request after shutdown.");
   }
   String command=Iterables.getFirst(request,"");
   if (appCommand != null && command.equals("blaze")) {
     int result=appCommand.exec(request.subList(1,request.size()),outErr,LockingMode.ERROR_OUT,"AF_UNIX client",firstContactTime);
-    if (appCommand.shutdown()) {
-      shutdown();
+    ShutdownMethod commandShutdown=appCommand.shutdown();
+    if (commandShutdown != ShutdownMethod.NONE) {
+      shutdown(commandShutdown);
     }
     return result;
   }
