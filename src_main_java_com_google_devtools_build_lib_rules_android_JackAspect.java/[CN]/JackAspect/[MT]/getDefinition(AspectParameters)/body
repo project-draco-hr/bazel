@@ -1,3 +1,10 @@
 {
-  return new AspectDefinition.Builder("JackAspect").requireProvider(JavaSourceInfoProvider.class).add(attr(":android_sdk",LABEL).allowedRuleClasses("android_sdk").value(AndroidRuleClasses.ANDROID_SDK)).attributeAspect("deps",JackAspect.class).attributeAspect("exports",JackAspect.class).attributeAspect("runtime_deps",JackAspect.class).requiresConfigurationFragments(AndroidConfiguration.class).build();
+  Label androidSdk;
+  try {
+    androidSdk=Label.parseAbsolute(Constants.TOOLS_REPOSITORY + AndroidRuleClasses.DEFAULT_SDK);
+  }
+ catch (  LabelSyntaxException e) {
+    throw new IllegalStateException(e);
+  }
+  return new AspectDefinition.Builder("JackAspect").requireProvider(JavaSourceInfoProvider.class).add(attr(":android_sdk",LABEL).allowedRuleClasses("android_sdk").value(new AndroidSdkLabel(androidSdk))).attributeAspect("deps",JackAspect.class).attributeAspect("exports",JackAspect.class).attributeAspect("runtime_deps",JackAspect.class).requiresConfigurationFragments(AndroidConfiguration.class).build();
 }
