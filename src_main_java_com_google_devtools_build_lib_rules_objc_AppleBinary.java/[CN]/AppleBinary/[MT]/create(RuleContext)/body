@@ -1,0 +1,30 @@
+{
+  ImmutableListMultimap<BuildConfiguration,ObjcProvider> configurationToObjcDepMap=ruleContext.getPrerequisitesByConfiguration("deps",Mode.SPLIT,ObjcProvider.class);
+  ImmutableListMultimap<BuildConfiguration,CppCompilationContext> configurationToCcDepMap=ruleContext.getPrerequisitesByConfiguration("deps",Mode.SPLIT,CppCompilationContext.class);
+  ImmutableListMultimap<BuildConfiguration,ObjcProvider> configurationToNonPropagatedObjcMap=ruleContext.getPrerequisitesByConfiguration("non_propagated_deps",Mode.SPLIT,ObjcProvider.class);
+  Set<BuildConfiguration> childConfigurations=getChildConfigurations(ruleContext);
+  IntermediateArtifacts ruleIntermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
+  NestedSetBuilder<Artifact> binariesToLipo=NestedSetBuilder.<Artifact>stableOrder();
+  NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(ruleIntermediateArtifacts.combinedArchitectureBinary());
+  for (  BuildConfiguration childConfig : childConfigurations) {
+    IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext,childConfig);
+    ObjcCommon common=common(ruleContext,childConfig,intermediateArtifacts,nullToEmptyList(configurationToObjcDepMap.get(childConfig)),nullToEmptyList(configurationToNonPropagatedObjcMap.get(childConfig)),nullToEmptyList(configurationToCcDepMap.get(childConfig)));
+    ObjcProvider objcProvider=common.getObjcProvider();
+    if (!hasLibraryOrSources(objcProvider)) {
+      ruleContext.ruleError(REQUIRES_AT_LEAST_ONE_LIBRARY_OR_SOURCE_FILE);
+      return null;
+    }
+    if (ruleContext.hasErrors()) {
+      return null;
+    }
+    binariesToLipo.add(intermediateArtifacts.strippedSingleArchitectureBinary());
+    new CompilationSupport(ruleContext,childConfig).registerCompileAndArchiveActions(common).registerLinkActions(objcProvider,new ExtraLinkArgs(),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
+    if (ruleContext.hasErrors()) {
+      return null;
+    }
+  }
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
+  new LipoSupport(ruleContext).registerCombineArchitecturesAction(binariesToLipo.build(),ruleIntermediateArtifacts.combinedArchitectureBinary(),appleConfiguration.getIosCpuPlatform());
+  RuleConfiguredTargetBuilder targetBuilder=ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build());
+  return targetBuilder.build();
+}

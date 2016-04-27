@@ -27,7 +27,7 @@
   if (compilationAttributes.isPresent()) {
     CompilationAttributes attributes=compilationAttributes.get();
     Iterable<PathFragment> sdkIncludes=Iterables.transform(Interspersing.prependEach(AppleToolchain.sdkDir() + "/usr/include/",PathFragment.safePathStrings(attributes.sdkIncludes())),TO_PATH_FRAGMENT);
-    objcProvider.addAll(HEADER,attributes.hdrs()).addAll(HEADER,attributes.textualHdrs()).addAll(INCLUDE,attributes.headerSearchPaths()).addAll(INCLUDE,sdkIncludes).addAll(SDK_FRAMEWORK,attributes.sdkFrameworks()).addAll(WEAK_SDK_FRAMEWORK,attributes.weakSdkFrameworks()).addAll(SDK_DYLIB,attributes.sdkDylibs());
+    objcProvider.addAll(HEADER,attributes.hdrs()).addAll(HEADER,attributes.textualHdrs()).addAll(INCLUDE,attributes.headerSearchPaths(buildConfiguration.getGenfilesFragment())).addAll(INCLUDE,sdkIncludes).addAll(SDK_FRAMEWORK,attributes.sdkFrameworks()).addAll(WEAK_SDK_FRAMEWORK,attributes.weakSdkFrameworks()).addAll(SDK_DYLIB,attributes.sdkDylibs());
   }
   if (resourceAttributes.isPresent()) {
     ResourceAttributes attributes=resourceAttributes.get();
@@ -74,7 +74,7 @@
       objcProvider.add(FORCE_LOAD_FOR_XCODEGEN,"$(WORKSPACE_ROOT)/" + archive.getExecPath().getSafePathString());
     }
   }
-  if (hasModuleMap && ObjcRuleClasses.objcConfiguration(context).moduleMapsEnabled()) {
+  if (hasModuleMap && buildConfiguration.getFragment(ObjcConfiguration.class).moduleMapsEnabled()) {
     CppModuleMap moduleMap=intermediateArtifacts.moduleMap();
     objcProvider.add(MODULE_MAP,moduleMap.getArtifact());
     objcProvider.add(TOP_LEVEL_MODULE_MAP,moduleMap);

@@ -3,6 +3,6 @@
     return;
   }
   Artifact resultingLinkedBinary=intermediateArtifacts.combinedArchitectureBinary();
-  NestedSet<Artifact> linkedBinaries=linkedBinaries();
-  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext).setMnemonic("ObjcCombiningArchitectures").addTransitiveInputs(linkedBinaries).addOutput(resultingLinkedBinary).setExecutable(CompilationSupport.xcrunwrapper(ruleContext)).setCommandLine(CustomCommandLine.builder().add(ObjcRuleClasses.LIPO).addExecPaths("-create",linkedBinaries).addExecPath("-o",resultingLinkedBinary).build()).build(ruleContext));
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
+  new LipoSupport(ruleContext).registerCombineArchitecturesAction(linkedBinaries(),resultingLinkedBinary,appleConfiguration.getIosCpuPlatform());
 }
