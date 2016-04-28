@@ -27,7 +27,7 @@
   builder.addInputs(directJars);
   builder.addInputs(compileTimeDependencyArtifacts);
   builder.addTool(javacJar);
-  JavaToolchainProvider javaToolchain=JavaToolchainProvider.fromRuleContext(ruleContext);
+  JavaToolchainProvider javaToolchain=ruleContext.getPrerequisite(":java_toolchain" + implicitAttributesSuffix,Mode.TARGET,JavaToolchainProvider.class);
   List<String> jvmArgs=ImmutableList.<String>builder().addAll(javaToolchain.getJavacJvmOptions()).add("-Xbootclasspath/p:" + javacJar.getExecPath().getPathString()).build();
   builder.setJarExecutable(ruleContext.getHostConfiguration().getFragment(Jvm.class).getJavaExecutable(),javaToolchain.getHeaderCompiler(),jvmArgs);
   builder.setResources(RESOURCE_SET);
