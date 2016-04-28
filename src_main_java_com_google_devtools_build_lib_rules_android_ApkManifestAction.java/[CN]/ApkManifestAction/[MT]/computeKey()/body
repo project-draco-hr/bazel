@@ -1,3 +1,16 @@
 {
-  return new Fingerprint().addString(GUID).hexDigestAndReset();
+  ApkManifestCreator manifestCreator=new ApkManifestCreator(new ArtifactDigester(){
+    @Override public byte[] getDigest(    Artifact artifact){
+      return Ints.toByteArray(artifact.getExecPathString().hashCode());
+    }
+  }
+);
+  ApkManifest manifest;
+  try {
+    manifest=manifestCreator.createManifest();
+  }
+ catch (  IOException e) {
+    throw new IllegalStateException(e);
+  }
+  return new Fingerprint().addString(GUID).addBoolean(textOutput).addBytes(manifest.toByteArray()).hexDigestAndReset();
 }

@@ -1,5 +1,10 @@
 {
-  ApkManifestCreator manifestCreator=new ApkManifestCreator(ctx.getMetadataHandler());
+  ApkManifestCreator manifestCreator=new ApkManifestCreator(new ArtifactDigester(){
+    @Override public byte[] getDigest(    Artifact artifact) throws IOException {
+      return ctx.getMetadataHandler().getMetadata(artifact).digest;
+    }
+  }
+);
   final ApkManifest manifest=manifestCreator.createManifest();
   return new DeterministicWriter(){
     @Override public void writeOutputFile(    OutputStream out) throws IOException {
