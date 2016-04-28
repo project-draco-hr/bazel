@@ -1,7 +1,6 @@
 {
   Preconditions.checkState(!serving);
-  InetAddress loopbackAddress=InetAddress.getLoopbackAddress();
-  server=NettyServerBuilder.forAddress(new InetSocketAddress(loopbackAddress,port)).addService(CommandServerGrpc.bindService(this)).build();
+  server=NettyServerBuilder.forAddress(new InetSocketAddress("localhost",port)).addService(CommandServerGrpc.bindService(this)).build();
   server.start();
   if (maxIdleSeconds > 0) {
     Thread timeoutThread=new Thread(new Runnable(){
@@ -14,10 +13,7 @@
     timeoutThread.start();
   }
   serving=true;
-  if (port == 0) {
-    port=getActualServerPort();
-  }
-  writeServerFile(PORT_FILE,loopbackAddress.getHostAddress() + ":" + Integer.toString(port));
+  writeServerFile(PORT_FILE,getAddressString());
   writeServerFile(REQUEST_COOKIE_FILE,requestCookie);
   writeServerFile(RESPONSE_COOKIE_FILE,responseCookie);
   try {

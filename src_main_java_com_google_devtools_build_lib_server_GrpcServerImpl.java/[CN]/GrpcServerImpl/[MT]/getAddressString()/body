@@ -2,7 +2,11 @@
   try {
     ServerSocketChannel channel=(ServerSocketChannel)getField(server,"transportServer","channel","ch");
     InetSocketAddress address=(InetSocketAddress)channel.getLocalAddress();
-    return address.getPort();
+    String host=address.getAddress().getHostAddress();
+    if (host.contains(":")) {
+      host="[" + host + "]";
+    }
+    return host + ":" + address.getPort();
   }
  catch (  IllegalAccessException|NullPointerException|IOException e) {
     throw new IllegalStateException("Cannot read server socket address from gRPC");
