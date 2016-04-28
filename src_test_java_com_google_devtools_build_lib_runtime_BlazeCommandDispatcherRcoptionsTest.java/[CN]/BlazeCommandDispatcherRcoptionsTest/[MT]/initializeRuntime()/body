@@ -1,4 +1,10 @@
 {
   BlazeDirectories directories=new BlazeDirectories(scratch.dir("install_base"),scratch.dir("output_base"),scratch.dir("pkg"));
-  this.runtime=new BlazeRuntime.Builder().setDirectories(directories).setStartupOptionsProvider(OptionsParser.newOptionsParser(BlazeServerStartupOptions.class)).setConfigurationFactory(new ConfigurationFactory(Mockito.mock(ConfigurationCollectionFactory.class))).build();
+  this.runtime=new BlazeRuntime.Builder().setDirectories(directories).setStartupOptionsProvider(OptionsParser.newOptionsParser(BlazeServerStartupOptions.class)).setConfigurationFactory(new ConfigurationFactory(Mockito.mock(ConfigurationCollectionFactory.class))).addBlazeModule(new BlazeModule(){
+    @Override public void initializeRuleClasses(    ConfiguredRuleClassProvider.Builder builder){
+      builder.addConfigurationOptions(BuildConfiguration.Options.class);
+      builder.addConfigurationOptions(MockFragmentOptions.class);
+    }
+  }
+).setInvocationPolicy(InvocationPolicyOuterClass.InvocationPolicy.getDefaultInstance()).build();
 }
