@@ -1,10 +1,10 @@
 {
   writeConfigRules();
   scratch.file("a/BUILD","genrule(","    name = 'gen',","    srcs = [],","    outs = ['out'],","    cmd = select({","        '//conditions:a': 'a command',","        '//conditions:b': 'b command',","        '" + BuildType.Selector.DEFAULT_CONDITION_KEY + "': 'default command',","    }))");
-  useConfiguration("-c","opt");
+  useConfiguration("--define","mode=a");
   assertEquals("a command",getMapper("//a:gen").get("cmd",Type.STRING));
-  useConfiguration("-c","dbg");
+  useConfiguration("--define","mode=b");
   assertEquals("b command",getMapper("//a:gen").get("cmd",Type.STRING));
-  useConfiguration("-c","fastbuild");
+  useConfiguration("--define","mode=c");
   assertEquals("default command",getMapper("//a:gen").get("cmd",Type.STRING));
 }

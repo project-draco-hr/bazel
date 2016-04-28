@@ -1,14 +1,22 @@
 {
   this.originalType=originalType;
-  Map<Label,T> result=Maps.newLinkedHashMap();
+  Map<Label,T> result=new LinkedHashMap<>();
+  ImmutableSet.Builder<Label> defaultValuesBuilder=ImmutableSet.builder();
   boolean foundDefaultCondition=false;
   for (  Entry<?,?> entry : x.entrySet()) {
     Label key=LABEL.convert(entry.getKey(),what,context);
     if (key.equals(DEFAULT_CONDITION_LABEL)) {
       foundDefaultCondition=true;
     }
-    result.put(key,originalType.convert(entry.getValue(),what,context));
+    if (entry.getValue() == Runtime.NONE) {
+      result.put(key,originalType.getDefaultValue());
+      defaultValuesBuilder.add(key);
+    }
+ else {
+      result.put(key,originalType.convert(entry.getValue(),what,context));
+    }
   }
-  map=ImmutableMap.copyOf(result);
+  map=Collections.unmodifiableMap(result);
+  conditionsWithDefaultValues=defaultValuesBuilder.build();
   hasDefaultCondition=foundDefaultCondition;
 }

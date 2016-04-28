@@ -1,0 +1,18 @@
+{
+  SelectorList<?> selectorList=getSelectorList(attributeName,getAttributeType(attributeName));
+  if (selectorList == null) {
+    return super.isAttributeValueExplicitlySpecified(attributeName);
+  }
+  for (  Selector<?> selector : selectorList.getSelectors()) {
+    try {
+      ConfigKeyAndValue<?> resolvedPath=resolveSelector(attributeName,selector);
+      if (selector.isValueSet(resolvedPath.configKey)) {
+        return true;
+      }
+    }
+ catch (    EvalException e) {
+      return true;
+    }
+  }
+  return false;
+}

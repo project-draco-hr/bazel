@@ -5,7 +5,15 @@
   }
   List<T> resolvedList=new ArrayList<>();
   for (  Selector<T> selector : selectorList.getSelectors()) {
-    resolvedList.add(resolveSelector(attributeName,selector));
+    ConfigKeyAndValue<T> resolvedPath=resolveSelector(attributeName,selector);
+    if (!selector.isValueSet(resolvedPath.configKey)) {
+      Attribute attr=getAttributeDefinition(attributeName);
+      Verify.verify(attr.getCondition() == Predicates.<AttributeMap>alwaysTrue());
+      resolvedList.add((T)attr.getDefaultValue(null));
+    }
+ else {
+      resolvedList.add(resolvedPath.value);
+    }
   }
   return resolvedList.size() == 1 ? resolvedList.get(0) : type.concat(resolvedList);
 }

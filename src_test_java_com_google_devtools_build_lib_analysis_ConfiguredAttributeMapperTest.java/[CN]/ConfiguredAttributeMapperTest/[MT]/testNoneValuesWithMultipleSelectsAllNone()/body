@@ -1,0 +1,8 @@
+{
+  writeConfigRules();
+  scratch.file("a/BUILD","genrule(","    name = 'gen',","    srcs = [],","    outs = ['out'],","    cmd = '',","    message = select({","        '//conditions:a': 'defined message 1',","        '//conditions:b': None,","    }) + select({","        '//conditions:a': 'defined message 2',","        '//conditions:b': None,","    }),",")");
+  useConfiguration("--define","mode=a");
+  assertThat(getMapper("//a:gen").isAttributeValueExplicitlySpecified("message")).isTrue();
+  useConfiguration("--define","mode=b");
+  assertThat(getMapper("//a:gen").isAttributeValueExplicitlySpecified("message")).isFalse();
+}

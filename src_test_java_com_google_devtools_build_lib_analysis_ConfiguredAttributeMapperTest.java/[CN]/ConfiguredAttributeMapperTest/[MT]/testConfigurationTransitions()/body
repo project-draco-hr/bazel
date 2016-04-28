@@ -1,7 +1,7 @@
 {
   writeConfigRules();
   scratch.file("a/BUILD","genrule(","    name = 'gen',","    srcs = [],","    outs = ['out'],","    cmd = 'nothing',","    tools = select({","        '//conditions:a': [':adep'],","        '//conditions:b': [':bdep'],","        '" + BuildType.Selector.DEFAULT_CONDITION_KEY + "': [':defaultdep'],","    }))","sh_binary(","    name = 'adep',","    srcs = ['adep.sh'])","sh_binary(","    name = 'bdep',","    srcs = ['bdep.sh'])","sh_binary(","    name = 'defaultdep',","    srcs = ['defaultdep.sh'])");
-  useConfiguration("-c","dbg");
+  useConfiguration("--define","mode=b");
   assertThat(getMapper("//a:gen").get("tools",BuildType.LABEL_LIST)).containsExactlyElementsIn(ImmutableList.of(Label.parseAbsolute("//a:bdep")));
   assertEquals(Attribute.ConfigurationTransition.HOST,getTarget("//a:gen").getAssociatedRule().getRuleClassObject().getAttributeByName("tools").getConfigurationTransition());
   assertEquals(CompilationMode.OPT,getHostConfiguration().getCompilationMode());
