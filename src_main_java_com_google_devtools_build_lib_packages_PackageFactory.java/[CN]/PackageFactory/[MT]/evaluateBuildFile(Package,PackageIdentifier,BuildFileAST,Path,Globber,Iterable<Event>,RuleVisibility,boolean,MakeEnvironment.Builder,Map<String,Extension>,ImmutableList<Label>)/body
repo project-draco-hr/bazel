@@ -2,7 +2,7 @@
   Package.LegacyBuilder pkgBuilder=new Package.LegacyBuilder(packageId,ruleClassProvider.getRunfilesPrefix());
   StoredEventHandler eventHandler=new StoredEventHandler();
   try (Mutability mutability=Mutability.create("package %s",packageId)){
-    Environment pkgEnv=Environment.builder(mutability).setGlobals(Environment.BUILD).setEventHandler(eventHandler).setImportedExtensions(imports).setLoadingPhase().build();
+    Environment pkgEnv=Environment.builder(mutability).setGlobals(Environment.BUILD).setEventHandler(eventHandler).setImportedExtensions(imports).setToolsRepository(ruleClassProvider.getToolsRepository()).setPhase(Phase.LOADING).build();
     pkgBuilder.setFilename(buildFilePath).setMakeEnv(pkgMakeEnv).setDefaultVisibility(defaultVisibility).setDefaultVisibilitySet(false).setSkylarkFileDependencies(skylarkFileDependencies).setWorkspaceName(externalPkg.getWorkspaceName());
     Event.replayEventsOn(eventHandler,pastEvents);
     PackageContext context=new PackageContext(pkgBuilder,globber,eventHandler);
