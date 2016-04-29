@@ -11,15 +11,15 @@
   final boolean collectCodeCoverage=config.isCodeCoverageEnabled() && instrumentedFiles != null;
   TestTargetExecutionSettings executionSettings;
   if (collectCodeCoverage) {
-    ImmutableList<Artifact> metadataFiles=ImmutableList.copyOf(instrumentedFiles.getInstrumentationMetadataFiles());
-    inputsBuilder.addTransitive(NestedSetBuilder.wrap(Order.STABLE_ORDER,metadataFiles));
+    NestedSet<Artifact> metadataFiles=instrumentedFiles.getInstrumentationMetadataFiles();
+    inputsBuilder.addTransitive(metadataFiles);
     for (    TransitiveInfoCollection dep : ruleContext.getPrerequisites(":coverage_support",Mode.HOST)) {
       inputsBuilder.addTransitive(dep.getProvider(FileProvider.class).getFilesToBuild());
     }
     for (    TransitiveInfoCollection dep : ruleContext.getPrerequisites(":gcov",Mode.HOST)) {
       inputsBuilder.addTransitive(dep.getProvider(FileProvider.class).getFilesToBuild());
     }
-    Artifact instrumentedFileManifest=InstrumentedFileManifestAction.getInstrumentedFileManifest(ruleContext,ImmutableList.copyOf(instrumentedFiles.getInstrumentedFiles()),metadataFiles);
+    Artifact instrumentedFileManifest=InstrumentedFileManifestAction.getInstrumentedFileManifest(ruleContext,instrumentedFiles.getInstrumentedFiles(),metadataFiles);
     executionSettings=new TestTargetExecutionSettings(ruleContext,runfilesSupport,executable,instrumentedFileManifest,shards);
     inputsBuilder.add(instrumentedFileManifest);
   }

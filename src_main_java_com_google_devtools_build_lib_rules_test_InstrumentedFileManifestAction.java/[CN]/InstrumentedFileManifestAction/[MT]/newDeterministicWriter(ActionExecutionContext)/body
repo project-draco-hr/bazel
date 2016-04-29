@@ -1,27 +1,15 @@
 {
   return new DeterministicWriter(){
     @Override public void writeOutputFile(    OutputStream out) throws IOException {
-      Writer writer=null;
-      try {
-        String[] fileNames=Iterables.toArray(Iterables.transform(Iterables.concat(collectedSourceFiles,metadataFiles),new Function<Artifact,String>(){
-          @Override public String apply(          Artifact artifact){
-            return artifact.getExecPathString();
-          }
-        }
-),String.class);
-        Arrays.sort(fileNames);
-        writer=new OutputStreamWriter(out,ISO_8859_1);
+      String[] fileNames=Iterables.toArray(Iterables.transform(files,TO_EXEC_PATH),String.class);
+      Arrays.sort(fileNames);
+      try (Writer writer=new OutputStreamWriter(out,ISO_8859_1)){
         for (        String name : fileNames) {
           writer.write(name);
           writer.write('\n');
         }
       }
-  finally {
-        if (writer != null) {
-          writer.close();
-        }
-      }
-    }
+     }
   }
 ;
 }
