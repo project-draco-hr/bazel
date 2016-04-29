@@ -2,11 +2,20 @@
   if (invocationPolicy == null || invocationPolicy.getFlagPoliciesCount() == 0) {
     return;
   }
+  ImmutableSet<String> commandAndParentCommands=command == null ? ImmutableSet.<String>of() : CommandNameCache.CommandNameCacheInstance.INSTANCE.get(command);
   for (  FlagPolicy flagPolicy : invocationPolicy.getFlagPoliciesList()) {
     String flagName=flagPolicy.getFlagName();
-    if (!flagPolicy.getCommandsList().isEmpty() && !flagPolicy.getCommandsList().contains(command)) {
-      log.info(String.format("Skipping flag policy for flag '%s' because it " + "applies only to commands %s and the current command is '%s'",flagName,flagPolicy.getCommandsList(),command));
-      continue;
+    if (!flagPolicy.getCommandsList().isEmpty() && !commandAndParentCommands.isEmpty()) {
+      boolean flagApplies=false;
+      for (      String policyCommand : flagPolicy.getCommandsList()) {
+        if (commandAndParentCommands.contains(policyCommand)) {
+          flagApplies=true;
+          break;
+        }
+      }
+      if (!flagApplies) {
+        continue;
+      }
     }
     OptionValueDescription valueDescription;
     try {

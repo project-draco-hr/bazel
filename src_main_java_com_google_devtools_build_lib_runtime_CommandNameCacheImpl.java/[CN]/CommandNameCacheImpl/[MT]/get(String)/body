@@ -1,0 +1,25 @@
+{
+  ImmutableSet<String> cachedResult=cache.get(commandName);
+  if (cachedResult != null) {
+    return cachedResult;
+  }
+  ImmutableSet.Builder<String> builder=ImmutableSet.builder();
+  Command command=Preconditions.checkNotNull(commandMap.get(commandName),commandName);
+  Set<Command> visited=new HashSet<>();
+  visited.add(command);
+  Queue<Command> queue=new ArrayDeque<>();
+  queue.add(command);
+  while (!queue.isEmpty()) {
+    Command cur=queue.remove();
+    builder.add(cur.name());
+    for (    Class<? extends BlazeCommand> clazz : cur.inherits()) {
+      Command parent=clazz.getAnnotation(Command.class);
+      if (visited.add(parent)) {
+        queue.add(parent);
+      }
+    }
+  }
+  cachedResult=builder.build();
+  cache.put(commandName,cachedResult);
+  return cachedResult;
+}
