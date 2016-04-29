@@ -27,7 +27,7 @@
       ExecutorService threadPool=Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),new ThreadFactoryBuilder().setNameFormat("GetPackages-%d").build());
       RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,eventHandler,targetPatternKey.getPolicy(),threadPool);
       TargetPattern parsedPattern=targetPatternKey.getParsedPattern();
-      ImmutableSet<PathFragment> subdirectoriesToExclude=targetPatternKey.getAllSubdirectoriesToExclude(blacklistPatterns);
+      ImmutableSet<PathFragment> subdirectoriesToExclude=targetPatternKey.getAllSubdirectoriesToExclude(blacklistPatternsSupplier.get());
       FilteringBatchingUniquifyingCallback wrapper=new FilteringBatchingUniquifyingCallback(callback);
       parsedPattern.eval(resolver,subdirectoriesToExclude,wrapper,QueryException.class);
       wrapper.processLastPending();
