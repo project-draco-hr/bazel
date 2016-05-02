@@ -1,0 +1,6 @@
+def MatchObjectNamesInArchive(xcrunwrapper, archive, object_names):
+    "Returns object names matching their identity in an archive file.\n\n  The linker that blaze uses appends an md5 hash to object file\n  names prior to inclusion in the archive file. Thus, object names\n  such as 'foo.o' need to be matched to their appropriate name in\n  the archive file, such as 'foo_<hash>.o'.\n\n  Args:\n    xcrunwrapper: A wrapper script over xcrun.\n    archive: The location of the archive file.\n    object_names: The expected basenames of object files to match,\n        sans extension. For example 'foo' (not 'foo.o').\n  Returns:\n    A list of basenames of matching members of the given archive\n  "
+    ar_contents_cmd = ('%s ar -t %s' % (xcrunwrapper, archive))
+    real_object_names = subprocess.check_output(ar_contents_cmd, shell=True)
+    expected_object_name_regex = ('^(?:%s)_[0-9a-f]{32}.o' % '|'.join([re.escape(name) for name in object_names]))
+    return re.findall(expected_object_name_regex, real_object_names, flags=re.MULTILINE)
