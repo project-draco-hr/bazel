@@ -3,7 +3,7 @@
   CompilationArtifacts compilationArtifacts=CompilationSupport.compilationArtifacts(ruleContext);
   ObjcCommon.Builder builder=new ObjcCommon.Builder(ruleContext).setCompilationAttributes(new CompilationAttributes(ruleContext)).setResourceAttributes(new ResourceAttributes(ruleContext)).setCompilationArtifacts(compilationArtifacts).addDefines(ruleContext.getTokenizedStringListAttr("defines")).addDepObjcProviders(ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProvider.class)).addDepCcHeaderProviders(ruleContext.getPrerequisites("deps",Mode.TARGET,CppCompilationContext.class)).addDepCcLinkProviders(ruleContext.getPrerequisites("deps",Mode.TARGET)).addDepObjcProviders(ruleContext.getPrerequisites("bundles",Mode.TARGET,ObjcProvider.class)).addNonPropagatedDepObjcProviders(ruleContext.getPrerequisites("non_propagated_deps",Mode.TARGET,ObjcProvider.class)).setIntermediateArtifacts(intermediateArtifacts).setAlwayslink(false).setHasModuleMap().setLinkedBinary(intermediateArtifacts.strippedSingleArchitectureBinary());
   builder.addDepObjcProviders(createSkylarkObjcProviders(ruleContext));
-  if (ObjcRuleClasses.objcConfiguration(ruleContext).generateDebugSymbols()) {
+  if (ObjcRuleClasses.objcConfiguration(ruleContext).generateDebugSymbols() || ObjcRuleClasses.objcConfiguration(ruleContext).generateDsym()) {
     builder.addDebugArtifacts(DsymOutputType.APP);
   }
   if (ObjcRuleClasses.objcConfiguration(ruleContext).generateLinkmap()) {
