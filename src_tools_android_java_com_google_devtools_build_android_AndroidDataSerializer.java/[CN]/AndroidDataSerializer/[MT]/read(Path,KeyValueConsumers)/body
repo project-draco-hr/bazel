@@ -1,0 +1,17 @@
+{
+  Stopwatch timer=Stopwatch.createStarted();
+  try (InputStream in=Files.newInputStream(inPath,StandardOpenOption.READ)){
+    FileSystem currentFileSystem=inPath.getFileSystem();
+    Header header=Header.parseDelimitedFrom(in);
+    if (header == null) {
+      throw new DeserializationException("No Header found in " + inPath);
+    }
+    readEntriesSegment(consumers,in,currentFileSystem,header.getEntryCount());
+  }
+ catch (  IOException e) {
+    throw new DeserializationException(e);
+  }
+ finally {
+    logger.fine(String.format("Deserialized in merged in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+  }
+}
