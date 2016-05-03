@@ -1,7 +1,7 @@
 {
   ImmutableList<Artifact> proguardSpecs=ProguardHelper.collectTransitiveProguardSpecs(ruleContext,ImmutableList.of(resourceApk.getResourceProguardConfig()));
   Artifact resourceApkArtifact=shrinkResources(ruleContext,androidCommon,resourceApk,binaryJar,proguardSpecs);
-  ProguardOutput proguardOutput=applyProguard(ruleContext,androidCommon,javaSemantics,binaryJar,filesBuilder,proguardSpecs,proguardMapping);
+  ProguardOutput proguardOutput=applyProguard(ruleContext,androidCommon,binaryJar,filesBuilder,proguardSpecs,proguardMapping);
   Artifact jarToDex=proguardOutput.getOutputJar();
   DexingOutput dexingOutput=shouldDexWithJack(ruleContext) ? dexWithJack(ruleContext,androidCommon,proguardSpecs) : dex(ruleContext,binaryJar,jarToDex,isBinaryJarFiltered,androidCommon,resourceClasses);
   if (dexingOutput == null) {
@@ -86,7 +86,7 @@
   androidCommon.addTransitiveInfoProviders(builder,androidSemantics,resourceApk,zipAlignedApk,apksUnderTest);
   androidSemantics.addTransitiveInfoProviders(builder,ruleContext,javaCommon,androidCommon,jarToDex);
   if (proguardOutput.getMapping() != null) {
-    builder.add(ProguardMappingProvider.class,new ProguardMappingProvider(proguardOutput.getMapping(),proguardOutput.getProtoMapping()));
+    builder.add(ProguardMappingProvider.class,new ProguardMappingProvider(proguardOutput.getMapping()));
   }
   return builder.setFilesToBuild(filesToBuild).add(RunfilesProvider.class,RunfilesProvider.simple(new Runfiles.Builder(ruleContext.getWorkspaceName(),ruleContext.getConfiguration().legacyExternalRunfiles()).addRunfiles(ruleContext,RunfilesProvider.DEFAULT_RUNFILES).addTransitiveArtifacts(filesToBuild).build())).add(JavaSourceInfoProvider.class,JavaSourceInfoProvider.fromJavaTargetAttributes(resourceClasses,javaSemantics)).add(ApkProvider.class,new ApkProvider(NestedSetBuilder.create(Order.STABLE_ORDER,zipAlignedApk),coverageMetadata,NestedSetBuilder.create(Order.STABLE_ORDER,applicationManifest.getManifest()))).add(AndroidPreDexJarProvider.class,new AndroidPreDexJarProvider(jarToDex)).addOutputGroup("mobile_install_full",fullInstallOutputGroup).addOutputGroup("mobile_install_incremental",incrementalInstallOutputGroup).addOutputGroup("mobile_install_split",splitInstallOutputGroup).addOutputGroup("apk_manifest",apkManifest).addOutputGroup("apk_manifest_text",apkManifestText).addOutputGroup("android_deploy_info",deployInfo);
 }
