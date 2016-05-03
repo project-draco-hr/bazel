@@ -1,0 +1,23 @@
+{
+  List<Class<? extends TransitiveInfoProvider>> mandatoryProvidersList=attribute.getMandatoryNativeProviders();
+  if (mandatoryProvidersList.isEmpty()) {
+    return null;
+  }
+  List<Class<? extends TransitiveInfoProvider>> missing=new ArrayList<>();
+  for (  Class<? extends TransitiveInfoProvider> provider : mandatoryProvidersList) {
+    if (prerequisite.getProvider(provider) == null) {
+      missing.add(provider);
+    }
+  }
+  if (missing.isEmpty()) {
+    return null;
+  }
+  StringBuilder sb=new StringBuilder();
+  for (  Class<? extends TransitiveInfoProvider> provider : missing) {
+    if (sb.length() > 0) {
+      sb.append(", ");
+    }
+    sb.append(provider.getSimpleName());
+  }
+  return sb.toString();
+}
