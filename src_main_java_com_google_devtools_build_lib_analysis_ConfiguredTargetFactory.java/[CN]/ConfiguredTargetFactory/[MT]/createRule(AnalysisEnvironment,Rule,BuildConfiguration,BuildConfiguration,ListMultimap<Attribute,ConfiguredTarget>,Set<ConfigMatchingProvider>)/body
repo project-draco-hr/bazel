@@ -1,5 +1,5 @@
 {
-  RuleContext ruleContext=new RuleContext.Builder(env,rule,null,configuration,hostConfiguration,ruleClassProvider.getPrerequisiteValidator(),rule.getRuleClassObject().getConfigurationFragmentPolicy()).setVisibility(convertVisibility(prerequisiteMap,env.getEventHandler(),rule,null)).setPrerequisites(prerequisiteMap).setConfigConditions(configConditions).setUniversalFragment(ruleClassProvider.getUniversalFragment()).build();
+  RuleContext ruleContext=new RuleContext.Builder(env,rule,null,configuration,hostConfiguration,ruleClassProvider.getPrerequisiteValidator(),rule.getRuleClassObject().getConfigurationFragmentPolicy()).setVisibility(convertVisibility(prerequisiteMap,env.getEventHandler(),rule,null)).setPrerequisites(prerequisiteMap).setConfigConditions(configConditions).setUniversalFragment(ruleClassProvider.getUniversalFragment()).setSkylarkProvidersRegistry(ruleClassProvider.getRegisteredSkylarkProviders()).build();
   if (ruleContext.hasErrors()) {
     return null;
   }
@@ -13,7 +13,7 @@
     return createFailConfiguredTarget(ruleContext);
   }
   if (rule.getRuleClassObject().isSkylarkExecutable()) {
-    return SkylarkRuleConfiguredTargetBuilder.buildRule(ruleContext,rule.getRuleClassObject().getConfiguredTargetFunction());
+    return SkylarkRuleConfiguredTargetBuilder.buildRule(ruleContext,rule.getRuleClassObject().getConfiguredTargetFunction(),ruleClassProvider.getRegisteredSkylarkProviders());
   }
  else {
     RuleClass.ConfiguredTargetFactory<ConfiguredTarget,RuleContext> factory=rule.getRuleClassObject().<ConfiguredTarget,RuleContext>getConfiguredTargetFactory();

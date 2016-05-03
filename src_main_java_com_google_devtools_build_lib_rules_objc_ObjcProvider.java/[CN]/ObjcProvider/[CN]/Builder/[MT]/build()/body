@@ -1,15 +1,28 @@
 {
-  ImmutableMap.Builder<Key<?>,NestedSet<?>> propagated=new ImmutableMap.Builder<>();
+  ImmutableMap.Builder<Key<?>,NestedSet<?>> propagatedBuilder=new ImmutableMap.Builder<>();
   for (  Map.Entry<Key<?>,NestedSetBuilder<?>> typeEntry : items.entrySet()) {
-    propagated.put(typeEntry.getKey(),typeEntry.getValue().build());
+    propagatedBuilder.put(typeEntry.getKey(),typeEntry.getValue().build());
   }
-  ImmutableMap.Builder<Key<?>,NestedSet<?>> nonPropagated=new ImmutableMap.Builder<>();
+  ImmutableMap.Builder<Key<?>,NestedSet<?>> nonPropagatedBuilder=new ImmutableMap.Builder<>();
   for (  Map.Entry<Key<?>,NestedSetBuilder<?>> typeEntry : nonPropagatedItems.entrySet()) {
-    nonPropagated.put(typeEntry.getKey(),typeEntry.getValue().build());
+    nonPropagatedBuilder.put(typeEntry.getKey(),typeEntry.getValue().build());
   }
-  ImmutableMap.Builder<Key<?>,NestedSet<?>> strictDependency=new ImmutableMap.Builder<>();
+  ImmutableMap.Builder<Key<?>,NestedSet<?>> strictDependencyBuilder=new ImmutableMap.Builder<>();
   for (  Map.Entry<Key<?>,NestedSetBuilder<?>> typeEntry : strictDependencyItems.entrySet()) {
-    strictDependency.put(typeEntry.getKey(),typeEntry.getValue().build());
+    strictDependencyBuilder.put(typeEntry.getKey(),typeEntry.getValue().build());
   }
-  return new ObjcProvider(propagated.build(),nonPropagated.build(),strictDependency.build());
+  ImmutableMap<Key<?>,NestedSet<?>> propagated=propagatedBuilder.build();
+  ImmutableMap<Key<?>,NestedSet<?>> nonPropagated=nonPropagatedBuilder.build();
+  ImmutableMap<Key<?>,NestedSet<?>> strictDependency=strictDependencyBuilder.build();
+  ImmutableMap.Builder<String,Object> skylarkFields=new ImmutableMap.Builder<>();
+  for (  Key<?> key : KEYS_FOR_SKYLARK) {
+    SkylarkType type=SkylarkType.of(key.getType());
+    if (items.containsKey(key)) {
+      skylarkFields.put(key.getSkylarkKeyName(),SkylarkNestedSet.of(type,propagated.get(key)));
+    }
+    if (strictDependency.containsKey(key)) {
+      skylarkFields.put(key.getSkylarkKeyName(),SkylarkNestedSet.of(type,strictDependency.get(key)));
+    }
+  }
+  return new ObjcProvider(propagated,nonPropagated,strictDependency,skylarkFields.build());
 }

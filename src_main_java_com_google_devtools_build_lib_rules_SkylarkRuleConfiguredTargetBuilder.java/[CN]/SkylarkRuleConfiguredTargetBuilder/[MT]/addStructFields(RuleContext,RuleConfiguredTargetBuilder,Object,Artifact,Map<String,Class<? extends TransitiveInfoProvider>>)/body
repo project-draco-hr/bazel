@@ -1,0 +1,87 @@
+{
+  Location loc=null;
+  Runfiles statelessRunfiles=null;
+  Runfiles dataRunfiles=null;
+  Runfiles defaultRunfiles=null;
+  if (target instanceof SkylarkClassObject) {
+    SkylarkClassObject struct=(SkylarkClassObject)target;
+    loc=struct.getCreationLoc();
+    for (    String key : struct.getKeys()) {
+      if (key.equals("files")) {
+        builder.setFilesToBuild(cast("files",struct,SkylarkNestedSet.class,Artifact.class,loc).getSet(Artifact.class));
+      }
+ else       if (key.equals("runfiles")) {
+        statelessRunfiles=cast("runfiles",struct,Runfiles.class,loc);
+      }
+ else       if (key.equals("data_runfiles")) {
+        dataRunfiles=cast("data_runfiles",struct,Runfiles.class,loc);
+      }
+ else       if (key.equals("default_runfiles")) {
+        defaultRunfiles=cast("default_runfiles",struct,Runfiles.class,loc);
+      }
+ else       if (key.equals("output_groups")) {
+        addOutputGroups(struct.getValue(key),loc,builder);
+      }
+ else       if (key.equals("instrumented_files")) {
+        SkylarkClassObject insStruct=cast("instrumented_files",struct,SkylarkClassObject.class,loc);
+        Location insLoc=insStruct.getCreationLoc();
+        FileTypeSet fileTypeSet=FileTypeSet.ANY_FILE;
+        if (insStruct.getKeys().contains("extensions")) {
+          List<String> exts=cast("extensions",insStruct,SkylarkList.class,String.class,insLoc);
+          if (exts.isEmpty()) {
+            fileTypeSet=FileTypeSet.NO_FILE;
+          }
+ else {
+            FileType[] fileTypes=new FileType[exts.size()];
+            for (int i=0; i < fileTypes.length; i++) {
+              fileTypes[i]=FileType.of(exts.get(i));
+            }
+            fileTypeSet=FileTypeSet.of(fileTypes);
+          }
+        }
+        List<String> dependencyAttributes=Collections.emptyList();
+        if (insStruct.getKeys().contains("dependency_attributes")) {
+          dependencyAttributes=cast("dependency_attributes",insStruct,SkylarkList.class,String.class,insLoc);
+        }
+        List<String> sourceAttributes=Collections.emptyList();
+        if (insStruct.getKeys().contains("source_attributes")) {
+          sourceAttributes=cast("source_attributes",insStruct,SkylarkList.class,String.class,insLoc);
+        }
+        InstrumentationSpec instrumentationSpec=new InstrumentationSpec(fileTypeSet).withSourceAttributes(sourceAttributes.toArray(new String[0])).withDependencyAttributes(dependencyAttributes.toArray(new String[0]));
+        InstrumentedFilesProvider instrumentedFilesProvider=InstrumentedFilesCollector.collect(ruleContext,instrumentationSpec,InstrumentedFilesCollector.NO_METADATA_COLLECTOR,Collections.<Artifact>emptySet());
+        builder.addProvider(InstrumentedFilesProvider.class,instrumentedFilesProvider);
+      }
+ else       if (registeredProviderTypes.containsKey(key)) {
+        Class<? extends TransitiveInfoProvider> providerType=registeredProviderTypes.get(key);
+        TransitiveInfoProvider provider=cast(key,struct,providerType,loc);
+        builder.addProvider(providerType,provider);
+      }
+ else       if (!key.equals("executable")) {
+        builder.addSkylarkTransitiveInfo(key,struct.getValue(key),loc);
+      }
+    }
+  }
+  if ((statelessRunfiles != null) && (dataRunfiles != null || defaultRunfiles != null)) {
+    throw new EvalException(loc,"Cannot specify the provider 'runfiles' " + "together with 'data_runfiles' or 'default_runfiles'");
+  }
+  if (statelessRunfiles == null && dataRunfiles == null && defaultRunfiles == null) {
+    statelessRunfiles=Runfiles.EMPTY;
+  }
+  RunfilesProvider runfilesProvider=statelessRunfiles != null ? RunfilesProvider.simple(merge(statelessRunfiles,executable,ruleContext)) : RunfilesProvider.withData(defaultRunfiles != null ? defaultRunfiles : Runfiles.EMPTY,dataRunfiles != null ? dataRunfiles : Runfiles.EMPTY);
+  builder.addProvider(RunfilesProvider.class,runfilesProvider);
+  Runfiles computedDefaultRunfiles=runfilesProvider.getDefaultRunfiles();
+  boolean testRule=TargetUtils.isTestRuleName(ruleContext.getRule().getRuleClass());
+  if (testRule && computedDefaultRunfiles.isEmpty()) {
+    throw new EvalException(loc,"Test rules have to define runfiles");
+  }
+  if (executable != null || testRule) {
+    RunfilesSupport runfilesSupport=computedDefaultRunfiles.isEmpty() ? null : RunfilesSupport.withExecutable(ruleContext,computedDefaultRunfiles,executable);
+    builder.setRunfilesSupport(runfilesSupport,executable);
+  }
+  try {
+    return builder.build();
+  }
+ catch (  IllegalArgumentException e) {
+    throw new EvalException(loc,e.getMessage());
+  }
+}
