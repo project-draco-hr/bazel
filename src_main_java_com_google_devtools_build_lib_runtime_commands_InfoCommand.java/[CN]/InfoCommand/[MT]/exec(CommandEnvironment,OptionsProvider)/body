@@ -28,12 +28,12 @@ catch (      InterruptedException e) {
     }
   }
 ;
-  Map<String,BlazeModule.InfoItem> items=getInfoItemMap(runtime,optionsProvider);
+  Map<String,InfoItem> items=getInfoItemMap(env,optionsProvider);
   try {
     if (infoOptions.showMakeEnvironment) {
       Map<String,String> makeEnv=configurationSupplier.get().getMakeEnvironment();
       for (      Map.Entry<String,String> entry : makeEnv.entrySet()) {
-        BlazeModule.InfoItem item=new MakeInfoItem(entry.getKey(),entry.getValue());
+        InfoItem item=new InfoItem.MakeInfoItem(entry.getKey(),entry.getValue());
         items.put(item.getName(),item);
       }
     }
@@ -47,7 +47,7 @@ catch (      InterruptedException e) {
     if (key != null) {
       byte[] value;
       if (items.containsKey(key)) {
-        value=items.get(key).get(configurationSupplier);
+        value=items.get(key).get(configurationSupplier,env);
       }
  else {
         env.getReporter().handle(Event.error("unknown key: '" + key + "'"));
@@ -64,12 +64,12 @@ catch (      InterruptedException e) {
     }
  else {
       configurationSupplier.get();
-      for (      BlazeModule.InfoItem infoItem : items.values()) {
+      for (      InfoItem infoItem : items.values()) {
         if (infoItem.isHidden()) {
           continue;
         }
         outErr.getOutputStream().write((infoItem.getName() + ": ").getBytes(StandardCharsets.UTF_8));
-        outErr.getOutputStream().write(infoItem.get(configurationSupplier));
+        outErr.getOutputStream().write(infoItem.get(configurationSupplier,env));
       }
     }
   }
