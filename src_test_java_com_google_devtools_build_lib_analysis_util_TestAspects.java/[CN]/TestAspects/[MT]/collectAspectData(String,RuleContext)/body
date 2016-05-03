@@ -1,8 +1,10 @@
 {
   NestedSetBuilder<String> result=new NestedSetBuilder<>(Order.STABLE_ORDER);
   result.add(me);
-  for (  AspectInfo dep : ruleContext.getPrerequisites("foo",Mode.TARGET,AspectInfo.class)) {
-    result.addTransitive(dep.getData());
+  if (ruleContext.attributes().has("foo",LABEL_LIST)) {
+    for (    AspectInfo dep : ruleContext.getPrerequisites("foo",Mode.TARGET,AspectInfo.class)) {
+      result.addTransitive(dep.getData());
+    }
   }
   return result.build();
 }
