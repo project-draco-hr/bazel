@@ -1,15 +1,13 @@
 {
-  String[] typeAndName=raw.split("/");
-  Preconditions.checkArgument(typeAndName.length == 2,"Invalid type and name: %s",raw);
   Matcher matcher=PARSING_REGEX.matcher(raw);
   if (!matcher.matches()) {
-    throw new IllegalArgumentException(String.format(INVALID_QUALIFIED_NAME_MESSAGE,raw));
+    throw new IllegalArgumentException(String.format(INVALID_QUALIFIED_NAME_MESSAGE_NO_MATCH,raw));
   }
   String parsedPackage=matcher.group("package");
   ResourceType resourceType=ResourceType.getEnum(matcher.group("type"));
   String resourceName=matcher.group("name");
   if (resourceType == null || resourceName == null) {
-    throw new IllegalArgumentException(String.format(INVALID_QUALIFIED_NAME_MESSAGE,raw));
+    throw new IllegalArgumentException(String.format(INVALID_QUALIFIED_NAME_MESSAGE_NO_TYPE_OR_NAME,resourceType,resourceName,raw));
   }
   return FullyQualifiedName.of(parsedPackage == null ? pkg : parsedPackage,qualifiers,resourceType,resourceName);
 }

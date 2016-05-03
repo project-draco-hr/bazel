@@ -1,0 +1,36 @@
+{
+  if (dirNameAndQualifiers.length == 1) {
+    return ImmutableList.of();
+  }
+  List<String> qualifiers=Lists.newArrayList(Arrays.copyOfRange(dirNameAndQualifiers,1,dirNameAndQualifiers.length));
+  if (qualifiers.size() >= 2) {
+    if ("es".equalsIgnoreCase(qualifiers.get(0)) && "419".equalsIgnoreCase(qualifiers.get(1))) {
+      qualifiers.remove(0);
+      qualifiers.set(0,"b+es+419");
+    }
+    if ("sr".equalsIgnoreCase(qualifiers.get(0)) && "rlatn".equalsIgnoreCase(qualifiers.get(1))) {
+      qualifiers.remove(0);
+      qualifiers.set(0,"b+sr+Latn");
+    }
+  }
+  int apiVersion=0;
+  int lastQualifierMatch=0;
+  for (  String qualifier : qualifiers) {
+    for (int i=lastQualifierMatch; i < QUALIFIER_API_ADJUSTERS.length; i++) {
+      if (QUALIFIER_API_ADJUSTERS[i].check(qualifier)) {
+        lastQualifierMatch=i;
+        apiVersion=QUALIFIER_API_ADJUSTERS[i].maxApi(apiVersion);
+      }
+    }
+  }
+  qualifiers.remove("anydpi");
+  if (apiVersion > 0) {
+    String lastQualifier=qualifiers.get(qualifiers.size() - 1);
+    if (VERSION_QUALIFIER.matcher(lastQualifier).matches()) {
+      apiVersion=Math.max(apiVersion,Integer.parseInt(lastQualifier.substring(1)));
+      qualifiers.remove(qualifiers.size() - 1);
+    }
+    qualifiers.add("v" + apiVersion);
+  }
+  return Lists.newArrayList(Joiner.on("-").join(qualifiers));
+}
