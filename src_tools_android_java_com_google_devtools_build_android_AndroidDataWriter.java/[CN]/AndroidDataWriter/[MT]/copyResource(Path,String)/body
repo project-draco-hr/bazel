@@ -1,3 +1,15 @@
 {
-  copy(source,resourceDirectory.resolve(relativeDestinationPath));
+  Path destinationPath=resourceDirectory.resolve(relativeDestinationPath);
+  if (source.getParent().getFileName().toString().startsWith(SdkConstants.DRAWABLE_FOLDER) && source.getFileName().toString().endsWith(SdkConstants.DOT_PNG)) {
+    try {
+      Files.createDirectories(destinationPath.getParent());
+      cruncher.crunchPng(source.toFile(),destinationPath.toFile());
+    }
+ catch (    InterruptedException|LoggedErrorException e) {
+      throw new RuntimeException(e);
+    }
+  }
+ else {
+    copy(source,destinationPath);
+  }
 }
