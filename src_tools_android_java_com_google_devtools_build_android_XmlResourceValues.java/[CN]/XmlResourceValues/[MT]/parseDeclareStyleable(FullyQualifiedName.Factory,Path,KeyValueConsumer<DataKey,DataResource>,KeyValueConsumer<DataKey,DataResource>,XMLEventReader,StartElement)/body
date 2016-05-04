@@ -1,10 +1,13 @@
 {
   List<String> members=new ArrayList<>();
-  for (XMLEvent element=eventReader.nextTag(); !isEndTag(element,TAG_DECLARE_STYLEABLE); element=eventReader.nextTag()) {
+  for (XMLEvent element=nextTag(eventReader); !isEndTag(element,TAG_DECLARE_STYLEABLE); element=nextTag(eventReader)) {
     if (isStartTag(element,TAG_ATTR)) {
       StartElement attr=element.asStartElement();
-      members.add(getElementName(attr));
-      overwritingConsumer.consume(fqnFactory.create(ResourceType.ATTR,getElementName(attr)),DataResourceXml.of(path,parseAttr(eventReader,start)));
+      String attrName=getElementName(attr);
+      members.add(attrName);
+      if (XmlResourceValues.getElementAttributeByName(attr,ATTR_FORMAT) != null || (XmlResourceValues.peekNextTag(eventReader) != null && XmlResourceValues.peekNextTag(eventReader).isStartElement())) {
+        overwritingConsumer.consume(fqnFactory.create(ResourceType.ATTR,attrName),DataResourceXml.of(path,parseAttr(eventReader,attr)));
+      }
     }
   }
   nonOverwritingConsumer.consume(fqnFactory.create(ResourceType.STYLEABLE,getElementName(start)),DataResourceXml.of(path,StyleableXmlResourceValue.of(members)));

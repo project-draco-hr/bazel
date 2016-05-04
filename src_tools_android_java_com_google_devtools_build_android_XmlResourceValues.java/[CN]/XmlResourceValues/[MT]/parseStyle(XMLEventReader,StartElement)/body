@@ -1,9 +1,10 @@
 {
   Map<String,String> values=new HashMap<>();
-  for (XMLEvent element=eventReader.nextTag(); !isEndTag(element,TAG_STYLE); element=eventReader.nextTag()) {
+  for (XMLEvent element=nextTag(eventReader); !isEndTag(element,TAG_STYLE); element=nextTag(eventReader)) {
     if (isItem(element)) {
       values.put(getElementName(element.asStartElement()),eventReader.getElementText());
     }
   }
-  return StyleXmlResourceValue.of(parseReferenceFromElementAttribute(start,ATTR_PARENT),values);
+  String parent=parseReferenceFromElementAttribute(start,ATTR_PARENT,false);
+  return StyleXmlResourceValue.of(parent,values);
 }

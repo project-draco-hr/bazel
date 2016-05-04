@@ -1,3 +1,13 @@
 {
-  mergedDataWriter.writeToValuesXml(key,ImmutableList.of(String.format("<!-- %s -->",source),String.format("<%s name='%s'>%s</%s>",valueType.tagName.getLocalPart(),key.name(),value,valueType.tagName.getLocalPart())));
+  StringBuilder xmlString=new StringBuilder("<").append(valueType.tagName.getLocalPart()).append(" name=\"").append(key.name()).append("\"");
+  for (  Entry<String,String> entry : attributes.entrySet()) {
+    xmlString.append(" ").append(entry.getKey()).append("=\"").append(entry.getValue()).append("\"");
+  }
+  if (value != null) {
+    xmlString.append(">").append(value).append("</").append(valueType.tagName.getLocalPart()).append(">");
+  }
+ else {
+    xmlString.append("/>");
+  }
+  mergedDataWriter.writeToValuesXml(key,ImmutableList.of(String.format("<!-- %s -->",source),xmlString.toString()));
 }

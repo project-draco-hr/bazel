@@ -5,12 +5,18 @@
   }
   XMLEvent nextTag=XmlResourceValues.peekNextTag(eventReader);
   if (nextTag != null && nextTag.isStartElement()) {
-    formatNames.add(nextTag.asStartElement().getName().getLocalPart().toLowerCase());
+    QName tagName=nextTag.asStartElement().getName();
+    if (TAG_FLAG.equals(tagName)) {
+      formatNames.add(FLAGS);
+    }
+ else {
+      formatNames.add(tagName.getLocalPart().toLowerCase());
+    }
   }
   Builder<String,ResourceXmlAttrValue> formats=ImmutableMap.builder();
   for (  String formatName : formatNames) {
 switch (formatName) {
-case FLAG:
+case FLAGS:
       Map<String,String> flags=readSubValues(eventReader,TAG_FLAG);
     endAttrElement(eventReader);
   formats.put(formatName,FlagResourceXmlAttrValue.of(flags));

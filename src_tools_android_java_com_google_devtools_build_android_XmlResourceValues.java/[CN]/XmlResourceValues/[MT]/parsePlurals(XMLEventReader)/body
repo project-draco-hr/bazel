@@ -1,8 +1,12 @@
 {
   ImmutableMap.Builder<String,String> values=ImmutableMap.builder();
-  for (XMLEvent element=eventReader.nextTag(); !isEndTag(element,TAG_PLURALS); element=eventReader.nextTag()) {
+  for (XMLEvent element=nextTag(eventReader); !isEndTag(element,TAG_PLURALS); element=nextTag(eventReader)) {
     if (isItem(element)) {
-      values.put(getElementAttributeByName(element.asStartElement(),ATTR_QUANTITY),eventReader.getElementText());
+      if (!element.isStartElement()) {
+        throw new XMLStreamException(String.format("Expected start element %s",element),element.getLocation());
+      }
+      String contents=readContentsAsString(eventReader,element.asStartElement().getName());
+      values.put(getElementAttributeByName(element.asStartElement(),ATTR_QUANTITY),contents == null ? "" : contents);
     }
   }
   return PluralXmlResourceValue.of(values.build());

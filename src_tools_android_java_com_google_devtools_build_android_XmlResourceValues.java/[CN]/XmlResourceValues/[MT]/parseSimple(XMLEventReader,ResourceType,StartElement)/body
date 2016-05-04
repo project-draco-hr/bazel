@@ -1,0 +1,27 @@
+{
+  Map<String,String> attributeMap=new LinkedHashMap<>();
+  @SuppressWarnings({"cast","unchecked"}) Iterator<Attribute> attributes=(Iterator<Attribute>)start.getAttributes();
+  while (attributes.hasNext()) {
+    Attribute attribute=attributes.next();
+    QName name=attribute.getName();
+    if (ATTR_NAME.equals(name)) {
+      continue;
+    }
+    String value=escapeXmlValues(attribute.getValue()).replace("\"","&quot;");
+    if (!name.getNamespaceURI().isEmpty()) {
+      attributeMap.put("xmlns:" + name.getPrefix(),name.getNamespaceURI());
+      attributeMap.put(name.getPrefix() + ":" + attribute.getName().getLocalPart(),value);
+    }
+ else {
+      attributeMap.put(attribute.getName().getLocalPart(),value);
+    }
+  }
+  String contents;
+  if (isEndTag(eventReader.peek(),start.getName())) {
+    contents=null;
+  }
+ else {
+    contents=readContentsAsString(eventReader,start.getName());
+  }
+  return SimpleXmlResourceValue.of(start.getName().equals(TAG_ITEM) ? SimpleXmlResourceValue.Type.ITEM : SimpleXmlResourceValue.Type.from(resourceType),ImmutableMap.copyOf(attributeMap),contents);
+}

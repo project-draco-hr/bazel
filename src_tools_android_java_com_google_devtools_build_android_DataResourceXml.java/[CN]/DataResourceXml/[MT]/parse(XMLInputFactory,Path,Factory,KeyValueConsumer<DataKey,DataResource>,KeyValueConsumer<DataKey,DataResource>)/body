@@ -1,16 +1,30 @@
 {
   XMLEventReader eventReader=xmlInputFactory.createXMLEventReader(Files.newBufferedReader(path,StandardCharsets.UTF_8));
-  while (XmlResourceValues.moveToResources(eventReader)) {
-    for (StartElement start=XmlResourceValues.findNextStart(eventReader); start != null; start=XmlResourceValues.findNextStart(eventReader)) {
-      ResourceType resourceType=getResourceType(start);
-      if (resourceType == DECLARE_STYLEABLE) {
-        XmlResourceValues.parseDeclareStyleable(fqnFactory,path,overwritingConsumer,nonOverwritingConsumer,eventReader,start);
-      }
+  try {
+    while (XmlResourceValues.moveToResources(eventReader)) {
+      for (StartElement start=XmlResourceValues.findNextStart(eventReader); start != null; start=XmlResourceValues.findNextStart(eventReader)) {
+        if (XmlResourceValues.isEatComment(start) || XmlResourceValues.isSkip(start)) {
+          continue;
+        }
+        ResourceType resourceType=getResourceType(start);
+        if (resourceType == null) {
+          throw new XMLStreamException(path + " contains an unrecognized resource type:" + start,start.getLocation());
+        }
+        if (resourceType == DECLARE_STYLEABLE) {
+          XmlResourceValues.parseDeclareStyleable(fqnFactory,path,overwritingConsumer,nonOverwritingConsumer,eventReader,start);
+        }
  else {
-        KeyValueConsumer<DataKey,DataResource> consumer=resourceType == ID ? nonOverwritingConsumer : overwritingConsumer;
-        FullyQualifiedName key=fqnFactory.create(resourceType,XmlResourceValues.getElementName(start));
-        consumer.consume(key,DataResourceXml.of(path,parseXmlElements(resourceType,eventReader,start)));
+          KeyValueConsumer<DataKey,DataResource> consumer=resourceType == ID ? nonOverwritingConsumer : overwritingConsumer;
+          FullyQualifiedName key=fqnFactory.create(resourceType,XmlResourceValues.getElementName(start));
+          consumer.consume(key,DataResourceXml.of(path,parseXmlElements(resourceType,eventReader,start)));
+        }
       }
     }
+  }
+ catch (  XMLStreamException e) {
+    throw new XMLStreamException(path + ":" + e.getMessage(),e.getLocation(),e);
+  }
+catch (  RuntimeException e) {
+    throw new RuntimeException("Error parsing " + path,e);
   }
 }

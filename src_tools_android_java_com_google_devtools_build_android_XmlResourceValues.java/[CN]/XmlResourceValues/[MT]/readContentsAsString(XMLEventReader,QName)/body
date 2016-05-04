@@ -3,7 +3,7 @@
   while (!isEndTag(eventReader.peek(),startTag)) {
     XMLEvent xmlEvent=eventReader.nextEvent();
     if (xmlEvent.isCharacters()) {
-      contents.append(xmlEvent.asCharacters().getData());
+      contents.append(escapeXmlValues(xmlEvent.asCharacters().getData()));
     }
  else     if (xmlEvent.isStartElement()) {
       QName name=xmlEvent.asStartElement().getName();
@@ -28,6 +28,7 @@
       contents.append(">");
     }
   }
-  Preconditions.checkArgument(eventReader.nextEvent().asEndElement().getName().equals(startTag));
-  return SimpleXmlResourceValue.of(SimpleXmlResourceValue.Type.from(resourceType),contents.toString());
+  EndElement endElement=eventReader.nextEvent().asEndElement();
+  Preconditions.checkArgument(endElement.getName().equals(startTag));
+  return contents.toString();
 }
