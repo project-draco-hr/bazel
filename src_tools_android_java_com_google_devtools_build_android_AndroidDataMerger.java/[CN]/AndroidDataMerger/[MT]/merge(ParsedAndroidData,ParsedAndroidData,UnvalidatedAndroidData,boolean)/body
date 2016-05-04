@@ -1,59 +1,68 @@
 {
-  ParsedAndroidData primary=ParsedAndroidData.from(primaryData);
-  Map<DataKey,DataResource> overwritableDeps=new HashMap<>();
-  Map<DataKey,DataAsset> assets=new HashMap<>();
-  Set<MergeConflict> conflicts=new HashSet<>();
-  conflicts.addAll(primary.conflicts());
-  for (  MergeConflict conflict : Iterables.concat(direct.conflicts(),transitive.conflicts())) {
-    if (allowPrimaryOverrideAll && (primary.containsOverwritable(conflict.dataKey()) || primary.containsAsset(conflict.dataKey()))) {
-      continue;
+  try {
+    ParsedAndroidData primary=ParsedAndroidData.from(primaryData);
+    Map<DataKey,DataResource> overwritableDeps=new HashMap<>();
+    Map<DataKey,DataAsset> assets=new HashMap<>();
+    Set<MergeConflict> conflicts=new HashSet<>();
+    conflicts.addAll(primary.conflicts());
+    for (    MergeConflict conflict : Iterables.concat(direct.conflicts(),transitive.conflicts())) {
+      if (allowPrimaryOverrideAll && (primary.containsOverwritable(conflict.dataKey()) || primary.containsAsset(conflict.dataKey()))) {
+        continue;
+      }
+      conflicts.add(conflict);
     }
-    conflicts.add(conflict);
-  }
-  for (  Map.Entry<DataKey,DataResource> entry : direct.iterateOverwritableEntries()) {
-    if (!primary.containsOverwritable(entry.getKey())) {
-      overwritableDeps.put(entry.getKey(),entry.getValue());
+    for (    Map.Entry<DataKey,DataResource> entry : direct.iterateOverwritableEntries()) {
+      if (!primary.containsOverwritable(entry.getKey())) {
+        overwritableDeps.put(entry.getKey(),entry.getValue());
+      }
     }
-  }
-  for (  Map.Entry<DataKey,DataResource> entry : transitive.iterateOverwritableEntries()) {
-    if (primary.containsOverwritable(entry.getKey()) && allowPrimaryOverrideAll) {
-      continue;
-    }
-    if (direct.containsOverwritable(entry.getKey())) {
-      conflicts.add(direct.foundResourceConflict(entry.getKey(),entry.getValue()));
-    }
- else     if (primary.containsOverwritable(entry.getKey())) {
-      conflicts.add(primary.foundResourceConflict(entry.getKey(),entry.getValue()));
-    }
+    for (    Map.Entry<DataKey,DataResource> entry : transitive.iterateOverwritableEntries()) {
+      if (primary.containsOverwritable(entry.getKey()) && allowPrimaryOverrideAll) {
+        continue;
+      }
+      if (direct.containsOverwritable(entry.getKey())) {
+        conflicts.add(direct.foundResourceConflict(entry.getKey(),entry.getValue()));
+      }
+ else       if (primary.containsOverwritable(entry.getKey())) {
+        conflicts.add(primary.foundResourceConflict(entry.getKey(),entry.getValue()));
+      }
  else {
-      overwritableDeps.put(entry.getKey(),entry.getValue());
+        overwritableDeps.put(entry.getKey(),entry.getValue());
+      }
     }
-  }
-  for (  Map.Entry<DataKey,DataAsset> entry : direct.iterateAssetEntries()) {
-    if (!primary.containsAsset(entry.getKey())) {
-      assets.put(entry.getKey(),entry.getValue());
+    for (    Map.Entry<DataKey,DataAsset> entry : direct.iterateAssetEntries()) {
+      if (!primary.containsAsset(entry.getKey())) {
+        assets.put(entry.getKey(),entry.getValue());
+      }
     }
-  }
-  for (  Map.Entry<DataKey,DataAsset> entry : transitive.iterateAssetEntries()) {
-    if (primary.containsAsset(entry.getKey()) && allowPrimaryOverrideAll) {
-      continue;
-    }
-    if (direct.containsAsset(entry.getKey())) {
-      conflicts.add(direct.foundAssetConflict(entry.getKey(),entry.getValue()));
-    }
- else     if (primary.containsAsset(entry.getKey())) {
-      conflicts.add(primary.foundAssetConflict(entry.getKey(),entry.getValue()));
-    }
+    for (    Map.Entry<DataKey,DataAsset> entry : transitive.iterateAssetEntries()) {
+      if (primary.containsAsset(entry.getKey()) && allowPrimaryOverrideAll) {
+        continue;
+      }
+      if (direct.containsAsset(entry.getKey())) {
+        conflicts.add(direct.foundAssetConflict(entry.getKey(),entry.getValue()));
+      }
+ else       if (primary.containsAsset(entry.getKey())) {
+        conflicts.add(primary.foundAssetConflict(entry.getKey(),entry.getValue()));
+      }
  else {
-      assets.put(entry.getKey(),entry.getValue());
+        assets.put(entry.getKey(),entry.getValue());
+      }
     }
-  }
-  if (!conflicts.isEmpty()) {
-    List<String> messages=new ArrayList<>();
-    for (    MergeConflict conflict : conflicts) {
-      messages.add(conflict.toConflictMessage());
+    if (!conflicts.isEmpty()) {
+      List<String> messages=new ArrayList<>();
+      for (      MergeConflict conflict : conflicts) {
+        if (!conflict.first().equals(conflict.second()) && !deDuplicator.checkEquality(conflict.first().source(),conflict.second().source())) {
+          messages.add(conflict.toConflictMessage());
+        }
+      }
+      if (!messages.isEmpty()) {
+        logger.warning(Joiner.on("").join(messages));
+      }
     }
-    throw new MergingException(Joiner.on("\n").join(messages));
+    return UnwrittenMergedAndroidData.of(primaryData.getManifest(),primary,ParsedAndroidData.of(ImmutableSet.<MergeConflict>of(),ImmutableMap.copyOf(overwritableDeps),direct.mergeNonOverwritable(transitive),ImmutableMap.copyOf(assets)));
   }
-  return UnwrittenMergedAndroidData.of(primaryData.getManifest(),primary,ParsedAndroidData.of(ImmutableSet.<MergeConflict>of(),ImmutableMap.copyOf(overwritableDeps),direct.mergeNonOverwritable(transitive),ImmutableMap.copyOf(assets)));
+ catch (  IOException e) {
+    throw new MergingException(e);
+  }
 }

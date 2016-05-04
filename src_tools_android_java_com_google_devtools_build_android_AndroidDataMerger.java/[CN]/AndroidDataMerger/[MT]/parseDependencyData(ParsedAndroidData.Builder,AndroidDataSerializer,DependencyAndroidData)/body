@@ -1,0 +1,12 @@
+{
+  try {
+    dependency.deserialize(serializer,parsedDataBuilder.consumers());
+  }
+ catch (  DeserializationException e) {
+    if (!e.isLegacy()) {
+      throw new MergingException(e);
+    }
+    logger.warning(String.format("\u001B[31mDEPRECATION:\u001B[0m Legacy resources used for %s",dependency.getManifest()));
+    dependency.walk(ParsedAndroidDataBuildingPathWalker.create(parsedDataBuilder));
+  }
+}

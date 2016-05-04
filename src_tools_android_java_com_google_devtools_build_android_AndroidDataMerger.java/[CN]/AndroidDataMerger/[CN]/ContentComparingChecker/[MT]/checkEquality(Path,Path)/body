@@ -1,0 +1,25 @@
+{
+  if (getFileSize(one) != getFileSize(two)) {
+    return false;
+  }
+  try (final InputStream oneStream=new BufferedInputStream(Files.newInputStream(one));final InputStream twoStream=new BufferedInputStream(Files.newInputStream(two))){
+    int bytesRead=0;
+    while (true) {
+      int oneByte=oneStream.read();
+      int twoByte=twoStream.read();
+      bytesRead++;
+      if (oneByte == -1 || twoByte == -1) {
+        if (oneByte == twoByte) {
+          return true;
+        }
+ else {
+          logger.severe(String.format("Filesystem size of %s (%s) or %s (%s) is inconsistant with bytes read %s.",one,getFileSize(one),two,getFileSize(two),bytesRead));
+          return false;
+        }
+      }
+      if (oneByte != twoByte) {
+        return false;
+      }
+    }
+  }
+ }

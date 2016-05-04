@@ -1,0 +1,20 @@
+{
+  Stopwatch timer=Stopwatch.createStarted();
+  try {
+    final ParsedAndroidData.Builder directBuilder=ParsedAndroidData.Builder.newBuilder();
+    final ParsedAndroidData.Builder transitiveBuilder=ParsedAndroidData.Builder.newBuilder();
+    final AndroidDataSerializer serializer=AndroidDataSerializer.create();
+    for (    final DependencyAndroidData dependency : direct) {
+      parseDependencyData(directBuilder,serializer,dependency);
+    }
+    for (    final DependencyAndroidData dependency : transitive) {
+      parseDependencyData(transitiveBuilder,serializer,dependency);
+    }
+    logger.fine(String.format("Merged dependencies read in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    timer.reset().start();
+    return merge(transitiveBuilder.build(),directBuilder.build(),primary,allowPrimaryOverrideAll);
+  }
+  finally {
+    logger.fine(String.format("Resources merged in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+  }
+}
