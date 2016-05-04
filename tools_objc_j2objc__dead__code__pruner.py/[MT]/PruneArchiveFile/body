@@ -1,5 +1,5 @@
-def PruneArchiveFile(input_archive, output_archive, dummy_archive, dependency_mapping_files, header_mapping_files, archive_source_mapping_files, entry_classes, xcrunwrapper, file_open=open):
-    'Remove unreachable objects from archive file.\n\n  Args:\n    input_archive: The source archive file to prune.\n    output_archive: The location of the pruned archive file.\n    dummy_archive: A dummy archive file that contains no object.\n    dependency_mapping_files: A comma separated list of J2ObjC-generated\n        dependency mapping files.\n    header_mapping_files: A comma separated list of J2ObjC-generated\n        header mapping files.\n    archive_source_mapping_files: A comma separated list of J2ObjC-generated\n        mapping between archive files and their associated source files.\n    entry_classes: A comma separated list of Java entry classes.\n    xcrunwrapper: A wrapper script over xcrun.\n    file_open: Reference to the builtin open function so it may be\n        overridden for testing.\n  '
+def PruneArchiveFile(input_archive, output_archive, dummy_archive, dependency_mapping_files, header_mapping_files, archive_source_mapping_files, entry_classes, xcrunwrapper, file_open=open, proc_exe=subprocess.check_call):
+    'Remove unreachable objects from archive file.\n\n  Args:\n    input_archive: The source archive file to prune.\n    output_archive: The location of the pruned archive file.\n    dummy_archive: A dummy archive file that contains no object.\n    dependency_mapping_files: A comma separated list of J2ObjC-generated\n        dependency mapping files.\n    header_mapping_files: A comma separated list of J2ObjC-generated\n        header mapping files.\n    archive_source_mapping_files: A comma separated list of J2ObjC-generated\n        mapping between archive files and their associated source files.\n    entry_classes: A comma separated list of Java entry classes.\n    xcrunwrapper: A wrapper script over xcrun.\n    file_open: Reference to the builtin open function so it may be\n        overridden for testing.\n    proc_exe: Object that can execute a command line process.\n  '
     reachability_file_mapping = BuildReachabilityTree(dependency_mapping_files, file_open)
     header_map = BuildHeaderMapping(header_mapping_files, file_open)
     archive_source_file_mapping = BuildArchiveSourceFileMapping(archive_source_mapping_files, file_open)
@@ -10,18 +10,17 @@ def PruneArchiveFile(input_archive, output_archive, dummy_archive, dependency_ma
         unreachable_object_names = []
         for source_file in source_files:
             if (os.path.splitext(source_file)[0] not in reachable_files_set):
-                unreachable_object_names.append(os.path.basename(os.path.splitext(source_file)[0]))
+                unreachable_object_names.append((os.path.basename(os.path.splitext(source_file)[0]) + '.o'))
         if unreachable_object_names:
             if (len(unreachable_object_names) == len(source_files)):
                 j2objc_cmd = ('cp %s %s' % (dummy_archive, output_archive))
             else:
                 j2objc_cmd += ('cp %s %s;' % (input_archive, output_archive))
                 j2objc_cmd += ('chmod +w %s;' % output_archive)
-                unreachable_object_names = MatchObjectNamesInArchive(xcrunwrapper, input_archive, unreachable_object_names)
                 j2objc_cmd += ('%s ar -d -s %s %s;' % (xcrunwrapper, output_archive, ' '.join(unreachable_object_names)))
                 j2objc_cmd += ('%s ranlib -a %s' % (xcrunwrapper, output_archive))
         else:
             j2objc_cmd = ('cp %s %s' % (input_archive, output_archive))
     else:
         j2objc_cmd = ('cp %s %s' % (input_archive, output_archive))
-    subprocess.check_output(j2objc_cmd, stderr=subprocess.STDOUT, shell=True)
+    proc_exe(j2objc_cmd, stderr=subprocess.STDOUT, shell=True)
