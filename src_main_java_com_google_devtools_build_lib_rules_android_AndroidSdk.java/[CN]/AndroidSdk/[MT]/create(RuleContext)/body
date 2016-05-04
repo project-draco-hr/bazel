@@ -1,6 +1,14 @@
 {
   FilesToRunProvider proguard=ruleContext.getFragment(JavaConfiguration.class).getProguardBinary() == null ? ruleContext.getExecutablePrerequisite("proguard",Mode.HOST) : ruleContext.getExecutablePrerequisite(":proguard",Mode.HOST);
   String buildToolsVersion=AggregatingAttributeMapper.of(ruleContext.getRule()).get("build_tools_version",Type.STRING);
+  FullRevision parsedBuildToolsVersion=null;
+  try {
+    parsedBuildToolsVersion=Strings.isNullOrEmpty(buildToolsVersion) ? null : FullRevision.parseRevision(buildToolsVersion);
+  }
+ catch (  NumberFormatException nfe) {
+    ruleContext.attributeError("build_tools_version","Invalid version: " + buildToolsVersion);
+  }
+  boolean aaptSupportsMainDexGeneration=parsedBuildToolsVersion == null || parsedBuildToolsVersion.compareTo(new FullRevision(24)) >= 0;
   FilesToRunProvider aidl=ruleContext.getExecutablePrerequisite("aidl",Mode.HOST);
   FilesToRunProvider aapt=ruleContext.getExecutablePrerequisite("aapt",Mode.HOST);
   FilesToRunProvider apkBuilder=ruleContext.getExecutablePrerequisite("apkbuilder",Mode.HOST);
@@ -21,5 +29,5 @@
   if (ruleContext.hasErrors()) {
     return null;
   }
-  return new RuleConfiguredTargetBuilder(ruleContext).add(AndroidSdkProvider.class,new AndroidSdkProvider(buildToolsVersion,frameworkAidl,androidJar,shrinkedAndroidJar,androidBaseClasspathForJack,javaBaseClasspathForJack,annotationsJar,mainDexClasses,adb,dx,mainDexListCreator,aidl,aapt,apkBuilder,proguard,zipalign,jack,jill,resourceExtractor)).add(RunfilesProvider.class,RunfilesProvider.EMPTY).setFilesToBuild(NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER)).build();
+  return new RuleConfiguredTargetBuilder(ruleContext).add(AndroidSdkProvider.class,new AndroidSdkProvider(buildToolsVersion,aaptSupportsMainDexGeneration,frameworkAidl,androidJar,shrinkedAndroidJar,androidBaseClasspathForJack,javaBaseClasspathForJack,annotationsJar,mainDexClasses,adb,dx,mainDexListCreator,aidl,aapt,apkBuilder,proguard,zipalign,jack,jill,resourceExtractor)).add(RunfilesProvider.class,RunfilesProvider.EMPTY).setFilesToBuild(NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER)).build();
 }

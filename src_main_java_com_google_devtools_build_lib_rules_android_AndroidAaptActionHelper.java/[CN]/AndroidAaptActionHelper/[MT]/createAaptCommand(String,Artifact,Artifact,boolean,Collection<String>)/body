@@ -1,0 +1,27 @@
+{
+  List<String> args=new ArrayList<>();
+  args.addAll(getArgs(output,actionKind,ResourceType.RESOURCES));
+  args.addAll(getArgs(output,actionKind,ResourceType.ASSETS));
+  args.add(ruleContext.getExecutablePrerequisite("$android_tool_runner",Mode.HOST).getExecutable().getExecPathString());
+  args.add(AndroidSdkProvider.fromRuleContext(ruleContext).getAapt().getExecutable().getExecPathString());
+  args.add("package");
+  args.addAll(outputArgs);
+  args.add("--auto-add-overlay");
+  if (rTxtOutput != null) {
+    args.add("--output-text-symbols");
+    args.add(rTxtOutput.getExecPath().getParentDirectory().getPathString());
+  }
+  if (!inlineConstants) {
+    args.add("--non-constant-id");
+  }
+  if (ruleContext.getConfiguration().getCompilationMode() != CompilationMode.OPT) {
+    args.add("--debug-mode");
+  }
+  args.add("-I");
+  args.add(AndroidSdkProvider.fromRuleContext(ruleContext).getAndroidJar().getExecPathString());
+  args.add("-M");
+  args.add(manifest.getExecPathString());
+  args.addAll(getResourcesDirArg(output,actionKind,"-S",ResourceType.RESOURCES));
+  args.addAll(getResourcesDirArg(output,actionKind,"-A",ResourceType.ASSETS));
+  return args;
+}

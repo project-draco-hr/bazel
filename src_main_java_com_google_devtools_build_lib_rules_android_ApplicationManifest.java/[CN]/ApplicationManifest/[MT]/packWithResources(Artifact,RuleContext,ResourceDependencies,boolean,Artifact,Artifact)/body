@@ -1,0 +1,31 @@
+{
+  TransitiveInfoCollection resourcesPrerequisite=ruleContext.getPrerequisite("resources",Mode.TARGET);
+  ResourceContainer resourceContainer=Iterables.getOnlyElement(resourcesPrerequisite.getProvider(AndroidResourcesProvider.class).getDirectAndroidResources());
+  List<ResourceContainer> resourceContainers=ImmutableList.<ResourceContainer>builder().addAll(resourceDeps.getResources()).build();
+  if (Iterables.size(resourceDeps.getResources()) > 1) {
+    if (resourceContainer.getConstantsInlined() && !resourceContainer.getArtifacts(ResourceType.RESOURCES).isEmpty()) {
+      ruleContext.ruleError("This android_binary depends on an android_library, so the" + " resources '" + AndroidCommon.getAndroidResources(ruleContext).getLabel() + "' should have the attribute inline_constants set to 0");
+      return null;
+    }
+  }
+  AndroidAaptActionHelper aaptActionHelper=new AndroidAaptActionHelper(ruleContext,getManifest(),Lists.newArrayList(resourceContainers));
+  List<String> resourceConfigurationFilters=ruleContext.getTokenizedStringListAttr("resource_configuration_filters");
+  List<String> uncompressedExtensions=ruleContext.getTokenizedStringListAttr("nocompress_extensions");
+  ImmutableList.Builder<String> additionalAaptOpts=ImmutableList.<String>builder();
+  for (  String extension : uncompressedExtensions) {
+    additionalAaptOpts.add("-0").add(extension);
+  }
+  if (!resourceConfigurationFilters.isEmpty()) {
+    additionalAaptOpts.add("-c").add(Joiner.on(",").join(resourceConfigurationFilters));
+  }
+  Artifact javaSourcesJar=null;
+  if (createSource) {
+    javaSourcesJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_JAVA_SOURCE_JAR);
+    aaptActionHelper.createGenerateResourceSymbolsAction(javaSourcesJar,null,resourceContainer.getJavaPackage(),true);
+  }
+  List<String> densities=ruleContext.getTokenizedStringListAttr("densities");
+  aaptActionHelper.createGenerateApkAction(resourceApk,resourceContainer.getRenameManifestPackage(),additionalAaptOpts.build(),densities);
+  ResourceContainer updatedResources=new ResourceContainer(ruleContext.getLabel(),resourceContainer.getJavaPackage(),resourceContainer.getRenameManifestPackage(),resourceContainer.getConstantsInlined(),resourceApk,getManifest(),javaSourcesJar,resourceContainer.getArtifacts(ResourceType.ASSETS),resourceContainer.getArtifacts(ResourceType.RESOURCES),resourceContainer.getRoots(ResourceType.ASSETS),resourceContainer.getRoots(ResourceType.RESOURCES),resourceContainer.isManifestExported(),resourceContainer.getRTxt(),null);
+  aaptActionHelper.createGenerateProguardAction(proguardCfg,mainDexProguardCfg);
+  return new ResourceApk(resourceApk,updatedResources.getJavaSourceJar(),resourceDeps,updatedResources,manifest,proguardCfg,mainDexProguardCfg,true);
+}

@@ -60,15 +60,15 @@
       }
     }
     applicationManifest=ruleManifest.mergeWith(ruleContext,resourceDeps);
-    resourceApk=applicationManifest.packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,false,resourceDeps,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),applicationId,versionCode,versionName,false,ProguardHelper.getProguardConfigArtifact(ruleContext,""),null,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_ZIP));
+    resourceApk=applicationManifest.packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,false,resourceDeps,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),applicationId,versionCode,versionName,false,ProguardHelper.getProguardConfigArtifact(ruleContext,""),createMainDexProguardSpec(ruleContext),null,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_ZIP));
     if (ruleContext.hasErrors()) {
       return null;
     }
-    incrementalResourceApk=applicationManifest.addStubApplication(ruleContext).packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_INCREMENTAL_RESOURCES_APK),ruleContext,false,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),applicationId,versionCode,versionName,true,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental"),null,null);
+    incrementalResourceApk=applicationManifest.addStubApplication(ruleContext).packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_INCREMENTAL_RESOURCES_APK),ruleContext,false,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),applicationId,versionCode,versionName,true,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental"),null,null,null);
     if (ruleContext.hasErrors()) {
       return null;
     }
-    splitResourceApk=applicationManifest.createSplitManifest(ruleContext,"android_resources",false).packWithDataAndResources(getDxArtifact(ruleContext,"android_resources.ap_"),ruleContext,false,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),applicationId,versionCode,versionName,true,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental_split"),null,null);
+    splitResourceApk=applicationManifest.createSplitManifest(ruleContext,"android_resources",false).packWithDataAndResources(getDxArtifact(ruleContext,"android_resources.ap_"),ruleContext,false,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),applicationId,versionCode,versionName,true,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental_split"),null,null,null);
     if (ruleContext.hasErrors()) {
       return null;
     }
@@ -84,16 +84,16 @@
     }
     applicationManifest=resourcesManifest.mergeWith(ruleContext,resourceDeps);
     if (shouldRegenerate(ruleContext,resourceDeps)) {
-      resourceApk=applicationManifest.packWithResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,resourceDeps,true,ProguardHelper.getProguardConfigArtifact(ruleContext,""));
+      resourceApk=applicationManifest.packWithResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,resourceDeps,true,ProguardHelper.getProguardConfigArtifact(ruleContext,""),createMainDexProguardSpec(ruleContext));
     }
  else {
-      resourceApk=applicationManifest.useCurrentResources(ruleContext,ProguardHelper.getProguardConfigArtifact(ruleContext,""));
+      resourceApk=applicationManifest.useCurrentResources(ruleContext,ProguardHelper.getProguardConfigArtifact(ruleContext,""),createMainDexProguardSpec(ruleContext));
     }
-    incrementalResourceApk=applicationManifest.addStubApplication(ruleContext).packWithResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_INCREMENTAL_RESOURCES_APK),ruleContext,resourceDeps,false,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental"));
+    incrementalResourceApk=applicationManifest.addStubApplication(ruleContext).packWithResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_INCREMENTAL_RESOURCES_APK),ruleContext,resourceDeps,false,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental"),null);
     if (ruleContext.hasErrors()) {
       return null;
     }
-    splitResourceApk=applicationManifest.createSplitManifest(ruleContext,"android_resources",false).packWithResources(getDxArtifact(ruleContext,"android_resources.ap_"),ruleContext,resourceDeps,false,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental_split"));
+    splitResourceApk=applicationManifest.createSplitManifest(ruleContext,"android_resources",false).packWithResources(getDxArtifact(ruleContext,"android_resources.ap_"),ruleContext,resourceDeps,false,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental_split"),null);
     if (ruleContext.hasErrors()) {
       return null;
     }

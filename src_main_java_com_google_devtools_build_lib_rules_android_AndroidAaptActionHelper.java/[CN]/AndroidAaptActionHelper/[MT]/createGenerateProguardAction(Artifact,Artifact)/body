@@ -1,0 +1,12 @@
+{
+  ImmutableList.Builder<Artifact> outputs=ImmutableList.builder();
+  ImmutableList.Builder<String> aaptArgs=ImmutableList.builder();
+  outputs.add(outputSpec);
+  aaptArgs.add("-G").add(outputSpec.getExecPathString());
+  if (outputMainDexSpec != null) {
+    aaptArgs.add("-D").add(outputMainDexSpec.getExecPathString());
+    outputs.add(outputMainDexSpec);
+  }
+  List<String> aaptCommand=createAaptCommand("proguard",outputSpec,null,true,aaptArgs.build());
+  ruleContext.registerAction(new SpawnAction.Builder().addInputs(getInputs()).addTool(AndroidSdkProvider.fromRuleContext(ruleContext).getAapt()).addOutputs(outputs.build()).setExecutable(ruleContext.getExecutablePrerequisite("$android_aapt_apk_generator",Mode.HOST)).setCommandLine(CommandLine.of(aaptCommand,false)).useParameterFile(ParameterFileType.UNQUOTED).setProgressMessage("Generating Proguard configuration for resources").setMnemonic("AndroidAapt").build(ruleContext));
+}

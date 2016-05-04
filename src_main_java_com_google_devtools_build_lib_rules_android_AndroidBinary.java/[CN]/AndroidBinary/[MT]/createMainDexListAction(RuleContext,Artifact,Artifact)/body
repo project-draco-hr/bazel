@@ -1,0 +1,22 @@
+{
+  Artifact strippedJar=AndroidBinary.getDxArtifact(ruleContext,"main_dex_intermediate.jar");
+  AndroidSdkProvider sdk=AndroidSdkProvider.fromRuleContext(ruleContext);
+  SpawnAction.Builder streamlinedBuilder=new SpawnAction.Builder().addOutput(strippedJar).setExecutable(sdk.getProguard()).setProgressMessage("Generating streamlined input jar for main dex classes list").setMnemonic("MainDexClassesIntermediate").addArgument("-forceprocessing").addArgument("-injars").addInputArgument(jar).addArgument("-libraryjars").addInputArgument(sdk.getShrinkedAndroidJar()).addArgument("-outjars").addArgument(strippedJar.getExecPathString()).addArgument("-dontwarn").addArgument("-dontnote").addArgument("-dontoptimize").addArgument("-dontobfuscate").addArgument("-dontpreverify");
+  List<Artifact> specs=new ArrayList<>();
+  specs.addAll(ruleContext.getPrerequisiteArtifacts("main_dex_proguard_specs",Mode.TARGET).list());
+  if (specs.isEmpty()) {
+    specs.add(sdk.getMainDexClasses());
+  }
+  if (mainDexProguardSpec != null) {
+    specs.add(mainDexProguardSpec);
+  }
+  for (  Artifact spec : specs) {
+    streamlinedBuilder.addArgument("-include");
+    streamlinedBuilder.addInputArgument(spec);
+  }
+  ruleContext.registerAction(streamlinedBuilder.build(ruleContext));
+  Artifact mainDexList=AndroidBinary.getDxArtifact(ruleContext,"main_dex_list.txt");
+  Builder builder=new Builder().setMnemonic("MainDexClasses").setProgressMessage("Generating main dex classes list");
+  ruleContext.registerAction(builder.setExecutable(sdk.getMainDexListCreator()).addOutputArgument(mainDexList).addInputArgument(strippedJar).addInputArgument(jar).addArguments(ruleContext.getTokenizedStringListAttr("main_dex_list_opts")).build(ruleContext));
+  return mainDexList;
+}
