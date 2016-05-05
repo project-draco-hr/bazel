@@ -1,0 +1,15 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("/workspace/tools/build_rules/BUILD");
+  scratch.file("foo/BUILD","genrule(name = 'foo',","  outs = ['out.txt'],","  cmd = 'echo hello >@')");
+  mockFS.statThrowsIoException=true;
+  invalidatePackages();
+  SkyKey skyKey=PackageValue.key(PackageIdentifier.parse("@//foo"));
+  EvaluationResult<PackageValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),skyKey,false,reporter);
+  assertTrue(result.hasError());
+  ErrorInfo errorInfo=result.getError(skyKey);
+  Throwable e=errorInfo.getException();
+  assertEquals(skyKey,errorInfo.getRootCauseOfException());
+  assertThat(e).isInstanceOf(NoSuchPackageException.class);
+  assertThat(e.getMessage()).contains("bork");
+}

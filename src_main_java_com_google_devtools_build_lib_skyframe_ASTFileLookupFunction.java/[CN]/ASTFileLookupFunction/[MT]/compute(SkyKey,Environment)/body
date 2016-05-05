@@ -3,7 +3,15 @@
   PathFragment filePathFragment=fileLabel.toPathFragment();
   SkyKey pkgSkyKey=PackageLookupValue.key(fileLabel.getPackageIdentifier());
   PackageLookupValue pkgLookupValue=null;
-  pkgLookupValue=(PackageLookupValue)env.getValue(pkgSkyKey);
+  try {
+    pkgLookupValue=(PackageLookupValue)env.getValueOrThrow(pkgSkyKey,BuildFileNotFoundException.class,InconsistentFilesystemException.class);
+  }
+ catch (  BuildFileNotFoundException e) {
+    throw new ASTLookupFunctionException(new ErrorReadingSkylarkExtensionException(e),Transience.PERSISTENT);
+  }
+catch (  InconsistentFilesystemException e) {
+    throw new ASTLookupFunctionException(e,Transience.PERSISTENT);
+  }
   if (pkgLookupValue == null) {
     return null;
   }

@@ -1,0 +1,10 @@
+{
+  reporter.removeHandler(failFastHandler);
+  scratch.file("foo/BUILD","genrule(name = 'foo',","  outs = ['out.txt'],","  cmd = 'echo hello >@')");
+  scratch.deleteFile("tools/build_rules/prelude_blaze");
+  invalidatePackages();
+  SkyKey skyKey=PackageValue.key(PackageIdentifier.parse("@//foo"));
+  EvaluationResult<PackageValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),skyKey,false,reporter);
+  assertFalse(result.hasError());
+  assertFalse(result.get(skyKey).getPackage().containsErrors());
+}

@@ -1,0 +1,10 @@
+{
+  invalidatePackages();
+  SkyKey skyKey=ASTFileLookupValue.key(Label.parseAbsoluteUnchecked("@a_remote_repo//remote_pkg:BUILD"));
+  EvaluationResult<ASTFileLookupValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),skyKey,false,reporter);
+  ErrorInfo errorInfo=result.getError(skyKey);
+  Throwable e=errorInfo.getException();
+  assertEquals(skyKey,errorInfo.getRootCauseOfException());
+  assertThat(e).isInstanceOf(ErrorReadingSkylarkExtensionException.class);
+  assertThat(e.getMessage()).contains("no such package '@a_remote_repo//remote_pkg'");
+}

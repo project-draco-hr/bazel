@@ -1,0 +1,12 @@
+{
+  scratch.deleteFile("tools/build_rules/prelude_blaze");
+  scratch.overwriteFile("WORKSPACE","local_repository(","    name = 'a_remote_repo',","    path = '/a_remote_repo'",")");
+  scratch.file("/a_remote_repo/remote_pkg/BUILD","load(':ext.bzl', 'CONST')");
+  scratch.file("/a_remote_repo/remote_pkg/ext.bzl","CONST = 17");
+  invalidatePackages();
+  SkyKey skyKey=ASTFileLookupValue.key(Label.parseAbsoluteUnchecked("@a_remote_repo//remote_pkg:BUILD"));
+  EvaluationResult<ASTFileLookupValue> result=SkyframeExecutorTestUtils.evaluate(getSkyframeExecutor(),skyKey,false,reporter);
+  ImmutableList<SkylarkImport> imports=result.get(skyKey).getAST().getImports();
+  assertThat(imports).hasSize(1);
+  assertThat(imports.get(0).getImportString()).isEqualTo(":ext.bzl");
+}
