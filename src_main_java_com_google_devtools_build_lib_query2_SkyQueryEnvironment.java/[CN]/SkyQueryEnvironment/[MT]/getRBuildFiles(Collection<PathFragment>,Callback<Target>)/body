@@ -16,14 +16,10 @@
         current.add(rdep);
       }
     }
-  }
-  Map<SkyKey,SkyValue> packageValues=graph.getSuccessfulValues(resultKeys);
-  ImmutableSet.Builder<Target> result=ImmutableSet.builder();
-  for (  SkyValue value : packageValues.values()) {
-    Package pkg=((PackageValue)value).getPackage();
-    if (!pkg.containsErrors()) {
-      result.add(pkg.getBuildFile());
+    if (resultKeys.size() >= BATCH_CALLBACK_SIZE) {
+      callback.process(getBuildFilesForPackageValues(graph.getSuccessfulValues(resultKeys).values()));
+      resultKeys.clear();
     }
   }
-  return result.build();
+  callback.process(getBuildFilesForPackageValues(graph.getSuccessfulValues(resultKeys).values()));
 }
