@@ -27,9 +27,9 @@
     if (incrementalDexing.contains(AndroidBinaryType.MONODEX)) {
       Artifact classesDex=getDxArtifact(ruleContext,"classes.dex.zip");
       Artifact jarToDex=getDxArtifact(ruleContext,"classes.jar");
-      Artifact javaResourceJar=createShuffleJarAction(ruleContext,true,(Artifact)null,ImmutableList.of(jarToDex),common,attributes,(Artifact)null);
+      createShuffleJarAction(ruleContext,true,(Artifact)null,ImmutableList.of(jarToDex),common,attributes,(Artifact)null);
       createDexMergerAction(ruleContext,"off",jarToDex,classesDex,(Artifact)null,false);
-      return new DexingOutput(classesDex,javaResourceJar,ImmutableList.of(classesDex));
+      return new DexingOutput(classesDex,binaryJar,ImmutableList.of(classesDex));
     }
  else {
       Artifact classesDex=getDxArtifact(ruleContext,"classes.dex");
@@ -63,21 +63,23 @@
       }
       CommandLine mergeCommandLine=CustomCommandLine.builder().addBeforeEachExecPath("--input_zip",shardDexes).addExecPath("--output_zip",classesDex).build();
       ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("MergeDexZips").setProgressMessage("Merging dex shards for " + ruleContext.getLabel()).setExecutable(ruleContext.getExecutablePrerequisite("$merge_dexzips",Mode.HOST)).addInputs(shardDexes).addOutput(classesDex).setCommandLine(mergeCommandLine).build(ruleContext));
+      if (incrementalDexing.contains(AndroidBinaryType.MULTIDEX_SHARDED)) {
+        javaResourceJar=binaryJar;
+      }
       return new DexingOutput(classesDex,javaResourceJar,shardDexes);
     }
  else {
       if (incrementalDexing.contains(AndroidBinaryType.MULTIDEX_UNSHARDED)) {
         Artifact jarToDex=AndroidBinary.getDxArtifact(ruleContext,"classes.jar");
-        Artifact javaResourceJar=createShuffleJarAction(ruleContext,true,(Artifact)null,ImmutableList.of(jarToDex),common,attributes,(Artifact)null);
+        createShuffleJarAction(ruleContext,true,(Artifact)null,ImmutableList.of(jarToDex),common,attributes,(Artifact)null);
         createDexMergerAction(ruleContext,"minimal",jarToDex,classesDex,mainDexList,Iterables.any(dexopts,FlagMatcher.MINIMAL_MAIN_DEX));
-        return new DexingOutput(classesDex,javaResourceJar,ImmutableList.of(classesDex));
       }
  else {
         Artifact classesDexIntermediate=AndroidBinary.getDxArtifact(ruleContext,"intermediate_classes.dex.zip");
         AndroidCommon.createDexAction(ruleContext,proguardedJar,classesDexIntermediate,dexopts,true,mainDexList);
         createCleanDexZipAction(ruleContext,classesDexIntermediate,classesDex);
-        return new DexingOutput(classesDex,binaryJar,ImmutableList.of(classesDex));
       }
+      return new DexingOutput(classesDex,binaryJar,ImmutableList.of(classesDex));
     }
   }
 }
