@@ -1,0 +1,16 @@
+{
+  ImmutableList.Builder<ObjcProvider> propagatedObjcDeps=ImmutableList.<ObjcProvider>builder();
+  ImmutableList.Builder<CppCompilationContext> cppDeps=ImmutableList.<CppCompilationContext>builder();
+  ImmutableList.Builder<CcLinkParamsProvider> cppDepLinkParams=ImmutableList.<CcLinkParamsProvider>builder();
+  for (  TransitiveInfoCollection dep : deps) {
+    addAnyProviders(propagatedObjcDeps,dep,ObjcProvider.class);
+    addAnyProviders(cppDeps,dep,CppCompilationContext.class);
+    if (dep.getProvider(CppRunfilesProvider.class) != null) {
+      cppDepLinkParams.add(dep.getProvider(CcLinkParamsProvider.class));
+    }
+  }
+  addDepObjcProviders(propagatedObjcDeps.build());
+  this.depCcHeaderProviders=Iterables.concat(this.depCcHeaderProviders,cppDeps.build());
+  this.depCcLinkProviders=Iterables.concat(this.depCcLinkProviders,cppDepLinkParams.build());
+  return this;
+}

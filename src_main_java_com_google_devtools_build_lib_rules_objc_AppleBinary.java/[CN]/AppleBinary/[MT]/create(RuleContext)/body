@@ -9,6 +9,18 @@
     IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext,childConfig);
     ObjcCommon common=common(ruleContext,childConfig,intermediateArtifacts,nullToEmptyList(configToDepsCollectionMap.get(childConfig)),nullToEmptyList(configurationToNonPropagatedObjcMap.get(childConfig)));
     ObjcProvider objcProvider=common.getObjcProvider();
+    ImmutableList.Builder<J2ObjcMappingFileProvider> j2ObjcMappingFileProviders=ImmutableList.builder();
+    J2ObjcEntryClassProvider.Builder j2ObjcEntryClassProviderBuilder=new J2ObjcEntryClassProvider.Builder();
+    for (    TransitiveInfoCollection dep : configToDepsCollectionMap.get(childConfig)) {
+      if (dep.getProvider(J2ObjcMappingFileProvider.class) != null) {
+        j2ObjcMappingFileProviders.add(dep.getProvider(J2ObjcMappingFileProvider.class));
+      }
+      if (dep.getProvider(J2ObjcEntryClassProvider.class) != null) {
+        j2ObjcEntryClassProviderBuilder.addTransitive(dep.getProvider(J2ObjcEntryClassProvider.class));
+      }
+    }
+    J2ObjcMappingFileProvider j2ObjcMappingFileProvider=J2ObjcMappingFileProvider.union(j2ObjcMappingFileProviders.build());
+    J2ObjcEntryClassProvider j2ObjcEntryClassProvider=j2ObjcEntryClassProviderBuilder.build();
     if (!hasLibraryOrSources(objcProvider)) {
       ruleContext.ruleError(REQUIRES_AT_LEAST_ONE_LIBRARY_OR_SOURCE_FILE);
       return null;
@@ -17,7 +29,7 @@
       return null;
     }
     binariesToLipo.add(intermediateArtifacts.strippedSingleArchitectureBinary());
-    new CompilationSupport(ruleContext,childConfig).registerCompileAndArchiveActions(common).registerLinkActions(objcProvider,new ExtraLinkArgs(),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
+    new CompilationSupport(ruleContext,childConfig).registerCompileAndArchiveActions(common).registerLinkActions(common.getObjcProvider(),j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,new ExtraLinkArgs(),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
     if (ruleContext.hasErrors()) {
       return null;
     }

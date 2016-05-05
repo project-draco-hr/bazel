@@ -1,14 +1,4 @@
 {
-  ImmutableList.Builder<ObjcProvider> propagatedObjcDeps=ImmutableList.<ObjcProvider>builder();
-  ImmutableList.Builder<CppCompilationContext> cppDeps=ImmutableList.<CppCompilationContext>builder();
-  for (  TransitiveInfoCollection dep : propagatedDeps) {
-    if (dep.getProvider(ObjcProvider.class) != null) {
-      propagatedObjcDeps.add(dep.getProvider(ObjcProvider.class));
-    }
-    if (dep.getProvider(CppCompilationContext.class) != null) {
-      cppDeps.add(dep.getProvider(CppCompilationContext.class));
-    }
-  }
   CompilationArtifacts compilationArtifacts=CompilationSupport.compilationArtifacts(ruleContext,intermediateArtifacts);
-  return new ObjcCommon.Builder(ruleContext,buildConfiguration).setCompilationAttributes(new CompilationAttributes(ruleContext)).setResourceAttributes(new ResourceAttributes(ruleContext)).setCompilationArtifacts(compilationArtifacts).addDefines(ruleContext.getTokenizedStringListAttr("defines")).addDepObjcProviders(propagatedObjcDeps.build()).addDepCcHeaderProviders(cppDeps.build()).addDepCcLinkProviders(propagatedDeps).addDepObjcProviders(ruleContext.getPrerequisites("bundles",Mode.TARGET,ObjcProvider.class)).addNonPropagatedDepObjcProviders(nonPropagatedObjcDeps).setIntermediateArtifacts(intermediateArtifacts).setAlwayslink(false).setHasModuleMap().setLinkedBinary(intermediateArtifacts.strippedSingleArchitectureBinary()).build();
+  return new ObjcCommon.Builder(ruleContext,buildConfiguration).setCompilationAttributes(new CompilationAttributes(ruleContext)).setResourceAttributes(new ResourceAttributes(ruleContext)).setCompilationArtifacts(compilationArtifacts).addDefines(ruleContext.getTokenizedStringListAttr("defines")).addDeps(propagatedDeps).addDepObjcProviders(ruleContext.getPrerequisites("bundles",Mode.TARGET,ObjcProvider.class)).addNonPropagatedDepObjcProviders(nonPropagatedObjcDeps).setIntermediateArtifacts(intermediateArtifacts).setAlwayslink(false).setHasModuleMap().setLinkedBinary(intermediateArtifacts.strippedSingleArchitectureBinary()).build();
 }
