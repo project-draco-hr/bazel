@@ -38,6 +38,14 @@
   if (androidIdeInfoProvider != null) {
     outputBuilder.setAndroidRuleIdeInfo(makeAndroidRuleIdeInfo(base,androidIdeInfoProvider,dependenciesResult,ideResolveArtifacts));
   }
+  if (TargetUtils.isTestRule(base.getTarget())) {
+    TestInfo.Builder builder=TestInfo.newBuilder();
+    String attr=NonconfigurableAttributeMapper.of(base.getTarget().getAssociatedRule()).get("size",Type.STRING);
+    if (attr != null) {
+      builder.setSize(attr);
+    }
+    outputBuilder.setTestInfo(builder);
+  }
   AndroidStudioInfoFilesProvider provider=providerBuilder.build();
   outputBuilder.addAllDependencies(transform(dependenciesResult.deps,LABEL_TO_STRING));
   outputBuilder.addAllRuntimeDeps(transform(dependenciesResult.runtimeDeps,LABEL_TO_STRING));

@@ -1,5 +1,5 @@
 {
-  scratch.file("java/com/google/example/BUILD","java_library(","   name = 'foobar',","   srcs = ['FooBar.java'],",")","java_test(","   name = 'FooBarTest',","   srcs = ['FooBarTest.java'],","   deps = [':foobar'],",")");
+  scratch.file("java/com/google/example/BUILD","java_library(","   name = 'foobar',","   srcs = ['FooBar.java'],",")","java_test(","   name = 'FooBarTest',","   srcs = ['FooBarTest.java'],","   size = 'large',","   deps = [':foobar'],",")");
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//java/com/google/example:FooBarTest");
   RuleIdeInfo testInfo=getRuleInfoAndVerifyLabel("//java/com/google/example:FooBarTest",ruleIdeInfos);
   assertThat(testInfo.getKind()).isEqualTo(Kind.JAVA_TEST);
@@ -10,4 +10,5 @@
   assertThat(transform(testInfo.getJavaRuleIdeInfo().getJarsList(),LIBRARY_ARTIFACT_TO_STRING)).containsExactly(jarString("java/com/google/example","FooBarTest.jar",null,"FooBarTest-src.jar"));
   assertThat(getIdeResolveFiles()).containsExactly("java/com/google/example/libfoobar.jar","java/com/google/example/libfoobar-ijar.jar","java/com/google/example/libfoobar-src.jar","java/com/google/example/FooBarTest.jar","java/com/google/example/FooBarTest-src.jar");
   assertThat(testInfo.getJavaRuleIdeInfo().getJdeps().getRelativePath()).isEqualTo("java/com/google/example/FooBarTest.jdeps");
+  assertThat(testInfo.getTestInfo().getSize()).isEqualTo("large");
 }
