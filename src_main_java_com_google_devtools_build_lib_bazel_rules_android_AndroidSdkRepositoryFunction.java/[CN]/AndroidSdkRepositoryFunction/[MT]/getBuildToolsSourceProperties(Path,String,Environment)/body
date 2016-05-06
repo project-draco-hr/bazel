@@ -1,0 +1,14 @@
+{
+  Path sourcePropertiesFilePath=directory.getRelative("build-tools/" + buildToolsDirectory + "/source.properties");
+  SkyKey releaseFileKey=FileValue.key(RootedPath.toRootedPath(directory,sourcePropertiesFilePath));
+  try {
+    env.getValueOrThrow(releaseFileKey,IOException.class,FileSymlinkException.class,InconsistentFilesystemException.class);
+    Properties properties=new Properties();
+    properties.load(sourcePropertiesFilePath.getInputStream());
+    return properties;
+  }
+ catch (  IOException|FileSymlinkException|InconsistentFilesystemException e) {
+    String error=String.format("Could not read %s in Android SDK: %s",sourcePropertiesFilePath,e.getMessage());
+    throw new RepositoryFunctionException(new IOException(error),Transience.PERSISTENT);
+  }
+}

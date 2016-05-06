@@ -5,10 +5,21 @@
     return null;
   }
   AttributeMap attributes=NonconfigurableAttributeMapper.of(rule);
-  String buildToolsVersion=attributes.get("build_tools_version",Type.STRING);
+  String buildToolsDirectory=attributes.get("build_tools_version",Type.STRING);
   Integer apiLevel=attributes.get("api_level",Type.INTEGER);
+  String buildToolsVersion;
+  if (buildToolsDirectory.contains("-preview")) {
+    Properties sourceProperties=getBuildToolsSourceProperties(outputDirectory,buildToolsDirectory,env);
+    if (env.valuesMissing()) {
+      return null;
+    }
+    buildToolsVersion=sourceProperties.getProperty("Pkg.Revision");
+  }
+ else {
+    buildToolsVersion=buildToolsDirectory;
+  }
   String template=getStringResource("android_sdk_repository_template.txt");
-  String buildFile=template.replaceAll("%workspace_name%",rule.getWorkspaceName()).replaceAll("%repository_name%",rule.getName()).replaceAll("%build_tools_version%",buildToolsVersion).replaceAll("%api_level%",apiLevel.toString());
+  String buildFile=template.replaceAll("%workspace_name%",rule.getWorkspaceName()).replaceAll("%repository_name%",rule.getName()).replaceAll("%build_tools_version%",buildToolsVersion).replaceAll("%build_tools_directory%",buildToolsDirectory).replaceAll("%api_level%",apiLevel.toString());
   writeBuildFile(outputDirectory,buildFile);
   return RepositoryDirectoryValue.create(outputDirectory);
 }
