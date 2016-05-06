@@ -1,0 +1,6 @@
+{
+  scratch.file("test/aspect.bzl","def _impl(target, ctx):","   return struct()","def _rule_impl(ctx):","   return struct()","MyAspectOptParam = aspect(","    implementation=_impl,","    attrs = { 'my_attr' : attr.string(values=['aaa'], default='aaa') },",")","my_rule = rule(","    implementation=_rule_impl,","    attrs = { 'deps' : attr.label_list(aspects=[MyAspectOptParam]) },",")");
+  scratch.file("test/BUILD","load('//test:aspect.bzl', 'my_rule')","my_rule(name = 'xxx')");
+  AnalysisResult result=update(ImmutableList.<String>of(),"//test:xxx");
+  assertThat(result.hasError()).isFalse();
+}

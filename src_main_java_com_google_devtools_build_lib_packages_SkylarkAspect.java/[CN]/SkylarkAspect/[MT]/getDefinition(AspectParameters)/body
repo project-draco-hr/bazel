@@ -1,0 +1,20 @@
+{
+  AspectDefinition.Builder builder=new AspectDefinition.Builder(getName());
+  for (  String attributeAspect : attributeAspects) {
+    builder.attributeAspect(attributeAspect,aspectClass);
+  }
+  for (  Attribute attribute : attributes) {
+    Attribute attr=attribute;
+    if (!aspectParams.getAttribute(attr.getName()).isEmpty()) {
+      String value=aspectParams.getOnlyValueOfAttribute(attr.getName());
+      Preconditions.checkState(!Attribute.isImplicit(attr.getName()));
+      Preconditions.checkState(attr.getType() == Type.STRING);
+      Preconditions.checkArgument(aspectParams.getAttribute(attr.getName()).size() == 1,String.format("Aspect %s parameter %s has %d values (must have exactly 1).",getName(),attr.getName(),aspectParams.getAttribute(attr.getName()).size()));
+      attr=attr.cloneBuilder(Type.STRING).value(value).build(attr.getName());
+    }
+    builder.add(attr);
+  }
+  builder.requiresConfigurationFragmentsBySkylarkModuleName(fragments);
+  builder.requiresHostConfigurationFragmentsBySkylarkModuleName(hostFragments);
+  return builder.build();
+}

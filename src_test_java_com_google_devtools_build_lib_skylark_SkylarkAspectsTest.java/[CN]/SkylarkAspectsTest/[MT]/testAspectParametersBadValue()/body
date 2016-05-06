@@ -1,0 +1,13 @@
+{
+  scratch.file("test/aspect.bzl","def _impl(target, ctx):","   return struct()","def _rule_impl(ctx):","   return struct()","MyAspectBadValue = aspect(","    implementation=_impl,","    attrs = { 'my_attr' : attr.string(values=['a']) },",")","my_rule = rule(","    implementation=_rule_impl,","    attrs = { 'deps' : attr.label_list(aspects=[MyAspectBadValue]),","              'my_attr' : attr.string() },",")");
+  scratch.file("test/BUILD","load('//test:aspect.bzl', 'my_rule')","my_rule(name = 'xxx', my_attr='b')");
+  reporter.removeHandler(failFastHandler);
+  try {
+    AnalysisResult result=update(ImmutableList.<String>of(),"//test:xxx");
+    assertThat(keepGoing()).isTrue();
+    assertThat(result.hasError()).isTrue();
+  }
+ catch (  Exception e) {
+  }
+  assertContainsEvent("ERROR /workspace/test/BUILD:2:1: //test:xxx: invalid value in 'my_attr' " + "attribute: has to be one of 'a' instead of 'b'");
+}

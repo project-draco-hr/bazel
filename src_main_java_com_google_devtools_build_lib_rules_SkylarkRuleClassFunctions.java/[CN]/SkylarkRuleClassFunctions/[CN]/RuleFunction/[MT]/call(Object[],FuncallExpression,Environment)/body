@@ -4,6 +4,15 @@
     if (ruleClass == null) {
       throw new EvalException(ast.getLocation(),"Invalid rule class hasn't been exported by a Skylark file");
     }
+    for (    Attribute attribute : ruleClass.getAttributes()) {
+      for (      Map.Entry<String,ImmutableSet<String>> attrRequirements : attribute.getRequiredAspectParameters().entrySet()) {
+        for (        String required : attrRequirements.getValue()) {
+          if (!ruleClass.hasAttr(required,Type.STRING)) {
+            throw new EvalException(definitionLocation,String.format("Aspect %s requires rule %s to specify attribute '%s' with type string.",attrRequirements.getKey(),ruleClass.getName(),required));
+          }
+        }
+      }
+    }
     PackageContext pkgContext=(PackageContext)env.lookup(PackageFactory.PKG_CONTEXT);
     BuildLangTypedAttributeValuesMap attributeValues=new BuildLangTypedAttributeValuesMap((Map<String,Object>)args[0]);
     return RuleFactory.createAndAddRule(pkgContext,ruleClass,attributeValues,ast,env);

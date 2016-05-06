@@ -1,0 +1,13 @@
+{
+  scratch.file("test/aspect.bzl","def _impl(target, ctx):","   return struct()","def _rule_impl(ctx):","   return struct()","MyAspectBadDefault = aspect(","    implementation=_impl,","    attrs = { 'my_attr' : attr.string(values=['a'], default='b') },",")","my_rule = rule(","    implementation=_rule_impl,","    attrs = { 'deps' : attr.label_list(aspects=[MyAspectBadDefault]) },",")");
+  scratch.file("test/BUILD","load('//test:aspect.bzl', 'my_rule')","my_rule(name = 'xxx')");
+  reporter.removeHandler(failFastHandler);
+  try {
+    AnalysisResult result=update(ImmutableList.<String>of(),"//test:xxx");
+    assertThat(keepGoing()).isTrue();
+    assertThat(result.hasError()).isTrue();
+  }
+ catch (  Exception e) {
+  }
+  assertContainsEvent("ERROR /workspace/test/aspect.bzl:5:22: " + "Aspect parameter attribute 'my_attr' has a bad default value: has to be one of 'a' " + "instead of 'b'");
+}
