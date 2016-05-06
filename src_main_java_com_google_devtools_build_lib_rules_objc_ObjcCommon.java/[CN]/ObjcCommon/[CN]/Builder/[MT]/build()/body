@@ -23,6 +23,12 @@
       }
     }
     objcProvider.addAll(SDK_FRAMEWORK,frameworkLinkOpts.build()).addAll(LINKOPT,nonFrameworkLinkOpts.build()).addTransitiveAndPropagate(CC_LIBRARY,params.getLibraries());
+    for (    LinkerInputs.LibraryToLink library : params.getLibraries()) {
+      Artifact artifact=library.getArtifact();
+      if (LINK_LIBRARY_FILETYPES.matches(artifact.getFilename())) {
+        objcProvider.add(FORCE_LOAD_FOR_XCODEGEN,"$(WORKSPACE_ROOT)/" + artifact.getExecPath().getSafePathString());
+      }
+    }
   }
   if (compilationAttributes.isPresent()) {
     CompilationAttributes attributes=compilationAttributes.get();
