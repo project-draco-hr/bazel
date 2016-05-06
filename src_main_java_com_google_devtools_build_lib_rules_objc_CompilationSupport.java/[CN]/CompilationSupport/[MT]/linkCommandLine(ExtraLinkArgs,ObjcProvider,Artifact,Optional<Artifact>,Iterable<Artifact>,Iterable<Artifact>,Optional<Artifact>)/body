@@ -18,7 +18,8 @@
   if (!objcConfiguration.shouldPrioritizeStaticLibs()) {
     commandLine.addExecPaths(bazelBuiltLibraries).addExecPaths(objcProvider.get(IMPORTED_LIBRARY)).addExecPaths(ccLibraries);
   }
-  commandLine.addExecPath("-o",linkedBinary).addBeforeEach("-force_load",Artifact.toExecPaths(objcProvider.get(FORCE_LOAD_LIBRARY))).add(extraLinkArgs).add(objcProvider.get(ObjcProvider.LINKOPT));
+  Iterable<Artifact> ccLibrariesToForceLoad=Iterables.filter(ccLibraries,ALWAYS_LINKED_CC_LIBRARY);
+  commandLine.addExecPath("-o",linkedBinary).addBeforeEach("-force_load",Artifact.toExecPaths(objcProvider.get(FORCE_LOAD_LIBRARY))).addBeforeEach("-force_load",Artifact.toExecPaths(ccLibrariesToForceLoad)).add(extraLinkArgs).add(objcProvider.get(ObjcProvider.LINKOPT));
   if (buildConfiguration.isCodeCoverageEnabled()) {
     commandLine.add(LINKER_COVERAGE_FLAGS);
   }
