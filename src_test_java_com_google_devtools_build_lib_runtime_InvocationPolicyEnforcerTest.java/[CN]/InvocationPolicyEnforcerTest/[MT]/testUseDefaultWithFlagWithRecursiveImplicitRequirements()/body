@@ -1,0 +1,15 @@
+{
+  InvocationPolicy.Builder invocationPolicyBuilder=InvocationPolicy.newBuilder();
+  invocationPolicyBuilder.addFlagPoliciesBuilder().setFlagName("test_recursive_implicit_requirement").getUseDefaultBuilder();
+  InvocationPolicyEnforcer enforcer=createOptionsPolicyEnforcer(invocationPolicyBuilder);
+  parser.parse("--test_recursive_implicit_requirement=user value");
+  TestOptions testOptions=getTestOptions();
+  assertEquals("user value",testOptions.testRecursiveImplicitRequirement);
+  assertEquals("bar",testOptions.testImplicitRequirement);
+  assertEquals("foo",testOptions.anImplicitRequirement);
+  enforcer.enforce(parser,"build");
+  testOptions=getTestOptions();
+  assertEquals("test recursive implicit requirement default",testOptions.testRecursiveImplicitRequirement);
+  assertEquals("test implicit requirement default",testOptions.testImplicitRequirement);
+  assertEquals("implicit default",testOptions.anImplicitRequirement);
+}

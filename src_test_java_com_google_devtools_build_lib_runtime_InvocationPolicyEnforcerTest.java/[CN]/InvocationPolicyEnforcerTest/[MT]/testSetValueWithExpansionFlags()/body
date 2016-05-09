@@ -1,15 +1,17 @@
 {
   InvocationPolicy.Builder invocationPolicyBuilder=InvocationPolicy.newBuilder();
-  invocationPolicyBuilder.addFlagPoliciesBuilder().setFlagName("test_expansion_b").getSetValueBuilder().addFlagValue("false");
+  invocationPolicyBuilder.addFlagPoliciesBuilder().setFlagName("test_expansion").getSetValueBuilder().addFlagValue("true");
   InvocationPolicyEnforcer enforcer=createOptionsPolicyEnforcer(invocationPolicyBuilder);
-  parser.parse("--test_expansion");
+  parser.parse("--test_string=foo");
   TestOptions testOptions=getTestOptions();
   assertTrue(testOptions.testExpansionA);
   assertTrue(testOptions.testExpansionB);
-  assertTrue(testOptions.testExpansionC);
+  assertEquals(12,testOptions.testExpansionC);
+  assertEquals("foo",testOptions.testExpansionD);
   enforcer.enforce(parser,"build");
   testOptions=getTestOptions();
-  assertTrue(testOptions.testExpansionA);
+  assertFalse(testOptions.testExpansionA);
   assertFalse(testOptions.testExpansionB);
-  assertTrue(testOptions.testExpansionC);
+  assertEquals(42,testOptions.testExpansionC);
+  assertEquals("bar",testOptions.testExpansionD);
 }

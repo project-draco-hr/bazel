@@ -1,0 +1,58 @@
+{
+  String value=null;
+  Field field;
+  boolean booleanValue=true;
+  if (arg.length() == 2) {
+    field=optionsData.getFieldForAbbrev(arg.charAt(1));
+    booleanValue=true;
+  }
+ else   if (arg.length() == 3 && arg.charAt(2) == '-') {
+    field=optionsData.getFieldForAbbrev(arg.charAt(1));
+    booleanValue=false;
+  }
+ else   if (allowSingleDashLongOptions || arg.startsWith("--")) {
+    int equalsAt=arg.indexOf('=');
+    int nameStartsAt=arg.startsWith("--") ? 2 : 1;
+    String name=equalsAt == -1 ? arg.substring(nameStartsAt) : arg.substring(nameStartsAt,equalsAt);
+    if (name.trim().isEmpty()) {
+      throw new OptionsParsingException("Invalid options syntax: " + arg,arg);
+    }
+    value=equalsAt == -1 ? null : arg.substring(equalsAt + 1);
+    field=optionsData.getFieldFromName(name);
+    if (field == null && name.startsWith("no")) {
+      name=name.substring(name.startsWith("no_") ? 3 : 2);
+      field=optionsData.getFieldFromName(name);
+      booleanValue=false;
+      if (field != null) {
+        if (!OptionsParserImpl.isBooleanField(field)) {
+          throw new OptionsParsingException("Illegal use of 'no' prefix on non-boolean option: " + arg,arg);
+        }
+        if (value != null) {
+          throw new OptionsParsingException("Unexpected value after boolean option: " + arg,arg);
+        }
+        value="0";
+      }
+    }
+  }
+ else {
+    throw new OptionsParsingException("Invalid options syntax: " + arg,arg);
+  }
+  if (field == null) {
+    throw new OptionsParsingException("Unrecognized option: " + arg,arg);
+  }
+  Option option=field.getAnnotation(Option.class);
+  if (value == null) {
+    if (OptionsParserImpl.isBooleanField(field)) {
+      value=booleanValue ? "1" : "0";
+    }
+ else     if (field.getType().equals(Void.class) && !option.wrapperOption()) {
+    }
+ else     if (nextArgs.hasNext()) {
+      value=nextArgs.next();
+    }
+ else {
+      throw new OptionsParsingException("Expected value after " + arg);
+    }
+  }
+  return new ParseOptionResult(field,option,value);
+}

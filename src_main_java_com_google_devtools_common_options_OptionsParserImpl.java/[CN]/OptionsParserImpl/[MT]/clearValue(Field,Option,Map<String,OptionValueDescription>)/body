@@ -1,0 +1,15 @@
+{
+  ParsedOptionEntry removed=parsedValues.remove(field);
+  if (removed != null) {
+    clearedValues.put(option.name(),removed.asOptionValueDescription(option.name()));
+  }
+  canonicalizeValues.removeAll(field);
+  for (  String[] args : new String[][]{option.implicitRequirements(),option.expansion()}) {
+    Iterator<String> argsIterator=Iterators.forArray(args);
+    while (argsIterator.hasNext()) {
+      String arg=argsIterator.next();
+      ParseOptionResult parseOptionResult=parseOption(arg,argsIterator);
+      clearValue(parseOptionResult.field,parseOptionResult.option,clearedValues);
+    }
+  }
+}
