@@ -1,8 +1,8 @@
 {
-  PathFragment file1=new PathFragment("hello.cc");
-  PathFragment file2=new PathFragment("hello.h");
+  Path file1=root.getRelative("hello.cc");
+  Path file2=root.getRelative("hello.h");
   String filename="hello.o";
-  Path dotd=scratch.file("/tmp/foo.d",filename + ": \\"," " + file1 + " \\"," " + file2 + " ");
+  Path dotd=scratch.file("/tmp/foo.d",filename + ": \\"," " + file1.relativeTo(root) + " \\"," " + file2.relativeTo(root) + " ");
   DependencySet depset=newDependencySet().read(dotd);
   assertThat(depset.getDependencies()).containsExactlyElementsIn(Sets.newHashSet(file1,file2));
   assertEquals(depset.getOutputFileName(),filename);

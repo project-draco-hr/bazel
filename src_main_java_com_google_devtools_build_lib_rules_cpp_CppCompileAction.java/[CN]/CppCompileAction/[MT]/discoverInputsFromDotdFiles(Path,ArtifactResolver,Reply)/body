@@ -6,37 +6,38 @@
   try {
     DependencySet depSet=processDepset(execRoot,reply);
     CppConfiguration toolchain=cppConfiguration;
-    List<PathFragment> systemIncludePrefixes=new ArrayList<>();
+    List<Path> systemIncludePrefixes=new ArrayList<>();
     for (    PathFragment includePath : toolchain.getBuiltInIncludeDirectories()) {
       if (includePath.isAbsolute()) {
-        systemIncludePrefixes.add(includePath);
+        systemIncludePrefixes.add(execRoot.getFileSystem().getPath(includePath));
       }
     }
     IncludeProblems problems=new IncludeProblems();
     Map<PathFragment,Artifact> allowedDerivedInputsMap=getAllowedDerivedInputsMap();
-    for (    PathFragment execPath : depSet.getDependencies()) {
-      if (execPath.isAbsolute()) {
+    for (    Path execPath : depSet.getDependencies()) {
+      PathFragment execPathFragment=execPath.asFragment();
+      if (execPathFragment.isAbsolute()) {
         if (FileSystemUtils.startsWithAny(execPath,systemIncludePrefixes)) {
           continue;
         }
-        if (execPath.startsWith(execRoot.asFragment())) {
-          execPath=execPath.relativeTo(execRoot.asFragment());
+        if (execPath.startsWith(execRoot)) {
+          execPathFragment=execPath.relativeTo(execRoot);
         }
  else {
-          problems.add(execPath.getPathString());
+          problems.add(execPathFragment.getPathString());
           continue;
         }
       }
-      Artifact artifact=allowedDerivedInputsMap.get(execPath);
+      Artifact artifact=allowedDerivedInputsMap.get(execPathFragment);
       if (artifact == null) {
-        artifact=artifactResolver.resolveSourceArtifact(execPath);
+        artifact=artifactResolver.resolveSourceArtifact(execPathFragment);
       }
       if (artifact != null) {
         inputs.add(artifact);
         inputs.addAll(specialInputsHandler.getInputsForIncludedFile(artifact,artifactResolver));
       }
  else {
-        problems.add(execPath.getPathString());
+        problems.add(execPathFragment.getPathString());
       }
     }
     problems.assertProblemFree(this,getSourceFile());

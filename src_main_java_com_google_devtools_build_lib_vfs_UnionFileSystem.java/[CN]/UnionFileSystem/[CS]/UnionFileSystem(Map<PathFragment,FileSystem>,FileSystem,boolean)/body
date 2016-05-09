@@ -6,8 +6,10 @@
   Preconditions.checkArgument(!prefixMapping.containsKey(PathFragment.EMPTY_FRAGMENT),"Attempted to specify an explicit root prefix mapping; " + "please use the rootFileSystem argument instead.");
   this.readOnly=readOnly;
   this.pathDelegate=new StringTrie<>();
+  this.isCaseSensitive=rootFileSystem.isFilePathCaseSensitive();
   for (  Map.Entry<PathFragment,FileSystem> prefix : prefixMapping.entrySet()) {
     FileSystem delegate=prefix.getValue();
+    Preconditions.checkArgument(delegate.isFilePathCaseSensitive() == this.isCaseSensitive,"The case sensitiveness of FileSystem are different in UnionFileSystem");
     PathFragment prefixPath=prefix.getKey();
     String path=prefixPath.getPathString();
     pathDelegate.put(path,delegate);
