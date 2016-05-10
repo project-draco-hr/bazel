@@ -18,12 +18,7 @@
     throw new ConfiguredTargetFunctionException(new ConfiguredValueCreationException(e.getMessage()));
   }
   if (pkg.containsErrors()) {
-    if (target == null) {
-      throw new ConfiguredTargetFunctionException(new ConfiguredValueCreationException(new BuildFileContainsErrorsException(lc.getLabel().getPackageIdentifier()).getMessage()));
-    }
- else {
-      transitiveLoadingRootCauses.add(lc.getLabel());
-    }
+    transitiveLoadingRootCauses.add(lc.getLabel());
   }
   transitivePackages.add(pkg);
   if (!target.isConfigurable()) {
@@ -32,7 +27,7 @@
   TargetAndConfiguration ctgValue=new TargetAndConfiguration(target,configuration);
   SkyframeDependencyResolver resolver=view.createDependencyResolver(env);
   try {
-    Set<ConfigMatchingProvider> configConditions=getConfigConditions(ctgValue.getTarget(),env,resolver,ctgValue,transitivePackages,transitiveLoadingRootCauses);
+    ImmutableMap<Label,ConfigMatchingProvider> configConditions=getConfigConditions(ctgValue.getTarget(),env,resolver,ctgValue,transitivePackages,transitiveLoadingRootCauses);
     if (env.valuesMissing()) {
       return null;
     }

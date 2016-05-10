@@ -1,0 +1,8 @@
+{
+  scratch.file("a/BUILD","filegroup(name='a', visibility=['//visibility:public'])");
+  scratch.file("b/BUILD","alias(name='b', actual='//a:a', visibility=['//visibility:private'])");
+  scratch.file("c/BUILD","filegroup(name='c', srcs=['//b:b'])");
+  reporter.removeHandler(failFastHandler);
+  getConfiguredTarget("//c:c");
+  assertContainsEvent("Target '//a:a' is not visible from target '//c:c' (aliased through '//b:b')");
+}

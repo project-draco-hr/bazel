@@ -2,7 +2,7 @@
   if (!(target instanceof Rule)) {
     return NO_CONFIG_CONDITIONS;
   }
-  ImmutableSet.Builder<ConfigMatchingProvider> configConditions=ImmutableSet.builder();
+  Map<Label,ConfigMatchingProvider> configConditions=new LinkedHashMap<>();
   ListMultimap<Attribute,LabelAndConfiguration> configLabelMap=ArrayListMultimap.create();
   RawAttributeMapper attributeMap=RawAttributeMapper.of(((Rule)target));
   for (  Attribute a : ((Rule)target).getAttributes()) {
@@ -16,6 +16,9 @@
     return NO_CONFIG_CONDITIONS;
   }
   Collection<Dependency> configValueNames=resolver.resolveRuleLabels(ctgValue,configLabelMap,transitiveLoadingRootCauses);
+  if (env.valuesMissing()) {
+    return null;
+  }
   BuildConfiguration targetConfig=ctgValue.getConfiguration();
   if (targetConfig != null && targetConfig.useDynamicConfigurations()) {
     ImmutableList.Builder<Dependency> staticConfigs=ImmutableList.builder();
@@ -32,7 +35,7 @@
     ConfiguredTarget value=configValues.get(TO_KEYS.apply(entry));
     ConfigMatchingProvider provider=value.getProvider(ConfigMatchingProvider.class);
     if (provider != null) {
-      configConditions.add(provider);
+      configConditions.put(entry.getLabel(),provider);
     }
  else {
       String message=entry.getLabel() + " is not a valid configuration key for " + target.getLabel();
@@ -40,5 +43,5 @@
       throw new DependencyEvaluationException(new ConfiguredValueCreationException(message,target.getLabel()));
     }
   }
-  return configConditions.build();
+  return ImmutableMap.copyOf(configConditions);
 }

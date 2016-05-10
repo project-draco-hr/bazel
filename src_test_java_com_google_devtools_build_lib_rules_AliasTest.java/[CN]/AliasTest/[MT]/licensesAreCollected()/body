@@ -1,0 +1,5 @@
+{
+  scratch.file("a/BUILD","filegroup(name='a', licenses=['unencumbered'])","alias(name='b', actual=':a', licenses=['restricted'])","filegroup(name='c', srcs=[':b'])");
+  useConfiguration("--check_licenses");
+  assertThat(getConfiguredTarget("//a:c").getProvider(LicensesProvider.class).getTransitiveLicenses()).hasSize(2);
+}

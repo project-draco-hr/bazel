@@ -1,9 +1,9 @@
 {
   if (!(ctg.getTarget() instanceof Rule)) {
-    return ImmutableSet.of();
+    return ImmutableMap.of();
   }
   Rule rule=(Rule)ctg.getTarget();
-  ImmutableSet.Builder<ConfigMatchingProvider> keys=ImmutableSet.builder();
+  ImmutableMap.Builder<Label,ConfigMatchingProvider> keys=ImmutableMap.builder();
   RawAttributeMapper mapper=RawAttributeMapper.of(rule);
   for (  Attribute attribute : rule.getAttributes()) {
     for (    Label label : mapper.getConfigurabilityKeys(attribute.getName(),attribute.getType())) {
@@ -11,7 +11,7 @@
         continue;
       }
       ConfiguredTarget ct=getConfiguredTargetForTesting(eventHandler,label,ctg.getConfiguration());
-      keys.add(Preconditions.checkNotNull(ct.getProvider(ConfigMatchingProvider.class)));
+      keys.put(label,Preconditions.checkNotNull(ct.getProvider(ConfigMatchingProvider.class)));
     }
   }
   return keys.build();

@@ -1,0 +1,7 @@
+{
+  scratch.file("a/BUILD","sh_test(name='a', srcs=['a.sh'])");
+  scratch.file("b/BUILD","alias(name='b', actual='//a:a', testonly=1)","test_suite(name='c', tests=[':b'])");
+  ConfiguredTarget c=getConfiguredTarget("//b:c");
+  NestedSet<Artifact> runfiles=c.getProvider(RunfilesProvider.class).getDataRunfiles().getAllArtifacts();
+  assertThat(ActionsTestUtil.baseArtifactNames(runfiles)).contains("a.sh");
+}

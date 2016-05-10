@@ -1,0 +1,6 @@
+{
+  scratch.file("a/BUILD","alias(name='a', actual=':b')","alias(name='b', actual=':c')","alias(name='c', actual=':a')","filegroup(name='d', srcs=[':c'])");
+  reporter.removeHandler(failFastHandler);
+  getConfiguredTarget("//a:d");
+  assertContainsEvent("cycle in dependency graph");
+}
