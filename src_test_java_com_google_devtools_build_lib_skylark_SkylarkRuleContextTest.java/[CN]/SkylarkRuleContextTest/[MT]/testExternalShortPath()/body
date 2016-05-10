@@ -1,0 +1,11 @@
+{
+  scratch.file("/bar/WORKSPACE");
+  scratch.file("/bar/bar.txt");
+  scratch.file("/bar/BUILD","exports_files(['bar.txt'])");
+  FileSystemUtils.appendIsoLatin1(scratch.resolve("WORKSPACE"),"local_repository(name = 'foo', path = '/bar')");
+  scratch.file("test/BUILD","genrule(","    name = 'lib',","    srcs = ['@foo//:bar.txt'],","    cmd = 'echo $(SRCS) $@',","    outs = ['lib.out'],","    executable = 1,",")");
+  invalidatePackages();
+  SkylarkRuleContext ruleContext=createRuleContext("//test:lib");
+  String filename=evalRuleContextCode(ruleContext,"ruleContext.files.srcs[0].short_path").toString();
+  assertThat(filename).isEqualTo("../foo/bar.txt");
+}
