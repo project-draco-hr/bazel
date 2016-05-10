@@ -6,7 +6,12 @@
   f.addStrings(executionRequirements);
   f.addPaths(context.getDeclaredIncludeDirs());
   f.addPaths(context.getDeclaredIncludeWarnDirs());
-  f.addPaths(getDeclaredIncludeSrcsInStableOrder());
-  f.addPaths(Artifact.asSortedPathFragments(getMandatoryInputs()));
+  for (  Artifact declaredIncludeSrc : context.getDeclaredIncludeSrcs()) {
+    f.addPath(declaredIncludeSrc.getExecPath());
+  }
+  f.addInt(0);
+  for (  Artifact input : getMandatoryInputs()) {
+    f.addPath(input.getExecPath());
+  }
   return f.hexDigestAndReset();
 }
