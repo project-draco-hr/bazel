@@ -4,7 +4,7 @@
   final CountDownLatch valuesReady=new CountDownLatch(3);
   final CountDownLatch errorThrown=new CountDownLatch(1);
   final AtomicBoolean secondBuild=new AtomicBoolean(false);
-  setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
+  injectGraphListenerForTesting(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!secondBuild.get()) {
         return;
@@ -16,7 +16,7 @@
       }
     }
   }
-));
+,true);
   final SkyKey dep1=GraphTester.toSkyKey("dep1");
   tester.set(dep1,new StringValue("dep1"));
   final SkyKey dep2=GraphTester.toSkyKey("dep2");

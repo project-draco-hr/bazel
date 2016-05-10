@@ -4,7 +4,7 @@
   final AtomicBoolean delayTopSignaling=new AtomicBoolean(false);
   final CountDownLatch topSignaled=new CountDownLatch(1);
   final CountDownLatch topRestartedBuild=new CountDownLatch(1);
-  setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
+  injectGraphListenerForTesting(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    @Nullable Object context){
       if (!delayTopSignaling.get()) {
         return;
@@ -18,7 +18,7 @@
       }
     }
   }
-));
+,true);
   final SkyKey firstKey=GraphTester.skyKey("first");
   tester.set(firstKey,new StringValue("biding"));
   tester.set(slowAddingDep,new StringValue("dep"));

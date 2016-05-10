@@ -3,7 +3,7 @@
   final AtomicBoolean blockingEnabled=new AtomicBoolean(false);
   final CountDownLatch waitForChanged=new CountDownLatch(1);
   final CountDownLatch threadsStarted=new CountDownLatch(3);
-  setGraphForTesting(new NotifyingInMemoryGraph(new Listener(){
+  injectGraphListenerForTesting(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!blockingEnabled.get()) {
         return;
@@ -30,7 +30,7 @@
       }
     }
   }
-));
+,false);
   SkyKey leaf=GraphTester.toSkyKey("leaf");
   tester.set(leaf,new StringValue("leaf"));
   tester.getOrCreate(parent).addDependency(leaf).setComputedValue(CONCATENATE);

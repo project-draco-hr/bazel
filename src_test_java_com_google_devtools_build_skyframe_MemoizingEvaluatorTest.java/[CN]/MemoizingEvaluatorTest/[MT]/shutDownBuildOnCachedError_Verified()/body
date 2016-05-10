@@ -11,7 +11,7 @@
   tester.getOrCreate(uncachedParentKey).addDependency(changedKey).addDependency(errorKey).setComputedValue(CONCATENATE);
   final AtomicBoolean synchronizeThreads=new AtomicBoolean(false);
   final CountDownLatch shutdownAwaiterStarted=new CountDownLatch(1);
-  setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
+  injectGraphListenerForTesting(new Listener(){
     private final CountDownLatch cachedSignaled=new CountDownLatch(1);
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!synchronizeThreads.get() || order != Order.BEFORE || type != EventType.SIGNAL) {
@@ -39,7 +39,7 @@
       }
     }
   }
-));
+,true);
   tester.eval(true,cachedParentKey,uncachedParentKey);
   tester.getOrCreate(invalidatedKey,true);
   tester.set(changedKey,new StringValue("new value"));

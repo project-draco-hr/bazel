@@ -3,7 +3,7 @@
   SkyKey inactiveKey=GraphTester.skyKey("inactive");
   final Thread mainThread=Thread.currentThread();
   final AtomicBoolean shouldInterrupt=new AtomicBoolean(false);
-  NotifyingInMemoryGraph graph=new NotifyingInMemoryGraph(new Listener(){
+  injectGraphListenerForTesting(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (shouldInterrupt.get() && key.equals(topKey) && type == EventType.IS_READY && order == Order.BEFORE) {
         mainThread.interrupt();
@@ -17,8 +17,7 @@
       }
     }
   }
-);
-  setGraphForTesting(graph);
+,false);
   tester.getOrCreate(topKey).addDependency(inactiveKey).setComputedValue(COPY);
   StringValue val=new StringValue("inactive");
   tester.set(inactiveKey,val);
@@ -33,10 +32,10 @@
   }
  catch (  InterruptedException e) {
   }
-  assertThat(graph.get(inactiveKey)).isNotNull();
-  assertThat(graph.get(inactiveKey).isDirty()).isTrue();
+  assertThat(tester.driver.getEntryForTesting(inactiveKey)).isNotNull();
+  assertThat(tester.driver.getEntryForTesting(inactiveKey).isDirty()).isTrue();
   assertThat(tester.evalAndGet(true,inactiveKey)).isEqualTo(val);
-  assertThat(graph.get(topKey)).isNull();
+  assertThat(tester.driver.getEntryForTesting(topKey)).isNull();
   tester.getOrCreate(inactiveKey,true);
   tester.invalidate();
   assertThat(tester.evalAndGet(true,inactiveKey)).isEqualTo(val);

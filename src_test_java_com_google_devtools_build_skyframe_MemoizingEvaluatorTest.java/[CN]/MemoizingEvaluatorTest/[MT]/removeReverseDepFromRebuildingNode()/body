@@ -8,7 +8,7 @@
   final CountDownLatch changedKeyStarted=new CountDownLatch(1);
   final CountDownLatch changedKeyCanFinish=new CountDownLatch(1);
   final AtomicBoolean controlTiming=new AtomicBoolean(false);
-  setGraphForTesting(new NotifyingInMemoryGraph(new Listener(){
+  injectGraphListenerForTesting(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!controlTiming.get()) {
         return;
@@ -21,7 +21,7 @@
       }
     }
   }
-));
+,false);
   assertThat(tester.evalAndGet(false,topKey)).isEqualTo(new StringValue("first"));
   tester.getOrCreate(changedKey,true).setConstantValue(null).setBuilder(new ChainedFunction(changedKeyStarted,changedKeyCanFinish,null,false,new StringValue("second"),ImmutableList.<SkyKey>of()));
   tester.getOrCreate(midKey,true);

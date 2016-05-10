@@ -9,7 +9,7 @@
   tester.getOrCreate(failingKey).addDependency(errorKey).setComputedValue(CONCATENATE);
   final AtomicBoolean synchronizeThreads=new AtomicBoolean(false);
   final CountDownLatch slowBuilt=new CountDownLatch(1);
-  setGraphForTesting(new DeterministicInMemoryGraph(new Listener(){
+  injectGraphListenerForTesting(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!synchronizeThreads.get()) {
         return;
@@ -34,7 +34,7 @@
       }
     }
   }
-));
+,true);
   tester.eval(true,errorKey);
   tester.getOrCreate(invalidatedKey,true);
   tester.invalidate();

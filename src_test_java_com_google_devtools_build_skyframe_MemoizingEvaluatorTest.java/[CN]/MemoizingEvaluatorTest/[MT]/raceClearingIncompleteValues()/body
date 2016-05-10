@@ -1,11 +1,11 @@
 {
-  SkyKey topKey=GraphTester.toSkyKey("top");
-  final SkyKey midKey=GraphTester.toSkyKey("mid");
+  SkyKey topKey=GraphTester.toSkyKey("aatop");
+  final SkyKey midKey=GraphTester.toSkyKey("zzmid");
   SkyKey badKey=GraphTester.toSkyKey("bad");
   final AtomicBoolean waitForSecondCall=new AtomicBoolean(false);
   final CountDownLatch otherThreadWinning=new CountDownLatch(1);
   final AtomicReference<Thread> firstThread=new AtomicReference<>();
-  setGraphForTesting(new NotifyingInMemoryGraph(new Listener(){
+  injectGraphListenerForTesting(new Listener(){
     @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
       if (!waitForSecondCall.get()) {
         return;
@@ -26,7 +26,7 @@
       }
     }
   }
-));
+,true);
   tester.getOrCreate(topKey).addDependency(midKey).setComputedValue(CONCATENATE);
   tester.getOrCreate(midKey).addDependency(badKey).setComputedValue(CONCATENATE);
   tester.getOrCreate(badKey).setHasError(true);
@@ -36,6 +36,10 @@
   result=tester.eval(true,topKey,midKey);
   assertNotNull(firstThread.get());
   assertEquals(0,otherThreadWinning.getCount());
-  assertThat(result.getError(midKey).getRootCauses()).containsExactly(badKey);
-  assertThat(result.getError(topKey).getRootCauses()).containsExactly(badKey);
+  assertThatEvaluationResult(result).hasErrorEntryForKeyThat(midKey).isNotNull();
+  assertThatEvaluationResult(result).hasErrorEntryForKeyThat(topKey).isNotNull();
+  if (rootCausesStored()) {
+    assertThatEvaluationResult(result).hasErrorEntryForKeyThat(midKey).rootCauseOfExceptionIs(badKey);
+    assertThatEvaluationResult(result).hasErrorEntryForKeyThat(topKey).rootCauseOfExceptionIs(badKey);
+  }
 }
