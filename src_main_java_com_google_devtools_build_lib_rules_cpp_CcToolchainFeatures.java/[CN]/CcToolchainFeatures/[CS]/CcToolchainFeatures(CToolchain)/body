@@ -40,6 +40,15 @@
       implies.put(selectable,implied);
     }
   }
+  for (  CToolchain.ActionConfig toolchainActionConfig : toolchain.getActionConfigList()) {
+    String name=toolchainActionConfig.getConfigName();
+    CrosstoolSelectable selectable=selectablesByName.get(name);
+    for (    String impliedName : toolchainActionConfig.getImpliesList()) {
+      CrosstoolSelectable implied=getActivatableOrFail(impliedName,name);
+      impliedBy.put(implied,selectable);
+      implies.put(selectable,implied);
+    }
+  }
   this.implies=implies.build();
   this.requires=requires.build();
   this.impliedBy=impliedBy.build();

@@ -7,13 +7,14 @@
     actualLinkstampCompileOptions=ImmutableList.copyOf(Iterables.concat(DEFAULT_LINKSTAMP_OPTIONS,linkstampCompileOptions));
   }
   CcToolchainFeatures.Variables variables=null;
-  FeatureConfiguration featureConfiguration=null;
   if (ruleContext != null) {
-    if (toolchain != null) {
-      featureConfiguration=CcCommon.configureFeatures(ruleContext,toolchain);
-    }
+    if (featureConfiguration == null) {
+      if (toolchain != null) {
+        featureConfiguration=CcCommon.configureFeatures(ruleContext,toolchain,CcLibraryHelper.SourceCategory.CC);
+      }
  else {
-      featureConfiguration=CcCommon.configureFeatures(ruleContext);
+        featureConfiguration=CcCommon.configureFeatures(ruleContext);
+      }
     }
     CcToolchainFeatures.Variables.Builder buildVariables=new CcToolchainFeatures.Variables.Builder();
     CppHelper.getFdoSupport(ruleContext).getLinkOptions(featureConfiguration,buildVariables);
