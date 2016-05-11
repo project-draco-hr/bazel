@@ -33,12 +33,23 @@
       platformRegexps=null;
     }
   }
+  Function<RuleClass,AttributeContainer> attributeContainerFactory=null;
+  for (  BlazeModule module : blazeModules) {
+    Function<RuleClass,AttributeContainer> attrContainerFactory=module.getAttributeContainerSupplier();
+    if (attrContainerFactory != null) {
+      Preconditions.checkState(attributeContainerFactory == null,"At most one attribute container supplier supported. But found two: %s and %s",attrContainerFactory,attributeContainerFactory);
+      attributeContainerFactory=attrContainerFactory;
+    }
+  }
+  if (attributeContainerFactory == null) {
+    attributeContainerFactory=AttributeContainer.ATTRIBUTE_CONTAINER_FACTORY;
+  }
   ConfiguredRuleClassProvider ruleClassProvider=ruleClassBuilder.build();
   List<PackageFactory.EnvironmentExtension> extensions=new ArrayList<>();
   for (  BlazeModule module : blazeModules) {
     extensions.add(module.getPackageEnvironmentExtension());
   }
-  PackageFactory packageFactory=new PackageFactory(ruleClassProvider,platformRegexps,extensions,BlazeVersionInfo.instance().getVersion());
+  PackageFactory packageFactory=new PackageFactory(ruleClassProvider,platformRegexps,attributeContainerFactory,extensions,BlazeVersionInfo.instance().getVersion());
   if (configurationFactory == null) {
     configurationFactory=new ConfigurationFactory(ruleClassProvider.getConfigurationCollectionFactory(),ruleClassProvider.getConfigurationFragments());
   }
