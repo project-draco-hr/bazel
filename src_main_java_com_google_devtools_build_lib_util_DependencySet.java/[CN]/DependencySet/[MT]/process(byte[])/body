@@ -2,33 +2,49 @@
   if (content.length > 0 && content[content.length - 1] != '\n') {
     throw new IOException("File does not end in a newline");
   }
-  boolean cr=content.length > 0 && content[0] == '\r';
-  boolean multiline=false;
-  byte prevByte=' ';
-  for (int i=1; i < content.length; i++) {
-    byte b=content[i];
-    if (cr || b == '\r') {
-      cr=true;
-      break;
-    }
-    if (b == '\n') {
-      if (prevByte == '\\') {
-        content[i]=' ';
-        content[i - 1]=' ';
+  int w=0;
+  for (int r=0; r < content.length; ++r) {
+    final byte c=content[r];
+switch (c) {
+case ' ':
+case '\n':
+case '\r':
+      if (w > 0) {
+        String s=new String(content,0,w,StandardCharsets.UTF_8);
+        addDependency(new PathFragment(s).normalize());
+        w=0;
       }
- else {
-        multiline=true;
-      }
+    break;
+case ':':
+switch (content[r + 1]) {
+case ' ':
+case '\n':
+case '\r':
+    if (w > 0) {
+      outputFileName=new String(content,0,w,StandardCharsets.UTF_8);
+      w=0;
     }
-    prevByte=b;
-  }
-  if (!cr && content.length > 0 && content[content.length - 1] == '\n') {
-    content[content.length - 1]=' ';
-  }
-  String s=new String(content,StandardCharsets.UTF_8);
-  if (cr) {
-    s=DOTD_MERGED_LINE_SEPARATOR.matcher(s).replaceAll(" ").trim();
-    multiline=true;
-  }
-  return process(s,multiline);
+  continue;
+default :
+content[w++]=c;
+continue;
+}
+case '\\':
+switch (content[r + 1]) {
+case ' ':
+content[w++]=' ';
+++r;
+continue;
+case '\n':
+case '\r':
+continue;
+default :
+content[w++]=c;
+continue;
+}
+default :
+content[w++]=c;
+}
+}
+return this;
 }
