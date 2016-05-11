@@ -1,0 +1,11 @@
+{
+  ImmutableList.Builder<SpawnAction> expandedActions=new ImmutableList.Builder<>();
+  for (  TreeFileArtifact inputTreeFileArtifact : inputTreeFileArtifacts) {
+    PathFragment parentRelativeOutputPath=outputPathMapper.parentRelativeOutputPath(inputTreeFileArtifact);
+    TreeFileArtifact outputTreeFileArtifact=createTreeFileArtifact(outputTreeArtifact,checkOutputParentRelativePath(parentRelativeOutputPath),artifactOwner);
+    expandedActions.add(createAction(inputTreeFileArtifact,outputTreeFileArtifact));
+  }
+  Iterable<SpawnAction> actions=expandedActions.build();
+  checkActionAndArtifactConflicts(ImmutableList.<ActionAnalysisMetadata>copyOf(actions));
+  return actions;
+}

@@ -1,0 +1,13 @@
+{
+  SpawnActionTemplate actionTemplate=createSimpleSpawnActionTemplate();
+  Artifact inputTreeArtifact=createInputTreeArtifact();
+  Artifact outputTreeArtifact=createOutputTreeArtifact();
+  Iterable<TreeFileArtifact> inputTreeFileArtifacts=createInputTreeFileArtifacts(inputTreeArtifact);
+  List<SpawnAction> expandedActions=ImmutableList.copyOf(actionTemplate.generateActionForInputArtifacts(inputTreeFileArtifacts,ArtifactOwner.NULL_OWNER));
+  assertThat(expandedActions).hasSize(3);
+  for (int i=0; i < expandedActions.size(); ++i) {
+    String baseName=String.format("child%d",i);
+    assertThat(expandedActions.get(i).getInputs()).containsExactly(ActionInputHelper.treeFileArtifact(inputTreeArtifact,new PathFragment("children/" + baseName)));
+    assertThat(expandedActions.get(i).getOutputs()).containsExactly(ActionInputHelper.treeFileArtifact(outputTreeArtifact,new PathFragment("children/" + baseName)));
+  }
+}

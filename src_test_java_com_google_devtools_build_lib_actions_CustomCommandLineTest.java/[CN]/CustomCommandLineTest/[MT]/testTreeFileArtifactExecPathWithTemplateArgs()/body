@@ -1,0 +1,9 @@
+{
+  Artifact treeArtifactOne=createTreeArtifact("myArtifact/treeArtifact1");
+  Artifact treeArtifactTwo=createTreeArtifact("myArtifact/treeArtifact2");
+  CustomCommandLine commandLineTemplate=CustomCommandLine.builder().addTreeFileArtifactExecPaths("%s:%s",treeArtifactOne,treeArtifactTwo).build();
+  TreeFileArtifact treeFileArtifactOne=createTreeFileArtifact(treeArtifactOne,"children/child1");
+  TreeFileArtifact treeFileArtifactTwo=createTreeFileArtifact(treeArtifactTwo,"children/child2");
+  CustomCommandLine commandLine=commandLineTemplate.evaluateTreeFileArtifacts(ImmutableList.of(treeFileArtifactOne,treeFileArtifactTwo));
+  assertThat(commandLine.arguments()).containsExactly("myArtifact/treeArtifact1/children/child1:myArtifact/treeArtifact2/children/child2");
+}

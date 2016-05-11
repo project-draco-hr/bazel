@@ -1,28 +1,10 @@
 {
-  if (isShellCommand && executable == null) {
-    executable=configuration.getShExecutable();
-  }
-  Preconditions.checkNotNull(executable);
-  Preconditions.checkNotNull(executableArgs);
-  if (useDefaultShellEnvironment) {
-    this.environment=configuration.getLocalShellEnvironment();
-  }
-  ImmutableList<String> argv=ImmutableList.<String>builder().add(executable.getPathString()).addAll(executableArgs).build();
   Iterable<String> arguments=argumentsBuilder.build();
-  Artifact paramsFile=ParamFileHelper.getParamsFileMaybe(argv,arguments,commandLine,paramFileInfo,configuration,analysisEnvironment,outputs);
-  List<Action> actions=new ArrayList<>();
-  CommandLine actualCommandLine;
+  Artifact paramsFile=ParamFileHelper.getParamsFileMaybe(buildExecutableArgs(configuration.getShExecutable()),arguments,commandLine,paramFileInfo,configuration,analysisEnvironment,outputs);
+  List<Action> actions=new ArrayList<>(2);
+  actions.add(buildSpawnAction(owner,configuration.getLocalShellEnvironment(),configuration.getShExecutable(),paramsFile));
   if (paramsFile != null) {
-    actualCommandLine=ParamFileHelper.createWithParamsFile(argv,arguments,commandLine,isShellCommand,owner,actions,paramFileInfo,paramsFile);
-    inputsBuilder.add(paramsFile);
+    actions.add(ParamFileHelper.createParameterFileWriteAction(arguments,commandLine,owner,paramsFile,paramFileInfo));
   }
- else {
-    actualCommandLine=ParamFileHelper.createWithoutParamsFile(argv,arguments,commandLine,isShellCommand);
-  }
-  NestedSet<Artifact> tools=toolsBuilder.build();
-  NestedSet<Artifact> inputsAndTools=NestedSetBuilder.<Artifact>stableOrder().addTransitive(inputsBuilder.build()).addTransitive(tools).build();
-  LinkedHashMap<PathFragment,Artifact> inputAndToolManifests=new LinkedHashMap<>(inputManifests);
-  inputAndToolManifests.putAll(toolManifests);
-  actions.add(0,new SpawnAction(owner,tools,inputsAndTools,ImmutableList.copyOf(outputs),resourceSet,actualCommandLine,environment,executionInfo,progressMessage,ImmutableMap.copyOf(inputAndToolManifests),mnemonic,executeUnconditionally,extraActionInfoSupplier));
   return actions.toArray(new Action[actions.size()]);
 }

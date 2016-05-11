@@ -1,0 +1,14 @@
+{
+  Artifact inputTreeArtifact=createInputTreeArtifact();
+  Artifact outputTreeArtifact=createOutputTreeArtifact();
+  Artifact commonInput=createDerivedArtifact("common/input");
+  Artifact commonTool=createDerivedArtifact("common/tool");
+  Artifact executable=createDerivedArtifact("bin/cp");
+  SpawnActionTemplate actionTemplate=builder(inputTreeArtifact,outputTreeArtifact).setExecutionInfo(ImmutableMap.<String,String>of("local","")).setExecutable(executable).setCommandLineTemplate(createSimpleCommandLineTemplate(inputTreeArtifact,outputTreeArtifact)).setOutputPathMapper(IDENTITY_MAPPER).setMnemonics("ActionTemplate","ExpandedAction").addCommonTools(ImmutableList.of(commonTool)).addCommonInputs(ImmutableList.of(commonInput)).build(ActionsTestUtil.NULL_ACTION_OWNER);
+  Iterable<TreeFileArtifact> inputTreeFileArtifacts=createInputTreeFileArtifacts(inputTreeArtifact);
+  List<SpawnAction> expandedActions=ImmutableList.copyOf(actionTemplate.generateActionForInputArtifacts(inputTreeFileArtifacts,ArtifactOwner.NULL_OWNER));
+  for (int i=0; i < expandedActions.size(); ++i) {
+    assertThat(expandedActions.get(i).getInputs()).containsAllOf(commonInput,commonTool,executable);
+    assertThat(expandedActions.get(i).getTools()).containsAllOf(commonTool,executable);
+  }
+}

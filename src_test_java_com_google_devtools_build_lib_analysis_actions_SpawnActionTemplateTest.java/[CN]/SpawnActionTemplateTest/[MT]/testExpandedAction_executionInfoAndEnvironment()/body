@@ -1,0 +1,11 @@
+{
+  SpawnActionTemplate actionTemplate=createSimpleSpawnActionTemplate();
+  Artifact inputTreeArtifact=createInputTreeArtifact();
+  Iterable<TreeFileArtifact> inputTreeFileArtifacts=createInputTreeFileArtifacts(inputTreeArtifact);
+  List<SpawnAction> expandedActions=ImmutableList.copyOf(actionTemplate.generateActionForInputArtifacts(inputTreeFileArtifacts,ArtifactOwner.NULL_OWNER));
+  assertThat(expandedActions).hasSize(3);
+  for (int i=0; i < expandedActions.size(); ++i) {
+    assertThat(expandedActions.get(i).getEnvironment()).containsExactly("env","value");
+    assertThat(expandedActions.get(i).getExecutionInfo()).containsExactly("local","");
+  }
+}

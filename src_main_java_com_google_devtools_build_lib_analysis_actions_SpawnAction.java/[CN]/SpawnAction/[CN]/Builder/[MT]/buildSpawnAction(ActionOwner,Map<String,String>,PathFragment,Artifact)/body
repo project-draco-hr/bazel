@@ -1,0 +1,24 @@
+{
+  List<String> argv=buildExecutableArgs(defaultShellExecutable);
+  Iterable<String> arguments=argumentsBuilder.build();
+  CommandLine actualCommandLine;
+  if (paramsFile != null) {
+    inputsBuilder.add(paramsFile);
+    actualCommandLine=ParamFileHelper.createWithParamsFile(argv,isShellCommand,paramFileInfo,paramsFile);
+  }
+ else {
+    actualCommandLine=ParamFileHelper.createWithoutParamsFile(argv,arguments,commandLine,isShellCommand);
+  }
+  NestedSet<Artifact> tools=toolsBuilder.build();
+  NestedSet<Artifact> inputsAndTools=NestedSetBuilder.<Artifact>stableOrder().addTransitive(inputsBuilder.build()).addTransitive(tools).build();
+  LinkedHashMap<PathFragment,Artifact> inputAndToolManifests=new LinkedHashMap<>(inputManifests);
+  inputAndToolManifests.putAll(toolManifests);
+  Map<String,String> env;
+  if (useDefaultShellEnvironment) {
+    env=Preconditions.checkNotNull(defaultShellEnvironment);
+  }
+ else {
+    env=this.environment;
+  }
+  return new SpawnAction(owner,tools,inputsAndTools,ImmutableList.copyOf(outputs),resourceSet,actualCommandLine,ImmutableMap.copyOf(env),executionInfo,progressMessage,ImmutableMap.copyOf(inputAndToolManifests),mnemonic,executeUnconditionally,extraActionInfoSupplier);
+}

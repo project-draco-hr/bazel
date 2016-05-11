@@ -1,0 +1,32 @@
+{
+  Artifact inputTreeArtifact=createInputTreeArtifact();
+  Artifact outputTreeArtifact=createOutputTreeArtifact();
+  Iterable<TreeFileArtifact> inputTreeFileArtifacts=createInputTreeFileArtifacts(inputTreeArtifact);
+  SpawnActionTemplate.Builder builder=builder(inputTreeArtifact,outputTreeArtifact).setExecutable(new PathFragment("/bin/cp")).setCommandLineTemplate(createSimpleCommandLineTemplate(inputTreeArtifact,outputTreeArtifact));
+  OutputPathMapper mapper=new OutputPathMapper(){
+    @Override public PathFragment parentRelativeOutputPath(    TreeFileArtifact inputTreeFileArtifact){
+      return new PathFragment("//absolute/" + inputTreeFileArtifact.getParentRelativePath());
+    }
+  }
+;
+  SpawnActionTemplate actionTemplate=builder.setOutputPathMapper(mapper).build(ActionsTestUtil.NULL_ACTION_OWNER);
+  try {
+    actionTemplate.generateActionForInputArtifacts(inputTreeFileArtifacts,ArtifactOwner.NULL_OWNER);
+    fail("Absolute output paths not allowed, expected IllegalArgumentException");
+  }
+ catch (  IllegalArgumentException e) {
+  }
+  mapper=new OutputPathMapper(){
+    @Override public PathFragment parentRelativeOutputPath(    TreeFileArtifact inputTreeFileArtifact){
+      return new PathFragment("../" + inputTreeFileArtifact.getParentRelativePath());
+    }
+  }
+;
+  actionTemplate=builder.setOutputPathMapper(mapper).build(ActionsTestUtil.NULL_ACTION_OWNER);
+  try {
+    actionTemplate.generateActionForInputArtifacts(inputTreeFileArtifacts,ArtifactOwner.NULL_OWNER);
+    fail("Output paths containing '..' not allowed, expected IllegalArgumentException");
+  }
+ catch (  IllegalArgumentException e) {
+  }
+}
