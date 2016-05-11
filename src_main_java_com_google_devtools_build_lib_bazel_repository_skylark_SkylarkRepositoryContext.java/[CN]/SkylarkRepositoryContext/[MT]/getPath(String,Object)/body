@@ -1,17 +1,12 @@
 {
   if (path instanceof String) {
     PathFragment pathFragment=new PathFragment(path.toString());
-    if (pathFragment.isAbsolute()) {
-      return new SkylarkPath(outputDirectory.getFileSystem().getPath(path.toString()));
-    }
- else {
-      return new SkylarkPath(outputDirectory.getRelative(pathFragment));
-    }
+    return new SkylarkPath(pathFragment.isAbsolute() ? outputDirectory.getFileSystem().getPath(path.toString()) : outputDirectory.getRelative(pathFragment));
   }
  else   if (path instanceof Label) {
     SkylarkPath result=getPathFromLabel((Label)path);
     if (result == null) {
-      SkylarkRepositoryFunction.restart();
+      throw SkylarkRepositoryFunction.restart();
     }
     return result;
   }
