@@ -1,6 +1,7 @@
 {
   SkylarkRuleContext ruleContext=createRuleContext("//foo:foo");
-  FileWriteAction action=(FileWriteAction)evalRuleContextCode(ruleContext,"ruleContext.file_action(","  output = ruleContext.files.srcs[0],","  content = 'hello world',","  executable = False)");
+  evalRuleContextCode(ruleContext,"ruleContext.file_action(","  output = ruleContext.files.srcs[0],","  content = 'hello world',","  executable = False)");
+  FileWriteAction action=(FileWriteAction)Iterables.getOnlyElement(ruleContext.getRuleContext().getAnalysisEnvironment().getRegisteredActions());
   assertEquals("foo/a.txt",Iterables.getOnlyElement(action.getOutputs()).getExecPathString());
   assertEquals("hello world",action.getFileContents());
   assertFalse(action.makeExecutable());
