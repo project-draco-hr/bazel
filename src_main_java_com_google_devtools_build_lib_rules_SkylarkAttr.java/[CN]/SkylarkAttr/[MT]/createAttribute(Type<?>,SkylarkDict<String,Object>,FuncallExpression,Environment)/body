@@ -35,8 +35,12 @@
  else     if (fileTypesObj instanceof SkylarkFileType) {
       builder.allowedFileTypes(((SkylarkFileType)fileTypesObj).getFileTypeSet());
     }
+ else     if (fileTypesObj instanceof SkylarkList) {
+      List<String> arg=SkylarkList.castSkylarkListOrNoneToList(fileTypesObj,String.class,"allow_files argument");
+      builder.allowedFileTypes(FileType.of(arg));
+    }
  else {
-      throw new EvalException(ast.getLocation(),"allow_files should be a boolean or a filetype object.");
+      throw new EvalException(ast.getLocation(),"allow_files should be a boolean or a string list");
     }
   }
  else   if (type.equals(BuildType.LABEL) || type.equals(BuildType.LABEL_LIST)) {
