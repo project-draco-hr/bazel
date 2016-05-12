@@ -1,9 +1,7 @@
 {
   Target prerequisiteTarget=prerequisite.getTarget();
-  Label prerequisiteLabel=prerequisiteTarget.getLabel();
   RuleClass ruleClass=((Rule)prerequisiteTarget).getRuleClassObject();
   Boolean allowed=null;
-  Boolean allowedWithWarning=null;
   if (attribute.getAllowedRuleClassesPredicate() != Predicates.<RuleClass>alwaysTrue()) {
     allowed=attribute.getAllowedRuleClassesPredicate().apply(ruleClass);
     if (allowed) {
@@ -11,9 +9,9 @@
     }
   }
   if (attribute.getAllowedRuleClassesWarningPredicate() != Predicates.<RuleClass>alwaysTrue()) {
-    allowedWithWarning=attribute.getAllowedRuleClassesWarningPredicate().apply(ruleClass);
-    if (allowedWithWarning) {
-      reportBadPrerequisite(attribute,prerequisiteTarget.getTargetKind(),prerequisite,"expected " + attribute.getAllowedRuleClassesPredicate(),true);
+    Predicate<RuleClass> warningPredicate=attribute.getAllowedRuleClassesWarningPredicate();
+    if (warningPredicate.apply(ruleClass)) {
+      reportBadPrerequisite(attribute,prerequisiteTarget.getTargetKind(),prerequisite,"expected " + warningPredicate,true);
       return;
     }
   }
