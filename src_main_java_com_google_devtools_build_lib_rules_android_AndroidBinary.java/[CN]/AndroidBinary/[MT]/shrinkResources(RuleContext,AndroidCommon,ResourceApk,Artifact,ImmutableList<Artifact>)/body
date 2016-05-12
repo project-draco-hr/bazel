@@ -12,7 +12,8 @@
     }
     builder.addArgument("-ignorewarnings").addArgument("-dontnote").addArgument("-forceprocessing").addArgument("-dontoptimize").addArgument("-dontobfuscate").addArgument("-dontpreverify").addArgument("-outjars").addOutputArgument(shrunkJar);
     ruleContext.registerAction(builder.build(ruleContext));
-    return new ResourceShrinkerActionBuilder(ruleContext).setResourceApkOut(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_SHRUNK_APK)).setShrunkResourcesOut(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_SHRUNK_ZIP)).withResourceFiles(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_ZIP)).withShrunkJar(shrunkJar).withPrimary(resourceApk.getPrimaryResource()).withDependencies(resourceApk.getResourceDependencies()).setConfigurationFilters(ruleContext.getTokenizedStringListAttr("resource_configuration_filters")).setUncompressedExtensions(ruleContext.getTokenizedStringListAttr("nocompress_extensions")).build();
+    Artifact apk=new ResourceShrinkerActionBuilder(ruleContext).setResourceApkOut(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_SHRUNK_APK)).setShrunkResourcesOut(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_SHRUNK_ZIP)).withResourceFiles(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_ZIP)).withShrunkJar(shrunkJar).withPrimary(resourceApk.getPrimaryResource()).withDependencies(resourceApk.getResourceDependencies()).setConfigurationFilters(ruleContext.getTokenizedStringListAttr("resource_configuration_filters")).setUncompressedExtensions(ruleContext.getTokenizedStringListAttr("nocompress_extensions")).build();
+    return new ResourceApk(apk,resourceApk.getResourceJavaSrcJar(),resourceApk.getResourceDependencies(),resourceApk.getPrimaryResource(),resourceApk.getManifest(),resourceApk.getResourceProguardConfig(),resourceApk.getMainDexProguardConfig(),resourceApk.isLegacy());
   }
-  return resourceApk.getArtifact();
+  return resourceApk;
 }

@@ -1,6 +1,8 @@
 {
   ImmutableList<Artifact> proguardSpecs=ProguardHelper.collectTransitiveProguardSpecs(ruleContext,ImmutableList.of(resourceApk.getResourceProguardConfig()));
-  Artifact resourceApkArtifact=shrinkResources(ruleContext,androidCommon,resourceApk,binaryJar,proguardSpecs);
+  if (shrinkResources) {
+    resourceApk=shrinkResources(ruleContext,androidCommon,resourceApk,binaryJar,proguardSpecs);
+  }
   ProguardOutput proguardOutput=applyProguard(ruleContext,androidCommon,binaryJar,filesBuilder,proguardSpecs,proguardMapping);
   Artifact jarToDex=proguardOutput.getOutputJar();
   DexingOutput dexingOutput=shouldDexWithJack(ruleContext) ? dexWithJack(ruleContext,androidCommon,proguardSpecs) : dex(ruleContext,binaryJar,jarToDex,isBinaryJarFiltered,androidCommon,resourceApk.getMainDexProguardConfig(),resourceClasses);
@@ -9,7 +11,7 @@
   }
   Artifact unsignedApk=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_UNSIGNED_APK);
   Artifact signedApk=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_SIGNED_APK);
-  ApkActionBuilder apkBuilder=new ApkActionBuilder(ruleContext,androidSemantics).classesDex(dexingOutput.classesDexZip).resourceApk(resourceApkArtifact).javaResourceZip(dexingOutput.javaResourceJar).nativeLibs(nativeLibs);
+  ApkActionBuilder apkBuilder=new ApkActionBuilder(ruleContext,androidSemantics).classesDex(dexingOutput.classesDexZip).resourceApk(resourceApk.getArtifact()).javaResourceZip(dexingOutput.javaResourceJar).nativeLibs(nativeLibs);
   ruleContext.registerAction(apkBuilder.message("Generating unsigned apk").build(unsignedApk));
   ruleContext.registerAction(apkBuilder.message("Generating signed apk").sign(true).build(signedApk));
   Artifact zipAlignedApk=zipalignApk(ruleContext,signedApk,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_APK));
