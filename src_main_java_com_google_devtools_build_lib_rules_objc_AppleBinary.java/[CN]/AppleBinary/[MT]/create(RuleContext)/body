@@ -4,11 +4,11 @@
   Set<BuildConfiguration> childConfigurations=getChildConfigurations(ruleContext);
   IntermediateArtifacts ruleIntermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   NestedSetBuilder<Artifact> binariesToLipo=NestedSetBuilder.<Artifact>stableOrder();
+  NestedSetBuilder<Artifact> archivesToLipo=NestedSetBuilder.<Artifact>stableOrder();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(ruleIntermediateArtifacts.combinedArchitectureBinary());
   for (  BuildConfiguration childConfig : childConfigurations) {
     IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext,childConfig);
     ObjcCommon common=common(ruleContext,childConfig,intermediateArtifacts,nullToEmptyList(configToDepsCollectionMap.get(childConfig)),nullToEmptyList(configurationToNonPropagatedObjcMap.get(childConfig)));
-    ObjcProvider objcProvider=common.getObjcProvider();
     ImmutableList.Builder<J2ObjcMappingFileProvider> j2ObjcMappingFileProviders=ImmutableList.builder();
     J2ObjcEntryClassProvider.Builder j2ObjcEntryClassProviderBuilder=new J2ObjcEntryClassProvider.Builder();
     for (    TransitiveInfoCollection dep : configToDepsCollectionMap.get(childConfig)) {
@@ -21,13 +21,14 @@
     }
     J2ObjcMappingFileProvider j2ObjcMappingFileProvider=J2ObjcMappingFileProvider.union(j2ObjcMappingFileProviders.build());
     J2ObjcEntryClassProvider j2ObjcEntryClassProvider=j2ObjcEntryClassProviderBuilder.build();
-    if (!hasLibraryOrSources(objcProvider)) {
-      ruleContext.ruleError(REQUIRES_AT_LEAST_ONE_LIBRARY_OR_SOURCE_FILE);
+    if (!common.getCompilationArtifacts().get().getArchive().isPresent()) {
+      ruleContext.ruleError(REQUIRES_AT_LEAST_ONE_SOURCE_FILE);
       return null;
     }
     if (ruleContext.hasErrors()) {
       return null;
     }
+    archivesToLipo.add(common.getCompilationArtifacts().get().getArchive().get());
     binariesToLipo.add(intermediateArtifacts.strippedSingleArchitectureBinary());
     new CompilationSupport(ruleContext,childConfig).registerCompileAndArchiveActions(common).registerLinkActions(common.getObjcProvider(),j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,new ExtraLinkArgs(),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
     if (ruleContext.hasErrors()) {
@@ -35,7 +36,7 @@
     }
   }
   AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
-  new LipoSupport(ruleContext).registerCombineArchitecturesAction(binariesToLipo.build(),ruleIntermediateArtifacts.combinedArchitectureBinary(),appleConfiguration.getIosCpuPlatform());
+  new LipoSupport(ruleContext).registerCombineArchitecturesAction(binariesToLipo.build(),ruleIntermediateArtifacts.combinedArchitectureBinary(),appleConfiguration.getIosCpuPlatform()).registerCombineArchitecturesAction(archivesToLipo.build(),ruleContext.getImplicitOutputArtifact(AppleBinaryRule.LIPO_ARCHIVE),appleConfiguration.getIosCpuPlatform());
   RuleConfiguredTargetBuilder targetBuilder=ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build());
   return targetBuilder.build();
 }
