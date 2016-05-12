@@ -1,0 +1,21 @@
+{
+  ImmutableList.Builder<CToolchain.Builder> toolchains=ImmutableList.builder();
+  toolchains.add(createX86Toolchain());
+  CToolchain.Builder x86Clang=createBaseX86ClangToolchain("x86","i686").setToolchainIdentifier("x86-clang3.8").setTargetCpu("x86").addAllToolPath(ndkPaths.createClangToolpaths("x86-4.9","i686-linux-android",null)).setBuiltinSysroot(ndkPaths.createBuiltinSysroot("x86"));
+  ndkPaths.addToolchainIncludePaths(x86Clang,"x86-4.9","i686-linux-android","4.9");
+  stlImpl.addStlImpl(x86Clang,"4.9");
+  toolchains.add(x86Clang);
+  CToolchain.Builder x8664=createBaseX86Toolchain().setToolchainIdentifier("x86_64-4.9").setTargetCpu("x86_64").setCompiler("gcc-4.9").addAllToolPath(ndkPaths.createToolpaths("x86_64-4.9","x86_64-linux-android")).setBuiltinSysroot(ndkPaths.createBuiltinSysroot("x86_64")).addCompilerFlag("-fstack-protector-strong");
+  ndkPaths.addToolchainIncludePaths(x8664,"x86_64-4.9","x86_64-linux-android","4.9");
+  stlImpl.addStlImpl(x8664,"4.9");
+  toolchains.add(x8664);
+  CToolchain.Builder x8664Clang=createBaseX86ClangToolchain("x86_64","x86_64").setToolchainIdentifier("x86_64-clang3.8").setTargetCpu("x86_64").addAllToolPath(ndkPaths.createClangToolpaths("x86_64-4.9","x86_64-linux-android",null)).setBuiltinSysroot(ndkPaths.createBuiltinSysroot("x86_64"));
+  ndkPaths.addToolchainIncludePaths(x8664Clang,"x86_64-4.9","x86_64-linux-android","4.9");
+  stlImpl.addStlImpl(x8664Clang,"4.9");
+  toolchains.add(x8664Clang);
+  ImmutableList<CToolchain.Builder> toolchainBuilders=toolchains.build();
+  for (  CToolchain.Builder toolchainBuilder : toolchainBuilders) {
+    toolchainBuilder.setTargetSystemName("x86-linux-android");
+  }
+  return toolchainBuilders;
+}

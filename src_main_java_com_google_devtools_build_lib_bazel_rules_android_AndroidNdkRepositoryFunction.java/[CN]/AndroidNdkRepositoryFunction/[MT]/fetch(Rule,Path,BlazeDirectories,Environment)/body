@@ -14,17 +14,23 @@
   AttributeMap attributes=NonconfigurableAttributeMapper.of(rule);
   String ruleName=rule.getName();
   String apiLevelAttr=attributes.get("api_level",Type.INTEGER).toString();
-  ApiLevel apiLevel=new ApiLevel(env.getListener(),ruleName,apiLevelAttr);
   NdkRelease ndkRelease=getNdkRelease(outputDirectory,env);
   if (env.valuesMissing()) {
     return null;
   }
+  ApiLevel apiLevel=ApiLevel.getApiLevel(ndkRelease,env.getListener(),ruleName,apiLevelAttr);
+  if (!ndkRelease.isValid) {
+    env.getListener().handle(Event.warn(String.format("The revision of the Android NDK given in android_ndk_repository rule '%s' could not be " + "determined (the revision string found is '%s'). " + "Defaulting to Android NDK revision %s",ruleName,ndkRelease.rawRelease,AndroidNdkCrosstools.LATEST_KNOWN_REVISION)));
+  }
+  if (!AndroidNdkCrosstools.isKnownNDKRevision(ndkRelease)) {
+    env.getListener().handle(Event.warn(String.format("Bazel Android NDK crosstools are based on Android NDK revision %s. " + "The revision of the Android NDK given in android_ndk_repository rule '%s' is '%s'",AndroidNdkCrosstools.LATEST_KNOWN_REVISION,ruleName,ndkRelease.rawRelease)));
+  }
   ImmutableList.Builder<CrosstoolStlPair> crosstoolsAndStls=ImmutableList.builder();
   try {
-    String hostPlatform=AndroidNdkCrosstoolsR10e.getHostPlatform(ndkRelease);
+    String hostPlatform=AndroidNdkCrosstools.getHostPlatform(ndkRelease);
     NdkPaths ndkPaths=new NdkPaths(ruleName,hostPlatform,apiLevel);
     for (    StlImpl stlImpl : StlImpls.get(ndkPaths)) {
-      CrosstoolRelease crosstoolRelease=AndroidNdkCrosstoolsR10e.create(env.getListener(),ndkPaths,ruleName,ndkRelease,stlImpl,hostPlatform);
+      CrosstoolRelease crosstoolRelease=AndroidNdkCrosstools.create(ndkRelease,ndkPaths,stlImpl,hostPlatform);
       crosstoolsAndStls.add(new CrosstoolStlPair(crosstoolRelease,stlImpl));
     }
   }

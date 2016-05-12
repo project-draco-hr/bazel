@@ -1,0 +1,15 @@
+{
+  String toolchainName="arm-linux-androideabi-4.9";
+  String targetPlatform="arm-linux-androideabi";
+  CToolchain.Builder toolchain=CToolchain.newBuilder().setTargetSystemName(targetPlatform).setCompiler("gcc-4.9").addAllToolPath(ndkPaths.createToolpaths(toolchainName,targetPlatform,excludedTools)).setBuiltinSysroot(ndkPaths.createBuiltinSysroot("arm")).addCompilerFlag("-fstack-protector-strong").addCompilerFlag("-fpic").addCompilerFlag("-ffunction-sections").addCompilerFlag("-funwind-tables").addCompilerFlag("-no-canonical-prefixes").addCompilerFlag("-fno-canonical-system-headers").addLinkerFlag("-no-canonical-prefixes");
+  if (thumb) {
+    toolchain.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.OPT).addCompilerFlag("-mthumb").addCompilerFlag("-Os").addCompilerFlag("-g").addCompilerFlag("-DNDEBUG").addCompilerFlag("-fomit-frame-pointer").addCompilerFlag("-fno-strict-aliasing").addCompilerFlag("-finline-limit=64"));
+    toolchain.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.DBG).addCompilerFlag("-g").addCompilerFlag("-fno-strict-aliasing").addCompilerFlag("-finline-limit=64").addCompilerFlag("-O0").addCompilerFlag("-UNDEBUG").addCompilerFlag("-marm").addCompilerFlag("-fno-omit-frame-pointer"));
+  }
+ else {
+    toolchain.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.OPT).addCompilerFlag("-O2").addCompilerFlag("-g").addCompilerFlag("-DNDEBUG").addCompilerFlag("-fomit-frame-pointer").addCompilerFlag("-fstrict-aliasing").addCompilerFlag("-funswitch-loops").addCompilerFlag("-finline-limit=300"));
+    toolchain.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.DBG).addCompilerFlag("-g").addCompilerFlag("-funswitch-loops").addCompilerFlag("-finline-limit=300").addCompilerFlag("-O0").addCompilerFlag("-UNDEBUG").addCompilerFlag("-fno-omit-frame-pointer").addCompilerFlag("-fno-strict-aliasing"));
+  }
+  ndkPaths.addToolchainIncludePaths(toolchain,toolchainName,targetPlatform,"4.9");
+  return toolchain;
+}

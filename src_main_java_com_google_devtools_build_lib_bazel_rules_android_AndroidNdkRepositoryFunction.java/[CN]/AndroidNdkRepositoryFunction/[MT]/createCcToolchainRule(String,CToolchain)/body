@@ -1,5 +1,12 @@
 {
-  String toolchainDirectory=NdkPaths.getToolchainDirectoryFromToolPath(toolchain.getToolPathList().get(0).getPath());
+  ToolPath gcc=null;
+  for (  ToolPath toolPath : toolchain.getToolPathList()) {
+    if ("gcc".equals(toolPath.getName())) {
+      gcc=toolPath;
+    }
+  }
+  checkNotNull(gcc,"gcc not found in crosstool toolpaths");
+  String toolchainDirectory=NdkPaths.getToolchainDirectoryFromToolPath(gcc.getPath());
   String androidPlatformIncludes=NdkPaths.stripRepositoryPrefix(toolchain.getBuiltinSysroot()) + "/**/*";
   List<String> toolchainFileGlobPatterns=new ArrayList<>();
   toolchainFileGlobPatterns.add(androidPlatformIncludes);
@@ -7,6 +14,11 @@
     if (!cxxFlag.startsWith("-")) {
       toolchainFileGlobPatterns.add(NdkPaths.stripRepositoryPrefix(cxxFlag) + "/**/*");
     }
+  }
+  int gccToolchainIndex=toolchain.getCompilerFlagList().indexOf("-gcc-toolchain");
+  if (gccToolchainIndex > -1) {
+    String gccToolchain=toolchain.getCompilerFlagList().get(gccToolchainIndex + 1);
+    toolchainFileGlobPatterns.add(NdkPaths.stripRepositoryPrefix(gccToolchain) + "/**/*");
   }
   StringBuilder toolchainFileGlobs=new StringBuilder();
   for (  String toolchainFileGlobPattern : toolchainFileGlobPatterns) {

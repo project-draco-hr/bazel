@@ -1,11 +1,8 @@
 {
-  Pattern releaseRegex=Pattern.compile("(?<rel>r\\d+\\w?)(-(?<rc>rc\\d+))?(?<s4> \\(64-bit\\))?");
-  Matcher matcher=releaseRegex.matcher(releaseString);
-  boolean isValid=matcher.matches();
-  if (isValid) {
-    return new NdkRelease(releaseString,isValid,matcher.group("rel"),matcher.group("rc"),matcher.group("s4") != null);
+  if (releaseString.contains(REVISION_PROPERTY)) {
+    return createFromSourceProperties(releaseString);
   }
  else {
-    return new NdkRelease(releaseString,false,null,null,false);
+    return createFromReleaseTxt(releaseString);
   }
 }
