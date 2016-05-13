@@ -4,12 +4,15 @@
     final ParsedAndroidData.Builder directBuilder=ParsedAndroidData.Builder.newBuilder();
     final ParsedAndroidData.Builder transitiveBuilder=ParsedAndroidData.Builder.newBuilder();
     final AndroidDataSerializer serializer=AndroidDataSerializer.create();
+    final List<ListenableFuture<Boolean>> tasks=new ArrayList<>();
     for (    final DependencyAndroidData dependency : direct) {
-      parseDependencyData(directBuilder,serializer,dependency);
+      tasks.add(executorService.submit(new ParseDependencyDataTask(serializer,dependency,directBuilder)));
     }
     for (    final DependencyAndroidData dependency : transitive) {
-      parseDependencyData(transitiveBuilder,serializer,dependency);
+      tasks.add(executorService.submit(new ParseDependencyDataTask(serializer,dependency,transitiveBuilder)));
     }
+    FailedFutureAggregator<MergingException> aggregator=FailedFutureAggregator.createForMergingExceptionWithMessage("Failure(s) during dependency parsing");
+    aggregator.aggregateAndMaybeThrow(tasks);
     logger.fine(String.format("Merged dependencies read in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     timer.reset().start();
     return merge(transitiveBuilder.build(),directBuilder.build(),primary,allowPrimaryOverrideAll);

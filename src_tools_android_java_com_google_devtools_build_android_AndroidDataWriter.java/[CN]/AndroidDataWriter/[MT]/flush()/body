@@ -1,39 +1,8 @@
 {
-  Map<Path,FileChannel> channels=new HashMap<>();
-  try {
-    for (    FullyQualifiedName key : Ordering.natural().sortedCopy(valueFragments.keySet())) {
-      Path valuesPath=resourceDirectory().resolve(key.valuesPath());
-      FileChannel channel;
-      if (!channels.containsKey(valuesPath)) {
-        Files.createDirectories(valuesPath.getParent());
-        channel=FileChannel.open(valuesPath,StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE);
-        channel.write(ByteBuffer.wrap(START_RESOURCES));
-        channels.put(valuesPath,channel);
-      }
- else {
-        channel=channels.get(valuesPath);
-      }
-      for (      String line : valueFragments.get(key)) {
-        channel.write(ByteBuffer.wrap(line.getBytes(UTF_8)));
-        channel.write(ByteBuffer.wrap(LINE_END));
-      }
-    }
+  for (  Entry<String,Map<FullyQualifiedName,Iterable<String>>> entry : valueFragments.entrySet()) {
+    writeTasks.add(executorService.submit(new WriteValuesXmlTask(resourceDirectory().resolve(entry.getKey()),entry.getValue())));
   }
-  finally {
-    List<Exception> suppressedExceptions=new ArrayList<>();
-    for (    FileChannel channel : channels.values()) {
-      try {
-        channel.write(ByteBuffer.wrap(END_RESOURCES));
-        channel.close();
-      }
- catch (      IOException e) {
-        logger.log(SEVERE,"Error during writing",e);
-        suppressedExceptions.add(e);
-      }
-    }
-    if (!suppressedExceptions.isEmpty()) {
-      throw new IOException("IOException(s) thrown during writing. See logs.");
-    }
-  }
+  FailedFutureAggregator.forIOExceptionsWithMessage("Failures during writing.").aggregateAndMaybeThrow(writeTasks);
+  writeTasks.clear();
   valueFragments.clear();
 }

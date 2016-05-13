@@ -1,0 +1,17 @@
+{
+  T exception=null;
+  for (  ListenableFuture<Boolean> task : tasks) {
+    try {
+      task.get();
+    }
+ catch (    ExecutionException|InterruptedException e) {
+      if (exception == null) {
+        exception=exceptionFactory.create();
+      }
+      exception.addSuppressed(e.getCause() != null ? e.getCause() : e);
+    }
+  }
+  if (exception != null) {
+    throw exception;
+  }
+}
