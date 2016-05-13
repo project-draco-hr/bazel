@@ -25,7 +25,7 @@
         Preconditions.checkState(parentVersion.atMost(graphVersion) && !parentVersion.equals(graphVersion),"parent entry is not older than the current graph version. " + "child: %s childEntry: %s, childVersion: %s" + "bubbleParent: %s bubbleParentEntry: %s, parentVersion: %s, graphVersion: %s",errorKey,errorEntry,childVersion,bubbleParent,bubbleParentEntry,parentVersion,graphVersion);
         continue;
       }
-      if (visitor.isInflight(bubbleParent) && bubbleParentEntry.getTemporaryDirectDeps().contains(errorKey)) {
+      if (visitor.isInflight(bubbleParent) && bubbleParentEntry.getTemporaryDirectDeps().expensiveContains(errorKey)) {
         parent=bubbleParent;
         parentEntry=bubbleParentEntry;
         break;
@@ -50,7 +50,7 @@ default :
   throw new AssertionError(parent + " not in valid dirty state: " + parentEntry);
 }
 }
-SkyFunctionEnvironment env=new SkyFunctionEnvironment(parent,ImmutableSet.<SkyKey>of(),bubbleErrorInfo,visitor);
+SkyFunctionEnvironment env=new SkyFunctionEnvironment(parent,new GroupedList<SkyKey>(),bubbleErrorInfo,visitor);
 externalInterrupt=externalInterrupt || Thread.currentThread().isInterrupted();
 try {
 factory.compute(parent,env);

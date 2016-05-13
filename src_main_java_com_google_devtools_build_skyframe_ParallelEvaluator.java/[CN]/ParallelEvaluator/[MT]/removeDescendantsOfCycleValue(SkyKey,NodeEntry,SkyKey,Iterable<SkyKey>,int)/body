@@ -1,5 +1,7 @@
 {
-  Set<SkyKey> unvisitedDeps=new HashSet<>(entry.getTemporaryDirectDeps());
+  GroupedList<SkyKey> directDeps=entry.getTemporaryDirectDeps();
+  Set<SkyKey> unvisitedDeps=Sets.newHashSetWithExpectedSize(directDeps.numElements());
+  Iterables.addAll(unvisitedDeps,Iterables.concat(directDeps));
   unvisitedDeps.remove(cycleChild);
   removeIncompleteChildrenForCycle(key,entry,unvisitedDeps);
   if (!entry.isReady()) {

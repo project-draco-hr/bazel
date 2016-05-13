@@ -4,9 +4,7 @@
   if (maybeHandleDirtyNode(state) == DirtyOutcome.ALREADY_PROCESSED) {
     return;
   }
-  Set<SkyKey> directDeps=state.getTemporaryDirectDeps();
-  Preconditions.checkState(!directDeps.contains(ErrorTransienceValue.KEY),"%s cannot have a dep on ErrorTransienceValue during building: %s",skyKey,state);
-  SkyFunctionEnvironment env=new SkyFunctionEnvironment(skyKey,directDeps,visitor);
+  SkyFunctionEnvironment env=new SkyFunctionEnvironment(skyKey,state.getTemporaryDirectDeps(),visitor);
   SkyFunctionName functionName=skyKey.functionName();
   SkyFunction factory=skyFunctions.get(functionName);
   Preconditions.checkState(factory != null,"Unable to find SkyFunction '%s' for node with key %s, %s",functionName,skyKey,state);
@@ -76,7 +74,7 @@ catch (  RuntimeException re) {
     Preconditions.checkState(!keepGoing,"%s %s %s",skyKey,state,env.getDepErrorKey());
     SkyKey childErrorKey=env.getDepErrorKey();
     NodeEntry childErrorEntry=Preconditions.checkNotNull(graph.get(childErrorKey),"skyKey: %s, state: %s childErrorKey: %s",skyKey,state,childErrorKey);
-    Preconditions.checkState(!state.getTemporaryDirectDeps().contains(childErrorKey),"Done error was already know: %s %s %s %s",skyKey,state,childErrorKey,childErrorEntry);
+    Preconditions.checkState(!state.getTemporaryDirectDeps().expensiveContains(childErrorKey),"Done error was already known: %s %s %s %s",skyKey,state,childErrorKey,childErrorEntry);
     Preconditions.checkState(newDirectDeps.contains(childErrorKey),"%s %s %s",state,childErrorKey,newDirectDeps);
     state.addTemporaryDirectDeps(GroupedListHelper.create(ImmutableList.of(childErrorKey)));
     DependencyState childErrorState=childErrorEntry.addReverseDepAndCheckIfDone(skyKey);

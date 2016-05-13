@@ -5,10 +5,10 @@
     eventBuilder.add(new TaggedEvents(getTagFromKey(),events));
   }
   if (storedEventFilter.storeEvents()) {
-    Set<SkyKey> depKeys=graph.get(skyKey).getTemporaryDirectDeps();
-    Map<SkyKey,SkyValue> deps=getValuesMaybeFromError(depKeys,bubbleErrorInfo);
-    if (!missingChildren && depKeys.size() != deps.size()) {
-      throw new IllegalStateException("Missing keys for " + skyKey + ": "+ Sets.difference(depKeys,deps.keySet())+ ", "+ graph.get(skyKey));
+    GroupedList<SkyKey> depKeys=graph.get(skyKey).getTemporaryDirectDeps();
+    Map<SkyKey,SkyValue> deps=getValuesMaybeFromError(Iterables.concat(depKeys),bubbleErrorInfo,depKeys.numElements());
+    if (!missingChildren && depKeys.numElements() != deps.size()) {
+      throw new IllegalStateException("Missing keys for " + skyKey + ": "+ Sets.difference(depKeys.toSet(),deps.keySet())+ ", "+ graph.get(skyKey));
     }
     for (    SkyValue value : deps.values()) {
       if (value == NULL_MARKER) {
