@@ -12,30 +12,56 @@
 switch (event.getKind()) {
 case STDOUT:
 case STDERR:
-        if (!buildComplete) {
+        OutputStream stream=event.getKind() == EventKind.STDOUT ? outErr.getOutputStream() : outErr.getErrorStream();
+      if (buildComplete) {
+        stream.write(event.getMessageBytes());
+        stream.flush();
+      }
+ else {
+        byte[] message=event.getMessageBytes();
+        int eolIndex=Bytes.lastIndexOf(message,(byte)'\n');
+        if (eolIndex >= 0) {
           clearProgressBar();
           terminal.flush();
+          stream.write(event.getKind() == EventKind.STDOUT ? stdoutBuffer : stderrBuffer);
+          stream.write(Arrays.copyOf(message,eolIndex + 1));
+          byte[] restMessage=Arrays.copyOfRange(message,eolIndex + 1,message.length + 1);
+          if (event.getKind() == EventKind.STDOUT) {
+            stdoutBuffer=restMessage;
+          }
+ else {
+            stderrBuffer=restMessage;
+          }
+          stream.flush();
+          if (cursorControl) {
+            addProgressBar();
+          }
+          terminal.flush();
         }
-      OutputStream stream=event.getKind() == EventKind.STDOUT ? outErr.getOutputStream() : outErr.getErrorStream();
-    stream.write(event.getMessageBytes());
-  if (!buildComplete) {
-    stream.write(new byte[]{10,13});
-  }
-stream.flush();
-if (!buildComplete) {
-if (cursorControl) {
-  addProgressBar();
-}
-terminal.flush();
-}
-break;
+ else {
+          if (event.getKind() == EventKind.STDOUT) {
+            stdoutBuffer=Bytes.concat(stdoutBuffer,message);
+          }
+ else {
+            stderrBuffer=Bytes.concat(stderrBuffer,message);
+          }
+        }
+      }
+    break;
 case ERROR:
 case WARNING:
 case INFO:
 case SUBCOMMAND:
-if (!buildComplete) {
-clearProgressBar();
-}
+  if (!buildComplete) {
+    clearProgressBar();
+  }
+outErr.getOutputStream().write(stdoutBuffer);
+outErr.getOutputStream().flush();
+stdoutBuffer=new byte[]{};
+outErr.getErrorStream().write(stderrBuffer);
+outErr.getErrorStream().flush();
+stderrBuffer=new byte[]{};
+crlf();
 setEventKindColor(event.getKind());
 terminal.writeString(event.getKind() + ": ");
 terminal.resetTerminal();
