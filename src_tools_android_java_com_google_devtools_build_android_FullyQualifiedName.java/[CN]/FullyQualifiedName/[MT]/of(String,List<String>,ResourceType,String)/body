@@ -1,3 +1,12 @@
 {
-  return new FullyQualifiedName(pkg,Ordering.natural().immutableSortedCopy(qualifiers),resourceType,resourceName);
+  ImmutableList<String> immutableQualifiers=ImmutableList.copyOf(qualifiers);
+  FullyQualifiedName name=new FullyQualifiedName(pkg,immutableQualifiers,resourceType,resourceName);
+  FullyQualifiedName cached=instanceCache.putIfAbsent(name,name);
+  if (cached == null) {
+    return name;
+  }
+ else {
+    cacheHit.incrementAndGet();
+    return cached;
+  }
 }
