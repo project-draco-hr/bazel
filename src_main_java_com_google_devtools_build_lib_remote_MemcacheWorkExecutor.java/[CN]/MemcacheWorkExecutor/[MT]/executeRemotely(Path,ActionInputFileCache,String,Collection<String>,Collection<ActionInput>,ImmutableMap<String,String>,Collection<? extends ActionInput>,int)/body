@@ -1,0 +1,33 @@
+{
+  RemoteWorkRequest.Builder work=RemoteWorkRequest.newBuilder();
+  work.setOutputKey(actionOutputKey);
+  long workSize=0;
+  for (  ActionInput input : inputs) {
+    if (!(input instanceof Artifact)) {
+      continue;
+    }
+    if (!actionCache.isFile((Artifact)input)) {
+      continue;
+    }
+    workSize+=actionCache.getSizeInBytes(input);
+  }
+  if (workSize > MAX_WORK_SIZE_BYTES) {
+    throw new WorkTooLargeException("Work is too large: " + workSize + " bytes.");
+  }
+  for (  ActionInput input : inputs) {
+    Path file=execRoot.getRelative(input.getExecPathString());
+    if (file.isDirectory()) {
+      throw new UnsupportedOperationException("Does not support directory artifacts: " + file + ".");
+    }
+    String contentKey=cache.putFileIfNotExist(actionCache,input);
+    work.addInputFilesBuilder().setPath(input.getExecPathString()).setContentKey(contentKey).setExecutable(file.isExecutable());
+  }
+  work.addAllArguments(arguments);
+  work.getMutableEnvironment().putAll(environment);
+  for (  ActionInput output : outputs) {
+    work.addOutputFilesBuilder().setPath(output.getExecPathString());
+  }
+  RemoteWorkFutureStub stub=RemoteWorkGrpc.newFutureStub(channel);
+  work.setTimeout(timeout);
+  return stub.executeSynchronously(work.build());
+}

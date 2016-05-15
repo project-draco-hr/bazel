@@ -3,9 +3,9 @@
     return false;
   }
   try {
-    ListenableFuture<RemoteWorkExecutor.Response> future=remoteWorkExecutor.submit(execRoot,actionCache,actionOutputKey,arguments,inputs,environment,outputs,timeout);
-    RemoteWorkExecutor.Response response=future.get(timeout,TimeUnit.SECONDS);
-    if (!response.success()) {
+    ListenableFuture<RemoteWorkResponse> future=remoteWorkExecutor.executeRemotely(execRoot,actionCache,actionOutputKey,arguments,inputs,environment,outputs,timeout);
+    RemoteWorkResponse response=future.get(timeout,TimeUnit.SECONDS);
+    if (!response.getSuccess()) {
       String exception="";
       if (!response.getException().isEmpty()) {
         exception=" (" + response.getException() + ")";
@@ -13,12 +13,8 @@
       eventHandler.handle(Event.warn(mnemonic + " failed to execute work remotely" + exception+ ", running locally"));
       return false;
     }
-    if (response.getOut() != null) {
-      outErr.printOut(response.getOut());
-    }
-    if (response.getErr() != null) {
-      outErr.printErr(response.getErr());
-    }
+    outErr.printOut(response.getOut());
+    outErr.printErr(response.getErr());
   }
  catch (  ExecutionException e) {
     eventHandler.handle(Event.warn(mnemonic + " failed to execute work remotely (" + e+ "), running locally"));

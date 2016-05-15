@@ -7,6 +7,11 @@
   ActionExecutionMetadata actionMetadata=spawn.getResourceOwner();
   ActionInputFileCache inputFileCache=actionExecutionContext.getActionInputFileCache();
   EventHandler eventHandler=executor.getEventHandler();
+  if (remoteActionCache == null) {
+    eventHandler.handle(Event.warn(spawn.getMnemonic() + " Cannot instantiate remote action cache. Running locally."));
+    standaloneStrategy.exec(spawn,actionExecutionContext);
+    return;
+  }
   Hasher hasher=Hashing.sha256().newHasher();
   Preconditions.checkNotNull(actionMetadata.getKey());
   hasher.putString(actionMetadata.getKey(),Charset.defaultCharset());

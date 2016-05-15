@@ -1,0 +1,46 @@
+{
+  OptionsParser parser=OptionsParser.newOptionsParser(RemoteOptions.class,RemoteWorkerOptions.class);
+  parser.parseAndExitUponError(args);
+  RemoteOptions remoteOptions=parser.getOptions(RemoteOptions.class);
+  RemoteWorkerOptions remoteWorkerOptions=parser.getOptions(RemoteWorkerOptions.class);
+  if (remoteWorkerOptions.workPath == null) {
+    printUsage(parser);
+    return;
+  }
+  System.out.println("*** Starting Hazelcast server.");
+  ConcurrentMap<String,byte[]> cache=new HazelcastCacheFactory().create(remoteOptions);
+  System.out.println("*** Starting grpc server at 0.0.0.0:" + remoteWorkerOptions.listenPort + ".");
+  Path workPath=getFileSystem().getPath(remoteWorkerOptions.workPath);
+  FileSystemUtils.createDirectoryAndParents(workPath);
+  RemoteWorker worker=new RemoteWorker(workPath,remoteOptions,remoteWorkerOptions,cache);
+  Server server=ServerBuilder.forPort(remoteWorkerOptions.listenPort).addService(RemoteWorkGrpc.bindService(worker)).build();
+  server.start();
+  final Path pidFile;
+  if (remoteWorkerOptions.pidFile != null) {
+    pidFile=getFileSystem().getPath(remoteWorkerOptions.pidFile);
+    PrintWriter writer=new PrintWriter(pidFile.getOutputStream());
+    writer.append(Integer.toString(ProcessUtils.getpid()));
+    writer.append("\n");
+    writer.close();
+  }
+ else {
+    pidFile=null;
+  }
+  Runtime.getRuntime().addShutdownHook(new Thread(){
+    @Override public void run(){
+      System.err.println("*** Shutting down grpc server.");
+      server.shutdown();
+      if (pidFile != null) {
+        try {
+          pidFile.delete();
+        }
+ catch (        IOException e) {
+          System.err.println("Cannot remove pid file: " + pidFile.toString());
+        }
+      }
+      System.err.println("*** Server shut down.");
+    }
+  }
+);
+  server.awaitTermination();
+}
