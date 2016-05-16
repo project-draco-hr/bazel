@@ -1,15 +1,18 @@
 {
   try (final ZipOutputStream zipOut=new ZipOutputStream(new FileOutputStream(aar.toFile()))){
     ZipEntry manifestEntry=new ZipEntry("AndroidManifest.xml");
+    manifestEntry.setTime(EPOCH);
     zipOut.putNextEntry(manifestEntry);
     zipOut.write(Files.readAllBytes(manifest));
     zipOut.closeEntry();
     ZipEntry classJar=new ZipEntry("classes.jar");
+    classJar.setTime(EPOCH);
     zipOut.putNextEntry(classJar);
     zipOut.write(Files.readAllBytes(classes));
     zipOut.closeEntry();
     Files.walkFileTree(data.getResourceDir(),new ZipDirectoryWriter(zipOut,data.getResourceDir(),"res"));
     ZipEntry r=new ZipEntry("R.txt");
+    r.setTime(EPOCH);
     zipOut.putNextEntry(r);
     zipOut.write(Files.readAllBytes(rtxt));
     zipOut.closeEntry();
