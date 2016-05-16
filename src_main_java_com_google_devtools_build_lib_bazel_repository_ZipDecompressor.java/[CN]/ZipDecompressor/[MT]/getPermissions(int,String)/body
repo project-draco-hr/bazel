@@ -1,14 +1,17 @@
 {
+  if (path.endsWith("/")) {
+    return S_IFDIR | EXECUTABLE_MASK;
+  }
   int shiftedPermissions=permissions >>> 16;
   if (shiftedPermissions != 0) {
     return shiftedPermissions;
   }
   int windowsPermission=permissions & 0xff;
-  if (path.endsWith("/") || (windowsPermission & WINDOWS_DIRECTORY) == WINDOWS_DIRECTORY) {
-    return 040755;
+  if ((windowsPermission & WINDOWS_DIRECTORY) == WINDOWS_DIRECTORY) {
+    return S_IFDIR | EXECUTABLE_MASK;
   }
  else   if (permissions == 0 || (windowsPermission & WINDOWS_FILE) == WINDOWS_FILE) {
-    return 010644;
+    return S_IFREG | EXECUTABLE_MASK;
   }
   throw new IOException("Unrecognized file mode for " + path + ": 0x"+ Integer.toHexString(permissions));
 }
