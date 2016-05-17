@@ -7,6 +7,7 @@
     if (includeLocation()) {
       rulePb.setLocation(location);
     }
+    Map<Attribute,Build.Attribute> serializedAttributes=Maps.newHashMap();
     for (    Attribute attr : rule.getAttributes()) {
       if (!includeDefaultValues && !rule.isAttributeValueExplicitlySpecified(attr) || !includeAttribute(rule,attr)) {
         continue;
@@ -15,8 +16,9 @@
       Object flattenedAttributeValue=AggregatingAttributeMapper.flattenAttributeValues(attr.getType(),possibleAttributeValues);
       Build.Attribute serializedAttribute=AttributeSerializer.getAttributeProto(attr,flattenedAttributeValue,rule.isAttributeValueExplicitlySpecified(attr),false,true);
       rulePb.addAttribute(serializedAttribute);
+      serializedAttributes.put(attr,serializedAttribute);
     }
-    postProcess(rule,rulePb);
+    postProcess(rule,rulePb,serializedAttributes);
     Environment env=rule.getRuleClassObject().getRuleDefinitionEnvironment();
     if (env != null && includeRuleDefinitionEnvironment()) {
       rulePb.addAttribute(Build.Attribute.newBuilder().setName(RULE_IMPLEMENTATION_HASH_ATTR_NAME).setType(ProtoUtils.getDiscriminatorFromType(com.google.devtools.build.lib.syntax.Type.STRING)).setStringValue(env.getTransitiveContentHashCode()));
