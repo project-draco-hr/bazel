@@ -6,7 +6,17 @@
   if (aPackage.containsErrors()) {
     builder.setContainsErrors();
   }
-  for (  Target target : aPackage.getTargets(Rule.class)) {
-    builder.addRule((Rule)target);
+  for (  Rule rule : aPackage.getTargets(Rule.class)) {
+    try {
+      Rule newRule=builder.createRule(rule.getLabel(),rule.getRuleClassObject(),rule.getLocation(),rule.getAttributeContainer());
+      newRule.populateOutputFiles(NullEventHandler.INSTANCE,builder);
+      if (rule.containsErrors()) {
+        newRule.setContainsErrors();
+      }
+      builder.addRule(newRule);
+    }
+ catch (    LabelSyntaxException e) {
+      throw new IllegalStateException(e);
+    }
   }
 }
