@@ -22,21 +22,26 @@
     JavaRuleIdeInfo javaRuleIdeInfo=makeJavaRuleIdeInfo(base,ruleContext,outputJarsProvider,ideResolveArtifacts,packageManifest);
     outputBuilder.setJavaRuleIdeInfo(javaRuleIdeInfo);
   }
-  CppCompilationContext cppCompilationContext=base.getProvider(CppCompilationContext.class);
-  if (cppCompilationContext != null) {
-    CRuleIdeInfo cRuleIdeInfo=makeCRuleIdeInfo(base,ruleContext,cppCompilationContext,ideResolveArtifacts);
-    outputBuilder.setCRuleIdeInfo(cRuleIdeInfo);
+  if (isCppRule(base)) {
+    CppCompilationContext cppCompilationContext=base.getProvider(CppCompilationContext.class);
+    if (cppCompilationContext != null) {
+      CRuleIdeInfo cRuleIdeInfo=makeCRuleIdeInfo(base,ruleContext,cppCompilationContext,ideResolveArtifacts);
+      outputBuilder.setCRuleIdeInfo(cRuleIdeInfo);
+    }
   }
-  CppConfiguration cppConfiguration=getCppConfiguration(base);
-  if (cppConfiguration != null) {
-    CToolchainIdeInfo cToolchainIdeInfo=makeCToolchainIdeInfo(ruleContext,cppConfiguration);
-    if (cToolchainIdeInfo != null) {
-      outputBuilder.setCToolchainIdeInfo(cToolchainIdeInfo);
+  CcToolchainProvider ccToolchainProvider=base.getProvider(CcToolchainProvider.class);
+  if (ccToolchainProvider != null) {
+    CppConfiguration cppConfiguration=ccToolchainProvider.getCppConfiguration();
+    if (cppConfiguration != null) {
+      CToolchainIdeInfo cToolchainIdeInfo=makeCToolchainIdeInfo(ruleContext,cppConfiguration);
+      if (cToolchainIdeInfo != null) {
+        outputBuilder.setCToolchainIdeInfo(cToolchainIdeInfo);
+      }
     }
   }
   AndroidIdeInfoProvider androidIdeInfoProvider=base.getProvider(AndroidIdeInfoProvider.class);
   if (androidIdeInfoProvider != null) {
-    outputBuilder.setAndroidRuleIdeInfo(makeAndroidRuleIdeInfo(base,androidIdeInfoProvider,dependenciesResult,ideResolveArtifacts));
+    outputBuilder.setAndroidRuleIdeInfo(makeAndroidRuleIdeInfo(androidIdeInfoProvider,dependenciesResult,ideResolveArtifacts));
   }
   if (TargetUtils.isTestRule(base.getTarget())) {
     TestInfo.Builder builder=TestInfo.newBuilder();
