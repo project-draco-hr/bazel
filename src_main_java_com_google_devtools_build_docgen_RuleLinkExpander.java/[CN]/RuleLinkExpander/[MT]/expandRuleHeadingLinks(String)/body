@@ -1,0 +1,22 @@
+{
+  Matcher matcher=DocgenConsts.BLAZE_RULE_HEADING_LINK.matcher(htmlDoc);
+  StringBuffer sb=new StringBuffer(htmlDoc.length());
+  while (matcher.find()) {
+    String name=matcher.group(2);
+    String heading=matcher.group(3);
+    if (ruleIndex.containsKey(name)) {
+      String ruleFamily=ruleIndex.get(name);
+      String link=ruleFamily + ".html#" + heading;
+      matcher.appendReplacement(sb,Matcher.quoteReplacement(link));
+      continue;
+    }
+    if (STATIC_PAGES.contains(name)) {
+      String link=name + ".html#" + heading;
+      matcher.appendReplacement(sb,Matcher.quoteReplacement(link));
+      continue;
+    }
+    throw new IllegalArgumentException("Rule family " + name + " in link tag does not match any rule or BE page: "+ matcher.group());
+  }
+  matcher.appendTail(sb);
+  return sb.toString();
+}
