@@ -43,14 +43,14 @@ switch (parentEntry.getDirtyState()) {
 case CHECK_DEPENDENCIES:
         parentEntry.signalDep();
 case NEEDS_REBUILDING:
-      maybeMarkRebuildingAndRemoveRemainingDirtyDirectDeps(parent,parentEntry);
+      maybeMarkRebuilding(parentEntry);
 case REBUILDING:
     break;
 default :
   throw new AssertionError(parent + " not in valid dirty state: " + parentEntry);
 }
 }
-SkyFunctionEnvironment env=new SkyFunctionEnvironment(parent,new GroupedList<SkyKey>(),bubbleErrorInfo,visitor);
+SkyFunctionEnvironment env=new SkyFunctionEnvironment(parent,new GroupedList<SkyKey>(),bubbleErrorInfo,ImmutableSet.<SkyKey>of(),visitor);
 externalInterrupt=externalInterrupt || Thread.currentThread().isInterrupted();
 try {
 factory.compute(parent,env);

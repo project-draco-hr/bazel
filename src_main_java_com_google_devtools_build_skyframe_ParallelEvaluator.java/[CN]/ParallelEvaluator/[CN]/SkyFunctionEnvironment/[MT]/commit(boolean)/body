@@ -12,6 +12,12 @@
     Preconditions.checkState(enqueueParents,"%s %s",skyKey,primaryEntry);
     valueWithMetadata=ValueWithMetadata.normal(value,errorInfo,events);
   }
+  if (!oldDeps.isEmpty()) {
+    Set<SkyKey> depsToRemove=Sets.difference(oldDeps,primaryEntry.getTemporaryDirectDeps().toSet());
+    for (    NodeEntry oldDepEntry : graph.getBatch(depsToRemove).values()) {
+      oldDepEntry.removeReverseDep(skyKey);
+    }
+  }
   Set<SkyKey> reverseDeps=primaryEntry.setValue(valueWithMetadata,graphVersion);
   valueVersion=primaryEntry.getVersion();
   Preconditions.checkState(valueVersion.atMost(graphVersion),"%s should be at most %s in the version partial ordering",valueVersion,graphVersion);

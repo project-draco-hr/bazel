@@ -23,11 +23,11 @@
  else       if (!entry.isReady()) {
         removeIncompleteChildrenForCycle(key,entry,Iterables.concat(entry.getTemporaryDirectDeps()));
       }
-      maybeMarkRebuildingAndRemoveRemainingDirtyDirectDeps(key,entry);
+      maybeMarkRebuilding(entry);
       GroupedList<SkyKey> directDeps=entry.getTemporaryDirectDeps();
       List<ErrorInfo> errorDeps=getChildrenErrorsForCycle(Iterables.concat(directDeps));
       Preconditions.checkState(!errorDeps.isEmpty(),"Value %s was not successfully evaluated, but had no child errors. ValueEntry: %s",key,entry);
-      SkyFunctionEnvironment env=new SkyFunctionEnvironment(key,directDeps,visitor);
+      SkyFunctionEnvironment env=new SkyFunctionEnvironment(key,directDeps,entry.getAllRemainingDirtyDirectDeps(),visitor);
       env.setError(ErrorInfo.fromChildErrors(key,errorDeps),false);
       env.commit(false);
     }
@@ -47,7 +47,7 @@
       Iterable<SkyKey> cycle=graphPath.subList(cycleStart,graphPath.size());
       if (entry.isDirty() && entry.getDirtyState() == NodeEntry.DirtyState.CHECK_DEPENDENCIES) {
         entry.signalDep();
-        maybeMarkRebuildingAndRemoveRemainingDirtyDirectDeps(key,entry);
+        maybeMarkRebuilding(entry);
       }
       if (keepGoing) {
         SkyKey cycleChild=selectCycleChild(key,graphPath,cycleStart);
@@ -55,7 +55,7 @@
         ValueWithMetadata dummyValue=ValueWithMetadata.wrapWithMetadata(new SkyValue(){
         }
 );
-        SkyFunctionEnvironment env=new SkyFunctionEnvironment(key,entry.getTemporaryDirectDeps(),ImmutableMap.of(cycleChild,dummyValue),visitor);
+        SkyFunctionEnvironment env=new SkyFunctionEnvironment(key,entry.getTemporaryDirectDeps(),ImmutableMap.of(cycleChild,dummyValue),entry.getAllRemainingDirtyDirectDeps(),visitor);
         List<ErrorInfo> allErrors=getChildrenErrors(Iterables.concat(entry.getTemporaryDirectDeps()),cycleChild);
         CycleInfo cycleInfo=new CycleInfo(cycle);
         allErrors.add(ErrorInfo.fromCycle(cycleInfo));

@@ -4,6 +4,11 @@
     return Iterables.concat(getTemporaryDirectDeps());
   }
  else {
-    return Iterables.concat(Iterables.concat(getTemporaryDirectDeps()),buildingState.getAllRemainingDirtyDirectDeps());
+    ImmutableSet.Builder<SkyKey> result=ImmutableSet.builder();
+    for (    Iterable<SkyKey> group : getTemporaryDirectDeps()) {
+      result.addAll(group);
+    }
+    result.addAll(buildingState.getAllRemainingDirtyDirectDeps(false));
+    return result.build();
   }
 }

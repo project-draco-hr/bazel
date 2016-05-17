@@ -4,7 +4,8 @@
   if (maybeHandleDirtyNode(state) == DirtyOutcome.ALREADY_PROCESSED) {
     return;
   }
-  SkyFunctionEnvironment env=new SkyFunctionEnvironment(skyKey,state.getTemporaryDirectDeps(),visitor);
+  Set<SkyKey> oldDeps=state.getAllRemainingDirtyDirectDeps();
+  SkyFunctionEnvironment env=new SkyFunctionEnvironment(skyKey,state.getTemporaryDirectDeps(),oldDeps,visitor);
   SkyFunctionName functionName=skyKey.functionName();
   SkyFunction factory=skyFunctions.get(functionName);
   Preconditions.checkState(factory != null,"Unable to find SkyFunction '%s' for node with key %s, %s",functionName,skyKey,state);
@@ -34,7 +35,7 @@
         }
       }
       ErrorInfo errorInfo=ErrorInfo.fromException(reifiedBuilderException,isTransitivelyTransient);
-      registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,newlyRequestedDeps,env);
+      registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,newlyRequestedDeps,oldDeps,env);
       env.setError(errorInfo,reifiedBuilderException.isTransient());
       env.commit(keepGoing);
       if (!shouldFailFast) {
@@ -66,7 +67,7 @@ catch (  RuntimeException re) {
   if (value != null) {
     Preconditions.checkState(!env.valuesMissing(),"Evaluation of %s returned non-null value " + "but requested dependencies that weren't computed yet (one of %s), ValueEntry: %s",skyKey,newDirectDeps,state);
     env.setValue(value);
-    registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,graph.getBatch(env.newlyRequestedDeps),env);
+    registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,graph.getBatch(env.newlyRequestedDeps),oldDeps,env);
     env.commit(true);
     return;
   }
@@ -93,6 +94,6 @@ catch (  RuntimeException re) {
   for (  Map.Entry<SkyKey,NodeEntry> e : graph.createIfAbsentBatch(newDirectDeps).entrySet()) {
     SkyKey newDirectDep=e.getKey();
     NodeEntry newDirectDepEntry=e.getValue();
-    enqueueChild(skyKey,state,newDirectDep,newDirectDepEntry,false);
+    enqueueChild(skyKey,state,newDirectDep,newDirectDepEntry,oldDeps.contains(newDirectDep));
   }
 }

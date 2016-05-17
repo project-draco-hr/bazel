@@ -9,7 +9,7 @@
   entry.addTemporaryDirectDeps(env.newlyRequestedDeps);
   for (  SkyKey newDep : env.newlyRequestedDeps) {
     NodeEntry depEntry=Preconditions.checkNotNull(newlyRequestedDepMap.get(newDep),newDep);
-    DependencyState triState=depEntry.addReverseDepAndCheckIfDone(skyKey);
+    DependencyState triState=oldDeps.contains(newDep) ? depEntry.checkIfDoneForDirtyReverseDep(skyKey) : depEntry.addReverseDepAndCheckIfDone(skyKey);
     Preconditions.checkState(DependencyState.DONE == triState,"new dep %s was not already done for %s. ValueEntry: %s. DepValueEntry: %s",newDep,skyKey,entry,depEntry);
     entry.signalDep();
   }
