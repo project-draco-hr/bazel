@@ -1,20 +1,48 @@
 {
-  List<String> unHandledQualifiers=new ArrayList<String>();
-  int startIndex=1;
-  if (dirNameAndQualifiers.length >= 3) {
-    if ("es".equalsIgnoreCase(dirNameAndQualifiers[1]) && "419".equalsIgnoreCase(dirNameAndQualifiers[2])) {
-      unHandledQualifiers.add("b+es+419");
-      startIndex=3;
+  PeekingIterator<String> rawQualifiers=Iterators.peekingIterator(Iterators.forArray(dirNameAndQualifiers));
+  rawQualifiers.next();
+  List<String> unHandledLanguageRegionQualifiers=new ArrayList<>();
+  List<String> handledQualifiers=new ArrayList<>();
+  for (int qualifierSlot=0; qualifierSlot < 4; qualifierSlot++) {
+    if (!rawQualifiers.hasNext()) {
+      break;
     }
- else     if ("sr".equalsIgnoreCase(dirNameAndQualifiers[1]) && "rlatn".equalsIgnoreCase(dirNameAndQualifiers[2])) {
-      unHandledQualifiers.add("b+sr+Latn");
-      startIndex=3;
+    String qualifier=rawQualifiers.next();
+    if (qualifier.startsWith(BCP_PREFIX)) {
+      unHandledLanguageRegionQualifiers.add(qualifier);
+    }
+ else     if ("es".equalsIgnoreCase(qualifier) && rawQualifiers.hasNext() && "419".equalsIgnoreCase(rawQualifiers.peek())) {
+      unHandledLanguageRegionQualifiers.add("b+es+419");
+      rawQualifiers.next();
+    }
+ else     if ("sr".equalsIgnoreCase(qualifier) && rawQualifiers.hasNext() && "rlatn".equalsIgnoreCase(rawQualifiers.peek())) {
+      unHandledLanguageRegionQualifiers.add("b+sr+Latn");
+      rawQualifiers.next();
+    }
+ else {
+      handledQualifiers.add(qualifier);
     }
   }
-  FolderConfiguration config=FolderConfiguration.getConfigFromQualifiers(ImmutableList.copyOf(Arrays.copyOfRange(dirNameAndQualifiers,startIndex,dirNameAndQualifiers.length)));
+  Iterators.addAll(handledQualifiers,rawQualifiers);
+  FolderConfiguration config=FolderConfiguration.getConfigFromQualifiers(handledQualifiers);
   if (config == null) {
     throw new IllegalArgumentException(String.format(INVALID_QUALIFIERS,DASH_JOINER.join(dirNameAndQualifiers)));
   }
   config.normalize();
-  return FluentIterable.from(unHandledQualifiers).append(FluentIterable.from(config.getQualifiers()).transform(QUALIFIER_TO_STRING)).toList();
+  PeekingIterator<ResourceQualifier> normalizedQualifiers=Iterators.peekingIterator(Iterators.forArray(config.getQualifiers()));
+  if (!normalizedQualifiers.hasNext()) {
+    return ImmutableList.copyOf(unHandledLanguageRegionQualifiers);
+  }
+  Builder<String> finalQualifiers=ImmutableList.<String>builder();
+  while (normalizedQualifiers.hasNext()) {
+    if (normalizedQualifiers.peek() instanceof CountryCodeQualifier || normalizedQualifiers.peek() instanceof NetworkCodeQualifier) {
+      finalQualifiers.add(QUALIFIER_TO_STRING.apply(normalizedQualifiers.next()));
+    }
+ else {
+      break;
+    }
+  }
+  finalQualifiers.addAll(unHandledLanguageRegionQualifiers);
+  finalQualifiers.addAll(Iterators.transform(normalizedQualifiers,QUALIFIER_TO_STRING));
+  return finalQualifiers.build();
 }
