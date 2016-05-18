@@ -1,5 +1,5 @@
 {
-  boolean isFinalJarDerived=isBinaryJarFiltered || binaryJar != proguardedJar;
+  boolean finalJarIsDerived=isBinaryJarFiltered || binaryJar != proguardedJar;
   List<String> dexopts=ruleContext.getTokenizedStringListAttr("dexopts");
   MultidexMode multidexMode=getMultidexMode(ruleContext);
   if (!supportsMultidexMode(ruleContext,multidexMode)) {
@@ -22,7 +22,7 @@
     ruleContext.ruleError("Both \"main_dex_list\" and \"multidex='manual_main_dex'\" must be specified.");
     return null;
   }
-  ImmutableSet<AndroidBinaryType> incrementalDexing=getEffectiveIncrementalDexing(ruleContext,dexopts,isFinalJarDerived,isBinaryJarFiltered);
+  ImmutableSet<AndroidBinaryType> incrementalDexing=getEffectiveIncrementalDexing(ruleContext,dexopts,finalJarIsDerived);
   if (multidexMode == MultidexMode.OFF) {
     if (incrementalDexing.contains(AndroidBinaryType.MONODEX)) {
       Artifact classesDex=getDxArtifact(ruleContext,"classes.dex.zip");
@@ -47,7 +47,7 @@
       for (int i=1; i <= dexShards; i++) {
         shards.add(getDxArtifact(ruleContext,"shard" + i + ".jar"));
       }
-      Artifact javaResourceJar=createShuffleJarAction(ruleContext,incrementalDexing.contains(AndroidBinaryType.MULTIDEX_SHARDED),isFinalJarDerived ? proguardedJar : null,shards,common,dexopts,attributes,mainDexList);
+      Artifact javaResourceJar=createShuffleJarAction(ruleContext,incrementalDexing.contains(AndroidBinaryType.MULTIDEX_SHARDED),finalJarIsDerived ? proguardedJar : null,shards,common,dexopts,attributes,mainDexList);
       List<Artifact> shardDexes=new ArrayList<>(dexShards);
       for (int i=1; i <= dexShards; i++) {
         Artifact shard=shards.get(i - 1);
