@@ -78,7 +78,13 @@ catch (  RuntimeException re) {
     Preconditions.checkState(!state.getTemporaryDirectDeps().expensiveContains(childErrorKey),"Done error was already known: %s %s %s %s",skyKey,state,childErrorKey,childErrorEntry);
     Preconditions.checkState(newDirectDeps.contains(childErrorKey),"%s %s %s",state,childErrorKey,newDirectDeps);
     state.addTemporaryDirectDeps(GroupedListHelper.create(ImmutableList.of(childErrorKey)));
-    DependencyState childErrorState=childErrorEntry.addReverseDepAndCheckIfDone(skyKey);
+    DependencyState childErrorState;
+    if (oldDeps.contains(childErrorKey)) {
+      childErrorState=childErrorEntry.checkIfDoneForDirtyReverseDep(skyKey);
+    }
+ else {
+      childErrorState=childErrorEntry.addReverseDepAndCheckIfDone(skyKey);
+    }
     Preconditions.checkState(childErrorState == DependencyState.DONE,"skyKey: %s, state: %s childErrorKey: %s",skyKey,state,childErrorKey,childErrorEntry);
     ErrorInfo childErrorInfo=Preconditions.checkNotNull(childErrorEntry.getErrorInfo());
     visitor.preventNewEvaluations();

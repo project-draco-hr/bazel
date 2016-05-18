@@ -1,0 +1,12 @@
+{
+  SkyKey topKey=GraphTester.skyKey("top");
+  SkyKey errorKey=GraphTester.skyKey("error");
+  tester.getOrCreate(errorKey).setHasError(true);
+  tester.getOrCreate(topKey).addDependency(errorKey).setComputedValue(CONCATENATE);
+  EvaluationResult<StringValue> result=tester.eval(true,topKey);
+  assertThatEvaluationResult(result).hasErrorEntryForKeyThat(topKey).rootCauseOfExceptionIs(errorKey);
+  tester.getOrCreate(topKey,true);
+  tester.invalidate();
+  result=tester.eval(false,topKey);
+  assertThatEvaluationResult(result).hasErrorEntryForKeyThat(topKey).rootCauseOfExceptionIs(errorKey);
+}
