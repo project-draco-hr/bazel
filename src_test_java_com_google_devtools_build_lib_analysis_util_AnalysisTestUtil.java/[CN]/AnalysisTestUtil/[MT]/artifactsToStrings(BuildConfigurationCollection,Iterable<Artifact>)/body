@@ -1,13 +1,20 @@
 {
-  Map<Root,String> rootMap=new HashMap<>();
+  Map<String,String> rootMap=new HashMap<>();
   BuildConfiguration targetConfiguration=Iterables.getOnlyElement(configurations.getTargetConfigurations());
-  rootMap.put(targetConfiguration.getBinDirectory(),"bin");
-  rootMap.put(targetConfiguration.getGenfilesDirectory(),"genfiles");
-  rootMap.put(targetConfiguration.getMiddlemanDirectory(),"internal");
+  rootMap.put(targetConfiguration.getBinDirectory().getPath().toString(),"bin");
+  rootMap.put(targetConfiguration.getGenfilesDirectory().getPath().toString(),"genfiles");
+  rootMap.put(targetConfiguration.getMiddlemanDirectory().getPath().toString(),"internal");
   BuildConfiguration hostConfiguration=configurations.getHostConfiguration();
-  rootMap.put(hostConfiguration.getBinDirectory(),"bin(host)");
-  rootMap.put(hostConfiguration.getGenfilesDirectory(),"genfiles(host)");
-  rootMap.put(hostConfiguration.getMiddlemanDirectory(),"internal(host)");
+  rootMap.put(hostConfiguration.getBinDirectory().getPath().toString(),"bin(host)");
+  rootMap.put(hostConfiguration.getGenfilesDirectory().getPath().toString(),"genfiles(host)");
+  rootMap.put(hostConfiguration.getMiddlemanDirectory().getPath().toString(),"internal(host)");
+  if (targetConfiguration.useDynamicConfigurations()) {
+    Map<String,String> prunedRootMap=new HashMap<>();
+    for (    Map.Entry<String,String> root : rootMap.entrySet()) {
+      prunedRootMap.put(OUTPUT_PATH_CPP_PREFIX_PATTERN.matcher(root.getKey()).replaceFirst(""),root.getValue());
+    }
+    rootMap.putAll(prunedRootMap);
+  }
   Set<String> files=new LinkedHashSet<>();
   for (  Artifact artifact : artifacts) {
     Root root=artifact.getRoot();
@@ -15,7 +22,7 @@
       files.add("src " + artifact.getRootRelativePath());
     }
  else {
-      String name=rootMap.get(root);
+      String name=rootMap.get(root.getPath().toString());
       if (name == null) {
         name="/";
       }
