@@ -1,5 +1,5 @@
 {
-  if (getAndroidConfig(ruleContext).getIncrementalDexingBinaries().isEmpty()) {
+  if (AndroidCommon.getAndroidConfig(ruleContext).getIncrementalDexingBinaries().isEmpty()) {
     return new ConfiguredAspect.Builder(NAME,ruleContext).build();
   }
   checkState(base.getProvider(DexArchiveProvider.class) == null,"dex archive natively generated: %s",ruleContext.getLabel());
@@ -9,9 +9,8 @@
   DexArchiveProvider.Builder result=createArchiveProviderBuilderFromDeps(ruleContext);
   JavaRuntimeJarProvider jarProvider=base.getProvider(JavaRuntimeJarProvider.class);
   if (jarProvider != null) {
-    Collection<String> incrementalDexopts=aspectDexopts(ruleContext,params);
     for (    Artifact jar : jarProvider.getRuntimeJars()) {
-      Artifact dexArchive=createDexArchiveAction(ruleContext,jar,incrementalDexopts);
+      Artifact dexArchive=createDexArchiveAction(ruleContext,jar);
       result.addDexArchive(dexArchive,jar);
     }
   }
