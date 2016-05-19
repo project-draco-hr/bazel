@@ -16,11 +16,11 @@
   if (env.valuesMissing()) {
     return null;
   }
-  ImmutableMap.Builder<Label,ConfigMatchingProvider> conditions=ImmutableMap.builder();
+  Map<Label,ConfigMatchingProvider> conditions=new LinkedHashMap<>();
   for (  Map.Entry<SkyKey,SkyValue> entry : cts.entrySet()) {
     Label label=((ConfiguredTargetKey)entry.getKey().argument()).getLabel();
     ConfiguredTarget ct=((ConfiguredTargetValue)entry.getValue()).getConfiguredTarget();
     conditions.put(label,Preconditions.checkNotNull(ct.getProvider(ConfigMatchingProvider.class)));
   }
-  return conditions.build();
+  return ImmutableMap.copyOf(conditions);
 }

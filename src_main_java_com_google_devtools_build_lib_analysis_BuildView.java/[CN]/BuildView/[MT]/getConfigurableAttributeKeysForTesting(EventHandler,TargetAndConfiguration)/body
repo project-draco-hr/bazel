@@ -3,7 +3,7 @@
     return ImmutableMap.of();
   }
   Rule rule=(Rule)ctg.getTarget();
-  ImmutableMap.Builder<Label,ConfigMatchingProvider> keys=ImmutableMap.builder();
+  Map<Label,ConfigMatchingProvider> keys=new LinkedHashMap<>();
   RawAttributeMapper mapper=RawAttributeMapper.of(rule);
   for (  Attribute attribute : rule.getAttributes()) {
     for (    Label label : mapper.getConfigurabilityKeys(attribute.getName(),attribute.getType())) {
@@ -14,5 +14,5 @@
       keys.put(label,Preconditions.checkNotNull(ct.getProvider(ConfigMatchingProvider.class)));
     }
   }
-  return keys.build();
+  return ImmutableMap.copyOf(keys);
 }
