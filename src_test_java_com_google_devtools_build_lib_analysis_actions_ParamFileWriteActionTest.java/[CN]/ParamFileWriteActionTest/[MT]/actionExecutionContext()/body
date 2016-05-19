@@ -1,0 +1,15 @@
+{
+  final Iterable<TreeFileArtifact> treeFileArtifacts=ImmutableList.of(createTreeFileArtifact(treeArtifact,"artifacts/treeFileArtifact1"),createTreeFileArtifact(treeArtifact,"artifacts/treeFileArtifact2"));
+  ArtifactExpander artifactExpander=new ArtifactExpander(){
+    @Override public void expand(    Artifact artifact,    Collection<? super Artifact> output){
+      for (      TreeFileArtifact treeFileArtifact : treeFileArtifacts) {
+        if (treeFileArtifact.getParent().equals(artifact)) {
+          output.add(treeFileArtifact);
+        }
+      }
+    }
+  }
+;
+  Executor executor=new TestExecutorBuilder(directories,binTools).build();
+  return new ActionExecutionContext(executor,null,null,new FileOutErr(),artifactExpander);
+}

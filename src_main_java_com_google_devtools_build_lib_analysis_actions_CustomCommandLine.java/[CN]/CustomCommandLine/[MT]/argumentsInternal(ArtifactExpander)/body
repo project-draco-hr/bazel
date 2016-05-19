@@ -1,0 +1,19 @@
+{
+  ImmutableList.Builder<String> builder=ImmutableList.builder();
+  for (  Object arg : arguments) {
+    Object substitutedArg=substituteTreeFileArtifactArgvFragment(arg);
+    if (substitutedArg instanceof ArgvFragment) {
+      if (artifactExpander != null && substitutedArg instanceof TreeArtifactExpansionArgvFragment) {
+        TreeArtifactExpansionArgvFragment expansionArg=(TreeArtifactExpansionArgvFragment)substitutedArg;
+        expansionArg.eval(builder,artifactExpander);
+      }
+ else {
+        ((ArgvFragment)substitutedArg).eval(builder);
+      }
+    }
+ else {
+      builder.add(substitutedArg.toString());
+    }
+  }
+  return builder.build();
+}

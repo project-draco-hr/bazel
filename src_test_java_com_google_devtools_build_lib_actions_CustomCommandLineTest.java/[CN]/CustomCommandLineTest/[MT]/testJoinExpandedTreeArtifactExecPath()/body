@@ -1,0 +1,17 @@
+{
+  Artifact treeArtifact=createTreeArtifact("myTreeArtifact");
+  CommandLine commandLine=CustomCommandLine.builder().add("hello").addJoinExpandedTreeArtifactExecPath(":",treeArtifact).build();
+  assertThat(commandLine.arguments()).containsExactly("hello","JoinExpandedTreeArtifactExecPathsArg{ delimiter: :, treeArtifact: myTreeArtifact}");
+  final Iterable<TreeFileArtifact> treeFileArtifacts=ImmutableList.of(createTreeFileArtifact(treeArtifact,"children/child1"),createTreeFileArtifact(treeArtifact,"children/child2"));
+  ArtifactExpander artifactExpander=new ArtifactExpander(){
+    @Override public void expand(    Artifact artifact,    Collection<? super Artifact> output){
+      for (      TreeFileArtifact treeFileArtifact : treeFileArtifacts) {
+        if (treeFileArtifact.getParent().equals(artifact)) {
+          output.add(treeFileArtifact);
+        }
+      }
+    }
+  }
+;
+  assertThat(commandLine.arguments(artifactExpander)).containsExactly("hello","myTreeArtifact/children/child1:myTreeArtifact/children/child2");
+}
