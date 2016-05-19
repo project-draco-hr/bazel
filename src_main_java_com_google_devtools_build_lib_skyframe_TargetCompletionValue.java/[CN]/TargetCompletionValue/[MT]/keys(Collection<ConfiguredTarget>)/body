@@ -1,7 +1,9 @@
 {
   return Iterables.transform(targets,new Function<ConfiguredTarget,SkyKey>(){
     @Override public SkyKey apply(    ConfiguredTarget ct){
-      return SkyKey.create(SkyFunctions.TARGET_COMPLETION,new LabelAndConfiguration(ct));
+      AliasProvider aliasProvider=ct.getProvider(AliasProvider.class);
+      Label label=aliasProvider != null ? aliasProvider.getAliasChain().get(0) : ct.getLabel();
+      return SkyKey.create(SkyFunctions.TARGET_COMPLETION,LabelAndConfiguration.of(label,ct.getConfiguration()));
     }
   }
 );
