@@ -1,0 +1,15 @@
+{
+  NestedSetBuilder<BundleableFile> frameworkFilesBuilder=NestedSetBuilder.stableOrder();
+  for (  Artifact frameworkFile : objcProvider.get(DYNAMIC_FRAMEWORK_FILE)) {
+    PathFragment frameworkDir=ObjcCommon.nearestContainerMatching(ObjcCommon.FRAMEWORK_CONTAINER_TYPE,frameworkFile).get();
+    String frameworkName=frameworkDir.getBaseName();
+    PathFragment inFrameworkPath=frameworkFile.getExecPath().relativeTo(frameworkDir);
+    if (inFrameworkPath.getFirstSegment(STRIP_FRAMEWORK_DIRS) == 0) {
+      continue;
+    }
+    int permissions=inFrameworkPath.segmentCount() == 1 ? BundleableFile.EXECUTABLE_EXTERNAL_FILE_ATTRIBUTE : BundleableFile.DEFAULT_EXTERNAL_FILE_ATTRIBUTE;
+    BundleableFile bundleFile=new BundleableFile(frameworkFile,"Frameworks/" + frameworkName + "/"+ inFrameworkPath.getPathString(),permissions);
+    frameworkFilesBuilder.add(bundleFile);
+  }
+  return frameworkFilesBuilder.build();
+}

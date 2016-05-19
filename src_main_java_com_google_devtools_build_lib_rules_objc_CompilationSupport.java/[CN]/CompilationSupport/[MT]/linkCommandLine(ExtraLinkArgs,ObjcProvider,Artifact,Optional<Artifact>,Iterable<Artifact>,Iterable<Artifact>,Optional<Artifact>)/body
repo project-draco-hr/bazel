@@ -14,7 +14,7 @@
   if (objcConfiguration.shouldPrioritizeStaticLibs()) {
     commandLine.addExecPaths(bazelBuiltLibraries).addExecPaths(objcProvider.get(IMPORTED_LIBRARY)).addExecPaths(ccLibraries);
   }
-  commandLine.add(commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration,appleConfiguration)).add("-Xlinker").add("-objc_abi_version").add("-Xlinker").add("2").add("-fobjc-link-runtime").add(DEFAULT_LINKER_FLAGS).addBeforeEach("-framework",frameworkNames(objcProvider)).addBeforeEach("-weak_framework",SdkFramework.names(objcProvider.get(WEAK_SDK_FRAMEWORK))).addFormatEach("-l%s",libraryNames);
+  commandLine.add(commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration,appleConfiguration)).add("-Xlinker").add("-objc_abi_version").add("-Xlinker").add("2").add("-Xlinker").add("-rpath").add("-Xlinker").add("@executable_path/Frameworks").add("-fobjc-link-runtime").add(DEFAULT_LINKER_FLAGS).addBeforeEach("-framework",frameworkNames(objcProvider)).addBeforeEach("-weak_framework",SdkFramework.names(objcProvider.get(WEAK_SDK_FRAMEWORK))).addFormatEach("-l%s",libraryNames);
   if (!objcConfiguration.shouldPrioritizeStaticLibs()) {
     commandLine.addExecPaths(bazelBuiltLibraries).addExecPaths(objcProvider.get(IMPORTED_LIBRARY)).addExecPaths(ccLibraries);
   }
@@ -25,9 +25,6 @@
   }
   if (objcProvider.is(USES_SWIFT)) {
     commandLine.add("-L").add(AppleToolchain.swiftLibDir(appleConfiguration));
-  }
-  if (objcProvider.is(USES_SWIFT) || objcProvider.is(USES_FRAMEWORKS)) {
-    commandLine.add("-Xlinker").add("-rpath").add("-Xlinker").add("@executable_path/Frameworks");
   }
   for (  String linkopt : attributes.linkopts()) {
     commandLine.add("-Wl," + linkopt);

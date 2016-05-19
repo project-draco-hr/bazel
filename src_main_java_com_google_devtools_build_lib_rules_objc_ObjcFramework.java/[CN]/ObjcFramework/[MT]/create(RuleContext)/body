@@ -1,11 +1,17 @@
 {
   Attributes sdkFrameworkAttributes=new Attributes(ruleContext);
+  ObjcCommon.Builder commonBuilder=new Builder(ruleContext).addExtraSdkFrameworks(sdkFrameworkAttributes.sdkFrameworks()).addExtraWeakSdkFrameworks(sdkFrameworkAttributes.weakSdkFrameworks()).addExtraSdkDylibs(sdkFrameworkAttributes.sdkDylibs());
   ImmutableList<Artifact> frameworkImports=ruleContext.getPrerequisiteArtifacts("framework_imports",Mode.TARGET).list();
-  ObjcCommon common=new ObjcCommon.Builder(ruleContext).addFrameworkImports(frameworkImports).addExtraSdkFrameworks(sdkFrameworkAttributes.sdkFrameworks()).addExtraWeakSdkFrameworks(sdkFrameworkAttributes.weakSdkFrameworks()).addExtraSdkDylibs(sdkFrameworkAttributes.sdkDylibs()).build();
+  if (ruleContext.attributes().get("is_dynamic",Type.BOOLEAN)) {
+    commonBuilder.addDynamicFrameworkImports(frameworkImports);
+  }
+ else {
+    commonBuilder.addStaticFrameworkImports(frameworkImports);
+  }
   Iterable<String> containerErrors=ObjcCommon.notInContainerErrors(frameworkImports,ObjcCommon.FRAMEWORK_CONTAINER_TYPE);
   for (  String error : containerErrors) {
     ruleContext.attributeError("framework_imports",error);
   }
   NestedSet<Artifact> filesToBuild=NestedSetBuilder.emptySet(STABLE_ORDER);
-  return ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild).addProvider(ObjcProvider.class,common.getObjcProvider()).build();
+  return ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild).addProvider(ObjcProvider.class,commonBuilder.build().getObjcProvider()).build();
 }

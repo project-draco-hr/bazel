@@ -6,10 +6,11 @@
   Optional<Artifact> actoolzipOutput=actoolzipOutput();
   Optional<Artifact> combinedArchitectureBinary=combinedArchitectureBinary();
   NestedSet<BundleableFile> binaryStringsFiles=binaryStringsFiles();
+  NestedSet<BundleableFile> dynamicFrameworks=dynamicFrameworkFiles();
   NestedSet<Artifact> mergeZips=mergeZips(actoolzipOutput);
   NestedSet<Artifact> rootMergeZips=NestedSetBuilder.<Artifact>stableOrder().addTransitive(objcProvider.get(ROOT_MERGE_ZIP)).build();
-  bundleFilesBuilder.addAll(binaryStringsFiles).addAll(objcProvider.get(BUNDLE_FILE));
+  bundleFilesBuilder.addAll(binaryStringsFiles).addAll(dynamicFrameworks).addAll(objcProvider.get(BUNDLE_FILE));
   ImmutableList<BundleableFile> bundleFiles=deduplicateByBundlePaths(bundleFilesBuilder.build());
-  NestedSetBuilder<Artifact> bundleContentArtifactsBuilder=NestedSetBuilder.<Artifact>stableOrder().addTransitive(nestedBundleContentArtifacts(objcProvider.get(NESTED_BUNDLE))).addAll(combinedArchitectureBinary.asSet()).addAll(bundleInfoplist.asSet()).addTransitive(mergeZips).addTransitive(rootMergeZips).addAll(BundleableFile.toArtifacts(binaryStringsFiles)).addAll(BundleableFile.toArtifacts(bundleFiles));
+  NestedSetBuilder<Artifact> bundleContentArtifactsBuilder=NestedSetBuilder.<Artifact>stableOrder().addTransitive(nestedBundleContentArtifacts(objcProvider.get(NESTED_BUNDLE))).addAll(combinedArchitectureBinary.asSet()).addAll(bundleInfoplist.asSet()).addTransitive(mergeZips).addTransitive(rootMergeZips).addAll(BundleableFile.toArtifacts(bundleFiles));
   return new Bundling(name,bundleDirFormat,combinedArchitectureBinary,bundleFiles,bundleInfoplist,actoolzipOutput,bundleContentArtifactsBuilder.build(),mergeZips,rootMergeZips,primaryBundleId,fallbackBundleId,architecture,minimumOsVersion,bundleInfoplistInputs,automaticEntriesInfoplistInput,objcProvider.get(NESTED_BUNDLE),families,intermediateArtifacts,artifactPrefix);
 }
