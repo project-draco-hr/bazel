@@ -2,11 +2,10 @@
   PeekingIterator<String> rawQualifiers=Iterators.peekingIterator(Iterators.forArray(dirNameAndQualifiers));
   rawQualifiers.next();
   List<String> unHandledLanguageRegionQualifiers=new ArrayList<>();
+  List<String> unHandledDensityQualifiers=new ArrayList<>();
+  List<String> unHandledUIModeQualifiers=new ArrayList<>();
   List<String> handledQualifiers=new ArrayList<>();
-  for (int qualifierSlot=0; qualifierSlot < 4; qualifierSlot++) {
-    if (!rawQualifiers.hasNext()) {
-      break;
-    }
+  while (rawQualifiers.hasNext()) {
     String qualifier=rawQualifiers.next();
     if (qualifier.startsWith(BCP_PREFIX)) {
       unHandledLanguageRegionQualifiers.add(qualifier);
@@ -19,30 +18,58 @@
       unHandledLanguageRegionQualifiers.add("b+sr+Latn");
       rawQualifiers.next();
     }
+ else     if (qualifier.equals("anydpi")) {
+      unHandledDensityQualifiers.add(qualifier);
+    }
+ else     if (qualifier.equals("watch")) {
+      unHandledUIModeQualifiers.add(qualifier);
+    }
  else {
       handledQualifiers.add(qualifier);
     }
   }
-  Iterators.addAll(handledQualifiers,rawQualifiers);
   FolderConfiguration config=FolderConfiguration.getConfigFromQualifiers(handledQualifiers);
   if (config == null) {
     throw new IllegalArgumentException(String.format(INVALID_QUALIFIERS,DASH_JOINER.join(dirNameAndQualifiers)));
   }
   config.normalize();
-  PeekingIterator<ResourceQualifier> normalizedQualifiers=Iterators.peekingIterator(Iterators.forArray(config.getQualifiers()));
-  if (!normalizedQualifiers.hasNext()) {
-    return ImmutableList.copyOf(unHandledLanguageRegionQualifiers);
+  Builder<String> builder=ImmutableList.<String>builder();
+  addIfNotNull(config.getCountryCodeQualifier(),builder);
+  addIfNotNull(config.getNetworkCodeQualifier(),builder);
+  if (unHandledLanguageRegionQualifiers.isEmpty()) {
+    addIfNotNull(config.getLanguageQualifier(),builder);
+    addIfNotNull(config.getRegionQualifier(),builder);
   }
-  Builder<String> finalQualifiers=ImmutableList.<String>builder();
-  while (normalizedQualifiers.hasNext()) {
-    if (normalizedQualifiers.peek() instanceof CountryCodeQualifier || normalizedQualifiers.peek() instanceof NetworkCodeQualifier) {
-      finalQualifiers.add(QUALIFIER_TO_STRING.apply(normalizedQualifiers.next()));
-    }
  else {
-      break;
-    }
+    builder.addAll(unHandledLanguageRegionQualifiers);
   }
-  finalQualifiers.addAll(unHandledLanguageRegionQualifiers);
-  finalQualifiers.addAll(Iterators.transform(normalizedQualifiers,QUALIFIER_TO_STRING));
-  return finalQualifiers.build();
+  addIfNotNull(config.getLayoutDirectionQualifier(),builder);
+  addIfNotNull(config.getSmallestScreenWidthQualifier(),builder);
+  addIfNotNull(config.getScreenWidthQualifier(),builder);
+  addIfNotNull(config.getScreenHeightQualifier(),builder);
+  addIfNotNull(config.getScreenSizeQualifier(),builder);
+  addIfNotNull(config.getScreenRatioQualifier(),builder);
+  addIfNotNull(config.getScreenRoundQualifier(),builder);
+  addIfNotNull(config.getScreenOrientationQualifier(),builder);
+  if (unHandledUIModeQualifiers.isEmpty()) {
+    addIfNotNull(config.getUiModeQualifier(),builder);
+  }
+ else {
+    builder.addAll(unHandledUIModeQualifiers);
+  }
+  addIfNotNull(config.getNightModeQualifier(),builder);
+  if (unHandledDensityQualifiers.isEmpty()) {
+    addIfNotNull(config.getDensityQualifier(),builder);
+  }
+ else {
+    builder.addAll(unHandledDensityQualifiers);
+  }
+  addIfNotNull(config.getTouchTypeQualifier(),builder);
+  addIfNotNull(config.getKeyboardStateQualifier(),builder);
+  addIfNotNull(config.getTextInputMethodQualifier(),builder);
+  addIfNotNull(config.getNavigationStateQualifier(),builder);
+  addIfNotNull(config.getNavigationMethodQualifier(),builder);
+  addIfNotNull(config.getScreenDimensionQualifier(),builder);
+  addIfNotNull(config.getVersionQualifier(),builder);
+  return builder.build();
 }
