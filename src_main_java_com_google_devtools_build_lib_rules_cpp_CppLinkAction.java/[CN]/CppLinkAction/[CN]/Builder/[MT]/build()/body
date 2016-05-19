@@ -29,7 +29,7 @@
   }
   PathFragment paramRootPath=ParameterFile.derivePath(outputLibrary.getArtifact().getRootRelativePath(),(isLTOIndexing) ? "lto" : "2");
   @Nullable final Artifact paramFile=canSplitCommandLine() ? linkArtifactFactory.create(ruleContext,paramRootPath) : null;
-  LinkCommandLine.Builder linkCommandLineBuilder=new LinkCommandLine.Builder(configuration,getOwner(),ruleContext).setLinkerInputs(linkerInputs).setRuntimeInputs(ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs))).setLinkTargetType(linkType).setLinkStaticness(linkStaticness).setFeatures(features).setRuntimeSolibDir(linkType.isStaticLibraryLink() ? null : runtimeSolibDir).setNativeDeps(isNativeDeps).setUseTestOnlyFlags(useTestOnlyFlags).setNeedWholeArchive(needWholeArchive).setParamFile(paramFile).setAllLTOArtifacts(isLTOIndexing ? null : allLTOArtifacts).setToolchain(toolchain).setFeatureConfiguration(featureConfiguration);
+  LinkCommandLine.Builder linkCommandLineBuilder=new LinkCommandLine.Builder(configuration,getOwner(),ruleContext).setActionName(getActionName()).setLinkerInputs(linkerInputs).setRuntimeInputs(ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs))).setLinkTargetType(linkType).setLinkStaticness(linkStaticness).setFeatures(features).setRuntimeSolibDir(linkType.isStaticLibraryLink() ? null : runtimeSolibDir).setNativeDeps(isNativeDeps).setUseTestOnlyFlags(useTestOnlyFlags).setNeedWholeArchive(needWholeArchive).setParamFile(paramFile).setAllLTOArtifacts(isLTOIndexing ? null : allLTOArtifacts).setToolchain(toolchain).setFeatureConfiguration(featureConfiguration);
   if (!isLTOIndexing) {
     linkCommandLineBuilder.setOutput(outputLibrary.getArtifact()).setInterfaceOutput(interfaceOutput).setSymbolCountsOutput(symbolCounts).setBuildInfoHeaderArtifacts(buildInfoHeaderArtifacts).setInterfaceSoBuilder(getInterfaceSoBuilder()).setLinkstamps(linkstampMap).setLinkopts(ImmutableList.copyOf(linkopts)).addLinkstampCompileOptions(linkstampOptions);
   }
@@ -76,11 +76,13 @@
     Action parameterFileWriteAction=new ParameterFileWriteAction(getOwner(),paramFile,linkCommandLine.paramCmdLine(),ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1);
     analysisEnvironment.registerAction(parameterFileWriteAction);
   }
-  ImmutableSet<String> executionRequirements=ImmutableSet.of();
-  if (featureConfiguration != null) {
-    if (featureConfiguration.actionIsConfigured(ACTION_NAME)) {
-      executionRequirements=featureConfiguration.getToolForAction(ACTION_NAME).getExecutionRequirements();
-    }
+  if (featureConfiguration == null) {
+    this.featureConfiguration=new FeatureConfiguration();
   }
-  return new CppLinkAction(getOwner(),inputsBuilder.deduplicate().build(),actionOutputs,cppConfiguration,outputLibrary,interfaceOutputLibrary,fake,isLTOIndexing,allLTOArtifacts,linkCommandLine,executionRequirements);
+  Map<String,String> toolchainEnv=featureConfiguration.getEnvironmentVariables(getActionName(),buildVariables);
+  ImmutableSet.Builder<String> executionRequirements=ImmutableSet.<String>builder();
+  if (featureConfiguration.actionIsConfigured(getActionName())) {
+    executionRequirements.addAll(featureConfiguration.getToolForAction(getActionName()).getExecutionRequirements());
+  }
+  return new CppLinkAction(getOwner(),inputsBuilder.deduplicate().build(),actionOutputs,cppConfiguration,outputLibrary,interfaceOutputLibrary,fake,isLTOIndexing,allLTOArtifacts,linkCommandLine,toolchainEnv,executionRequirements.build());
 }
