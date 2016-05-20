@@ -1,12 +1,11 @@
 {
   CcToolchainFeatures.Variables.Builder buildVariables=new CcToolchainFeatures.Variables.Builder();
-  CppCompilationContext builderContext=builder.getContext();
-  CppModuleMap cppModuleMap=builderContext.getCppModuleMap();
+  CppModuleMap cppModuleMap=context.getCppModuleMap();
   if (featureConfiguration.isEnabled(CppRuleClasses.MODULE_MAPS) && cppModuleMap != null) {
     buildVariables.addVariable("module_name",cppModuleMap.getName());
     buildVariables.addVariable("module_map_file",cppModuleMap.getArtifact().getExecPathString());
     CcToolchainFeatures.Variables.ValueSequence.Builder sequence=new CcToolchainFeatures.Variables.ValueSequence.Builder();
-    for (    Artifact artifact : builderContext.getDirectModuleMaps()) {
+    for (    Artifact artifact : context.getDirectModuleMaps()) {
       sequence.addValue(artifact.getExecPathString());
     }
     buildVariables.addSequence("dependent_module_map_files",sequence.build());
@@ -15,20 +14,9 @@
     buildVariables.addSequenceVariable("module_files",getHeaderModulePaths(builder,usePic));
   }
   if (featureConfiguration.isEnabled(CppRuleClasses.INCLUDE_PATHS)) {
-    buildVariables.addSequenceVariable("include_paths",getSafePathStrings(builderContext.getIncludeDirs()));
-    buildVariables.addSequenceVariable("quote_include_paths",getSafePathStrings(builderContext.getQuoteIncludeDirs()));
-    buildVariables.addSequenceVariable("system_include_paths",getSafePathStrings(builderContext.getSystemIncludeDirs()));
-  }
-  if (featureConfiguration.isEnabled(CppRuleClasses.PREPROCESSOR_DEFINES)) {
-    String fdoBuildStamp=CppHelper.getFdoBuildStamp(ruleContext);
-    ImmutableList<String> defines;
-    if (fdoBuildStamp != null) {
-      defines=ImmutableList.<String>builder().addAll(builderContext.getDefines()).add(CppConfiguration.FDO_STAMP_MACRO + "=\"" + CppHelper.getFdoBuildStamp(ruleContext)+ "\"").build();
-    }
- else {
-      defines=builderContext.getDefines();
-    }
-    buildVariables.addSequenceVariable("preprocessor_defines",defines);
+    buildVariables.addSequenceVariable("include_paths",getSafePathStrings(context.getIncludeDirs()));
+    buildVariables.addSequenceVariable("quote_include_paths",getSafePathStrings(context.getQuoteIncludeDirs()));
+    buildVariables.addSequenceVariable("system_include_paths",getSafePathStrings(context.getSystemIncludeDirs()));
   }
   if (usePic) {
     if (!featureConfiguration.isEnabled(CppRuleClasses.PIC)) {
