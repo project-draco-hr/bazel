@@ -18,13 +18,27 @@
   }
   if (action.getOwner() != null) {
     if (action.getOwner().getLabel() != null) {
+      String pathString=action.getOwner().getLabel().getPackageFragment().toString();
+      int pathIndex=message.indexOf(pathString);
+      if (pathIndex >= 0) {
+        String start=message.substring(0,pathIndex);
+        String end=message.substring(pathIndex + pathString.length());
+        int pathTargetLength=desiredWidth - start.length() - end.length()- postfix.length();
+        if (pathTargetLength >= 3 * ELLIPSIS.length()) {
+          String shortPath=suffix(pathString,pathTargetLength - ELLIPSIS.length());
+          int slashPos=shortPath.indexOf('/');
+          if (slashPos >= 0) {
+            return start + ELLIPSIS + shortPath.substring(slashPos)+ end+ postfix;
+          }
+        }
+      }
       String shortLabel=shortenedLabelString(action.getOwner().getLabel(),desiredWidth - postfix.length());
       if (shortLabel.length() + postfix.length() <= desiredWidth) {
         return shortLabel + postfix;
       }
     }
   }
-  if (3 * ELLIPSIS.length() <= desiredWidth) {
+  if (3 * ELLIPSIS.length() + postfix.length() <= desiredWidth) {
     message=ELLIPSIS + suffix(message,desiredWidth - ELLIPSIS.length() - postfix.length());
   }
   return message + postfix;
