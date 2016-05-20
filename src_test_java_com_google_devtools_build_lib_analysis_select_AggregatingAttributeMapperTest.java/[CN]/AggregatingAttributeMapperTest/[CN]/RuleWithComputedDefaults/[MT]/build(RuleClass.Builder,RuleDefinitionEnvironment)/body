@@ -1,0 +1,13 @@
+{
+  return builder.add(attr("configurable1",STRING)).add(attr("configurable2",STRING)).add(attr("nonconfigurable",STRING).nonconfigurable("that's the point")).add(attr("$computed_default_with_configurable_deps",STRING).value(new Attribute.ComputedDefault("configurable1","configurable2"){
+    @Override public Object getDefault(    AttributeMap rule){
+      return Joiner.on(" ").join(rule.get("configurable1",STRING),rule.get("configurable2",STRING),rule.get("nonconfigurable",STRING));
+    }
+  }
+)).add(attr("$computed_default_without_configurable_deps",STRING).value(new Attribute.ComputedDefault(){
+    @Override public Object getDefault(    AttributeMap rule){
+      return rule.get("nonconfigurable",STRING);
+    }
+  }
+)).build();
+}

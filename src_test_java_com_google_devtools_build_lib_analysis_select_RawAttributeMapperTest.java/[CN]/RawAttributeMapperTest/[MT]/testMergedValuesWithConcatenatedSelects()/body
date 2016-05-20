@@ -1,5 +1,5 @@
 {
-  Rule rule=createRule("x","myrule","sh_binary(","    name = 'myrule',","    srcs = select({","            '//conditions:a1': ['a1.sh'],","            '//conditions:b1': ['b1.sh', 'another_b1.sh']})","        + select({","            '//conditions:a2': ['a2.sh'],","            '//conditions:b2': ['b2.sh']})","    )");
+  Rule rule=scratchRule("x","myrule","sh_binary(","    name = 'myrule',","    srcs = select({","            '//conditions:a1': ['a1.sh'],","            '//conditions:b1': ['b1.sh', 'another_b1.sh']})","        + select({","            '//conditions:a2': ['a2.sh'],","            '//conditions:b2': ['b2.sh']})","    )");
   RawAttributeMapper rawMapper=RawAttributeMapper.of(rule);
   assertThat(rawMapper.getMergedValues("srcs",BuildType.LABEL_LIST)).containsExactly(Label.parseAbsolute("//x:a1.sh"),Label.parseAbsolute("//x:b1.sh"),Label.parseAbsolute("//x:another_b1.sh"),Label.parseAbsolute("//x:a2.sh"),Label.parseAbsolute("//x:b2.sh")).inOrder();
 }

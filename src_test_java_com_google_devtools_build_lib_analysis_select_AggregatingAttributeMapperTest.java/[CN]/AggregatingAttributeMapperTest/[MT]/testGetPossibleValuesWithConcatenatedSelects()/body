@@ -1,4 +1,4 @@
 {
-  Rule rule=createRule("a","myrule","sh_binary(name = 'myrule',","          srcs = select({","                  '//conditions:a1': ['a1.sh'],","                  '//conditions:b1': ['b1.sh']})","              + select({","                  '//conditions:a2': ['a2.sh'],","                  '//conditions:b2': ['b2.sh']})","          )");
+  Rule rule=scratchRule("a","myrule","sh_binary(name = 'myrule',","          srcs = select({","                  '//conditions:a1': ['a1.sh'],","                  '//conditions:b1': ['b1.sh']})","              + select({","                  '//conditions:a2': ['a2.sh'],","                  '//conditions:b2': ['b2.sh']})","          )");
   assertThat(AggregatingAttributeMapper.of(rule).visitAttribute("srcs",BuildType.LABEL_LIST)).containsExactlyElementsIn(ImmutableList.of(ImmutableList.of(Label.create("@//a","a1.sh"),Label.create("@//a","a2.sh")),ImmutableList.of(Label.create("@//a","a1.sh"),Label.create("@//a","b2.sh")),ImmutableList.of(Label.create("@//a","b1.sh"),Label.create("@//a","a2.sh")),ImmutableList.of(Label.create("@//a","b1.sh"),Label.create("@//a","b2.sh"))));
 }
