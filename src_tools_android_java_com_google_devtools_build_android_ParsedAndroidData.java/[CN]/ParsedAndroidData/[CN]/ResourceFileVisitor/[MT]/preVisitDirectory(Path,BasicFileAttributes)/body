@@ -1,6 +1,15 @@
 {
   final String[] dirNameAndQualifiers=dir.getFileName().toString().split("-");
-  inValuesSubtree="values".equals(dirNameAndQualifiers[0]);
-  fqnFactory=FullyQualifiedName.Factory.fromDirectoryName(dirNameAndQualifiers);
-  return FileVisitResult.CONTINUE;
+  folderType=ResourceFolderType.getTypeByName(dirNameAndQualifiers[0]);
+  if (folderType == null) {
+    return FileVisitResult.CONTINUE;
+  }
+  try {
+    fqnFactory=FullyQualifiedName.Factory.fromDirectoryName(dirNameAndQualifiers);
+    return FileVisitResult.CONTINUE;
+  }
+ catch (  IllegalArgumentException e) {
+    logger.warning(String.format("%s is an invalid resource directory due to %s",dir,e.getMessage()));
+    return FileVisitResult.SKIP_SUBTREE;
+  }
 }
