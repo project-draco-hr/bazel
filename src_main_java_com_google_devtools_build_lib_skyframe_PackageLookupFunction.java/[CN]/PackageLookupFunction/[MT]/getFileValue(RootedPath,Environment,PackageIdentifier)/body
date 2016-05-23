@@ -1,15 +1,15 @@
 {
-  String basename=buildFileRootedPath.asPath().getBaseName();
-  SkyKey fileSkyKey=FileValue.key(buildFileRootedPath);
+  String basename=fileRootedPath.asPath().getBaseName();
+  SkyKey fileSkyKey=FileValue.key(fileRootedPath);
   FileValue fileValue=null;
   try {
     fileValue=(FileValue)env.getValueOrThrow(fileSkyKey,IOException.class,FileSymlinkException.class,InconsistentFilesystemException.class);
   }
  catch (  IOException e) {
-    throw new PackageLookupFunctionException(new BuildFileNotFoundException(packageIdentifier,"IO errors while looking for " + basename + " file reading "+ buildFileRootedPath.asPath()+ ": "+ e.getMessage(),e),Transience.PERSISTENT);
+    throw new PackageLookupFunctionException(new BuildFileNotFoundException(packageIdentifier,"IO errors while looking for " + basename + " file reading "+ fileRootedPath.asPath()+ ": "+ e.getMessage(),e),Transience.PERSISTENT);
   }
 catch (  FileSymlinkException e) {
-    throw new PackageLookupFunctionException(new BuildFileNotFoundException(packageIdentifier,"Symlink cycle detected while trying to find " + basename + " file "+ buildFileRootedPath.asPath()),Transience.PERSISTENT);
+    throw new PackageLookupFunctionException(new BuildFileNotFoundException(packageIdentifier,"Symlink cycle detected while trying to find " + basename + " file "+ fileRootedPath.asPath()),Transience.PERSISTENT);
   }
 catch (  InconsistentFilesystemException e) {
     throw new PackageLookupFunctionException(e,Transience.PERSISTENT);

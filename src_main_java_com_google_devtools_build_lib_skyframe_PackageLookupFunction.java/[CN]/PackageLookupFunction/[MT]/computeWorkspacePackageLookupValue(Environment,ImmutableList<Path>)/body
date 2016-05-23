@@ -1,0 +1,18 @@
+{
+  PackageLookupValue result=getPackageLookupValue(env,packagePathEntries,Label.EXTERNAL_PACKAGE_IDENTIFIER,new PathFragment("WORKSPACE"));
+  if (result == null) {
+    return null;
+  }
+  if (result.packageExists()) {
+    return result;
+  }
+  if (packagePathEntries.isEmpty()) {
+    return PackageLookupValue.NO_BUILD_FILE_VALUE;
+  }
+  Path lastPackagePath=packagePathEntries.get(packagePathEntries.size() - 1);
+  FileValue lastPackagePackagePathFileValue=getFileValue(RootedPath.toRootedPath(lastPackagePath,PathFragment.EMPTY_FRAGMENT),env,Label.EXTERNAL_PACKAGE_IDENTIFIER);
+  if (lastPackagePackagePathFileValue == null) {
+    return null;
+  }
+  return lastPackagePackagePathFileValue.exists() ? PackageLookupValue.success(lastPackagePath) : PackageLookupValue.NO_BUILD_FILE_VALUE;
+}

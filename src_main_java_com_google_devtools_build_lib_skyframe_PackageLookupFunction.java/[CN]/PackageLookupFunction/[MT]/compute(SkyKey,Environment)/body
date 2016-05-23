@@ -8,7 +8,7 @@
     return computeExternalPackageLookupValue(skyKey,env,packageKey);
   }
  else   if (packageKey.equals(Label.EXTERNAL_PACKAGE_IDENTIFIER)) {
-    return computeWorkspaceLookupValue(env,packageKey);
+    return computeWorkspacePackageLookupValue(env,pkgLocator.getPathEntries());
   }
   String packageNameErrorMsg=LabelValidator.validatePackageName(packageKey.getPackageFragment().getPathString());
   if (packageNameErrorMsg != null) {
@@ -27,11 +27,5 @@
       return PackageLookupValue.DELETED_PACKAGE_VALUE;
     }
   }
-  for (  Path packagePathEntry : pkgLocator.getPathEntries()) {
-    PackageLookupValue value=getPackageLookupValue(env,packagePathEntry,packageKey);
-    if (value == null || value.packageExists()) {
-      return value;
-    }
-  }
-  return PackageLookupValue.NO_BUILD_FILE_VALUE;
+  return getPackageLookupValue(env,pkgLocator.getPathEntries(),packageKey,packageKey.getPackageFragment().getChild("BUILD"));
 }
