@@ -12,7 +12,7 @@
   Collection<Artifact> sources=Sets.newHashSet(compilationArtifacts.getSrcs());
   Collection<Artifact> privateHdrs=Sets.newHashSet(compilationArtifacts.getPrivateHdrs());
   Collection<Artifact> publicHdrs=Sets.newHashSet(compilationAttributes.hdrs());
-  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,ObjcCppSemantics.INSTANCE,featureConfiguration,CcLibraryHelper.SourceCategory.CC_AND_OBJC).addSources(sources).addSources(privateHdrs).enableCompileProviders().addPublicHeaders(publicHdrs).addPrecompiledFiles(precompiledFiles).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addVariableExtension(variablesExtension(ruleContext));
+  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,new ObjcCppSemantics(common.getObjcProvider()),featureConfiguration,CcLibraryHelper.SourceCategory.CC_AND_OBJC).addSources(sources).addSources(privateHdrs).enableCompileProviders().addPublicHeaders(publicHdrs).addPrecompiledFiles(precompiledFiles).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addVariableExtension(new ObjcVariablesExtension(ruleContext,common.getObjcProvider()));
   CcLibraryHelper.Info info=helper.build();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().addAll(common.getCompiledArchive().asSet());
   return ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build()).addProviders(info.getProviders()).build();
