@@ -1,5 +1,4 @@
 {
-  Preconditions.checkState(invalidationType != InvalidationType.DELETED,keys);
   final boolean isChanged=(invalidationType == InvalidationType.CHANGED);
   Set<SkyKey> setToCheck=isChanged ? changed : dirtied;
   int size=Iterables.size(keys);
@@ -15,12 +14,15 @@
     }
   }
   final Map<SkyKey,? extends ThinNodeEntry> entries=graph.getBatch(keysToGet);
+  if (enqueueingKeyForExistenceCheck != null && entries.size() != keysToGet.size()) {
+    Set<SkyKey> missingKeys=Sets.difference(ImmutableSet.copyOf(keysToGet),entries.keySet());
+    throw new IllegalStateException(String.format("key(s) %s not in the graph, but enqueued for dirtying by %s",Iterables.limit(missingKeys,10),enqueueingKeyForExistenceCheck));
+  }
   for (  final SkyKey key : keysToGet) {
     executor.execute(new Runnable(){
       @Override public void run(){
         ThinNodeEntry entry=entries.get(key);
         if (entry == null) {
-          Preconditions.checkState(!mustExist,"%s does not exist in the graph but was enqueued for dirtying by another " + "node",key);
           if (supportInterruptions) {
             pendingVisitations.remove(Pair.of(key,invalidationType));
           }
@@ -39,7 +41,7 @@
           }
           return;
         }
-        visit(markedDirtyResult.getReverseDepsUnsafe(),InvalidationType.DIRTIED,MUST_EXIST);
+        visit(markedDirtyResult.getReverseDepsUnsafe(),InvalidationType.DIRTIED,key);
         informInvalidationReceiver(key,EvaluationProgressReceiver.InvalidationState.DIRTY);
         dirtyKeyTracker.dirty(key);
         if (supportInterruptions) {
