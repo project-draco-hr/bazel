@@ -49,10 +49,11 @@
   for (  ConfiguredTarget target : failed) {
     outErr.printErr("Target " + target.getLabel() + " failed to build\n");
     OutputGroupProvider topLevelProvider=target.getProvider(OutputGroupProvider.class);
+    String productName=env.getRuntime().getProductName();
     if (topLevelProvider != null) {
       for (      Artifact temp : topLevelProvider.getOutputGroup(OutputGroupProvider.TEMP_FILES)) {
         if (temp.getPath().exists()) {
-          outErr.printErrLn("  See temp at " + OutputDirectoryLinksUtils.getPrettyPath(temp.getPath(),env.getWorkspaceName(),env.getWorkspace(),request.getBuildOptions().getSymlinkPrefix()));
+          outErr.printErrLn("  See temp at " + OutputDirectoryLinksUtils.getPrettyPath(temp.getPath(),env.getWorkspaceName(),env.getWorkspace(),request.getBuildOptions().getSymlinkPrefix(productName),productName));
         }
       }
     }

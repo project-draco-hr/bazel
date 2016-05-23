@@ -1,6 +1,6 @@
 {
   Stopwatch timer=Stopwatch.createStarted();
-  prepare(packageRoots,configurations);
+  prepare(packageRoots);
   ActionGraph actionGraph=analysisResult.getActionGraph();
   ImmutableSet<Artifact> additionalArtifacts=analysisResult.getAdditionalArtifactsToBuild();
   OutputService outputService=env.getOutputService();
@@ -14,7 +14,8 @@
   List<BuildConfiguration> targetConfigurations=configurations.getTargetConfigurations();
   BuildConfiguration targetConfiguration=targetConfigurations.size() == 1 ? targetConfigurations.get(0) : null;
   if (targetConfigurations.size() == 1) {
-    OutputDirectoryLinksUtils.createOutputDirectoryLinks(env.getWorkspaceName(),env.getWorkspace(),getExecRoot(),env.getOutputPath(),getReporter(),targetConfiguration,request.getBuildOptions().getSymlinkPrefix());
+    String productName=runtime.getProductName();
+    OutputDirectoryLinksUtils.createOutputDirectoryLinks(env.getWorkspaceName(),env.getWorkspace(),getExecRoot(),env.getOutputPath(),getReporter(),targetConfiguration,request.getBuildOptions().getSymlinkPrefix(productName),productName);
   }
   ActionCache actionCache=getActionCache();
   SkyframeExecutor skyframeExecutor=env.getSkyframeExecutor();

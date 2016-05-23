@@ -4,7 +4,7 @@
   OutErr outErr=env.getReporter().getOutErr();
   Options helpOptions=options.getOptions(Options.class);
   if (options.getResidue().isEmpty()) {
-    emitBlazeVersionInfo(outErr);
+    emitBlazeVersionInfo(outErr,runtime.getProductName());
     emitGenericHelp(runtime,outErr);
     return ExitCode.SUCCESS;
   }
@@ -14,13 +14,13 @@
   }
   String helpSubject=options.getResidue().get(0);
   if (helpSubject.equals("startup_options")) {
-    emitBlazeVersionInfo(outErr);
+    emitBlazeVersionInfo(outErr,runtime.getProductName());
     emitStartupOptions(outErr,helpOptions.helpVerbosity,runtime,getOptionCategories(runtime));
     return ExitCode.SUCCESS;
   }
  else   if (helpSubject.equals("target-syntax")) {
-    emitBlazeVersionInfo(outErr);
-    emitTargetSyntaxHelp(outErr,getOptionCategories(runtime));
+    emitBlazeVersionInfo(outErr,runtime.getProductName());
+    emitTargetSyntaxHelp(outErr,getOptionCategories(runtime),runtime.getProductName());
     return ExitCode.SUCCESS;
   }
  else   if (helpSubject.equals("info-keys")) {
@@ -44,7 +44,7 @@
       return ExitCode.COMMAND_LINE_ERROR;
     }
   }
-  emitBlazeVersionInfo(outErr);
-  outErr.printOut(BlazeCommandUtils.getUsage(command.getClass(),getOptionCategories(runtime),helpOptions.helpVerbosity,runtime.getBlazeModules(),runtime.getRuleClassProvider()));
+  emitBlazeVersionInfo(outErr,runtime.getProductName());
+  outErr.printOut(BlazeCommandUtils.getUsage(command.getClass(),getOptionCategories(runtime),helpOptions.helpVerbosity,runtime.getBlazeModules(),runtime.getRuleClassProvider(),runtime.getProductName()));
   return ExitCode.SUCCESS;
 }
