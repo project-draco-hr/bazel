@@ -2,5 +2,6 @@
   if (!storedExitCode.compareAndSet(ExitCode.RESERVED.getNumericExitCode(),exitCode)) {
     return;
   }
-  workspace.getSkyframeExecutor().getEventBus().post(new CommandCompleteEvent(exitCode));
+  CommandCompleteEvent commandCompleteEvent=exitCode == ExitCode.OOM_ERROR.getNumericExitCode() ? OOM_COMMAND_COMPLETE_EVENT : new CommandCompleteEvent(exitCode);
+  workspace.getSkyframeExecutor().getEventBus().post(commandCompleteEvent);
 }
