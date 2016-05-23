@@ -1,3 +1,10 @@
 {
-  return Iterables.transform(deps,TO_COMPILATION_ARGS);
+  ImmutableList.Builder<JavaCompilationArgsProvider> result=ImmutableList.builder();
+  for (  TransitiveInfoCollection target : deps) {
+    JavaCompilationArgsProvider argsProvider=target.getProvider(JavaCompilationArgsProvider.class);
+    if (argsProvider != null) {
+      result.add(argsProvider);
+    }
+  }
+  return result.build();
 }
