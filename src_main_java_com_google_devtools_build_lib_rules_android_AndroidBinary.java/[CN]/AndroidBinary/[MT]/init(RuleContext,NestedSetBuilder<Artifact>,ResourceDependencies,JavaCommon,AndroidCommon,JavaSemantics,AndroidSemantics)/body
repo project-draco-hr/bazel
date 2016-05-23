@@ -1,11 +1,9 @@
 {
   if (getMultidexMode(ruleContext) != MultidexMode.LEGACY && ruleContext.attributes().isAttributeValueExplicitlySpecified("main_dex_proguard_specs")) {
-    ruleContext.attributeError("main_dex_proguard_specs","The 'main_dex_proguard_specs' " + "attribute is only allowed if 'multidex' is set to 'legacy'");
-    return null;
+    ruleContext.throwWithAttributeError("main_dex_proguard_specs","The " + "'main_dex_proguard_specs' attribute is only allowed if 'multidex' is set to 'legacy'");
   }
   if (ruleContext.attributes().isAttributeValueExplicitlySpecified("proguard_apply_mapping") && ruleContext.attributes().get(ProguardHelper.PROGUARD_SPECS,BuildType.LABEL_LIST).isEmpty()) {
-    ruleContext.attributeError("proguard_apply_mapping","'proguard_apply_mapping' can only be used when 'proguard_specs' is also set");
-    return null;
+    ruleContext.throwWithAttributeError("proguard_apply_mapping","'proguard_apply_mapping' can only be used when 'proguard_specs' is also set");
   }
   Multimap<String,TransitiveInfoCollection> depsByArchitecture=MultimapBuilder.treeKeys().arrayListValues().build();
   AndroidConfiguration config=ruleContext.getFragment(AndroidConfiguration.class);
@@ -37,13 +35,8 @@
   ResourceApk incrementalResourceApk;
   ResourceApk resourceApk;
   if (LocalResourceContainer.definesAndroidResources(ruleContext.attributes())) {
-    if (!LocalResourceContainer.validateRuleContext(ruleContext)) {
-      return null;
-    }
+    LocalResourceContainer.validateRuleContext(ruleContext);
     ApplicationManifest ruleManifest=androidSemantics.getManifestForRule(ruleContext);
-    if (ruleManifest == null) {
-      return null;
-    }
     String applicationId=ruleContext.attributes().get("application_id",Type.STRING);
     String versionCode=getExpandedMakeVarsForAttr(ruleContext,"version_code");
     String versionName=getExpandedMakeVarsForAttr(ruleContext,"version_name");
@@ -61,26 +54,19 @@
     }
     applicationManifest=ruleManifest.mergeWith(ruleContext,resourceDeps);
     resourceApk=applicationManifest.packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,false,resourceDeps,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),applicationId,versionCode,versionName,false,ProguardHelper.getProguardConfigArtifact(ruleContext,""),createMainDexProguardSpec(ruleContext),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_PROCESSED_MANIFEST),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_ZIP));
-    if (ruleContext.hasErrors()) {
-      return null;
-    }
+    ruleContext.assertNoErrors();
     incrementalResourceApk=applicationManifest.addStubApplication(ruleContext).packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_INCREMENTAL_RESOURCES_APK),ruleContext,false,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),applicationId,versionCode,versionName,true,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental"),null,null,null);
-    if (ruleContext.hasErrors()) {
-      return null;
-    }
+    ruleContext.assertNoErrors();
     splitResourceApk=applicationManifest.createSplitManifest(ruleContext,"android_resources",false).packWithDataAndResources(getDxArtifact(ruleContext,"android_resources.ap_"),ruleContext,false,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),applicationId,versionCode,versionName,true,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental_split"),null,null,null);
-    if (ruleContext.hasErrors()) {
-      return null;
-    }
+    ruleContext.assertNoErrors();
   }
  else {
     if (!ruleContext.attributes().get("crunch_png",Type.BOOLEAN)) {
-      ruleContext.ruleError("Setting crunch_png = 0 is not supported for android_binary" + " rules which depend on android_resources rules.");
-      return null;
+      ruleContext.throwWithRuleError("Setting crunch_png = 0 is not supported for android_binary" + " rules which depend on android_resources rules.");
     }
     ApplicationManifest resourcesManifest=ApplicationManifest.fromResourcesRule(ruleContext);
     if (resourcesManifest == null) {
-      return null;
+      throw new RuleErrorException();
     }
     applicationManifest=resourcesManifest.mergeWith(ruleContext,resourceDeps);
     if (shouldRegenerate(ruleContext,resourceDeps)) {
@@ -90,18 +76,12 @@
       resourceApk=applicationManifest.useCurrentResources(ruleContext,ProguardHelper.getProguardConfigArtifact(ruleContext,""),createMainDexProguardSpec(ruleContext));
     }
     incrementalResourceApk=applicationManifest.addStubApplication(ruleContext).packWithResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_INCREMENTAL_RESOURCES_APK),ruleContext,resourceDeps,false,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental"),null);
-    if (ruleContext.hasErrors()) {
-      return null;
-    }
+    ruleContext.assertNoErrors();
     splitResourceApk=applicationManifest.createSplitManifest(ruleContext,"android_resources",false).packWithResources(getDxArtifact(ruleContext,"android_resources.ap_"),ruleContext,resourceDeps,false,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental_split"),null);
-    if (ruleContext.hasErrors()) {
-      return null;
-    }
+    ruleContext.assertNoErrors();
   }
   JavaTargetAttributes resourceClasses=androidCommon.init(javaSemantics,androidSemantics,resourceApk,ruleContext.getConfiguration().isCodeCoverageEnabled(),true);
-  if (resourceClasses == null) {
-    return null;
-  }
+  ruleContext.assertNoErrors();
   Artifact deployJar=createDeployJar(ruleContext,javaSemantics,androidCommon,resourceClasses,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_DEPLOY_JAR));
   Artifact proguardMapping=ruleContext.getPrerequisiteArtifact("proguard_apply_mapping",Mode.TARGET);
   return createAndroidBinary(ruleContext,filesBuilder,deployJar,false,javaCommon,androidCommon,javaSemantics,androidSemantics,nativeLibs,applicationManifest,resourceApk,incrementalResourceApk,splitResourceApk,true,resourceClasses,ImmutableList.<Artifact>of(),ImmutableList.<Artifact>of(),proguardMapping);

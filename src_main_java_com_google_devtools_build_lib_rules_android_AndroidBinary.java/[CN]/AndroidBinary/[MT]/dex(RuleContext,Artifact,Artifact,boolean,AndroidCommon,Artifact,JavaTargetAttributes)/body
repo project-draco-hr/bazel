@@ -3,24 +3,20 @@
   List<String> dexopts=ruleContext.getTokenizedStringListAttr("dexopts");
   MultidexMode multidexMode=getMultidexMode(ruleContext);
   if (!supportsMultidexMode(ruleContext,multidexMode)) {
-    ruleContext.ruleError("Multidex mode \"" + multidexMode.getAttributeValue() + "\" not supported by this version of the Android SDK");
-    return null;
+    ruleContext.throwWithRuleError("Multidex mode \"" + multidexMode.getAttributeValue() + "\" not supported by this version of the Android SDK");
   }
   int dexShards=ruleContext.attributes().get("dex_shards",Type.INTEGER);
   if (dexShards > 1) {
     if (multidexMode == MultidexMode.OFF) {
-      ruleContext.ruleError(".dex sharding is only available in multidex mode");
-      return null;
+      ruleContext.throwWithRuleError(".dex sharding is only available in multidex mode");
     }
     if (multidexMode == MultidexMode.MANUAL_MAIN_DEX) {
-      ruleContext.ruleError(".dex sharding is not available in manual multidex mode");
-      return null;
+      ruleContext.throwWithRuleError(".dex sharding is not available in manual multidex mode");
     }
   }
   Artifact mainDexList=ruleContext.getPrerequisiteArtifact("main_dex_list",Mode.TARGET);
   if ((mainDexList != null && multidexMode != MultidexMode.MANUAL_MAIN_DEX) || (mainDexList == null && multidexMode == MultidexMode.MANUAL_MAIN_DEX)) {
-    ruleContext.ruleError("Both \"main_dex_list\" and \"multidex='manual_main_dex'\" must be specified.");
-    return null;
+    ruleContext.throwWithRuleError("Both \"main_dex_list\" and \"multidex='manual_main_dex'\" must be specified.");
   }
   ImmutableSet<AndroidBinaryType> incrementalDexing=getEffectiveIncrementalDexing(ruleContext,dexopts,isFinalJarDerived,isBinaryJarFiltered);
   if (multidexMode == MultidexMode.OFF) {

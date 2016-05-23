@@ -1,23 +1,15 @@
 {
   ObjcCommon common=common(ruleContext);
   ObjcProvider objcProvider=common.getObjcProvider();
-  if (!hasLibraryOrSources(objcProvider)) {
-    ruleContext.ruleError(REQUIRES_AT_LEAST_ONE_LIBRARY_OR_SOURCE_FILE);
-    return null;
-  }
+  assertLibraryOrSources(objcProvider,ruleContext);
   IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(intermediateArtifacts.strippedSingleArchitectureBinary());
   new ResourceSupport(ruleContext).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
-  if (ruleContext.hasErrors()) {
-    return null;
-  }
+  ruleContext.assertNoErrors();
   J2ObjcMappingFileProvider j2ObjcMappingFileProvider=J2ObjcMappingFileProvider.union(ruleContext.getPrerequisites("deps",Mode.TARGET,J2ObjcMappingFileProvider.class));
   J2ObjcEntryClassProvider j2ObjcEntryClassProvider=new J2ObjcEntryClassProvider.Builder().addTransitive(ruleContext.getPrerequisites("deps",Mode.TARGET,J2ObjcEntryClassProvider.class)).build();
   CompilationSupport compilationSupport=new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common).registerFullyLinkAction(common.getObjcProvider()).addXcodeSettings(xcodeProviderBuilder,common).registerLinkActions(objcProvider,j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,getExtraLinkArgs(ruleContext),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
-  if (ruleContext.hasErrors()) {
-    return null;
-  }
   Optional<XcTestAppProvider> xcTestAppProvider;
   Optional<RunfilesSupport> maybeRunfilesSupport=Optional.absent();
 switch (hasReleaseBundlingSupport) {

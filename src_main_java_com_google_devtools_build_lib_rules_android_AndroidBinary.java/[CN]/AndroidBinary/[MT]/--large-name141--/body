@@ -6,9 +6,6 @@
   ProguardOutput proguardOutput=applyProguard(ruleContext,androidCommon,binaryJar,filesBuilder,proguardSpecs,proguardMapping);
   Artifact jarToDex=proguardOutput.getOutputJar();
   DexingOutput dexingOutput=shouldDexWithJack(ruleContext) ? dexWithJack(ruleContext,androidCommon,proguardSpecs) : dex(ruleContext,binaryJar,jarToDex,isBinaryJarFiltered,androidCommon,resourceApk.getMainDexProguardConfig(),resourceClasses);
-  if (dexingOutput == null) {
-    return null;
-  }
   Artifact unsignedApk=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_UNSIGNED_APK);
   Artifact signedApk=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_SIGNED_APK);
   ApkActionBuilder apkBuilder=new ApkActionBuilder(ruleContext,androidSemantics).classesDex(dexingOutput.classesDexZip).resourceApk(resourceApk.getArtifact()).javaResourceZip(dexingOutput.javaResourceJar).nativeLibs(nativeLibs);
@@ -31,9 +28,7 @@
   ruleContext.registerAction(new SpawnAction.Builder().setMnemonic("AndroidDexManifest").setProgressMessage("Generating incremental installation manifest for " + ruleContext.getLabel()).setExecutable(ruleContext.getExecutablePrerequisite("$build_incremental_dexmanifest",Mode.HOST)).addOutputArgument(incrementalDexManifest).addInputArguments(dexingOutput.shardDexZips).useParameterFile(ParameterFileType.UNQUOTED).build(ruleContext));
   Artifact stubData=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.STUB_APPLICATION_DATA);
   Artifact stubDex=getStubDex(ruleContext,javaSemantics,false);
-  if (ruleContext.hasErrors()) {
-    return null;
-  }
+  ruleContext.assertNoErrors();
   ApkActionBuilder incrementalActionBuilder=new ApkActionBuilder(ruleContext,androidSemantics).classesDex(stubDex).resourceApk(incrementalResourceApk.getArtifact()).javaResourceZip(dexingOutput.javaResourceJar).sign(true).javaResourceFile(stubData).message("Generating incremental apk");
   if (!ruleContext.getFragment(AndroidConfiguration.class).useIncrementalNativeLibs()) {
     incrementalActionBuilder.nativeLibs(nativeLibs);
@@ -71,9 +66,7 @@
   NestedSet<Artifact> splitApks=splitApkSetBuilder.build();
   Artifact splitMainApk=getDxArtifact(ruleContext,"split_main.apk");
   Artifact splitStubDex=getStubDex(ruleContext,javaSemantics,true);
-  if (ruleContext.hasErrors()) {
-    return null;
-  }
+  ruleContext.assertNoErrors();
   ruleContext.registerAction(new ApkActionBuilder(ruleContext,androidSemantics).resourceApk(splitMainApkResources).classesDex(splitStubDex).sign(true).message("Generating split main apk").build(splitMainApk));
   splitApkSetBuilder.add(splitMainApk);
   NestedSet<Artifact> allSplitApks=splitApkSetBuilder.build();

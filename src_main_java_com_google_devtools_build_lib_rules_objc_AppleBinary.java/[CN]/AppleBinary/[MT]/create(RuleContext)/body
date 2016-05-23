@@ -22,18 +22,12 @@
     J2ObjcMappingFileProvider j2ObjcMappingFileProvider=J2ObjcMappingFileProvider.union(j2ObjcMappingFileProviders.build());
     J2ObjcEntryClassProvider j2ObjcEntryClassProvider=j2ObjcEntryClassProviderBuilder.build();
     if (!common.getCompilationArtifacts().get().getArchive().isPresent()) {
-      ruleContext.ruleError(REQUIRES_AT_LEAST_ONE_SOURCE_FILE);
-      return null;
-    }
-    if (ruleContext.hasErrors()) {
-      return null;
+      ruleContext.throwWithRuleError(REQUIRES_AT_LEAST_ONE_SOURCE_FILE);
     }
     archivesToLipo.add(common.getCompilationArtifacts().get().getArchive().get());
     binariesToLipo.add(intermediateArtifacts.strippedSingleArchitectureBinary());
     new CompilationSupport(ruleContext,childConfig).registerCompileAndArchiveActions(common).registerLinkActions(common.getObjcProvider(),j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,new ExtraLinkArgs(),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
-    if (ruleContext.hasErrors()) {
-      return null;
-    }
+    ruleContext.assertNoErrors();
   }
   AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   new LipoSupport(ruleContext).registerCombineArchitecturesAction(binariesToLipo.build(),ruleIntermediateArtifacts.combinedArchitectureBinary(),appleConfiguration.getIosCpuPlatform()).registerCombineArchitecturesAction(archivesToLipo.build(),ruleContext.getImplicitOutputArtifact(AppleBinaryRule.LIPO_ARCHIVE),appleConfiguration.getIosCpuPlatform());

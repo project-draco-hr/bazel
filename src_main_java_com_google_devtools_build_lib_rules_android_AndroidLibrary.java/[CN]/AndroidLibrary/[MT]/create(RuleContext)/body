@@ -12,15 +12,12 @@
   javaSemantics.checkRule(ruleContext,javaCommon);
   AndroidCommon androidCommon=new AndroidCommon(javaCommon);
   boolean definesLocalResources=LocalResourceContainer.definesAndroidResources(ruleContext.attributes());
-  if (definesLocalResources && !LocalResourceContainer.validateRuleContext(ruleContext)) {
-    return null;
+  if (definesLocalResources) {
+    LocalResourceContainer.validateRuleContext(ruleContext);
   }
   final ResourceApk resourceApk;
   if (definesLocalResources) {
     ApplicationManifest applicationManifest=androidSemantics.getManifestForRule(ruleContext);
-    if (applicationManifest == null) {
-      return null;
-    }
     resourceApk=applicationManifest.packWithDataAndResources(null,ruleContext,true,ResourceDependencies.fromRuleDeps(ruleContext,JavaCommon.isNeverLink(ruleContext)),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_SYMBOLS_TXT),ImmutableList.<String>of(),ImmutableList.<String>of(),false,ImmutableList.<String>of(),null,null,null,false,null,null,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_PROCESSED_MANIFEST),null);
     if (ruleContext.hasErrors()) {
       return null;
