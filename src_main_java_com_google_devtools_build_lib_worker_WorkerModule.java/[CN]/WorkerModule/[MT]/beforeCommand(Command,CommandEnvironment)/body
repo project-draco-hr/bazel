@@ -1,35 +1,4 @@
 {
   this.env=env;
   env.getEventBus().register(this);
-  if (workerFactory == null) {
-    Path logDir=env.getOutputBase().getRelative("worker-logs");
-    try {
-      if (!logDir.createDirectory()) {
-        for (        Path logFile : logDir.getDirectoryEntries()) {
-          try {
-            logFile.delete();
-          }
- catch (          IOException e) {
-            env.getReporter().handle(Event.error("Could not delete old worker log: " + logFile));
-          }
-        }
-      }
-    }
- catch (    IOException e) {
-      env.getReporter().handle(Event.error("Could not create directory for worker logs: " + logDir));
-    }
-    workerFactory=new WorkerFactory(logDir);
-  }
-  workerFactory.setReporter(env.getReporter());
-  if (workerPool == null) {
-    GenericKeyedObjectPoolConfig config=new GenericKeyedObjectPoolConfig();
-    config.setLifo(true);
-    config.setTimeBetweenEvictionRunsMillis(5 * 1000);
-    config.setTestOnBorrow(true);
-    config.setTestOnCreate(true);
-    config.setTestOnReturn(true);
-    config.setTestWhileIdle(true);
-    config.setMaxTotal(-1);
-    workerPool=new WorkerPool(workerFactory,config);
-  }
 }

@@ -1,10 +1,34 @@
 {
-  Preconditions.checkNotNull(workerPool);
-  this.buildRequest=event.getRequest();
+  buildRequest=event.getRequest();
   WorkerOptions options=buildRequest.getOptions(WorkerOptions.class);
-  workerPool.setMaxTotalPerKey(options.workerMaxInstances);
-  workerPool.setMaxIdlePerKey(options.workerMaxInstances);
-  workerPool.setMinIdlePerKey(options.workerMaxInstances);
+  verbose=options.workerVerbose;
+  if (workerFactory == null) {
+    Path logDir=env.getOutputBase().getRelative("worker-logs");
+    try {
+      if (!logDir.createDirectory()) {
+        for (        Path logFile : logDir.getDirectoryEntries()) {
+          try {
+            logFile.delete();
+          }
+ catch (          IOException e) {
+            env.getReporter().handle(Event.error("Could not delete old worker log: " + logFile));
+          }
+        }
+      }
+    }
+ catch (    IOException e) {
+      env.getReporter().handle(Event.error("Could not create directory for worker logs: " + logDir));
+    }
+    workerFactory=new WorkerFactory(logDir);
+  }
+  workerFactory.setReporter(env.getReporter());
   workerFactory.setVerbose(options.workerVerbose);
-  this.verbose=options.workerVerbose;
+  WorkerPoolConfig newConfig=createWorkerPoolConfig(options);
+  if (workerPoolConfig != null && !workerPoolConfig.equals(newConfig)) {
+    shutdownPool("Worker configuration has changed, restarting worker pool...");
+  }
+  if (workerPool == null) {
+    workerPoolConfig=newConfig;
+    workerPool=new WorkerPool(workerFactory,workerPoolConfig);
+  }
 }
