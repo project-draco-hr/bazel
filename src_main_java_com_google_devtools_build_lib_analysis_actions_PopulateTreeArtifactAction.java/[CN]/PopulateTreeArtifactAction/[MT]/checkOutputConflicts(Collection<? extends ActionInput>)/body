@@ -1,0 +1,10 @@
+{
+  ImmutableMap.Builder<Artifact,ActionAnalysisMetadata> generatingActions=ImmutableMap.<Artifact,ActionAnalysisMetadata>builder();
+  for (  ActionInput output : outputs) {
+    generatingActions.put((Artifact)output,this);
+  }
+  Map<ActionAnalysisMetadata,ArtifactPrefixConflictException> artifactPrefixConflictMap=Actions.findArtifactPrefixConflicts(generatingActions.build());
+  if (!artifactPrefixConflictMap.isEmpty()) {
+    throw artifactPrefixConflictMap.values().iterator().next();
+  }
+}

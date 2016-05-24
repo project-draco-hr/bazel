@@ -1,0 +1,18 @@
+{
+  ImmutableList.Builder<PathFragment> manifestEntries=ImmutableList.builder();
+  boolean hasNonEmptyLines=false;
+  for (  String line : FileSystemUtils.iterateLinesAsLatin1(archiveManifest.getPath())) {
+    if (!line.isEmpty()) {
+      hasNonEmptyLines=true;
+      PathFragment path=new PathFragment(line);
+      if (!path.isNormalized() || path.isAbsolute()) {
+        throw new IllegalManifestFileException(path + " is not a proper relative path");
+      }
+      manifestEntries.add(path);
+    }
+  }
+  if (!hasNonEmptyLines) {
+    throw new IllegalManifestFileException(String.format("Archive manifest %s must not be empty.",archiveManifest));
+  }
+  return manifestEntries.build();
+}

@@ -1,0 +1,13 @@
+{
+  Fingerprint f=new Fingerprint();
+  f.addString(GUID);
+  f.addString(getMnemonic());
+  f.addStrings(spawnCommandLine());
+  Map<PathFragment,Artifact> zipperManifest=zipperExecutableRunfilesManifest();
+  f.addInt(zipperManifest.size());
+  for (  Map.Entry<PathFragment,Artifact> input : zipperManifest.entrySet()) {
+    f.addString(input.getKey().getPathString() + "/");
+    f.addPath(input.getValue().getExecPath());
+  }
+  return f.hexDigestAndReset();
+}

@@ -1,0 +1,28 @@
+{
+  Executor executor=actionExecutionContext.getExecutor();
+  Spawn spawn;
+  try {
+    spawn=createSpawn();
+  }
+ catch (  IOException e) {
+    throw new ActionExecutionException(e,this,false);
+  }
+catch (  IllegalManifestFileException e) {
+    throw new ActionExecutionException(e,this,true);
+  }
+  try {
+    checkOutputConflicts(spawn.getOutputFiles());
+  }
+ catch (  ArtifactPrefixConflictException e) {
+    throw new ActionExecutionException(e,this,true);
+  }
+  try {
+    getContext(executor).exec(spawn,actionExecutionContext);
+  }
+ catch (  ExecException e) {
+    throw e.toActionExecutionException(getMnemonic() + " action failed for target: " + getOwner().getLabel(),executor.getVerboseFailures(),this);
+  }
+  for (  ActionInput fileEntry : spawn.getOutputFiles()) {
+    actionExecutionContext.getMetadataHandler().addExpandedTreeOutput((TreeFileArtifact)fileEntry);
+  }
+}
