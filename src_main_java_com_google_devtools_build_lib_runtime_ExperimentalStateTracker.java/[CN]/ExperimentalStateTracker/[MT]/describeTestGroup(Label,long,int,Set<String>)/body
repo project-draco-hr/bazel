@@ -1,0 +1,29 @@
+{
+  String prefix="Testing ";
+  String labelSep=" [";
+  String postfix=" (" + allActions.size() + " actions)]";
+  int labelWidth=desiredWidth - prefix.length() - labelSep.length()- postfix.length()- 12;
+  StringBuffer message=new StringBuffer(prefix).append(shortenedLabelString(owner,labelWidth)).append(labelSep);
+  int remainingWidth=desiredWidth - message.length() - postfix.length();
+  if (remainingWidth < 0) {
+    remainingWidth=5;
+  }
+  String sep="";
+  int count=0;
+  for (  String action : allActions) {
+    long nanoRuntime=nanoTime - actionNanoStartTimes.get(action);
+    long runtimeSeconds=nanoRuntime / NANOS_PER_SECOND;
+    String text=sep + runtimeSeconds + "s";
+    if (remainingWidth < text.length()) {
+      break;
+    }
+    message.append(text);
+    remainingWidth-=text.length();
+    count++;
+    sep=", ";
+  }
+  if (count == allActions.size()) {
+    postfix="]";
+  }
+  return message.append(postfix).toString();
+}

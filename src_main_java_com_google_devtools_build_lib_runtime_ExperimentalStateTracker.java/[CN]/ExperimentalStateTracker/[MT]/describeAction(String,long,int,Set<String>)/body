@@ -1,8 +1,20 @@
 {
   Action action=actions.get(name);
+  if (action.getOwner() != null) {
+    Label owner=action.getOwner().getLabel();
+    if (owner != null) {
+      Set<String> allRelatedActions=testActions.get(owner);
+      if (allRelatedActions != null && allRelatedActions.size() > 1) {
+        if (toSkip != null) {
+          toSkip.addAll(allRelatedActions);
+        }
+        return describeTestGroup(owner,nanoTime,desiredWidth,allRelatedActions);
+      }
+    }
+  }
   String postfix="";
   long nanoRuntime=nanoTime - actionNanoStartTimes.get(name);
-  long runtimeSeconds=nanoRuntime / 1000000000;
+  long runtimeSeconds=nanoRuntime / NANOS_PER_SECOND;
   if (runtimeSeconds > SHOW_TIME_THRESHOLD_SECONDS) {
     postfix=" " + runtimeSeconds + "s";
   }

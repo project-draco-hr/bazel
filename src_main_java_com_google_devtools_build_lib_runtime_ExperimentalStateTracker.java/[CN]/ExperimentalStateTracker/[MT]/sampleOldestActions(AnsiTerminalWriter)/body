@@ -1,16 +1,22 @@
 {
   int count=0;
+  int totalCount=0;
   long nanoTime=clock.nanoTime();
   int actionCount=runningActions.size();
+  Set<String> toSkip=new TreeSet<>();
   for (  String action : runningActions) {
+    totalCount++;
+    if (toSkip.contains(action)) {
+      continue;
+    }
     count++;
-    int width=(count >= SAMPLE_SIZE && count < actionCount) ? targetWidth - 8 : targetWidth - 4;
-    terminalWriter.newline().append("    " + describeAction(action,nanoTime,width));
-    if (count >= SAMPLE_SIZE) {
+    if (count > SAMPLE_SIZE) {
       break;
     }
+    int width=(count >= SAMPLE_SIZE && count < actionCount) ? targetWidth - 8 : targetWidth - 4;
+    terminalWriter.newline().append("    " + describeAction(action,nanoTime,width,toSkip));
   }
-  if (count < actionCount) {
+  if (totalCount < actionCount) {
     terminalWriter.append(" ...");
   }
 }
