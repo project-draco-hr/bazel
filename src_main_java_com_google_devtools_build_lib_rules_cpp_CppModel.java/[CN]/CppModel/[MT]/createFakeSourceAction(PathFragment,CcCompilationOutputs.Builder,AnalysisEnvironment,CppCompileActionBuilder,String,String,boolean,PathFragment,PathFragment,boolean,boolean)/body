@@ -6,7 +6,9 @@
   Artifact outputFile=ruleContext.getRelatedArtifact(outputName,outputExtension);
   PathFragment tempOutputName=FileSystemUtils.replaceExtension(outputFile.getExecPath(),".temp" + outputExtension,outputExtension);
   builder.setPicMode(usePic).setOutputFile(outputFile).setDotdFile(outputName,dependencyFileExtension).setTempOutputFile(tempOutputName);
-  setupBuildVariables(builder,usePic,ccRelativeName,execPath,null);
+  Artifact dwoFile=generateDwo ? getDwoFile(outputFile) : null;
+  builder.setDwoFile(dwoFile);
+  setupBuildVariables(builder,usePic,ccRelativeName,execPath,null,dwoFile);
   semantics.finalizeCompileActionBuilder(ruleContext,builder);
   CppCompileAction action=builder.build();
   env.registerAction(action);
