@@ -1,4 +1,10 @@
 {
-  commonBuilder.setCompilationArtifacts(getCompilationArtifacts()).addUserHeaderSearchPaths(getSearchPathEntries()).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).addDepObjcProviders(ruleContext.getPrerequisites(ObjcProtoLibraryRule.PROTO_LIB_ATTR,Mode.TARGET,ObjcProvider.class)).setHasModuleMap();
+  commonBuilder.setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).addDepObjcProviders(ruleContext.getPrerequisites(ObjcRuleClasses.PROTO_LIB_ATTR,Mode.TARGET,ObjcProvider.class)).setHasModuleMap();
+  if (usesProtobufLibrary() && experimentalAutoUnion() && targetType == TargetType.PROTO_TARGET) {
+    commonBuilder.addDirectDependencyHeaderSearchPaths(getUserHeaderSearchPaths()).setCompilationArtifacts(getCompilationArtifacts());
+  }
+ else {
+    commonBuilder.addUserHeaderSearchPaths(getUserHeaderSearchPaths()).setCompilationArtifacts(getCompilationArtifacts());
+  }
   return this;
 }

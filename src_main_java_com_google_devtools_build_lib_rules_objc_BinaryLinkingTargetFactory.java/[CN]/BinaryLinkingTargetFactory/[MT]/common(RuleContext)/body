@@ -1,7 +1,11 @@
 {
   IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   CompilationArtifacts compilationArtifacts=CompilationSupport.compilationArtifacts(ruleContext);
-  ObjcCommon.Builder builder=new ObjcCommon.Builder(ruleContext).setCompilationAttributes(new CompilationAttributes(ruleContext)).setResourceAttributes(new ResourceAttributes(ruleContext)).setCompilationArtifacts(compilationArtifacts).addDefines(ruleContext.getTokenizedStringListAttr("defines")).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addDepObjcProviders(ruleContext.getPrerequisites("bundles",Mode.TARGET,ObjcProvider.class)).addNonPropagatedDepObjcProviders(ruleContext.getPrerequisites("non_propagated_deps",Mode.TARGET,ObjcProvider.class)).setIntermediateArtifacts(intermediateArtifacts).setAlwayslink(false).setHasModuleMap().setLinkedBinary(intermediateArtifacts.strippedSingleArchitectureBinary());
+  if (ObjcRuleClasses.objcConfiguration(ruleContext).experimentalAutoTopLevelUnionObjCProtos()) {
+    ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET);
+    compilationArtifacts=new CompilationArtifacts.Builder().setPchFile(compilationArtifacts.getPchFile()).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).addAllSources(compilationArtifacts).addAllSources(protoSupport.getCompilationArtifacts()).build();
+  }
+  ObjcCommon.Builder builder=new ObjcCommon.Builder(ruleContext).setCompilationAttributes(new CompilationAttributes(ruleContext)).setCompilationArtifacts(compilationArtifacts).setResourceAttributes(new ResourceAttributes(ruleContext)).addDefines(ruleContext.getTokenizedStringListAttr("defines")).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addDeps(ruleContext.getPrerequisites("bundles",Mode.TARGET)).addNonPropagatedDepObjcProviders(ruleContext.getPrerequisites("non_propagated_deps",Mode.TARGET,ObjcProvider.class)).setIntermediateArtifacts(intermediateArtifacts).setAlwayslink(false).setHasModuleMap().setLinkedBinary(intermediateArtifacts.strippedSingleArchitectureBinary());
   if (ObjcRuleClasses.objcConfiguration(ruleContext).generateDebugSymbols() || ObjcRuleClasses.objcConfiguration(ruleContext).generateDsym()) {
     builder.addDebugArtifacts(DsymOutputType.APP);
   }

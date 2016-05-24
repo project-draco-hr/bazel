@@ -1,4 +1,15 @@
 {
   ImmutableList<Artifact> generatedSources=getGeneratedSources();
-  return new CompilationArtifacts.Builder().addNonArcSrcs(generatedSources).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).setPchFile(Optional.<Artifact>absent()).addAdditionalHdrs(getGeneratedHeaders()).addAdditionalHdrs(generatedSources).build();
+  CompilationArtifacts.Builder builder=new CompilationArtifacts.Builder().setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).setPchFile(Optional.<Artifact>absent()).addAdditionalHdrs(getGeneratedHeaders()).addAdditionalHdrs(generatedSources);
+  if (experimentalAutoUnion()) {
+    if (targetType == TargetType.PROTO_TARGET && !usesProtobufLibrary() || targetType == TargetType.LINKING_TARGET) {
+      builder.addNonArcSrcs(generatedSources);
+    }
+  }
+ else {
+    if (targetType == TargetType.PROTO_TARGET) {
+      builder.addNonArcSrcs(generatedSources);
+    }
+  }
+  return builder.build();
 }

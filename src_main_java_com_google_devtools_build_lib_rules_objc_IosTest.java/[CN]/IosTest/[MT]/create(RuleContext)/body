@@ -9,6 +9,16 @@
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
   addResourceFilesToBuild(ruleContext,common.getObjcProvider(),filesToBuild);
+  ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET);
+  Iterable<PathFragment> priorityHeaders;
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
+    protoSupport.registerActions().addXcodeProviderOptions(xcodeProviderBuilder);
+    priorityHeaders=protoSupport.getUserHeaderSearchPaths();
+  }
+ else {
+    priorityHeaders=ImmutableList.of();
+  }
   XcodeProductType productType=getProductType(ruleContext);
   ExtraLinkArgs extraLinkArgs;
   Iterable<Artifact> extraLinkInputs;
@@ -30,8 +40,7 @@
   }
   J2ObjcMappingFileProvider j2ObjcMappingFileProvider=J2ObjcMappingFileProvider.union(ruleContext.getPrerequisites("deps",Mode.TARGET,J2ObjcMappingFileProvider.class));
   J2ObjcEntryClassProvider j2ObjcEntryClassProvider=new J2ObjcEntryClassProvider.Builder().addTransitive(ruleContext.getPrerequisites("deps",Mode.TARGET,J2ObjcEntryClassProvider.class)).build();
-  new CompilationSupport(ruleContext).registerLinkActions(common.getObjcProvider(),j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,extraLinkArgs,extraLinkInputs,DsymOutputType.TEST).registerCompileAndArchiveActions(common).registerFullyLinkAction(common.getObjcProvider()).addXcodeSettings(xcodeProviderBuilder,common).validateAttributes();
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  new CompilationSupport(ruleContext).registerLinkActions(common.getObjcProvider(),j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,extraLinkArgs,extraLinkInputs,DsymOutputType.TEST).registerCompileAndArchiveActions(common,priorityHeaders).registerFullyLinkAction(common.getObjcProvider()).addXcodeSettings(xcodeProviderBuilder,common).validateAttributes();
   new ReleaseBundlingSupport(ruleContext,common.getObjcProvider(),LinkedBinary.LOCAL_AND_DEPENDENCIES,bundleFormat,objcConfiguration.getMinimumOs()).registerActions(DsymOutputType.TEST).addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild,DsymOutputType.TEST).validateResources().validateAttributes();
   new ResourceSupport(ruleContext).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
   new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),productType).addDependencies(xcodeProviderBuilder,new Attribute("bundles",Mode.TARGET)).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET)).addNonPropagatedDependencies(xcodeProviderBuilder,new Attribute("non_propagated_deps",Mode.TARGET)).addFilesToBuild(filesToBuild).registerActions(xcodeProviderBuilder.build());

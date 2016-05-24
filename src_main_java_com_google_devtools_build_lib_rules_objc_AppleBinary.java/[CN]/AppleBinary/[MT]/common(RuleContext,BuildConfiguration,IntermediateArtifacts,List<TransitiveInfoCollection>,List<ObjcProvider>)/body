@@ -1,4 +1,9 @@
 {
   CompilationArtifacts compilationArtifacts=CompilationSupport.compilationArtifacts(ruleContext,intermediateArtifacts);
-  return new ObjcCommon.Builder(ruleContext,buildConfiguration).setCompilationAttributes(new CompilationAttributes(ruleContext)).setResourceAttributes(new ResourceAttributes(ruleContext)).setCompilationArtifacts(compilationArtifacts).addDefines(ruleContext.getTokenizedStringListAttr("defines")).addDeps(propagatedDeps).addDepObjcProviders(ruleContext.getPrerequisites("bundles",Mode.TARGET,ObjcProvider.class)).addNonPropagatedDepObjcProviders(nonPropagatedObjcDeps).setIntermediateArtifacts(intermediateArtifacts).setAlwayslink(false).setHasModuleMap().setLinkedBinary(intermediateArtifacts.strippedSingleArchitectureBinary()).build();
+  ObjcConfiguration objcConfiguration=buildConfiguration.getFragment(ObjcConfiguration.class);
+  if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
+    ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET);
+    compilationArtifacts=new CompilationArtifacts.Builder().setPchFile(compilationArtifacts.getPchFile()).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).addAllSources(compilationArtifacts).addAllSources(protoSupport.getCompilationArtifacts()).build();
+  }
+  return new ObjcCommon.Builder(ruleContext,buildConfiguration).setCompilationAttributes(new CompilationAttributes(ruleContext)).setCompilationArtifacts(compilationArtifacts).setResourceAttributes(new ResourceAttributes(ruleContext)).addDefines(ruleContext.getTokenizedStringListAttr("defines")).addDeps(propagatedDeps).addDepObjcProviders(ruleContext.getPrerequisites("bundles",Mode.TARGET,ObjcProvider.class)).addNonPropagatedDepObjcProviders(nonPropagatedObjcDeps).setIntermediateArtifacts(intermediateArtifacts).setAlwayslink(false).setHasModuleMap().setLinkedBinary(intermediateArtifacts.strippedSingleArchitectureBinary()).build();
 }

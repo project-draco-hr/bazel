@@ -2,21 +2,30 @@
   ObjcCommon common=common(ruleContext);
   ObjcProvider objcProvider=common.getObjcProvider();
   assertLibraryOrSources(objcProvider,ruleContext);
-  IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
+  ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET);
+  Iterable<PathFragment> priorityHeaders;
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
+    protoSupport.registerActions().addXcodeProviderOptions(xcodeProviderBuilder);
+    priorityHeaders=protoSupport.getUserHeaderSearchPaths();
+  }
+ else {
+    priorityHeaders=ImmutableList.of();
+  }
+  IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(intermediateArtifacts.strippedSingleArchitectureBinary());
   new ResourceSupport(ruleContext).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
   ruleContext.assertNoErrors();
   J2ObjcMappingFileProvider j2ObjcMappingFileProvider=J2ObjcMappingFileProvider.union(ruleContext.getPrerequisites("deps",Mode.TARGET,J2ObjcMappingFileProvider.class));
   J2ObjcEntryClassProvider j2ObjcEntryClassProvider=new J2ObjcEntryClassProvider.Builder().addTransitive(ruleContext.getPrerequisites("deps",Mode.TARGET,J2ObjcEntryClassProvider.class)).build();
-  CompilationSupport compilationSupport=new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common).registerFullyLinkAction(common.getObjcProvider()).addXcodeSettings(xcodeProviderBuilder,common).registerLinkActions(objcProvider,j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,getExtraLinkArgs(ruleContext),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
+  CompilationSupport compilationSupport=new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common,priorityHeaders).registerFullyLinkAction(common.getObjcProvider()).addXcodeSettings(xcodeProviderBuilder,common).registerLinkActions(objcProvider,j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,getExtraLinkArgs(ruleContext),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
   Optional<XcTestAppProvider> xcTestAppProvider;
   Optional<RunfilesSupport> maybeRunfilesSupport=Optional.absent();
 switch (hasReleaseBundlingSupport) {
 case YES:
-    ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
-ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,objcProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES,ReleaseBundlingSupport.APP_BUNDLE_DIR_FORMAT,objcConfiguration.getMinimumOs());
+    AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
+  ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,objcProvider,LinkedBinary.LOCAL_AND_DEPENDENCIES,ReleaseBundlingSupport.APP_BUNDLE_DIR_FORMAT,objcConfiguration.getMinimumOs());
 releaseBundlingSupport.registerActions(DsymOutputType.APP).addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild,DsymOutputType.APP).validateResources().validateAttributes();
 xcTestAppProvider=Optional.of(releaseBundlingSupport.xcTestAppProvider());
 if (appleConfiguration.getBundlingPlatform() == Platform.IOS_SIMULATOR) {
