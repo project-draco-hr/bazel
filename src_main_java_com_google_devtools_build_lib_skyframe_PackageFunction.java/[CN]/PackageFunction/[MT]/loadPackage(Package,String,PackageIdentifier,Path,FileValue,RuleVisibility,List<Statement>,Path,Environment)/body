@@ -1,5 +1,5 @@
 {
-  CacheEntryWithGlobDeps<Package.LegacyBuilder> packageFunctionCacheEntry=packageFunctionCache.getIfPresent(packageId);
+  CacheEntryWithGlobDeps<Package.Builder> packageFunctionCacheEntry=packageFunctionCache.getIfPresent(packageId);
   if (packageFunctionCacheEntry == null) {
     profiler.startTask(ProfilerTask.CREATE_PACKAGE,packageId.toString());
     try {
@@ -54,7 +54,7 @@
       astCache.invalidate(packageId);
       Globber legacyGlobber=astCacheEntry.legacyGlobber != null ? astCacheEntry.legacyGlobber : packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
       SkyframeHybridGlobber skyframeGlobber=new SkyframeHybridGlobber(packageId,packageRoot,env,legacyGlobber);
-      Package.LegacyBuilder pkgBuilder=packageFactory.createPackageFromPreprocessingAst(externalPkg,packageId,buildFilePath,astAfterPreprocessing,importResult.importMap,importResult.fileDependencies,defaultVisibility,skyframeGlobber);
+      Package.Builder pkgBuilder=packageFactory.createPackageFromPreprocessingAst(externalPkg,packageId,buildFilePath,astAfterPreprocessing,importResult.importMap,importResult.fileDependencies,defaultVisibility,skyframeGlobber);
       Set<SkyKey> globDepsRequested=ImmutableSet.<SkyKey>builder().addAll(globDepsRequestedDuringPreprocessing).addAll(skyframeGlobber.getGlobDepsRequested()).build();
       packageFunctionCacheEntry=new CacheEntryWithGlobDeps<>(pkgBuilder,globDepsRequested,null);
       numPackagesLoaded.incrementAndGet();

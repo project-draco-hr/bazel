@@ -71,24 +71,24 @@ if (astLookupValue == null) {
 return null;
 }
 List<Statement> preludeStatements=astLookupValue.lookupSuccessful() ? astLookupValue.getAST().getStatements() : ImmutableList.<Statement>of();
-CacheEntryWithGlobDeps<Package.LegacyBuilder> packageBuilderAndGlobDeps=loadPackage(externalPkg,replacementContents,packageId,buildFilePath,buildFileValue,defaultVisibility,preludeStatements,packageLookupValue.getRoot(),env);
+CacheEntryWithGlobDeps<Package.Builder> packageBuilderAndGlobDeps=loadPackage(externalPkg,replacementContents,packageId,buildFilePath,buildFileValue,defaultVisibility,preludeStatements,packageLookupValue.getRoot(),env);
 if (packageBuilderAndGlobDeps == null) {
 return null;
 }
-Package.LegacyBuilder legacyPkgBuilder=packageBuilderAndGlobDeps.value;
-legacyPkgBuilder.buildPartial();
+Package.Builder pkgBuilder=packageBuilderAndGlobDeps.value;
+pkgBuilder.buildPartial();
 try {
-handleLabelsCrossingSubpackagesAndPropagateInconsistentFilesystemExceptions(packageLookupValue.getRoot(),packageId,legacyPkgBuilder,env);
+handleLabelsCrossingSubpackagesAndPropagateInconsistentFilesystemExceptions(packageLookupValue.getRoot(),packageId,pkgBuilder,env);
 }
  catch (InternalInconsistentFilesystemException e) {
 packageFunctionCache.invalidate(packageId);
 throw new PackageFunctionException(e.toNoSuchPackageException(),e.isTransient() ? Transience.TRANSIENT : Transience.PERSISTENT);
 }
 Set<SkyKey> globKeys=packageBuilderAndGlobDeps.globDepKeys;
-Map<Label,Path> subincludes=legacyPkgBuilder.getSubincludes();
+Map<Label,Path> subincludes=pkgBuilder.getSubincludes();
 boolean packageShouldBeConsideredInError;
 try {
-packageShouldBeConsideredInError=markDependenciesAndPropagateInconsistentFilesystemExceptions(env,globKeys,subincludes,packageId,legacyPkgBuilder.containsErrors());
+packageShouldBeConsideredInError=markDependenciesAndPropagateInconsistentFilesystemExceptions(env,globKeys,subincludes,packageId,pkgBuilder.containsErrors());
 }
  catch (InternalInconsistentFilesystemException e) {
 packageFunctionCache.invalidate(packageId);
@@ -97,11 +97,11 @@ throw new PackageFunctionException(e.toNoSuchPackageException(),e.isTransient() 
 if (env.valuesMissing()) {
 return null;
 }
-Event.replayEventsOn(env.getListener(),legacyPkgBuilder.getEvents());
+Event.replayEventsOn(env.getListener(),pkgBuilder.getEvents());
 if (packageShouldBeConsideredInError) {
-legacyPkgBuilder.setContainsErrors();
+pkgBuilder.setContainsErrors();
 }
-Package pkg=legacyPkgBuilder.finishBuild();
+Package pkg=pkgBuilder.finishBuild();
 packageFunctionCache.invalidate(packageId);
 return new PackageValue(pkg);
 }
