@@ -1,0 +1,7 @@
+{
+  CustomCommandLine.Builder args=new CustomCommandLine.Builder().addExecPath("--input_jar",jar).addExecPath("--output_zip",dexArchive).add(incrementalDexopts);
+  Artifact paramFile=ruleContext.getDerivedArtifact(ParameterFile.derivePath(dexArchive.getRootRelativePath()),dexArchive.getRoot());
+  ruleContext.registerAction(new ParameterFileWriteAction(ruleContext.getActionOwner(),paramFile,args.build(),ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1));
+  SpawnAction.Builder dexbuilder=new SpawnAction.Builder().setExecutable(ruleContext.getExecutablePrerequisite(dexbuilderPrereq,Mode.HOST)).addArgument("@" + paramFile.getExecPathString()).addInput(jar).addInput(paramFile).addOutput(dexArchive).setMnemonic("DexBuilder").setProgressMessage("Dexing " + jar.prettyPrint() + " with applicable dexopts "+ incrementalDexopts);
+  ruleContext.registerAction(dexbuilder.build(ruleContext));
+}

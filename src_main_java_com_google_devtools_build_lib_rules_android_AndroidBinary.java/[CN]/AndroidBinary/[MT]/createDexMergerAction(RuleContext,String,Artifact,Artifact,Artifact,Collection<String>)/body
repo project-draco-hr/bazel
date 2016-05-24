@@ -1,0 +1,10 @@
+{
+  SpawnAction.Builder dexmerger=new SpawnAction.Builder().setExecutable(ruleContext.getExecutablePrerequisite("$dexmerger",Mode.HOST)).addArgument("--input").addInputArgument(inputJar).addArgument("--output").addOutputArgument(classesDex).addArguments(DexArchiveAspect.incrementalDexopts(ruleContext,dexopts)).addArgument("--multidex=" + multidexStrategy).setMnemonic("DexMerger").setProgressMessage("Assembling dex files into " + classesDex.prettyPrint());
+  if (mainDexList != null) {
+    dexmerger.addArgument("--main-dex-list").addInputArgument(mainDexList);
+    if (dexopts.contains("--minimal-main-dex")) {
+      dexmerger.addArgument("--minimal-main-dex");
+    }
+  }
+  ruleContext.registerAction(dexmerger.build(ruleContext));
+}

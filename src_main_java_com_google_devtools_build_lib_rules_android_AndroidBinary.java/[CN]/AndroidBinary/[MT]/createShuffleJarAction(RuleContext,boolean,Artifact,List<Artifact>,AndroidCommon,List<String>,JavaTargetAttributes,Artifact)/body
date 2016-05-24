@@ -1,0 +1,27 @@
+{
+  checkArgument(mainDexList == null || shards.size() > 1);
+  Artifact javaResourceJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.JAVA_RESOURCES_JAR);
+  SpawnAction.Builder shardAction=new SpawnAction.Builder().setMnemonic("ShardClassesToDex").setProgressMessage("Sharding classes for dexing for " + ruleContext.getLabel()).setExecutable(ruleContext.getExecutablePrerequisite("$shuffle_jars",Mode.HOST)).addOutputs(shards).addOutput(javaResourceJar);
+  CustomCommandLine.Builder shardCommandLine=CustomCommandLine.builder().addBeforeEachExecPath("--output_jar",shards).addExecPath("--output_resources",javaResourceJar);
+  if (mainDexList != null) {
+    shardCommandLine.addExecPath("--main_dex_filter",mainDexList);
+    shardAction.addInput(mainDexList);
+  }
+  if (proguardedJar != null) {
+    checkArgument(!useDexArchives,"Dex archives are incompatible with Proguard");
+    shardCommandLine.addExecPath("--input_jar",proguardedJar);
+    shardAction.addInput(proguardedJar);
+  }
+ else {
+    Iterable<Artifact> classpath=Iterables.concat(common.getRuntimeJars(),attributes.getRuntimeClassPathForArchive());
+    if (useDexArchives) {
+      classpath=Iterables.transform(classpath,collectDexArchives(ruleContext,common,dexopts));
+      shardCommandLine.add("--split_dexed_classes");
+    }
+    shardCommandLine.addBeforeEachExecPath("--input_jar",classpath);
+    shardAction.addInputs(classpath);
+  }
+  shardAction.setCommandLine(shardCommandLine.build());
+  ruleContext.registerAction(shardAction.build(ruleContext));
+  return javaResourceJar;
+}

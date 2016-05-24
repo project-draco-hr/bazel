@@ -1,0 +1,11 @@
+{
+  DexArchiveProvider.Builder result=new DexArchiveProvider.Builder().addTransitiveProviders(ruleContext.getPrerequisites("deps",Mode.TARGET,DexArchiveProvider.class));
+  ImmutableSet<String> incrementalDexopts=DexArchiveAspect.incrementalDexopts(ruleContext,dexopts);
+  for (  Artifact jar : common.getJarsProducedForRuntime()) {
+    PathFragment jarPath=jar.getRootRelativePath();
+    Artifact dexArchive=ruleContext.getDerivedArtifact(jarPath.replaceName(jarPath.getBaseName() + ".dex.zip"),jar.getRoot());
+    DexArchiveAspect.createDexArchiveAction(ruleContext,jar,dexArchive,incrementalDexopts);
+    result.addDexArchive(incrementalDexopts,dexArchive,jar);
+  }
+  return result.build().archivesForDexopts(incrementalDexopts);
+}

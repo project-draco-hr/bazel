@@ -12,7 +12,8 @@
     Iterable<String> blacklistedDexopts=Iterables.filter(dexopts,new FlagMatcher(AndroidCommon.getAndroidConfig(ruleContext).getTargetDexoptsThatPreventIncrementalDexing()));
     if (!Iterables.isEmpty(blacklistedDexopts)) {
       if (override == TriState.YES) {
-        ruleContext.attributeWarning("incremental_dexing","Using incremental dexing even though the following dexopts indicate this target " + "may be unsuitable for incremental dexing for the moment: " + blacklistedDexopts);
+        Iterable<String> ignored=Iterables.filter(blacklistedDexopts,Predicates.not(Predicates.in(AndroidCommon.getAndroidConfig(ruleContext).getDexoptsSupportedInIncrementalDexing())));
+        ruleContext.attributeWarning("incremental_dexing",String.format("Using incremental dexing even though dexopts %s indicate this target " + "may be unsuitable for incremental dexing for the moment.%s",blacklistedDexopts,Iterables.isEmpty(ignored) ? "" : " These will be ignored: " + ignored));
       }
  else {
         result=ImmutableSet.of();

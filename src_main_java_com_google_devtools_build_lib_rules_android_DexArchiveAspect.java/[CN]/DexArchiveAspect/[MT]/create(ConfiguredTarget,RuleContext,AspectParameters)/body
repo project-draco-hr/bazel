@@ -1,4 +1,8 @@
 {
+  TriState incrementalAttr=TriState.valueOf(params.getOnlyValueOfAttribute("incremental_dexing"));
+  if (incrementalAttr == TriState.NO || (getAndroidConfig(ruleContext).getIncrementalDexingBinaries().isEmpty() && incrementalAttr != TriState.YES)) {
+    return new ConfiguredAspect.Builder(NAME,ruleContext).build();
+  }
   checkState(base.getProvider(DexArchiveProvider.class) == null,"dex archive natively generated: %s",ruleContext.getLabel());
   if (JavaCommon.isNeverLink(ruleContext)) {
     return new ConfiguredAspect.Builder(NAME,ruleContext).addProvider(DexArchiveProvider.class,DexArchiveProvider.NEVERLINK).build();
@@ -6,9 +10,12 @@
   DexArchiveProvider.Builder result=createArchiveProviderBuilderFromDeps(ruleContext);
   JavaRuntimeJarProvider jarProvider=base.getProvider(JavaRuntimeJarProvider.class);
   if (jarProvider != null) {
+    Set<Set<String>> aspectDexopts=aspectDexopts(ruleContext);
     for (    Artifact jar : jarProvider.getRuntimeJars()) {
-      Artifact dexArchive=createDexArchiveAction(ruleContext,jar);
-      result.addDexArchive(dexArchive,jar);
+      for (      Set<String> incrementalDexopts : aspectDexopts) {
+        Artifact dexArchive=createDexArchiveAction(ruleContext,jar,incrementalDexopts);
+        result.addDexArchive(incrementalDexopts,dexArchive,jar);
+      }
     }
   }
   return new ConfiguredAspect.Builder(NAME,ruleContext).addProvider(DexArchiveProvider.class,result.build()).build();
