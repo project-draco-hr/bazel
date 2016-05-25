@@ -1,0 +1,13 @@
+{
+  scratch.file("parent/BUILD","sh_library(name = 'a', deps = ['//child:b'])");
+  scratch.file("child/BUILD","sh_library(name = 'b')","undefined_symbol");
+  reporter.removeHandler(failFastHandler);
+  try {
+    update("//parent:a");
+    fail();
+  }
+ catch (  LoadingFailedException|ViewCreationFailedException expected) {
+  }
+  assertContainsEventWithFrequency("name 'undefined_symbol' is not defined",1);
+  assertContainsEventWithFrequency("Target '//child:b' contains an error and its package is in error and referenced " + "by '//parent:a'",1);
+}
