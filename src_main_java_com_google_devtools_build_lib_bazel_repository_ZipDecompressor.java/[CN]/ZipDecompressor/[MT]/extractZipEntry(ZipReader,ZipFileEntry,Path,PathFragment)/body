@@ -5,9 +5,24 @@
   Path outputPath=destinationDirectory.getRelative(strippedRelativePath);
   int permissions=getPermissions(entry.getExternalAttributes(),entry.getName());
   FileSystemUtils.createDirectoryAndParents(outputPath.getParentDirectory());
-  boolean isDirectory=(permissions & 040000) == 040000;
+  boolean isDirectory=(permissions & S_IFDIR) == S_IFDIR;
+  boolean isSymlink=(permissions & S_IFLNK) == S_IFLNK;
   if (isDirectory) {
     FileSystemUtils.createDirectoryAndParents(outputPath);
+  }
+ else   if (isSymlink) {
+    Preconditions.checkState(entry.getSize() < MAX_PATH_LENGTH);
+    byte buffer[]=new byte[(int)entry.getSize()];
+    int read=reader.getInputStream(entry).read(buffer);
+    Preconditions.checkState(read == buffer.length);
+    PathFragment target=new PathFragment(new String(buffer,Charset.defaultCharset())).normalize();
+    if (!target.isNormalized()) {
+      throw new IOException("Zip entries cannot refer to files outside of their directory: " + reader.getFilename() + " has a symlink to "+ target);
+    }
+    if (target.isAbsolute()) {
+      throw new IOException("Zip entries cannot be symlinks to absolute paths: " + reader.getFilename() + " has a symlink to "+ target);
+    }
+    outputPath.createSymbolicLink(target);
   }
  else {
     File outputFile=outputPath.getPathFile();
