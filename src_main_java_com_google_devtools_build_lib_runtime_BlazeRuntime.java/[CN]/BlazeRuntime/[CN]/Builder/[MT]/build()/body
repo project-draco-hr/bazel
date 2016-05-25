@@ -49,7 +49,18 @@
   for (  BlazeModule module : blazeModules) {
     extensions.add(module.getPackageEnvironmentExtension());
   }
-  PackageFactory packageFactory=new PackageFactory(ruleClassProvider,platformRegexps,attributeContainerFactory,extensions,BlazeVersionInfo.instance().getVersion());
+  Package.Builder.Helper packageBuilderHelper=null;
+  for (  BlazeModule module : blazeModules) {
+    Package.Builder.Helper candidateHelper=module.getPackageBuilderHelper();
+    if (candidateHelper != null) {
+      Preconditions.checkState(packageBuilderHelper == null,"more than one module defines a package builder helper");
+      packageBuilderHelper=candidateHelper;
+    }
+  }
+  if (packageBuilderHelper == null) {
+    packageBuilderHelper=Package.Builder.DefaultHelper.INSTANCE;
+  }
+  PackageFactory packageFactory=new PackageFactory(ruleClassProvider,platformRegexps,attributeContainerFactory,extensions,BlazeVersionInfo.instance().getVersion(),packageBuilderHelper);
   if (configurationFactory == null) {
     configurationFactory=new ConfigurationFactory(ruleClassProvider.getConfigurationCollectionFactory(),ruleClassProvider.getConfigurationFragments());
   }
