@@ -4,7 +4,12 @@
     if (!attrList.isEmpty() && ConstantRuleVisibility.LEGACY_PUBLIC_LABEL.equals(attrList.get(0))) {
       rule.reportError(rule.getLabel() + ": //visibility:legacy_public only allowed in package declaration",eventHandler);
     }
-    rule.setVisibility(PackageFactory.getVisibility(rule.getLabel(),attrList));
+    try {
+      rule.setVisibility(PackageFactory.getVisibility(rule.getLabel(),attrList));
+    }
+ catch (    EvalException e) {
+      rule.reportError(rule.getLabel() + " " + e.getMessage(),eventHandler);
+    }
   }
   rule.setAttributeValue(attr,nativeAttrVal,explicit);
   checkAllowedValues(rule,attr,eventHandler);

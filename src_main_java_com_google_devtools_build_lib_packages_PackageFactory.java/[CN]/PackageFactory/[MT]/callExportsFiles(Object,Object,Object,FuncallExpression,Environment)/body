@@ -1,7 +1,13 @@
 {
   Package.Builder pkgBuilder=getContext(env,ast).pkgBuilder;
   List<String> files=Type.STRING_LIST.convert(srcs,"'exports_files' operand");
-  RuleVisibility visibility=EvalUtils.isNullOrNone(visibilityO) ? ConstantRuleVisibility.PUBLIC : getVisibility(pkgBuilder.getBuildFileLabel(),BuildType.LABEL_LIST.convert(visibilityO,"'exports_files' operand",pkgBuilder.getBuildFileLabel()));
+  RuleVisibility visibility;
+  try {
+    visibility=EvalUtils.isNullOrNone(visibilityO) ? ConstantRuleVisibility.PUBLIC : getVisibility(pkgBuilder.getBuildFileLabel(),BuildType.LABEL_LIST.convert(visibilityO,"'exports_files' operand",pkgBuilder.getBuildFileLabel()));
+  }
+ catch (  EvalException e) {
+    throw new EvalException(ast.getLocation(),e.getMessage());
+  }
   License license=BuildType.LICENSE.convertOptional(licensesO,"'exports_files' operand");
   for (  String file : files) {
     String errorMessage=LabelValidator.validateTargetName(file);

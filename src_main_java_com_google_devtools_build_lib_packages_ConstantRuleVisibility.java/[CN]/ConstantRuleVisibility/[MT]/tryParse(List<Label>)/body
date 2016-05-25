@@ -1,6 +1,13 @@
 {
-  if (labels.size() != 1) {
-    return null;
+  if (labels.size() == 1) {
+    return tryParse(labels.get(0));
   }
-  return tryParse(labels.get(0));
+  ConstantRuleVisibility visibility;
+  for (  Label label : labels) {
+    visibility=tryParse(label);
+    if (visibility != null) {
+      throw new EvalException(null,"Public or private visibility labels (e.g. //visibility:public or" + " //visibility:private) cannot be used in combination with other labels");
+    }
+  }
+  return null;
 }
