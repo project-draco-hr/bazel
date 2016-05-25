@@ -5,9 +5,11 @@
     return aspectBuilder.build();
   }
   ObjcProtoProvider.Builder aspectObjcProtoProvider=new ObjcProtoProvider.Builder();
-  Iterable<ObjcProtoProvider> depObjcProtoProviders=ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProtoProvider.class);
-  aspectObjcProtoProvider.addTransitive(depObjcProtoProviders);
-  if (ruleContext.attributes().has(ObjcProtoLibraryRule.PORTABLE_PROTO_FILTERS_ATTR,LABEL_LIST)) {
+  if (ruleContext.attributes().has("deps",BuildType.LABEL_LIST)) {
+    Iterable<ObjcProtoProvider> depObjcProtoProviders=ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProtoProvider.class);
+    aspectObjcProtoProvider.addTransitive(depObjcProtoProviders);
+  }
+  if (ruleContext.attributes().isAttributeValueExplicitlySpecified(ObjcProtoLibraryRule.PORTABLE_PROTO_FILTERS_ATTR)) {
     aspectObjcProtoProvider.addPortableProtoFilters(PrerequisiteArtifacts.nestedSet(ruleContext,ObjcProtoLibraryRule.PORTABLE_PROTO_FILTERS_ATTR,Mode.HOST));
     Iterable<ProtoSourcesProvider> protoProviders=ruleContext.getPrerequisites("deps",Mode.TARGET,ProtoSourcesProvider.class);
     for (    ProtoSourcesProvider protoProvider : protoProviders) {
