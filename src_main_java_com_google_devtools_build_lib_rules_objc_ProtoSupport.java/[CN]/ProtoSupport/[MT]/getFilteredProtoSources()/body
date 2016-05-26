@@ -1,12 +1,4 @@
 {
-  NestedSetBuilder<Artifact> protos=NestedSetBuilder.stableOrder();
-  if (experimentalAutoUnion() && targetType == TargetType.LINKING_TARGET) {
-    Iterable<ObjcProtoProvider> objcProtoProviders=ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProtoProvider.class);
-    for (    ObjcProtoProvider objcProtoProvider : objcProtoProviders) {
-      protos.addTransitive(objcProtoProvider.getProtoSources());
-    }
-  }
-  protos.addTransitive(attributes.getProtoFiles());
   ImmutableSet.Builder<PathFragment> wellKnownProtoPathsBuilder=new ImmutableSet.Builder<>();
   for (  Artifact wellKnownProto : attributes.getWellKnownTypeProtos()) {
     PathFragment execPath=wellKnownProto.getExecPath();
@@ -19,7 +11,7 @@
   }
   ImmutableSet<PathFragment> wellKnownProtoPaths=wellKnownProtoPathsBuilder.build();
   ImmutableSet.Builder<Artifact> filteredProtos=new ImmutableSet.Builder<>();
-  for (  Artifact proto : protos.build()) {
+  for (  Artifact proto : getAllProtoSources()) {
     if (!wellKnownProtoPaths.contains(proto.getExecPath())) {
       filteredProtos.add(proto);
     }
