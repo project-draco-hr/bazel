@@ -1,10 +1,23 @@
 {
   ThreadPoolExecutor executor=new ThreadPoolExecutor(2,2,0,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>());
-  AbstractQueueVisitor visitor=createQueueVisitorWithErrorClassification(executor,ErrorClassification.NOT_CRITICAL);
+  final Error error=new Error("bad!");
+  final AtomicBoolean criticalErrorSeen=new AtomicBoolean(false);
+  ErrorHandler errorHandler=new ErrorHandler(){
+    @Override public void handle(    Throwable t,    ErrorClassification classification){
+      if (t == error) {
+        assertThat(classification).isEqualTo(ErrorClassification.CRITICAL_AND_LOG);
+        criticalErrorSeen.compareAndSet(false,true);
+      }
+ else {
+        fail();
+      }
+    }
+  }
+;
+  AbstractQueueVisitor visitor=createQueueVisitorWithConstantErrorClassification(executor,ErrorClassification.NOT_CRITICAL,errorHandler);
   final CountDownLatch latch=new CountDownLatch(1);
   final AtomicBoolean sleepFinished=new AtomicBoolean(false);
   final AtomicBoolean sleepInterrupted=new AtomicBoolean(false);
-  final Error error=new Error("bad!");
   Runnable errorRunnable=new Runnable(){
     @Override public void run(){
       try {
@@ -41,4 +54,5 @@
   assertTrue(sleepInterrupted.get());
   assertFalse(sleepFinished.get());
   assertEquals(error,thrownError);
+  assertTrue(criticalErrorSeen.get());
 }
