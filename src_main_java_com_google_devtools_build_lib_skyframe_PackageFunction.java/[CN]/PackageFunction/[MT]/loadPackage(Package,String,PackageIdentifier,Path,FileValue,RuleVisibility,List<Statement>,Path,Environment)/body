@@ -2,6 +2,9 @@
   CacheEntryWithGlobDeps<Package.Builder> packageFunctionCacheEntry=packageFunctionCache.getIfPresent(packageId);
   if (packageFunctionCacheEntry == null) {
     profiler.startTask(ProfilerTask.CREATE_PACKAGE,packageId.toString());
+    if (packageProgress != null) {
+      packageProgress.startReadPackage(packageId);
+    }
     try {
       CacheEntryWithGlobDeps<AstAfterPreprocessing> astCacheEntry=astCache.getIfPresent(packageId);
       if (astCacheEntry == null) {
@@ -58,6 +61,9 @@
       Set<SkyKey> globDepsRequested=ImmutableSet.<SkyKey>builder().addAll(globDepsRequestedDuringPreprocessing).addAll(skyframeGlobber.getGlobDepsRequested()).build();
       packageFunctionCacheEntry=new CacheEntryWithGlobDeps<>(pkgBuilder,globDepsRequested,null);
       numPackagesLoaded.incrementAndGet();
+      if (packageProgress != null) {
+        packageProgress.doneReadPackage(packageId);
+      }
       packageFunctionCache.put(packageId,packageFunctionCacheEntry);
     }
   finally {

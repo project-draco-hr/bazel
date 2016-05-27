@@ -1,0 +1,15 @@
+{
+  String state="42 packages loaded";
+  String activity="currently loading //src/foo/bar and 17 more";
+  PackageProgressReceiver progress=Mockito.mock(PackageProgressReceiver.class);
+  when(progress.progressState()).thenReturn(new Pair<String,String>(state,activity));
+  ManualClock clock=new ManualClock();
+  ExperimentalStateTracker stateTracker=new ExperimentalStateTracker(clock);
+  stateTracker.loadingStarted(new LoadingPhaseStartedEvent(progress));
+  LoggingTerminalWriter terminalWriter=new LoggingTerminalWriter(true);
+  stateTracker.writeProgressBar(terminalWriter);
+  String output=terminalWriter.getTranscript();
+  assertTrue("Output should indicate that we are in the loading phase, but was:\n" + output,output.contains("Loading"));
+  assertTrue("Output should contain loading state '" + state + "', but was:\n"+ output,output.contains(state));
+  assertTrue("Output should contain loading state '" + activity + "', but was:\n"+ output,output.contains(activity));
+}

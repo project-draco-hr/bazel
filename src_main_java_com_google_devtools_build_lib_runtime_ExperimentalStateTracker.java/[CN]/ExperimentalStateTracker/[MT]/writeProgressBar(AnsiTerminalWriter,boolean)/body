@@ -8,13 +8,21 @@
       terminalWriter.failStatus();
     }
     terminalWriter.append(status + ":").normal().append(" " + additionalMessage);
-    if (numPackagesLoaded != null) {
-      terminalWriter.append(" (" + numPackagesLoaded.get() + " packages loaded)");
+    if (packageProgressReceiver != null) {
+      Pair<String,String> progress=packageProgressReceiver.progressState();
+      terminalWriter.append(" (" + progress.getFirst() + ")");
+      if (progress.getSecond().length() > 0) {
+        terminalWriter.newline().append("    " + progress.getSecond());
+      }
     }
     return;
   }
-  if (loadingProgressReceiver != null) {
-    terminalWriter.okStatus().append("Loading:").normal().append(" " + loadingProgressReceiver.progressState());
+  if (packageProgressReceiver != null) {
+    Pair<String,String> progress=packageProgressReceiver.progressState();
+    terminalWriter.okStatus().append("Loading:").normal().append(" " + progress.getFirst());
+    if (progress.getSecond().length() > 0) {
+      terminalWriter.newline().append("    " + progress.getSecond());
+    }
     return;
   }
   if (executionProgressReceiver != null) {
