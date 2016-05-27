@@ -1,3 +1,11 @@
 {
-  return builder.add(attr("entry_classes",STRING_LIST)).build();
+  return builder.add(attr("entry_classes",STRING_LIST)).add(attr("jre_deps",LABEL_LIST).direct_compile_time_input().allowedRuleClasses("objc_library").allowedFileTypes().validityPredicate(new ValidityPredicate(){
+    @Override public String checkValid(    Rule from,    Rule to){
+      if (!to.getRuleTags().contains("j2objc_jre_lib")) {
+        return "Only J2ObjC JRE libraries are allowed";
+      }
+      return null;
+    }
+  }
+)).build();
 }

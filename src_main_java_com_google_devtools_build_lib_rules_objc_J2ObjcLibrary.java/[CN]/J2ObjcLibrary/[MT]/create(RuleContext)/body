@@ -4,9 +4,13 @@
     return null;
   }
   J2ObjcEntryClassProvider j2ObjcEntryClassProvider=new J2ObjcEntryClassProvider.Builder().addTransitive(ruleContext).addEntryClasses(ruleContext.attributes().get("entry_classes",Type.STRING_LIST)).build();
-  ObjcProvider.Builder objcProviderBuilder=new ObjcProvider.Builder().addTransitiveAndPropagate(ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProvider.class));
+  Iterable<ObjcProvider> jreDeps=ruleContext.getPrerequisites("jre_deps",Mode.TARGET,ObjcProvider.class);
+  ObjcProvider.Builder objcProviderBuilder=new ObjcProvider.Builder().addTransitiveAndPropagate(jreDeps).addTransitiveAndPropagate(ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProvider.class));
+  for (  ObjcProvider prereq : jreDeps) {
+    objcProviderBuilder.addTransitiveAndPropagate(JRE_LIBRARY,prereq.get(LIBRARY));
+  }
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
-  XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET));
+  XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addJreDependencies(xcodeProviderBuilder).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET));
   ObjcProvider objcProvider=objcProviderBuilder.build();
   xcodeSupport.addXcodeSettings(xcodeProviderBuilder,objcProvider,LIBRARY_STATIC);
   J2ObjcMappingFileProvider j2ObjcMappingFileProvider=J2ObjcMappingFileProvider.union(ruleContext.getPrerequisites("deps",Mode.TARGET,J2ObjcMappingFileProvider.class));

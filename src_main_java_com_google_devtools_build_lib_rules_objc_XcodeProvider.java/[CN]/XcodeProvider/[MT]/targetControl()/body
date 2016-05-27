@@ -4,15 +4,24 @@
   NestedSet<String> headerSearchPaths=NestedSetBuilder.<String>linkOrder().addTransitive(propagatedHeaderSearchPaths).addTransitive(nonPropagatedHeaderSearchPaths).build();
   TargetControl.Builder targetControl=TargetControl.newBuilder().setName(label.getName()).setLabel(xcodeTargetName(label)).setProductType(productType.getIdentifier()).addSupportFile(buildFilePath).addAllImportedLibrary(Artifact.toExecPaths(objcProvider.get(IMPORTED_LIBRARY))).addAllImportedLibrary(Artifact.toExecPaths(ccLibraries(objcProvider))).addAllUserHeaderSearchPath(userHeaderSearchPaths).addAllHeaderSearchPath(headerSearchPaths).addAllSupportFile(Artifact.toExecPaths(headers)).addAllCopt(compilationModeCopts).addAllCopt(CompilationSupport.DEFAULT_COMPILER_FLAGS).addAllCopt(Interspersing.prependEach("-D",objcProvider.get(DEFINE))).addAllCopt(copts).addAllLinkopt(Interspersing.beforeEach("-force_load",objcProvider.get(FORCE_LOAD_FOR_XCODEGEN))).addAllLinkopt(CompilationSupport.DEFAULT_LINKER_FLAGS).addAllLinkopt(Interspersing.beforeEach("-weak_framework",SdkFramework.names(objcProvider.get(WEAK_SDK_FRAMEWORK)))).addAllBuildSetting(xcodeprojBuildSettings).addAllBuildSetting(AppleToolchain.defaultWarningsForXcode()).addAllSdkFramework(SdkFramework.names(objcProvider.get(SDK_FRAMEWORK))).addAllFramework(PathFragment.safePathStrings(objcProvider.get(FRAMEWORK_DIR))).addAllFrameworkSearchPathOnly(PathFragment.safePathStrings(objcProvider.get(FRAMEWORK_SEARCH_PATH_ONLY))).addAllXcassetsDir(PathFragment.safePathStrings(objcProvider.get(XCASSETS_DIR))).addAllXcdatamodel(PathFragment.safePathStrings(Xcdatamodels.datamodelDirs(objcProvider.get(XCDATAMODEL)))).addAllBundleImport(PathFragment.safePathStrings(objcProvider.get(BUNDLE_IMPORT_DIR))).addAllSdkDylib(objcProvider.get(SDK_DYLIB)).addAllGeneralResourceFile(Artifact.toExecPaths(objcProvider.get(GENERAL_RESOURCE_FILE))).addAllGeneralResourceFile(PathFragment.safePathStrings(objcProvider.get(GENERAL_RESOURCE_DIR)));
   if (CAN_LINK_PRODUCT_TYPES.contains(productType)) {
+    Set<String> jreTargetNames=new HashSet<>();
+    for (    XcodeProvider jreDependency : jreDependencies) {
+      jreTargetNames.add(jreDependency.dependencyXcodeTargetName());
+    }
     Set<DependencyControl> dependencySet=new LinkedHashSet<>();
+    Set<DependencyControl> jreDependencySet=new LinkedHashSet<>();
     for (    XcodeProvider dependency : propagatedDependencies) {
       boolean hasSources=dependency.compilationArtifacts.isPresent() && dependency.compilationArtifacts.get().getArchive().isPresent();
       if (hasSources || (dependency.productType == XcodeProductType.BUNDLE || (dependency.productType == XcodeProductType.WATCH_OS1_APPLICATION))) {
         String dependencyXcodeTargetName=dependency.dependencyXcodeTargetName();
-        dependencySet.add(DependencyControl.newBuilder().setTargetLabel(dependencyXcodeTargetName).build());
+        Set<DependencyControl> set=jreTargetNames.contains(dependencyXcodeTargetName) ? jreDependencySet : dependencySet;
+        set.add(DependencyControl.newBuilder().setTargetLabel(dependencyXcodeTargetName).build());
       }
     }
     for (    DependencyControl dependencyControl : dependencySet) {
+      targetControl.addDependency(dependencyControl);
+    }
+    for (    DependencyControl dependencyControl : jreDependencySet) {
       targetControl.addDependency(dependencyControl);
     }
   }
