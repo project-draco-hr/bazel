@@ -6,6 +6,7 @@
       return 2;
     }
   }
-  JUnit4Runner runner=DaggerBazelTestRunner_JUnit4Bazel.builder().suiteClass(new SuiteClass(suite)).config(new Config(args)).build().runner();
+  Injector injector=Guice.createInjector(new BazelTestRunnerModule(suite,ImmutableList.copyOf(args)));
+  JUnit4Runner runner=injector.getInstance(JUnit4Runner.class);
   return runner.run().wasSuccessful() ? 0 : 1;
 }
