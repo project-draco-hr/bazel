@@ -1,0 +1,13 @@
+{
+  ImmutableSet.Builder<PathFragment> excludedPathsBuilder=ImmutableSet.builder();
+  excludedPathsBuilder.addAll(getExcludedSubdirectories());
+  if (parsedPattern.getType() == Type.TARGETS_BELOW_DIRECTORY) {
+    for (    PathFragment blacklistedPackagePrefix : blacklistedPackagePrefixes.get()) {
+      PackageIdentifier pkgIdForBlacklistedDirectorPrefix=PackageIdentifier.create(parsedPattern.getDirectory().getRepository(),blacklistedPackagePrefix);
+      if (parsedPattern.containsBelowDirectory(pkgIdForBlacklistedDirectorPrefix)) {
+        excludedPathsBuilder.add(blacklistedPackagePrefix);
+      }
+    }
+  }
+  return excludedPathsBuilder.build();
+}
