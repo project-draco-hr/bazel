@@ -7,10 +7,10 @@
   JavaFileManager fileManager=context.get(JavaFileManager.class);
   ClassLoader loader=fileManager.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) ? fileManager.getClassLoader(StandardLocation.ANNOTATION_PROCESSOR_PATH) : fileManager.getClass().getClassLoader();
   Iterable<BugChecker> extraBugCheckers=ServiceLoader.load(BugChecker.class,loader);
-  ScannerSupplier scannerSupplier=defaultScannerSupplier().plus(ScannerSupplier.fromBugCheckerClasses(Iterables.transform(extraBugCheckers,GET_CLASS)));
+  ScannerSupplier result=scannerSupplier.plus(ScannerSupplier.fromBugCheckerClasses(Iterables.transform(extraBugCheckers,GET_CLASS)));
   if (epOptions != null) {
     try {
-      scannerSupplier=scannerSupplier.applyOverrides(epOptions);
+      result=result.applyOverrides(epOptions);
     }
  catch (    InvalidCommandLineOptionException e) {
       throwError(Result.CMDERR,e.getMessage());
@@ -19,5 +19,5 @@
  else {
     epOptions=ErrorProneOptions.empty();
   }
-  errorProneAnalyzer=ErrorProneAnalyzer.create(scannerSupplier.get()).init(context,epOptions);
+  errorProneAnalyzer=ErrorProneAnalyzer.create(result.get()).init(context,epOptions);
 }
