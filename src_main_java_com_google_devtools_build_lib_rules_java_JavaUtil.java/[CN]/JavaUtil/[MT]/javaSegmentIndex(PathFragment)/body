@@ -2,5 +2,35 @@
   if (path.isAbsolute()) {
     throw new IllegalArgumentException("path must not be absolute: '" + path + "'");
   }
-  return path.getFirstSegment(ImmutableSet.of("java","javatests"));
+  int rootIndex=path.getFirstSegment(ImmutableSet.of("java","javatests","src"));
+  if (rootIndex < 0) {
+    return rootIndex;
+  }
+  final boolean isSrc="src".equals(path.getSegment(rootIndex));
+  int checkMavenIndex=isSrc ? rootIndex : -1;
+  if (rootIndex == 0 || isSrc) {
+    for (int i=rootIndex + 1, max=path.segmentCount() - 2; i <= max; i++) {
+      String segment=path.getSegment(i);
+      if ("src".equals(segment) || (isSrc && ("javatests".equals(segment) || "java".equals(segment)))) {
+        String next=path.getSegment(i + 1);
+        if ("com".equals(next) || "org".equals(next) || "net".equals(next)) {
+          rootIndex=i;
+        }
+ else         if ("src".equals(segment)) {
+          checkMavenIndex=i;
+        }
+        break;
+      }
+    }
+  }
+  if (checkMavenIndex >= 0 && checkMavenIndex + 2 < path.segmentCount()) {
+    String next=path.getSegment(checkMavenIndex + 1);
+    if ("main".equals(next) || "test".equals(next)) {
+      next=path.getSegment(checkMavenIndex + 2);
+      if ("java".equals(next) || "resources".equals(next)) {
+        rootIndex=checkMavenIndex + 2;
+      }
+    }
+  }
+  return rootIndex;
 }
