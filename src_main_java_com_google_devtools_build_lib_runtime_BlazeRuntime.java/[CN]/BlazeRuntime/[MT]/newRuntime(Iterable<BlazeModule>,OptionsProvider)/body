@@ -3,6 +3,7 @@
     module.globalInit(options);
   }
   BlazeServerStartupOptions startupOptions=options.getOptions(BlazeServerStartupOptions.class);
+  String productName=startupOptions.productName.toLowerCase();
   if (startupOptions.oomMoreEagerlyThreshold != 100) {
     new RetainedHeapLimiter(startupOptions.oomMoreEagerlyThreshold).install();
   }
@@ -19,7 +20,7 @@
   if (outputBase != null && !outputBase.isAbsolute()) {
     throw new IllegalArgumentException("Bad --output_base option specified: '" + outputBase + "'");
   }
-  PathFragment outputPathFragment=BlazeDirectories.outputPathFromOutputBase(outputBase,workspaceDirectory,startupOptions.deepExecRoot,Constants.PRODUCT_NAME);
+  PathFragment outputPathFragment=BlazeDirectories.outputPathFromOutputBase(outputBase,workspaceDirectory,startupOptions.deepExecRoot,productName);
   FileSystem fs=null;
   for (  BlazeModule module : blazeModules) {
     FileSystem moduleFs=module.getFileSystem(options,outputPathFragment);
@@ -41,7 +42,7 @@
   if (fs instanceof UnixFileSystem) {
     ((UnixFileSystem)fs).setRootsWithAllowedHardlinks(Iterables.filter(Arrays.asList(installBasePath,outputBasePath,workspaceDirectoryPath),Predicates.notNull()));
   }
-  BlazeDirectories directories=new BlazeDirectories(installBasePath,outputBasePath,workspaceDirectoryPath,startupOptions.deepExecRoot,startupOptions.installMD5,Constants.PRODUCT_NAME);
+  BlazeDirectories directories=new BlazeDirectories(installBasePath,outputBasePath,workspaceDirectoryPath,startupOptions.deepExecRoot,startupOptions.installMD5,productName);
   Clock clock=BlazeClock.instance();
   BinTools binTools;
   try {
@@ -50,7 +51,7 @@
  catch (  IOException e) {
     throw new AbruptExitException("Cannot enumerate embedded binaries: " + e.getMessage(),ExitCode.LOCAL_ENVIRONMENTAL_ERROR);
   }
-  BlazeRuntime.Builder runtimeBuilder=new BlazeRuntime.Builder().setDirectories(directories).setStartupOptionsProvider(options).setBinTools(binTools).setClock(clock).setEventBusExceptionHandler(startupOptions.fatalEventBusExceptions || !BlazeVersionInfo.instance().isReleasedBlaze() ? new BlazeRuntime.BugReportingExceptionHandler() : new BlazeRuntime.RemoteExceptionHandler());
+  BlazeRuntime.Builder runtimeBuilder=new BlazeRuntime.Builder().setProductName(productName).setDirectories(directories).setStartupOptionsProvider(options).setBinTools(binTools).setClock(clock).setEventBusExceptionHandler(startupOptions.fatalEventBusExceptions || !BlazeVersionInfo.instance().isReleasedBlaze() ? new BlazeRuntime.BugReportingExceptionHandler() : new BlazeRuntime.RemoteExceptionHandler());
   if (System.getenv("TEST_TMPDIR") != null && System.getenv("NO_CRASH_ON_LOGGING_IN_TEST") == null) {
     LoggingUtil.installRemoteLogger(getTestCrashLogger());
   }
