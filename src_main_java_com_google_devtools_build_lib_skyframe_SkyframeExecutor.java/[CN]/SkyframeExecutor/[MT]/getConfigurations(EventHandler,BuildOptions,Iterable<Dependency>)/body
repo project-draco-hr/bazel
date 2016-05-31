@@ -33,14 +33,16 @@
     if (!depsToEvaluate.contains(key) || labelsWithErrors.contains(key.getLabel())) {
       continue;
     }
-    configSkyKeys.add(BuildConfigurationValue.key(fragmentsMap.get(key.getLabel()),getDynamicConfigOptions(key,fromOptions)));
+    Set<Class<? extends BuildConfiguration.Fragment>> depFragments=fragmentsMap.get(key.getLabel());
+    configSkyKeys.add(BuildConfigurationValue.key(depFragments,getDynamicConfigOptions(key,fromOptions,depFragments)));
   }
   EvaluationResult<SkyValue> configsResult=evaluateSkyKeys(eventHandler,configSkyKeys);
   for (  Dependency key : keys) {
     if (!depsToEvaluate.contains(key) || labelsWithErrors.contains(key.getLabel())) {
       continue;
     }
-    SkyKey configKey=BuildConfigurationValue.key(fragmentsMap.get(key.getLabel()),getDynamicConfigOptions(key,fromOptions));
+    Set<Class<? extends BuildConfiguration.Fragment>> depFragments=fragmentsMap.get(key.getLabel());
+    SkyKey configKey=BuildConfigurationValue.key(depFragments,getDynamicConfigOptions(key,fromOptions,depFragments));
     builder.put(key,((BuildConfigurationValue)configsResult.get(configKey)).getConfiguration());
   }
   return builder;
