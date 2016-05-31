@@ -1,6 +1,28 @@
 {
-  if (!ruleContext.getRule().isAttributeValueExplicitlySpecified("includes") || !cppConfiguration.useIsystemForIncludes()) {
-    return ImmutableList.of();
+  List<PathFragment> result=new ArrayList<>();
+  PackageIdentifier packageIdentifier=ruleContext.getLabel().getPackageIdentifier();
+  PathFragment packageFragment=packageIdentifier.getPathFragment();
+  for (  String includesAttr : ruleContext.attributes().get("includes",Type.STRING_LIST)) {
+    includesAttr=ruleContext.expandMakeVariables("includes",includesAttr);
+    if (includesAttr.startsWith("/")) {
+      ruleContext.attributeWarning("includes","ignoring invalid absolute path '" + includesAttr + "'");
+      continue;
+    }
+    PathFragment includesPath=packageFragment.getRelative(includesAttr).normalize();
+    if (!includesPath.isNormalized()) {
+      ruleContext.attributeError("includes","Path references a path above the execution root.");
+    }
+    if (includesPath.segmentCount() == 0) {
+      ruleContext.attributeError("includes","'" + includesAttr + "' resolves to the workspace root, which would allow this rule and all of its "+ "transitive dependents to include any file in your workspace. Please include only"+ " what you need");
+    }
+ else     if (!includesPath.startsWith(packageFragment)) {
+      ruleContext.attributeWarning("includes","'" + includesAttr + "' resolves to '"+ includesPath+ "' not below the relative path of its package '"+ packageFragment+ "'. This will be an error in the future");
+    }
+ else     if (packageIdentifier.getRepository().isMain() && !includesPath.startsWith(RuleClass.THIRD_PARTY_PREFIX)) {
+      ruleContext.attributeWarning("includes","'" + includesAttr + "' resolves to '"+ includesPath+ "' not in '"+ RuleClass.THIRD_PARTY_PREFIX+ "'. This will be an error in the future");
+    }
+    result.add(includesPath);
+    result.add(ruleContext.getConfiguration().getGenfilesFragment().getRelative(includesPath));
   }
-  return getIncludeDirsFromIncludesAttribute();
+  return result;
 }

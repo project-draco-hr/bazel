@@ -1,8 +1,6 @@
 {
-  useConfiguration("--use_isystem_for_includes=false");
   scratch.file("bang/BUILD","cc_library(name = 'bang',","           srcs = ['bang.cc'],","           includes = ['bang_includes'])");
   ConfiguredTarget foo=getConfiguredTarget("//bang:bang");
   String includesRoot="bang/bang_includes";
-  List<PathFragment> expected=ImmutableList.of(new PathFragment(includesRoot),targetConfig.getGenfilesFragment().getRelative(includesRoot));
-  assertEquals(expected,foo.getProvider(CppCompilationContext.class).getIncludeDirs());
+  assertThat(foo.getProvider(CppCompilationContext.class).getSystemIncludeDirs()).containsAllOf(new PathFragment(includesRoot),targetConfig.getGenfilesFragment().getRelative(includesRoot));
 }
