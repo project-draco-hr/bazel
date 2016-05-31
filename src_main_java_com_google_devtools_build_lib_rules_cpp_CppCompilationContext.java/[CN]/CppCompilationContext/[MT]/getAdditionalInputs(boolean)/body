@@ -1,23 +1,18 @@
 {
-  if (depsContexts.isEmpty()) {
-    return NestedSetBuilder.emptySet(Order.STABLE_ORDER);
-  }
   NestedSetBuilder<Artifact> builder=NestedSetBuilder.stableOrder();
-  for (  DepsContext depsContext : depsContexts) {
-    if (useHeaderModules) {
-      if (usePic) {
-        builder.addTransitive(depsContext.picTopLevelHeaderModules);
-        builder.addTransitive(depsContext.picImpliedHeaderModules);
-      }
+  if (useHeaderModules) {
+    if (usePic) {
+      builder.addTransitive(picTopLevelHeaderModules);
+      builder.addTransitive(picImpliedHeaderModules);
+    }
  else {
-        builder.addTransitive(depsContext.topLevelHeaderModules);
-        builder.addTransitive(depsContext.impliedHeaderModules);
-      }
+      builder.addTransitive(topLevelHeaderModules);
+      builder.addTransitive(impliedHeaderModules);
     }
-    builder.addTransitive(depsContext.directModuleMaps);
-    if (provideTransitiveModuleMaps) {
-      builder.addTransitive(depsContext.transitiveModuleMaps);
-    }
+  }
+  builder.addTransitive(directModuleMaps);
+  if (provideTransitiveModuleMaps) {
+    builder.addTransitive(transitiveModuleMaps);
   }
   if (cppModuleMap != null) {
     builder.add(cppModuleMap.getArtifact());
