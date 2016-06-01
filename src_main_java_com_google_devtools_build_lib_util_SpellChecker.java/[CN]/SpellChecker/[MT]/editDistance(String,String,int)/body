@@ -1,0 +1,28 @@
+{
+  if (s1.equals(s2)) {
+    return 0;
+  }
+  if (Math.abs(s1.length() - s2.length()) > maxEditDistance) {
+    return -1;
+  }
+  int[] row=new int[s2.length() + 1];
+  for (int i=0; i <= s2.length(); i++) {
+    row[i]=i;
+  }
+  for (int i=1; i <= s1.length(); i++) {
+    row[0]=i;
+    int bestInTheRow=row[0];
+    int previous=i - 1;
+    for (int j=1; j <= s2.length(); j++) {
+      int old=row[j];
+      row[j]=Math.min(previous + (s1.charAt(i - 1) == s2.charAt(j - 1) ? 0 : 1),1 + Math.min(row[j - 1],row[j]));
+      previous=old;
+      bestInTheRow=Math.min(bestInTheRow,row[j]);
+    }
+    if (bestInTheRow > maxEditDistance) {
+      return -1;
+    }
+  }
+  int result=row[s2.length()];
+  return result <= maxEditDistance ? result : -1;
+}
