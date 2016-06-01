@@ -1,0 +1,23 @@
+{
+  EvaluationResult<SkyValue> result;
+  try {
+    result=callUninterruptibly(new Callable<EvaluationResult<SkyValue>>(){
+      @Override public EvaluationResult<SkyValue> call() throws Exception {
+synchronized (valueLookupLock) {
+          try {
+            skyframeBuildView.enableAnalysis(true);
+            return buildDriver.evaluate(skyKeys,keepGoing,DEFAULT_THREAD_COUNT,eventHandler);
+          }
+  finally {
+            skyframeBuildView.enableAnalysis(false);
+          }
+        }
+      }
+    }
+);
+  }
+ catch (  Exception e) {
+    throw new IllegalStateException(e);
+  }
+  return result;
+}

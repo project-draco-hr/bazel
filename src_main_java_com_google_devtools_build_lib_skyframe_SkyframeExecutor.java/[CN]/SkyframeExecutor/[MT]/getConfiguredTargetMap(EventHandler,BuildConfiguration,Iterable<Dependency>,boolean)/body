@@ -18,6 +18,9 @@
   }
   final List<SkyKey> skyKeys=new ArrayList<>();
   for (  Dependency key : keys) {
+    if (!configs.containsKey(key)) {
+      continue;
+    }
     skyKeys.add(ConfiguredTargetValue.key(key.getLabel(),configs.get(key)));
     for (    AspectDescriptor aspectDescriptor : key.getAspects()) {
       skyKeys.add(ConfiguredTargetFunction.createAspectKey(key.getLabel(),configs.get(key),configs.get(key),aspectDescriptor.getAspectClass(),aspectDescriptor.getParameters()));
@@ -26,6 +29,9 @@
   EvaluationResult<SkyValue> result=evaluateSkyKeys(eventHandler,skyKeys);
   ImmutableMap.Builder<Dependency,ConfiguredTarget> cts=ImmutableMap.builder();
   DependentNodeLoop:   for (  Dependency key : keys) {
+    if (!configs.containsKey(key)) {
+      continue;
+    }
     SkyKey configuredTargetKey=ConfiguredTargetValue.key(key.getLabel(),configs.get(key));
     if (result.get(configuredTargetKey) == null) {
       continue;

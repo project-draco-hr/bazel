@@ -1,0 +1,32 @@
+{
+  Map<Label,TargetAndConfiguration> labelsToTargets=new LinkedHashMap<>();
+  BuildConfiguration topLevelConfig=null;
+  List<Dependency> asDeps=new ArrayList<Dependency>();
+  for (  TargetAndConfiguration targetAndConfig : inputs) {
+    labelsToTargets.put(targetAndConfig.getLabel(),targetAndConfig);
+    BuildConfiguration targetConfig=targetAndConfig.getConfiguration();
+    if (targetConfig != null) {
+      asDeps.add(Dependency.withTransitionAndAspects(targetAndConfig.getLabel(),Attribute.ConfigurationTransition.NONE,ImmutableSet.<AspectDescriptor>of()));
+      Verify.verify(topLevelConfig == null || topLevelConfig == targetConfig);
+      topLevelConfig=targetConfig;
+    }
+  }
+  Map<Label,TargetAndConfiguration> successfullyEvaluatedTargets=new LinkedHashMap<>();
+  if (!asDeps.isEmpty()) {
+    Map<Dependency,BuildConfiguration> trimmedTargets=skyframeExecutor.getConfigurations(eventHandler,topLevelConfig.getOptions(),asDeps);
+    for (    Map.Entry<Dependency,BuildConfiguration> trimmedTarget : trimmedTargets.entrySet()) {
+      Label targetLabel=trimmedTarget.getKey().getLabel();
+      successfullyEvaluatedTargets.put(targetLabel,new TargetAndConfiguration(labelsToTargets.get(targetLabel).getTarget(),trimmedTarget.getValue()));
+    }
+  }
+  ImmutableList.Builder<TargetAndConfiguration> result=ImmutableList.<TargetAndConfiguration>builder();
+  for (  TargetAndConfiguration originalInput : inputs) {
+    if (successfullyEvaluatedTargets.containsKey(originalInput.getLabel())) {
+      result.add(successfullyEvaluatedTargets.get(originalInput.getLabel()));
+    }
+ else {
+      result.add(originalInput);
+    }
+  }
+  return result.build();
+}

@@ -5,8 +5,8 @@
   Collection<Target> targets=loadingResult.getTargets();
   eventBus.post(new AnalysisPhaseStartedEvent(targets));
   skyframeBuildView.setConfigurations(configurations);
-  List<TargetAndConfiguration> nodes=nodesForTargets(configurations,targets);
-  List<ConfiguredTargetKey> targetSpecs=Lists.transform(nodes,new Function<TargetAndConfiguration,ConfiguredTargetKey>(){
+  List<TargetAndConfiguration> topLevelTargetsWithConfigs=nodesForTopLevelTargets(configurations,targets,eventHandler);
+  List<ConfiguredTargetKey> topLevelCtKeys=Lists.transform(topLevelTargetsWithConfigs,new Function<TargetAndConfiguration,ConfiguredTargetKey>(){
     @Override public ConfiguredTargetKey apply(    TargetAndConfiguration node){
       return new ConfiguredTargetKey(node.getLabel(),node.getConfiguration());
     }
@@ -18,14 +18,14 @@
     if (delimiterPosition >= 0) {
       PathFragment bzlFile=new PathFragment("/" + aspect.substring(0,delimiterPosition));
       String skylarkFunctionName=aspect.substring(delimiterPosition + 1);
-      for (      ConfiguredTargetKey targetSpec : targetSpecs) {
+      for (      ConfiguredTargetKey targetSpec : topLevelCtKeys) {
         aspectKeys.add(AspectValue.createSkylarkAspectKey(targetSpec.getLabel(),targetSpec.getConfiguration(),targetSpec.getConfiguration(),bzlFile,skylarkFunctionName));
       }
     }
  else {
       final NativeAspectClass aspectFactoryClass=ruleClassProvider.getNativeAspectClassMap().get(aspect);
       if (aspectFactoryClass != null) {
-        for (        ConfiguredTargetKey targetSpec : targetSpecs) {
+        for (        ConfiguredTargetKey targetSpec : topLevelCtKeys) {
           aspectKeys.add(AspectValue.createAspectKey(targetSpec.getLabel(),targetSpec.getConfiguration(),targetSpec.getConfiguration(),aspectFactoryClass));
         }
       }
@@ -37,13 +37,13 @@
   skyframeExecutor.injectWorkspaceStatusData();
   SkyframeAnalysisResult skyframeAnalysisResult;
   try {
-    skyframeAnalysisResult=skyframeBuildView.configureTargets(eventHandler,targetSpecs,aspectKeys,eventBus,viewOptions.keepGoing);
+    skyframeAnalysisResult=skyframeBuildView.configureTargets(eventHandler,topLevelCtKeys,aspectKeys,eventBus,viewOptions.keepGoing);
     setArtifactRoots(skyframeAnalysisResult.getPackageRoots(),configurations);
   }
   finally {
     skyframeBuildView.clearInvalidatedConfiguredTargets();
   }
-  int numTargetsToAnalyze=nodes.size();
+  int numTargetsToAnalyze=topLevelTargetsWithConfigs.size();
   int numSuccessful=skyframeAnalysisResult.getConfiguredTargets().size();
   if (0 < numSuccessful && numSuccessful < numTargetsToAnalyze) {
     String msg=String.format("Analysis succeeded for only %d of %d top-level targets",numSuccessful,numTargetsToAnalyze);

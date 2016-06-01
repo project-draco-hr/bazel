@@ -1,0 +1,7 @@
+{
+  scratch.file("foo/BUILD","sh_library(name='x', ","        srcs=['x.sh'])");
+  useConfiguration("--experimental_dynamic_configs");
+  AnalysisResult res=update("//foo:x");
+  ConfiguredTarget topLevelTarget=Iterables.getOnlyElement(res.getTargetsToBuild());
+  assertThat(topLevelTarget.getConfiguration().getAllFragments().keySet()).containsExactly(ruleClassProvider.getUniversalFragment());
+}

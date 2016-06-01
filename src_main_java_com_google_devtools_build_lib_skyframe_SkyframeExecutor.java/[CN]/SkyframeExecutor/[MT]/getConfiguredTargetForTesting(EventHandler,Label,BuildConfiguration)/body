@@ -2,5 +2,15 @@
   if (memoizingEvaluator.getExistingValueForTesting(PrecomputedValue.WORKSPACE_STATUS_KEY.getKeyForTesting()) == null) {
     injectWorkspaceStatusData();
   }
-  return Iterables.getFirst(getConfiguredTargets(eventHandler,configuration,ImmutableList.of(configuration != null ? Dependency.withConfiguration(label,configuration) : Dependency.withNullConfiguration(label)),true),null);
+  Dependency dep;
+  if (configuration == null) {
+    dep=Dependency.withNullConfiguration(label);
+  }
+ else   if (configuration.useDynamicConfigurations()) {
+    dep=Dependency.withTransitionAndAspects(label,Attribute.ConfigurationTransition.NONE,ImmutableSet.<AspectDescriptor>of());
+  }
+ else {
+    dep=Dependency.withConfiguration(label,configuration);
+  }
+  return Iterables.getFirst(getConfiguredTargets(eventHandler,configuration,ImmutableList.of(dep),false),null);
 }
