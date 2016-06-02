@@ -1,5 +1,4 @@
 {
-  boolean isFinalJarDerived=isBinaryJarFiltered || binaryJar != proguardedJar;
   List<String> dexopts=ruleContext.getTokenizedStringListAttr("dexopts");
   MultidexMode multidexMode=getMultidexMode(ruleContext);
   if (!supportsMultidexMode(ruleContext,multidexMode)) {
@@ -18,12 +17,13 @@
   if ((mainDexList != null && multidexMode != MultidexMode.MANUAL_MAIN_DEX) || (mainDexList == null && multidexMode == MultidexMode.MANUAL_MAIN_DEX)) {
     ruleContext.throwWithRuleError("Both \"main_dex_list\" and \"multidex='manual_main_dex'\" must be specified.");
   }
-  ImmutableSet<AndroidBinaryType> incrementalDexing=getEffectiveIncrementalDexing(ruleContext,dexopts,isFinalJarDerived,isBinaryJarFiltered);
+  ImmutableSet<AndroidBinaryType> incrementalDexing=getEffectiveIncrementalDexing(ruleContext,dexopts,binaryJar != proguardedJar);
+  Artifact inclusionFilterJar=isBinaryJarFiltered && binaryJar == proguardedJar ? binaryJar : null;
   if (multidexMode == MultidexMode.OFF) {
     if (incrementalDexing.contains(AndroidBinaryType.MONODEX)) {
       Artifact classesDex=getDxArtifact(ruleContext,"classes.dex.zip");
       Artifact jarToDex=getDxArtifact(ruleContext,"classes.jar");
-      createShuffleJarAction(ruleContext,true,(Artifact)null,ImmutableList.of(jarToDex),common,dexopts,attributes,(Artifact)null);
+      createShuffleJarAction(ruleContext,true,(Artifact)null,ImmutableList.of(jarToDex),common,inclusionFilterJar,dexopts,attributes,(Artifact)null);
       createDexMergerAction(ruleContext,"off",jarToDex,classesDex,(Artifact)null,dexopts);
       return new DexingOutput(classesDex,binaryJar,ImmutableList.of(classesDex));
     }
@@ -43,7 +43,7 @@
       for (int i=1; i <= dexShards; i++) {
         shards.add(getDxArtifact(ruleContext,"shard" + i + ".jar"));
       }
-      Artifact javaResourceJar=createShuffleJarAction(ruleContext,incrementalDexing.contains(AndroidBinaryType.MULTIDEX_SHARDED),isFinalJarDerived ? proguardedJar : null,shards,common,dexopts,attributes,mainDexList);
+      Artifact javaResourceJar=createShuffleJarAction(ruleContext,incrementalDexing.contains(AndroidBinaryType.MULTIDEX_SHARDED),binaryJar != proguardedJar ? proguardedJar : null,shards,common,inclusionFilterJar,dexopts,attributes,mainDexList);
       List<Artifact> shardDexes=new ArrayList<>(dexShards);
       for (int i=1; i <= dexShards; i++) {
         Artifact shard=shards.get(i - 1);
@@ -67,7 +67,7 @@
  else {
       if (incrementalDexing.contains(AndroidBinaryType.MULTIDEX_UNSHARDED)) {
         Artifact jarToDex=AndroidBinary.getDxArtifact(ruleContext,"classes.jar");
-        createShuffleJarAction(ruleContext,true,(Artifact)null,ImmutableList.of(jarToDex),common,dexopts,attributes,(Artifact)null);
+        createShuffleJarAction(ruleContext,true,(Artifact)null,ImmutableList.of(jarToDex),common,inclusionFilterJar,dexopts,attributes,(Artifact)null);
         createDexMergerAction(ruleContext,"minimal",jarToDex,classesDex,mainDexList,dexopts);
       }
  else {

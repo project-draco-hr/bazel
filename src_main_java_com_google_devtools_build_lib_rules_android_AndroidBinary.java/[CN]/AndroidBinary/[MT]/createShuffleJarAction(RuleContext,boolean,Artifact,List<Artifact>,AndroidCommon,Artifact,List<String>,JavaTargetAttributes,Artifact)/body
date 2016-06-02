@@ -1,5 +1,6 @@
 {
   checkArgument(mainDexList == null || shards.size() > 1);
+  checkArgument(proguardedJar == null || inclusionFilterJar == null);
   Artifact javaResourceJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.JAVA_RESOURCES_JAR);
   SpawnAction.Builder shardAction=new SpawnAction.Builder().setMnemonic("ShardClassesToDex").setProgressMessage("Sharding classes for dexing for " + ruleContext.getLabel()).setExecutable(ruleContext.getExecutablePrerequisite("$shuffle_jars",Mode.HOST)).addOutputs(shards).addOutput(javaResourceJar);
   CustomCommandLine.Builder shardCommandLine=CustomCommandLine.builder().addBeforeEachExecPath("--output_jar",shards).addExecPath("--output_resources",javaResourceJar);
@@ -20,6 +21,10 @@
     }
     shardCommandLine.addBeforeEachExecPath("--input_jar",classpath);
     shardAction.addInputs(classpath);
+    if (inclusionFilterJar != null) {
+      shardCommandLine.addExecPath("--inclusion_filter_jar",inclusionFilterJar);
+      shardAction.addInput(inclusionFilterJar);
+    }
   }
   shardAction.setCommandLine(shardCommandLine.build());
   ruleContext.registerAction(shardAction.build(ruleContext));

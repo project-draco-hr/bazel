@@ -1,10 +1,10 @@
 {
   TriState override=ruleContext.attributes().get("incremental_dexing",BuildType.TRISTATE);
-  if (isFinalJarDerived && override == TriState.YES) {
-    ruleContext.attributeError("incremental_dexing","target cannot be incrementally dexed because " + (isBinaryJarFiltered ? "it builds a partial APK" : "the target uses Proguard"));
+  if (isBinaryProguarded && override == TriState.YES) {
+    ruleContext.attributeError("incremental_dexing","target cannot be incrementally dexed because it uses Proguard");
     return ImmutableSet.of();
   }
-  if (isFinalJarDerived || override == TriState.NO) {
+  if (isBinaryProguarded || override == TriState.NO) {
     return ImmutableSet.of();
   }
   ImmutableSet<AndroidBinaryType> result=override == TriState.YES ? ImmutableSet.copyOf(AndroidBinaryType.values()) : AndroidCommon.getAndroidConfig(ruleContext).getIncrementalDexingBinaries();
