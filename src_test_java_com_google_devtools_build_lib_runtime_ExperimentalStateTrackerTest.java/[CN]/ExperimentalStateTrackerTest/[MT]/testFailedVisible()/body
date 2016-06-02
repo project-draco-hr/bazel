@@ -8,13 +8,13 @@
   ConfiguredTarget targetB=Mockito.mock(ConfiguredTarget.class);
   when(filteringComplete.getTestTargets()).thenReturn(ImmutableSet.of(targetA,targetB));
   TestSummary testSummary=Mockito.mock(TestSummary.class);
-  when(testSummary.getStatus()).thenReturn(BlazeTestStatus.PASSED);
+  when(testSummary.getStatus()).thenReturn(BlazeTestStatus.FAILED);
   when(testSummary.getTarget()).thenReturn(targetA);
   stateTracker.testFilteringComplete(filteringComplete);
   stateTracker.testSummary(testSummary);
   LoggingTerminalWriter terminalWriter=new LoggingTerminalWriter();
   stateTracker.writeProgressBar(terminalWriter);
   String output=terminalWriter.getTranscript();
-  String expected=LoggingTerminalWriter.OK + labelA;
+  String expected=LoggingTerminalWriter.FAIL + labelA;
   assertTrue("Sequence '" + expected + "' should be present in colored progress bar: "+ output,output.contains(expected));
 }
