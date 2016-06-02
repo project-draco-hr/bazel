@@ -7,7 +7,11 @@
   String filterFile=options.mainDexFilter;
   String resourceFile=options.outputResources;
   try {
-    new SplitZip().setVerbose(false).useDefaultEntryDate().setSplitDexedClasses(options.splitDexedClasses).addInputs(inputs).addOutputs(outputs).setMainClassListFile(filterFile).setResourceFile(resourceFile).run().close();
+    Predicate<String> inputFilter=Predicates.alwaysTrue();
+    if (options.inclusionFilterJar != null) {
+      inputFilter=SplitZipFilters.entriesIn(options.inclusionFilterJar);
+    }
+    new SplitZip().setVerbose(false).useDefaultEntryDate().setSplitDexedClasses(options.splitDexedClasses).addInputs(inputs).addOutputs(outputs).setInputFilter(inputFilter).setMainClassListFile(filterFile).setResourceFile(resourceFile).run().close();
   }
  catch (  Exception ex) {
     System.err.println("Caught exception" + ex.getMessage());

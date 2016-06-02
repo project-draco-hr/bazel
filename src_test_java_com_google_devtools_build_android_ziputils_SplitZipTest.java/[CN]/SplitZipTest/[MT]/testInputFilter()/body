@@ -1,0 +1,8 @@
+{
+  new ZipFileBuilder().add("pkg/test.txt","hello world").add("pkg/test2.txt","how are you").add("pkg/test.class","hello world").add("pkg/test2.class","how are you").add("pkg/R$attr.class","bye bye").create("input.zip");
+  new ZipFileBuilder().add("pkg/test.txt","hello world").add("pkg/test2.class","how are you").create("expected.zip");
+  byte[] expectedBytes=fileSystem.toByteArray("expected.zip");
+  new SplitZip().addOutput(new ZipOut(fileSystem.getOutputChannel("out/shard1.jar",false),"out/shard1.jar")).setVerbose(true).addInput(new ZipIn(fileSystem.getInputChannel("input.zip"),"input.zip")).setInputFilter(Predicates.in(ImmutableSet.of("pkg/test.txt","pkg/test2.class","pkg2/test.class"))).run().close();
+  byte[] outputBytes=fileSystem.toByteArray("out/shard1.jar");
+  assertThat(outputBytes).isEqualTo(expectedBytes);
+}

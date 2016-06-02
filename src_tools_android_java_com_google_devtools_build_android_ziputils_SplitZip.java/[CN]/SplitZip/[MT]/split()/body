@@ -3,6 +3,9 @@
     CentralDirectory cdir=centralDirectories.get(in.getFilename());
     for (    DirectoryEntry entry : cdir.list()) {
       String filename=normalizedFilename(entry.getFilename());
+      if (!inputFilter.apply(filename)) {
+        continue;
+      }
       if (filename.endsWith(".class")) {
         classes.add(filename);
       }
@@ -11,13 +14,13 @@
       }
     }
   }
-  Splitter entryFilter=new Splitter(outputs.size(),classes.size());
+  Splitter splitter=new Splitter(outputs.size(),classes.size());
   if (filter != null) {
-    entryFilter.assign(filter);
-    entryFilter.nextShard();
+    splitter.assign(Sets.filter(filter,inputFilter));
+    splitter.nextShard();
   }
   for (  String path : classes) {
-    int assignment=entryFilter.assign(path);
+    int assignment=splitter.assign(path);
     Preconditions.checkState(assignment >= 0 && assignment < zipOuts.length);
     assignments.put(path,zipOuts[assignment]);
   }
