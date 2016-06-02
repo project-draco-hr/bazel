@@ -1,9 +1,8 @@
 {
   scratch.file("com/google/example/BUILD","java_library(","    name = 'simple',","    srcs = ['simple/Simple.java']",")","java_library(","    name = 'complex',","    srcs = ['complex/Complex.java'],","    deps = [':simple']",")");
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:complex");
-  assertThat(ruleIdeInfos.size()).isEqualTo(2);
   getRuleInfoAndVerifyLabel("//com/google/example:simple",ruleIdeInfos);
   RuleIdeInfo complexRuleIdeInfo=getRuleInfoAndVerifyLabel("//com/google/example:complex",ruleIdeInfos);
   assertThat(relativePathsForJavaSourcesOf(complexRuleIdeInfo)).containsExactly("com/google/example/complex/Complex.java");
-  assertThat(complexRuleIdeInfo.getDependenciesList()).containsExactly("//com/google/example:simple");
+  assertThat(complexRuleIdeInfo.getDependenciesList()).contains("//com/google/example:simple");
 }

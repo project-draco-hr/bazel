@@ -1,7 +1,6 @@
 {
   Path buildFilePath=scratch.file("com/google/example/BUILD","java_library(","    name = 'simple',","    srcs = ['simple/Simple.java']",")");
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:simple");
-  assertThat(ruleIdeInfos.size()).isEqualTo(1);
   RuleIdeInfo ruleIdeInfo=getRuleInfoAndVerifyLabel("//com/google/example:simple",ruleIdeInfos);
   ArtifactLocation location=ruleIdeInfo.getBuildFileArtifactLocation();
   assertThat(location.getRelativePath()).isEqualTo("com/google/example/BUILD");
@@ -12,7 +11,6 @@
   }
   assertThat(ruleIdeInfo.getKind()).isEqualTo(Kind.JAVA_LIBRARY);
   assertThat(ruleIdeInfo.getKindString()).isEqualTo("java_library");
-  assertThat(ruleIdeInfo.getDependenciesCount()).isEqualTo(0);
   assertThat(relativePathsForJavaSourcesOf(ruleIdeInfo)).containsExactly("com/google/example/simple/Simple.java");
   assertThat(transform(ruleIdeInfo.getJavaRuleIdeInfo().getJarsList(),LIBRARY_ARTIFACT_TO_STRING)).containsExactly(jarString("com/google/example","libsimple.jar","libsimple-ijar.jar","libsimple-src.jar"));
   assertThat(getIdeResolveFiles()).containsExactly("com/google/example/libsimple.jar","com/google/example/libsimple-ijar.jar","com/google/example/libsimple-src.jar");

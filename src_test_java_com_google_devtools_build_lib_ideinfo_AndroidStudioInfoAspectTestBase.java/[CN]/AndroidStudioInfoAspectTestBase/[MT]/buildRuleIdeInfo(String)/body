@@ -3,19 +3,19 @@
     buildTarget(target);
     AndroidStudioInfoFilesProvider provider=configuredAspect.getProvider(AndroidStudioInfoFilesProvider.class);
     Iterable<Artifact> artifacts=provider.getIdeInfoFiles();
-    ImmutableMap.Builder<String,RuleIdeInfo> builder=ImmutableMap.builder();
+    Map<String,RuleIdeInfo> ruleIdeInfos=new HashMap<>();
     for (    Artifact artifact : artifacts) {
       Action generatingAction=getGeneratingAction(artifact);
       if (generatingAction instanceof BinaryFileWriteAction) {
         BinaryFileWriteAction writeAction=(BinaryFileWriteAction)generatingAction;
         RuleIdeInfo ruleIdeInfo=RuleIdeInfo.parseFrom(writeAction.getSource().openStream());
-        builder.put(ruleIdeInfo.getLabel(),ruleIdeInfo);
+        ruleIdeInfos.put(ruleIdeInfo.getLabel(),ruleIdeInfo);
       }
  else {
         verifyPackageManifestSpawnAction(generatingAction);
       }
     }
-    return builder.build();
+    return ruleIdeInfos;
   }
  else {
     BuildView.AnalysisResult analysisResult=update(ImmutableList.of(target),ImmutableList.of("intellij_tools/intellij_info.bzl%intellij_info_aspect"),false,LOADING_PHASE_THREADS,true,new EventBus());

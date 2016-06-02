@@ -1,12 +1,11 @@
 {
   scratch.file("com/google/example/BUILD","java_library(","    name = 'simple',","    srcs = ['simple/Simple.java']",")","java_library(","    name = 'complex',","    srcs = ['complex/Complex.java'],","    exports = [':simple'],",")","java_library(","    name = 'extracomplex',","    srcs = ['extracomplex/ExtraComplex.java'],","    deps = [':complex']",")");
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:extracomplex");
-  assertThat(ruleIdeInfos.size()).isEqualTo(3);
   getRuleInfoAndVerifyLabel("//com/google/example:simple",ruleIdeInfos);
   getRuleInfoAndVerifyLabel("//com/google/example:complex",ruleIdeInfos);
   RuleIdeInfo complexRuleIdeInfo=getRuleInfoAndVerifyLabel("//com/google/example:complex",ruleIdeInfos);
   RuleIdeInfo extraComplexRuleIdeInfo=getRuleInfoAndVerifyLabel("//com/google/example:extracomplex",ruleIdeInfos);
-  assertThat(complexRuleIdeInfo.getDependenciesList()).containsExactly("//com/google/example:simple");
-  assertThat(extraComplexRuleIdeInfo.getDependenciesList()).containsExactly("//com/google/example:simple","//com/google/example:complex").inOrder();
+  assertThat(complexRuleIdeInfo.getDependenciesList()).contains("//com/google/example:simple");
+  assertThat(extraComplexRuleIdeInfo.getDependenciesList()).containsAllOf("//com/google/example:simple","//com/google/example:complex");
   assertThat(getIdeResolveFiles()).containsExactly("com/google/example/libextracomplex.jar","com/google/example/libextracomplex-ijar.jar","com/google/example/libextracomplex-src.jar","com/google/example/libcomplex.jar","com/google/example/libcomplex-ijar.jar","com/google/example/libcomplex-src.jar","com/google/example/libsimple.jar","com/google/example/libsimple-ijar.jar","com/google/example/libsimple-src.jar");
 }

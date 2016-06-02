@@ -1,0 +1,11 @@
+{
+  scratch.file("com/google/example/BUILD","java_library(","    name = 'a',","    srcs = ['A.java'],","    deps = [':b'],",")","java_library(","    name = 'b',","    srcs = ['B.java'],",")");
+  Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:a");
+  List<RuleIdeInfo> javaToolChainInfos=findJavaToolchain(ruleIdeInfos);
+  assertThat(javaToolChainInfos).hasSize(1);
+  RuleIdeInfo toolChainInfo=Iterables.getOnlyElement(javaToolChainInfos);
+  assertThat(toolChainInfo.getJavaToolchainIdeInfo().getSourceVersion()).isNotEmpty();
+  assertThat(toolChainInfo.getJavaToolchainIdeInfo().getTargetVersion()).isNotEmpty();
+  RuleIdeInfo a=ruleIdeInfos.get("//com/google/example:a");
+  assertThat(a.getDependenciesList()).containsAllOf("//com/google/example:b",toolChainInfo.getLabel());
+}
