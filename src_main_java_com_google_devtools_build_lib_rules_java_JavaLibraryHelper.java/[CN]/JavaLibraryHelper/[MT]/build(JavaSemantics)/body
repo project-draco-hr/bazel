@@ -7,7 +7,7 @@
   attributes.setRuleKind(ruleContext.getRule().getRuleClass());
   attributes.setTargetLabel(ruleContext.getLabel());
   if (isStrict() && classpathMode != JavaClasspathMode.OFF) {
-    JavaCompilationHelper.addDependencyArtifactsToAttributes(attributes,transformDeps());
+    JavaCompilationHelper.addDependencyArtifactsToAttributes(attributes,deps);
   }
   JavaCompilationArtifacts.Builder artifactsBuilder=new JavaCompilationArtifacts.Builder();
   JavaCompilationHelper helper=new JavaCompilationHelper(ruleContext,semantics,javacOpts,attributes,implicitAttributesSuffix);
@@ -17,11 +17,5 @@
   artifactsBuilder.addRuntimeJar(output);
   JavaCompilationArtifacts compilationArtifacts=artifactsBuilder.build();
   Map<Class<? extends TransitiveInfoProvider>,TransitiveInfoProvider> providers=new LinkedHashMap<>();
-  if (emitProviders) {
-    providers.put(JavaCompilationArgsProvider.class,collectJavaCompilationArgs(compilationArtifacts));
-    providers.put(JavaSourceJarsProvider.class,new JavaSourceJarsProvider(collectTransitiveJavaSourceJars(),sourceJars));
-    providers.put(JavaRunfilesProvider.class,collectJavaRunfiles(compilationArtifacts));
-    providers.put(JavaCcLinkParamsProvider.class,new JavaCcLinkParamsProvider(createJavaCcLinkParamsStore()));
-  }
   return new Info(providers,compilationArtifacts);
 }
