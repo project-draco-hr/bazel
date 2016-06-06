@@ -1,0 +1,16 @@
+{
+  Artifact inputTreeArtifact=createAndPopulateTreeArtifact("inputTreeArtifact","child0","child1","child2");
+  Artifact outputTreeArtifact=createTreeArtifact("outputTreeArtifact");
+  SpawnActionTemplate spawnActionTemplate=ActionsTestUtil.createDummySpawnActionTemplate(inputTreeArtifact,outputTreeArtifact);
+  List<Action> actions=evaluate(spawnActionTemplate);
+  assertThat(actions).hasSize(3);
+  ArtifactOwner owner=ActionTemplateExpansionValue.createActionTemplateExpansionKey(spawnActionTemplate);
+  int i=0;
+  for (  Action action : actions) {
+    String childName="child" + i;
+    assertThat(Artifact.toExecPaths(action.getInputs())).contains("out/inputTreeArtifact/" + childName);
+    assertThat(Artifact.toExecPaths(action.getOutputs())).containsExactly("out/outputTreeArtifact/" + childName);
+    assertThat(Iterables.getOnlyElement(action.getOutputs()).getArtifactOwner()).isEqualTo(owner);
+    ++i;
+  }
+}

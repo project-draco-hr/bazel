@@ -1,0 +1,17 @@
+{
+  Artifact inputTreeArtifact=createAndPopulateTreeArtifact("inputTreeArtifact","child0","child1","child2");
+  Artifact outputTreeArtifact=createTreeArtifact("outputTreeArtifact");
+  OutputPathMapper mapper=new OutputPathMapper(){
+    @Override public PathFragment parentRelativeOutputPath(    TreeFileArtifact inputTreeFileArtifact){
+      return new PathFragment("conflict_path");
+    }
+  }
+;
+  SpawnActionTemplate spawnActionTemplate=new SpawnActionTemplate.Builder(inputTreeArtifact,outputTreeArtifact).setExecutable(new PathFragment("/bin/cp")).setCommandLineTemplate(CustomCommandLine.builder().build()).setOutputPathMapper(mapper).build(ActionsTestUtil.NULL_ACTION_OWNER);
+  try {
+    evaluate(spawnActionTemplate);
+    fail("Expected ActionConflictException");
+  }
+ catch (  ActionConflictException e) {
+  }
+}

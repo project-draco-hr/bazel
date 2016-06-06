@@ -13,26 +13,24 @@
   if (actionMetadata == null) {
     return null;
   }
-  Preconditions.checkState(actionMetadata instanceof Action,"%s is not a proper Action object and therefore cannot be executed",actionMetadata);
-  Action action=(Action)actionMetadata;
-  ActionExecutionValue actionValue=(ActionExecutionValue)env.getValue(ActionExecutionValue.key(action));
-  if (actionValue == null) {
-    return null;
-  }
-  if (artifact.isTreeArtifact()) {
-    return actionValue.getTreeArtifactValue(artifact);
-  }
- else   if (!isAggregatingValue(action)) {
-    try {
-      return createSimpleValue(artifact,actionValue);
-    }
- catch (    IOException e) {
-      ActionExecutionException ex=new ActionExecutionException(e,action,false);
-      env.getListener().handle(Event.error(ex.getLocation(),ex.getMessage()));
-      throw new ArtifactFunctionException(ex,Transience.TRANSIENT);
-    }
+  if (artifact.isTreeArtifact() && actionMetadata instanceof SpawnActionTemplate) {
+    return createTreeArtifactValueFromActionTemplate((SpawnActionTemplate)actionMetadata,artifact,env);
   }
  else {
-    return createAggregatingValue(artifact,action,actionValue.getArtifactValue(artifact),env);
+    Preconditions.checkState(actionMetadata instanceof Action,"%s is not a proper Action object and therefore cannot be executed",actionMetadata);
+    Action action=(Action)actionMetadata;
+    ActionExecutionValue actionValue=(ActionExecutionValue)env.getValue(ActionExecutionValue.key(action));
+    if (actionValue == null) {
+      return null;
+    }
+    if (artifact.isTreeArtifact()) {
+      return Preconditions.checkNotNull(actionValue.getTreeArtifactValue(artifact),artifact);
+    }
+ else     if (isAggregatingValue(action)) {
+      return createAggregatingValue(artifact,action,actionValue.getArtifactValue(artifact),env);
+    }
+ else {
+      return createSimpleFileArtifactValue(artifact,action,actionValue,env);
+    }
   }
 }

@@ -1,0 +1,15 @@
+{
+  Artifact artifact1=createTreeArtifact("treeArtifact1");
+  TreeFileArtifact treeFileArtifactA=ActionInputHelper.treeFileArtifact(artifact1,new PathFragment("child1"));
+  TreeFileArtifact treeFileArtifactB=ActionInputHelper.treeFileArtifact(artifact1,new PathFragment("child2"));
+  registerAction(new TouchingTestAction(treeFileArtifactA,treeFileArtifactB));
+  Artifact artifact2=createTreeArtifact("treeArtifact2");
+  SpawnActionTemplate actionTemplate=ActionsTestUtil.createDummySpawnActionTemplate(artifact1,artifact2);
+  registerAction(actionTemplate);
+  TreeFileArtifact expectedOutputTreeFileArtifact1=ActionInputHelper.treeFileArtifact(artifact2,new PathFragment("child1"));
+  TreeFileArtifact expectedOutputTreeFileArtifact2=ActionInputHelper.treeFileArtifact(artifact2,new PathFragment("child2"));
+  Action generateOutputAction=new DummyAction(ImmutableList.<Artifact>of(treeFileArtifactA),expectedOutputTreeFileArtifact1);
+  Action noGenerateOutputAction=new DummyAction(ImmutableList.<Artifact>of(treeFileArtifactB),expectedOutputTreeFileArtifact2);
+  actionTemplateExpansionFunction=new DummyActionTemplateExpansionFunction(ImmutableMultimap.of(actionTemplate,generateOutputAction,actionTemplate,noGenerateOutputAction));
+  buildArtifact(artifact2);
+}

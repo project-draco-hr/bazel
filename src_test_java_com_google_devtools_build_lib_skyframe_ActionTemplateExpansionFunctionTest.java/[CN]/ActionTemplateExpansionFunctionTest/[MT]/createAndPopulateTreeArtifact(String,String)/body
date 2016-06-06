@@ -1,0 +1,11 @@
+{
+  Artifact treeArtifact=createTreeArtifact(path);
+  Map<TreeFileArtifact,FileArtifactValue> treeFileArtifactMap=new LinkedHashMap<>();
+  for (  String childRelativePath : childRelativePaths) {
+    TreeFileArtifact treeFileArtifact=ActionInputHelper.treeFileArtifact(treeArtifact,new PathFragment(childRelativePath));
+    scratch.file(treeFileArtifact.getPath().toString(),childRelativePath);
+    treeFileArtifactMap.put(treeFileArtifact,FileArtifactValue.create(treeFileArtifact));
+  }
+  artifactValueMap.put(treeArtifact,TreeArtifactValue.create(ImmutableMap.copyOf(treeFileArtifactMap)));
+  return treeArtifact;
+}

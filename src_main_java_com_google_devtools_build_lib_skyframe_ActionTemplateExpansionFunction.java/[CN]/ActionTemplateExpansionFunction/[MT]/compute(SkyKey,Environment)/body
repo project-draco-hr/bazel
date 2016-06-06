@@ -1,0 +1,23 @@
+{
+  ActionTemplateExpansionKey key=(ActionTemplateExpansionKey)skyKey.argument();
+  SpawnActionTemplate actionTemplate=key.getActionTemplate();
+  SkyKey artifactValueKey=ArtifactValue.key(actionTemplate.getInputTreeArtifact(),true);
+  TreeArtifactValue treeArtifactValue=(TreeArtifactValue)env.getValue(artifactValueKey);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  Iterable<TreeFileArtifact> inputTreeFileArtifacts=treeArtifactValue.getChildren();
+  Iterable<Action> expandedActions;
+  try {
+    expandedActions=ImmutableList.<Action>copyOf(actionTemplate.generateActionForInputArtifacts(inputTreeFileArtifacts,key));
+  }
+ catch (  ActionConflictException e) {
+    e.reportTo(env.getListener());
+    throw new ActionTemplateExpansionFunctionException(e);
+  }
+catch (  ArtifactPrefixConflictException e) {
+    env.getListener().handle(Event.error(e.getMessage()));
+    throw new ActionTemplateExpansionFunctionException(e);
+  }
+  return new ActionTemplateExpansionValue(expandedActions);
+}

@@ -1,0 +1,15 @@
+{
+  reporter.removeHandler(failFastHandler);
+  Artifact artifact1=createTreeArtifact("treeArtifact1");
+  registerAction(new ThrowingDummyAction(ImmutableList.<Artifact>of(),ImmutableList.of(artifact1)));
+  Artifact artifact2=createTreeArtifact("treeArtifact2");
+  SpawnActionTemplate actionTemplate=ActionsTestUtil.createDummySpawnActionTemplate(artifact1,artifact2);
+  registerAction(actionTemplate);
+  try {
+    buildArtifact(artifact2);
+    fail("Expected BuildFailedException");
+  }
+ catch (  BuildFailedException e) {
+    assertThat(e.getMessage()).contains("Throwing dummy action");
+  }
+}

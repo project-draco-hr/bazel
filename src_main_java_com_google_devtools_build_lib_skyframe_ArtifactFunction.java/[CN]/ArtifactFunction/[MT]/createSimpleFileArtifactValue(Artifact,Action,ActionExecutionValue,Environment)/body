@@ -1,0 +1,17 @@
+{
+  FileArtifactValue value=actionValue.getArtifactValue(artifact);
+  if (value != null) {
+    return value;
+  }
+  Preconditions.checkState(!artifact.isMiddlemanArtifact(),artifact);
+  FileValue data=Preconditions.checkNotNull(actionValue.getData(artifact),"%s %s",artifact,actionValue);
+  Preconditions.checkNotNull(data.getDigest(),"Digest should already have been calculated for %s (%s)",artifact,data);
+  try {
+    return FileArtifactValue.create(artifact,data);
+  }
+ catch (  IOException e) {
+    ActionExecutionException ex=new ActionExecutionException(e,generatingAction,false);
+    env.getListener().handle(Event.error(ex.getLocation(),ex.getMessage()));
+    throw new ArtifactFunctionException(ex,Transience.TRANSIENT);
+  }
+}

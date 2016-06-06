@@ -1,0 +1,9 @@
+{
+  artifactValueMap=new LinkedHashMap<>();
+  AtomicReference<PathPackageLocator> pkgLocator=new AtomicReference<>(new PathPackageLocator(rootDirectory.getFileSystem().getPath("/outputbase"),ImmutableList.of(rootDirectory)));
+  RecordingDifferencer differencer=new RecordingDifferencer();
+  MemoizingEvaluator evaluator=new InMemoryMemoizingEvaluator(ImmutableMap.<SkyFunctionName,SkyFunction>builder().put(SkyFunctions.ARTIFACT,new DummyArtifactFunction(artifactValueMap)).put(SkyFunctions.ACTION_TEMPLATE_EXPANSION,new ActionTemplateExpansionFunction()).build(),differencer);
+  driver=new SequentialBuildDriver(evaluator);
+  PrecomputedValue.BUILD_ID.set(differencer,UUID.randomUUID());
+  PrecomputedValue.PATH_PACKAGE_LOCATOR.set(differencer,pkgLocator.get());
+}

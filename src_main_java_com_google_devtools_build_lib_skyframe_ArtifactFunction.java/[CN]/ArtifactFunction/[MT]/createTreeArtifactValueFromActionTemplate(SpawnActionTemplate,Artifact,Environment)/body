@@ -1,0 +1,24 @@
+{
+  ActionTemplateExpansionValue expansionValue=(ActionTemplateExpansionValue)env.getValue(ActionTemplateExpansionValue.key(actionTemplate));
+  if (env.valuesMissing()) {
+    return null;
+  }
+  Iterable<SkyKey> expandedActionExecutionKeys=ActionExecutionValue.keys(expansionValue.getExpandedActions());
+  Map<SkyKey,SkyValue> expandedActionValueMap=env.getValues(expandedActionExecutionKeys);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  ImmutableMap.Builder<TreeFileArtifact,FileArtifactValue> map=ImmutableMap.builder();
+  for (  Map.Entry<SkyKey,SkyValue> entry : expandedActionValueMap.entrySet()) {
+    SkyKey expandedActionExecutionKey=entry.getKey();
+    ActionExecutionValue actionExecutionValue=(ActionExecutionValue)entry.getValue();
+    Action expandedAction=(Action)expandedActionExecutionKey.argument();
+    Iterable<TreeFileArtifact> treeFileArtifacts=findActionOutputsWithMatchingParent(expandedAction,treeArtifact);
+    Preconditions.checkState(!Iterables.isEmpty(treeFileArtifacts),"Action %s does not output TreeFileArtifact under %s",expandedAction,treeArtifact);
+    for (    TreeFileArtifact treeFileArtifact : treeFileArtifacts) {
+      FileArtifactValue value=createSimpleFileArtifactValue(treeFileArtifact,expandedAction,actionExecutionValue,env);
+      map.put(treeFileArtifact,value);
+    }
+  }
+  return TreeArtifactValue.create(map.build());
+}

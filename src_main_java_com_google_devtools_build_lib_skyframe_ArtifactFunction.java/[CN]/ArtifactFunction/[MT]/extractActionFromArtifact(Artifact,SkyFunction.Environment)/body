@@ -8,5 +8,11 @@
     return null;
   }
   Preconditions.checkNotNull(value,"Owner %s of %s not in graph %s",artifactOwner,artifact,actionLookupKey);
-  return Preconditions.checkNotNull(value.getGeneratingAction(artifact),"Value %s does not contain generating action of %s",value,artifact);
+  ActionAnalysisMetadata action=value.getGeneratingAction(artifact);
+  if (artifact.hasParent()) {
+    if (action == null) {
+      action=value.getGeneratingAction(artifact.getParent());
+    }
+  }
+  return Preconditions.checkNotNull(action,"Value %s does not contain generating action of %s",value,artifact);
 }

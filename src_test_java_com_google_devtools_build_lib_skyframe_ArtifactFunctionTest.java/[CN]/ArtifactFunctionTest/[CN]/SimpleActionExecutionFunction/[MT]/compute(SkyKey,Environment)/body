@@ -1,20 +1,27 @@
 {
   Map<Artifact,FileValue> artifactData=new HashMap<>();
+  Map<Artifact,TreeArtifactValue> treeArtifactData=new HashMap<>();
+  Map<Artifact,FileArtifactValue> additionalOutputData=new HashMap<>();
   Action action=(Action)skyKey.argument();
   Artifact output=Iterables.getOnlyElement(action.getOutputs());
-  FileArtifactValue value;
-  if (action.getActionType() == MiddlemanType.NORMAL) {
-    try {
+  try {
+    if (output.isTreeArtifact()) {
+      TreeFileArtifact treeFileArtifact1=ActionInputHelper.treeFileArtifact(output,new PathFragment("child1"));
+      TreeFileArtifact treeFileArtifact2=ActionInputHelper.treeFileArtifact(output,new PathFragment("child2"));
+      TreeArtifactValue treeArtifactValue=TreeArtifactValue.create(ImmutableMap.of(treeFileArtifact1,FileArtifactValue.create(treeFileArtifact1),treeFileArtifact2,FileArtifactValue.create(treeFileArtifact2)));
+      treeArtifactData.put(output,treeArtifactValue);
+    }
+ else     if (action.getActionType() == MiddlemanType.NORMAL) {
       FileValue fileValue=ActionMetadataHandler.fileValueFromArtifact(output,null,null);
       artifactData.put(output,fileValue);
-      value=FileArtifactValue.create(output,fileValue);
+      additionalOutputData.put(output,FileArtifactValue.create(output,fileValue));
     }
- catch (    IOException e) {
-      throw new IllegalStateException(e);
-    }
-  }
  else {
-    value=FileArtifactValue.DEFAULT_MIDDLEMAN;
+      additionalOutputData.put(output,FileArtifactValue.DEFAULT_MIDDLEMAN);
+    }
   }
-  return new ActionExecutionValue(artifactData,ImmutableMap.<Artifact,TreeArtifactValue>of(),ImmutableMap.of(output,value));
+ catch (  IOException e) {
+    throw new IllegalStateException(e);
+  }
+  return new ActionExecutionValue(artifactData,treeArtifactData,additionalOutputData);
 }

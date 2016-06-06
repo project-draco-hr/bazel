@@ -1,0 +1,18 @@
+{
+  Artifact artifact1=createDerivedTreeArtifactWithAction("treeArtifact1");
+  createFakeTreeFileArtifact(artifact1,"child1","hello1");
+  createFakeTreeFileArtifact(artifact1,"child2","hello2");
+  Artifact artifact2=createDerivedTreeArtifactOnly("treeArtifact2");
+  createFakeTreeFileArtifact(artifact2,"child1","hello1");
+  createFakeTreeFileArtifact(artifact2,"child2","hello2");
+  actions.add(ActionsTestUtil.createDummySpawnActionTemplate(artifact1,artifact2));
+  Artifact artifact3=createDerivedTreeArtifactOnly("treeArtifact3");
+  TreeFileArtifact treeFileArtifact1=createFakeTreeFileArtifact(artifact3,"child1","hello1");
+  TreeFileArtifact treeFileArtifact2=createFakeTreeFileArtifact(artifact3,"child2","hello2");
+  actions.add(ActionsTestUtil.createDummySpawnActionTemplate(artifact2,artifact3));
+  TreeArtifactValue value=(TreeArtifactValue)evaluateArtifactValue(artifact3);
+  assertNotNull(value.getChildValue(treeFileArtifact1));
+  assertNotNull(value.getChildValue(treeFileArtifact2));
+  assertNotNull(value.getChildValue(treeFileArtifact1).getDigest());
+  assertNotNull(value.getChildValue(treeFileArtifact2).getDigest());
+}
