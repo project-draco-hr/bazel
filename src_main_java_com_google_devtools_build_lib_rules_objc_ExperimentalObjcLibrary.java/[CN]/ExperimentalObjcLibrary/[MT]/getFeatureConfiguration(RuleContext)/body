@@ -1,0 +1,12 @@
+{
+  CcToolchainProvider toolchain=ruleContext.getPrerequisite(":cc_toolchain",Mode.TARGET).getProvider(CcToolchainProvider.class);
+  ImmutableList.Builder<String> activatedCrosstoolSelectables=ImmutableList.<String>builder().addAll(ACTIVATED_ACTIONS);
+  if (ruleContext.getPrerequisiteArtifact("pch",Mode.TARGET) != null) {
+    activatedCrosstoolSelectables.add("pch");
+  }
+  if (ObjcCommon.shouldUseObjcModules(ruleContext)) {
+    activatedCrosstoolSelectables.add(OBJC_MODULE_FEATURE_NAME);
+  }
+  activatedCrosstoolSelectables.add(CppRuleClasses.MODULE_MAPS);
+  return toolchain.getFeatures().getFeatureConfiguration(activatedCrosstoolSelectables.build());
+}

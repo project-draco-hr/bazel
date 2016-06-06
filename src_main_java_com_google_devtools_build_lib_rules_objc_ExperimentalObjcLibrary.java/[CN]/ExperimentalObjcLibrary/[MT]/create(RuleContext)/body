@@ -1,18 +1,16 @@
 {
+  validateAttributes(ruleContext);
   CompilationArtifacts compilationArtifacts=CompilationSupport.compilationArtifacts(ruleContext);
   CompilationAttributes compilationAttributes=CompilationAttributes.Builder.fromRuleContext(ruleContext).build();
   PrecompiledFiles precompiledFiles=new PrecompiledFiles(ruleContext);
   ObjcCommon common=common(ruleContext,compilationAttributes,compilationArtifacts);
-  CcToolchainProvider toolchain=ruleContext.getPrerequisite(":cc_toolchain",Mode.TARGET).getProvider(CcToolchainProvider.class);
-  ImmutableList.Builder<String> activatedCrosstoolSelectables=ImmutableList.<String>builder().addAll(ACTIVATED_ACTIONS);
-  if (ruleContext.getPrerequisiteArtifact("pch",Mode.TARGET) != null) {
-    activatedCrosstoolSelectables.add("pch");
-  }
-  FeatureConfiguration featureConfiguration=toolchain.getFeatures().getFeatureConfiguration(activatedCrosstoolSelectables.build());
   Collection<Artifact> sources=Sets.newHashSet(compilationArtifacts.getSrcs());
   Collection<Artifact> privateHdrs=Sets.newHashSet(compilationArtifacts.getPrivateHdrs());
   Collection<Artifact> publicHdrs=Sets.newHashSet(compilationAttributes.hdrs());
-  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,new ObjcCppSemantics(common.getObjcProvider()),featureConfiguration,CcLibraryHelper.SourceCategory.CC_AND_OBJC).addSources(sources).addSources(privateHdrs).enableCompileProviders().addPublicHeaders(publicHdrs).addPrecompiledFiles(precompiledFiles).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addVariableExtension(new ObjcVariablesExtension(ruleContext,common.getObjcProvider()));
+  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,new ObjcCppSemantics(common.getObjcProvider()),getFeatureConfiguration(ruleContext),CcLibraryHelper.SourceCategory.CC_AND_OBJC).addSources(sources).addSources(privateHdrs).enableCompileProviders().addPublicHeaders(publicHdrs).addPrecompiledFiles(precompiledFiles).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addVariableExtension(new ObjcVariablesExtension(ruleContext,common.getObjcProvider()));
+  if (ObjcCommon.shouldUseObjcModules(ruleContext)) {
+    helper.setCppModuleMap(ObjcRuleClasses.intermediateArtifacts(ruleContext).moduleMap());
+  }
   CcLibraryHelper.Info info=helper.build();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().addAll(common.getCompiledArchive().asSet());
   return ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build()).addProviders(info.getProviders()).build();
