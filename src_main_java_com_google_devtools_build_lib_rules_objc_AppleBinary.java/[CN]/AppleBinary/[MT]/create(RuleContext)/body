@@ -26,17 +26,13 @@
     }
     archivesToLipo.add(common.getCompilationArtifacts().get().getArchive().get());
     binariesToLipo.add(intermediateArtifacts.strippedSingleArchitectureBinary());
-    ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET);
-    Iterable<PathFragment> priorityHeaders;
     ObjcConfiguration objcConfiguration=childConfig.getFragment(ObjcConfiguration.class);
     if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
-      protoSupport.registerActions();
-      priorityHeaders=protoSupport.getUserHeaderSearchPaths();
+      ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET).registerActions();
+      ObjcCommon protoCommon=protoSupport.getCommon();
+      new CompilationSupport(ruleContext,protoSupport.getIntermediateArtifacts(),new CompilationAttributes.Builder().build()).registerCompileAndArchiveActions(protoCommon,protoSupport.getUserHeaderSearchPaths());
     }
- else {
-      priorityHeaders=ImmutableList.of();
-    }
-    new CompilationSupport(ruleContext,childConfig).registerCompileAndArchiveActions(common,priorityHeaders).registerLinkActions(common.getObjcProvider(),j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,new ExtraLinkArgs(),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
+    new CompilationSupport(ruleContext,childConfig).registerCompileAndArchiveActions(common).registerLinkActions(common.getObjcProvider(),j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,new ExtraLinkArgs(),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
     ruleContext.assertNoErrors();
   }
   AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);

@@ -1,0 +1,26 @@
+{
+  NestedSetBuilder<CppModuleMap> moduleMaps=NestedSetBuilder.stableOrder();
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  if (objcConfiguration.moduleMapsEnabled()) {
+    if (ruleContext.attributes().has("deps",BuildType.LABEL_LIST)) {
+      Iterable<ObjcProvider> providers=ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProvider.class);
+      for (      ObjcProvider provider : providers) {
+        moduleMaps.addTransitive(provider.get(TOP_LEVEL_MODULE_MAP));
+      }
+    }
+    if (ruleContext.attributes().has("non_propagated_deps",BuildType.LABEL_LIST)) {
+      Iterable<ObjcProvider> providers=ruleContext.getPrerequisites("non_propagated_deps",Mode.TARGET,ObjcProvider.class);
+      for (      ObjcProvider provider : providers) {
+        moduleMaps.addTransitive(provider.get(TOP_LEVEL_MODULE_MAP));
+      }
+    }
+  }
+  builder.addModuleMapsForDirectDeps(moduleMaps.build());
+  PathFragment packageFragment=ruleContext.getLabel().getPackageIdentifier().getPathFragment();
+  if (packageFragment != null) {
+    builder.setPackageFragment(packageFragment);
+  }
+  if (ruleContext.attributes().has("enable_modules",Type.BOOLEAN) && ruleContext.attributes().get("enable_modules",Type.BOOLEAN)) {
+    builder.enableModules();
+  }
+}

@@ -1,9 +1,13 @@
 {
   CompilationArtifacts compilationArtifacts=CompilationSupport.compilationArtifacts(ruleContext,intermediateArtifacts);
+  Optional<Artifact> protoLib;
   ObjcConfiguration objcConfiguration=buildConfiguration.getFragment(ObjcConfiguration.class);
   if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
     ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET);
-    compilationArtifacts=new CompilationArtifacts.Builder().setPchFile(compilationArtifacts.getPchFile()).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).addAllSources(compilationArtifacts).addAllSources(protoSupport.getCompilationArtifacts()).build();
+    protoLib=protoSupport.getCommon().getCompiledArchive();
   }
-  return new ObjcCommon.Builder(ruleContext,buildConfiguration).setCompilationAttributes(new CompilationAttributes(ruleContext)).setCompilationArtifacts(compilationArtifacts).setResourceAttributes(new ResourceAttributes(ruleContext)).addDefines(ruleContext.getTokenizedStringListAttr("defines")).addDeps(propagatedDeps).addDepObjcProviders(ruleContext.getPrerequisites("bundles",Mode.TARGET,ObjcProvider.class)).addNonPropagatedDepObjcProviders(nonPropagatedObjcDeps).setIntermediateArtifacts(intermediateArtifacts).setAlwayslink(false).setHasModuleMap().setLinkedBinary(intermediateArtifacts.strippedSingleArchitectureBinary()).build();
+ else {
+    protoLib=Optional.absent();
+  }
+  return new ObjcCommon.Builder(ruleContext,buildConfiguration).setCompilationAttributes(CompilationAttributes.Builder.fromRuleContext(ruleContext).build()).setCompilationArtifacts(compilationArtifacts).setResourceAttributes(new ResourceAttributes(ruleContext)).addDefines(ruleContext.getTokenizedStringListAttr("defines")).addDeps(propagatedDeps).addDepObjcProviders(ruleContext.getPrerequisites("bundles",Mode.TARGET,ObjcProvider.class)).addNonPropagatedDepObjcProviders(nonPropagatedObjcDeps).setIntermediateArtifacts(intermediateArtifacts).setAlwayslink(false).setHasModuleMap().setLinkedBinary(intermediateArtifacts.strippedSingleArchitectureBinary()).addExtraImportLibraries(protoLib.asSet()).build();
 }

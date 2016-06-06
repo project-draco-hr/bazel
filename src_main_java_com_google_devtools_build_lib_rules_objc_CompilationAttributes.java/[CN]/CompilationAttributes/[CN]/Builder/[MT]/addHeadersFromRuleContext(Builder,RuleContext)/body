@@ -1,0 +1,18 @@
+{
+  if (ruleContext.attributes().has("hdrs",BuildType.LABEL_LIST)) {
+    NestedSetBuilder<Artifact> headers=NestedSetBuilder.stableOrder();
+    for (    Pair<Artifact,Label> header : CcCommon.getHeaders(ruleContext)) {
+      headers.add(header.first);
+    }
+    builder.addHdrs(headers.build());
+  }
+  if (ruleContext.attributes().has("textual_hdrs",BuildType.LABEL_LIST)) {
+    builder.addTextualHdrs(PrerequisiteArtifacts.nestedSet(ruleContext,"textual_hdrs",Mode.TARGET));
+  }
+  if (ruleContext.attributes().has("bridging_header",BuildType.LABEL)) {
+    Artifact header=ruleContext.getPrerequisiteArtifact("bridging_header",Mode.TARGET);
+    if (header != null) {
+      builder.setBridgingHeader(header);
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  if (ruleContext.attributes().has("sdk_frameworks",Type.STRING_LIST)) {
+    NestedSetBuilder<SdkFramework> frameworks=NestedSetBuilder.stableOrder();
+    frameworks.addAll(ObjcRuleClasses.AUTOMATIC_SDK_FRAMEWORKS);
+    for (    String explicit : ruleContext.attributes().get("sdk_frameworks",Type.STRING_LIST)) {
+      frameworks.add(new SdkFramework(explicit));
+    }
+    builder.addSdkFrameworks(frameworks.build());
+  }
+  if (ruleContext.attributes().has("weak_sdk_frameworks",Type.STRING_LIST)) {
+    NestedSetBuilder<SdkFramework> weakFrameworks=NestedSetBuilder.stableOrder();
+    for (    String frameworkName : ruleContext.attributes().get("weak_sdk_frameworks",Type.STRING_LIST)) {
+      weakFrameworks.add(new SdkFramework(frameworkName));
+    }
+    builder.addWeakSdkFrameworks(weakFrameworks.build());
+  }
+  if (ruleContext.attributes().has("sdk_dylibs",Type.STRING_LIST)) {
+    NestedSetBuilder<String> sdkDylibs=NestedSetBuilder.stableOrder();
+    sdkDylibs.addAll(ruleContext.attributes().get("sdk_dylibs",Type.STRING_LIST));
+    builder.addSdkDylibs(sdkDylibs.build());
+  }
+}

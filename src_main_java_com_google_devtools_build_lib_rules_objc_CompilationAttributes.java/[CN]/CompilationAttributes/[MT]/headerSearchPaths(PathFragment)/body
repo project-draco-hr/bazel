@@ -1,0 +1,13 @@
+{
+  NestedSetBuilder<PathFragment> paths=NestedSetBuilder.stableOrder();
+  if (packageFragment.isPresent()) {
+    List<PathFragment> rootFragments=ImmutableList.of(packageFragment.get(),genfilesFragment.getRelative(packageFragment.get()));
+    Iterable<PathFragment> relativeIncludes=Iterables.filter(includes(),Predicates.not(PathFragment.IS_ABSOLUTE));
+    for (    PathFragment include : relativeIncludes) {
+      for (      PathFragment rootFragment : rootFragments) {
+        paths.add(rootFragment.getRelative(include).normalize());
+      }
+    }
+  }
+  return paths.build();
+}
