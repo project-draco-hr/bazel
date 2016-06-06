@@ -28,12 +28,16 @@
     Map<String,RuleIdeInfo> ruleIdeInfos=new HashMap<>();
     for (    Artifact artifact : outputGroup) {
       Action generatingAction=getGeneratingAction(artifact);
-      assertThat(generatingAction).isInstanceOf(FileWriteAction.class);
-      String fileContents=((FileWriteAction)generatingAction).getFileContents();
-      RuleIdeInfo.Builder builder=RuleIdeInfo.newBuilder();
-      TextFormat.getParser().merge(fileContents,builder);
-      RuleIdeInfo ruleIdeInfo=builder.build();
-      ruleIdeInfos.put(ruleIdeInfo.getLabel(),ruleIdeInfo);
+      if (generatingAction instanceof FileWriteAction) {
+        String fileContents=((FileWriteAction)generatingAction).getFileContents();
+        RuleIdeInfo.Builder builder=RuleIdeInfo.newBuilder();
+        TextFormat.getParser().merge(fileContents,builder);
+        RuleIdeInfo ruleIdeInfo=builder.build();
+        ruleIdeInfos.put(ruleIdeInfo.getLabel(),ruleIdeInfo);
+      }
+ else {
+        verifyPackageManifestSpawnAction(generatingAction);
+      }
     }
     return ruleIdeInfos;
   }

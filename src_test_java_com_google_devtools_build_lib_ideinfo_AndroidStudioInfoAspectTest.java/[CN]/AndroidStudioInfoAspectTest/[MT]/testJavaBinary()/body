@@ -2,7 +2,9 @@
   scratch.file("com/google/example/BUILD","java_library(","   name = 'foobar',","   srcs = ['FooBar.java'],",")","java_binary(","   name = 'foobar-exe',","   main_class = 'MyMainClass',","   srcs = ['FooBarMain.java'],","   deps = [':foobar'],",")");
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:foobar-exe");
   RuleIdeInfo binaryInfo=getRuleInfoAndVerifyLabel("//com/google/example:foobar-exe",ruleIdeInfos);
-  assertThat(binaryInfo.getKind()).isEqualTo(Kind.JAVA_BINARY);
+  if (testLegacyAswbPluginVersionCompatibility()) {
+    assertThat(binaryInfo.getKind()).isEqualTo(Kind.JAVA_BINARY);
+  }
   assertThat(binaryInfo.getKindString()).isEqualTo("java_binary");
   assertThat(relativePathsForJavaSourcesOf(binaryInfo)).containsExactly("com/google/example/FooBarMain.java");
   assertThat(binaryInfo.getDependenciesList()).contains("//com/google/example:foobar");

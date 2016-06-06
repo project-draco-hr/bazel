@@ -3,13 +3,13 @@
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:simple");
   assertThat(ruleIdeInfos.size()).isEqualTo(2);
   RuleIdeInfo ruleIdeInfo=getRuleInfoAndVerifyLabel("//com/google/example:simple",ruleIdeInfos);
-  if (isNativeTest()) {
+  ArtifactLocation location=ruleIdeInfo.getBuildFileArtifactLocation();
+  assertThat(location.getRelativePath()).isEqualTo("com/google/example/BUILD");
+  if (testLegacyAswbPluginVersionCompatibility()) {
     assertThat(ruleIdeInfo.getBuildFile()).isEqualTo(buildFilePath.toString());
-    ArtifactLocation location=ruleIdeInfo.getBuildFileArtifactLocation();
     assertThat(Paths.get(location.getRootPath(),location.getRelativePath()).toString()).isEqualTo(buildFilePath.toString());
-    assertThat(location.getRelativePath()).isEqualTo("com/google/example/BUILD");
+    assertThat(ruleIdeInfo.getKind()).isEqualTo(Kind.CC_LIBRARY);
   }
-  assertThat(ruleIdeInfo.getKind()).isEqualTo(Kind.CC_LIBRARY);
   assertThat(ruleIdeInfo.getKindString()).isEqualTo("cc_library");
   assertThat(ruleIdeInfo.getDependenciesCount()).isEqualTo(1);
   assertThat(relativePathsForCSourcesOf(ruleIdeInfo)).containsExactly("com/google/example/simple/simple.cc");

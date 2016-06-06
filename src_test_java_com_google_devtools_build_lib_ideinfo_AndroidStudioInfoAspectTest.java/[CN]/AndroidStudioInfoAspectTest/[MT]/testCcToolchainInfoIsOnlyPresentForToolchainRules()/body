@@ -5,11 +5,11 @@
   RuleIdeInfo ruleInfo=getRuleInfoAndVerifyLabel("//com/google/example:simple",ruleIdeInfos);
   Entry<String,RuleIdeInfo> toolchainEntry=getCcToolchainRuleAndVerifyThereIsOnlyOne(ruleIdeInfos);
   RuleIdeInfo toolchainInfo=toolchainEntry.getValue();
-  if (isNativeTest()) {
+  ArtifactLocation location=ruleInfo.getBuildFileArtifactLocation();
+  assertThat(location.getRelativePath()).isEqualTo("com/google/example/BUILD");
+  if (testLegacyAswbPluginVersionCompatibility()) {
     assertThat(ruleInfo.getBuildFile()).isEqualTo(buildFilePath.toString());
-    ArtifactLocation location=ruleInfo.getBuildFileArtifactLocation();
     assertThat(Paths.get(location.getRootPath(),location.getRelativePath()).toString()).isEqualTo(buildFilePath.toString());
-    assertThat(location.getRelativePath()).isEqualTo("com/google/example/BUILD");
   }
   assertThat(ruleInfo.hasCToolchainIdeInfo()).isFalse();
   assertThat(toolchainInfo.hasCToolchainIdeInfo()).isTrue();

@@ -3,7 +3,9 @@
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:lib");
   RuleIdeInfo libInfo=getRuleInfoAndVerifyLabel("//com/google/example:lib",ruleIdeInfos);
   RuleIdeInfo impInfo=getRuleInfoAndVerifyLabel("//com/google/example:imp",ruleIdeInfos);
-  assertThat(impInfo.getKind()).isEqualTo(Kind.JAVA_IMPORT);
+  if (testLegacyAswbPluginVersionCompatibility()) {
+    assertThat(impInfo.getKind()).isEqualTo(Kind.JAVA_IMPORT);
+  }
   assertThat(impInfo.getKindString()).isEqualTo("java_import");
   assertThat(impInfo.getDependenciesList()).contains("//com/google/example:foobar");
   assertThat(libInfo.getDependenciesList()).containsAllOf("//com/google/example:foobar","//com/google/example:imp");

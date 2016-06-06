@@ -2,7 +2,9 @@
   scratch.file("java/com/google/example/BUILD","java_library(","   name = 'foobar',","   srcs = ['FooBar.java'],",")","java_test(","   name = 'FooBarTest',","   srcs = ['FooBarTest.java'],","   size = 'large',","   deps = [':foobar'],",")");
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//java/com/google/example:FooBarTest");
   RuleIdeInfo testInfo=getRuleInfoAndVerifyLabel("//java/com/google/example:FooBarTest",ruleIdeInfos);
-  assertThat(testInfo.getKind()).isEqualTo(Kind.JAVA_TEST);
+  if (testLegacyAswbPluginVersionCompatibility()) {
+    assertThat(testInfo.getKind()).isEqualTo(Kind.JAVA_TEST);
+  }
   assertThat(testInfo.getKindString()).isEqualTo("java_test");
   assertThat(relativePathsForJavaSourcesOf(testInfo)).containsExactly("java/com/google/example/FooBarTest.java");
   assertThat(testInfo.getDependenciesList()).contains("//java/com/google/example:foobar");

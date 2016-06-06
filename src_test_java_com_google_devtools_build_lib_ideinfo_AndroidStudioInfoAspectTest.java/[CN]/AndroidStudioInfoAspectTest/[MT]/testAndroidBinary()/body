@@ -2,7 +2,9 @@
   scratch.file("com/google/example/BUILD","android_library(","  name = 'l1',","  manifest = 'AndroidManifest.xml',","  custom_package = 'com.google.example',","  resource_files = ['r1/values/a.xml'],",")","android_binary(","  name = 'b',","  srcs = ['Main.java'],","  deps = [':l1'],","  manifest = 'AndroidManifest.xml',","  custom_package = 'com.google.example',","  resource_files = ['res/drawable/a.png', 'res/drawable/b.png'],",")");
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:b");
   RuleIdeInfo ruleInfo=getRuleInfoAndVerifyLabel("//com/google/example:b",ruleIdeInfos);
-  assertThat(ruleInfo.getKind()).isEqualTo(Kind.ANDROID_BINARY);
+  if (testLegacyAswbPluginVersionCompatibility()) {
+    assertThat(ruleInfo.getKind()).isEqualTo(Kind.ANDROID_BINARY);
+  }
   assertThat(ruleInfo.getKindString()).isEqualTo("android_binary");
   assertThat(relativePathsForJavaSourcesOf(ruleInfo)).containsExactly("com/google/example/Main.java");
   assertThat(transform(ruleInfo.getJavaRuleIdeInfo().getJarsList(),LIBRARY_ARTIFACT_TO_STRING)).containsExactly(jarString("com/google/example","libb.jar","libb-ijar.jar","libb-src.jar"),jarString("com/google/example","b_resources.jar","b_resources-ijar.jar","b_resources-src.jar"));
