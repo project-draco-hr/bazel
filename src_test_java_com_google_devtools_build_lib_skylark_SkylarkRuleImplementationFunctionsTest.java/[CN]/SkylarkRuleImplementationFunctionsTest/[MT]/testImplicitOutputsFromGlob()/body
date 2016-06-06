@@ -1,5 +1,5 @@
 {
-  scratch.file("test/glob.bzl","def _impl(ctx):","  outs = ctx.outputs","  for i in ctx.attr.srcs:","    o = getattr(outs, 'foo_' + i.label.name)","    ctx.file_action(","      output = o,","      content = 'hoho')","","def _foo(attr_map):","  outs = {}","  for i in attr_map.srcs:","    outs['foo_' + i.name] = i.name + '.out'","  return outs","","glob_rule = rule(","    attrs = {","        'srcs': attr.label_list(allow_files = True),","    },","    outputs = _foo,","    implementation = _impl,",")");
+  scratch.file("test/glob.bzl","def _impl(ctx):","  outs = ctx.outputs","  for i in ctx.attr.srcs:","    o = getattr(outs, 'foo_' + i.label.name)","    ctx.file_action(","      output = o,","      content = 'hoho')","","def _foo(srcs):","  outs = {}","  for i in srcs:","    outs['foo_' + i.name] = i.name + '.out'","  return outs","","glob_rule = rule(","    attrs = {","        'srcs': attr.label_list(allow_files = True),","    },","    outputs = _foo,","    implementation = _impl,",")");
   scratch.file("test/a.bar","a");
   scratch.file("test/b.bar","b");
   scratch.file("test/BUILD","load('/test/glob', 'glob_rule')","glob_rule(name = 'my_glob', srcs = glob(['*.bar']))");

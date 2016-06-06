@@ -1,0 +1,19 @@
+{
+  Builder<Object> builder=ImmutableList.<Object>builder();
+  ImmutableList<String> names=getParameterNames();
+  int requiredParameters=names.size() - arguments.length;
+  for (int pos=0; pos < requiredParameters; ++pos) {
+    String name=names.get(pos);
+    Object value=ctx.getValue(name);
+    if (value == null) {
+      if (requiredParameters == 1 && LEGACY_ATTR_MAP_NAMES.contains(name)) {
+        value=ctx;
+      }
+ else {
+        throw new IllegalArgumentException(ctx.errorMessage(name));
+      }
+    }
+    builder.add(value);
+  }
+  return builder.add(arguments).build();
+}
