@@ -2,13 +2,15 @@
   Preconditions.checkArgument(timeout > 0,"Timeout must be set prior to calling execute().");
   Preconditions.checkArgument(!args.isEmpty(),"No command specified.");
   Preconditions.checkState(!executed,"Command was already executed, cannot re-use builder.");
+  Preconditions.checkNotNull(directory,"Directory must be set before calling execute().");
   executed=true;
   try {
     String[] argsArray=new String[args.size()];
     for (int i=0; i < args.size(); i++) {
       argsArray[i]=args.get(i);
     }
-    CommandResult result=new Command(argsArray).execute(new byte[]{},timeout,false);
+    Command command=new Command(argsArray,envBuilder.build(),directory);
+    CommandResult result=command.execute(new byte[]{},timeout,false);
     return new SkylarkExecutionResult(result);
   }
  catch (  BadExitStatusException e) {
