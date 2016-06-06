@@ -1,0 +1,17 @@
+{
+  FileStatus baseStat=syscalls.statNullable(base,Symlinks.FOLLOW);
+  if (baseStat == null || patterns.isEmpty()) {
+    return Futures.immediateFuture(Collections.<Path>emptyList());
+  }
+  List<String[]> splitPatterns=checkAndSplitPatterns(patterns);
+  pendingOps.incrementAndGet();
+  try {
+    for (    String[] splitPattern : splitPatterns) {
+      queueGlob(base,baseStat.isDirectory(),splitPattern,0,excludeDirectories,results,cache,dirPred,syscalls);
+    }
+  }
+  finally {
+    decrementAndCheckDone();
+  }
+  return result;
+}

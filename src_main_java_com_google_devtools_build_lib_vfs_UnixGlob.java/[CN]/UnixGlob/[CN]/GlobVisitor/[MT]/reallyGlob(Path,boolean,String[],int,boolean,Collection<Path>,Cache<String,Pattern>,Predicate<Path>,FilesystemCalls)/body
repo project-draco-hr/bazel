@@ -1,0 +1,53 @@
+{
+  if (baseIsDir && !dirPred.apply(base)) {
+    return;
+  }
+  if (idx == patternParts.length) {
+    if (!(excludeDirectories && baseIsDir)) {
+      results.add(base);
+    }
+    return;
+  }
+  if (!baseIsDir) {
+    return;
+  }
+  final String pattern=patternParts[idx];
+  if ("**".equals(pattern)) {
+    queueGlob(base,baseIsDir,patternParts,idx + 1,excludeDirectories,results,cache,dirPred,syscalls);
+  }
+  if (!pattern.contains("*") && !pattern.contains("?")) {
+    Path child=base.getChild(pattern);
+    FileStatus status=syscalls.statNullable(child,Symlinks.FOLLOW);
+    if (status == null || (!status.isDirectory() && !status.isFile())) {
+      return;
+    }
+    boolean childIsDir=status.isDirectory();
+    queueGlob(child,childIsDir,patternParts,idx + 1,excludeDirectories,results,cache,dirPred,syscalls);
+    return;
+  }
+  Collection<Dirent> dents=syscalls.readdir(base,Symlinks.FOLLOW);
+  for (  Dirent dent : dents) {
+    Dirent.Type type=dent.getType();
+    if (type == Dirent.Type.UNKNOWN) {
+      continue;
+    }
+    boolean childIsDir=(type == Dirent.Type.DIRECTORY);
+    String text=dent.getName();
+    Path child=base.getChild(text);
+    if ("**".equals(pattern)) {
+      if (childIsDir) {
+        queueGlob(child,childIsDir,patternParts,idx,excludeDirectories,results,cache,dirPred,syscalls);
+      }
+    }
+    if (matches(pattern,text,cache)) {
+      if (childIsDir) {
+        queueGlob(child,childIsDir,patternParts,idx + 1,excludeDirectories,results,cache,dirPred,syscalls);
+      }
+ else {
+        if (idx + 1 == patternParts.length) {
+          results.add(child);
+        }
+      }
+    }
+  }
+}
