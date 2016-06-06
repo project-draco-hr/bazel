@@ -1,8 +1,5 @@
 {
-  byte[] md5bin=null;
-  if (Objects.equals(path.getFastDigestFunctionType(),"MD5")) {
-    md5bin=getFastDigest(path);
-  }
+  byte[] md5bin=getFastDigest(path);
   if (md5bin != null && !binaryDigestWellFormed(md5bin)) {
     String msg=String.format("Malformed digest '%s' for file %s",BaseEncoding.base16().lowerCase().encode(md5bin),path);
     LoggingUtil.logToRemote(Level.SEVERE,msg,new IllegalStateException(msg));
@@ -11,7 +8,7 @@
   if (md5bin != null) {
     return md5bin;
   }
- else   if (fileSize > 4096) {
+ else   if (fileSize > 4096 && !MULTI_THREADED_DIGEST.get()) {
     return getDigestInExclusiveMode(path);
   }
  else {
