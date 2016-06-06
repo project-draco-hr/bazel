@@ -7,7 +7,15 @@
   pendingOps.incrementAndGet();
   try {
     for (    String[] splitPattern : splitPatterns) {
-      queueGlob(base,baseStat.isDirectory(),splitPattern,0,excludeDirectories,results,cache,dirPred,syscalls);
+      boolean containsRecursivePattern=false;
+      for (      String pattern : splitPattern) {
+        if (isRecursivePattern(pattern)) {
+          containsRecursivePattern=true;
+          break;
+        }
+      }
+      GlobTaskContext context=containsRecursivePattern ? new RecursiveGlobTaskContext(splitPattern,excludeDirectories,dirPred,syscalls) : new GlobTaskContext(splitPattern,excludeDirectories,dirPred,syscalls);
+      context.queueGlob(base,baseStat.isDirectory(),0);
     }
   }
   finally {
