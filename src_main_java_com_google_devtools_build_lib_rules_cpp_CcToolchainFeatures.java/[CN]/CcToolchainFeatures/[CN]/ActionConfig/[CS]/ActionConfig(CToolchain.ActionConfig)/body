@@ -2,4 +2,12 @@
   this.configName=actionConfig.getConfigName();
   this.actionName=actionConfig.getActionName();
   this.tools=actionConfig.getToolList();
+  ImmutableList.Builder<FlagSet> flagSetBuilder=ImmutableList.builder();
+  for (  CToolchain.FlagSet flagSet : actionConfig.getFlagSetList()) {
+    if (!flagSet.getActionList().isEmpty()) {
+      throw new InvalidConfigurationException(String.format(FLAG_SET_WITH_ACTION_ERROR,configName));
+    }
+    flagSetBuilder.add(new FlagSet(flagSet,ImmutableSet.of(actionName)));
+  }
+  this.flagSets=flagSetBuilder.build();
 }
