@@ -1,31 +1,26 @@
 {
-  StringBuilder contents=new StringBuilder();
+  StringWriter contents=new StringWriter();
+  XMLEventWriter writer=XML_OUTPUT_FACTORY.createXMLEventWriter(contents);
   while (!isEndTag(eventReader.peek(),startTag)) {
     XMLEvent xmlEvent=eventReader.nextEvent();
-    if (xmlEvent.isCharacters()) {
-      contents.append(escapeXmlValues(xmlEvent.asCharacters().getData()));
-    }
- else     if (xmlEvent.isStartElement()) {
-      QName name=xmlEvent.asStartElement().getName();
-      contents.append("<");
-      if (!name.getNamespaceURI().isEmpty()) {
-        contents.append(name.getPrefix()).append(':').append(name.getLocalPart()).append(' ').append("xmlns:").append(name.getPrefix()).append("='").append(name.getNamespaceURI()).append("'");
+    if (xmlEvent.isStartElement()) {
+      StartElement start=xmlEvent.asStartElement();
+      QName name=start.getName();
+      List<Namespace> namespaces=maybeAddNamespace(name,null);
+      Iterator<Attribute> attributes=iterateAttributesFrom(start);
+      while (attributes.hasNext()) {
+        Attribute attribute=attributes.next();
+        namespaces=maybeAddNamespace(attribute.getName(),namespaces);
+      }
+      if (namespaces != null) {
+        writer.add(XML_EVENT_FACTORY.createStartElement(name,iterateAttributesFrom(start),namespaces.iterator()));
       }
  else {
-        contents.append(name.getLocalPart());
+        writer.add(xmlEvent);
       }
-      contents.append(">");
     }
- else     if (xmlEvent.isEndElement()) {
-      QName name=xmlEvent.asEndElement().getName();
-      contents.append("</");
-      if (!name.getNamespaceURI().isEmpty()) {
-        contents.append(name.getPrefix()).append(':').append(name.getLocalPart());
-      }
  else {
-        contents.append(name.getLocalPart());
-      }
-      contents.append(">");
+      writer.add(xmlEvent);
     }
   }
   EndElement endElement=eventReader.nextEvent().asEndElement();
