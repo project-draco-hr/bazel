@@ -27,8 +27,11 @@
   String argv=Joiner.on(' ').join(Iterables.transform(getArgv(outputFile.getExecPath()),new Function<String,String>(){
     @Override public String apply(    String input){
       String result=ShellEscaper.escapeString(input);
+      if (input.equals(tempOutputFile.getPathString())) {
+        result=outputPrefix + ShellEscaper.escapeString(outputFile.getExecPathString());
+      }
       if (input.equals(outputFile.getExecPathString()) || input.equals(getDotdFile().getSafeExecPath().getPathString())) {
-        result=outputPrefix + result;
+        result=outputPrefix + ShellEscaper.escapeString(input);
       }
       return result;
     }
