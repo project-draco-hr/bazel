@@ -1,6 +1,9 @@
 {
   scratch.file("foo/BUILD","java_binary(name = 'java', srcs = ['DoesntMatter.java'])","cc_binary(name = 'cpp', data = [':java'])");
   update("//foo:java","//foo:cpp");
+  if (getTargetConfiguration().useDynamicConfigurations()) {
+    fail(ExpectedDynamicConfigurationErrors.LATE_BOUND_ATTRIBUTES_UNSUPPORTED);
+  }
   useConfiguration("--java_launcher=//foo:cpp");
   reporter.removeHandler(failFastHandler);
   try {
