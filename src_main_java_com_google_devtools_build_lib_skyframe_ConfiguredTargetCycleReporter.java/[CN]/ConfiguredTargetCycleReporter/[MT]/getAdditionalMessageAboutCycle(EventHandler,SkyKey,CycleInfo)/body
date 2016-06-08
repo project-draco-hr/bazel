@@ -1,3 +1,14 @@
 {
-  return "\nThis cycle occurred because of a configuration option";
+  if (Iterables.all(cycleInfo.getCycle(),IS_TRANSITIVE_TARGET_SKY_KEY)) {
+    Iterable<SkyKey> pathAsTargetKeys=Iterables.transform(cycleInfo.getPathToCycle(),new Function<SkyKey,SkyKey>(){
+      @Override public SkyKey apply(      SkyKey key){
+        return asTransitiveTargetKey(key);
+      }
+    }
+);
+    return targetReporter.getAdditionalMessageAboutCycle(eventHandler,asTransitiveTargetKey(topLevelKey),new CycleInfo(pathAsTargetKeys,cycleInfo.getCycle()));
+  }
+ else {
+    return "\nThis cycle occurred because of a configuration option";
+  }
 }
