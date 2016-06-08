@@ -2,9 +2,10 @@
   CcToolchainFeatures.Variables.Builder buildVariables=new CcToolchainFeatures.Variables.Builder();
   CppCompilationContext builderContext=builder.getContext();
   CppModuleMap cppModuleMap=builderContext.getCppModuleMap();
+  Artifact sourceFile=builder.getSourceFile();
   Artifact outputFile=builder.getOutputFile();
   String realOutputFilePath;
-  buildVariables.addVariable("source_file",builder.getSourceFile().getExecPathString());
+  buildVariables.addVariable("source_file",sourceFile.getExecPathString());
   buildVariables.addVariable("output_file",outputFile.getExecPathString());
   if (fake) {
     realOutputFilePath=builder.getTempOutputFile().getPathString();
@@ -20,6 +21,10 @@
   }
  else {
     buildVariables.addVariable("output_object_file",realOutputFilePath);
+  }
+  DotdFile dotdFile=CppFileTypes.mustProduceDotdFile(sourceFile.getPath().toString()) ? Preconditions.checkNotNull(builder.getDotdFile()) : null;
+  if (dotdFile != null) {
+    buildVariables.addVariable("dependency_file",dotdFile.getSafeExecPath().getPathString());
   }
   if (featureConfiguration.isEnabled(CppRuleClasses.MODULE_MAPS) && cppModuleMap != null) {
     buildVariables.addVariable("module_name",cppModuleMap.getName());
