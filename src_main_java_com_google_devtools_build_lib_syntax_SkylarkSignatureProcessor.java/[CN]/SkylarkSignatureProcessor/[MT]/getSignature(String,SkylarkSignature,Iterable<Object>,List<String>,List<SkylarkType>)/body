@@ -15,11 +15,10 @@
     for (    Param param : annotation.optionalPositionals()) {
       paramList.add(getParameter(name,param,enforcedTypes,doc,documented,false,false,false,getDefaultValue(param,defaultValuesIterator)));
     }
-    if (annotation.extraPositionals().length > 0 || annotation.optionalNamedOnly().length > 0 || annotation.mandatoryNamedOnly().length > 0) {
+    if (!annotation.extraPositionals().name().isEmpty() || annotation.optionalNamedOnly().length > 0 || annotation.mandatoryNamedOnly().length > 0) {
       @Nullable Param starParam=null;
-      if (annotation.extraPositionals().length > 0) {
-        Preconditions.checkArgument(annotation.extraPositionals().length == 1);
-        starParam=annotation.extraPositionals()[0];
+      if (!annotation.extraPositionals().name().isEmpty()) {
+        starParam=annotation.extraPositionals();
       }
       paramList.add(getParameter(name,starParam,enforcedTypes,doc,documented,false,true,false,null));
     }
@@ -29,9 +28,8 @@
     for (    Param param : annotation.optionalNamedOnly()) {
       paramList.add(getParameter(name,param,enforcedTypes,doc,documented,false,false,false,getDefaultValue(param,defaultValuesIterator)));
     }
-    if (annotation.extraKeywords().length > 0) {
-      Preconditions.checkArgument(annotation.extraKeywords().length == 1);
-      paramList.add(getParameter(name,annotation.extraKeywords()[0],enforcedTypes,doc,documented,false,false,true,null));
+    if (!annotation.extraKeywords().name().isEmpty()) {
+      paramList.add(getParameter(name,annotation.extraKeywords(),enforcedTypes,doc,documented,false,false,true,null));
     }
     FunctionSignature.WithValues<Object,SkylarkType> signature=FunctionSignature.WithValues.<Object,SkylarkType>of(paramList);
     for (    String paramName : signature.getSignature().getNames()) {
