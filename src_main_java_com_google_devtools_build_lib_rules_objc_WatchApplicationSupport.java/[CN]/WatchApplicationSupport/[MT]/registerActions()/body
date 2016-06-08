@@ -4,5 +4,5 @@
   String watchKitStubBinaryPath=workingDirectory + "/" + bundleName;
   String watchKitStubResourcePath=workingDirectory + "/_WatchKitStub";
   ImmutableList<String> command=ImmutableList.of(String.format("cp -f %s %s",WatchUtils.WATCH_KIT_STUB_PATH,watchKitStubBinaryPath),"&&","mkdir -p " + watchKitStubResourcePath,"&&",String.format("cp -f %s %s",WatchUtils.WATCH_KIT_STUB_PATH,watchKitStubResourcePath),"&&","cd " + workingDirectory,"&&",String.format("/usr/bin/zip -q -r -0 %s %s",watchKitStubZip.getFilename(),Joiner.on(" ").join(ImmutableList.of("_WatchKitStub",bundleName))));
-  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext,ruleContext.getFragment(AppleConfiguration.class).getBundlingPlatform()).setProgressMessage("Copying WatchKit binary and stub resource: " + ruleContext.getLabel()).setShellCommand(ImmutableList.of("/bin/bash","-c",Joiner.on(" ").join(command))).addOutput(watchKitStubZip).build(ruleContext));
+  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext,ruleContext.getFragment(AppleConfiguration.class).getMultiArchPlatform(PlatformType.IOS)).setProgressMessage("Copying WatchKit binary and stub resource: " + ruleContext.getLabel()).setShellCommand(ImmutableList.of("/bin/bash","-c",Joiner.on(" ").join(command))).addOutput(watchKitStubZip).build(ruleContext));
 }

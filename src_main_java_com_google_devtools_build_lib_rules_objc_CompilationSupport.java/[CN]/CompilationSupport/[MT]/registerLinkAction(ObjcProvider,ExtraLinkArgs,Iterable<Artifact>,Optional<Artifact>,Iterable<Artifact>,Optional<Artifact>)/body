@@ -4,7 +4,7 @@
   ImmutableList<Artifact> ccLibraries=ccLibraries(objcProvider);
   ImmutableList<Artifact> bazelBuiltLibraries=Iterables.isEmpty(prunedJ2ObjcArchives) ? objcLibraries : substituteJ2ObjcPrunedLibraries(objcProvider);
   CommandLine commandLine=linkCommandLine(extraLinkArgs,objcProvider,binaryToLink,dsymBundleZip,ccLibraries,bazelBuiltLibraries,linkmap);
-  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext,appleConfiguration.getPlatform(PlatformType.IOS)).setMnemonic("ObjcLink").setShellCommand(ImmutableList.of("/bin/bash","-c")).setCommandLine(new SingleArgCommandLine(commandLine)).addOutput(binaryToLink).addOutputs(dsymBundleZip.asSet()).addOutputs(linkmap.asSet()).addInputs(bazelBuiltLibraries).addTransitiveInputs(objcProvider.get(IMPORTED_LIBRARY)).addTransitiveInputs(objcProvider.get(STATIC_FRAMEWORK_FILE)).addTransitiveInputs(objcProvider.get(DYNAMIC_FRAMEWORK_FILE)).addInputs(ccLibraries).addInputs(extraLinkInputs).addInputs(prunedJ2ObjcArchives).addInput(intermediateArtifacts.linkerObjList()).addInput(xcrunwrapper(ruleContext).getExecutable()).build(ruleContext));
+  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext,appleConfiguration.getSingleArchPlatform()).setMnemonic("ObjcLink").setShellCommand(ImmutableList.of("/bin/bash","-c")).setCommandLine(new SingleArgCommandLine(commandLine)).addOutput(binaryToLink).addOutputs(dsymBundleZip.asSet()).addOutputs(linkmap.asSet()).addInputs(bazelBuiltLibraries).addTransitiveInputs(objcProvider.get(IMPORTED_LIBRARY)).addTransitiveInputs(objcProvider.get(STATIC_FRAMEWORK_FILE)).addTransitiveInputs(objcProvider.get(DYNAMIC_FRAMEWORK_FILE)).addInputs(ccLibraries).addInputs(extraLinkInputs).addInputs(prunedJ2ObjcArchives).addInput(intermediateArtifacts.linkerObjList()).addInput(xcrunwrapper(ruleContext).getExecutable()).build(ruleContext));
   if (objcConfiguration.shouldStripBinary()) {
     final Iterable<String> stripArgs;
     if (TargetUtils.isTestRule(ruleContext.getRule())) {
@@ -17,6 +17,6 @@
       stripArgs=ImmutableList.<String>of();
     }
     Artifact strippedBinary=intermediateArtifacts.strippedSingleArchitectureBinary();
-    ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext,appleConfiguration.getPlatform(PlatformType.IOS)).setMnemonic("ObjcBinarySymbolStrip").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(symbolStripCommandLine(stripArgs,binaryToLink,strippedBinary)).addOutput(strippedBinary).addInput(binaryToLink).build(ruleContext));
+    ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext,appleConfiguration.getSingleArchPlatform()).setMnemonic("ObjcBinarySymbolStrip").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(symbolStripCommandLine(stripArgs,binaryToLink,strippedBinary)).addOutput(strippedBinary).addInput(binaryToLink).build(ruleContext));
   }
 }

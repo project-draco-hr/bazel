@@ -3,6 +3,6 @@
   Iterable<Xcdatamodel> xcdatamodels=Xcdatamodels.xcdatamodels(bundling.getIntermediateArtifacts(),objcProvider.get(ObjcProvider.XCDATAMODEL));
   for (  Xcdatamodel datamodel : xcdatamodels) {
     Artifact outputZip=datamodel.getOutputZip();
-    ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext).setMnemonic("MomCompile").setExecutable(attributes.momcWrapper()).addOutput(outputZip).addInputs(datamodel.getInputs()).setCommandLine(CustomCommandLine.builder().addPath(outputZip.getExecPath()).add(datamodel.archiveRootForMomczip()).add("-XD_MOMC_SDKROOT=" + AppleToolchain.sdkDir()).add("-XD_MOMC_IOS_TARGET_VERSION=" + bundling.getMinimumOsVersion()).add("-MOMC_PLATFORMS").add(appleConfiguration.getBundlingPlatform().getLowerCaseNameInPlist()).add("-XD_MOMC_TARGET_VERSION=10.6").add(datamodel.getContainer().getSafePathString()).build()).build(ruleContext));
+    ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext).setMnemonic("MomCompile").setExecutable(attributes.momcWrapper()).addOutput(outputZip).addInputs(datamodel.getInputs()).setCommandLine(CustomCommandLine.builder().addPath(outputZip.getExecPath()).add(datamodel.archiveRootForMomczip()).add("-XD_MOMC_SDKROOT=" + AppleToolchain.sdkDir()).add("-XD_MOMC_IOS_TARGET_VERSION=" + bundling.getMinimumOsVersion()).add("-MOMC_PLATFORMS").add(appleConfiguration.getMultiArchPlatform(PlatformType.IOS).getLowerCaseNameInPlist()).add("-XD_MOMC_TARGET_VERSION=10.6").add(datamodel.getContainer().getSafePathString()).build()).build(ruleContext));
   }
 }
