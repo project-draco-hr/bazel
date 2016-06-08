@@ -1,0 +1,19 @@
+def main(unused_argv):
+    base_json = '{}'
+    manifest = utils.GetLatestManifestFromTar(FLAGS.base)
+    if manifest:
+        config_file = manifest['Config']
+        base_json = utils.GetTarFile(FLAGS.base, config_file)
+    data = json.loads(base_json)
+    layers = []
+    for layer in FLAGS.layer:
+        layers.append(utils.ExtractValue(layer))
+    labels = KeyValueToDict(FLAGS.labels)
+    for (label, value) in labels.iteritems():
+        if value.startswith('@'):
+            with open(value[1:], 'r') as f:
+                labels[label] = f.read()
+    output = CreateImageConfig(data, ConfigOptions(layers=layers, entrypoint=FLAGS.entrypoint, cmd=FLAGS.command, user=FLAGS.user, labels=labels, env=KeyValueToDict(FLAGS.env), ports=FLAGS.ports, volumes=FLAGS.volumes, workdir=FLAGS.workdir))
+    with open(FLAGS.output, 'w') as fp:
+        json.dump(output, fp, sort_keys=True)
+        fp.write('\n')

@@ -1,6 +1,8 @@
 def main(unused_argv):
-    identifier = FLAGS.id
-    if identifier.startswith('@'):
-        with open(identifier[1:], 'r') as f:
-            identifier = f.read()
-    create_image(FLAGS.output, identifier, FLAGS.base, FLAGS.layer, FLAGS.metadata, FLAGS.name, FLAGS.repository)
+    identifier = utils.ExtractValue(FLAGS.id)
+    legacy_id = utils.ExtractValue(FLAGS.legacy_id)
+    layers = []
+    for kv in FLAGS.layer:
+        (k, v) = kv.split('=', 1)
+        layers.append({'name': utils.ExtractValue(k), 'layer': v, })
+    create_image(FLAGS.output, identifier, layers, FLAGS.config, FLAGS.tag, FLAGS.base, FLAGS.legacy_base, legacy_id, FLAGS.metadata, FLAGS.name, FLAGS.repository)

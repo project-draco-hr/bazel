@@ -1,12 +1,39 @@
-def create_image(output, identifier, base=None, layer=None, metadata=None, name=None, repository=None):
-    'Creates a Docker image.\n\n  Args:\n    output: the name of the docker image file to create.\n    identifier: the identifier of the top layer for this image.\n    base: a base layer (optional) to merge to current layer.\n    layer: the layer content (a tar file).\n    metadata: the json metadata file for the top layer.\n    name: symbolic name for this docker image.\n    repository: repository name for this docker image.\n  '
+def create_image(output, identifier, layers, config, tags=None, base=None, legacy_base=None, metadata_id=None, metadata=None, name=None, repository=None):
+    'Creates a Docker image.\n\n  Args:\n    output: the name of the docker image file to create.\n    identifier: the identifier for this image (sha256 of the metadata).\n    layers: the layer content (a sha256 and a tar file).\n    config: the configuration file for the image.\n    tags: tags that apply to this image.\n    base: a base layer (optional) to build on top of.\n    legacy_base: a base layer (optional) to build on top of.\n    metadata_id: the identifier of the top layer for this image.\n    metadata: the json metadata file for the top layer.\n    name: symbolic name for this docker image.\n    repository: repository name for this docker image.\n  '
     tar = archive.TarFileWriter(output)
-    tar.add_file('top', content=identifier)
-    tar.add_file((identifier + '/'), tarfile.DIRTYPE)
-    tar.add_file((identifier + '/VERSION'), content=DATA_FORMAT_VERSION)
-    tar.add_file((identifier + '/layer.tar'), file_content=layer)
-    tar.add_file((identifier + '/json'), file_content=metadata)
+    config_file_name = (identifier + '.json')
+    tar.add_file(config_file_name, file_content=config)
+    layer_file_names = []
+    if metadata_id:
+        tar.add_file('top', content=metadata_id)
+        tar.add_file((metadata_id + '/'), tarfile.DIRTYPE)
+        tar.add_file((metadata_id + '/VERSION'), content=DATA_FORMAT_VERSION)
+        layer_file_name = (metadata_id + '/layer.tar')
+        layer_file_names.append(layer_file_name)
+        tar.add_file(layer_file_name, file_content=layers[0]['layer'])
+        tar.add_file((metadata_id + '/json'), file_content=metadata)
+        if legacy_base:
+            tar.add_tar(legacy_base, name_filter=_base_name_filter)
+    else:
+        for layer in layers:
+            layer_file_name = (((identifier + '/') + layer['name']) + '.tar')
+            layer_file_names.append(layer_file_name)
+            tar.add_file(layer_file_name, file_content=layer['layer'])
+    base_layer_file_names = []
+    parent = None
     if base:
-        tar.add_tar(base, name_filter=_base_name_filter)
+        latest_item = utils.GetLatestManifestFromTar(base)
+        if latest_item:
+            base_layer_file_names = latest_item.get('Layers', [])
+            config_file = latest_item['Config']
+            parent_search = re.search('^(.+)\\.json$', config_file)
+            if parent_search:
+                parent = parent_search.group(1)
+    manifest_item = {'Config': config_file_name, 'Layers': (base_layer_file_names + layer_file_names), 'RepoTags': (tags or []), }
+    if parent:
+        manifest_item['Parent'] = ('sha256:' + parent)
+    manifest = [manifest_item]
+    manifest_content = json.dumps(manifest, sort_keys=True)
+    tar.add_file('manifest.json', content=manifest_content)
     if repository:
         tar.add_file('repositories', content='\n'.join(['{', ('  "%s": {' % repository), ('    "%s": "%s"' % (name, identifier)), '  }', '}']))

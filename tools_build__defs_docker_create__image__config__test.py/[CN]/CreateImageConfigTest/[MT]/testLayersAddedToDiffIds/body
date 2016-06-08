@@ -1,0 +1,8 @@
+def testLayersAddedToDiffIds(self):
+    initial_diff_ids = ['sha256:1', 'sha256:2']
+    in_data = {'rootfs': {'type': 'layers', 'diff_ids': initial_diff_ids, }, }
+    layers = ['3', '4']
+    expected = self.base_expected.copy()
+    expected.update({'rootfs': {'type': 'layers', 'diff_ids': (initial_diff_ids + [('sha256:%s' % l) for l in layers]), }, })
+    actual = CreateImageConfig(in_data, ConfigOptions(layers=layers))
+    self.assertEquals(expected, actual)

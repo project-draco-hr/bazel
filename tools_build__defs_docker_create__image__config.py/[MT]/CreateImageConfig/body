@@ -1,0 +1,51 @@
+def CreateImageConfig(data, options):
+    'Create an image config possibly based on an existing one.\n\n  Args:\n    data: A dict of Docker image config to base on top of.\n    options: Options specific to this image which will be merged with any\n             existing data\n\n  Returns:\n    Image config for the new image\n  '
+    defaults = DeepCopySkipNull(data)
+    output = dict()
+    output['created'] = '0001-01-01T00:00:00Z'
+    output['author'] = 'Bazel'
+    output['architecture'] = _PROCESSOR_ARCHITECTURE
+    output['os'] = _OPERATING_SYSTEM
+    output['config'] = defaults.get('config', {})
+    if options.entrypoint:
+        output['config']['Entrypoint'] = options.entrypoint
+    if options.cmd:
+        output['config']['Cmd'] = options.cmd
+    if options.user:
+        output['config']['User'] = options.user
+
+    def Dict2ConfigValue(d):
+        return [('%s=%s' % (k, d[k])) for k in sorted(d.keys())]
+    if options.env:
+        environ_dict = KeyValueToDict(output['config'].get('Env', []))
+        for (k, v) in options.env.iteritems():
+            environ_dict[k] = Resolve(v, environ_dict)
+        output['config']['Env'] = Dict2ConfigValue(environ_dict)
+    if options.labels:
+        label_dict = KeyValueToDict(output['config'].get('Label', []))
+        for (k, v) in options.labels.iteritems():
+            label_dict[k] = v
+        output['config']['Label'] = Dict2ConfigValue(label_dict)
+    if options.ports:
+        if ('ExposedPorts' not in output['config']):
+            output['config']['ExposedPorts'] = {}
+        for p in options.ports:
+            if ('/' in p):
+                output['config']['ExposedPorts'][p] = {}
+            else:
+                output['config']['ExposedPorts'][(p + '/tcp')] = {}
+    if options.volumes:
+        if ('Volumes' not in output['config']):
+            output['config']['Volumes'] = {}
+        for p in options.volumes:
+            output['config']['Volumes'][p] = {}
+    if options.workdir:
+        output['config']['WorkingDir'] = options.workdir
+    diff_ids = defaults.get('rootfs', {}).get('diff_ids', [])
+    layers = (options.layers if options.layers else [])
+    diff_ids += [('sha256:%s' % l) for l in layers]
+    output['rootfs'] = {'type': 'layers', 'diff_ids': diff_ids, }
+    history = defaults.get('history', [])
+    history += [{'created': '0001-01-01T00:00:00Z', 'created_by': 'bazel build ...', 'author': 'Bazel', }]
+    output['history'] = history
+    return output

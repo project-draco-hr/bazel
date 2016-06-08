@@ -1,0 +1,27 @@
+'This package manipulates OCI image configuration metadata.'
+from collections import namedtuple
+import copy
+import json
+import os
+import os.path
+import sys
+from tools.build_defs.docker import utils
+from third_party.py import gflags
+gflags.DEFINE_string('base', None, 'The parent image')
+gflags.DEFINE_string('output', None, 'The output file to generate')
+gflags.MarkFlagAsRequired('output')
+gflags.DEFINE_multistring('layer', [], 'Layer sha256 hashes that make up this image')
+gflags.DEFINE_list('entrypoint', None, 'Override the "Entrypoint" of the previous image')
+gflags.DEFINE_list('command', None, 'Override the "Cmd" of the previous image')
+gflags.DEFINE_string('user', None, 'The username to run commands under')
+gflags.DEFINE_list('labels', None, 'Augment the "Label" of the previous image')
+gflags.DEFINE_list('ports', None, 'Augment the "ExposedPorts" of the previous image')
+gflags.DEFINE_list('volumes', None, 'Augment the "Volumes" of the previous image')
+gflags.DEFINE_string('workdir', None, 'Set the working directory for the image')
+gflags.DEFINE_list('env', None, 'Augment the "Env" of the previous image')
+FLAGS = gflags.FLAGS
+_ConfigOptionsT = namedtuple('ConfigOptionsT', ['layers', 'entrypoint', 'cmd', 'env', 'labels', 'ports', 'volumes', 'workdir', 'user'])
+_PROCESSOR_ARCHITECTURE = 'amd64'
+_OPERATING_SYSTEM = 'linux'
+if (__name__ == '__main__'):
+    main(FLAGS(sys.argv))

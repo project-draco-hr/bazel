@@ -1,8 +1,12 @@
 def create_image(output, layers, identifier=None, name=None, repository=None):
     'Creates a Docker image from a list of layers.\n\n  Args:\n    output: the name of the docker image file to create.\n    layers: the layers (tar files) to join to the image.\n    identifier: the identifier of the top layer for this image.\n    name: symbolic name for this docker image.\n    repository: repository name for this docker image.\n  '
+    manifest = []
     tar = archive.TarFileWriter(output)
     for layer in layers:
         tar.add_tar(layer, name_filter=_layer_filter)
+        manifest += utils.GetManifestFromTar(layer)
+    manifest_content = json.dumps(manifest, sort_keys=True)
+    tar.add_file('manifest.json', content=manifest_content)
     if identifier:
         tar.add_file('top', content=identifier)
         if (repository and name):
