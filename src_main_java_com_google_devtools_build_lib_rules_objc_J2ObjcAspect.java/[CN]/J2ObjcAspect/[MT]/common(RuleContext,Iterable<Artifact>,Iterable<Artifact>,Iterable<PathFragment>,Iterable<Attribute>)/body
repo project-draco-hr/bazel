@@ -4,11 +4,12 @@
   if (!Iterables.isEmpty(transpiledSources) || !Iterables.isEmpty(transpiledHeaders)) {
     CompilationArtifacts compilationArtifacts=new CompilationArtifacts.Builder().addNonArcSrcs(transpiledSources).setIntermediateArtifacts(intermediateArtifacts).setPchFile(Optional.<Artifact>absent()).addAdditionalHdrs(transpiledHeaders).build();
     builder.setCompilationArtifacts(compilationArtifacts);
+    builder.setHasModuleMap();
   }
   for (  Attribute dependentAttribute : dependentAttributes) {
     if (ruleContext.getAttribute(dependentAttribute.getName()) != null) {
       builder.addDepObjcProviders(ruleContext.getPrerequisites(dependentAttribute.getName(),dependentAttribute.getAccessMode(),ObjcProvider.class));
     }
   }
-  return builder.addUserHeaderSearchPaths(headerSearchPaths).setIntermediateArtifacts(intermediateArtifacts).setHasModuleMap().build();
+  return builder.addUserHeaderSearchPaths(headerSearchPaths).setIntermediateArtifacts(intermediateArtifacts).build();
 }

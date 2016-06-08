@@ -26,11 +26,14 @@
     sourcePath=objcConfiguration.getXcodeWorkspaceRoot() + "/" + sourcePath;
   }
   commandLine.add("-c").add(sourcePath).addExecPath("-o",objFile).add("-MD").addExecPath("-MF",dotdFile);
+  if (objcConfiguration.moduleMapsEnabled()) {
+    additionalInputs.addAll(objcProvider.get(MODULE_MAP));
+  }
   if (moduleMap.isPresent()) {
     if (!attributes.enableModules()) {
       commandLine.add("-fmodule-maps");
     }
     commandLine.add("-iquote").add(moduleMap.get().getArtifact().getExecPath().getParentDirectory().toString()).add("-fmodule-name=" + moduleMap.get().getName());
   }
-  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext,appleConfiguration.getSingleArchPlatform()).setMnemonic("ObjcCompile").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(commandLine.build()).addInput(sourceFile).addInputs(additionalInputs.build()).addOutput(objFile).addOutputs(gcnoFiles.build()).addOutput(dotdFile).addTransitiveInputs(objcProvider.get(HEADER)).addTransitiveInputs(objcProvider.get(MODULE_MAP)).addInputs(compilationArtifacts.getPrivateHdrs()).addTransitiveInputs(objcProvider.get(STATIC_FRAMEWORK_FILE)).addTransitiveInputs(objcProvider.get(DYNAMIC_FRAMEWORK_FILE)).addInputs(compilationArtifacts.getPchFile().asSet()).build(ruleContext));
+  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext,appleConfiguration.getSingleArchPlatform()).setMnemonic("ObjcCompile").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(commandLine.build()).addInput(sourceFile).addInputs(additionalInputs.build()).addOutput(objFile).addOutputs(gcnoFiles.build()).addOutput(dotdFile).addTransitiveInputs(objcProvider.get(HEADER)).addInputs(compilationArtifacts.getPrivateHdrs()).addTransitiveInputs(objcProvider.get(STATIC_FRAMEWORK_FILE)).addTransitiveInputs(objcProvider.get(DYNAMIC_FRAMEWORK_FILE)).addInputs(compilationArtifacts.getPchFile().asSet()).build(ruleContext));
 }
