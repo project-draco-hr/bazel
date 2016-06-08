@@ -29,18 +29,12 @@ Throwable e=x.getCause();
 if (e instanceof EvalException) {
 throw ((EvalException)e).ensureLocation(loc);
 }
- else if (e instanceof InterruptedException) {
-throw (InterruptedException)e;
-}
- else if (e instanceof ClassCastException || e instanceof ExecutionException || e instanceof IllegalStateException) {
-throw new EvalException(loc,"in call to " + getName(),e);
-}
  else if (e instanceof IllegalArgumentException) {
 throw new EvalException(loc,"Illegal argument in call to " + getName(),e);
 }
- else {
+Throwables.propagateIfInstanceOf(e,InterruptedException.class);
+Throwables.propagateIfPossible(e);
 throw badCallException(loc,e,args);
-}
 }
 catch (IllegalArgumentException e) {
 final int len=args.length - ((extraArgs == null) ? 0 : extraArgs.length);
