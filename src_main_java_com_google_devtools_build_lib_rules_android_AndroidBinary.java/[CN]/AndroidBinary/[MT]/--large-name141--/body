@@ -74,10 +74,11 @@
   Artifact splitDeployInfo=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.DEPLOY_INFO_SPLIT);
   AndroidDeployInfoAction.createDeployInfoAction(ruleContext,splitDeployInfo,applicationManifest.getManifest(),additionalMergedManifests,ImmutableList.<Artifact>of());
   NestedSet<Artifact> splitInstallOutputGroup=NestedSetBuilder.<Artifact>stableOrder().addTransitive(allSplitApks).add(splitDeployMarker).add(splitDeployInfo).build();
+  Artifact debugKeystore=androidSemantics.getApkDebugSigningKey(ruleContext);
   Artifact apkManifest=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.APK_MANIFEST);
-  createApkManifestAction(ruleContext,apkManifest,false,androidCommon,resourceClasses,resourceApk,nativeLibs);
+  createApkManifestAction(ruleContext,apkManifest,false,androidCommon,resourceClasses,resourceApk,nativeLibs,debugKeystore);
   Artifact apkManifestText=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.APK_MANIFEST_TEXT);
-  createApkManifestAction(ruleContext,apkManifestText,true,androidCommon,resourceClasses,resourceApk,nativeLibs);
+  createApkManifestAction(ruleContext,apkManifestText,true,androidCommon,resourceClasses,resourceApk,nativeLibs,debugKeystore);
   androidCommon.addTransitiveInfoProviders(builder,androidSemantics,resourceApk,zipAlignedApk,apksUnderTest);
   androidSemantics.addTransitiveInfoProviders(builder,ruleContext,javaCommon,androidCommon,jarToDex);
   if (proguardOutput.getMapping() != null) {
