@@ -1,0 +1,14 @@
+def StubifyMobileInstall(manifest_string):
+    'Does the stubification on an XML string for mobile-install.\n\n  Args:\n    manifest_string: the input manifest as a string.\n  Returns:\n    A tuple of (output manifest, old application class, app package)\n  Raises:\n    Exception: if something goes wrong\n  '
+    (manifest, application) = _ParseManifest(manifest_string)
+    old_application = application.get(('{%s}name' % ANDROID), 'android.app.Application')
+    application.set(('{%s}name' % ANDROID), MOBILE_INSTALL_STUB_APPLICATION)
+    application.attrib.pop(('{%s}hasCode' % ANDROID), None)
+    read_permission = manifest.findall(('./uses-permission[@android:name="%s"]' % READ_EXTERNAL_STORAGE), namespaces={'android': ANDROID, })
+    if (not read_permission):
+        read_permission = ElementTree.Element('uses-permission')
+        read_permission.set(('{%s}name' % ANDROID), READ_EXTERNAL_STORAGE)
+        manifest.insert(0, read_permission)
+    new_manifest = ElementTree.tostring(manifest)
+    app_package = manifest.get('package')
+    return (new_manifest, old_application, app_package)

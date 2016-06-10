@@ -1,0 +1,14 @@
+def _ParseManifest(manifest_string):
+    'Parses the given manifest xml.\n\n  Args:\n    manifest_string: the manifest as a string.\n  Returns:\n    a tuple of the manifest ElementTree and the application tag.\n  Raises:\n    BadManifestException: if the manifest is bad.\n  '
+    manifest = ElementTree.fromstring(manifest_string)
+    if (manifest.tag != 'manifest'):
+        raise BadManifestException('invalid input manifest')
+    app_list = manifest.findall('application')
+    if (len(app_list) == 1):
+        application = app_list[0]
+    elif (len(app_list) == 0):
+        application = ElementTree.Element('application')
+        manifest.insert(0, application)
+    else:
+        raise BadManifestException('multiple <application> elements present')
+    return (manifest, application)
