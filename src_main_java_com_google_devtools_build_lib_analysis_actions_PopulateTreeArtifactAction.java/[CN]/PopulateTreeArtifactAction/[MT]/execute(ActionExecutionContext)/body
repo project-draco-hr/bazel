@@ -10,11 +10,22 @@
 catch (  IllegalManifestFileException e) {
     throw new ActionExecutionException(e,this,true);
   }
+  if (spawn.getOutputFiles().isEmpty()) {
+    return;
+  }
   try {
     checkOutputConflicts(spawn.getOutputFiles());
   }
  catch (  ArtifactPrefixConflictException e) {
     throw new ActionExecutionException(e,this,true);
+  }
+  try {
+    for (    ActionInput fileEntry : spawn.getOutputFiles()) {
+      FileSystemUtils.createDirectoryAndParents(((Artifact)fileEntry).getPath().getParentDirectory());
+    }
+  }
+ catch (  IOException e) {
+    throw new ActionExecutionException(e,this,false);
   }
   try {
     getContext(executor).exec(spawn,actionExecutionContext);

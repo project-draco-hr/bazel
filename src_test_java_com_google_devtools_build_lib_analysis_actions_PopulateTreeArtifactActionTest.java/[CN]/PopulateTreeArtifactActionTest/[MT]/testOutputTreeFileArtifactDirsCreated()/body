@@ -1,0 +1,12 @@
+{
+  Action action=createPopulateTreeArtifactAction();
+  scratch.overwriteFile("archiveManifest.txt","archive_members/dirA/memberA","archive_members/dirB/memberB");
+  ArrayList<Artifact> treeFileArtifacts=new ArrayList<Artifact>();
+  ActionExecutionContext executionContext=actionExecutionContext(treeFileArtifacts);
+  action.execute(executionContext);
+  assertThat(treeFileArtifacts).hasSize(2);
+  for (  Artifact treeFileArtifact : treeFileArtifacts) {
+    assertThat(treeFileArtifact.getPath().getParentDirectory().exists()).isTrue();
+    assertThat(treeFileArtifact.getPath().exists()).isFalse();
+  }
+}

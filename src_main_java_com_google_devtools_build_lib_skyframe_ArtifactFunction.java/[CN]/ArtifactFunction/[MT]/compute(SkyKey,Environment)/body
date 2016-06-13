@@ -14,6 +14,13 @@
     return null;
   }
   if (artifact.isTreeArtifact() && actionMetadata instanceof SpawnActionTemplate) {
+    try {
+      FileSystemUtils.createDirectoryAndParents(artifact.getPath());
+    }
+ catch (    IOException e) {
+      env.getListener().handle(Event.error(String.format("Failed to create output directory for TreeArtifact %s: %s",artifact,e.getMessage())));
+      throw new ArtifactFunctionException(e,Transience.TRANSIENT);
+    }
     return createTreeArtifactValueFromActionTemplate((SpawnActionTemplate)actionMetadata,artifact,env);
   }
  else {
