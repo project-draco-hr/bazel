@@ -1,9 +1,14 @@
 {
-  if (IS_CONFIGURED_TARGET_SKY_KEY.apply(key)) {
+  if (SkyFunctions.isSkyFunction(SkyFunctions.CONFIGURED_TARGET).apply(key)) {
     return ((ConfiguredTargetKey)key.argument()).getLabel();
   }
- else {
-    Verify.verify(IS_TRANSITIVE_TARGET_SKY_KEY.apply(key));
+ else   if (SkyFunctions.isSkyFunction(SkyFunctions.ASPECT).apply(key)) {
+    return ((AspectKey)key.argument()).getLabel();
+  }
+ else   if (SkyFunctions.isSkyFunction(TRANSITIVE_TARGET).apply(key)) {
     return (Label)key.argument();
+  }
+ else {
+    throw new UnsupportedOperationException();
   }
 }
