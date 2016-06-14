@@ -1,6 +1,6 @@
 {
   long actionCacheSizeInBytes=0;
-  long actionCacheSaveTime;
+  long actionCacheSaveTimeInMs;
   AutoProfiler p=AutoProfiler.profiledAndLogged("Saving action cache",ProfilerTask.INFO,LOG);
   try {
     actionCacheSizeInBytes=actionCache.save();
@@ -9,7 +9,7 @@
     getReporter().handle(Event.error("I/O error while writing action log: " + e.getMessage()));
   }
  finally {
-    actionCacheSaveTime=p.completeAndGetElapsedTimeNanos();
+    actionCacheSaveTimeInMs=MILLISECONDS.convert(p.completeAndGetElapsedTimeNanos(),NANOSECONDS);
   }
-  env.getEventBus().post(new CachesSavedEvent(actionCacheSaveTime,actionCacheSizeInBytes));
+  env.getEventBus().post(new CachesSavedEvent(actionCacheSaveTimeInMs,actionCacheSizeInBytes));
 }
