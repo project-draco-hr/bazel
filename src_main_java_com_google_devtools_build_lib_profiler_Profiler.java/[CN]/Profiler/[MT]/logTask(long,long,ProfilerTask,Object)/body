@@ -5,15 +5,21 @@
     duration=0;
   }
   tasksHistograms[type.ordinal()].addStat((int)TimeUnit.NANOSECONDS.toMillis(duration),object);
-  TaskData parent=taskStack.peek();
+  TaskStack localStack=taskStack;
+  Queue<TaskData> localQueue=taskQueue;
+  if (localStack == null || localQueue == null) {
+    LOG.severe("Variables null in profiler for " + type + ", probably due to async crash");
+    return;
+  }
+  TaskData parent=localStack.peek();
   if (parent != null) {
     parent.aggregateChild(type,duration);
   }
   if (wasTaskSlowEnoughToRecord(type,duration)) {
-    TaskData data=taskStack.create(startTime,type,object);
+    TaskData data=localStack.create(startTime,type,object);
     data.duration=duration;
     if (out != null) {
-      taskQueue.add(data);
+      localQueue.add(data);
     }
     SlowestTaskAggregator aggregator=slowestTasks[type.ordinal()];
     if (aggregator != null) {
