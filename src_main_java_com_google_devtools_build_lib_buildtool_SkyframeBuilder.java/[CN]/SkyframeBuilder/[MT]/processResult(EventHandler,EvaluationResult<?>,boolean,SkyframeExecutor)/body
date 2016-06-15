@@ -8,7 +8,18 @@
       rethrow(result.getCatastrophe());
     }
     if (keepGoing) {
-      return false;
+      ExitCode exitCode=null;
+      for (      Map.Entry<SkyKey,ErrorInfo> error : result.errorMap().entrySet()) {
+        Throwable cause=error.getValue().getException();
+        if (cause instanceof ActionExecutionException) {
+          ActionExecutionException actionExecutionCause=(ActionExecutionException)cause;
+          ExitCode code=actionExecutionCause.getExitCode();
+          if (ExitCodeComparator.INSTANCE.compare(code,exitCode) > 0) {
+            exitCode=code;
+          }
+        }
+      }
+      return Optional.fromNullable(exitCode);
     }
     ErrorInfo errorInfo=Preconditions.checkNotNull(result.getError(),result);
     Exception exception=errorInfo.getException();
@@ -20,5 +31,5 @@
       rethrow(exception);
     }
   }
-  return true;
+  return null;
 }

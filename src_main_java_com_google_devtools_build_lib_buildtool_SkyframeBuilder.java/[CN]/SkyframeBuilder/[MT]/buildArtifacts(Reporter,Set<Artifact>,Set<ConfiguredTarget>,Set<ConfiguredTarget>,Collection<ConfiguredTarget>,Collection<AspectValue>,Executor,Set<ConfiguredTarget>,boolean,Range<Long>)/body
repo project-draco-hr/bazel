@@ -4,7 +4,7 @@
   ExecutionProgressReceiver executionProgressReceiver=new ExecutionProgressReceiver(Preconditions.checkNotNull(builtTargets),countTestActions(exclusiveTests),skyframeExecutor.getEventBus());
   skyframeExecutor.getEventBus().post(new ExecutionProgressReceiverAvailableEvent(executionProgressReceiver));
   ResourceManager.instance().setEventBus(skyframeExecutor.getEventBus());
-  boolean success=false;
+  List<ExitCode> exitCodes=new LinkedList<>();
   EvaluationResult<?> result;
   ActionExecutionStatusReporter statusReporter=ActionExecutionStatusReporter.create(reporter,executor,skyframeExecutor.getEventBus());
   AtomicBoolean isBuildingExclusiveArtifacts=new AtomicBoolean(false);
@@ -13,14 +13,19 @@
   watchdog.start();
   try {
     result=skyframeExecutor.buildArtifacts(reporter,executor,artifacts,targetsToBuild,aspects,parallelTests,false,keepGoing,explain,finalizeActionsToOutputService,numJobs,actionCacheChecker,executionProgressReceiver);
-    success=processResult(reporter,result,keepGoing,skyframeExecutor);
-    Preconditions.checkState(!success || result.keyNames().size() == (artifacts.size() + targetsToBuild.size() + aspects.size()+ parallelTests.size()),"Build reported as successful but not all artifacts and targets built: %s, %s",result,artifacts);
+    Optional<ExitCode> exitCode=processResult(reporter,result,keepGoing,skyframeExecutor);
+    Preconditions.checkState(exitCode != null || result.keyNames().size() == (artifacts.size() + targetsToBuild.size() + aspects.size()+ parallelTests.size()),"Build reported as successful but not all artifacts and targets built: %s, %s",result,artifacts);
+    if (exitCode != null) {
+      exitCodes.add(exitCode.orNull());
+    }
     isBuildingExclusiveArtifacts.set(true);
     for (    ConfiguredTarget exclusiveTest : exclusiveTests) {
       result=skyframeExecutor.buildArtifacts(reporter,executor,ImmutableSet.<Artifact>of(),targetsToBuild,aspects,ImmutableSet.of(exclusiveTest),true,keepGoing,explain,finalizeActionsToOutputService,numJobs,actionCacheChecker,null);
-      boolean exclusiveSuccess=processResult(reporter,result,keepGoing,skyframeExecutor);
-      Preconditions.checkState(!exclusiveSuccess || !result.keyNames().isEmpty(),"Build reported as successful but test %s not executed: %s",exclusiveTest,result);
-      success&=exclusiveSuccess;
+      exitCode=processResult(reporter,result,keepGoing,skyframeExecutor);
+      Preconditions.checkState(exitCode != null || !result.keyNames().isEmpty(),"Build reported as successful but test %s not executed: %s",exclusiveTest,result);
+      if (exitCode != null) {
+        exitCodes.add(exitCode.orNull());
+      }
     }
   }
   finally {
@@ -29,7 +34,12 @@
     skyframeExecutor.setActionExecutionProgressReportingObjects(null,null,null);
     statusReporter.unregisterFromEventBus();
   }
-  if (!success) {
-    throw new BuildFailedException();
+  if (!exitCodes.isEmpty()) {
+    if (keepGoing) {
+      throw new BuildFailedException(null,Collections.max(exitCodes,ExitCodeComparator.INSTANCE));
+    }
+ else {
+      throw new BuildFailedException();
+    }
   }
 }
