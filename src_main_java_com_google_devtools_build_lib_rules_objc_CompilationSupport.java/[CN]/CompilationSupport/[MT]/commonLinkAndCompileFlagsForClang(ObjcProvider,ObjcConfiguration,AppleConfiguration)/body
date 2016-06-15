@@ -1,14 +1,24 @@
 {
   ImmutableList.Builder<String> builder=new ImmutableList.Builder<>();
   Platform platform=appleConfiguration.getSingleArchPlatform();
-  if (platform == Platform.IOS_SIMULATOR) {
+switch (platform) {
+case IOS_SIMULATOR:
     builder.add("-mios-simulator-version-min=" + objcConfiguration.getMinimumOs());
-  }
- else {
-    builder.add("-miphoneos-version-min=" + objcConfiguration.getMinimumOs());
-  }
-  if (objcConfiguration.generateDebugSymbols() || objcConfiguration.generateDsym()) {
-    builder.add("-g");
-  }
-  return builder.add("-arch",appleConfiguration.getSingleArchitecture()).add("-isysroot",AppleToolchain.sdkDir()).addAll(commonFrameworkFlags(provider,appleConfiguration)).build();
+  break;
+case IOS_DEVICE:
+builder.add("-miphoneos-version-min=" + objcConfiguration.getMinimumOs());
+break;
+case WATCHOS_SIMULATOR:
+builder.add("-mwatchos-simulator-version-min=" + appleConfiguration.getSdkVersionForPlatform(platform));
+break;
+case WATCHOS_DEVICE:
+builder.add("-mwatchos-version-min=" + appleConfiguration.getSdkVersionForPlatform(platform));
+break;
+default :
+throw new IllegalArgumentException("Unhandled platform " + platform);
+}
+if (objcConfiguration.generateDebugSymbols() || objcConfiguration.generateDsym()) {
+builder.add("-g");
+}
+return builder.add("-arch",appleConfiguration.getSingleArchitecture()).add("-isysroot",AppleToolchain.sdkDir()).addAll(commonFrameworkFlags(provider,appleConfiguration)).build();
 }

@@ -1,0 +1,32 @@
+{
+  List<String> cpus;
+  ConfigurationDistinguisher configurationDistinguisher;
+switch (platformType) {
+case IOS:
+    cpus=buildOptions.get(AppleCommandLineOptions.class).iosMultiCpus;
+  configurationDistinguisher=ConfigurationDistinguisher.APPLEBIN_IOS;
+break;
+case WATCHOS:
+cpus=buildOptions.get(AppleCommandLineOptions.class).watchosCpus;
+if (cpus.isEmpty()) {
+cpus=ImmutableList.of(AppleCommandLineOptions.DEFAULT_WATCHOS_CPU);
+}
+configurationDistinguisher=ConfigurationDistinguisher.APPLEBIN_WATCHOS;
+break;
+default :
+throw new IllegalArgumentException("Unsupported platform type " + platformType);
+}
+ImmutableList.Builder<BuildOptions> splitBuildOptions=ImmutableList.builder();
+for (String cpu : cpus) {
+BuildOptions splitOptions=buildOptions.clone();
+splitOptions.get(AppleCommandLineOptions.class).applePlatformType=platformType;
+splitOptions.get(AppleCommandLineOptions.class).appleSplitCpu=cpu;
+splitOptions.get(AppleCommandLineOptions.class).iosCpu=cpu;
+if (splitOptions.get(ObjcCommandLineOptions.class).enableCcDeps) {
+splitOptions.get(BuildConfiguration.Options.class).cpu=String.format("%s_%s",platformType,cpu);
+}
+splitOptions.get(AppleCommandLineOptions.class).configurationDistinguisher=configurationDistinguisher;
+splitBuildOptions.add(splitOptions);
+}
+return splitBuildOptions.build();
+}
