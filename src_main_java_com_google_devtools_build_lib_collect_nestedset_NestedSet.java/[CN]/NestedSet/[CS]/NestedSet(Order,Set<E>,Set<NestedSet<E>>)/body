@@ -1,0 +1,74 @@
+{
+  this.order=order;
+  Collection<E> directOrder=direct;
+  Collection<NestedSet<E>> transitiveOrder=transitive;
+  boolean preorder;
+switch (order) {
+case LINK_ORDER:
+    directOrder=ImmutableList.copyOf(direct).reverse();
+  transitiveOrder=ImmutableList.copyOf(transitive).reverse();
+preorder=false;
+break;
+case STABLE_ORDER:
+case COMPILE_ORDER:
+preorder=false;
+break;
+case NAIVE_LINK_ORDER:
+preorder=true;
+break;
+default :
+throw new AssertionError(order);
+}
+Set<E> alreadyInserted=ImmutableSet.of();
+Object[] children=new Object[direct.size() + transitive.size()];
+int n=0;
+boolean leaf=true;
+for (int pass=0; pass <= 1; ++pass) {
+if ((pass == 0) == preorder && !direct.isEmpty()) {
+for (E member : directOrder) {
+if (member instanceof Object[]) {
+throw new IllegalArgumentException("cannot store Object[] in NestedSet");
+}
+if (!alreadyInserted.contains(member)) {
+children[n++]=member;
+}
+}
+alreadyInserted=direct;
+}
+ else if ((pass == 1) == preorder && !transitive.isEmpty()) {
+CompactHashSet<E> hoisted=CompactHashSet.create();
+for (NestedSet<E> subset : transitiveOrder) {
+Object c=subset.children;
+if (c instanceof Object[]) {
+Object[] a=(Object[])c;
+if (a.length < 2) {
+throw new AssertionError(a.length);
+}
+children[n++]=a;
+leaf=false;
+}
+ else {
+if (!alreadyInserted.contains((E)c) && hoisted.add((E)c)) {
+children[n++]=c;
+}
+}
+}
+alreadyInserted=hoisted;
+}
+}
+if (n == 1) {
+this.children=children[0];
+}
+ else if (n == 0) {
+this.children=EMPTY_CHILDREN;
+}
+ else if (n < children.length) {
+this.children=Arrays.copyOf(children,n);
+}
+ else {
+this.children=children;
+}
+if (leaf) {
+this.memo=LEAF_MEMO;
+}
+}

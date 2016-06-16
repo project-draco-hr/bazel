@@ -3,10 +3,16 @@
   if (wrappedList.isEmpty()) {
     return order.emptySet();
   }
- else   if (wrappedList.size() == 1) {
-    return order.factory.oneDirect(getOnlyElement(wrappedItems));
+ else   if (order == Order.STABLE_ORDER && wrappedList == wrappedItems && wrappedList.size() > 1) {
+    NestedSet<?> cached=immutableListCache.get(wrappedList);
+    if (cached != null) {
+      return (NestedSet<E>)cached;
+    }
+    NestedSet<E> built=new NestedSetBuilder<E>(order).addAll(wrappedList).build();
+    immutableListCache.putIfAbsent(wrappedList,built);
+    return built;
   }
  else {
-    return order.factory.onlyDirects(wrappedList);
+    return new NestedSetBuilder<E>(order).addAll(wrappedList).build();
   }
 }

@@ -2,42 +2,12 @@
   if (isEmpty()) {
     return order.emptySet();
   }
-  LinkedHashSet<NestedSet<E>> transitiveSetsCast=(LinkedHashSet<NestedSet<E>>)(LinkedHashSet<?>)transitiveSets;
+  CompactHashSet<NestedSet<E>> transitiveSetsCast=(CompactHashSet<NestedSet<E>>)(CompactHashSet<?>)transitiveSets;
   if (items.isEmpty() && (transitiveSetsCast.size() == 1)) {
     NestedSet<E> candidate=getOnlyElement(transitiveSetsCast);
     if (candidate.getOrder().equals(order)) {
       return candidate;
     }
   }
-  int transitiveSize=transitiveSets.size();
-  int directSize=items.size();
-switch (transitiveSize) {
-case 0:
-switch (directSize) {
-case 0:
-      return order.emptySet();
-case 1:
-    return order.factory.oneDirect(getOnlyElement(items));
-default :
-  return order.factory.onlyDirects(items.toArray());
-}
-case 1:
-switch (directSize) {
-case 0:
-return order.factory.onlyOneTransitive(getOnlyElement(transitiveSetsCast));
-case 1:
-return order.factory.oneDirectOneTransitive(getOnlyElement(items),getOnlyElement(transitiveSetsCast));
-default :
-return order.factory.manyDirectsOneTransitive(items.toArray(),getOnlyElement(transitiveSetsCast));
-}
-default :
-switch (directSize) {
-case 0:
-return order.factory.onlyManyTransitives(transitiveSetsCast.toArray(new NestedSet[transitiveSize]));
-case 1:
-return order.factory.oneDirectManyTransitive(getOnlyElement(items),transitiveSetsCast.toArray(new NestedSet[transitiveSize]));
-default :
-return order.factory.manyDirectManyTransitive(items.toArray(),transitiveSetsCast.toArray(new NestedSet[transitiveSize]));
-}
-}
+  return new NestedSet<E>(order,items,transitiveSetsCast);
 }

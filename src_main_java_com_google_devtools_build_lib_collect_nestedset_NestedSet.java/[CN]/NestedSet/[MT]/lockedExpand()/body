@@ -1,0 +1,16 @@
+{
+  if (memo != null) {
+    return null;
+  }
+  Object[] children=(Object[])this.children;
+  CompactHashSet<E> members=CompactHashSet.createWithExpectedSize(128);
+  CompactHashSet<Object> sets=CompactHashSet.createWithExpectedSize(128);
+  sets.add(children);
+  memo=new byte[Math.min((children.length + 7) / 8,8)];
+  int pos=walk(sets,members,children,0);
+  int bytes=(pos + 7) / 8;
+  if (bytes <= memo.length - 16) {
+    memo=Arrays.copyOf(memo,bytes);
+  }
+  return members;
+}

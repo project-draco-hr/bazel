@@ -1,0 +1,13 @@
+{
+  if (memo == LEAF_MEMO) {
+    return ImmutableList.<E>copyOf(new ArraySharingCollection<E>((Object[])children));
+  }
+  CompactHashSet<E> members=lockedExpand();
+  if (members != null) {
+    return ImmutableList.copyOf(members);
+  }
+  Object[] children=(Object[])this.children;
+  ImmutableList.Builder<E> output=ImmutableList.builder();
+  replay(output,children,memo,0);
+  return output.build();
+}
