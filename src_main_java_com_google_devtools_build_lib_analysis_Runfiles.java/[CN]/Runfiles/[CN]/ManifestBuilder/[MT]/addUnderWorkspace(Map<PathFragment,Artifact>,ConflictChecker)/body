@@ -3,13 +3,10 @@
     PathFragment path=entry.getKey();
     if (isUnderWorkspace(path)) {
       sawWorkspaceName=true;
-      checker.put(manifest,workspaceName.getRelative(path),entry.getValue());
     }
- else {
-      if (legacyExternalRunfiles) {
-        checker.put(manifest,workspaceName.getRelative(path),entry.getValue());
-      }
-      checker.put(manifest,getExternalPath(path),entry.getValue());
+ else     if (legacyExternalRunfiles) {
+      checker.put(manifest,workspaceName.getRelative(Label.EXTERNAL_PACKAGE_NAME).getRelative(workspaceName).getRelative(path).normalize(),entry.getValue());
     }
+    checker.put(manifest,workspaceName.getRelative(path).normalize(),entry.getValue());
   }
 }

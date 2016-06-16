@@ -1,0 +1,23 @@
+{
+  Path rootA=fileSystem.getPath("/A");
+  Path rootB=fileSystem.getPath("/B");
+  ImmutableMap<PackageIdentifier,Path> packageRootMap=ImmutableMap.<PackageIdentifier,Path>builder().put(createPkg(rootA,rootB,"pkgA"),rootA).put(createPkg(rootA,rootB,"dir1/pkgA"),rootA).put(createPkg(rootA,rootB,"dir1/pkgB"),rootB).put(createPkg(rootA,rootB,"dir2/pkg"),rootA).put(createPkg(rootA,rootB,"dir2/pkg/pkg"),rootB).put(createPkg(rootA,rootB,"pkgB"),rootB).put(createPkg(rootA,rootB,"pkgB/dir/pkg"),rootA).put(createPkg(rootA,rootB,"pkgB/pkg"),rootA).put(createPkg(rootA,rootB,"pkgB/pkg/pkg"),rootA).build();
+  createPkg(rootA,rootB,"pkgB/dir");
+  Path linkRoot=fileSystem.getPath("/linkRoot");
+  createDirectoryAndParents(linkRoot);
+  SymlinkForest forest=new SymlinkForest(packageRootMap,linkRoot,TestConstants.PRODUCT_NAME);
+  forest.plantLinkForest();
+  assertLinksTo(linkRoot,rootA,"pkgA");
+  assertIsDir(linkRoot,"dir1");
+  assertLinksTo(linkRoot,rootA,"dir1/pkgA");
+  assertLinksTo(linkRoot,rootB,"dir1/pkgB");
+  assertIsDir(linkRoot,"dir2");
+  assertIsDir(linkRoot,"dir2/pkg");
+  assertLinksTo(linkRoot,rootA,"dir2/pkg/file");
+  assertLinksTo(linkRoot,rootB,"dir2/pkg/pkg");
+  assertIsDir(linkRoot,"pkgB");
+  assertIsDir(linkRoot,"pkgB/dir");
+  assertLinksTo(linkRoot,rootB,"pkgB/dir/file");
+  assertLinksTo(linkRoot,rootA,"pkgB/dir/pkg");
+  assertLinksTo(linkRoot,rootA,"pkgB/pkg");
+}

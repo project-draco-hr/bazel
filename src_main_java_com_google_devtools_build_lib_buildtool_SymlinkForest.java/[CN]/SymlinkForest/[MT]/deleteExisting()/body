@@ -1,0 +1,11 @@
+{
+  FileSystemUtils.createDirectoryAndParents(workspace);
+  FileSystemUtils.deleteTreesBelowNotPrefixed(workspace,new String[]{".","_",productName + "-"});
+  for (  Map.Entry<PackageIdentifier,Path> entry : packageRoots.entrySet()) {
+    RepositoryName repo=entry.getKey().getRepository();
+    Path repoPath=workspace.getRelative(repo.getPathFragment());
+    if (!repo.isMain() && repoPath.exists()) {
+      FileSystemUtils.deleteTree(repoPath);
+    }
+  }
+}

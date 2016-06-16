@@ -1,0 +1,16 @@
+{
+  Map<PackageIdentifier,Root> packageRoots=ImmutableMap.of(PackageIdentifier.create("@workspace",new PathFragment("")),clientRoot,PackageIdentifier.create("@repo",new PathFragment("dir")),clientRoot);
+  artifactFactory.setPackageRoots(packageRoots);
+  PathFragment topLevel=new PathFragment("../workspace/foo");
+  PathFragment subdir=new PathFragment("../repo/dir/foo");
+  Artifact topLevelArtifact=artifactFactory.resolveSourceArtifact(topLevel);
+  assertThat(topLevelArtifact).isNotNull();
+  Artifact subdirArtifact=artifactFactory.resolveSourceArtifact(subdir);
+  assertThat(subdirArtifact).isNotNull();
+  MockPackageRootResolver packageRootResolver=new MockPackageRootResolver();
+  packageRootResolver.setPackageRoots(packageRoots);
+  Map<PathFragment,Artifact> result=new HashMap<>();
+  result.put(topLevel,topLevelArtifact);
+  result.put(subdir,subdirArtifact);
+  assertThat(artifactFactory.resolveSourceArtifacts(ImmutableList.of(topLevel,subdir),packageRootResolver).entrySet()).containsExactlyElementsIn(result.entrySet());
+}

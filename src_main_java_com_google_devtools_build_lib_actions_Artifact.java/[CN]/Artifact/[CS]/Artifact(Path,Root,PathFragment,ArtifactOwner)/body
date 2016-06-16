@@ -1,18 +1,18 @@
 {
-  if (root == null || !path.startsWith(root.getPath())) {
+  if (root == null || !pathMostlyStartsWith(path,root.getPath())) {
     throw new IllegalArgumentException(root + ": illegal root for " + path+ " (execPath: "+ execPath+ ")");
   }
-  if (execPath == null || execPath.isAbsolute() || !path.asFragment().endsWith(execPath)) {
+  if (execPath == null || execPath.isAbsolute() || !pathEndsWith(path.asFragment(),execPath)) {
     throw new IllegalArgumentException(execPath + ": illegal execPath for " + path+ " (root: "+ root+ ")");
   }
   this.hashCode=path.hashCode();
   this.path=path;
   this.root=root;
   this.execPath=execPath;
-  PathFragment rootRel=path.relativeTo(root.getPath());
-  if (!execPath.endsWith(rootRel)) {
+  PathFragment rootRel=getRelativePath(path.asFragment(),root.getPath().asFragment());
+  if (!pathEndsWith(execPath,rootRel)) {
     throw new IllegalArgumentException(execPath + ": illegal execPath doesn't end with " + rootRel+ " at "+ path+ " with root "+ root);
   }
-  this.rootRelativePath=rootRel.equals(execPath) ? execPath : rootRel;
+  this.rootRelativePath=root.getPath().getRelative(rootRel).asFragment().normalize().equals(root.getPath().getRelative(execPath).asFragment().normalize()) ? execPath : rootRel;
   this.owner=Preconditions.checkNotNull(owner,path);
 }
