@@ -1,0 +1,16 @@
+{
+  String strategy="verySpecialStrategy";
+  String primaryOutput="some/path/to/a/file";
+  ManualClock clock=new ManualClock();
+  Path path=outputBase.getRelative(new PathFragment(primaryOutput));
+  Artifact artifact=new Artifact(path,Root.asSourceRoot(path));
+  ActionExecutionMetadata actionMetadata=Mockito.mock(ActionExecutionMetadata.class);
+  when(actionMetadata.getPrimaryOutput()).thenReturn(artifact);
+  ExperimentalStateTracker stateTracker=new ExperimentalStateTracker(clock);
+  stateTracker.actionStarted(new ActionStartedEvent(mockAction("Some random action",primaryOutput),clock.nanoTime()));
+  stateTracker.actionStatusMessage(ActionStatusMessage.runningStrategy(actionMetadata,strategy));
+  LoggingTerminalWriter terminalWriter=new LoggingTerminalWriter(true);
+  stateTracker.writeProgressBar(terminalWriter);
+  String output=terminalWriter.getTranscript();
+  assertTrue("Output should mention strategy '" + strategy + "', but was: "+ output,output.contains(strategy));
+}
