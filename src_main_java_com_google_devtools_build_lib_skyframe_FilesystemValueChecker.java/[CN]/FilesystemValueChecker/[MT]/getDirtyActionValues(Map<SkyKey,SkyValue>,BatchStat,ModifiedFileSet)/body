@@ -21,9 +21,20 @@
   ThrowableRecordingRunnableWrapper wrapper=new ThrowableRecordingRunnableWrapper("FileSystemValueChecker#getDirtyActionValues");
   modifiedOutputFilesCounter.set(0);
   modifiedOutputFilesIntraBuildCounter.set(0);
-  ImmutableSet<PathFragment> knownModifiedOutputFiles=modifiedOutputFiles == ModifiedFileSet.EVERYTHING_MODIFIED ? null : modifiedOutputFiles.modifiedSourceFiles();
+  final ImmutableSet<PathFragment> knownModifiedOutputFiles=modifiedOutputFiles == ModifiedFileSet.EVERYTHING_MODIFIED ? null : modifiedOutputFiles.modifiedSourceFiles();
+  Supplier<NavigableSet<PathFragment>> sortedKnownModifiedOutputFiles=Suppliers.memoize(new Supplier<NavigableSet<PathFragment>>(){
+    @Override public NavigableSet<PathFragment> get(){
+      if (knownModifiedOutputFiles == null) {
+        return null;
+      }
+ else {
+        return ImmutableSortedSet.copyOf(knownModifiedOutputFiles);
+      }
+    }
+  }
+);
   for (  List<Pair<SkyKey,ActionExecutionValue>> shard : outputShards) {
-    Runnable job=(batchStatter == null) ? outputStatJob(dirtyKeys,shard,knownModifiedOutputFiles) : batchStatJob(dirtyKeys,shard,batchStatter,knownModifiedOutputFiles);
+    Runnable job=(batchStatter == null) ? outputStatJob(dirtyKeys,shard,knownModifiedOutputFiles,sortedKnownModifiedOutputFiles) : batchStatJob(dirtyKeys,shard,batchStatter,knownModifiedOutputFiles,sortedKnownModifiedOutputFiles);
     executor.submit(wrapper.wrap(job));
   }
   boolean interrupted=ExecutorUtil.interruptibleShutdown(executor);

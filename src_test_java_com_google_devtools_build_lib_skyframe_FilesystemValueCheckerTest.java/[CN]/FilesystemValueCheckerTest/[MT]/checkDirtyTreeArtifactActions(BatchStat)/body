@@ -13,11 +13,14 @@
   FileSystemUtils.createDirectoryAndParents(outEmpty.getPath());
   Artifact outUnchanging=createTreeArtifact("untouched");
   FileSystemUtils.createDirectoryAndParents(outUnchanging.getPath());
+  Artifact last=createTreeArtifact("zzzzzzzzzz");
+  FileSystemUtils.createDirectoryAndParents(last.getPath());
   Action action1=new TestAction(Runnables.doNothing(),ImmutableSet.<Artifact>of(),ImmutableSet.of(out1));
   Action action2=new TestAction(Runnables.doNothing(),ImmutableSet.<Artifact>of(),ImmutableSet.of(out2));
   Action actionEmpty=new TestAction(Runnables.doNothing(),ImmutableSet.<Artifact>of(),ImmutableSet.of(outEmpty));
   Action actionUnchanging=new TestAction(Runnables.doNothing(),ImmutableSet.<Artifact>of(),ImmutableSet.of(outUnchanging));
-  differencer.inject(ImmutableMap.<SkyKey,SkyValue>of(ActionExecutionValue.key(action1),actionValueWithTreeArtifacts(ImmutableList.of(file11)),ActionExecutionValue.key(action2),actionValueWithTreeArtifacts(ImmutableList.of(file21,file22)),ActionExecutionValue.key(actionEmpty),actionValueWithEmptyDirectory(outEmpty),ActionExecutionValue.key(actionUnchanging),actionValueWithEmptyDirectory(outUnchanging)));
+  Action lastAction=new TestAction(Runnables.doNothing(),ImmutableSet.<Artifact>of(),ImmutableSet.of(last));
+  differencer.inject(ImmutableMap.<SkyKey,SkyValue>of(ActionExecutionValue.key(action1),actionValueWithTreeArtifacts(ImmutableList.of(file11)),ActionExecutionValue.key(action2),actionValueWithTreeArtifacts(ImmutableList.of(file21,file22)),ActionExecutionValue.key(actionEmpty),actionValueWithEmptyDirectory(outEmpty),ActionExecutionValue.key(actionUnchanging),actionValueWithEmptyDirectory(outUnchanging),ActionExecutionValue.key(lastAction),actionValueWithEmptyDirectory(last)));
   assertFalse(driver.evaluate(ImmutableList.<SkyKey>of(),false,1,NullEventHandler.INSTANCE).hasError());
   assertThat(new FilesystemValueChecker(null,null).getDirtyActionValues(evaluator.getValues(),batchStatter,ModifiedFileSet.EVERYTHING_MODIFIED)).isEmpty();
   FileSystemUtils.touchFile(out1.getPath());
@@ -43,5 +46,12 @@
   file21.getPath().delete();
   assertThat(new FilesystemValueChecker(null,null).getDirtyActionValues(evaluator.getValues(),batchStatter,ModifiedFileSet.EVERYTHING_MODIFIED)).containsExactly(ActionExecutionValue.key(action1),ActionExecutionValue.key(action2),ActionExecutionValue.key(actionEmpty));
   assertThat(new FilesystemValueChecker(null,null).getDirtyActionValues(evaluator.getValues(),batchStatter,new ModifiedFileSet.Builder().modify(file21.getExecPath()).modify(out1new.getExecPath()).modify(outEmptyNew.getExecPath()).build())).containsExactly(ActionExecutionValue.key(action1),ActionExecutionValue.key(action2),ActionExecutionValue.key(actionEmpty));
+  assertThat(new FilesystemValueChecker(null,null).getDirtyActionValues(evaluator.getValues(),batchStatter,new ModifiedFileSet.Builder().modify(file21.getExecPath()).modify(outEmptyNew.getExecPath()).build())).containsExactly(ActionExecutionValue.key(action2),ActionExecutionValue.key(actionEmpty));
+  assertThat(new FilesystemValueChecker(null,null).getDirtyActionValues(evaluator.getValues(),batchStatter,new ModifiedFileSet.Builder().modify(file21.getExecPath()).modify(out1new.getExecPath()).build())).containsExactly(ActionExecutionValue.key(action1),ActionExecutionValue.key(action2));
+  last.getPath().delete();
+  assertThat(new FilesystemValueChecker(null,null).getDirtyActionValues(evaluator.getValues(),batchStatter,new ModifiedFileSet.Builder().modify(file21.getExecPath()).modify(out1new.getExecPath()).modify(last.getExecPath()).build())).containsExactly(ActionExecutionValue.key(action1),ActionExecutionValue.key(action2),ActionExecutionValue.key(lastAction));
+  assertThat(new FilesystemValueChecker(null,null).getDirtyActionValues(evaluator.getValues(),batchStatter,new ModifiedFileSet.Builder().modify(file21.getExecPath()).modify(out1new.getExecPath()).build())).containsExactly(ActionExecutionValue.key(action1),ActionExecutionValue.key(action2));
+  last.getPath().delete();
+  FileSystemUtils.createDirectoryAndParents(last.getPath());
   assertThat(new FilesystemValueChecker(null,null).getDirtyActionValues(evaluator.getValues(),batchStatter,ModifiedFileSet.NOTHING_MODIFIED)).isEmpty();
 }
