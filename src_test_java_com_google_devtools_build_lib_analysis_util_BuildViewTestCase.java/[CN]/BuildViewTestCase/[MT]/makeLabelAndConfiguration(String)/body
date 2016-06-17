@@ -1,3 +1,12 @@
 {
-  return new ConfiguredTargetKey(makeLabel(label),targetConfig);
+  BuildConfiguration config=targetConfig;
+  if (targetConfig.useDynamicConfigurations()) {
+    try {
+      config=view.trimConfigurationForTesting(getTarget(label),targetConfig,reporter);
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+  return new ConfiguredTargetKey(makeLabel(label),config);
 }
