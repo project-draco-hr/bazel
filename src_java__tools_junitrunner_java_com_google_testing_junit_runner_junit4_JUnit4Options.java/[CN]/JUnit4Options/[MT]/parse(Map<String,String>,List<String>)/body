@@ -1,6 +1,6 @@
 {
-  ImmutableList.Builder<String> unparsedArgsBuilder=ImmutableList.builder();
-  Map<String,String> optionsMap=Maps.newHashMap();
+  List<String> unparsedArgs=new ArrayList<>();
+  Map<String,String> optionsMap=new HashMap<>();
   optionsMap.put(TEST_INCLUDE_FILTER_OPTION,null);
   optionsMap.put(TEST_EXCLUDE_FILTER_OPTION,null);
   for (Iterator<String> it=args.iterator(); it.hasNext(); ) {
@@ -20,12 +20,11 @@
       optionsMap.put(arg,it.next());
       continue;
     }
-    unparsedArgsBuilder.add(arg);
+    unparsedArgs.add(arg);
   }
   String testFilter=envVars.get(TESTBRIDGE_TEST_ONLY);
   if (testFilter != null && optionsMap.get(TEST_INCLUDE_FILTER_OPTION) == null) {
     optionsMap.put(TEST_INCLUDE_FILTER_OPTION,testFilter);
   }
-  ImmutableList<String> unparsedArgs=unparsedArgsBuilder.build();
-  return new JUnit4Options(optionsMap.get(TEST_INCLUDE_FILTER_OPTION),optionsMap.get(TEST_EXCLUDE_FILTER_OPTION),unparsedArgs.toArray(new String[unparsedArgs.size()]));
+  return new JUnit4Options(optionsMap.get(TEST_INCLUDE_FILTER_OPTION),optionsMap.get(TEST_EXCLUDE_FILTER_OPTION),unparsedArgs.toArray(new String[0]));
 }
