@@ -1,6 +1,11 @@
 {
   Iterable<BundleableFile> bundleImports=BundleableFile.bundleImportsFromRule(context);
   ObjcProvider.Builder objcProvider=new ObjcProvider.Builder().addAll(IMPORTED_LIBRARY,extraImportLibraries).addAll(BUNDLE_FILE,bundleImports).addAll(BUNDLE_IMPORT_DIR,uniqueContainers(BundleableFile.toArtifacts(bundleImports),BUNDLE_CONTAINER_TYPE)).addAll(SDK_FRAMEWORK,extraSdkFrameworks).addAll(WEAK_SDK_FRAMEWORK,extraWeakSdkFrameworks).addAll(SDK_DYLIB,extraSdkDylibs).addAll(STATIC_FRAMEWORK_FILE,staticFrameworkImports).addAll(DYNAMIC_FRAMEWORK_FILE,dynamicFrameworkImports).addAll(FRAMEWORK_DIR,uniqueContainers(staticFrameworkImports,FRAMEWORK_CONTAINER_TYPE)).addAll(FRAMEWORK_DIR,uniqueContainers(dynamicFrameworkImports,FRAMEWORK_CONTAINER_TYPE)).addAll(INCLUDE,userHeaderSearchPaths).addAllForDirectDependents(INCLUDE,directDependencyHeaderSearchPaths).addAll(DEFINE,defines).addTransitiveAndPropagate(depObjcProviders).addTransitiveWithoutPropagating(directDepObjcProviders);
+  for (  ObjcProvider provider : runtimeDepObjcProviders) {
+    objcProvider.addTransitiveAndPropagate(ObjcProvider.DYNAMIC_FRAMEWORK_FILE,provider);
+    objcProvider.addTransitiveAndPropagate(ObjcProvider.STATIC_FRAMEWORK_FILE,provider);
+    objcProvider.addTransitiveAndPropagate(ObjcProvider.MERGE_ZIP,provider);
+  }
   for (  CppCompilationContext headerProvider : depCcHeaderProviders) {
     objcProvider.addTransitiveAndPropagate(HEADER,headerProvider.getDeclaredIncludeSrcs());
     objcProvider.addAll(INCLUDE,headerProvider.getIncludeDirs());
