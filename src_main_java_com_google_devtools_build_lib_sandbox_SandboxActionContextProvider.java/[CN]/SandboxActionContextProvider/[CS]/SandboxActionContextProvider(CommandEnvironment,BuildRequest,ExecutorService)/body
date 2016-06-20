@@ -1,11 +1,9 @@
 {
   boolean verboseFailures=buildRequest.getOptions(ExecutionOptions.class).verboseFailures;
-  boolean sandboxDebug=buildRequest.getOptions(SandboxOptions.class).sandboxDebug;
   boolean unblockNetwork=buildRequest.getOptions(BuildConfiguration.Options.class).testArguments.contains("--wrapper_script_flag=--debug");
-  List<String> sandboxAddPath=buildRequest.getOptions(SandboxOptions.class).sandboxAddPath;
   Builder<ActionContext> strategies=ImmutableList.builder();
   if (OS.getCurrent() == OS.LINUX) {
-    strategies.add(new LinuxSandboxedStrategy(env.getClientEnv(),env.getDirectories(),backgroundWorkers,verboseFailures,sandboxDebug,sandboxAddPath,unblockNetwork,env.getRuntime().getProductName()));
+    strategies.add(new LinuxSandboxedStrategy(buildRequest.getOptions(SandboxOptions.class),env.getClientEnv(),env.getDirectories(),backgroundWorkers,verboseFailures,unblockNetwork,env.getRuntime().getProductName()));
   }
   this.strategies=strategies.build();
 }
