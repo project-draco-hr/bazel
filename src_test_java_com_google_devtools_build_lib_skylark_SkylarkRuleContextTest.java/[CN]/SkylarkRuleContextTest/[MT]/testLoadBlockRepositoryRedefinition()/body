@@ -7,13 +7,13 @@
   scratch.file("/baz/baz.txt");
   scratch.file("/baz/BUILD","filegroup(name = 'baz', srcs = ['baz.txt'])");
   scratch.overwriteFile("WORKSPACE","local_repository(name = 'foo', path = '/bar')","local_repository(name = 'foo', path = '/baz')");
-  invalidatePackages();
+  invalidatePackages(false);
   assertThat((List<Label>)getConfiguredTarget("@foo//:baz").getTarget().getAssociatedRule().getAttributeContainer().getAttr("srcs")).contains(Label.parseAbsolute("@foo//:baz.txt"));
   scratch.overwriteFile("BUILD");
   scratch.overwriteFile("bar.bzl","dummy = 1");
   scratch.overwriteFile("WORKSPACE","local_repository(name = 'foo', path = '/bar')","load('//:bar.bzl', 'dummy')","local_repository(name = 'foo', path = '/baz')");
   try {
-    invalidatePackages();
+    invalidatePackages(false);
     createRuleContext("@foo//:baz");
     fail("Should have failed because repository 'foo' is overloading after a load!");
   }
