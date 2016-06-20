@@ -1,7 +1,8 @@
 {
+  deleteTreesBelowNotPrefixed(workspace,prefixes);
   Path emptyPackagePath=null;
   Map<PathFragment,Set<Path>> dirRootsMap=Maps.newTreeMap();
-  for (  Map.Entry<PathFragment,Path> entry : packageRootMap.entrySet()) {
+  for (  Map.Entry<PathFragment,Path> entry : packageRoots.entrySet()) {
     PathFragment pkgDir=entry.getKey();
     Path pkgRoot=entry.getValue();
     if (pkgDir.segmentCount() == 0) {
@@ -19,10 +20,10 @@
   }
   for (  Map.Entry<PathFragment,Set<Path>> entry : dirRootsMap.entrySet()) {
     PathFragment dir=entry.getKey();
-    if (!packageRootMap.containsKey(dir)) {
-      PathFragment pkgDir=longestPathPrefix(dir,packageRootMap.keySet());
+    if (!packageRoots.containsKey(dir)) {
+      PathFragment pkgDir=longestPathPrefix(dir,packageRoots.keySet());
       if (pkgDir != null) {
-        entry.getValue().add(packageRootMap.get(pkgDir));
+        entry.getValue().add(packageRoots.get(pkgDir));
       }
     }
   }
@@ -30,9 +31,9 @@
     PathFragment dir=entry.getKey();
     if (entry.getValue().size() > 1) {
       if (LOG_FINER) {
-        LOG.finer("mkdir " + linkRoot.getRelative(dir));
+        LOG.finer("mkdir " + workspace.getRelative(dir));
       }
-      createDirectoryAndParents(linkRoot.getRelative(dir));
+      FileSystemUtils.createDirectoryAndParents(workspace.getRelative(dir));
     }
   }
   for (  Map.Entry<PathFragment,Set<Path>> entry : dirRootsMap.entrySet()) {
@@ -44,27 +45,27 @@
       }
       Path root=roots.iterator().next();
       if (LOG_FINER) {
-        LOG.finer("ln -s " + root.getRelative(dir) + " "+ linkRoot.getRelative(dir));
+        LOG.finer("ln -s " + root.getRelative(dir) + " "+ workspace.getRelative(dir));
       }
-      linkRoot.getRelative(dir).createSymbolicLink(root.getRelative(dir));
+      workspace.getRelative(dir).createSymbolicLink(root.getRelative(dir));
     }
   }
   for (  Map.Entry<PathFragment,Set<Path>> entry : dirRootsMap.entrySet()) {
     PathFragment dir=entry.getKey();
     if (entry.getValue().size() > 1) {
-      PathFragment pkgDir=longestPathPrefix(dir,packageRootMap.keySet());
+      PathFragment pkgDir=longestPathPrefix(dir,packageRoots.keySet());
       if (pkgDir != null) {
-        Path root=packageRootMap.get(pkgDir);
+        Path root=packageRoots.get(pkgDir);
         try {
           Path absdir=root.getRelative(dir);
           if (absdir.isDirectory()) {
             if (LOG_FINER) {
-              LOG.finer("ln -s " + absdir + "/* "+ linkRoot.getRelative(dir)+ "/");
+              LOG.finer("ln -s " + absdir + "/* "+ workspace.getRelative(dir)+ "/");
             }
             for (            Path target : absdir.getDirectoryEntries()) {
               PathFragment p=target.relativeTo(root);
               if (!dirRootsMap.containsKey(p)) {
-                linkRoot.getRelative(p).createSymbolicLink(target);
+                workspace.getRelative(p).createSymbolicLink(target);
               }
             }
           }
@@ -81,8 +82,8 @@
   if (emptyPackagePath != null) {
     for (    Path target : emptyPackagePath.getDirectoryEntries()) {
       String baseName=target.getBaseName();
-      if (!baseName.startsWith(productName + "-") && !linkRoot.getRelative(baseName).exists()) {
-        linkRoot.getRelative(baseName).createSymbolicLink(target);
+      if (!baseName.startsWith(productName + "-") && !workspace.getRelative(baseName).exists()) {
+        workspace.getRelative(baseName).createSymbolicLink(target);
       }
     }
   }
