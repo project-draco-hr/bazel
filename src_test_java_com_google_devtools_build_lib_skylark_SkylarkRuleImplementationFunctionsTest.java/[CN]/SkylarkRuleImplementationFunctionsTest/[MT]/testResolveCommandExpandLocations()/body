@@ -2,7 +2,7 @@
   evalRuleContextCode(createRuleContext("//foo:resolve_me"),"def foo():","  label_dict = {}","  all = []","  for dep in ruleContext.attr.srcs + ruleContext.attr.tools:","    all.extend(list(dep.files))","    label_dict[dep.label] = list(dep.files)","  return ruleContext.resolve_command(","    command='A$(locations //foo:mytool) B$(location //foo:file3.dat)',","    attribute='cmd', expand_locations=True, label_dict=label_dict)","inputs, argv, manifests = foo()");
   @SuppressWarnings("unchecked") List<String> argv=(List<String>)(List<?>)(MutableList)lookup("argv");
   assertThat(argv).hasSize(3);
-  assertMatches("argv[0]","^.*/bash$",argv.get(0));
+  assertMatches("argv[0]","^.*/bash" + OsUtils.executableExtension() + "$",argv.get(0));
   assertThat(argv.get(1)).isEqualTo("-c");
   assertMatches("argv[2]","A.*/mytool .*/mytool.sh B.*file3.dat",argv.get(2));
 }
