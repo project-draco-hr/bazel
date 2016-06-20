@@ -1,0 +1,17 @@
+{
+  List<SymbolFileProvider> libraries=new ArrayList<>();
+  for (  DependencyAndroidData dataDep : dependencyData) {
+    SymbolFileProvider library=dataDep.asSymbolFileProvider();
+    libraries.add(library);
+  }
+  String appPackageName=customPackageForR;
+  if (appPackageName == null) {
+    appPackageName=VariantConfiguration.getManifestPackage(androidManifest.toFile());
+  }
+  Multimap<String,SymbolLoader> libSymbolMap=ArrayListMultimap.create();
+  Path primaryRTxt=sourceOut != null ? sourceOut.resolve("R.txt") : null;
+  if (primaryRTxt != null && !libraries.isEmpty()) {
+    SymbolLoader fullSymbolValues=loadResourceSymbolTable(libraries,appPackageName,primaryRTxt,libSymbolMap);
+    writePackageRJavaFiles(libSymbolMap,fullSymbolValues,sourceOut);
+  }
+}

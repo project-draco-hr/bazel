@@ -1,0 +1,30 @@
+{
+  URLClassLoader urlClassLoader=new URLClassLoader(new URL[]{baseDir.toUri().toURL()});
+  Class<?> innerClass=urlClassLoader.loadClass(expectedClassName);
+  assertThat(innerClass.getSuperclass()).isEqualTo(Object.class);
+  assertThat(innerClass.getEnclosingClass().toString()).isEqualTo(outerClass.toString());
+  ImmutableMap.Builder<String,Integer> actualIntFields=ImmutableMap.builder();
+  ImmutableMap.Builder<String,List<Integer>> actualIntArrayFields=ImmutableMap.builder();
+  for (  Field f : innerClass.getFields()) {
+    int fieldModifiers=f.getModifiers();
+    assertThat(Modifier.isFinal(fieldModifiers)).isEqualTo(areFieldsFinal);
+    assertThat(Modifier.isPublic(fieldModifiers)).isTrue();
+    assertThat(Modifier.isStatic(fieldModifiers)).isTrue();
+    Class<?> fieldType=f.getType();
+    if (fieldType.isPrimitive()) {
+      assertThat(fieldType).isEqualTo(Integer.TYPE);
+      actualIntFields.put(f.getName(),(Integer)f.get(null));
+    }
+ else {
+      assertThat(fieldType.isArray()).isTrue();
+      int[] asArray=(int[])f.get(null);
+      ImmutableList.Builder<Integer> list=ImmutableList.builder();
+      for (      int i : asArray) {
+        list.add(i);
+      }
+      actualIntArrayFields.put(f.getName(),list.build());
+    }
+  }
+  assertThat(actualIntFields.build()).containsExactlyEntriesIn(intFields);
+  assertThat(actualIntArrayFields.build()).containsExactlyEntriesIn(intArrayFields);
+}

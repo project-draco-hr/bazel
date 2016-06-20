@@ -1,0 +1,14 @@
+{
+  Preconditions.checkArgument(value.startsWith("{ "),"Expected list starting with { ");
+  Preconditions.checkArgument(value.endsWith(" }"),"Expected list ending with } ");
+  if (value.length() < 4) {
+    return new IntArrayDeferredInitializer(name,ImmutableList.<Integer>of());
+  }
+  ImmutableList.Builder<Integer> intValues=ImmutableList.builder();
+  String trimmedValue=value.substring(2,value.length() - 2);
+  Iterable<String> valueStrings=Splitter.on(',').trimResults().omitEmptyStrings().split(trimmedValue);
+  for (  String valueString : valueStrings) {
+    intValues.add(Integer.decode(valueString));
+  }
+  return new IntArrayDeferredInitializer(name,intValues.build());
+}
