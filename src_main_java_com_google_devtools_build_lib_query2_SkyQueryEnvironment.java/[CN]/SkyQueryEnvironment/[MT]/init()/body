@@ -6,7 +6,9 @@
    graph=result.getWalkableGraph();
   blacklistPatternsSupplier=Suppliers.memoize(new BlacklistSupplier(graph));
   SkyKey universeKey=graphFactory.getUniverseKey(universeScope,parserPrefix);
-  universeTargetPatternKeys=PrepareDepsOfPatternsFunction.getTargetPatternKeys(PrepareDepsOfPatternsFunction.getSkyKeys(universeKey,eventHandler));
+  ImmutableList<TargetPatternKey> universeTargetPatternKeys=PrepareDepsOfPatternsFunction.getTargetPatternKeys(PrepareDepsOfPatternsFunction.getSkyKeys(universeKey,eventHandler));
+  GraphBackedRecursivePackageProvider graphBackedRecursivePackageProvider=new GraphBackedRecursivePackageProvider(graph,universeTargetPatternKeys,pkgPath);
+  resolver=new RecursivePackageProviderBackedTargetPatternResolver(graphBackedRecursivePackageProvider,eventHandler,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,threadPool);
   Collection<SkyValue> values=result.values();
   if (!values.isEmpty()) {
     Preconditions.checkState(values.size() == 1,"Universe query \"%s\" returned multiple" + " values unexpectedly (%s values in result)",universeScope,values.size());

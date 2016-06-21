@@ -13,48 +13,56 @@
   final AtomicReference<TargetParsingException> parsingException=new AtomicReference<>();
   final AtomicReference<Exception> genericException=new AtomicReference<>();
   final Object callbackLock=new Object();
-  try {
-    for (    final Iterable<PackageIdentifier> pkgIdBatch : Iterables.partition(pkgIds,MAX_PACKAGES_BULK_GET)) {
-      executor.execute(new Runnable(){
-        @Override public void run(){
-          Iterable<ResolvedTargets<Target>> resolvedTargets=null;
-          try {
-            resolvedTargets=bulkGetTargetsInPackage(originalPattern,pkgIdBatch,NO_FILTER).values();
-          }
- catch (          InterruptedException e) {
-            interrupt.compareAndSet(null,e);
-            return;
-          }
-catch (          TargetParsingException e) {
-            parsingException.compareAndSet(null,e);
-          }
-          List<Target> filteredTargets=new ArrayList<>(calculateSize(resolvedTargets));
-          for (          ResolvedTargets<Target> targets : resolvedTargets) {
-            for (            Target target : targets.getTargets()) {
-              foundTarget.set(true);
-              if (actualPolicy.shouldRetain(target,false)) {
-                filteredTargets.add(target);
-              }
+  List<List<PackageIdentifier>> partitions=ImmutableList.copyOf(Iterables.partition(pkgIds,MAX_PACKAGES_BULK_GET));
+  ArrayList<ListenableFuture<?>> futures=new ArrayList<>(partitions.size());
+  for (  final Iterable<PackageIdentifier> pkgIdBatch : partitions) {
+    futures.add(executor.submit(new Runnable(){
+      @Override public void run(){
+        Iterable<ResolvedTargets<Target>> resolvedTargets;
+        try {
+          resolvedTargets=bulkGetTargetsInPackage(originalPattern,pkgIdBatch,NO_FILTER).values();
+        }
+ catch (        InterruptedException e) {
+          interrupt.compareAndSet(null,e);
+          return;
+        }
+catch (        TargetParsingException e) {
+          parsingException.compareAndSet(null,e);
+          return;
+        }
+catch (        RuntimeException e) {
+          genericException.compareAndSet(null,e);
+          return;
+        }
+        List<Target> filteredTargets=new ArrayList<>(calculateSize(resolvedTargets));
+        for (        ResolvedTargets<Target> targets : resolvedTargets) {
+          for (          Target target : targets.getTargets()) {
+            foundTarget.set(true);
+            if (actualPolicy.shouldRetain(target,false)) {
+              filteredTargets.add(target);
             }
-          }
-          try {
-synchronized (callbackLock) {
-              callback.process(filteredTargets);
-            }
-          }
- catch (          InterruptedException e) {
-            interrupt.compareAndSet(null,e);
-          }
-catch (          Exception e) {
-            genericException.compareAndSet(e,null);
           }
         }
+        try {
+synchronized (callbackLock) {
+            callback.process(filteredTargets);
+          }
+        }
+ catch (        InterruptedException e) {
+          interrupt.compareAndSet(null,e);
+        }
+catch (        Exception e) {
+          genericException.compareAndSet(e,null);
+        }
       }
-);
     }
+));
   }
-  finally {
-    ExecutorUtil.interruptibleShutdown(executor);
+  try {
+    Futures.allAsList(futures).get();
+  }
+ catch (  ExecutionException e) {
+    throw new IllegalStateException(e);
   }
   Throwables.propagateIfInstanceOf(interrupt.get(),InterruptedException.class);
   Throwables.propagateIfInstanceOf(parsingException.get(),TargetParsingException.class);
