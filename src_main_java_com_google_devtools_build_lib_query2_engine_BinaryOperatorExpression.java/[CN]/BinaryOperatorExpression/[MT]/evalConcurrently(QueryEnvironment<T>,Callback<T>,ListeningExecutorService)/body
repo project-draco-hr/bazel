@@ -1,0 +1,57 @@
+{
+  if (operator == TokenKind.PLUS || operator == TokenKind.UNION) {
+    final AtomicReference<InterruptedException> interruptRef=new AtomicReference<>();
+    final AtomicReference<QueryException> queryExceptionRef=new AtomicReference<>();
+    ArrayList<ListenableFuture<?>> futures=new ArrayList<>(operands.size());
+    for (    final QueryExpression operand : operands) {
+      futures.add(executorService.submit(new Runnable(){
+        @Override public void run(){
+          try {
+            env.eval(operand,callback);
+          }
+ catch (          QueryException e) {
+            queryExceptionRef.compareAndSet(null,e);
+          }
+catch (          InterruptedException e) {
+            interruptRef.compareAndSet(null,e);
+          }
+        }
+      }
+));
+    }
+    try {
+      Futures.allAsList(futures).get();
+    }
+ catch (    ExecutionException e) {
+      throw new IllegalStateException(e);
+    }
+    InterruptedException interruptedExceptionIfAny=interruptRef.get();
+    if (interruptedExceptionIfAny != null) {
+      throw interruptedExceptionIfAny;
+    }
+    QueryException queryException=queryExceptionRef.get();
+    if (queryException != null) {
+      throw queryException;
+    }
+    return;
+  }
+  Set<T> lhsValue=QueryUtil.evalAll(env,operands.get(0));
+  for (int i=1; i < operands.size(); i++) {
+    Set<T> rhsValue=QueryUtil.evalAll(env,operands.get(i));
+switch (operator) {
+case INTERSECT:
+case CARET:
+      lhsValue.retainAll(rhsValue);
+    break;
+case EXCEPT:
+case MINUS:
+  lhsValue.removeAll(rhsValue);
+break;
+case UNION:
+case PLUS:
+default :
+throw new IllegalStateException("operator=" + operator);
+}
+}
+callback.process(lhsValue);
+}

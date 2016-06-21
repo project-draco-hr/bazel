@@ -1,8 +1,11 @@
 {
-  Preconditions.checkNotNull(pending,"Reuse of the callback is not allowed");
-  pending.addAll(uniquifier.unique(partialResult));
-  if (pending.size() >= batchThreshold) {
-    callback.process(pending);
-    pending=new ArrayList<>();
+  ImmutableList<Target> uniquifiedTargets=uniquifier.unique(partialResult);
+synchronized (pendingLock) {
+    Preconditions.checkNotNull(pending,"Reuse of the callback is not allowed");
+    pending.addAll(uniquifiedTargets);
+    if (pending.size() >= batchThreshold) {
+      callback.process(pending);
+      pending=new ArrayList<>();
+    }
   }
 }

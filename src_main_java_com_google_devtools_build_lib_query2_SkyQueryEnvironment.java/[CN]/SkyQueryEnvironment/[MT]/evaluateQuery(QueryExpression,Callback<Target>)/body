@@ -1,17 +1,23 @@
 {
   eventHandler.resetErrors();
   init();
-  final BatchStreamedCallback aggregator=new BatchStreamedCallback(callback,BATCH_CALLBACK_SIZE,createUniquifier());
+  final BatchStreamedCallback aggregator=new BatchStreamedCallback(callback,BATCH_CALLBACK_SIZE);
   final AtomicBoolean empty=new AtomicBoolean(true);
+  Callback<Target> callbackWithEmptyCheck=new Callback<Target>(){
+    @Override public void process(    Iterable<Target> partialResult) throws QueryException, InterruptedException {
+      empty.compareAndSet(true,Iterables.isEmpty(partialResult));
+      aggregator.process(partialResult);
+    }
+  }
+;
   try (final AutoProfiler p=AutoProfiler.logged("evaluating query",LOG)){
     try {
-      expr.eval(this,new Callback<Target>(){
-        @Override public void process(        Iterable<Target> partialResult) throws QueryException, InterruptedException {
-          empty.compareAndSet(true,Iterables.isEmpty(partialResult));
-          aggregator.process(partialResult);
-        }
+      if (canEvalConcurrently(expr)) {
+        expr.evalConcurrently(this,callbackWithEmptyCheck,threadPool);
       }
-);
+ else {
+        expr.eval(this,callbackWithEmptyCheck);
+      }
     }
  catch (    QueryException e) {
       throw new QueryException(e,expr);
