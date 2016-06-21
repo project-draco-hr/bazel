@@ -1,5 +1,38 @@
 {
   eventHandler.resetErrors();
   init();
-  return super.evaluateQuery(expr,callback);
+  final BatchStreamedCallback aggregator=new BatchStreamedCallback(callback,BATCH_CALLBACK_SIZE,createUniquifier());
+  final AtomicBoolean empty=new AtomicBoolean(true);
+  try (final AutoProfiler p=AutoProfiler.logged("evaluating query",LOG)){
+    Set<String> targetPatternSet=new LinkedHashSet<>();
+    expr.collectTargetPatterns(targetPatternSet);
+    try {
+      preloadOrThrow(expr,targetPatternSet);
+    }
+ catch (    TargetParsingException e) {
+      throw new QueryException(expr,e.getMessage());
+    }
+    try {
+      expr.eval(this,new Callback<Target>(){
+        @Override public void process(        Iterable<Target> partialResult) throws QueryException, InterruptedException {
+          empty.compareAndSet(true,Iterables.isEmpty(partialResult));
+          aggregator.process(partialResult);
+        }
+      }
+);
+    }
+ catch (    QueryException e) {
+      throw new QueryException(e,expr);
+    }
+    aggregator.processLastPending();
+  }
+   if (eventHandler.hasErrors()) {
+    if (!keepGoing) {
+      throw new QueryException("Evaluation of query \"" + expr + "\" failed due to BUILD file errors");
+    }
+ else {
+      eventHandler.handle(Event.warn("--keep_going specified, ignoring errors.  " + "Results may be inaccurate"));
+    }
+  }
+  return new QueryEvalResult(!eventHandler.hasErrors(),empty.get());
 }
