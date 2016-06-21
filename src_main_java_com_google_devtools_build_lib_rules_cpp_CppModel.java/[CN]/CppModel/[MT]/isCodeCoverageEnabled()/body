@@ -1,12 +1,11 @@
 {
   if (configuration.isCodeCoverageEnabled()) {
-    final RegexFilter filter=configuration.getInstrumentationFilter();
-    if (filter.isIncluded(ruleContext.getLabel().toString())) {
+    if (InstrumentedFilesCollector.shouldIncludeLocalSources(ruleContext)) {
       return true;
     }
     if (ruleContext.getRule().isAttrDefined("deps",BuildType.LABEL_LIST)) {
       for (      TransitiveInfoCollection dep : ruleContext.getPrerequisites("deps",Mode.TARGET)) {
-        if (dep.getProvider(CppCompilationContext.class) != null && filter.isIncluded(dep.getLabel().toString())) {
+        if (dep.getProvider(CppCompilationContext.class) != null && InstrumentedFilesCollector.shouldIncludeLocalSources(configuration,dep)) {
           return true;
         }
       }
