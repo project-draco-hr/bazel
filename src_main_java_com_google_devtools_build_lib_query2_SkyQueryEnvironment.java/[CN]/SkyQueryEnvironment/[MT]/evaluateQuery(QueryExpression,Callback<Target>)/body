@@ -4,14 +4,6 @@
   final BatchStreamedCallback aggregator=new BatchStreamedCallback(callback,BATCH_CALLBACK_SIZE,createUniquifier());
   final AtomicBoolean empty=new AtomicBoolean(true);
   try (final AutoProfiler p=AutoProfiler.logged("evaluating query",LOG)){
-    Set<String> targetPatternSet=new LinkedHashSet<>();
-    expr.collectTargetPatterns(targetPatternSet);
-    try {
-      preloadOrThrow(expr,targetPatternSet);
-    }
- catch (    TargetParsingException e) {
-      throw new QueryException(expr,e.getMessage());
-    }
     try {
       expr.eval(this,new Callback<Target>(){
         @Override public void process(        Iterable<Target> partialResult) throws QueryException, InterruptedException {

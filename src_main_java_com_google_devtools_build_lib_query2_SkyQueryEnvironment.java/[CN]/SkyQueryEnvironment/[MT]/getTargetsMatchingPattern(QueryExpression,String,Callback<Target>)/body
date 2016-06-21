@@ -1,42 +1,19 @@
 {
-  if (precomputedPatterns.containsKey(pattern)) {
-    Set<Label> labels=precomputedPatterns.get(pattern);
-    if (labels != null) {
-      try {
-        makeTargetsFromLabels(labels,callback);
-      }
- catch (      InterruptedException e) {
-        throw new QueryException(owner,e.getMessage());
-      }
-    }
- else {
-      TargetParsingException exception;
-      try {
-        exception=(TargetParsingException)Preconditions.checkNotNull(graph.getException(TargetPatternValue.key(pattern,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,parserPrefix)),pattern);
-      }
- catch (      TargetParsingException e) {
-        exception=e;
-      }
-      reportBuildFileError(owner,exception.getMessage());
-    }
+  try {
+    TargetPatternKey targetPatternKey=((TargetPatternKey)TargetPatternValue.key(pattern,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,parserPrefix).argument());
+    GraphBackedRecursivePackageProvider provider=new GraphBackedRecursivePackageProvider(graph,universeTargetPatternKeys,pkgPath);
+    ExecutorService threadPool=Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),new ThreadFactoryBuilder().setNameFormat("GetPackages-%d").build());
+    RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,eventHandler,targetPatternKey.getPolicy(),threadPool);
+    TargetPattern parsedPattern=targetPatternKey.getParsedPattern();
+    ImmutableSet<PathFragment> subdirectoriesToExclude=targetPatternKey.getAllSubdirectoriesToExclude(blacklistPatternsSupplier);
+    FilteringBatchingUniquifyingCallback wrapper=new FilteringBatchingUniquifyingCallback(callback);
+    parsedPattern.eval(resolver,subdirectoriesToExclude,wrapper,QueryException.class);
+    wrapper.processLastPending();
   }
- else {
-    try {
-      TargetPatternKey targetPatternKey=((TargetPatternKey)TargetPatternValue.key(pattern,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,parserPrefix).argument());
-      GraphBackedRecursivePackageProvider provider=new GraphBackedRecursivePackageProvider(graph,universeTargetPatternKeys,pkgPath);
-      ExecutorService threadPool=Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),new ThreadFactoryBuilder().setNameFormat("GetPackages-%d").build());
-      RecursivePackageProviderBackedTargetPatternResolver resolver=new RecursivePackageProviderBackedTargetPatternResolver(provider,eventHandler,targetPatternKey.getPolicy(),threadPool);
-      TargetPattern parsedPattern=targetPatternKey.getParsedPattern();
-      ImmutableSet<PathFragment> subdirectoriesToExclude=targetPatternKey.getAllSubdirectoriesToExclude(blacklistPatternsSupplier);
-      FilteringBatchingUniquifyingCallback wrapper=new FilteringBatchingUniquifyingCallback(callback);
-      parsedPattern.eval(resolver,subdirectoriesToExclude,wrapper,QueryException.class);
-      wrapper.processLastPending();
-    }
- catch (    TargetParsingException e) {
-      reportBuildFileError(owner,e.getMessage());
-    }
-catch (    InterruptedException e) {
-      throw new QueryException(owner,e.getMessage());
-    }
+ catch (  TargetParsingException e) {
+    reportBuildFileError(owner,e.getMessage());
+  }
+catch (  InterruptedException e) {
+    throw new QueryException(owner,e.getMessage());
   }
 }
