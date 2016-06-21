@@ -5,8 +5,9 @@
   aaptConfigOptions=optionsParser.getOptions(AaptConfigOptions.class);
   options=optionsParser.getOptions(Options.class);
   AndroidResourceProcessor resourceProcessor=new AndroidResourceProcessor(stdLogger);
-  try (ScopedTemporaryDirectory scopedTmp=new ScopedTemporaryDirectory("resource_shrinker_tmp")){
-    Path working=scopedTmp.getPath();
+  try {
+    Path working=Files.createTempDirectory("resource_shrinker_tmp");
+    working.toFile().deleteOnExit();
     final Path resourceFiles=working.resolve("resource_files");
     final Path shrunkResources=working.resolve("shrunk_resources");
     Set<String> resourcePackages=getManifestPackages(options.primaryManifest,options.dependencyManifests);

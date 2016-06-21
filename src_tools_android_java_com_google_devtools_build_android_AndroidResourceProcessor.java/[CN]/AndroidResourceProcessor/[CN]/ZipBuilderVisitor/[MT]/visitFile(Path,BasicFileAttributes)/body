@@ -1,5 +1,14 @@
 {
   byte[] content=Files.readAllBytes(file);
-  addEntry(file,content);
+  CRC32 crc32=new CRC32();
+  crc32.update(content);
+  ZipEntry entry=new ZipEntry(directory + "/" + root.relativize(file));
+  entry.setMethod(ZipEntry.STORED);
+  entry.setTime(ZIP_EPOCH);
+  entry.setSize(content.length);
+  entry.setCrc(crc32.getValue());
+  zip.putNextEntry(entry);
+  zip.write(content);
+  zip.closeEntry();
   return FileVisitResult.CONTINUE;
 }
