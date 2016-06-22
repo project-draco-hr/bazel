@@ -32,7 +32,12 @@
     }
   }
   if (strictJavaDeps != BuildConfiguration.StrictDepsMode.OFF) {
-    result.add(new JavaCompileAction.JarsToTargetsArgv(classpathEntries,directJars));
+    result.add(new CustomMultiArgv(){
+      @Override public Iterable<String> argv(){
+        return JavaCompileAction.addJarsToTargets(classpathEntries,directJars);
+      }
+    }
+);
     if (!compileTimeDependencyArtifacts.isEmpty()) {
       result.addExecPaths("--deps_artifacts",compileTimeDependencyArtifacts);
     }

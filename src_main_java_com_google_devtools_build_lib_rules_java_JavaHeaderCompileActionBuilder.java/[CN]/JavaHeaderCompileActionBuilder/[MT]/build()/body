@@ -11,10 +11,6 @@
   checkNotNull(javacOpts,"javacOpts must not be null");
   checkNotNull(processorPath,"processorPath must not be null");
   checkNotNull(processorNames,"processorNames must not be null");
-  if (strictJavaDeps == BuildConfiguration.StrictDepsMode.OFF) {
-    directJars=NestedSetBuilder.emptySet(Order.NAIVE_LINK_ORDER);
-    compileTimeDependencyArtifacts.clear();
-  }
   SpawnAction.Builder builder=new SpawnAction.Builder();
   builder.addOutput(outputJar);
   if (outputDepsProto != null) {
@@ -28,7 +24,7 @@
   builder.addInputs(processorPath);
   builder.addInputs(sourceJars);
   builder.addInputs(sourceFiles);
-  builder.addTransitiveInputs(directJars);
+  builder.addInputs(directJars);
   builder.addInputs(compileTimeDependencyArtifacts);
   builder.addTool(javacJar);
   JavaToolchainProvider javaToolchain=ruleContext.getPrerequisite(":java_toolchain" + implicitAttributesSuffix,Mode.TARGET,JavaToolchainProvider.class);

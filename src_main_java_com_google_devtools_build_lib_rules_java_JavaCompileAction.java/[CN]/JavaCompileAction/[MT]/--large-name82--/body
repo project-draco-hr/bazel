@@ -1,6 +1,6 @@
 {
-  checkNotNull(classDirectory);
-  checkNotNull(tempDirectory);
+  Preconditions.checkNotNull(classDirectory);
+  Preconditions.checkNotNull(tempDirectory);
   CustomCommandLine.Builder result=CustomCommandLine.builder();
   result.add("--classdir").addPath(classDirectory);
   result.add("--tempdir").addPath(tempDirectory);
@@ -72,7 +72,12 @@
   if (strictJavaDeps != BuildConfiguration.StrictDepsMode.OFF) {
     result.add("--strict_java_deps");
     result.add(strictJavaDeps.toString());
-    result.add(new JarsToTargetsArgv(classpath,directJars));
+    result.add(new CustomMultiArgv(){
+      @Override public Iterable<String> argv(){
+        return addJarsToTargets(classpath,directJars);
+      }
+    }
+);
     if (configuration.getFragment(JavaConfiguration.class).getReduceJavaClasspath() == JavaClasspathMode.JAVABUILDER) {
       result.add("--reduce_classpath");
       if (!compileTimeDependencyArtifacts.isEmpty()) {
