@@ -1,0 +1,45 @@
+{
+  ClassWriter innerClassWriter=new ClassWriter(ClassWriter.COMPUTE_MAXS);
+  String fullyQualifiedInnerClass=fullyQualifiedOuterClass + "$" + innerClass;
+  innerClassWriter.visit(JAVA_VERSION,Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_SUPER,fullyQualifiedInnerClass,null,SUPER_CLASS,null);
+  innerClassWriter.visitSource("R.java",null);
+  writeConstructor(innerClassWriter);
+  innerClassWriter.visitInnerClass(fullyQualifiedInnerClass,fullyQualifiedOuterClass,innerClass,Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC);
+  Map<String,SymbolEntry> rowMap=symbols.row(innerClass);
+  Set<String> symbolSet=rowMap.keySet();
+  List<String> symbolList=new ArrayList<>(symbolSet);
+  Collections.sort(symbolList);
+  List<DeferredInitializer> deferredInitializers=new ArrayList<>();
+  int fieldAccessLevel=Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC;
+  if (finalFields) {
+    fieldAccessLevel|=Opcodes.ACC_FINAL;
+  }
+  for (  String symbolName : symbolList) {
+    SymbolEntry value=values.get(innerClass,symbolName);
+    if (value != null) {
+      String desc;
+      Object initializer=null;
+      if (value.getType().equals("int")) {
+        desc="I";
+        if (finalFields) {
+          initializer=Integer.decode(value.getValue());
+        }
+ else {
+          deferredInitializers.add(IntDeferredInitializer.of(value.getName(),value.getValue()));
+        }
+      }
+ else {
+        Preconditions.checkArgument(value.getType().equals("int[]"));
+        desc="[I";
+        deferredInitializers.add(IntArrayDeferredInitializer.of(value.getName(),value.getValue()));
+      }
+      innerClassWriter.visitField(fieldAccessLevel,value.getName(),desc,null,initializer).visitEnd();
+    }
+  }
+  if (!deferredInitializers.isEmpty()) {
+    writeStaticClassInit(innerClassWriter,fullyQualifiedInnerClass,deferredInitializers);
+  }
+  innerClassWriter.visitEnd();
+  File innerFile=new File(packageDir,"R$" + innerClass + ".class");
+  Files.write(innerClassWriter.toByteArray(),innerFile);
+}

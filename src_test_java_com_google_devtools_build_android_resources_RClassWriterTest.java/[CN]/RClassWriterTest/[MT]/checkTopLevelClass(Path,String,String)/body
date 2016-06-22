@@ -1,0 +1,19 @@
+{
+  URLClassLoader urlClassLoader=new URLClassLoader(new URL[]{baseDir.toUri().toURL()});
+  Class<?> toplevelClass=urlClassLoader.loadClass(expectedClassName);
+  assertThat(toplevelClass.getSuperclass()).isEqualTo(Object.class);
+  int outerModifiers=toplevelClass.getModifiers();
+  assertThat(Modifier.isFinal(outerModifiers)).isTrue();
+  assertThat(Modifier.isPublic(outerModifiers)).isTrue();
+  ImmutableList.Builder<String> actualClasses=ImmutableList.builder();
+  for (  Class<?> innerClass : toplevelClass.getClasses()) {
+    assertThat(innerClass.getDeclaredClasses()).isEmpty();
+    int modifiers=innerClass.getModifiers();
+    assertThat(Modifier.isFinal(modifiers)).isTrue();
+    assertThat(Modifier.isPublic(modifiers)).isTrue();
+    assertThat(Modifier.isStatic(modifiers)).isTrue();
+    actualClasses.add(innerClass.getName());
+  }
+  assertThat(actualClasses.build()).containsExactly((Object[])expectedInnerClasses);
+  return toplevelClass;
+}

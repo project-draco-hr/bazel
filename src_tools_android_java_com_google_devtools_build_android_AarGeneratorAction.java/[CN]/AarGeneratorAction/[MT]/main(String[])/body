@@ -7,15 +7,14 @@
   FileSystem fileSystem=FileSystems.getDefault();
   Path working=fileSystem.getPath("").toAbsolutePath();
   AndroidResourceProcessor resourceProcessor=new AndroidResourceProcessor(new StdLogger(com.android.utils.StdLogger.Level.VERBOSE));
-  try {
-    Path resourcesOut=Files.createTempDirectory("tmp-resources");
-    resourcesOut.toFile().deleteOnExit();
-    Path assetsOut=Files.createTempDirectory("tmp-assets");
-    assetsOut.toFile().deleteOnExit();
-    Path expandedOut=Files.createTempDirectory("tmp-expanded");
-    expandedOut.toFile().deleteOnExit();
-    Path deduplicatedOut=Files.createTempDirectory("tmp-deduplicated");
-    deduplicatedOut.toFile().deleteOnExit();
+  try (ScopedTemporaryDirectory scopedTmp=new ScopedTemporaryDirectory("aar_gen_tmp")){
+    Path tmp=scopedTmp.getPath();
+    Path resourcesOut=tmp.resolve("merged_resources");
+    Files.createDirectories(resourcesOut);
+    Path assetsOut=tmp.resolve("merged_assets");
+    Files.createDirectories(assetsOut);
+    Path expandedOut=tmp.resolve("tmp-expanded");
+    Path deduplicatedOut=tmp.resolve("tmp-deduplicated");
     logger.fine(String.format("Setup finished at %dms",timer.elapsed(TimeUnit.MILLISECONDS)));
     ImmutableList<DirectoryModifier> modifiers=ImmutableList.of(new PackedResourceTarExpander(expandedOut,working),new FileDeDuplicator(Hashing.murmur3_128(),deduplicatedOut,working));
     MergedAndroidData mergedData=resourceProcessor.mergeData(options.mainData,options.dependencyData,resourcesOut,assetsOut,modifiers,null,options.strictMerge);

@@ -1,0 +1,47 @@
+{
+  int numThreads=Math.max(1,Runtime.getRuntime().availableProcessors() / 2);
+  ListeningExecutorService executorService=MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numThreads));
+  try (Closeable closeable=ExecutorServiceCloser.createWith(executorService)){
+    Map<SymbolFileProvider,ListenableFuture<String>> packageJobs=new HashMap<>();
+    for (    final SymbolFileProvider lib : libraries) {
+      packageJobs.put(lib,executorService.submit(new PackageParsingTask(lib.getManifest())));
+    }
+    Map<SymbolFileProvider,String> packageNames=new HashMap<>();
+    try {
+      for (      Map.Entry<SymbolFileProvider,ListenableFuture<String>> entry : packageJobs.entrySet()) {
+        packageNames.put(entry.getKey(),entry.getValue().get());
+      }
+    }
+ catch (    InterruptedException|ExecutionException e) {
+      throw new IOException("Failed to load package name: ",e);
+    }
+    for (    SymbolFileProvider lib : libraries) {
+      String packageName=packageNames.get(lib);
+      if (appPackageName.equals(packageName)) {
+        continue;
+      }
+      File rFile=lib.getSymbolFile();
+      if (rFile.isFile()) {
+        SymbolLoader libSymbols=new SymbolLoader(rFile,stdLogger);
+        libMap.put(packageName,libSymbols);
+      }
+    }
+    File primaryRTxtFile=primaryRTxt.toFile();
+    SymbolLoader fullSymbolValues=null;
+    if (primaryRTxtFile.isFile()) {
+      fullSymbolValues=new SymbolLoader(primaryRTxtFile,stdLogger);
+    }
+    List<ListenableFuture<?>> loadJobs=new ArrayList<>();
+    Iterable<SymbolLoader> toLoad=fullSymbolValues != null ? Iterables.concat(libMap.values(),ImmutableList.of(fullSymbolValues)) : libMap.values();
+    for (    final SymbolLoader loader : toLoad) {
+      loadJobs.add(executorService.submit(new SymbolLoadingTask(loader)));
+    }
+    try {
+      Futures.allAsList(loadJobs).get();
+    }
+ catch (    InterruptedException|ExecutionException e) {
+      throw new IOException("Failed to load SymbolFile: ",e);
+    }
+    return fullSymbolValues;
+  }
+ }

@@ -1,0 +1,14 @@
+{
+  boolean finalFields=true;
+  SymbolLoader symbolValues=createSymbolFile("R.txt","int[] styleable ActionMenuView { }");
+  SymbolLoader symbolsInLibrary=symbolValues;
+  Path out=temp.resolve("classes");
+  Files.createDirectories(out);
+  RClassWriter writer=new RClassWriter(out.toFile(),"com.testEmptyIntArray",symbolValues,finalFields);
+  writer.addSymbolsToWrite(symbolsInLibrary);
+  writer.write();
+  Path packageDir=out.resolve("com/testEmptyIntArray");
+  checkFilesInPackage(packageDir,"R.class","R$styleable.class");
+  Class<?> outerClass=checkTopLevelClass(out,"com.testEmptyIntArray.R","com.testEmptyIntArray.R$styleable");
+  checkInnerClass(out,"com.testEmptyIntArray.R$styleable",outerClass,ImmutableMap.<String,Integer>of(),ImmutableMap.<String,List<Integer>>of("ActionMenuView",ImmutableList.<Integer>of()),finalFields);
+}

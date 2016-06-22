@@ -4,16 +4,7 @@
     if (staticIds) {
       content=replaceIdsWithStaticIds(UTF_8.decode(ByteBuffer.wrap(content)).toString()).getBytes(UTF_8);
     }
-    ZipEntry entry=new ZipEntry(root.relativize(file).toString());
-    entry.setMethod(ZipEntry.STORED);
-    entry.setTime(ZIP_EPOCH);
-    entry.setSize(content.length);
-    CRC32 crc32=new CRC32();
-    crc32.update(content);
-    entry.setCrc(crc32.getValue());
-    zip.putNextEntry(entry);
-    zip.write(content);
-    zip.closeEntry();
+    addEntry(file,content);
   }
   return FileVisitResult.CONTINUE;
 }
