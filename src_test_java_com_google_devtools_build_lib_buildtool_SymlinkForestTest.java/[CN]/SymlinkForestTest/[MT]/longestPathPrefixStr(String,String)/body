@@ -1,8 +1,8 @@
 {
-  Set<PathFragment> prefixes=new HashSet<>();
+  ImmutableSet.Builder<PackageIdentifier> prefixes=ImmutableSet.builder();
   for (  String prefix : prefixStrs) {
-    prefixes.add(new PathFragment(prefix));
+    prefixes.add(PackageIdentifier.createInMainRepo(prefix));
   }
-  PathFragment longest=SymlinkForest.longestPathPrefix(new PathFragment(path),prefixes);
-  return longest != null ? longest.getPathString() : null;
+  PackageIdentifier longest=SymlinkForest.longestPathPrefix(PackageIdentifier.createInMainRepo(path),prefixes.build());
+  return longest != null ? longest.getPackageFragment().getPathString() : null;
 }

@@ -1,0 +1,15 @@
+{
+  Path outputBase=fileSystem.getPath("/ob");
+  Path rootY=outputBase.getRelative(Label.EXTERNAL_PATH_PREFIX).getRelative("y");
+  Path rootZ=outputBase.getRelative(Label.EXTERNAL_PATH_PREFIX).getRelative("z");
+  Path rootW=outputBase.getRelative(Label.EXTERNAL_PATH_PREFIX).getRelative("w");
+  createDirectoryAndParents(rootY);
+  FileSystemUtils.createEmptyFile(rootY.getRelative("file"));
+  ImmutableMap<PackageIdentifier,Path> packageRootMap=ImmutableMap.<PackageIdentifier,Path>builder().put(createPkg(outputBase,"y","w"),outputBase).put(createPkg(outputBase,"z",""),outputBase).put(createPkg(outputBase,"z","a/b/c"),outputBase).put(createPkg(outputBase,"w",""),outputBase).build();
+  new SymlinkForest(packageRootMap,linkRoot,TestConstants.PRODUCT_NAME).plantSymlinkForest();
+  assertFalse(linkRoot.getRelative(Label.EXTERNAL_PATH_PREFIX + "/y/file").exists());
+  assertLinksTo(linkRoot.getRelative(Label.EXTERNAL_PATH_PREFIX + "/y/w"),rootY.getRelative("w"));
+  assertLinksTo(linkRoot.getRelative(Label.EXTERNAL_PATH_PREFIX + "/z/file"),rootZ.getRelative("file"));
+  assertLinksTo(linkRoot.getRelative(Label.EXTERNAL_PATH_PREFIX + "/z/a"),rootZ.getRelative("a"));
+  assertLinksTo(linkRoot.getRelative(Label.EXTERNAL_PATH_PREFIX + "/w/file"),rootW.getRelative("file"));
+}
