@@ -1,0 +1,17 @@
+{
+  Map<String,String> manifestValues=new TreeMap<>();
+  AndroidResourcesProvider resourcesProvider=AndroidCommon.getAndroidResources(context);
+  if (resourcesProvider != null) {
+    ResourceContainer resourceContainer=Iterables.getOnlyElement(resourcesProvider.getDirectAndroidResources());
+    if (resourceContainer.getRenameManifestPackage() != null) {
+      manifestValues.put("applicationId",resourceContainer.getRenameManifestPackage());
+    }
+  }
+  if (context.attributes().isAttributeValueExplicitlySpecified("manifest_values")) {
+    manifestValues.putAll(context.attributes().get("manifest_values",Type.STRING_DICT));
+  }
+  for (  String variable : manifestValues.keySet()) {
+    manifestValues.put(variable,context.expandMakeVariables("manifest_values",manifestValues.get(variable)));
+  }
+  return ImmutableMap.copyOf(manifestValues);
+}

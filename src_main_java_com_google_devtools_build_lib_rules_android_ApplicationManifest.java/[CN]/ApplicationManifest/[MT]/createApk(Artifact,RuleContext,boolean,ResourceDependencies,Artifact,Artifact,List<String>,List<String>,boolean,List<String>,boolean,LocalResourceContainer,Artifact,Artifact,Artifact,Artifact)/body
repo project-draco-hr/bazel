@@ -1,0 +1,12 @@
+{
+  ResourceContainer resourceContainer=checkForInlinedResources(new AndroidResourceContainerBuilder().withData(data).withManifest(getManifest()).withROutput(rTxt).withSymbolsFile(symbolsTxt).buildFromRule(ruleContext,resourceApk),resourceDeps.getResources(),ruleContext);
+  if (ruleContext.hasErrors()) {
+    return null;
+  }
+  AndroidResourcesProcessorBuilder builder=new AndroidResourcesProcessorBuilder(ruleContext).setLibrary(isLibrary).setApkOut(resourceContainer.getApk()).setConfigurationFilters(configurationFilters).setUncompressedExtensions(uncompressedExtensions).setCrunchPng(crunchPng).setJavaPackage(resourceContainer.getJavaPackage()).setDebug(ruleContext.getConfiguration().getCompilationMode() != CompilationMode.OPT).setManifestOut(manifestOut).setMergedResourcesOut(mergedResources).withPrimary(resourceContainer).withDependencies(resourceDeps).setDensities(densities).setProguardOut(proguardCfg).setMainDexProguardOut(mainDexProguardCfg).setApplicationId(manifestValues.get("applicationId")).setVersionCode(manifestValues.get("versionCode")).setVersionName(manifestValues.get("versionName"));
+  if (!incremental) {
+    builder.setRTxtOut(resourceContainer.getRTxt()).setSymbolsTxt(resourceContainer.getSymbolsTxt()).setSourceJarOut(resourceContainer.getJavaSourceJar());
+  }
+  ResourceContainer processed=builder.build(ruleContext);
+  return new ResourceApk(resourceApk,processed.getJavaSourceJar(),resourceDeps,processed,processed.getManifest(),proguardCfg,mainDexProguardCfg,false);
+}

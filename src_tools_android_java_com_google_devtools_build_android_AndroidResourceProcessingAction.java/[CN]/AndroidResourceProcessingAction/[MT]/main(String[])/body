@@ -16,6 +16,7 @@
     final Path filteredResources=tmp.resolve("resources-filtered");
     final Path densityManifest=tmp.resolve("manifest-filtered/AndroidManifest.xml");
     final Path processedManifest=tmp.resolve("manifest-processed/AndroidManifest.xml");
+    final Path dummyManifest=tmp.resolve("manifest-aapt-dummy/AndroidManifest.xml");
     Path generatedSources=null;
     if (options.srcJarOutput != null || options.rOutput != null || options.symbolsTxtOut != null) {
       generatedSources=tmp.resolve("generated_resources");
@@ -27,12 +28,17 @@
     LOGGER.fine(String.format("Merging finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     final DensityFilteredAndroidData filteredData=mergedData.filter(new DensitySpecificResourceFilter(options.densities,filteredResources,mergedResources),new DensitySpecificManifestProcessor(options.densities,densityManifest));
     LOGGER.fine(String.format("Density filtering finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
-    final MergedAndroidData processedManifestData=resourceProcessor.processManifest(options.packageType,options.packageForR,options.applicationId,options.versionCode,options.versionName,filteredData,processedManifest);
-    resourceProcessor.processResources(aaptConfigOptions.aapt,aaptConfigOptions.androidJar,aaptConfigOptions.buildToolsVersion,options.packageType,aaptConfigOptions.debug,options.packageForR,new FlagAaptOptions(aaptConfigOptions),aaptConfigOptions.resourceConfigs,aaptConfigOptions.splits,processedManifestData,data,generatedSources,options.packagePath,options.proguardOutput,options.mainDexProguardOutput,options.resourcesOutput != null ? processedManifestData.getResourceDir().resolve("values").resolve("public.xml") : null);
-    LOGGER.fine(String.format("aapt finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    MergedAndroidData processedData=resourceProcessor.processManifest(options.packageType,options.packageForR,options.applicationId,options.versionCode,options.versionName,filteredData,processedManifest);
     if (options.manifestOutput != null) {
-      resourceProcessor.copyManifestToOutput(processedManifestData,options.manifestOutput);
+      resourceProcessor.copyManifestToOutput(processedData,options.manifestOutput);
     }
+    if (options.packageType == Type.LIBRARY) {
+      Files.createDirectories(dummyManifest.getParent());
+      Files.write(dummyManifest,String.format("<?xml version=\"1.0\" encoding=\"utf-8\"?>" + "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"" + " package=\"%s\">"+ "</manifest>",options.packageForR).getBytes(UTF_8));
+      processedData=new MergedAndroidData(processedData.getResourceDir(),processedData.getAssetDir(),dummyManifest);
+    }
+    resourceProcessor.processResources(aaptConfigOptions.aapt,aaptConfigOptions.androidJar,aaptConfigOptions.buildToolsVersion,options.packageType,aaptConfigOptions.debug,options.packageForR,new FlagAaptOptions(aaptConfigOptions),aaptConfigOptions.resourceConfigs,aaptConfigOptions.splits,processedData,data,generatedSources,options.packagePath,options.proguardOutput,options.mainDexProguardOutput,options.resourcesOutput != null ? processedData.getResourceDir().resolve("values").resolve("public.xml") : null);
+    LOGGER.fine(String.format("aapt finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
     if (options.srcJarOutput != null) {
       resourceProcessor.createSrcJar(generatedSources,options.srcJarOutput,VariantConfiguration.Type.LIBRARY == options.packageType);
     }
@@ -43,7 +49,7 @@
       resourceProcessor.copyRToOutput(generatedSources,options.symbolsTxtOut,VariantConfiguration.Type.LIBRARY == options.packageType);
     }
     if (options.resourcesOutput != null) {
-      resourceProcessor.createResourcesZip(processedManifestData.getResourceDir(),processedManifestData.getAssetDir(),options.resourcesOutput);
+      resourceProcessor.createResourcesZip(processedData.getResourceDir(),processedData.getAssetDir(),options.resourcesOutput);
     }
     LOGGER.fine(String.format("Packaging finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
   }

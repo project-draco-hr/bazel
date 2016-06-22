@@ -1,10 +1,26 @@
 {
   Iterable<Artifact> mergeeManifests=getMergeeManifests(resourceDeps.getResources());
-  if (!Iterables.isEmpty(mergeeManifests)) {
-    Iterable<Artifact> exportedManifests=mergeeManifests;
-    Artifact outputManifest=ruleContext.getUniqueDirectoryArtifact(ruleContext.getRule().getName() + "_merged","AndroidManifest.xml",ruleContext.getBinOrGenfilesDirectory());
-    AndroidManifestMergeHelper.createMergeManifestAction(ruleContext,getManifest(),exportedManifests,ImmutableList.of("all"),outputManifest);
-    return new ApplicationManifest(outputManifest);
+  boolean legacy=true;
+  if (ruleContext.isLegalFragment(AndroidConfiguration.class) && ruleContext.getRule().isAttrDefined("manifest_merger",STRING)) {
+    AndroidManifestMerger merger=AndroidManifestMerger.fromString(ruleContext.attributes().get("manifest_merger",STRING));
+    if (merger == null) {
+      merger=ruleContext.getFragment(AndroidConfiguration.class).getManifestMerger();
+    }
+    legacy=merger == AndroidManifestMerger.LEGACY;
+  }
+  if (legacy) {
+    if (!Iterables.isEmpty(mergeeManifests)) {
+      Artifact outputManifest=ruleContext.getUniqueDirectoryArtifact(ruleContext.getRule().getName() + "_merged","AndroidManifest.xml",ruleContext.getBinOrGenfilesDirectory());
+      AndroidManifestMergeHelper.createMergeManifestAction(ruleContext,getManifest(),mergeeManifests,ImmutableList.of("all"),outputManifest);
+      return new ApplicationManifest(ruleContext,outputManifest);
+    }
+  }
+ else {
+    if (!Iterables.isEmpty(mergeeManifests) || !manifestValues.isEmpty()) {
+      Artifact outputManifest=ruleContext.getUniqueDirectoryArtifact(ruleContext.getRule().getName() + "_merged","AndroidManifest.xml",ruleContext.getBinOrGenfilesDirectory());
+      new ManifestMergerActionBuilder(ruleContext).setManifest(getManifest()).setMergeeManifests(mergeeManifests).setLibrary(false).setManifestValues(manifestValues).setCustomPackage(AndroidCommon.getJavaPackage(ruleContext)).setManifestOutput(outputManifest).build(ruleContext);
+      return new ApplicationManifest(ruleContext,outputManifest);
+    }
   }
   return this;
 }

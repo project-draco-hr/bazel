@@ -1,0 +1,24 @@
+{
+  NestedSetBuilder<Artifact> inputs=NestedSetBuilder.naiveLinkOrder();
+  ImmutableList.Builder<Artifact> outputs=ImmutableList.builder();
+  CustomCommandLine.Builder builder=new CustomCommandLine.Builder();
+  inputs.addAll(ruleContext.getExecutablePrerequisite("$android_manifest_merger",Mode.HOST).getRunfilesSupport().getRunfilesArtifactsWithoutMiddlemen());
+  builder.addExecPath("--manifest",manifest);
+  inputs.add(manifest);
+  if (mergeeManifests != null && !mergeeManifests.isEmpty()) {
+    builder.addJoinExecPaths("--mergeeManifests",":",mergeeManifests);
+    inputs.addAll(mergeeManifests);
+  }
+  if (isLibrary) {
+    builder.add("--mergeType").add("LIBRARY");
+  }
+  if (manifestValues != null && !manifestValues.isEmpty()) {
+    builder.add("--manifestValues").add(mapToDictionaryString(manifestValues));
+  }
+  if (customPackage != null && !customPackage.isEmpty()) {
+    builder.add("--customPackage").add(customPackage);
+  }
+  builder.addExecPath("--manifestOutput",manifestOutput);
+  outputs.add(manifestOutput);
+  ruleContext.registerAction(this.spawnActionBuilder.addTransitiveInputs(inputs.build()).addOutputs(outputs.build()).setCommandLine(builder.build()).setExecutable(ruleContext.getExecutablePrerequisite("$android_manifest_merger",Mode.HOST)).setProgressMessage("Merging manifest").setMnemonic("ManifestMerger").build(context));
+}

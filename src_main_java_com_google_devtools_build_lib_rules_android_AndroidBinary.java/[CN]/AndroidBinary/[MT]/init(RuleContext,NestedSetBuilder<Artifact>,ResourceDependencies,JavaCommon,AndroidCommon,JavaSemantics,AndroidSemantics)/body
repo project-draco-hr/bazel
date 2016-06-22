@@ -38,29 +38,14 @@
   if (LocalResourceContainer.definesAndroidResources(ruleContext.attributes())) {
     LocalResourceContainer.validateRuleContext(ruleContext);
     ApplicationManifest ruleManifest=androidSemantics.getManifestForRule(ruleContext);
-    String applicationId=null;
-    String versionCode=null;
-    String versionName=null;
-    Map<String,String> manifestValues=ruleContext.attributes().get("manifest_values",Type.STRING_DICT);
-    if (manifestValues != null) {
-      if (manifestValues.containsKey("applicationId")) {
-        applicationId=manifestValues.get("applicationId");
-      }
-      if (manifestValues.containsKey("versionCode")) {
-        versionCode=ruleContext.expandMakeVariables("manifest_values",manifestValues.get("versionCode"));
-      }
-      if (manifestValues.containsKey("versionName")) {
-        versionName=ruleContext.expandMakeVariables("manifest_values",manifestValues.get("versionName"));
-      }
-    }
     applicationManifest=ruleManifest.mergeWith(ruleContext,resourceDeps);
-    resourceApk=applicationManifest.packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,false,resourceDeps,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),applicationId,versionCode,versionName,false,ProguardHelper.getProguardConfigArtifact(ruleContext,""),createMainDexProguardSpec(ruleContext),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_PROCESSED_MANIFEST),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_ZIP));
+    resourceApk=applicationManifest.packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_APK),ruleContext,false,resourceDeps,ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),false,ProguardHelper.getProguardConfigArtifact(ruleContext,""),createMainDexProguardSpec(ruleContext),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_PROCESSED_MANIFEST),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_ZIP));
     ruleContext.assertNoErrors();
-    incrementalResourceApk=applicationManifest.addMobileInstallStubApplication(ruleContext).packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_INCREMENTAL_RESOURCES_APK),ruleContext,false,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),applicationId,versionCode,versionName,true,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental"),null,null,null);
+    incrementalResourceApk=applicationManifest.addMobileInstallStubApplication(ruleContext).packWithDataAndResources(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_INCREMENTAL_RESOURCES_APK),ruleContext,false,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),true,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental"),null,null,null);
     ruleContext.assertNoErrors();
-    instantRunResourceApk=applicationManifest.addInstantRunStubApplication(ruleContext).packWithDataAndResources(getDxArtifact(ruleContext,"android_instant_run.ap_"),ruleContext,false,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),applicationId,versionCode,versionName,true,ProguardHelper.getProguardConfigArtifact(ruleContext,"instant_run"),null,null,null);
+    instantRunResourceApk=applicationManifest.addInstantRunStubApplication(ruleContext).packWithDataAndResources(getDxArtifact(ruleContext,"android_instant_run.ap_"),ruleContext,false,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),true,ProguardHelper.getProguardConfigArtifact(ruleContext,"instant_run"),null,null,null);
     ruleContext.assertNoErrors();
-    splitResourceApk=applicationManifest.createSplitManifest(ruleContext,"android_resources",false).packWithDataAndResources(getDxArtifact(ruleContext,"android_resources.ap_"),ruleContext,false,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),applicationId,versionCode,versionName,true,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental_split"),null,null,null);
+    splitResourceApk=applicationManifest.createSplitManifest(ruleContext,"android_resources",false).packWithDataAndResources(getDxArtifact(ruleContext,"android_resources.ap_"),ruleContext,false,resourceDeps,null,null,ruleContext.getTokenizedStringListAttr("resource_configuration_filters"),ruleContext.getTokenizedStringListAttr("nocompress_extensions"),ruleContext.attributes().get("crunch_png",Type.BOOLEAN),ruleContext.getTokenizedStringListAttr("densities"),true,ProguardHelper.getProguardConfigArtifact(ruleContext,"incremental_split"),null,null,null);
     ruleContext.assertNoErrors();
   }
  else {

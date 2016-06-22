@@ -6,7 +6,13 @@
   try {
     Path mergedManifest;
     if (options.mergeType == MergeType.APPLICATION) {
-      mergedManifest=resourceProcessor.mergeManifest(options.manifest,options.mergeeManifests,options.mergeType,options.manifestValues,options.manifestOutput);
+      Path tmp=Files.createTempDirectory("manifest_merge_tmp");
+      tmp.toFile().deleteOnExit();
+      ImmutableList.Builder<Path> mergeeManifests=ImmutableList.builder();
+      for (      Path mergeeManifest : options.mergeeManifests) {
+        mergeeManifests.add(removePermissions(mergeeManifest,tmp));
+      }
+      mergedManifest=resourceProcessor.mergeManifest(options.manifest,mergeeManifests.build(),options.mergeType,options.manifestValues,options.manifestOutput);
     }
  else {
       mergedManifest=resourceProcessor.writeManifestPackage(options.manifest,options.customPackage,options.manifestOutput);

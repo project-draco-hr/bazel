@@ -1,10 +1,10 @@
 {
   Artifact result=AndroidBinary.getDxArtifact(ruleContext,"split_" + splitName + "/AndroidManifest.xml");
   SpawnAction.Builder builder=new SpawnAction.Builder().setExecutable(ruleContext.getExecutablePrerequisite("$build_split_manifest",Mode.HOST)).setProgressMessage("Creating manifest for split " + splitName).setMnemonic("AndroidBuildSplitManifest").addArgument("--main_manifest").addInputArgument(manifest).addArgument("--split_manifest").addOutputArgument(result).addArgument("--split").addArgument(splitName).addArgument(hasCode ? "--hascode" : "--nohascode");
-  String overridePackage=getOverridePackage(ruleContext);
+  String overridePackage=manifestValues.get("applicationId");
   if (overridePackage != null) {
     builder.addArgument("--override_package").addArgument(overridePackage);
   }
   ruleContext.registerAction(builder.build(ruleContext));
-  return new ApplicationManifest(result);
+  return new ApplicationManifest(ruleContext,result);
 }

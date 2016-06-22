@@ -1,11 +1,11 @@
 {
   Artifact stubManifest=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.MOBILE_INSTALL_STUB_APPLICATON_MANIFEST);
   SpawnAction.Builder builder=new SpawnAction.Builder().setExecutable(ruleContext.getExecutablePrerequisite("$stubify_manifest",Mode.HOST)).setProgressMessage("Injecting mobile install stub application").setMnemonic("InjectMobileInstallStubApplication").addArgument("--mode=mobile_install").addArgument("--input_manifest").addInputArgument(manifest).addArgument("--output_manifest").addOutputArgument(stubManifest).addArgument("--output_datafile").addOutputArgument(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.MOBILE_INSTALL_STUB_APPLICATION_DATA));
-  String overridePackage=getOverridePackage(ruleContext);
+  String overridePackage=manifestValues.get("applicationId");
   if (overridePackage != null) {
     builder.addArgument("--override_package");
     builder.addArgument(overridePackage);
   }
   ruleContext.registerAction(builder.build(ruleContext));
-  return new ApplicationManifest(stubManifest);
+  return new ApplicationManifest(ruleContext,stubManifest);
 }
