@@ -8,11 +8,14 @@
     pkgResults.put(pkgId,Preconditions.checkNotNull(pkgValue.getPackage(),pkgId));
   }
   SetView<SkyKey> unknownKeys=Sets.difference(pkgKeys,packages.keySet());
+  if (!Iterables.isEmpty(unknownKeys)) {
+    LOGGER.warning("Unable to find " + unknownKeys + " in the batch lookup of "+ pkgKeys);
+  }
   for (  Map.Entry<SkyKey,Exception> missingOrExceptionEntry : graph.getMissingAndExceptions(unknownKeys).entrySet()) {
     PackageIdentifier pkgIdentifier=(PackageIdentifier)missingOrExceptionEntry.getKey().argument();
     Exception exception=missingOrExceptionEntry.getValue();
     if (exception == null) {
-      throw new BuildFileNotFoundException(pkgIdentifier,"BUILD file not found on package path");
+      throw new BuildFileNotFoundException(pkgIdentifier,"Package not found");
     }
     Throwables.propagateIfInstanceOf(exception,NoSuchPackageException.class);
     Throwables.propagate(exception);
