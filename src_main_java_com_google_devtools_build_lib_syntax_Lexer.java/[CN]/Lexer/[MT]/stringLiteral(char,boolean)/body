@@ -14,8 +14,14 @@ case '\n':
 return t;
 case '\\':
 if (isRaw) {
-pos++;
-break;
+if (pos + 1 < buffer.length && buffer[pos] == '\r' && buffer[pos + 1] == '\n') {
+  pos=oldPos + 1;
+  return escapedStringLiteral(quot,true);
+}
+ else {
+  pos++;
+  break;
+}
 }
 pos=oldPos + 1;
 return escapedStringLiteral(quot,false);

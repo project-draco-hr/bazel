@@ -23,13 +23,31 @@ case '\\':
     }
   if (isRaw) {
     literal.append('\\');
-    literal.append(buffer[pos]);
-    pos++;
+    if (pos + 1 < buffer.length && buffer[pos] == '\r' && buffer[pos + 1] == '\n') {
+      literal.append("\n");
+      pos+=2;
+    }
+ else     if (buffer[pos] == '\r' || buffer[pos] == '\n') {
+      literal.append("\n");
+      pos+=1;
+    }
+ else {
+      literal.append(buffer[pos]);
+      pos+=1;
+    }
     break;
   }
 c=buffer[pos];
 pos++;
 switch (c) {
+case '\r':
+if (pos < buffer.length && buffer[pos] == '\n') {
+pos+=1;
+break;
+}
+ else {
+break;
+}
 case '\n':
 break;
 case 'n':
