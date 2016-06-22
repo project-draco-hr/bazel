@@ -1,0 +1,52 @@
+{
+  Map<String,BlazeCommand> commandsByName=getSortedCommands(runtime);
+  StringBuilder result=new StringBuilder();
+  result.append("<h2>Commands</h2>\n");
+  result.append("<table>\n");
+  for (  Map.Entry<String,BlazeCommand> e : commandsByName.entrySet()) {
+    BlazeCommand command=e.getValue();
+    Command annotation=command.getClass().getAnnotation(Command.class);
+    if (annotation.hidden()) {
+      continue;
+    }
+    String shortDescription=annotation.shortDescription().replace("%{product}",runtime.getProductName());
+    result.append("<tr>\n");
+    result.append(String.format("  <td><a href=\"#%s\"><code>%s</code></a></td>\n",e.getKey(),e.getKey()));
+    result.append("  <td>").append(HTML_ESCAPER.escape(shortDescription)).append("</td>\n");
+    result.append("</tr>\n");
+  }
+  result.append("</table>\n");
+  result.append("\n");
+  result.append("<h2>Startup Options</h2>\n");
+  appendOptionsHtml(result,BlazeCommandUtils.getStartupOptions(runtime.getBlazeModules()));
+  result.append("\n");
+  result.append("<h2><a name=\"common_options\">Options Common to all Commands</a></h2>\n");
+  appendOptionsHtml(result,BlazeCommandUtils.getCommonOptions());
+  result.append("\n");
+  for (  Map.Entry<String,BlazeCommand> e : commandsByName.entrySet()) {
+    result.append(String.format("<h2><a name=\"%s\">%s Options</a></h2>\n",e.getKey(),capitalize(e.getKey())));
+    BlazeCommand command=e.getValue();
+    Command annotation=command.getClass().getAnnotation(Command.class);
+    if (annotation.hidden()) {
+      continue;
+    }
+    List<String> inheritedCmdNames=new ArrayList<>();
+    for (    Class<? extends BlazeCommand> base : annotation.inherits()) {
+      String name=base.getAnnotation(Command.class).name();
+      inheritedCmdNames.add(String.format("<a href=\"#%s\">%s</a>",name,name));
+    }
+    if (!inheritedCmdNames.isEmpty()) {
+      result.append("<p>Inherits all options from ");
+      result.append(StringUtil.joinEnglishList(inheritedCmdNames,"and"));
+      result.append(".</p>\n\n");
+    }
+    Set<Class<? extends OptionsBase>> options=new HashSet<>();
+    Collections.addAll(options,annotation.options());
+    for (    BlazeModule blazeModule : runtime.getBlazeModules()) {
+      Iterables.addAll(options,blazeModule.getCommandOptions(annotation));
+    }
+    appendOptionsHtml(result,options);
+    result.append("\n");
+  }
+  outErr.printOut(result.toString());
+}

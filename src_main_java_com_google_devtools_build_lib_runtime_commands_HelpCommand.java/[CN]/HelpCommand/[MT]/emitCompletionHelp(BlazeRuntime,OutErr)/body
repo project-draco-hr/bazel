@@ -1,9 +1,8 @@
 {
   Iterable<BlazeModule> blazeModules=runtime.getBlazeModules();
   ConfiguredRuleClassProvider ruleClassProvider=runtime.getRuleClassProvider();
-  Map<String,BlazeCommand> commandsByName=runtime.getCommandMap();
-  Set<String> commands=commandsByName.keySet();
-  outErr.printOutLn("BAZEL_COMMAND_LIST=\"" + SPACE_JOINER.join(commands) + "\"");
+  Map<String,BlazeCommand> commandsByName=getSortedCommands(runtime);
+  outErr.printOutLn("BAZEL_COMMAND_LIST=\"" + SPACE_JOINER.join(commandsByName.keySet()) + "\"");
   outErr.printOutLn("BAZEL_INFO_KEYS=\"");
   for (  String name : InfoCommand.getHardwiredInfoItemNames(runtime.getProductName())) {
     outErr.printOutLn(name);
@@ -13,9 +12,9 @@
   Iterable<Class<? extends OptionsBase>> options=BlazeCommandUtils.getStartupOptions(blazeModules);
   outErr.printOut(OptionsParser.newOptionsParser(options).getOptionsCompletion());
   outErr.printOutLn("\"");
-  for (  String name : commands) {
-    BlazeCommand command=commandsByName.get(name);
-    String varName=name.toUpperCase().replace('-','_');
+  for (  Map.Entry<String,BlazeCommand> e : commandsByName.entrySet()) {
+    BlazeCommand command=e.getValue();
+    String varName=e.getKey().toUpperCase(Locale.US).replace('-','_');
     Command annotation=command.getClass().getAnnotation(Command.class);
     if (!annotation.completion().isEmpty()) {
       outErr.printOutLn("BAZEL_COMMAND_" + varName + "_ARGUMENT=\""+ annotation.completion()+ "\"");

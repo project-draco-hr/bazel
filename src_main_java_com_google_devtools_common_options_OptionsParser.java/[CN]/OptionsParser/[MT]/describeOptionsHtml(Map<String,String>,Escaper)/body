@@ -1,0 +1,32 @@
+{
+  StringBuilder desc=new StringBuilder();
+  if (!impl.getOptionsClasses().isEmpty()) {
+    List<Field> allFields=Lists.newArrayList();
+    for (    Class<? extends OptionsBase> optionsClass : impl.getOptionsClasses()) {
+      allFields.addAll(impl.getAnnotatedFieldsFor(optionsClass));
+    }
+    Collections.sort(allFields,OptionsUsage.BY_CATEGORY);
+    String prevCategory=null;
+    for (    Field optionField : allFields) {
+      String category=optionField.getAnnotation(Option.class).category();
+      DocumentationLevel level=documentationLevel(category);
+      if (!category.equals(prevCategory) && level == DocumentationLevel.DOCUMENTED) {
+        String description=categoryDescriptions.get(category);
+        if (description == null) {
+          description="Options category '" + category + "'";
+        }
+        if (prevCategory != null) {
+          desc.append("</dl>\n\n");
+        }
+        desc.append(escaper.escape(description)).append(":\n");
+        desc.append("<dl>");
+        prevCategory=category;
+      }
+      if (level == DocumentationLevel.DOCUMENTED) {
+        OptionsUsage.getUsageHtml(optionField,desc,escaper);
+      }
+    }
+    desc.append("</dl>\n");
+  }
+  return desc.toString();
+}
