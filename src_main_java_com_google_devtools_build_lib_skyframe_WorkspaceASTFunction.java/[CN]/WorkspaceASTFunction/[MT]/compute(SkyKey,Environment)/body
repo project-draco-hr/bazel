@@ -8,17 +8,17 @@
   try {
     BuildFileAST ast=BuildFileAST.parseBuildFile(ParserInputSource.create(ruleClassProvider.getDefaultWorkspacePrefix(),new PathFragment("/DEFAULT.WORKSPACE")),env.getListener(),false);
     if (ast.containsErrors()) {
-      throw new WorkspaceASTFunctionException(new IOException("Failed to parse default WORKSPACE file"),Transience.PERSISTENT);
+      throw new WorkspaceASTFunctionException(new BuildFileContainsErrorsException(Label.EXTERNAL_PACKAGE_IDENTIFIER,"Failed to parse default WORKSPACE file"),Transience.PERSISTENT);
     }
     if (workspaceFileValue.exists()) {
       ast=BuildFileAST.parseBuildFile(ParserInputSource.create(repoWorkspace),ast.getStatements(),env.getListener(),false);
       if (ast.containsErrors()) {
-        throw new WorkspaceASTFunctionException(new IOException("Failed to parse WORKSPACE file"),Transience.PERSISTENT);
+        throw new WorkspaceASTFunctionException(new BuildFileContainsErrorsException(Label.EXTERNAL_PACKAGE_IDENTIFIER,"Failed to parse WORKSPACE file"),Transience.PERSISTENT);
       }
     }
     ast=BuildFileAST.parseBuildFile(ParserInputSource.create(ruleClassProvider.getDefaultWorkspaceSuffix(),new PathFragment("/DEFAULT.WORKSPACE.SUFFIX")),ast.getStatements(),env.getListener(),false);
     if (ast.containsErrors()) {
-      throw new WorkspaceASTFunctionException(new IOException("Failed to parse default WORKSPACE file suffix"),Transience.PERSISTENT);
+      throw new WorkspaceASTFunctionException(new BuildFileContainsErrorsException(Label.EXTERNAL_PACKAGE_IDENTIFIER,"Failed to parse default WORKSPACE file suffix"),Transience.PERSISTENT);
     }
     return new WorkspaceASTValue(splitAST(ast));
   }
