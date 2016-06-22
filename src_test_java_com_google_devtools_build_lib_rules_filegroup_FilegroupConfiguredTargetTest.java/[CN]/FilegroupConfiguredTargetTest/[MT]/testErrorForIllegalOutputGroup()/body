@@ -1,0 +1,11 @@
+{
+  scratch.file("pkg/a.cc");
+  scratch.file("pkg/BUILD","cc_library(name='lib_a', srcs=['a.cc'])",String.format("filegroup(name='group', srcs=[':lib_a'], output_group='%s')",OutputGroupProvider.HIDDEN_TOP_LEVEL));
+  try {
+    getConfiguredTarget("//pkg:group");
+    fail("Should throw AssertionError");
+  }
+ catch (  AssertionError e) {
+    assertThat(e.getMessage()).contains(String.format(Filegroup.ILLEGAL_OUTPUT_GROUP_ERROR,OutputGroupProvider.HIDDEN_TOP_LEVEL));
+  }
+}
