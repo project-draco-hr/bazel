@@ -88,11 +88,15 @@ Set<SkyKey> globKeys=packageBuilderAndGlobDeps.globDepKeys;
 Map<Label,Path> subincludes=pkgBuilder.getSubincludes();
 boolean packageShouldBeConsideredInError;
 try {
-packageShouldBeConsideredInError=markDependenciesAndPropagateInconsistentFilesystemExceptions(env,globKeys,subincludes,packageId,pkgBuilder.containsErrors());
+packageShouldBeConsideredInError=markDependenciesAndPropagateFilesystemExceptions(env,globKeys,subincludes,packageId,pkgBuilder.containsErrors());
 }
  catch (InternalInconsistentFilesystemException e) {
 packageFunctionCache.invalidate(packageId);
 throw new PackageFunctionException(e.toNoSuchPackageException(),e.isTransient() ? Transience.TRANSIENT : Transience.PERSISTENT);
+}
+catch (FileOutsidePackageRootsException|SymlinkOutsidePackageRootsException e) {
+packageFunctionCache.invalidate(packageId);
+throw new PackageFunctionException(new NoSuchPackageException(packageId,"Encountered file outside package roots",e),Transience.PERSISTENT);
 }
 if (env.valuesMissing()) {
 return null;
