@@ -1,0 +1,9 @@
+{
+  new EnvironmentGroupMaker("buildenv/foo").setEnvironments("a","b").setDefaults().make();
+  writeDepsForSelectTests();
+  scratch.file("hello/BUILD","cc_library(","    name = 'lib2',","    srcs = [],","    deps = select({","        '//config:a': ['//deps:dep_a'],","        '//config:b': ['//deps:dep_b'],","    }),","    compatible_with = ['//buildenv/foo:a', '//buildenv/foo:b'])","cc_library(","    name = 'lib1',","    srcs = [],","    deps = select({","        '//config:a': [':lib2'],","        '//config:b': ['//deps:dep_b'],","    }),","    compatible_with = ['//buildenv/foo:a', '//buildenv/foo:b'])","cc_library(","    name = 'depender',","    srcs = [],","    deps = [':lib1'],","    compatible_with = ['//buildenv/foo:b'])");
+  useConfiguration("--define","mode=a");
+  reporter.removeHandler(failFastHandler);
+  assertNull(getConfiguredTarget("//hello:depender"));
+  assertContainsEvent("//hello:depender: the current command-line flags disqualify all supported " + "environments because of incompatible select() paths:\n" + " environment: //buildenv/foo:b removed by: //hello:lib2 (/workspace/hello/BUILD:1:1)");
+}
