@@ -19,7 +19,11 @@
     builder.addSymlinksToArtifacts(Iterables.filter(fakeLinkerInputs,Artifact.MIDDLEMAN_FILTER));
     builder.addTransitiveArtifacts(toolchain.getCrosstool());
     builder.addTransitiveArtifacts(toolchain.getLibcLink());
-    builder.addSymlinksToArtifacts(Iterables.transform(cAndCppSources,Pair.<Artifact,Label>firstFunction()));
+    ImmutableSet.Builder<Artifact> sourcesBuilder=ImmutableSet.<Artifact>builder();
+    for (    CppSource cppSource : cAndCppSources) {
+      sourcesBuilder.add(cppSource.getSource());
+    }
+    builder.addSymlinksToArtifacts(sourcesBuilder.build());
     builder.addSymlinksToArtifacts(cppCompilationContext.getDeclaredIncludeSrcs());
     builder.addSymlinksToArtifacts(cppCompilationContext.getAdditionalInputs(CppHelper.usePic(context,!isLinkShared(context))));
   }

@@ -8,18 +8,18 @@
     Label moduleMapLabel=Label.parseAbsoluteUnchecked(context.getCppModuleMap().getName());
     PathFragment outputName=getObjectOutputPath(moduleMapArtifact,objectDir);
     CppCompileActionBuilder builder=initializeCompileAction(moduleMapArtifact,moduleMapLabel,true);
-    createSourceAction(outputName,result,env,moduleMapArtifact,builder,".pcm",".pcm.d",false,false,false);
+    createSourceAction(outputName,result,env,moduleMapArtifact,builder,".pcm",".pcm.d",false,false,false,ImmutableMap.<String,String>of());
   }
-  for (  Pair<Artifact,Label> source : sourceFiles) {
-    Artifact sourceArtifact=source.getFirst();
-    Label sourceLabel=source.getSecond();
+  for (  CppSource source : sourceFiles) {
+    Artifact sourceArtifact=source.getSource();
+    Label sourceLabel=source.getLabel();
     PathFragment outputName=getObjectOutputPath(sourceArtifact,objectDir);
     CppCompileActionBuilder builder=initializeCompileAction(sourceArtifact,sourceLabel,false);
-    if (CppFileTypes.CPP_HEADER.matches(source.first.getExecPath())) {
+    if (CppFileTypes.CPP_HEADER.matches(source.getSource().getExecPath())) {
       createHeaderAction(outputName,result,env,builder);
     }
  else {
-      createSourceAction(outputName,result,env,sourceArtifact,builder,".o",".d",true,isCodeCoverageEnabled(),cppConfiguration.useFission());
+      createSourceAction(outputName,result,env,sourceArtifact,builder,".o",".d",true,isCodeCoverageEnabled(),cppConfiguration.useFission(),source.getBuildVariables());
     }
   }
   compilationOutputs=result.build();
