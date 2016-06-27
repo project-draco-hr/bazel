@@ -1,0 +1,19 @@
+{
+  buffer.append("\"");
+  for (  Artifact artifact : artifacts) {
+    if (buffer.length() > 1) {
+      buffer.append(delimiter);
+    }
+    if (!isRunfilesEnabled) {
+      buffer.append("$(rlocation ");
+      PathFragment runfilePath=new PathFragment(new PathFragment(workspacePrefix),artifact.getRunfilesPath());
+      buffer.append(runfilePath.normalize().getPathString());
+      buffer.append(")");
+    }
+ else {
+      buffer.append("${RUNPATH}");
+      buffer.append(artifact.getRunfilesPath().getPathString());
+    }
+  }
+  buffer.append("\"");
+}

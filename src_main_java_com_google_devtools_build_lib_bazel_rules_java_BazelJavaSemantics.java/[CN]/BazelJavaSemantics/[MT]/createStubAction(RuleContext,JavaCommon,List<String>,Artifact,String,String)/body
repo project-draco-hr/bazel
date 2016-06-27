@@ -5,10 +5,9 @@
   Preconditions.checkNotNull(javaStartClass);
   Preconditions.checkNotNull(javaExecutable);
   List<Substitution> arguments=new ArrayList<>();
-  String workspacePrefix=ruleContext.getWorkspaceName();
-  if (!workspacePrefix.isEmpty()) {
-    workspacePrefix+="/";
-  }
+  String workspaceName=ruleContext.getWorkspaceName();
+  final String workspacePrefix=workspaceName + (workspaceName.isEmpty() ? "" : "/");
+  final boolean isRunfilesEnabled=ruleContext.getConfiguration().runfilesEnabled();
   arguments.add(Substitution.of("%workspace_prefix%",workspacePrefix));
   arguments.add(Substitution.of("%javabin%",javaExecutable));
   arguments.add(Substitution.of("%needs_runfiles%",ruleContext.getFragment(Jvm.class).getJavaExecutable().isAbsolute() ? "0" : "1"));
@@ -16,7 +15,8 @@
     @Override public String getValue(){
       StringBuilder buffer=new StringBuilder();
       Iterable<Artifact> jars=javaCommon.getRuntimeClasspath();
-      appendRunfilesRelativeEntries(buffer,jars,':');
+      char delimiter=File.pathSeparatorChar;
+      appendRunfilesRelativeEntries(buffer,jars,workspacePrefix,delimiter,isRunfilesEnabled);
       return buffer.toString();
     }
   }
