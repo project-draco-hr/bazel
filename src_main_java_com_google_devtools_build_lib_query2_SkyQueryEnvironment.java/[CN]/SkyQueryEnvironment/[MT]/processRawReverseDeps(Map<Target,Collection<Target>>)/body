@@ -1,0 +1,22 @@
+{
+  Set<Target> result=CompactHashSet.create();
+  CompactHashSet<Target> visited=CompactHashSet.create();
+  Set<Label> keys=CompactHashSet.create(Collections2.transform(rawReverseDeps.keySet(),TARGET_LABEL_FUNCTION));
+  for (  Collection<Target> parentCollection : rawReverseDeps.values()) {
+    for (    Target parent : parentCollection) {
+      if (visited.add(parent)) {
+        if (parent instanceof Rule && dependencyFilter != DependencyFilter.ALL_DEPS) {
+          for (          Label label : getAllowedDeps((Rule)parent)) {
+            if (keys.contains(label)) {
+              result.add(parent);
+            }
+          }
+        }
+ else {
+          result.add(parent);
+        }
+      }
+    }
+  }
+  return result;
+}

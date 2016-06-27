@@ -1,0 +1,10 @@
+{
+  Collection<Target> children=processRawReverseDeps(makeTargetsMap(reverseDepsMap));
+  Iterable<Target> currentInUniverse=Iterables.filter(children,universe);
+  ImmutableList<Target> uniqueChildren=uniquifier.unique(currentInUniverse);
+  reverseDepsMap.clear();
+  if (!uniqueChildren.isEmpty()) {
+    callback.process(uniqueChildren);
+    reverseDepsQueue.addAll(graph.getReverseDeps(makeTransitiveTraversalKeys(uniqueChildren)).entrySet());
+  }
+}

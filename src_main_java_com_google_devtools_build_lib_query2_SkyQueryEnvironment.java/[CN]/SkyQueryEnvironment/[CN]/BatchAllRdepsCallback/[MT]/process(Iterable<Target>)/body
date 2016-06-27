@@ -1,0 +1,48 @@
+{
+  Iterable<Target> currentInUniverse=Iterables.filter(targets,universe);
+  ImmutableList<Target> uniqueTargets=uniquifier.unique(currentInUniverse);
+  callback.process(uniqueTargets);
+  Queue<Map.Entry<SkyKey,Iterable<SkyKey>>> reverseDepsQueue=new LinkedList<>();
+  reverseDepsQueue.addAll(graph.getReverseDeps(makeTransitiveTraversalKeys(uniqueTargets)).entrySet());
+  for (int i=0; i < depth; i++) {
+    Map<SkyKey,Iterable<SkyKey>> reverseDepsMap=Maps.newHashMap();
+    int batch=0;
+    int processed=0;
+    int size=reverseDepsQueue.size();
+    while (processed < size) {
+      Map.Entry<SkyKey,Iterable<SkyKey>> entry=reverseDepsQueue.peek();
+      int rdepsSize=Iterables.size(entry.getValue());
+      if (rdepsSize == 0) {
+        reverseDepsQueue.poll();
+        processed++;
+        continue;
+      }
+      if ((rdepsSize + batch <= batchSize)) {
+        reverseDepsMap.put(entry.getKey(),entry.getValue());
+        batch+=rdepsSize;
+        reverseDepsQueue.poll();
+        processed++;
+      }
+ else {
+        if (batch == 0) {
+          for (          Iterable<SkyKey> subList : Iterables.partition(entry.getValue(),batchSize)) {
+            reverseDepsMap.put(entry.getKey(),subList);
+            processReverseDepsMap(uniquifier,reverseDepsMap,callback,reverseDepsQueue);
+          }
+          reverseDepsQueue.poll();
+          processed++;
+        }
+ else {
+          processReverseDepsMap(uniquifier,reverseDepsMap,callback,reverseDepsQueue);
+          batch=0;
+        }
+      }
+    }
+    if (!reverseDepsMap.isEmpty()) {
+      processReverseDepsMap(uniquifier,reverseDepsMap,callback,reverseDepsQueue);
+    }
+    if (reverseDepsQueue.isEmpty()) {
+      break;
+    }
+  }
+}
