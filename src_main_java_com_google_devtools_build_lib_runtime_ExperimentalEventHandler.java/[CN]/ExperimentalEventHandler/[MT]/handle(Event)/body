@@ -53,21 +53,28 @@ case FAIL:
 case WARNING:
 case INFO:
 case SUBCOMMAND:
-  if (showProgress && !buildComplete) {
-    clearProgressBar();
-  }
-flushStdOutStdErrBuffers();
+  boolean incompleteLine;
+if (showProgress && !buildComplete) {
+  clearProgressBar();
+}
+incompleteLine=flushStdOutStdErrBuffers();
+if (incompleteLine) {
 crlf();
+}
 setEventKindColor(event.getKind());
 terminal.writeString(event.getKind() + ": ");
 terminal.resetTerminal();
+incompleteLine=true;
 if (event.getLocation() != null) {
 terminal.writeString(event.getLocation() + ": ");
 }
 if (event.getMessage() != null) {
 terminal.writeString(event.getMessage());
+incompleteLine=!event.getMessage().endsWith("\n");
 }
+if (incompleteLine) {
 crlf();
+}
 if (showProgress && !buildComplete) {
 addProgressBar();
 }

@@ -1,13 +1,21 @@
 {
+  boolean didFlush=false;
   try {
-    outErr.getOutputStream().write(stdoutBuffer);
-    outErr.getOutputStream().flush();
-    stdoutBuffer=new byte[]{};
-    outErr.getErrorStream().write(stderrBuffer);
-    outErr.getErrorStream().flush();
-    stderrBuffer=new byte[]{};
+    if (stdoutBuffer.length > 0) {
+      outErr.getOutputStream().write(stdoutBuffer);
+      outErr.getOutputStream().flush();
+      stdoutBuffer=new byte[]{};
+      didFlush=true;
+    }
+    if (stderrBuffer.length > 0) {
+      outErr.getErrorStream().write(stderrBuffer);
+      outErr.getErrorStream().flush();
+      stderrBuffer=new byte[]{};
+      didFlush=true;
+    }
   }
  catch (  IOException e) {
     LOG.warning("IO Error writing to output stream: " + e);
   }
+  return didFlush;
 }
