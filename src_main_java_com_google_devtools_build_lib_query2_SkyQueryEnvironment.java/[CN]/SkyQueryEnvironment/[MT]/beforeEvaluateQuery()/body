@@ -3,19 +3,11 @@
   try (AutoProfiler p=AutoProfiler.logged("evaluation and walkable graph",LOG)){
     result=graphFactory.prepareAndGet(universeScope,parserPrefix,loadingPhaseThreads,eventHandler);
   }
-   graph=result.getWalkableGraph();
+   SkyKey universeKey=graphFactory.getUniverseKey(universeScope,parserPrefix);
+  checkEvaluationResult(result,universeKey);
+  graph=result.getWalkableGraph();
   blacklistPatternsSupplier=Suppliers.memoize(new BlacklistSupplier(graph));
-  SkyKey universeKey=graphFactory.getUniverseKey(universeScope,parserPrefix);
   ImmutableList<TargetPatternKey> universeTargetPatternKeys=PrepareDepsOfPatternsFunction.getTargetPatternKeys(PrepareDepsOfPatternsFunction.getSkyKeys(universeKey,eventHandler));
   GraphBackedRecursivePackageProvider graphBackedRecursivePackageProvider=new GraphBackedRecursivePackageProvider(graph,universeTargetPatternKeys,pkgPath);
   resolver=new RecursivePackageProviderBackedTargetPatternResolver(graphBackedRecursivePackageProvider,eventHandler,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,threadPool);
-  Collection<SkyValue> values=result.values();
-  if (!values.isEmpty()) {
-    Preconditions.checkState(values.size() == 1,"Universe query \"%s\" returned multiple" + " values unexpectedly (%s values in result)",universeScope,values.size());
-    Preconditions.checkNotNull(result.get(universeKey),result);
-  }
- else {
-    boolean foundCycle=!Iterables.isEmpty(result.getError().getCycleInfo());
-    Preconditions.checkState(foundCycle,"Universe query \"%s\" failed with non-cycle error: %s",universeScope,result.getError());
-  }
 }
