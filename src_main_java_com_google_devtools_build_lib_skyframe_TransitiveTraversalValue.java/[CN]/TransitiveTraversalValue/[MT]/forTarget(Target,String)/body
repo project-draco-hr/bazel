@@ -1,7 +1,26 @@
 {
   if (target instanceof Rule) {
     Rule rule=(Rule)target;
-    return new TransitiveTraversalValue(rule.getRuleClassObject().canHaveAnyProvider(),toStringSet(rule.getRuleClassObject().getAdvertisedProviders()),firstErrorMessage);
+    RuleClass ruleClass=rule.getRuleClassObject();
+    if (firstErrorMessage == null && !ruleClass.isSkylark()) {
+      TransitiveTraversalValue value=VALUES_BY_RULE_CLASS.get(ruleClass);
+      if (value != null) {
+        return value;
+      }
+      ImmutableSet<String> providers=canonicalSet(toList(ruleClass.getAdvertisedProviders()));
+      value=new TransitiveTraversalValue(ruleClass.canHaveAnyProvider(),providers,null);
+      value=VALUE_INTERNER.intern(value);
+      VALUES_BY_RULE_CLASS.putIfAbsent(ruleClass,value);
+      return value;
+    }
+ else {
+      return TransitiveTraversalValue.create(ruleClass.canHaveAnyProvider(),toList(rule.getRuleClassObject().getAdvertisedProviders()),firstErrorMessage);
+    }
   }
-  return new TransitiveTraversalValue(false,ImmutableList.<String>of(),firstErrorMessage);
+  if (firstErrorMessage == null) {
+    return EMPTY_VALUE;
+  }
+ else {
+    return new TransitiveTraversalValue(false,ImmutableSet.<String>of(),firstErrorMessage);
+  }
 }
