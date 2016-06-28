@@ -1,15 +1,20 @@
 {
   Map<String,SkylarkModuleDoc> modules=SkylarkDocumentationCollector.collectModules(clazz);
-  List<SkylarkModuleDoc> navModules=new ArrayList<>();
   SkylarkModuleDoc topLevelModule=modules.remove(SkylarkDocumentationCollector.getTopLevelModule().name());
-  topLevelModule.setTitle("Globals");
   writePage(outputDir,topLevelModule);
-  navModules.add(topLevelModule);
+  Map<SkylarkModuleCategory,List<SkylarkModuleDoc>> modulesByCategory=new HashMap<>();
+  for (  SkylarkModuleCategory c : SkylarkModuleCategory.values()) {
+    modulesByCategory.put(c,new ArrayList<SkylarkModuleDoc>());
+  }
+  modulesByCategory.get(topLevelModule.getAnnotation().category()).add(topLevelModule);
   for (  SkylarkModuleDoc module : modules.values()) {
     if (module.getAnnotation().documented()) {
       writePage(outputDir,module);
-      navModules.add(module);
+      modulesByCategory.get(module.getAnnotation().category()).add(module);
     }
   }
-  writeNavPage(outputDir,navModules);
+  writeCategoryPage(SkylarkModuleCategory.CONFIGURATION_FRAGMENT,outputDir,modulesByCategory);
+  writeCategoryPage(SkylarkModuleCategory.BUILTIN,outputDir,modulesByCategory);
+  writeCategoryPage(SkylarkModuleCategory.PROVIDER,outputDir,modulesByCategory);
+  writeNavPage(outputDir,modulesByCategory.get(SkylarkModuleCategory.TOP_LEVEL_TYPE));
 }
