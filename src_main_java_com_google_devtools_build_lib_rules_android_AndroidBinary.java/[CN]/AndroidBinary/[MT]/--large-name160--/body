@@ -3,7 +3,7 @@
   if (shrinkResources) {
     resourceApk=shrinkResources(ruleContext,androidCommon,resourceApk,binaryJar,proguardSpecs);
   }
-  ProguardOutput proguardOutput=applyProguard(ruleContext,androidCommon,binaryJar,filesBuilder,proguardSpecs,proguardMapping);
+  ProguardOutput proguardOutput=applyProguard(ruleContext,androidCommon,javaSemantics,binaryJar,filesBuilder,proguardSpecs,proguardMapping);
   Artifact jarToDex=proguardOutput.getOutputJar();
   DexingOutput dexingOutput=shouldDexWithJack(ruleContext) ? dexWithJack(ruleContext,androidCommon,proguardSpecs) : dex(ruleContext,androidSemantics,binaryJar,jarToDex,isBinaryJarFiltered,androidCommon,resourceApk.getMainDexProguardConfig(),resourceClasses);
   Artifact unsignedApk=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_UNSIGNED_APK);
@@ -82,7 +82,7 @@
   androidCommon.addTransitiveInfoProviders(builder,androidSemantics,resourceApk,zipAlignedApk,apksUnderTest);
   androidSemantics.addTransitiveInfoProviders(builder,ruleContext,javaCommon,androidCommon,jarToDex);
   if (proguardOutput.getMapping() != null) {
-    builder.add(ProguardMappingProvider.class,new ProguardMappingProvider(proguardOutput.getMapping()));
+    builder.add(ProguardMappingProvider.class,new ProguardMappingProvider(proguardOutput.getMapping(),proguardOutput.getProtoMapping()));
   }
   return builder.setFilesToBuild(filesToBuild).add(RunfilesProvider.class,RunfilesProvider.simple(new Runfiles.Builder(ruleContext.getWorkspaceName(),ruleContext.getConfiguration().legacyExternalRunfiles()).addRunfiles(ruleContext,RunfilesProvider.DEFAULT_RUNFILES).addTransitiveArtifacts(filesToBuild).build())).add(JavaSourceInfoProvider.class,JavaSourceInfoProvider.fromJavaTargetAttributes(resourceClasses,javaSemantics)).add(ApkProvider.class,new ApkProvider(NestedSetBuilder.create(Order.STABLE_ORDER,zipAlignedApk),coverageMetadata,NestedSetBuilder.create(Order.STABLE_ORDER,applicationManifest.getManifest()))).add(AndroidPreDexJarProvider.class,new AndroidPreDexJarProvider(jarToDex)).addOutputGroup("mobile_install_full" + INTERNAL_SUFFIX,fullInstallOutputGroup).addOutputGroup("mobile_install_incremental" + INTERNAL_SUFFIX,incrementalInstallOutputGroup).addOutputGroup("mobile_install_split" + INTERNAL_SUFFIX,splitInstallOutputGroup).addOutputGroup("apk_manifest",apkManifest).addOutputGroup("apk_manifest_text",apkManifestText).addOutputGroup("android_deploy_info",deployInfo);
 }
