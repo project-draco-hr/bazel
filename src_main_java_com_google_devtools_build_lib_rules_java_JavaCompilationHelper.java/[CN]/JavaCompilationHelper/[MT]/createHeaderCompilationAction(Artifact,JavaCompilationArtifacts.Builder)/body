@@ -8,8 +8,14 @@
   builder.setClasspathEntries(attributes.getCompileTimeClassPath());
   builder.addAllBootclasspathEntries(getBootclasspathOrDefault());
   builder.addAllExtClasspathEntries(getExtdirInputs());
-  builder.addProcessorPaths(attributes.getProcessorPath());
-  builder.addProcessorNames(attributes.getProcessorNames());
+  if (getJavaConfiguration().optimizeHeaderCompilationAnnotationProcessing()) {
+    builder.addProcessorPaths(attributes.getApiGeneratingProcessorPath());
+    builder.addProcessorNames(attributes.getApiGeneratingProcessorNames());
+  }
+ else {
+    builder.addProcessorPaths(attributes.getProcessorPath());
+    builder.addProcessorNames(attributes.getProcessorNames());
+  }
   builder.setJavacOpts(getJavacOpts());
   builder.setTempDirectory(tempDir(headerJar));
   builder.setOutputJar(headerJar);

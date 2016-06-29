@@ -1,9 +1,13 @@
 {
   ImmutableSet.Builder<String> processorClasses=ImmutableSet.builder();
   NestedSetBuilder<Artifact> processorClasspath=NestedSetBuilder.naiveLinkOrder();
+  ImmutableSet.Builder<String> apiGeneratingProcessorClasses=ImmutableSet.builder();
+  NestedSetBuilder<Artifact> apiGeneratingProcessorClasspath=NestedSetBuilder.naiveLinkOrder();
   for (  JavaPluginInfoProvider provider : providers) {
     processorClasses.addAll(provider.getProcessorClasses());
     processorClasspath.addTransitive(provider.getProcessorClasspath());
+    apiGeneratingProcessorClasses.addAll(provider.getApiGeneratingProcessorClasses());
+    apiGeneratingProcessorClasspath.addTransitive(provider.getApiGeneratingProcessorClasspath());
   }
-  return new JavaPluginInfoProvider(processorClasses.build(),processorClasspath.build());
+  return new JavaPluginInfoProvider(processorClasses.build(),processorClasspath.build(),apiGeneratingProcessorClasses.build(),apiGeneratingProcessorClasspath.build());
 }
