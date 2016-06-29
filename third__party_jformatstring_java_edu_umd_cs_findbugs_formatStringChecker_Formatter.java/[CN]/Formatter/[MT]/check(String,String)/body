@@ -1,0 +1,32 @@
+{
+  int last=-1;
+  int lasto=-1;
+  int maxIndex=-1;
+  for (  FormatSpecifier fs : parse(format)) {
+    int index=fs.index();
+switch (index) {
+case -2:
+      break;
+case -1:
+    if (last < 0 || last > args.length - 1)     throw new MissingFormatArgumentException(last,fs.toString());
+  fs.print(args[last],last);
+break;
+case 0:
+lasto++;
+last=lasto;
+if (lasto > args.length - 1) throw new MissingFormatArgumentException(lasto,fs.toString());
+maxIndex=Math.max(maxIndex,lasto);
+fs.print(args[lasto],lasto);
+break;
+default :
+last=index - 1;
+if (last > args.length - 1) throw new MissingFormatArgumentException(last,fs.toString());
+maxIndex=Math.max(maxIndex,last);
+fs.print(args[last],last);
+break;
+}
+}
+if (maxIndex < args.length - 1) {
+throw new ExtraFormatArgumentsException(args.length,maxIndex + 1);
+}
+}
