@@ -11,14 +11,10 @@
   final boolean collectCodeCoverage=config.isCodeCoverageEnabled() && instrumentedFiles != null;
   TestTargetExecutionSettings executionSettings;
   if (collectCodeCoverage) {
+    inputsBuilder.addTransitive(instrumentedFiles.getCoverageSupportFiles());
     NestedSet<Artifact> metadataFiles=instrumentedFiles.getInstrumentationMetadataFiles();
     inputsBuilder.addTransitive(metadataFiles);
-    for (    TransitiveInfoCollection dep : ruleContext.getPrerequisites(":coverage_support",Mode.HOST)) {
-      inputsBuilder.addTransitive(dep.getProvider(FileProvider.class).getFilesToBuild());
-    }
-    for (    TransitiveInfoCollection dep : ruleContext.getPrerequisites(":gcov",Mode.HOST)) {
-      inputsBuilder.addTransitive(dep.getProvider(FileProvider.class).getFilesToBuild());
-    }
+    inputsBuilder.addTransitive(PrerequisiteArtifacts.nestedSet(ruleContext,"$coverage_support",Mode.HOST));
     Artifact instrumentedFileManifest=InstrumentedFileManifestAction.getInstrumentedFileManifest(ruleContext,instrumentedFiles.getInstrumentedFiles(),metadataFiles);
     executionSettings=new TestTargetExecutionSettings(ruleContext,runfilesSupport,executable,instrumentedFileManifest,shards);
     inputsBuilder.add(instrumentedFileManifest);
@@ -56,6 +52,9 @@
       results.add(cacheStatus);
     }
   }
-  Artifact reportGenerator=collectCodeCoverage ? ruleContext.getPrerequisiteArtifact(":coverage_report_generator",Mode.HOST) : null;
+  Artifact reportGenerator=null;
+  if (collectCodeCoverage) {
+    reportGenerator=ruleContext.getPrerequisiteArtifact("$coverage_report_generator",Mode.HOST);
+  }
   return new TestParams(runsPerTest,shards,TestTimeout.getTestTimeout(ruleContext.getRule()),ruleContext.getRule().getRuleClass(),ImmutableList.copyOf(results),coverageArtifacts.build(),reportGenerator);
 }
