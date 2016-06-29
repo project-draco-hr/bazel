@@ -1,3 +1,12 @@
 {
-  mergedDataWriter.writeToValuesXml(key,FluentIterable.from(ImmutableList.of(String.format("<!-- %s -->",source),String.format("<declare-styleable name='%s'>",key.name()))).append(FluentIterable.from(attrs.keySet()).transform(ITEM_TO_ATTR)).append("</declare-styleable>"));
+  ValuesResourceDefinition definition=mergedDataWriter.define(key).derivedFrom(source).startTag("declare-styleable").named(key).closeTag();
+  for (  Entry<FullyQualifiedName,Boolean> entry : attrs.entrySet()) {
+    if (entry.getValue().booleanValue()) {
+      definition=definition.adopt(entry.getKey());
+    }
+ else {
+      definition=definition.startTag("attr").attribute("name").setTo(entry.getKey()).closeUnaryTag();
+    }
+  }
+  definition.endTag().save();
 }

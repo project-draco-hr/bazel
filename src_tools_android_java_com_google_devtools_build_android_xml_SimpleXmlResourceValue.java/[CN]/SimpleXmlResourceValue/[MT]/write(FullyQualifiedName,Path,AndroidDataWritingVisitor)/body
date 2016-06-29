@@ -1,13 +1,9 @@
 {
-  StringBuilder xmlString=new StringBuilder("<").append(valueType.tagName.getLocalPart()).append(" name=\"").append(key.name()).append("\"");
-  for (  Entry<String,String> entry : attributes.entrySet()) {
-    xmlString.append(" ").append(entry.getKey()).append("=\"").append(entry.getValue()).append("\"");
-  }
+  StartTag startTag=mergedDataWriter.define(key).derivedFrom(source).startTag(valueType.tagName).named(key).addAttributesFrom(attributes.entrySet());
   if (value != null) {
-    xmlString.append(">").append(value).append("</").append(valueType.tagName.getLocalPart()).append(">");
+    startTag.closeTag().addCharactersOf(value).endTag().save();
   }
  else {
-    xmlString.append("/>");
+    startTag.closeUnaryTag().save();
   }
-  mergedDataWriter.writeToValuesXml(key,ImmutableList.of(String.format("<!-- %s -->",source),xmlString.toString()));
 }

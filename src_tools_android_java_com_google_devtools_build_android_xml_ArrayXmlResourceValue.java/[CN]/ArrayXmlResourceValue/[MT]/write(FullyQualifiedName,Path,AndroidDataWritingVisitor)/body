@@ -1,3 +1,7 @@
 {
-  mergedDataWriter.writeToValuesXml(key,FluentIterable.from(ImmutableList.of(String.format("<!-- %s -->",source),arrayType.openTag(key,attributes))).append(FluentIterable.from(values).transform(ITEM_TO_XML)).append(arrayType.closeTag()));
+  ValuesResourceDefinition definition=mergedDataWriter.define(key).derivedFrom(source).startTag(arrayType.tagName).named(key).addAttributesFrom(attributes.entrySet()).closeTag();
+  for (  String value : values) {
+    definition=definition.startItemTag().closeTag().addCharactersOf(value).endTag();
+  }
+  definition.endTag().save();
 }
