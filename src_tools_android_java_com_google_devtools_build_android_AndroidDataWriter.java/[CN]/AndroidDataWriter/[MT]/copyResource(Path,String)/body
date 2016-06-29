@@ -1,13 +1,7 @@
 {
-  Path destinationPath=resourceDirectory.resolve(relativeDestinationPath);
+  final Path destinationPath=resourceDirectory.resolve(relativeDestinationPath);
   if (!source.getParent().getFileName().toString().startsWith(SdkConstants.FD_RES_RAW) && source.getFileName().toString().endsWith(SdkConstants.DOT_PNG)) {
-    try {
-      Files.createDirectories(destinationPath.getParent());
-      cruncher.crunchPng(source.toFile(),destinationPath.toFile());
-    }
- catch (    InterruptedException|LoggedErrorException e) {
-      throw new MergingException(e);
-    }
+    writeTasks.add(executorService.submit(new CrunchTask(cruncher,destinationPath,source)));
   }
  else {
     copy(source,destinationPath);

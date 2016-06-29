@@ -2,6 +2,9 @@
   for (  Entry<String,Map<FullyQualifiedName,Iterable<String>>> entry : valueFragments.entrySet()) {
     writeTasks.add(executorService.submit(new WriteValuesXmlTask(resourceDirectory().resolve(entry.getKey()),entry.getValue())));
   }
+  for (  Entry<String,ResourceValuesDefinitions> entry : valueTags.entrySet()) {
+    writeTasks.add(executorService.submit(entry.getValue().createWritingTask(resourceDirectory().resolve(entry.getKey()))));
+  }
   FailedFutureAggregator.forIOExceptionsWithMessage("Failures during writing.").aggregateAndMaybeThrow(writeTasks);
   writeTasks.clear();
   valueFragments.clear();
