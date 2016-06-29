@@ -1,0 +1,28 @@
+{
+  RegularBlockImpl cur=start;
+  empty.add(cur);
+  for (  final BlockImpl pred : cur.getPredecessors()) {
+switch (pred.getType()) {
+case SPECIAL_BLOCK:
+      predecessors.add(getPredecessorHolder(pred,cur));
+    break;
+case CONDITIONAL_BLOCK:
+  predecessors.add(getPredecessorHolder(pred,cur));
+break;
+case EXCEPTION_BLOCK:
+predecessors.add(getPredecessorHolder(pred,cur));
+break;
+case REGULAR_BLOCK:
+RegularBlockImpl r=(RegularBlockImpl)pred;
+if (r.isEmpty()) {
+if (!empty.contains(r)) {
+computeNeighborhoodOfEmptyBlockBackwards(r,empty,predecessors);
+}
+}
+ else {
+predecessors.add(getPredecessorHolder(pred,cur));
+}
+break;
+}
+}
+}

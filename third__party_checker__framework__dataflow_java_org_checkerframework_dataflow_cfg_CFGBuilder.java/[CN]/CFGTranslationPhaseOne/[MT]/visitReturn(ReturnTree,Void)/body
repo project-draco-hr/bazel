@@ -1,0 +1,22 @@
+{
+  ExpressionTree ret=tree.getExpression();
+  ReturnNode result=null;
+  if (ret != null) {
+    Node node=scan(ret,p);
+    Tree enclosing=TreeUtils.enclosingOfKind(getCurrentPath(),new HashSet<Kind>(Arrays.asList(Kind.METHOD,Kind.LAMBDA_EXPRESSION)));
+    if (enclosing.getKind() == Kind.LAMBDA_EXPRESSION) {
+      LambdaExpressionTree lambdaTree=(LambdaExpressionTree)enclosing;
+      TreePath lambdaTreePath=TreePath.getPath(getCurrentPath().getCompilationUnit(),lambdaTree);
+      Context ctx=((JavacProcessingEnvironment)env).getContext();
+      Element overriddenElement=com.sun.tools.javac.code.Types.instance(ctx).findDescriptorSymbol(((Type)trees.getTypeMirror(lambdaTreePath)).tsym);
+      result=new ReturnNode(tree,node,env.getTypeUtils(),lambdaTree,(MethodSymbol)overriddenElement);
+    }
+ else {
+      result=new ReturnNode(tree,node,env.getTypeUtils(),(MethodTree)enclosing);
+    }
+    returnNodes.add(result);
+    extendWithNode(result);
+  }
+  extendWithExtendedNode(new UnconditionalJump(regularExitLabel));
+  return result;
+}

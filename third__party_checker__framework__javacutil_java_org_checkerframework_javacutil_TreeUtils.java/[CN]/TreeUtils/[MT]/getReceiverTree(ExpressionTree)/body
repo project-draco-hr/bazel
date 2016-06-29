@@ -1,0 +1,30 @@
+{
+  ExpressionTree receiver=TreeUtils.skipParens(expression);
+  if (!(receiver.getKind() == Tree.Kind.METHOD_INVOCATION || receiver.getKind() == Tree.Kind.MEMBER_SELECT || receiver.getKind() == Tree.Kind.IDENTIFIER || receiver.getKind() == Tree.Kind.ARRAY_ACCESS)) {
+    return null;
+  }
+  if (receiver.getKind() == Tree.Kind.METHOD_INVOCATION) {
+    receiver=((MethodInvocationTree)receiver).getMethodSelect();
+    if (receiver.getKind() == Tree.Kind.IDENTIFIER) {
+      return null;
+    }
+ else     if (receiver.getKind() == Tree.Kind.MEMBER_SELECT) {
+      receiver=((MemberSelectTree)receiver).getExpression();
+    }
+ else {
+    }
+  }
+ else   if (receiver.getKind() == Tree.Kind.IDENTIFIER) {
+    return null;
+  }
+ else   if (receiver.getKind() == Tree.Kind.ARRAY_ACCESS) {
+    return TreeUtils.skipParens(((ArrayAccessTree)receiver).getExpression());
+  }
+ else   if (receiver.getKind() == Tree.Kind.MEMBER_SELECT) {
+    receiver=((MemberSelectTree)receiver).getExpression();
+    if (receiver instanceof PrimitiveTypeTree) {
+      return null;
+    }
+  }
+  return TreeUtils.skipParens(receiver);
+}

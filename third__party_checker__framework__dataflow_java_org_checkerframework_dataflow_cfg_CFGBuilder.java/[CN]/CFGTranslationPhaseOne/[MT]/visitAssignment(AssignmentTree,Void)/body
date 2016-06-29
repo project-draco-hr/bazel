@@ -1,0 +1,28 @@
+{
+  AssignmentNode assignmentNode;
+  ExpressionTree variable=tree.getVariable();
+  TypeMirror varType=InternalUtils.typeOf(variable);
+  if (TreeUtils.isFieldAccess(variable)) {
+    Node receiver=getReceiver(variable,TreeUtils.enclosingClass(getCurrentPath()));
+    Node expression=scan(tree.getExpression(),p);
+    expression=assignConvert(expression,varType);
+    FieldAccessNode target=new FieldAccessNode(variable,receiver);
+    target.setLValue();
+    Element element=TreeUtils.elementFromUse(variable);
+    if (ElementUtils.isStatic(element) || receiver instanceof ThisLiteralNode) {
+      extendWithNode(target);
+    }
+ else {
+      TypeElement npeElement=elements.getTypeElement("java.lang.NullPointerException");
+      extendWithNodeWithException(target,npeElement.asType());
+    }
+    assignmentNode=new AssignmentNode(tree,target,expression);
+    extendWithNode(assignmentNode);
+  }
+ else {
+    Node target=scan(variable,p);
+    target.setLValue();
+    assignmentNode=translateAssignment(tree,target,tree.getExpression());
+  }
+  return assignmentNode;
+}

@@ -1,0 +1,24 @@
+{
+  if (node.isLValue()) {
+    return new RegularTransferResult<A,S>(null,store.getRegularStore());
+  }
+  store.node=node;
+  currentNode=node;
+  TransferResult<A,S> transferResult=node.accept(transferFunction,store);
+  currentNode=null;
+  if (node instanceof ReturnNode) {
+    storesAtReturnStatements.put((ReturnNode)node,transferResult);
+  }
+  if (node instanceof AssignmentNode) {
+    AssignmentNode assignment=(AssignmentNode)node;
+    Node lhst=assignment.getTarget();
+    if (lhst instanceof LocalVariableNode) {
+      LocalVariableNode lhs=(LocalVariableNode)lhst;
+      Element elem=lhs.getElement();
+      if (ElementUtils.isEffectivelyFinal(elem)) {
+        finalLocalValues.put(elem,transferResult.getResultValue());
+      }
+    }
+  }
+  return transferResult;
+}

@@ -1,0 +1,20 @@
+{
+  TypeMirror exprType=InternalUtils.typeOf(tree);
+  Label trueStart=new Label();
+  Label falseStart=new Label();
+  Label merge=new Label();
+  Node condition=unbox(scan(tree.getCondition(),p));
+  ConditionalJump cjump=new ConditionalJump(trueStart,falseStart);
+  extendWithExtendedNode(cjump);
+  addLabelForNextNode(trueStart);
+  Node trueExpr=scan(tree.getTrueExpression(),p);
+  trueExpr=conditionalExprPromotion(trueExpr,exprType);
+  extendWithExtendedNode(new UnconditionalJump(merge));
+  addLabelForNextNode(falseStart);
+  Node falseExpr=scan(tree.getFalseExpression(),p);
+  falseExpr=conditionalExprPromotion(falseExpr,exprType);
+  addLabelForNextNode(merge);
+  Node node=new TernaryExpressionNode(tree,condition,trueExpr,falseExpr);
+  extendWithNode(node);
+  return node;
+}

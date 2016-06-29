@@ -1,0 +1,17 @@
+{
+  ExpressionTree tree=TreeUtils.skipParens(node);
+  if (tree instanceof LiteralTree) {
+    return true;
+  }
+  if (TreeUtils.isUseOfElement(tree)) {
+    Element elt=TreeUtils.elementFromUse(tree);
+    return ElementUtils.isCompileTimeConstant(elt);
+  }
+ else   if (TreeUtils.isStringConcatenation(tree)) {
+    BinaryTree binOp=(BinaryTree)tree;
+    return isCompileTimeString(binOp.getLeftOperand()) && isCompileTimeString(binOp.getRightOperand());
+  }
+ else {
+    return false;
+  }
+}

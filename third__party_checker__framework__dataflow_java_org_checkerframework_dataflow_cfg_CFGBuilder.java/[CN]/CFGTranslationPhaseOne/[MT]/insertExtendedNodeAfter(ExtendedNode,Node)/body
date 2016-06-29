@@ -1,0 +1,33 @@
+{
+  int index=-1;
+  for (int i=0; i < nodeList.size(); i++) {
+    ExtendedNode inList=nodeList.get(i);
+    if (inList instanceof NodeHolder || inList instanceof NodeWithExceptionsHolder) {
+      if (inList.getNode() == pred) {
+        index=i;
+        break;
+      }
+    }
+  }
+  if (index != -1) {
+    nodeList.add(index + 1,n);
+    for (    Entry<Label,Integer> e : bindings.entrySet()) {
+      if (e.getValue() >= index + 1) {
+        bindings.put(e.getKey(),e.getValue() + 1);
+      }
+    }
+    Set<Integer> newLeaders=new HashSet<>();
+    for (    Integer l : leaders) {
+      if (l >= index + 1) {
+        newLeaders.add(l + 1);
+      }
+ else {
+        newLeaders.add(l);
+      }
+    }
+    leaders=newLeaders;
+  }
+ else {
+    nodeList.add(n);
+  }
+}

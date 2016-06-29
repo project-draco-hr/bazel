@@ -1,0 +1,17 @@
+{
+  Map<? extends ExecutableElement,? extends AnnotationValue> valmap;
+  if (useDefaults) {
+    valmap=getElementValuesWithDefaults(anno);
+  }
+ else {
+    valmap=anno.getElementValues();
+  }
+  for (  ExecutableElement elem : valmap.keySet()) {
+    if (elem.getSimpleName().contentEquals(name)) {
+      AnnotationValue val=valmap.get(elem);
+      return expectedType.cast(val.getValue());
+    }
+  }
+  ErrorReporter.errorAbort("No element with name \'" + name + "\' in annotation "+ anno);
+  return null;
+}

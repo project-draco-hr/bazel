@@ -1,0 +1,43 @@
+{
+  TransferInput<A,S> input=analysis.getInput(bb);
+  this.sbStore.setLength(0);
+  this.sbStore.append("Before:");
+  S thenStore=input.getThenStore();
+  if (thenStore == null) {
+    S regularStore=input.getRegularStore();
+    this.sbStore.append('[');
+    visualizeStore(regularStore);
+    this.sbStore.append(']');
+  }
+ else {
+    S elseStore=input.getElseStore();
+    this.sbStore.append("[then=");
+    visualizeStore(thenStore);
+    this.sbStore.append(", else=");
+    visualizeStore(elseStore);
+    this.sbStore.append("]");
+  }
+  this.sbStore.append("\\n~~~~~~~~~\\n");
+  this.sbBlock.insert(0,this.sbStore);
+  if (verbose) {
+    Node lastNode;
+switch (bb.getType()) {
+case REGULAR_BLOCK:
+      List<Node> blockContents=((RegularBlock)bb).getContents();
+    lastNode=blockContents.get(blockContents.size() - 1);
+  break;
+case EXCEPTION_BLOCK:
+lastNode=((ExceptionBlock)bb).getNode();
+break;
+default :
+lastNode=null;
+}
+if (lastNode != null) {
+this.sbStore.setLength(0);
+this.sbStore.append("\\n~~~~~~~~~\\n");
+this.sbStore.append("After:");
+visualizeStore(analysis.getResult().getStoreAfter(lastNode.getTree()));
+this.sbBlock.append(this.sbStore);
+}
+}
+}

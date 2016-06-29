@@ -1,0 +1,23 @@
+{
+  Element elt=TreeUtils.elementFromUse(node);
+  String reason="call";
+  if (!PurityUtils.hasPurityAnnotation(annoProvider,elt)) {
+    p.addNotBothReason(node,reason);
+  }
+ else {
+    boolean det=PurityUtils.isDeterministic(annoProvider,elt);
+    boolean seFree=(assumeSideEffectFree || PurityUtils.isSideEffectFree(annoProvider,elt));
+    if (!det && !seFree) {
+      p.addNotBothReason(node,reason);
+    }
+ else     if (!det) {
+      p.addNotDetReason(node,reason);
+    }
+ else     if (!seFree) {
+      p.addNotSeFreeReason(node,reason);
+    }
+  }
+  PurityResult r=scan(node.getMethodSelect(),p);
+  r=scan(node.getArguments(),r);
+  return r;
+}

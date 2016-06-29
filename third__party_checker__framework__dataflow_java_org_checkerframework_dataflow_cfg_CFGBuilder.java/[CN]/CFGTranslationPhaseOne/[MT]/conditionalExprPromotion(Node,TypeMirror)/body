@@ -1,0 +1,34 @@
+{
+  TypeMirror nodeType=node.getType();
+  if (types.isSameType(nodeType,destType)) {
+    return node;
+  }
+  if (TypesUtils.isPrimitive(nodeType) && TypesUtils.isBoxedPrimitive(destType)) {
+    return box(node);
+  }
+  boolean isBoxedPrimitive=TypesUtils.isBoxedPrimitive(nodeType);
+  TypeMirror unboxedNodeType=isBoxedPrimitive ? types.unboxedType(nodeType) : nodeType;
+  TypeMirror unboxedDestType=TypesUtils.isBoxedPrimitive(destType) ? types.unboxedType(destType) : destType;
+  if (TypesUtils.isNumeric(unboxedNodeType) && TypesUtils.isNumeric(unboxedDestType)) {
+    if (unboxedNodeType.getKind() == TypeKind.BYTE && destType.getKind() == TypeKind.SHORT) {
+      if (isBoxedPrimitive) {
+        node=unbox(node);
+      }
+      return widen(node,destType);
+    }
+    TypeKind destKind=destType.getKind();
+    if (destKind == TypeKind.BYTE || destKind == TypeKind.CHAR || destKind == TypeKind.SHORT) {
+      if (isBoxedPrimitive) {
+        return unbox(node);
+      }
+ else       if (nodeType.getKind() == TypeKind.INT) {
+        return narrow(node,destType);
+      }
+    }
+    return binaryNumericPromotion(node,destType);
+  }
+  if (TypesUtils.isPrimitive(nodeType) && (destType.getKind() == TypeKind.DECLARED || destType.getKind() == TypeKind.UNION || destType.getKind() == TypeKind.INTERSECTION)) {
+    return box(node);
+  }
+  return node;
+}

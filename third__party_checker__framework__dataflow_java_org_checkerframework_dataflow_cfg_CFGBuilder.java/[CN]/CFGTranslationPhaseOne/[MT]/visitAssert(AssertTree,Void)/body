@@ -1,0 +1,18 @@
+{
+  if (assumeAssertionsEnabled || assumeAssertionsEnabledFor(tree)) {
+    translateAssertWithAssertionsEnabled(tree);
+    return null;
+  }
+  if (assumeAssertionsDisabled) {
+    return null;
+  }
+  VariableTree ea=getAssertionsEnabledVariable();
+  Label assertionEnabled=new Label();
+  Label assertionDisabled=new Label();
+  extendWithNode(new LocalVariableNode(ea));
+  extendWithExtendedNode(new ConditionalJump(assertionEnabled,assertionDisabled));
+  addLabelForNextNode(assertionEnabled);
+  translateAssertWithAssertionsEnabled(tree);
+  addLabelForNextNode(assertionDisabled);
+  return null;
+}

@@ -1,0 +1,33 @@
+{
+  Type t1=((Type)tm1).unannotatedType();
+  Type t2=((Type)tm2).unannotatedType();
+  JavacProcessingEnvironment javacEnv=(JavacProcessingEnvironment)processingEnv;
+  Types types=Types.instance(javacEnv.getContext());
+  if (types.isSameType(t1,t2)) {
+    return t1;
+  }
+  if (t1.getKind() == TypeKind.NULL) {
+    return t1;
+  }
+  if (t2.getKind() == TypeKind.NULL) {
+    return t2;
+  }
+  if (TypesUtils.isPrimitive(t1) || TypesUtils.isPrimitive(t2)) {
+    if (types.isAssignable(t1,t2)) {
+      return t1;
+    }
+ else     if (types.isAssignable(t2,t1)) {
+      return t2;
+    }
+ else {
+      return processingEnv.getTypeUtils().getNoType(TypeKind.NONE);
+    }
+  }
+  if (t1.getKind() == TypeKind.WILDCARD) {
+    return t2;
+  }
+  if (t2.getKind() == TypeKind.WILDCARD) {
+    return t1;
+  }
+  return types.glb(t1,t2);
+}

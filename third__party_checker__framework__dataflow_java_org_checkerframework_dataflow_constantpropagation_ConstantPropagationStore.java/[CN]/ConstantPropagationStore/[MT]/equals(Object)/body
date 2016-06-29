@@ -1,0 +1,38 @@
+{
+  if (o == null) {
+    return false;
+  }
+  if (!(o instanceof ConstantPropagationStore)) {
+    return false;
+  }
+  ConstantPropagationStore other=(ConstantPropagationStore)o;
+  for (  Entry<Node,Constant> e : other.contents.entrySet()) {
+    Node n=e.getKey();
+    Constant otherVal=e.getValue();
+    if (otherVal.isBottom()) {
+      continue;
+    }
+    if (contents.containsKey(n)) {
+      if (!otherVal.equals(contents.get(n))) {
+        return false;
+      }
+    }
+ else {
+      return false;
+    }
+  }
+  for (  Entry<Node,Constant> e : contents.entrySet()) {
+    Node n=e.getKey();
+    Constant thisVal=e.getValue();
+    if (thisVal.isBottom()) {
+      continue;
+    }
+    if (other.contents.containsKey(n)) {
+      continue;
+    }
+ else {
+      return false;
+    }
+  }
+  return true;
+}

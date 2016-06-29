@@ -1,0 +1,14 @@
+{
+  Element methodElement=InternalUtils.symbol(node);
+  boolean sideEffectFree=(assumeSideEffectFree || PurityUtils.isSideEffectFree(annoProvider,methodElement));
+  if (sideEffectFree) {
+    p.addNotDetReason(node,"object.creation");
+  }
+ else {
+    p.addNotBothReason(node,"object.creation");
+  }
+  PurityResult r=scan(node.getEnclosingExpression(),p);
+  r=scan(node.getArguments(),r);
+  r=scan(node.getClassBody(),r);
+  return r;
+}

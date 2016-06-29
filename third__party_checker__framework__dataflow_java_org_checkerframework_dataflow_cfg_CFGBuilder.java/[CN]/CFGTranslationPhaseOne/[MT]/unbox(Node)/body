@@ -1,0 +1,21 @@
+{
+  if (TypesUtils.isBoxedPrimitive(node.getType())) {
+    MemberSelectTree primValueSelect=treeBuilder.buildPrimValueMethodAccess(node.getTree());
+    handleArtificialTree(primValueSelect);
+    MethodAccessNode primValueAccess=new MethodAccessNode(primValueSelect,node);
+    primValueAccess.setInSource(false);
+    TypeElement npeElement=elements.getTypeElement("java.lang.NullPointerException");
+    insertNodeWithExceptionsAfter(primValueAccess,Collections.singleton(npeElement.asType()),node);
+    MethodInvocationTree primValueCall=treeBuilder.buildMethodInvocation(primValueSelect);
+    handleArtificialTree(primValueCall);
+    Node unboxed=new MethodInvocationNode(primValueCall,primValueAccess,Collections.<Node>emptyList(),getCurrentPath());
+    unboxed.setInSource(false);
+    TypeElement throwableElement=elements.getTypeElement("java.lang.Throwable");
+    addToConvertedLookupMap(node.getTree(),unboxed);
+    insertNodeWithExceptionsAfter(unboxed,Collections.singleton(throwableElement.asType()),primValueAccess);
+    return unboxed;
+  }
+ else {
+    return node;
+  }
+}

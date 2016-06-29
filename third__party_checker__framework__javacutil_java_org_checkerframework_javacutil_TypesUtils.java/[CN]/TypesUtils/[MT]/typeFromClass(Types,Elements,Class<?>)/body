@@ -1,0 +1,22 @@
+{
+  if (clazz == void.class) {
+    return types.getNoType(TypeKind.VOID);
+  }
+ else   if (clazz.isPrimitive()) {
+    String primitiveName=clazz.getName().toUpperCase();
+    TypeKind primitiveKind=TypeKind.valueOf(primitiveName);
+    return types.getPrimitiveType(primitiveKind);
+  }
+ else   if (clazz.isArray()) {
+    TypeMirror componentType=typeFromClass(types,elements,clazz.getComponentType());
+    return types.getArrayType(componentType);
+  }
+ else {
+    TypeElement element=elements.getTypeElement(clazz.getCanonicalName());
+    if (element == null) {
+      ErrorReporter.errorAbort("Unrecognized class: " + clazz);
+      return null;
+    }
+    return element.asType();
+  }
+}

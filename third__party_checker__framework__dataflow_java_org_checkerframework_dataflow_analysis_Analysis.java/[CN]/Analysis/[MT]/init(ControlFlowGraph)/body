@@ -1,0 +1,36 @@
+{
+  this.cfg=cfg;
+  thenStores=new IdentityHashMap<>();
+  elseStores=new IdentityHashMap<>();
+  inputs=new IdentityHashMap<>();
+  storesAtReturnStatements=new IdentityHashMap<>();
+  worklist=new Worklist(cfg);
+  nodeValues=new IdentityHashMap<>();
+  finalLocalValues=new HashMap<>();
+  worklist.add(cfg.getEntryBlock());
+  List<LocalVariableNode> parameters=null;
+  UnderlyingAST underlyingAST=cfg.getUnderlyingAST();
+  if (underlyingAST.getKind() == Kind.METHOD) {
+    MethodTree tree=((CFGMethod)underlyingAST).getMethod();
+    parameters=new ArrayList<>();
+    for (    VariableTree p : tree.getParameters()) {
+      LocalVariableNode var=new LocalVariableNode(p);
+      parameters.add(var);
+    }
+  }
+ else   if (underlyingAST.getKind() == Kind.LAMBDA) {
+    LambdaExpressionTree lambda=((CFGLambda)underlyingAST).getLambdaTree();
+    parameters=new ArrayList<>();
+    for (    VariableTree p : lambda.getParameters()) {
+      LocalVariableNode var=new LocalVariableNode(p);
+      parameters.add(var);
+    }
+  }
+ else {
+  }
+  S initialStore=transferFunction.initialStore(underlyingAST,parameters);
+  Block entry=cfg.getEntryBlock();
+  thenStores.put(entry,initialStore);
+  elseStores.put(entry,initialStore);
+  inputs.put(entry,new TransferInput<>(null,this,initialStore));
+}

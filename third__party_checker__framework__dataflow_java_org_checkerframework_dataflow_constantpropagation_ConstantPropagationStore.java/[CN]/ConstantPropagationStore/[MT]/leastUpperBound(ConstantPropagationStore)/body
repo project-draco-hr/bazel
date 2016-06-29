@@ -1,0 +1,21 @@
+{
+  Map<Node,Constant> newContents=new HashMap<>();
+  for (  Entry<Node,Constant> e : other.contents.entrySet()) {
+    Node n=e.getKey();
+    Constant otherVal=e.getValue();
+    if (contents.containsKey(n)) {
+      newContents.put(n,otherVal.leastUpperBound(contents.get(n)));
+    }
+ else {
+      newContents.put(n,otherVal);
+    }
+  }
+  for (  Entry<Node,Constant> e : contents.entrySet()) {
+    Node n=e.getKey();
+    Constant thisVal=e.getValue();
+    if (!other.contents.containsKey(n)) {
+      newContents.put(n,thisVal);
+    }
+  }
+  return new ConstantPropagationStore(newContents);
+}

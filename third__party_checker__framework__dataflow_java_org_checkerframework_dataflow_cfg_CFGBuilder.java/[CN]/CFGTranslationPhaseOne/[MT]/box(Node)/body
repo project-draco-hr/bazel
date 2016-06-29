@@ -1,0 +1,28 @@
+{
+  if (TypesUtils.isPrimitive(node.getType())) {
+    PrimitiveType primitive=types.getPrimitiveType(node.getType().getKind());
+    TypeMirror boxedType=types.getDeclaredType(types.boxedClass(primitive));
+    TypeElement boxedElement=(TypeElement)((DeclaredType)boxedType).asElement();
+    IdentifierTree classTree=treeBuilder.buildClassUse(boxedElement);
+    handleArtificialTree(classTree);
+    ClassNameNode className=new ClassNameNode(classTree);
+    className.setInSource(false);
+    insertNodeAfter(className,node);
+    MemberSelectTree valueOfSelect=treeBuilder.buildValueOfMethodAccess(classTree);
+    handleArtificialTree(valueOfSelect);
+    MethodAccessNode valueOfAccess=new MethodAccessNode(valueOfSelect,className);
+    valueOfAccess.setInSource(false);
+    insertNodeAfter(valueOfAccess,className);
+    MethodInvocationTree valueOfCall=treeBuilder.buildMethodInvocation(valueOfSelect,(ExpressionTree)node.getTree());
+    handleArtificialTree(valueOfCall);
+    Node boxed=new MethodInvocationNode(valueOfCall,valueOfAccess,Collections.singletonList(node),getCurrentPath());
+    boxed.setInSource(false);
+    TypeElement throwableElement=elements.getTypeElement("java.lang.Throwable");
+    addToConvertedLookupMap(node.getTree(),boxed);
+    insertNodeWithExceptionsAfter(boxed,Collections.singleton(throwableElement.asType()),valueOfAccess);
+    return boxed;
+  }
+ else {
+    return node;
+  }
+}

@@ -1,0 +1,46 @@
+{
+  TypeMirror nodeType=node.getType();
+  boolean isSameType=types.isSameType(nodeType,varType);
+  if (isSameType) {
+    return node;
+  }
+  boolean isRightNumeric=TypesUtils.isNumeric(nodeType);
+  boolean isRightPrimitive=TypesUtils.isPrimitive(nodeType);
+  boolean isRightBoxed=TypesUtils.isBoxedPrimitive(nodeType);
+  boolean isRightReference=nodeType instanceof ReferenceType;
+  boolean isLeftNumeric=TypesUtils.isNumeric(varType);
+  boolean isLeftPrimitive=TypesUtils.isPrimitive(varType);
+  boolean isLeftReference=varType instanceof ReferenceType;
+  boolean isSubtype=types.isSubtype(nodeType,varType);
+  if (isRightNumeric && isLeftNumeric && isSubtype) {
+    node=widen(node,varType);
+    nodeType=node.getType();
+  }
+ else   if (isRightReference && isLeftReference && isSubtype) {
+  }
+ else   if (isRightPrimitive && isLeftReference) {
+    if (contextAllowsNarrowing && conversionRequiresNarrowing(varType,node)) {
+      node=narrowAndBox(node,varType);
+      nodeType=node.getType();
+    }
+ else {
+      node=box(node);
+      nodeType=node.getType();
+    }
+  }
+ else   if (isRightBoxed && isLeftPrimitive) {
+    node=unbox(node);
+    nodeType=node.getType();
+    if (types.isSubtype(nodeType,varType) && !types.isSameType(nodeType,varType)) {
+      node=widen(node,varType);
+      nodeType=node.getType();
+    }
+  }
+ else   if (isRightPrimitive && isLeftPrimitive) {
+    if (contextAllowsNarrowing && conversionRequiresNarrowing(varType,node)) {
+      node=narrow(node,varType);
+      nodeType=node.getType();
+    }
+  }
+  return node;
+}

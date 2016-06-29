@@ -1,0 +1,20 @@
+{
+  ArrayType type=(ArrayType)InternalUtils.typeOf(tree);
+  TypeMirror elemType=type.getComponentType();
+  List<? extends ExpressionTree> dimensions=tree.getDimensions();
+  List<? extends ExpressionTree> initializers=tree.getInitializers();
+  List<Node> dimensionNodes=new ArrayList<Node>();
+  if (dimensions != null) {
+    for (    ExpressionTree dim : dimensions) {
+      dimensionNodes.add(unaryNumericPromotion(scan(dim,p)));
+    }
+  }
+  List<Node> initializerNodes=new ArrayList<Node>();
+  if (initializers != null) {
+    for (    ExpressionTree init : initializers) {
+      initializerNodes.add(assignConvert(scan(init,p),elemType));
+    }
+  }
+  Node node=new ArrayCreationNode(tree,type,dimensionNodes,initializerNodes);
+  return extendWithNode(node);
+}

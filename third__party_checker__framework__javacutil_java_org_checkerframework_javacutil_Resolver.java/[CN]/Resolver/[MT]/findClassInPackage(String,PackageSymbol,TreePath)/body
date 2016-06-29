@@ -1,0 +1,17 @@
+{
+  Log.DiagnosticHandler discardDiagnosticHandler=new Log.DiscardDiagnosticHandler(log);
+  try {
+    JavacScope scope=(JavacScope)trees.getScope(path);
+    Env<AttrContext> env=scope.getEnv();
+    Element res=wrapInvocationOnResolveInstance(FIND_IDENT_IN_PACKAGE,env,pck,names.fromString(name),TYP);
+    if (res.getKind() == ElementKind.CLASS) {
+      return (ClassSymbol)res;
+    }
+ else {
+      return null;
+    }
+  }
+  finally {
+    log.popDiagnosticHandler(discardDiagnosticHandler);
+  }
+}

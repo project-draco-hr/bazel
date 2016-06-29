@@ -1,0 +1,18 @@
+{
+  Label assertEnd=new Label();
+  Label elseEntry=new Label();
+  Node condition=unbox(scan(tree.getCondition(),null));
+  ConditionalJump cjump=new ConditionalJump(assertEnd,elseEntry);
+  extendWithExtendedNode(cjump);
+  Node detail=null;
+  addLabelForNextNode(elseEntry);
+  if (tree.getDetail() != null) {
+    detail=scan(tree.getDetail(),null);
+  }
+  TypeElement assertException=elements.getTypeElement("java.lang.AssertionError");
+  AssertionErrorNode assertNode=new AssertionErrorNode(tree,condition,detail,assertException.asType());
+  extendWithNode(assertNode);
+  NodeWithExceptionsHolder exNode=extendWithNodeWithException(new ThrowNode(null,assertNode,env.getTypeUtils()),assertException.asType());
+  exNode.setTerminatesExecution(true);
+  addLabelForNextNode(assertEnd);
+}

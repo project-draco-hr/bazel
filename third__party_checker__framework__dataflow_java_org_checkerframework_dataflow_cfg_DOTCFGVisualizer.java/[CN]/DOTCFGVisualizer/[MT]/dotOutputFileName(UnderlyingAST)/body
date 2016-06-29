@@ -1,0 +1,44 @@
+{
+  StringBuilder srcloc=new StringBuilder();
+  StringBuilder outfile=new StringBuilder(outdir);
+  outfile.append('/');
+  if (ast.getKind() == UnderlyingAST.Kind.ARBITRARY_CODE) {
+    CFGStatement cfgs=(CFGStatement)ast;
+    String clsname=cfgs.getClassTree().getSimpleName().toString();
+    outfile.append(clsname);
+    outfile.append("-initializer-");
+    outfile.append(ast.hashCode());
+    srcloc.append('<');
+    srcloc.append(clsname);
+    srcloc.append("::initializer::");
+    srcloc.append(((JCTree)cfgs.getCode()).pos);
+    srcloc.append('>');
+  }
+ else   if (ast.getKind() == UnderlyingAST.Kind.METHOD) {
+    CFGMethod cfgm=(CFGMethod)ast;
+    String clsname=cfgm.getClassTree().getSimpleName().toString();
+    String methname=cfgm.getMethod().getName().toString();
+    outfile.append(clsname);
+    outfile.append('-');
+    outfile.append(methname);
+    srcloc.append('<');
+    srcloc.append(clsname);
+    srcloc.append("::");
+    srcloc.append(methname);
+    srcloc.append('(');
+    srcloc.append(cfgm.getMethod().getParameters());
+    srcloc.append(")::");
+    srcloc.append(((JCTree)cfgm.getMethod()).pos);
+    srcloc.append('>');
+  }
+ else {
+    ErrorReporter.errorAbort("Unexpected AST kind: " + ast.getKind() + " value: "+ ast.toString());
+    return null;
+  }
+  outfile.append('-');
+  outfile.append(checkerName);
+  outfile.append(".dot");
+  String out=outfile.toString().replace("<","_").replace(">","");
+  generated.put(srcloc.toString(),out);
+  return out;
+}

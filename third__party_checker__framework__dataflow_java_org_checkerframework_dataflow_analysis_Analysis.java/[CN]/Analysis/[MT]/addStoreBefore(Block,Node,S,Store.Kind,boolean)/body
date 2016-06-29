@@ -1,0 +1,60 @@
+{
+  S thenStore=getStoreBefore(b,Store.Kind.THEN);
+  S elseStore=getStoreBefore(b,Store.Kind.ELSE);
+switch (kind) {
+case THEN:
+{
+      S newThenStore=(thenStore != null) ? thenStore.leastUpperBound(s) : s;
+      if (!newThenStore.equals(thenStore)) {
+        thenStores.put(b,newThenStore);
+        if (elseStore != null) {
+          inputs.put(b,new TransferInput<>(node,this,newThenStore,elseStore));
+          addBlockToWorklist=true;
+        }
+      }
+      break;
+    }
+case ELSE:
+{
+    S newElseStore=(elseStore != null) ? elseStore.leastUpperBound(s) : s;
+    if (!newElseStore.equals(elseStore)) {
+      elseStores.put(b,newElseStore);
+      if (thenStore != null) {
+        inputs.put(b,new TransferInput<>(node,this,thenStore,newElseStore));
+        addBlockToWorklist=true;
+      }
+    }
+    break;
+  }
+case BOTH:
+if (thenStore == elseStore) {
+  S newStore=(thenStore != null) ? thenStore.leastUpperBound(s) : s;
+  if (!newStore.equals(thenStore)) {
+    thenStores.put(b,newStore);
+    elseStores.put(b,newStore);
+    inputs.put(b,new TransferInput<>(node,this,newStore));
+    addBlockToWorklist=true;
+  }
+}
+ else {
+  boolean storeChanged=false;
+  S newThenStore=(thenStore != null) ? thenStore.leastUpperBound(s) : s;
+  if (!newThenStore.equals(thenStore)) {
+    thenStores.put(b,newThenStore);
+    storeChanged=true;
+  }
+  S newElseStore=(elseStore != null) ? elseStore.leastUpperBound(s) : s;
+  if (!newElseStore.equals(elseStore)) {
+    elseStores.put(b,newElseStore);
+    storeChanged=true;
+  }
+  if (storeChanged) {
+    inputs.put(b,new TransferInput<>(node,this,newThenStore,newElseStore));
+    addBlockToWorklist=true;
+  }
+}
+}
+if (addBlockToWorklist) {
+addToWorklist(b);
+}
+}

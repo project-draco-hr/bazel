@@ -1,0 +1,30 @@
+{
+  Name parentLabel=getLabel(getCurrentPath());
+  Label loopEntry=new Label();
+  Label loopExit=new Label();
+  Label conditionStart;
+  if (parentLabel != null) {
+    conditionStart=continueLabels.get(parentLabel);
+  }
+ else {
+    conditionStart=new Label();
+  }
+  Label oldBreakTargetL=breakTargetL;
+  breakTargetL=loopExit;
+  Label oldContinueTargetL=continueTargetL;
+  continueTargetL=conditionStart;
+  addLabelForNextNode(loopEntry);
+  if (tree.getStatement() != null) {
+    scan(tree.getStatement(),p);
+  }
+  addLabelForNextNode(conditionStart);
+  if (tree.getCondition() != null) {
+    unbox(scan(tree.getCondition(),p));
+    ConditionalJump cjump=new ConditionalJump(loopEntry,loopExit);
+    extendWithExtendedNode(cjump);
+  }
+  addLabelForNextNode(loopExit);
+  breakTargetL=oldBreakTargetL;
+  continueTargetL=oldContinueTargetL;
+  return null;
+}

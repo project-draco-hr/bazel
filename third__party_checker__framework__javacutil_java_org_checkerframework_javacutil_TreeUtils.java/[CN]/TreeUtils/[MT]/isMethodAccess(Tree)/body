@@ -1,0 +1,16 @@
+{
+  if (tree.getKind().equals(Tree.Kind.MEMBER_SELECT)) {
+    MemberSelectTree memberSelect=(MemberSelectTree)tree;
+    Element el=TreeUtils.elementFromUse(memberSelect);
+    return el.getKind() == ElementKind.METHOD || el.getKind() == ElementKind.CONSTRUCTOR;
+  }
+ else   if (tree.getKind().equals(Tree.Kind.IDENTIFIER)) {
+    IdentifierTree ident=(IdentifierTree)tree;
+    if (ident.getName().contentEquals("super") || ident.getName().contentEquals("this")) {
+      return true;
+    }
+    Element el=TreeUtils.elementFromUse(ident);
+    return el.getKind() == ElementKind.METHOD || el.getKind() == ElementKind.CONSTRUCTOR;
+  }
+  return false;
+}

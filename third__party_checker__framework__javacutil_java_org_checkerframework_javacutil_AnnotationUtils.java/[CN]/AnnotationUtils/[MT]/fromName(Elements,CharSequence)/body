@@ -1,0 +1,28 @@
+{
+  if (annotationsFromNames.containsKey(name)) {
+    return annotationsFromNames.get(name);
+  }
+  final DeclaredType annoType=typeFromName(elements,name);
+  if (annoType == null) {
+    return null;
+  }
+  if (annoType.asElement().getKind() != ElementKind.ANNOTATION_TYPE) {
+    ErrorReporter.errorAbort(annoType + " is not an annotation");
+    return null;
+  }
+  AnnotationMirror result=new AnnotationMirror(){
+    String toString="@" + annoType;
+    @Override public DeclaredType getAnnotationType(){
+      return annoType;
+    }
+    @Override public Map<? extends ExecutableElement,? extends AnnotationValue> getElementValues(){
+      return Collections.emptyMap();
+    }
+    @Override public String toString(){
+      return toString;
+    }
+  }
+;
+  annotationsFromNames.put(name,result);
+  return result;
+}

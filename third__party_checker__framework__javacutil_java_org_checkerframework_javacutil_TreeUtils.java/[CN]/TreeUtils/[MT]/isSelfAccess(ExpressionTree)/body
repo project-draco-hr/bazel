@@ -1,0 +1,25 @@
+{
+  ExpressionTree tr=TreeUtils.skipParens(tree);
+  if (tr.getKind() == Tree.Kind.ARRAY_ACCESS) {
+    return false;
+  }
+  if (tree.getKind() == Tree.Kind.METHOD_INVOCATION) {
+    tr=((MethodInvocationTree)tree).getMethodSelect();
+  }
+  tr=TreeUtils.skipParens(tr);
+  if (tr.getKind() == Tree.Kind.TYPE_CAST) {
+    tr=((TypeCastTree)tr).getExpression();
+  }
+  tr=TreeUtils.skipParens(tr);
+  if (tr.getKind() == Tree.Kind.IDENTIFIER) {
+    return true;
+  }
+  if (tr.getKind() == Tree.Kind.MEMBER_SELECT) {
+    tr=((MemberSelectTree)tr).getExpression();
+    if (tr.getKind() == Tree.Kind.IDENTIFIER) {
+      Name ident=((IdentifierTree)tr).getName();
+      return ident.contentEquals("this") || ident.contentEquals("super");
+    }
+  }
+  return false;
+}

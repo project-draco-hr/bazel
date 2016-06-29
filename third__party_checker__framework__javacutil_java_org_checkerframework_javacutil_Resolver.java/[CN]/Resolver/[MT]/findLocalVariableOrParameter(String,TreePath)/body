@@ -1,0 +1,17 @@
+{
+  Log.DiagnosticHandler discardDiagnosticHandler=new Log.DiscardDiagnosticHandler(log);
+  try {
+    JavacScope scope=(JavacScope)trees.getScope(path);
+    Env<AttrContext> env=scope.getEnv();
+    Element res=wrapInvocationOnResolveInstance(FIND_VAR,env,names.fromString(name));
+    if (res.getKind() == ElementKind.LOCAL_VARIABLE || res.getKind() == ElementKind.PARAMETER) {
+      return (VariableElement)res;
+    }
+ else {
+      return null;
+    }
+  }
+  finally {
+    log.popDiagnosticHandler(discardDiagnosticHandler);
+  }
+}

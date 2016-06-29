@@ -1,0 +1,47 @@
+{
+  if (args.length < 2) {
+    printUsage();
+    System.exit(1);
+  }
+  String input=args[0];
+  String output=args[1];
+  File file=new File(input);
+  if (!file.canRead()) {
+    printError("Cannot read input file: " + file.getAbsolutePath());
+    printUsage();
+    System.exit(1);
+  }
+  String method="test";
+  String clas="Test";
+  boolean pdf=false;
+  boolean error=false;
+  for (int i=2; i < args.length; i++) {
+    if (args[i].equals("-pdf")) {
+      pdf=true;
+    }
+ else     if (args[i].equals("-method")) {
+      if (i >= args.length - 1) {
+        printError("Did not find <name> after -method.");
+        continue;
+      }
+      i++;
+      method=args[i];
+    }
+ else     if (args[i].equals("-class")) {
+      if (i >= args.length - 1) {
+        printError("Did not find <name> after -class.");
+        continue;
+      }
+      i++;
+      clas=args[i];
+    }
+ else {
+      printError("Unknown command line argument: " + args[i]);
+      error=true;
+    }
+  }
+  if (error) {
+    System.exit(1);
+  }
+  generateDOTofCFG(input,output,method,clas,pdf);
+}

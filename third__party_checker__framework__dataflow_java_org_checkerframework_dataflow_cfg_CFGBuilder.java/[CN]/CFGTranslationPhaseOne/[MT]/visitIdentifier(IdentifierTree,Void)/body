@@ -1,0 +1,40 @@
+{
+  Node node;
+  if (TreeUtils.isFieldAccess(tree)) {
+    Node receiver=getReceiver(tree,TreeUtils.enclosingClass(getCurrentPath()));
+    node=new FieldAccessNode(tree,receiver);
+  }
+ else {
+    Element element=TreeUtils.elementFromUse(tree);
+switch (element.getKind()) {
+case ANNOTATION_TYPE:
+case CLASS:
+case ENUM:
+case INTERFACE:
+case TYPE_PARAMETER:
+      node=new ClassNameNode(tree);
+    break;
+case FIELD:
+  if (element.getSimpleName().contentEquals("this")) {
+    node=new ExplicitThisLiteralNode(tree);
+  }
+ else {
+    node=new SuperNode(tree);
+  }
+break;
+case EXCEPTION_PARAMETER:
+case LOCAL_VARIABLE:
+case RESOURCE_VARIABLE:
+case PARAMETER:
+node=new LocalVariableNode(tree);
+break;
+case PACKAGE:
+node=new PackageNameNode(tree);
+break;
+default :
+throw new IllegalArgumentException("unexpected element kind : " + element.getKind());
+}
+}
+extendWithNode(node);
+return node;
+}

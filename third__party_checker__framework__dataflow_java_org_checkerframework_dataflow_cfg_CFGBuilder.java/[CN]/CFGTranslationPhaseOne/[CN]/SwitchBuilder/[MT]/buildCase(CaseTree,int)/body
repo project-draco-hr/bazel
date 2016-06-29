@@ -1,0 +1,18 @@
+{
+  final Label thisBodyL=caseBodyLabels[index];
+  final Label nextBodyL=caseBodyLabels[index + 1];
+  final Label nextCaseL=new Label();
+  ExpressionTree exprTree=tree.getExpression();
+  if (exprTree != null) {
+    Node expr=scan(exprTree,p);
+    CaseNode test=new CaseNode(tree,switchExpr,expr,env.getTypeUtils());
+    extendWithNode(test);
+    extendWithExtendedNode(new ConditionalJump(thisBodyL,nextCaseL));
+  }
+  addLabelForNextNode(thisBodyL);
+  for (  StatementTree stmt : tree.getStatements()) {
+    scan(stmt,p);
+  }
+  extendWithExtendedNode(new UnconditionalJump(nextBodyL));
+  addLabelForNextNode(nextCaseL);
+}

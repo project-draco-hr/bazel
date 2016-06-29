@@ -1,0 +1,33 @@
+{
+  Log.DiagnosticHandler discardDiagnosticHandler=new Log.DiscardDiagnosticHandler(log);
+  try {
+    JavacScope scope=(JavacScope)trees.getScope(path);
+    Env<AttrContext> env=scope.getEnv();
+    Type site=(Type)receiverType;
+    Name name=names.fromString(methodName);
+    List<Type> argtypes=List.nil();
+    for (    TypeMirror a : argumentTypes) {
+      argtypes=argtypes.append((Type)a);
+    }
+    List<Type> typeargtypes=List.nil();
+    boolean allowBoxing=true;
+    boolean useVarargs=false;
+    boolean operator=true;
+    try {
+      Object methodContext=buildMethodContext();
+      Object oldContext=getField(resolve,"currentResolutionContext");
+      setField(resolve,"currentResolutionContext",methodContext);
+      Element result=wrapInvocationOnResolveInstance(FIND_METHOD,env,site,name,argtypes,typeargtypes,allowBoxing,useVarargs,operator);
+      setField(resolve,"currentResolutionContext",oldContext);
+      return result;
+    }
+ catch (    Throwable t) {
+      Error err=new AssertionError("Unexpected Reflection error");
+      err.initCause(t);
+      throw err;
+    }
+  }
+  finally {
+    log.popDiagnosticHandler(discardDiagnosticHandler);
+  }
+}

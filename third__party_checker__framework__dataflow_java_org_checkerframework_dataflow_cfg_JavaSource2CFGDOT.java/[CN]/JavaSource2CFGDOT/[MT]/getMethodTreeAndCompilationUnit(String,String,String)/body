@@ -1,0 +1,52 @@
+{
+  final Holder<MethodTree> m=new Holder<>();
+  final Holder<CompilationUnitTree> c=new Holder<>();
+  BasicTypeProcessor typeProcessor=new BasicTypeProcessor(){
+    @Override protected TreePathScanner<?,?> createTreePathScanner(    CompilationUnitTree root){
+      c.value=root;
+      return new TreePathScanner<Void,Void>(){
+        @Override public Void visitMethod(        MethodTree node,        Void p){
+          ExecutableElement el=TreeUtils.elementFromDeclaration(node);
+          if (el.getSimpleName().contentEquals(method)) {
+            m.value=node;
+            throw new RuntimeException();
+          }
+          return null;
+        }
+      }
+;
+    }
+  }
+;
+  Context context=new Context();
+  JavaCompiler javac=new JavaCompiler(context);
+  javac.attrParseOnly=true;
+  JavacFileManager fileManager=(JavacFileManager)context.get(JavaFileManager.class);
+  JavaFileObject l=fileManager.getJavaFileObjectsFromStrings(List.of(file)).iterator().next();
+  PrintStream err=System.err;
+  try {
+    System.setErr(new PrintStream(new OutputStream(){
+      @Override public void write(      int b) throws IOException {
+      }
+    }
+));
+    javac.compile(List.of(l),List.of(clas),List.of(typeProcessor));
+  }
+ catch (  Throwable e) {
+  }
+ finally {
+    System.setErr(err);
+  }
+  return new Entry<MethodTree,CompilationUnitTree>(){
+    @Override public CompilationUnitTree setValue(    CompilationUnitTree value){
+      return null;
+    }
+    @Override public CompilationUnitTree getValue(){
+      return c.value;
+    }
+    @Override public MethodTree getKey(){
+      return m.value;
+    }
+  }
+;
+}

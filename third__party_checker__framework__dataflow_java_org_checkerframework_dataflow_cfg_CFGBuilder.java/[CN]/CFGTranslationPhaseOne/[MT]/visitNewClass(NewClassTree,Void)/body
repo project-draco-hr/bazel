@@ -1,0 +1,18 @@
+{
+  Tree enclosingExpr=tree.getEnclosingExpression();
+  if (enclosingExpr != null) {
+    scan(enclosingExpr,p);
+  }
+  ExecutableElement constructor=TreeUtils.elementFromUse(tree);
+  List<? extends ExpressionTree> actualExprs=tree.getArguments();
+  List<Node> arguments=convertCallArguments(constructor,actualExprs);
+  Node constructorNode=scan(tree.getIdentifier(),p);
+  Node node=new ObjectCreationNode(tree,constructorNode,arguments);
+  Set<TypeMirror> thrownSet=new HashSet<>();
+  List<? extends TypeMirror> thrownTypes=constructor.getThrownTypes();
+  thrownSet.addAll(thrownTypes);
+  TypeElement throwableElement=elements.getTypeElement("java.lang.Throwable");
+  thrownSet.add(throwableElement.asType());
+  extendWithNodeWithExceptions(node,thrownSet);
+  return node;
+}

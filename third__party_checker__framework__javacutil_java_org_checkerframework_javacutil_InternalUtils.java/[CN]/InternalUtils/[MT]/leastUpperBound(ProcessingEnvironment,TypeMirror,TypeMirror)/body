@@ -1,0 +1,45 @@
+{
+  Type t1=((Type)tm1).unannotatedType();
+  Type t2=((Type)tm2).unannotatedType();
+  JavacProcessingEnvironment javacEnv=(JavacProcessingEnvironment)processingEnv;
+  Types types=Types.instance(javacEnv.getContext());
+  if (types.isSameType(t1,t2)) {
+    return t1;
+  }
+  if (t1.getKind() == TypeKind.NULL) {
+    return t2;
+  }
+  if (t2.getKind() == TypeKind.NULL) {
+    return t1;
+  }
+  if (TypesUtils.isPrimitive(t1) || TypesUtils.isPrimitive(t2)) {
+    if (types.isAssignable(t1,t2)) {
+      return t2;
+    }
+ else     if (types.isAssignable(t2,t1)) {
+      return t1;
+    }
+ else {
+      return processingEnv.getTypeUtils().getNoType(TypeKind.NONE);
+    }
+  }
+  if (t1.getKind() == TypeKind.WILDCARD) {
+    WildcardType wc1=(WildcardType)t1;
+    Type bound=(Type)wc1.getExtendsBound();
+    if (bound == null) {
+      Elements elements=processingEnv.getElementUtils();
+      return elements.getTypeElement("java.lang.Object").asType();
+    }
+    t1=bound;
+  }
+  if (t2.getKind() == TypeKind.WILDCARD) {
+    WildcardType wc2=(WildcardType)t2;
+    Type bound=(Type)wc2.getExtendsBound();
+    if (bound == null) {
+      Elements elements=processingEnv.getElementUtils();
+      return elements.getTypeElement("java.lang.Object").asType();
+    }
+    t2=bound;
+  }
+  return types.lub(t1,t2);
+}

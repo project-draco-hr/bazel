@@ -1,0 +1,39 @@
+{
+  Name parentLabel=getLabel(getCurrentPath());
+  Label conditionStart=new Label();
+  Label loopEntry=new Label();
+  Label loopExit=new Label();
+  Label updateStart;
+  if (parentLabel != null) {
+    updateStart=continueLabels.get(parentLabel);
+  }
+ else {
+    updateStart=new Label();
+  }
+  Label oldBreakTargetL=breakTargetL;
+  breakTargetL=loopExit;
+  Label oldContinueTargetL=continueTargetL;
+  continueTargetL=updateStart;
+  for (  StatementTree init : tree.getInitializer()) {
+    scan(init,p);
+  }
+  addLabelForNextNode(conditionStart);
+  if (tree.getCondition() != null) {
+    unbox(scan(tree.getCondition(),p));
+    ConditionalJump cjump=new ConditionalJump(loopEntry,loopExit);
+    extendWithExtendedNode(cjump);
+  }
+  addLabelForNextNode(loopEntry);
+  if (tree.getStatement() != null) {
+    scan(tree.getStatement(),p);
+  }
+  addLabelForNextNode(updateStart);
+  for (  ExpressionStatementTree update : tree.getUpdate()) {
+    scan(update,p);
+  }
+  extendWithExtendedNode(new UnconditionalJump(conditionStart));
+  addLabelForNextNode(loopExit);
+  breakTargetL=oldBreakTargetL;
+  continueTargetL=oldContinueTargetL;
+  return null;
+}

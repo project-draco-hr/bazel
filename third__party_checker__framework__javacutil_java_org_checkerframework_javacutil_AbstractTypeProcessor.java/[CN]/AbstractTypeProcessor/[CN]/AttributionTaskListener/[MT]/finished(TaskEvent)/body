@@ -1,0 +1,30 @@
+{
+  if (e.getKind() != TaskEvent.Kind.ANALYZE) {
+    return;
+  }
+  if (!hasInvokedTypeProcessingStart) {
+    typeProcessingStart();
+    hasInvokedTypeProcessingStart=true;
+  }
+  Log log=Log.instance(((JavacProcessingEnvironment)processingEnv).getContext());
+  if (!hasInvokedTypeProcessingOver && elements.isEmpty() && log.nerrors == 0) {
+    typeProcessingOver();
+    hasInvokedTypeProcessingOver=true;
+  }
+  if (e.getTypeElement() == null) {
+    throw new AssertionError("event task without a type element");
+  }
+  if (e.getCompilationUnit() == null) {
+    throw new AssertionError("event task without compilation unit");
+  }
+  if (!elements.remove(e.getTypeElement().getQualifiedName())) {
+    return;
+  }
+  TypeElement elem=e.getTypeElement();
+  TreePath p=Trees.instance(processingEnv).getPath(elem);
+  typeProcess(elem,p);
+  if (!hasInvokedTypeProcessingOver && elements.isEmpty() && log.nerrors == 0) {
+    typeProcessingOver();
+    hasInvokedTypeProcessingOver=true;
+  }
+}
