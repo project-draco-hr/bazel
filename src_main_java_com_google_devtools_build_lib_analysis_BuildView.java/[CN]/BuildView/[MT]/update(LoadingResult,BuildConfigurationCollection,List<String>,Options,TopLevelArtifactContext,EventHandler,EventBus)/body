@@ -18,14 +18,20 @@
     if (delimiterPosition >= 0) {
       PathFragment bzlFile=new PathFragment("/" + aspect.substring(0,delimiterPosition));
       String skylarkFunctionName=aspect.substring(delimiterPosition + 1);
-      for (      ConfiguredTargetKey targetSpec : topLevelCtKeys) {
+      for (      TargetAndConfiguration targetSpec : topLevelTargetsWithConfigs) {
+        if (!(targetSpec.getTarget() instanceof Rule)) {
+          continue;
+        }
         aspectKeys.add(AspectValue.createSkylarkAspectKey(targetSpec.getLabel(),targetSpec.getConfiguration(),targetSpec.getConfiguration(),bzlFile,skylarkFunctionName));
       }
     }
  else {
       final NativeAspectClass aspectFactoryClass=ruleClassProvider.getNativeAspectClassMap().get(aspect);
       if (aspectFactoryClass != null) {
-        for (        ConfiguredTargetKey targetSpec : topLevelCtKeys) {
+        for (        TargetAndConfiguration targetSpec : topLevelTargetsWithConfigs) {
+          if (!(targetSpec.getTarget() instanceof Rule)) {
+            continue;
+          }
           aspectKeys.add(AspectValue.createAspectKey(targetSpec.getLabel(),targetSpec.getConfiguration(),targetSpec.getConfiguration(),aspectFactoryClass));
         }
       }
