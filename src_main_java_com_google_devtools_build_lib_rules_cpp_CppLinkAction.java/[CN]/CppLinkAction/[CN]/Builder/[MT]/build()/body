@@ -35,8 +35,10 @@
   }
  else {
     List<String> opts=new ArrayList<>(linkopts);
-    opts.add("-flto");
-    opts.add("-Wl,-plugin-opt,thin-lto=" + configuration.getBinDirectory().getExecPathString() + ":"+ configuration.getBinDirectory().getExecPath().getRelative(ltoOutputRootPrefix).toString());
+    opts.add("-flto=thin");
+    opts.add("-Wl,-plugin-opt,thinlto-index-only");
+    opts.add("-Wl,-plugin-opt,thinlto-emit-imports-files");
+    opts.add("-Wl,-plugin-opt,thinlto-prefix-replace=" + configuration.getBinDirectory().getExecPathString() + ";"+ configuration.getBinDirectory().getExecPath().getRelative(ltoOutputRootPrefix).toString());
     linkCommandLineBuilder.setLinkopts(ImmutableList.copyOf(opts));
   }
   LinkCommandLine linkCommandLine=linkCommandLineBuilder.build();
@@ -49,6 +51,9 @@
     dependencyInputsBuilder.addAll(buildInfoHeaderArtifacts);
     dependencyInputsBuilder.addAll(linkstamps);
     dependencyInputsBuilder.addTransitive(compilationInputs.build());
+  }
+  if (featureConfiguration == null) {
+    this.featureConfiguration=new FeatureConfiguration();
   }
   Iterable<Artifact> expandedInputs=LinkerInputs.toLibraryArtifacts(Link.mergeInputsDependencies(uniqueLibraries,needWholeArchive,cppConfiguration.archiveType()));
   Iterable<Artifact> expandedNonLibraryInputs=LinkerInputs.toLibraryArtifacts(nonLibraries);
@@ -70,14 +75,20 @@
     }
     expandedNonLibraryInputs=renamedNonLibraryInputs;
   }
+ else   if (isLTOIndexing && allLTOArtifacts != null) {
+    for (    LTOBackendArtifacts a : allLTOArtifacts) {
+      List<String> argv=new ArrayList<>();
+      argv.addAll(cppConfiguration.getLinkOptions());
+      argv.addAll(featureConfiguration.getCommandLine(getActionName(),buildVariables));
+      argv.addAll(cppConfiguration.getCompilerOptions(features));
+      a.setCommandLine(argv);
+    }
+  }
   IterablesChain.Builder<Artifact> inputsBuilder=IterablesChain.<Artifact>builder().add(ImmutableList.copyOf(expandedNonLibraryInputs)).add(dependencyInputsBuilder.build()).add(ImmutableIterable.from(expandedInputs));
   if (linkCommandLine.getParamFile() != null) {
     inputsBuilder.add(ImmutableList.of(linkCommandLine.getParamFile()));
     Action parameterFileWriteAction=new ParameterFileWriteAction(getOwner(),paramFile,linkCommandLine.paramCmdLine(),ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1);
     analysisEnvironment.registerAction(parameterFileWriteAction);
-  }
-  if (featureConfiguration == null) {
-    this.featureConfiguration=new FeatureConfiguration();
   }
   Map<String,String> toolchainEnv=featureConfiguration.getEnvironmentVariables(getActionName(),buildVariables);
   ImmutableSet.Builder<String> executionRequirements=ImmutableSet.<String>builder();

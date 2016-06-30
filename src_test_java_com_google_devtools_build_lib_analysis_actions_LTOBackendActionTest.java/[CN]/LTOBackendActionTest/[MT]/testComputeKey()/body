@@ -1,0 +1,42 @@
+{
+  final Artifact artifactA=getSourceArtifact("a");
+  final Artifact artifactB=getSourceArtifact("b");
+  final Artifact artifactAimports=getSourceArtifact("a.imports");
+  final Artifact artifactBimports=getSourceArtifact("b.imports");
+  ActionTester.runTest(64,new ActionCombinationFactory(){
+    @Override public Action generate(    int i){
+      LTOBackendAction.Builder builder=builder();
+      builder.addOutput(destinationArtifact);
+      PathFragment executable=(i & 1) == 0 ? artifactA.getExecPath() : artifactB.getExecPath();
+      builder.setExecutable(executable);
+      if ((i & 2) == 0) {
+        builder.addImportsInfo(new HashMap<PathFragment,Artifact>(),artifactAimports);
+      }
+ else {
+        builder.addImportsInfo(new HashMap<PathFragment,Artifact>(),artifactBimports);
+      }
+      builder.setMnemonic((i & 4) == 0 ? "a" : "b");
+      if ((i & 8) == 0) {
+        builder.addInputManifest(artifactA,new PathFragment("a"));
+      }
+ else {
+        builder.addInputManifest(artifactB,new PathFragment("a"));
+      }
+      if ((i & 16) == 0) {
+        builder.addInput(artifactA);
+      }
+ else {
+        builder.addInput(artifactB);
+      }
+      Map<String,String> env=new HashMap<>();
+      if ((i & 32) == 0) {
+        env.put("foo","bar");
+      }
+      builder.setEnvironment(env);
+      Action[] actions=builder.build(ActionsTestUtil.NULL_ACTION_OWNER,collectingAnalysisEnvironment,targetConfig);
+      collectingAnalysisEnvironment.registerAction(actions);
+      return actions[0];
+    }
+  }
+);
+}

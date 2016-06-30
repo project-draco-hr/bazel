@@ -1,0 +1,15 @@
+{
+  Action[] actions=builder().addImportsInfo(allBitcodeFiles,imports2Artifact).addInput(bitcode2Artifact).addInput(index2Artifact).addOutput(destinationArtifact).setExecutable(scratch.file("/bin/clang").asFragment()).setProgressMessage("Test").build(ActionsTestUtil.NULL_ACTION_OWNER,collectingAnalysisEnvironment,targetConfig);
+  collectingAnalysisEnvironment.registerAction(actions);
+  LTOBackendAction action=(LTOBackendAction)actions[0];
+  assertEquals(ActionsTestUtil.NULL_ACTION_OWNER.getLabel(),action.getOwner().getLabel());
+  assertThat(action.getInputs()).containsExactly(bitcode2Artifact,index2Artifact);
+  assertThat(action.getOutputs()).containsExactly(destinationArtifact);
+  assertEquals(AbstractAction.DEFAULT_RESOURCE_SET,action.getSpawn().getLocalResources());
+  assertThat(action.getArguments()).containsExactly("/bin/clang");
+  assertEquals("Test",action.getProgressMessage());
+  assertThat(action.inputsKnown()).isFalse();
+  action.discoverInputs(context);
+  assertThat(action.inputsKnown()).isTrue();
+  assertThat(action.getInputs()).containsExactly(bitcode1Artifact,bitcode2Artifact,index2Artifact);
+}

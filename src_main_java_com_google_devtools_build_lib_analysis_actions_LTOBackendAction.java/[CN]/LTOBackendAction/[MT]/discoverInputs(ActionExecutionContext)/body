@@ -1,0 +1,23 @@
+{
+  HashSet<PathFragment> importSet=new HashSet<>();
+  try {
+    for (    String line : FileSystemUtils.iterateLinesAsLatin1(imports.getPath())) {
+      if (!line.isEmpty()) {
+        PathFragment execPath=new PathFragment(line);
+        if (execPath.isAbsolute()) {
+          throw new ActionExecutionException("Absolute paths not allowed in imports file " + imports.getPath() + ": "+ execPath,this,false);
+        }
+        importSet.add(new PathFragment(line));
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new ActionExecutionException("error iterating imports file " + imports.getPath(),e,this,false);
+  }
+  Set<Artifact> bitcodeInputSet=computeBitcodeInputs(importSet);
+  if (bitcodeInputSet.size() != importSet.size()) {
+    throw new ActionExecutionException("error computing inputs from imports file " + imports.getPath(),this,false);
+  }
+  updateInputs(createInputs(bitcodeInputSet,getMandatoryInputs()));
+  return bitcodeInputSet;
+}

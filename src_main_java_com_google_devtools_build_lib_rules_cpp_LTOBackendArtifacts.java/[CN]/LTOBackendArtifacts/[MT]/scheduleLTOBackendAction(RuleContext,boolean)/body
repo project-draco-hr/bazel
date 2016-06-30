@@ -1,0 +1,27 @@
+{
+  LTOBackendAction.Builder builder=new LTOBackendAction.Builder();
+  builder.addImportsInfo(bitcodeFiles,imports);
+  builder.addInput(bitcodeFile);
+  builder.addInput(index);
+  builder.addTransitiveInputs(CppHelper.getToolchain(ruleContext).getCompile());
+  builder.addOutput(objectFile);
+  builder.setProgressMessage("LTO Backend Compile " + objectFile.getFilename());
+  builder.setMnemonic("CcLtoBackendCompile");
+  CppConfiguration cppConfiguration=ruleContext.getFragment(CppConfiguration.class);
+  PathFragment compiler=cppConfiguration.getCppExecutable();
+  builder.setExecutable(compiler);
+  List<String> execArgs=new ArrayList<>();
+  execArgs.add("-c");
+  execArgs.add("-fthinlto-index=" + index.getExecPath());
+  execArgs.add("-o");
+  execArgs.add(objectFile.getExecPath().getPathString());
+  execArgs.add("-x");
+  execArgs.add("ir");
+  execArgs.add(bitcodeFile.getExecPath().getPathString());
+  if (usePic) {
+    execArgs.add("-fPIC");
+  }
+  execArgs.addAll(commandLine);
+  builder.addExecutableArguments(execArgs);
+  ruleContext.registerAction(builder.build(ruleContext));
+}

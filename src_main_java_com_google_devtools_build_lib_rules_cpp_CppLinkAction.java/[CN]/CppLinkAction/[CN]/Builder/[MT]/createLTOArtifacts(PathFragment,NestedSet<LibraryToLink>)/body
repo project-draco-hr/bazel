@@ -3,25 +3,26 @@
   for (  LibraryToLink lib : uniqueLibraries) {
     Iterables.addAll(compiled,lib.getLTOBitcodeFiles());
   }
-  NestedSetBuilder<Artifact> bitcodeBuilder=NestedSetBuilder.stableOrder();
+  Map<PathFragment,Artifact> allBitcode=new HashMap<>();
   for (  LibraryToLink lib : uniqueLibraries) {
     if (!lib.containsObjectFiles()) {
       continue;
     }
     for (    Artifact a : lib.getObjectFiles()) {
       if (compiled.contains(a)) {
-        bitcodeBuilder.add(a);
+        allBitcode.put(a.getExecPath(),a);
       }
     }
   }
   for (  LinkerInput input : nonLibraries) {
     if (CppFileTypes.OBJECT_FILE.matches(input.getArtifact().getExecPath()) || CppFileTypes.PIC_OBJECT_FILE.matches(input.getArtifact().getExecPath())) {
-      bitcodeBuilder.add(input.getArtifact());
+      if (this.ltoBitcodeFiles.contains(input.getArtifact())) {
+        allBitcode.put(input.getArtifact().getExecPath(),input.getArtifact());
+      }
     }
   }
-  NestedSet<Artifact> allBitcode=bitcodeBuilder.build();
   ImmutableList.Builder<LTOBackendArtifacts> ltoOutputs=ImmutableList.builder();
-  for (  Artifact a : allBitcode) {
+  for (  Artifact a : allBitcode.values()) {
     LTOBackendArtifacts ltoArtifacts=new LTOBackendArtifacts(ltoOutputRootPrefix,a,allBitcode,ruleContext,linkArtifactFactory);
     ltoOutputs.add(ltoArtifacts);
   }
