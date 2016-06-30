@@ -11,7 +11,10 @@
   CcLibraryHelper.Info info=helper.build();
   CppCompilationContext cppCompilationContext=info.getCppCompilationContext();
   CcCompilationOutputs ccCompilationOutputs=info.getCcCompilationOutputs();
-  PathFragment binaryPath=new PathFragment(ruleContext.getTarget().getName() + OsUtils.executableExtension());
+  PathFragment binaryPath=new PathFragment(ruleContext.getTarget().getName());
+  if (!isLinkShared(ruleContext)) {
+    binaryPath=new PathFragment(binaryPath.getPathString() + OsUtils.executableExtension());
+  }
   Artifact binary=ruleContext.getPackageRelativeArtifact(binaryPath,ruleContext.getConfiguration().getBinDirectory());
   CppLinkAction.Builder linkActionBuilder=determineLinkerArguments(ruleContext,common,precompiledFiles,ccCompilationOutputs,cppCompilationContext.getTransitiveCompilationPrerequisites(),fake,binary,linkStaticness,linkopts);
   linkActionBuilder.setUseTestOnlyFlags(isTest);
