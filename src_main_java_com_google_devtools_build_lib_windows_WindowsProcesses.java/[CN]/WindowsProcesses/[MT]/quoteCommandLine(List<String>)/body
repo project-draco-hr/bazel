@@ -1,0 +1,40 @@
+{
+  StringBuilder result=new StringBuilder();
+  for (int iArg=0; iArg < argv.size(); iArg++) {
+    if (iArg != 0) {
+      result.append(" ");
+    }
+    String arg=argv.get(iArg);
+    boolean hasSpace=arg.contains(" ");
+    if (!arg.contains("\"") && !arg.contains("\\") && !hasSpace) {
+      result.append(arg);
+    }
+ else {
+      if (hasSpace) {
+        result.append("\"");
+      }
+      for (int iChar=0; iChar < arg.length(); iChar++) {
+        boolean lastChar=iChar == arg.length() - 1;
+switch (arg.charAt(iChar)) {
+case '"':
+          result.append("\\\"");
+        break;
+case '\\':
+      if (lastChar) {
+        result.append(hasSpace ? "\\\\" : "\\");
+      }
+ else {
+        result.append(arg.charAt(iChar + 1) == '"' || arg.charAt(iChar + 1) == '\\' ? "\\\\" : "\\");
+      }
+    break;
+default :
+  result.append(arg.charAt(iChar));
+}
+}
+if (hasSpace) {
+result.append("\"");
+}
+}
+}
+return result.toString();
+}
