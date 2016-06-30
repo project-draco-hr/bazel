@@ -7,6 +7,7 @@
   ImmutableList<String> xlint=ImmutableList.of();
   ImmutableList<String> misc=ImmutableList.of();
   ImmutableList<String> jvmOpts=ImmutableList.of();
+  SupportsWorkers javacSupportsWorkers=SupportsWorkers.NO;
   for (  Build.Attribute attribute : rule.getAttributeList()) {
 switch (attribute.getName()) {
 case "source_version":
@@ -44,7 +45,12 @@ break;
 case "jvm_opts":
 jvmOpts=ImmutableList.copyOf(attribute.getStringListValueList());
 break;
+case "javac_supports_workers":
+if (attribute.getBooleanValue()) {
+javacSupportsWorkers=SupportsWorkers.YES;
+}
+break;
 }
 }
-return new JavaToolchainData(source,target,bootclasspath,extclasspath,encoding,xlint,misc,jvmOpts);
+return new JavaToolchainData(source,target,bootclasspath,extclasspath,encoding,xlint,misc,jvmOpts,javacSupportsWorkers);
 }
