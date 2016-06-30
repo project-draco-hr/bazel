@@ -1,7 +1,0 @@
-'\nScons Builder for nanopb .proto definitions.\n\nThis tool will locate the nanopb generator and use it to generate .pb.c and\n.pb.h files from the .proto files.\n\nBasic example\n-------------\n# Build myproto.pb.c and myproto.pb.h from myproto.proto\nmyproto = env.NanopbProto("myproto")\n\n# Link nanopb core to the program\nenv.Append(CPPPATH = "$NANOB")\nmyprog = env.Program(["myprog.c", myproto, "$NANOPB/pb_encode.c", "$NANOPB/pb_decode.c"])\n\nConfiguration options\n---------------------\nNormally, this script is used in the test environment of nanopb and it locates\nthe nanopb generator by a relative path. If this script is used in another\napplication, the path to nanopb root directory has to be defined:\n\nenv.SetDefault(NANOPB = "path/to/nanopb")\n\nAdditionally, the path to protoc and the options to give to protoc can be\ndefined manually:\n\nenv.SetDefault(PROTOC = "path/to/protoc")\nenv.SetDefault(PROTOCFLAGS = "--plugin=protoc-gen-nanopb=path/to/protoc-gen-nanopb")\n'
-import SCons.Action
-import SCons.Builder
-import SCons.Util
-import os.path
-SCons.Warnings.enableWarningClass(NanopbWarning)
-_nanopb_proto_builder = SCons.Builder.Builder(generator=_nanopb_proto_actions, suffix='.pb.c', src_suffix='.proto', emitter=_nanopb_proto_emitter)
