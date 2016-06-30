@@ -1,3 +1,27 @@
 {
-  evalConcurrently(env,callback,MoreExecutors.newDirectExecutorService());
+  if (operator == TokenKind.PLUS || operator == TokenKind.UNION) {
+    for (    QueryExpression operand : operands) {
+      env.eval(operand,callback);
+    }
+    return;
+  }
+  Set<T> lhsValue=QueryUtil.evalAll(env,operands.get(0));
+  for (int i=1; i < operands.size(); i++) {
+    Set<T> rhsValue=QueryUtil.evalAll(env,operands.get(i));
+switch (operator) {
+case INTERSECT:
+case CARET:
+      lhsValue.retainAll(rhsValue);
+    break;
+case EXCEPT:
+case MINUS:
+  lhsValue.removeAll(rhsValue);
+break;
+case UNION:
+case PLUS:
+default :
+throw new IllegalStateException("operator=" + operator);
+}
+}
+callback.process(lhsValue);
 }

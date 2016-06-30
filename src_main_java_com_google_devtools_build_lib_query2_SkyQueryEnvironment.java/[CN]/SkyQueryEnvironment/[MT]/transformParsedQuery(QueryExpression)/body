@@ -1,29 +1,5 @@
 {
-  if (universeScope.size() != 1) {
-    return queryExpression;
-  }
-  final TargetPattern.Parser targetPatternParser=new TargetPattern.Parser(parserPrefix);
-  String universeScopePattern=Iterables.getOnlyElement(universeScope);
-  final String absoluteUniverseScopePattern=targetPatternParser.absolutize(universeScopePattern);
-  QueryExpressionMapper rdepsToAllRDepsMapper=new QueryExpressionMapper(){
-    @Override public QueryExpression map(    FunctionExpression functionExpression){
-      if (functionExpression.getFunction().getName().equals(new RdepsFunction().getName())) {
-        List<Argument> args=functionExpression.getArgs();
-        QueryExpression universeExpression=args.get(0).getExpression();
-        if (universeExpression instanceof TargetLiteral) {
-          TargetLiteral literalUniverseExpression=(TargetLiteral)universeExpression;
-          String absolutizedUniverseExpression=targetPatternParser.absolutize(literalUniverseExpression.getPattern());
-          if (absolutizedUniverseExpression.equals(absoluteUniverseScopePattern)) {
-            List<Argument> argsTail=args.subList(1,functionExpression.getArgs().size());
-            return new FunctionExpression(new AllRdepsFunction(),argsTail);
-          }
-        }
-      }
-      return super.map(functionExpression);
-    }
-  }
-;
-  QueryExpression transformedQueryExpression=queryExpression.getMapped(rdepsToAllRDepsMapper);
+  QueryExpression transformedQueryExpression=getTransformedQueryExpression(queryExpression);
   LOG.info(String.format("transformed query [%s] to [%s]",Ascii.truncate(queryExpression.toString(),MAX_QUERY_EXPRESSION_LOG_CHARS,"[truncated]"),Ascii.truncate(transformedQueryExpression.toString(),MAX_QUERY_EXPRESSION_LOG_CHARS,"[truncated]")));
   return transformedQueryExpression;
 }

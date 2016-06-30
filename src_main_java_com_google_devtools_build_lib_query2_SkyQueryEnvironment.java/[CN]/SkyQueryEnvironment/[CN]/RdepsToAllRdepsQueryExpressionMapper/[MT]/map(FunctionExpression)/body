@@ -1,0 +1,15 @@
+{
+  if (functionExpression.getFunction().getName().equals(new RdepsFunction().getName())) {
+    List<Argument> args=functionExpression.getArgs();
+    QueryExpression universeExpression=args.get(0).getExpression();
+    if (universeExpression instanceof TargetLiteral) {
+      TargetLiteral literalUniverseExpression=(TargetLiteral)universeExpression;
+      String absolutizedUniverseExpression=targetPatternParser.absolutize(literalUniverseExpression.getPattern());
+      if (absolutizedUniverseExpression.equals(absoluteUniverseScopePattern)) {
+        List<Argument> argsTail=args.subList(1,functionExpression.getArgs().size());
+        return new FunctionExpression(new AllRdepsFunction(),argsTail);
+      }
+    }
+  }
+  return super.map(functionExpression);
+}
