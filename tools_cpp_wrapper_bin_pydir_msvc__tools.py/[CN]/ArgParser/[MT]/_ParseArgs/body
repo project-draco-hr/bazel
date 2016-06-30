@@ -4,10 +4,12 @@ def _ParseArgs(self, argv):
     matched = []
     unmatched = []
     files = []
-    is_pch = False
     while (i < len(argv)):
         (num_matched, action, groups) = self._MatchOneArg(argv[i:])
         arg = argv[i]
+        if (arg.startswith('/Fo') or arg.startswith('/Fa') or arg.startswith('/Fi')):
+            self.output_file = arg[3:]
+            self.options.append(('/Fd%s.pdb' % self.NormPath(os.path.splitext(self.output_file)[0])))
         if (num_matched == 0):
             if (os.path.isfile(arg) and (os.path.splitext(arg)[1] == '.a') and (os.path.getsize(arg) == 0)):
                 i += 1
@@ -26,9 +28,6 @@ def _ParseArgs(self, argv):
             continue
         matched += argv[i:(i + num_matched)]
         for entry in action:
-            if (entry == '$CREATE_PRECOMPILED_HEADER'):
-                is_pch = True
-                continue
             if (entry == '$TARGET_ARCH'):
                 if (arg == '-m32'):
                     self.target_arch = 'x86'
@@ -60,16 +59,6 @@ def _ParseArgs(self, argv):
                         except IOError as e:
                             print 'Could not open', value, 'for reading:', str(e)
                             exit((-1))
-                        continue
-                    if (entry == ('$COMPILE_OUTPUT%d' % g)):
-                        if is_pch:
-                            with open(value, 'a'):
-                                os.utime(value, None)
-                            sys.exit(0)
-                        else:
-                            self.output_file = value
-                            self.options.append(('/Fo%s' % self.NormPath(value)))
-                            self.options.append(('/Fd%s.pdb' % self.NormPath(os.path.splitext(value)[0])))
                         continue
                     if (entry == ('$GENERATE_DEPS%d' % g)):
                         self.options.append('/showIncludes')
