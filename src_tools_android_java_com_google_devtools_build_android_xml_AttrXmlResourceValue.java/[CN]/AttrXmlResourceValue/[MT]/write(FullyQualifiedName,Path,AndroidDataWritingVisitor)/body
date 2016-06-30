@@ -1,10 +1,10 @@
 {
   if (formats.isEmpty()) {
-    mergedDataWriter.define(key).derivedFrom(source).startTag("attr").named(key).closeTag().endTag().save();
+    mergedDataWriter.define(key).derivedFrom(source).startTag("attr").named(key).closeUnaryTag().save();
   }
  else {
     ImmutableList<String> formatKeys=FluentIterable.from(formats.keySet()).filter(not(equalTo(FLAGS))).filter(not(equalTo(ENUM))).toSortedList(Ordering.natural());
-    ValuesResourceDefinition definition=mergedDataWriter.define(key).derivedFrom(source).startTag("attr").named(key).optional().attribute("format").setFrom(formatKeys).joinedBy("|").closeTag();
+    ValuesResourceDefinition definition=mergedDataWriter.define(key).derivedFrom(source).startTag("attr").named(key).optional().attribute("format").setFrom(formatKeys).joinedBy("|").closeTag().addCharactersOf("\n");
     for (    ResourceXmlAttrValue value : formats.values()) {
       definition=value.writeTo(definition);
     }
