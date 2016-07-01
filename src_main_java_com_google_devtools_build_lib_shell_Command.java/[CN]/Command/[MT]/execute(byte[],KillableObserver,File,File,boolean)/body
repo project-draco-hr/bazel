@@ -1,7 +1,17 @@
 {
   nullCheck(stdinInput,"stdinInput");
   nullCheck(observer,"observer");
-  processBuilder.redirectOutput(redirectToFileOrDevNull(stdOut));
-  processBuilder.redirectError(redirectToFileOrDevNull(stdErr));
+  if (stdOut == null) {
+    subprocessBuilder.setStdout(StreamAction.DISCARD);
+  }
+ else {
+    subprocessBuilder.setStdout(stdOut);
+  }
+  if (stdErr == null) {
+    subprocessBuilder.setStderr(StreamAction.DISCARD);
+  }
+ else {
+    subprocessBuilder.setStderr(stdErr);
+  }
   return doExecute(new ByteArrayInputSource(stdinInput),observer,null,killSubprocessOnInterrupt,false).get();
 }
