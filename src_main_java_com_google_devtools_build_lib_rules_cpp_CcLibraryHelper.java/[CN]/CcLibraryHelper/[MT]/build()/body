@@ -38,6 +38,9 @@
   providers.put(CppDebugFileProvider.class,new CppDebugFileProvider(dwoArtifacts.getDwoArtifacts(),dwoArtifacts.getPicDwoArtifacts()));
   providers.put(TransitiveLipoInfoProvider.class,collectTransitiveLipoInfo(ccOutputs));
   Map<String,NestedSet<Artifact>> outputGroups=new TreeMap<>();
+  if (shouldAddLinkerOutputArtifacts(ruleContext,ccOutputs)) {
+    addLinkerOutputArtifacts(outputGroups);
+  }
   outputGroups.put(OutputGroupProvider.TEMP_FILES,getTemps(ccOutputs));
   if (emitCompileProviders) {
     boolean isLipoCollector=ruleContext.getFragment(CppConfiguration.class).isLipoContextCollector();
