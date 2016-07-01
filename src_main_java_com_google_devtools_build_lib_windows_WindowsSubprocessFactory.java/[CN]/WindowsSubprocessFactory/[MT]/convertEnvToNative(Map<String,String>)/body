@@ -1,0 +1,14 @@
+{
+  if (env.isEmpty()) {
+    return new byte[]{0,0};
+  }
+  StringBuilder result=new StringBuilder();
+  for (  String key : Ordering.natural().sortedCopy(env.keySet())) {
+    if (key.contains("=")) {
+      throw new IOException("Environment variable names must not contain '='");
+    }
+    result.append(key + "=" + env.get(key)+ "\0");
+  }
+  result.append("\0");
+  return result.toString().getBytes(Charsets.UTF_8);
+}

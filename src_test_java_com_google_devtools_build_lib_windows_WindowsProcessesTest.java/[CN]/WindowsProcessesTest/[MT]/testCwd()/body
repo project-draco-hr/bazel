@@ -1,0 +1,10 @@
+{
+  String dir1=System.getenv("TEST_TMPDIR") + "/dir1";
+  new File(dir1).mkdir();
+  process=WindowsProcesses.nativeCreateProcess(mockArgs("O."),null,dir1,null,null);
+  assertNoError();
+  byte[] buf=new byte[1024];
+  int len=WindowsProcesses.nativeReadStdout(process,buf,0,1024);
+  assertNoError();
+  assertThat(new String(buf,0,len,UTF8).replace("\\","/")).isEqualTo(dir1);
+}

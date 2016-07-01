@@ -1,10 +1,11 @@
 {
   String stdoutFile=System.getenv("TEST_TMPDIR") + "\\stdout_redirect";
   String stderrFile=System.getenv("TEST_TMPDIR") + "\\stderr_redirect";
-  process=WindowsProcesses.nativeCreateProcess(mockArgs("O-one","E-two"),null,stdoutFile,stderrFile);
+  process=WindowsProcesses.nativeCreateProcess(mockArgs("O-one","E-two"),null,null,stdoutFile,stderrFile);
   assertThat(process).isGreaterThan(0L);
   assertNoError();
-  WindowsProcesses.nativeWaitFor(process);
+  assertThat(WindowsProcesses.nativeWaitFor(process)).isTrue();
+  WindowsProcesses.nativeGetExitCode(process);
   assertNoError();
   byte[] stdout=Files.readAllBytes(Paths.get(stdoutFile));
   byte[] stderr=Files.readAllBytes(Paths.get(stderrFile));

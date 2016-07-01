@@ -1,0 +1,13 @@
+{
+  String commandLine=WindowsProcesses.quoteCommandLine(builder.getArgv());
+  byte[] env=builder.getEnv() == null ? null : convertEnvToNative(builder.getEnv());
+  String stdoutPath=getRedirectPath(builder.getStdout(),builder.getStdoutFile());
+  String stderrPath=getRedirectPath(builder.getStderr(),builder.getStderrFile());
+  long nativeProcess=WindowsProcesses.nativeCreateProcess(commandLine,env,builder.getWorkingDirectory().getPath(),stdoutPath,stderrPath);
+  String error=WindowsProcesses.nativeGetLastError(nativeProcess);
+  if (!error.isEmpty()) {
+    WindowsProcesses.nativeDelete(nativeProcess);
+    throw new IOException(error);
+  }
+  return new WindowsSubprocess(nativeProcess,stdoutPath != null,stderrPath != null);
+}

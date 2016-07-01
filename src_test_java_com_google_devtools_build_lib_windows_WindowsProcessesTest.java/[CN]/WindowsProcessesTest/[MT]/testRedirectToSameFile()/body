@@ -1,9 +1,10 @@
 {
   String file=System.getenv("TEST_TMPDIR") + "\\captured_";
-  process=WindowsProcesses.nativeCreateProcess(mockArgs("O-one","E-two"),null,file,file);
+  process=WindowsProcesses.nativeCreateProcess(mockArgs("O-one","E-two"),null,null,file,file);
   assertThat(process).isGreaterThan(0L);
   assertNoError();
-  WindowsProcesses.nativeWaitFor(process);
+  assertThat(WindowsProcesses.nativeWaitFor(process)).isTrue();
+  WindowsProcesses.nativeGetExitCode(process);
   assertNoError();
   byte[] bytes=Files.readAllBytes(Paths.get(file));
   assertThat(new String(bytes,UTF8)).isEqualTo("onetwo");
