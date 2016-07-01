@@ -1,0 +1,27 @@
+{
+  ImmutableSet.Builder<String> newIds=ImmutableSet.builder();
+  try (BufferedInputStream inStream=new BufferedInputStream(Files.newInputStream(source))){
+    XMLEventReader eventReader=xmlInputFactory.createXMLEventReader(inStream,StandardCharsets.UTF_8.toString());
+    while (eventReader.hasNext()) {
+      XMLEvent event=eventReader.nextEvent();
+      if (event.isStartElement()) {
+        StartElement start=event.asStartElement();
+        Iterator<Attribute> attributes=XmlResourceValues.iterateAttributesFrom(start);
+        while (attributes.hasNext()) {
+          Attribute attribute=attributes.next();
+          String value=attribute.getValue();
+          if (value.startsWith(SdkConstants.NEW_ID_PREFIX)) {
+            String idName=value.substring(SdkConstants.NEW_ID_PREFIX.length());
+            newIds.add(idName);
+          }
+        }
+      }
+    }
+    eventReader.close();
+  }
+   ImmutableSet<String> idResources=newIds.build();
+  overwritingConsumer.consume(fileKey,DataValueFile.of(source));
+  for (  String id : idResources) {
+    combiningConsumer.consume(fqnFactory.create(ResourceType.ID,id),DataResourceXml.of(source,IdXmlResourceValue.of()));
+  }
+}
