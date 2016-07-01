@@ -3,10 +3,10 @@
   List<String> linkopts=new ArrayList<>(extraLinkOpts);
   linkopts.addAll(linkParams.flattenedLinkopts());
   Map<Artifact,NestedSet<Artifact>> linkstamps=CppHelper.resolveLinkstamps(ruleContext,linkParams);
-  List<Artifact> buildInfoArtifacts=linkstamps.isEmpty() ? ImmutableList.<Artifact>of() : ruleContext.getBuildInfo(CppBuildInfo.KEY);
+  List<Artifact> buildInfoArtifacts=linkstamps.isEmpty() ? ImmutableList.<Artifact>of() : ruleContext.getAnalysisEnvironment().getBuildInfo(ruleContext,CppBuildInfo.KEY,configuration);
   boolean shareNativeDeps=configuration.getFragment(CppConfiguration.class).shareNativeDeps();
   NestedSet<LibraryToLink> linkerInputs=linkParams.getLibraries();
-  Artifact sharedLibrary=shareNativeDeps ? ruleContext.getShareableArtifact(getSharedNativeDepsPath(LinkerInputs.toLibraryArtifacts(linkerInputs),linkopts,linkstamps.keySet(),buildInfoArtifacts,ruleContext.getFeatures()),ruleContext.getConfiguration().getBinDirectory()) : nativeDeps;
+  Artifact sharedLibrary=shareNativeDeps ? ruleContext.getShareableArtifact(getSharedNativeDepsPath(LinkerInputs.toLibraryArtifacts(linkerInputs),linkopts,linkstamps.keySet(),buildInfoArtifacts,ruleContext.getFeatures()),configuration.getBinDirectory()) : nativeDeps;
   CppLinkAction.Builder builder=new CppLinkAction.Builder(ruleContext,sharedLibrary,configuration,toolchain);
   if (useDynamicRuntime) {
     builder.setRuntimeInputs(toolchain.getDynamicRuntimeLinkMiddleman(),toolchain.getDynamicRuntimeLinkInputs());

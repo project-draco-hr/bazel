@@ -2,7 +2,7 @@
   if (interfaceOutput != null && (fake || linkType != LinkTargetType.DYNAMIC_LIBRARY)) {
     throw new RuntimeException("Interface output can only be used " + "with non-fake DYNAMIC_LIBRARY targets");
   }
-  final ImmutableList<Artifact> buildInfoHeaderArtifacts=!linkstamps.isEmpty() ? ruleContext.getBuildInfo(CppBuildInfo.KEY) : ImmutableList.<Artifact>of();
+  final ImmutableList<Artifact> buildInfoHeaderArtifacts=!linkstamps.isEmpty() ? analysisEnvironment.getBuildInfo(ruleContext,CppBuildInfo.KEY,configuration) : ImmutableList.<Artifact>of();
   boolean needWholeArchive=wholeArchive || needWholeArchive(linkStaticness,linkType,linkopts,isNativeDeps,cppConfiguration);
   NestedSet<LibraryToLink> uniqueLibraries=libraries.build();
   final Iterable<Artifact> filteredNonLibraryArtifacts=filterLinkerInputArtifacts(LinkerInputs.toLibraryArtifacts(nonLibraries));
@@ -10,7 +10,7 @@
   final ImmutableSet<String> features=(ruleContext == null) ? ImmutableSet.<String>of() : ruleContext.getFeatures();
   final LibraryToLink outputLibrary=LinkerInputs.newInputLibrary(output,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
   final LibraryToLink interfaceOutputLibrary=(interfaceOutput == null) ? null : LinkerInputs.newInputLibrary(interfaceOutput,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
-  final ImmutableMap<Artifact,Artifact> linkstampMap=mapLinkstampsToOutputs(linkstamps,ruleContext,output,linkArtifactFactory);
+  final ImmutableMap<Artifact,Artifact> linkstampMap=mapLinkstampsToOutputs(linkstamps,ruleContext,configuration,output,linkArtifactFactory);
   PathFragment ltoOutputRootPrefix=null;
   if (isLTOIndexing && allLTOArtifacts == null) {
     ltoOutputRootPrefix=FileSystemUtils.appendExtension(outputLibrary.getArtifact().getRootRelativePath(),".lto");
@@ -28,7 +28,7 @@
     actionOutputs=constructOutputs(outputLibrary.getArtifact(),linkstampMap.values(),interfaceOutputLibrary == null ? null : interfaceOutputLibrary.getArtifact(),symbolCounts);
   }
   PathFragment paramRootPath=ParameterFile.derivePath(outputLibrary.getArtifact().getRootRelativePath(),(isLTOIndexing) ? "lto" : "2");
-  @Nullable final Artifact paramFile=canSplitCommandLine() ? linkArtifactFactory.create(ruleContext,paramRootPath) : null;
+  @Nullable final Artifact paramFile=canSplitCommandLine() ? linkArtifactFactory.create(ruleContext,configuration,paramRootPath) : null;
   LinkCommandLine.Builder linkCommandLineBuilder=new LinkCommandLine.Builder(configuration,getOwner(),ruleContext).setActionName(getActionName()).setLinkerInputs(linkerInputs).setRuntimeInputs(ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs))).setLinkTargetType(linkType).setLinkStaticness(linkStaticness).setFeatures(features).setRuntimeSolibDir(linkType.isStaticLibraryLink() ? null : runtimeSolibDir).setNativeDeps(isNativeDeps).setUseTestOnlyFlags(useTestOnlyFlags).setNeedWholeArchive(needWholeArchive).setParamFile(paramFile).setAllLTOArtifacts(isLTOIndexing ? null : allLTOArtifacts).setToolchain(toolchain).setFeatureConfiguration(featureConfiguration);
   if (!isLTOIndexing) {
     linkCommandLineBuilder.setOutput(outputLibrary.getArtifact()).setInterfaceOutput(interfaceOutput).setSymbolCountsOutput(symbolCounts).setBuildInfoHeaderArtifacts(buildInfoHeaderArtifacts).setInterfaceSoBuilder(getInterfaceSoBuilder()).setLinkstamps(linkstampMap).setLinkopts(ImmutableList.copyOf(linkopts)).addLinkstampCompileOptions(linkstampOptions);
