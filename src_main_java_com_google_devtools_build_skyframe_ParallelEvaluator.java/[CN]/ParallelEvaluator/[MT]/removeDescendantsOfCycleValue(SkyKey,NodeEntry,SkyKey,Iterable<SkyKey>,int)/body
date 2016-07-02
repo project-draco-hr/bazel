@@ -3,7 +3,7 @@
   Set<SkyKey> unvisitedDeps=Sets.newHashSetWithExpectedSize(directDeps.numElements());
   Iterables.addAll(unvisitedDeps,Iterables.concat(directDeps));
   unvisitedDeps.remove(cycleChild);
-  removeIncompleteChildrenForCycle(key,entry,unvisitedDeps);
+  Set<SkyKey> removedDeps=removeIncompleteChildrenForCycle(key,entry,unvisitedDeps);
   if (!entry.isReady()) {
     entry.signalDep();
   }
@@ -15,7 +15,7 @@
     if (descendant == CHILDREN_FINISHED) {
       cycleLength--;
       if (cycleLength == 0) {
-        return;
+        return removedDeps;
       }
       continue;
     }
