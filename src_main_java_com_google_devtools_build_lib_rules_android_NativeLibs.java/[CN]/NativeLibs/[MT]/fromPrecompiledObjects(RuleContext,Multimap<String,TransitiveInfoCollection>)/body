@@ -1,0 +1,8 @@
+{
+  ImmutableMap.Builder<String,Iterable<Artifact>> builder=ImmutableMap.builder();
+  for (  Map.Entry<String,Collection<TransitiveInfoCollection>> entry : depsByArchitecture.asMap().entrySet()) {
+    NestedSet<LinkerInput> nativeLibraries=AndroidCommon.collectTransitiveNativeLibraries(entry.getValue());
+    builder.put(entry.getKey(),filterUniqueSharedLibraries(ruleContext,nativeLibraries));
+  }
+  return new NativeLibs(builder.build(),null);
+}

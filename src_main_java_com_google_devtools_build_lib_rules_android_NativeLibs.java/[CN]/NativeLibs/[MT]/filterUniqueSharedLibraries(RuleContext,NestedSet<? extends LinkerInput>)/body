@@ -1,9 +1,6 @@
 {
   Map<String,Artifact> basenames=new HashMap<>();
   Set<Artifact> artifacts=new HashSet<>();
-  if (linkedLibrary != null) {
-    basenames.put(linkedLibrary.getExecPath().getBaseName(),linkedLibrary);
-  }
   for (  LinkerInput linkerInput : libraries) {
     String name=linkerInput.getArtifact().getFilename();
     if (!(CppFileTypes.SHARED_LIBRARY.matches(name) || CppFileTypes.VERSIONED_SHARED_LIBRARY.matches(name))) {
@@ -16,7 +13,7 @@
     String basename=artifact.getExecPath().getBaseName();
     Artifact oldArtifact=basenames.put(basename,artifact);
     if (oldArtifact != null) {
-      ruleContext.ruleError("Each library in the transitive closure must have a unique basename to avoid " + "name collisions when packaged into an apk, but two libraries have the basename '" + basename + "': "+ artifact.prettyPrint()+ " and "+ oldArtifact.prettyPrint()+ ((oldArtifact == linkedLibrary) ? " (the library compiled for this target)" : ""));
+      ruleContext.ruleError("Each library in the transitive closure must have a unique " + "basename, but two libraries had the basename '" + basename + "': "+ artifact.prettyPrint()+ " and "+ oldArtifact.prettyPrint());
     }
   }
   return artifacts;

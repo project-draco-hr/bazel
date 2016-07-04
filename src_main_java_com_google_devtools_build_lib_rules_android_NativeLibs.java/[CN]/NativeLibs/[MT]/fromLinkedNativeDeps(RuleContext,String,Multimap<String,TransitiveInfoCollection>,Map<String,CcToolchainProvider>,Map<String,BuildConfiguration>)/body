@@ -1,15 +1,13 @@
 {
   Map<String,Iterable<Artifact>> result=new LinkedHashMap<>();
-  String nativeDepsLibraryBasename=null;
   for (  Map.Entry<String,Collection<TransitiveInfoCollection>> entry : depsByArchitecture.asMap().entrySet()) {
     CcLinkParams linkParams=AndroidCommon.getCcLinkParamsStore(entry.getValue()).get(true,true);
-    Artifact nativeDepsLibrary=NativeDepsHelper.linkAndroidNativeDepsIfPresent(ruleContext,linkParams,configurationMap.get(entry.getKey()),toolchainMap.get(entry.getKey()));
+    Artifact nativeDepsLibrary=NativeDepsHelper.maybeCreateAndroidNativeDepsAction(ruleContext,linkParams,configurationMap.get(entry.getKey()),toolchainMap.get(entry.getKey()));
     ImmutableList.Builder<Artifact> librariesBuilder=ImmutableList.builder();
+    librariesBuilder.addAll(filterUniqueSharedLibraries(ruleContext,linkParams.getLibraries()));
     if (nativeDepsLibrary != null) {
       librariesBuilder.add(nativeDepsLibrary);
-      nativeDepsLibraryBasename=nativeDepsLibrary.getExecPath().getBaseName();
     }
-    librariesBuilder.addAll(filterUniqueSharedLibraries(ruleContext,nativeDepsLibrary,linkParams.getLibraries()));
     ImmutableList<Artifact> libraries=librariesBuilder.build();
     if (!libraries.isEmpty()) {
       result.put(entry.getKey(),libraries);
@@ -18,12 +16,10 @@
   if (result.isEmpty()) {
     return NativeLibs.EMPTY;
   }
- else   if (nativeDepsLibraryBasename == null) {
-    return new NativeLibs(ImmutableMap.copyOf(result),null);
-  }
  else {
+    Artifact anyNativeLibrary=result.entrySet().iterator().next().getValue().iterator().next();
     Artifact nativeDepsName=ruleContext.getUniqueDirectoryArtifact("nativedeps_filename",nativeDepsFileName,ruleContext.getBinOrGenfilesDirectory());
-    ruleContext.registerAction(new FileWriteAction(ruleContext.getActionOwner(),nativeDepsName,nativeDepsLibraryBasename,false));
+    ruleContext.registerAction(new FileWriteAction(ruleContext.getActionOwner(),nativeDepsName,anyNativeLibrary.getExecPath().getBaseName(),false));
     return new NativeLibs(ImmutableMap.copyOf(result),nativeDepsName);
   }
 }
