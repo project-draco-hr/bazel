@@ -1,0 +1,18 @@
+{
+  if (fileTypesObj == Boolean.TRUE) {
+    builder.allowedFileTypes(FileTypeSet.ANY_FILE);
+  }
+ else   if (fileTypesObj == Boolean.FALSE) {
+    builder.allowedFileTypes(FileTypeSet.NO_FILE);
+  }
+ else   if (fileTypesObj instanceof SkylarkFileType) {
+    builder.allowedFileTypes(((SkylarkFileType)fileTypesObj).getFileTypeSet());
+  }
+ else   if (fileTypesObj instanceof SkylarkList) {
+    List<String> arg=SkylarkList.castSkylarkListOrNoneToList(fileTypesObj,String.class,"allow_files argument");
+    builder.allowedFileTypes(FileType.of(arg));
+  }
+ else {
+    throw new EvalException(ast.getLocation(),attr + " should be a boolean or a string list");
+  }
+}
