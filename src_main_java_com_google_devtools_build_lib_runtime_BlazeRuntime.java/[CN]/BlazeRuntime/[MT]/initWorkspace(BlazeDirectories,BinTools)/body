@@ -1,66 +1,8 @@
 {
-  SkyframeExecutorFactory skyframeExecutorFactory=null;
+  boolean watchFS=startupOptionsProvider != null && startupOptionsProvider.getOptions(BlazeServerStartupOptions.class).watchFS;
+  WorkspaceBuilder builder=new WorkspaceBuilder(directories,binTools,watchFS);
   for (  BlazeModule module : blazeModules) {
-    SkyframeExecutorFactory skyFactory=module.getSkyframeExecutorFactory(directories);
-    if (skyFactory != null) {
-      Preconditions.checkState(skyframeExecutorFactory == null,"At most one Skyframe factory supported. But found two: %s and %s",skyFactory,skyframeExecutorFactory);
-      skyframeExecutorFactory=skyFactory;
-    }
+    module.workspaceInit(directories,builder);
   }
-  if (skyframeExecutorFactory == null) {
-    skyframeExecutorFactory=new SequencedSkyframeExecutorFactory();
-  }
-  WorkspaceStatusAction.Factory workspaceStatusActionFactory=null;
-  for (  BlazeModule module : blazeModules) {
-    WorkspaceStatusAction.Factory candidate=module.getWorkspaceStatusActionFactory();
-    if (candidate != null) {
-      Preconditions.checkState(workspaceStatusActionFactory == null,"more than one module defines a workspace status action factory");
-      workspaceStatusActionFactory=candidate;
-    }
-  }
-  Iterable<DiffAwareness.Factory> diffAwarenessFactories;
-{
-    ImmutableList.Builder<DiffAwareness.Factory> builder=new ImmutableList.Builder<>();
-    boolean watchFS=startupOptionsProvider != null && startupOptionsProvider.getOptions(BlazeServerStartupOptions.class).watchFS;
-    for (    BlazeModule module : blazeModules) {
-      builder.addAll(module.getDiffAwarenessFactories(watchFS));
-    }
-    diffAwarenessFactories=builder.build();
-  }
-  Predicate<PathFragment> allowedMissingInputs=null;
-  for (  BlazeModule module : blazeModules) {
-    Predicate<PathFragment> modulePredicate=module.getAllowedMissingInputs();
-    if (modulePredicate != null) {
-      Preconditions.checkArgument(allowedMissingInputs == null,"More than one Blaze module allows missing inputs.");
-      allowedMissingInputs=modulePredicate;
-    }
-  }
-  if (allowedMissingInputs == null) {
-    allowedMissingInputs=Predicates.alwaysFalse();
-  }
-  Preprocessor.Factory.Supplier preprocessorFactorySupplier=null;
-  for (  BlazeModule module : blazeModules) {
-    Preprocessor.Factory.Supplier modulePreprocessorFactorySupplier=module.getPreprocessorFactorySupplier();
-    if (modulePreprocessorFactorySupplier != null) {
-      Preconditions.checkState(preprocessorFactorySupplier == null,"more than one module defines a preprocessor factory supplier");
-      preprocessorFactorySupplier=modulePreprocessorFactorySupplier;
-    }
-  }
-  if (preprocessorFactorySupplier == null) {
-    preprocessorFactorySupplier=Preprocessor.Factory.Supplier.NullSupplier.INSTANCE;
-  }
-  ImmutableMap.Builder<SkyFunctionName,SkyFunction> skyFunctions=ImmutableMap.builder();
-  for (  BlazeModule module : blazeModules) {
-    skyFunctions.putAll(module.getSkyFunctions(directories));
-  }
-  ImmutableList.Builder<PrecomputedValue.Injected> precomputedValues=ImmutableList.builder();
-  for (  BlazeModule module : blazeModules) {
-    precomputedValues.addAll(module.getPrecomputedSkyframeValues());
-  }
-  ImmutableList.Builder<SkyValueDirtinessChecker> customDirtinessCheckers=ImmutableList.builder();
-  for (  BlazeModule module : blazeModules) {
-    customDirtinessCheckers.addAll(module.getCustomDirtinessCheckers());
-  }
-  SkyframeExecutor skyframeExecutor=skyframeExecutorFactory.create(packageFactory,directories,binTools,workspaceStatusActionFactory,ruleClassProvider.getBuildInfoFactories(),diffAwarenessFactories,allowedMissingInputs,preprocessorFactorySupplier,skyFunctions.build(),precomputedValues.build(),customDirtinessCheckers.build(),getProductName());
-  this.workspace=new BlazeWorkspace(this,directories,skyframeExecutor,eventBusExceptionHandler,workspaceStatusActionFactory,binTools);
+  this.workspace=builder.build(this,packageFactory,ruleClassProvider,getProductName(),eventBusExceptionHandler);
 }
