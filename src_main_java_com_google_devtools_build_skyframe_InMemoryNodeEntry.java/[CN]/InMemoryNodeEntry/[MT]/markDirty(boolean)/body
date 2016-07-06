@@ -1,7 +1,7 @@
 {
   assertKeepEdges();
   if (isDone()) {
-    buildingState=BuildingState.newDirtyState(isChanged,GroupedList.<SkyKey>create(directDeps),value);
+    buildingState=DirtyBuildingState.create(isChanged,GroupedList.<SkyKey>create(directDeps),value);
     value=null;
     directDeps=null;
     return new MarkedDirtyResult(getReverseDepsUtil().getReverseDeps(this));
@@ -9,7 +9,7 @@
   Preconditions.checkState(isChanged != isChanged(),"Cannot mark node dirty twice or changed twice: %s",this);
   Preconditions.checkState(value == null,"Value should have been reset already %s",this);
   if (isChanged) {
-    buildingState.markChanged();
+    getDirtyBuildingState().markChanged();
   }
   return null;
 }
