@@ -8,10 +8,18 @@ synchronized (this) {
   }
   if (threadToWaitFor != null) {
     threadToWaitFor.interrupt();
-    try {
-      threadToWaitFor.join();
+    boolean gotInterrupted=false;
+    while (true) {
+      try {
+        threadToWaitFor.join();
+        break;
+      }
+ catch (      InterruptedException e) {
+        gotInterrupted=true;
+      }
     }
- catch (    InterruptedException e) {
+    if (gotInterrupted) {
+      Thread.currentThread().interrupt();
     }
   }
 }

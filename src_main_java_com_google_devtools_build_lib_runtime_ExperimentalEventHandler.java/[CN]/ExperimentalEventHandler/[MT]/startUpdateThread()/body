@@ -1,10 +1,7 @@
 {
-  if (buildComplete) {
-    return;
-  }
   Thread threadToStart=null;
 synchronized (this) {
-    if (updateThread == null) {
+    if (!buildComplete && updateThread == null) {
       final ExperimentalEventHandler eventHandler=this;
       updateThread=new Thread(new Runnable(){
         @Override public void run(){
@@ -24,8 +21,8 @@ synchronized (this) {
 );
       threadToStart=updateThread;
     }
-    if (threadToStart != null) {
-      threadToStart.start();
-    }
+  }
+  if (threadToStart != null) {
+    threadToStart.start();
   }
 }
