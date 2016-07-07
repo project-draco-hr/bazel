@@ -1,3 +1,9 @@
 {
-  checkInvalidCpuError("cpu",Pattern.compile("No toolchain found for cpu 'bogus'. Valid cpus are: \\[\n(  [\\w-]+,\n)+]"));
+  try {
+    create("--cpu=bogus","--experimental_disable_jvm");
+    fail();
+  }
+ catch (  InvalidConfigurationException e) {
+    assertThat(e.getMessage()).matches(Pattern.compile("No toolchain found for cpu 'bogus'. Valid cpus are: \\[\n(  [\\w-]+,\n)+]"));
+  }
 }
