@@ -5,13 +5,11 @@
   process.close();
   log.finer(status.toString());
   try {
-    if (outErr != null) {
-      if (Thread.currentThread().isInterrupted()) {
-        outErr.cancel();
-      }
+    if (Thread.currentThread().isInterrupted()) {
+      outErr.cancel();
+    }
  else {
-        outErr.waitForCompletion();
-      }
+      outErr.waitForCompletion();
     }
   }
  catch (  IOException ioe) {
@@ -24,7 +22,7 @@
       throw status.exited() ? new BadExitStatusException(this,noOutputResult,message,ioe) : new AbnormalTerminationException(this,noOutputResult,message,ioe);
     }
   }
-  CommandResult result=new CommandResult(outErr != null ? outErr.getAccumulatedOut() : CommandResult.NO_OUTPUT_COLLECTED,outErr != null ? outErr.getAccumulatedErr() : CommandResult.NO_OUTPUT_COLLECTED,status);
+  CommandResult result=new CommandResult(outErr.getAccumulatedOut(),outErr.getAccumulatedErr(),status);
   result.logThis();
   if (status.success()) {
     return result;
