@@ -1,13 +1,21 @@
 {
-  if (env.isEmpty()) {
+  Map<String,String> realEnv=new TreeMap<>();
+  realEnv.putAll(env == null ? System.getenv() : env);
+  if (getSystemRoot(realEnv) == null) {
+    String systemRoot=getSystemRoot(System.getenv());
+    if (systemRoot != null) {
+      realEnv.put("SystemRoot",systemRoot);
+    }
+  }
+  if (realEnv.isEmpty()) {
     return new byte[]{0,0};
   }
   StringBuilder result=new StringBuilder();
-  for (  String key : Ordering.natural().sortedCopy(env.keySet())) {
-    if (key.contains("=")) {
+  for (  Map.Entry<String,String> entry : realEnv.entrySet()) {
+    if (entry.getKey().contains("=")) {
       throw new IOException("Environment variable names must not contain '='");
     }
-    result.append(key + "=" + env.get(key)+ "\0");
+    result.append(entry.getKey() + "=" + entry.getValue()+ "\0");
   }
   result.append("\0");
   return result.toString().getBytes(Charsets.UTF_8);
