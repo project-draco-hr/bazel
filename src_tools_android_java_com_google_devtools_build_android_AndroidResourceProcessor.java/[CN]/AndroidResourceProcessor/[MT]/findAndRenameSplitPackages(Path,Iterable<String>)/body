@@ -1,0 +1,22 @@
+{
+  String prefix=packageOut.getFileName().toString() + "_";
+  String prefixGlob=prefix.replaceAll("[\\\\{}\\[\\]*?]","\\\\$0") + "*";
+  Path outputDirectory=packageOut.getParent();
+  ImmutableList.Builder<String> filenameSuffixes=new ImmutableList.Builder<>();
+  try (DirectoryStream<Path> glob=Files.newDirectoryStream(outputDirectory,prefixGlob)){
+    for (    Path file : glob) {
+      filenameSuffixes.add(file.getFileName().toString().substring(prefix.length()));
+    }
+  }
+   Map<String,String> outputs=SplitConfigurationFilter.mapFilenamesToSplitFlags(filenameSuffixes.build(),splits);
+  ImmutableList.Builder<Path> outputPaths=new ImmutableList.Builder<>();
+  for (  Map.Entry<String,String> splitMapping : outputs.entrySet()) {
+    Path resultPath=packageOut.resolveSibling(prefix + splitMapping.getValue());
+    outputPaths.add(resultPath);
+    if (!splitMapping.getKey().equals(splitMapping.getValue())) {
+      Path sourcePath=packageOut.resolveSibling(prefix + splitMapping.getKey());
+      Files.move(sourcePath,resultPath);
+    }
+  }
+  return outputPaths.build();
+}

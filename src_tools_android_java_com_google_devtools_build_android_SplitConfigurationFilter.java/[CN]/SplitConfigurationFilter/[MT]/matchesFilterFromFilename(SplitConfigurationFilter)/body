@@ -1,0 +1,14 @@
+{
+  if (filenameFilter.configs.size() != this.configs.size()) {
+    return false;
+  }
+  List<ResourceConfiguration> unmatchedConfigs=new ArrayList<>(this.configs);
+  for (  ResourceConfiguration filenameConfig : filenameFilter.configs) {
+    Optional<ResourceConfiguration> matched=Iterables.tryFind(unmatchedConfigs,new ResourceConfiguration.MatchesConfigurationFromFilename(filenameConfig));
+    if (!matched.isPresent()) {
+      return false;
+    }
+    unmatchedConfigs.remove(matched.get());
+  }
+  return true;
+}

@@ -1,0 +1,30 @@
+{
+  TreeSet<SplitConfigurationFilter> filenameFilters=new TreeSet<>();
+  for (  String filename : filenames) {
+    filenameFilters.add(SplitConfigurationFilter.fromFilenameSuffix(filename));
+  }
+  TreeSet<SplitConfigurationFilter> flagFilters=new TreeSet<>();
+  for (  String splitFlag : splitFlags) {
+    flagFilters.add(SplitConfigurationFilter.fromSplitFlag(splitFlag));
+  }
+  ImmutableMap.Builder<String,String> result=ImmutableMap.builder();
+  List<String> unidentifiedFilenames=new ArrayList<>();
+  for (  SplitConfigurationFilter filenameFilter : filenameFilters) {
+    Optional<SplitConfigurationFilter> matched=Iterables.tryFind(flagFilters,new MatchesFilterFromFilename(filenameFilter));
+    if (matched.isPresent()) {
+      result.put(filenameFilter.filename,matched.get().filename);
+      flagFilters.remove(matched.get());
+    }
+ else {
+      unidentifiedFilenames.add(filenameFilter.filename);
+    }
+  }
+  if (!(unidentifiedFilenames.isEmpty() && flagFilters.isEmpty())) {
+    ImmutableList.Builder<String> unidentifiedFlags=ImmutableList.builder();
+    for (    SplitConfigurationFilter flagFilter : flagFilters) {
+      unidentifiedFlags.add(flagFilter.filename);
+    }
+    throw new UnrecognizedSplitsException(unidentifiedFlags.build(),unidentifiedFilenames,result.build());
+  }
+  return result.build();
+}
