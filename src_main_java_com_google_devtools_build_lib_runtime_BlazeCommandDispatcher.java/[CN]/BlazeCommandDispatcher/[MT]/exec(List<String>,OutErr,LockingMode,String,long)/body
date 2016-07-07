@@ -12,15 +12,22 @@
     outErr.printErrLn(String.format("Command '%s' not found. Try '%s help'.",commandName,runtime.getProductName()));
     return ExitCode.COMMAND_LINE_ERROR.getNumericExitCode();
   }
+  long waitTimeInMs=0;
 synchronized (commandLock) {
-    if (currentClientDescription != null) {
+    boolean warningPrinted=false;
+    while (currentClientDescription != null) {
 switch (lockingMode) {
 case WAIT:
-        outErr.printErrLn("Another command (" + currentClientDescription + ") is running. "+ " Waiting for it to complete...");
-      commandLock.wait();
-    break;
+        if (!warningPrinted) {
+          outErr.printErrLn("Another command (" + currentClientDescription + ") is running. "+ " Waiting for it to complete...");
+          warningPrinted=true;
+        }
+      long clockBefore=BlazeClock.nanoTime();
+    commandLock.wait();
+  waitTimeInMs=(BlazeClock.nanoTime() - clockBefore) / (1000L * 1000L);
+break;
 case ERROR_OUT:
-  outErr.printErrLn(String.format("Another command (" + currentClientDescription + ") is "+ "running. Exiting immediately."));
+outErr.printErrLn(String.format("Another command (" + currentClientDescription + ") is "+ "running. Exiting immediately."));
 return ExitCode.COMMAND_LINE_ERROR.getNumericExitCode();
 default :
 throw new IllegalStateException();
@@ -30,7 +37,7 @@ Verify.verify(currentClientDescription == null);
 currentClientDescription=clientDescription;
 }
 try {
-return execExclusively(args,outErr,firstContactTime,commandName,command);
+return execExclusively(args,outErr,firstContactTime,commandName,command,waitTimeInMs);
 }
   finally {
 synchronized (commandLock) {
