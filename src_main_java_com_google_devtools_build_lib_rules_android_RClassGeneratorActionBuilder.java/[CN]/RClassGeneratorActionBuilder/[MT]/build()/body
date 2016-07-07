@@ -1,0 +1,25 @@
+{
+  CustomCommandLine.Builder builder=new CustomCommandLine.Builder();
+  NestedSetBuilder<Artifact> inputs=NestedSetBuilder.naiveLinkOrder();
+  inputs.addAll(ruleContext.getExecutablePrerequisite("$android_rclass_generator",Mode.HOST).getRunfilesSupport().getRunfilesArtifactsWithoutMiddlemen());
+  List<Artifact> outs=new ArrayList<>();
+  if (primary.getRTxt() != null) {
+    builder.addExecPath("--primaryRTxt",primary.getRTxt());
+    inputs.add(primary.getRTxt());
+  }
+  if (primary.getManifest() != null) {
+    builder.addExecPath("--primaryManifest",primary.getManifest());
+    inputs.add(primary.getManifest());
+  }
+  if (dependencies != null) {
+    Iterable<ResourceContainer> depResources=dependencies.getResources();
+    if (depResources.iterator().hasNext()) {
+      builder.addJoinStrings("--libraries",",",Iterables.transform(depResources,DEPS_TO_ARG));
+      inputs.addTransitive(NestedSetBuilder.wrap(Order.NAIVE_LINK_ORDER,FluentIterable.from(depResources).transformAndConcat(DEPS_TO_ARTIFACTS)));
+    }
+  }
+  builder.addExecPath("--classJarOutput",classJarOut);
+  outs.add(classJarOut);
+  SpawnAction.Builder spawnActionBuilder=new SpawnAction.Builder();
+  ruleContext.registerAction(spawnActionBuilder.addTransitiveInputs(inputs.build()).addOutputs(ImmutableList.<Artifact>copyOf(outs)).useParameterFile(ParameterFileType.SHELL_QUOTED).setCommandLine(builder.build()).setExecutable(ruleContext.getExecutablePrerequisite("$android_rclass_generator",Mode.HOST)).setProgressMessage("Generating R Classes: " + ruleContext.getLabel()).setMnemonic("RClassGenerator").build(ruleContext));
+}

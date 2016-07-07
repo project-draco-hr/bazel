@@ -1,0 +1,15 @@
+{
+  SymbolLoader symbolValues=createSymbolFile("R.txt","int attr agility 0x7f010000","int attr dexterity 0x7f010001","int drawable heart 0x7f020000","int id someTextView 0x7f080000","int integer maxNotifications 0x7f090000","int string alphabet 0x7f100000","int string ok 0x7f100001");
+  SymbolLoader symbolsInLibrary=createSymbolFile("lib.R.txt","int attr agility 0x1","int id someTextView 0x1","int string ok 0x1");
+  Path out=temp.resolve("classes");
+  Files.createDirectories(out);
+  RClassGenerator writer=new RClassGenerator(out.toFile(),"com.bar",symbolValues,finalFields);
+  writer.addSymbolsToWrite(symbolsInLibrary);
+  writer.write();
+  Path packageDir=out.resolve("com/bar");
+  checkFilesInPackage(packageDir,"R.class","R$attr.class","R$id.class","R$string.class");
+  Class<?> outerClass=checkTopLevelClass(out,"com.bar.R","com.bar.R$attr","com.bar.R$id","com.bar.R$string");
+  checkInnerClass(out,"com.bar.R$attr",outerClass,ImmutableMap.of("agility",0x7f010000),ImmutableMap.<String,List<Integer>>of(),finalFields);
+  checkInnerClass(out,"com.bar.R$id",outerClass,ImmutableMap.of("someTextView",0x7f080000),ImmutableMap.<String,List<Integer>>of(),finalFields);
+  checkInnerClass(out,"com.bar.R$string",outerClass,ImmutableMap.of("ok",0x7f100001),ImmutableMap.<String,List<Integer>>of(),finalFields);
+}

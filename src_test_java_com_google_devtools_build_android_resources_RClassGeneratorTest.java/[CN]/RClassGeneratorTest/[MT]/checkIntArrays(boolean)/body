@@ -1,0 +1,14 @@
+{
+  SymbolLoader symbolValues=createSymbolFile("R.txt","int attr android_layout 0x010100f2","int attr bar 0x7f010001","int attr baz 0x7f010002","int attr fox 0x7f010003","int attr attr 0x7f010004","int attr another_attr 0x7f010005","int attr zoo 0x7f010006","int[] styleable ActionButton { 0x010100f2, 0x7f010001, 0x7f010002, 0x7f010003, " + "0x7f010004, 0x7f010005, 0x7f010006 }","int styleable ActionButton_android_layout 0","int styleable ActionButton_another_attr 5","int styleable ActionButton_attr 4","int styleable ActionButton_bar 1","int styleable ActionButton_baz 2","int styleable ActionButton_fox 3","int styleable ActionButton_zoo 6");
+  SymbolLoader symbolsInLibrary=symbolValues;
+  Path out=temp.resolve("classes");
+  Files.createDirectories(out);
+  RClassGenerator writer=new RClassGenerator(out.toFile(),"com.intArray",symbolValues,finalFields);
+  writer.addSymbolsToWrite(symbolsInLibrary);
+  writer.write();
+  Path packageDir=out.resolve("com/intArray");
+  checkFilesInPackage(packageDir,"R.class","R$attr.class","R$styleable.class");
+  Class<?> outerClass=checkTopLevelClass(out,"com.intArray.R","com.intArray.R$attr","com.intArray.R$styleable");
+  checkInnerClass(out,"com.intArray.R$attr",outerClass,ImmutableMap.<String,Integer>builder().put("android_layout",0x010100f2).put("bar",0x7f010001).put("baz",0x7f010002).put("fox",0x7f010003).put("attr",0x7f010004).put("another_attr",0x7f010005).put("zoo",0x7f010006).build(),ImmutableMap.<String,List<Integer>>of(),finalFields);
+  checkInnerClass(out,"com.intArray.R$styleable",outerClass,ImmutableMap.<String,Integer>builder().put("ActionButton_android_layout",0).put("ActionButton_bar",1).put("ActionButton_baz",2).put("ActionButton_fox",3).put("ActionButton_attr",4).put("ActionButton_another_attr",5).put("ActionButton_zoo",6).build(),ImmutableMap.<String,List<Integer>>of("ActionButton",ImmutableList.of(0x010100f2,0x7f010001,0x7f010002,0x7f010003,0x7f010004,0x7f010005,0x7f010006)),finalFields);
+}
