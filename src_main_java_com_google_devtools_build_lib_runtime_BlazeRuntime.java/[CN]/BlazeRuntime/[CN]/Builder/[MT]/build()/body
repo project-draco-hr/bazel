@@ -8,42 +8,13 @@
   for (  BlazeModule module : blazeModules) {
     module.blazeStartup(startupOptionsProvider,BlazeVersionInfo.instance(),instanceId,directories,clock);
   }
-  QueryEnvironmentFactory queryEnvironmentFactory=null;
+  ServerBuilder serverBuilder=new ServerBuilder();
   for (  BlazeModule module : blazeModules) {
-    QueryEnvironmentFactory queryEnvFactory=module.getQueryEnvironmentFactory();
-    if (queryEnvFactory != null) {
-      Preconditions.checkState(queryEnvironmentFactory == null,"At most one query environment factory supported. But found two: %s and %s",queryEnvFactory,queryEnvironmentFactory);
-      queryEnvironmentFactory=queryEnvFactory;
-    }
-  }
-  if (queryEnvironmentFactory == null) {
-    queryEnvironmentFactory=new QueryEnvironmentFactory();
+    module.serverInit(startupOptionsProvider,serverBuilder);
   }
   ConfiguredRuleClassProvider.Builder ruleClassBuilder=new ConfiguredRuleClassProvider.Builder();
   for (  BlazeModule module : blazeModules) {
     module.initializeRuleClasses(ruleClassBuilder);
-  }
-  Map<String,String> platformRegexps=null;
-{
-    ImmutableMap.Builder<String,String> builder=new ImmutableMap.Builder<>();
-    for (    BlazeModule module : blazeModules) {
-      builder.putAll(module.getPlatformSetRegexps());
-    }
-    platformRegexps=builder.build();
-    if (platformRegexps.isEmpty()) {
-      platformRegexps=null;
-    }
-  }
-  Function<RuleClass,AttributeContainer> attributeContainerFactory=null;
-  for (  BlazeModule module : blazeModules) {
-    Function<RuleClass,AttributeContainer> attrContainerFactory=module.getAttributeContainerSupplier();
-    if (attrContainerFactory != null) {
-      Preconditions.checkState(attributeContainerFactory == null,"At most one attribute container supplier supported. But found two: %s and %s",attrContainerFactory,attributeContainerFactory);
-      attributeContainerFactory=attrContainerFactory;
-    }
-  }
-  if (attributeContainerFactory == null) {
-    attributeContainerFactory=AttributeContainer.ATTRIBUTE_CONTAINER_FACTORY;
   }
   ConfiguredRuleClassProvider ruleClassProvider=ruleClassBuilder.build();
   List<PackageFactory.EnvironmentExtension> extensions=new ArrayList<>();
@@ -61,10 +32,8 @@
   if (packageBuilderHelper == null) {
     packageBuilderHelper=Package.Builder.DefaultHelper.INSTANCE;
   }
-  PackageFactory packageFactory=new PackageFactory(ruleClassProvider,platformRegexps,attributeContainerFactory,extensions,BlazeVersionInfo.instance().getVersion(),packageBuilderHelper);
-  if (configurationFactory == null) {
-    configurationFactory=new ConfigurationFactory(ruleClassProvider.getConfigurationCollectionFactory(),ruleClassProvider.getConfigurationFragments());
-  }
+  PackageFactory packageFactory=new PackageFactory(ruleClassProvider,ruleClassBuilder.getPlatformRegexps(),serverBuilder.getAttributeContainerFactory(),extensions,BlazeVersionInfo.instance().getVersion(),packageBuilderHelper);
+  ConfigurationFactory configurationFactory=new ConfigurationFactory(ruleClassProvider.getConfigurationCollectionFactory(),ruleClassProvider.getConfigurationFragments());
   ProjectFile.Provider projectFileProvider=null;
   for (  BlazeModule module : blazeModules) {
     ProjectFile.Provider candidate=module.createProjectFileProvider();
@@ -73,8 +42,7 @@
       projectFileProvider=candidate;
     }
   }
-  invocationPolicy=createInvocationPolicyFromModules(invocationPolicy,blazeModules);
-  BlazeRuntime runtime=new BlazeRuntime(queryEnvironmentFactory,packageFactory,ruleClassProvider,configurationFactory,clock,startupOptionsProvider,ImmutableList.copyOf(blazeModules),eventBusExceptionHandler,projectFileProvider,invocationPolicy,commands,productName);
+  BlazeRuntime runtime=new BlazeRuntime(serverBuilder.getQueryEnvironmentFactory(),packageFactory,ruleClassProvider,configurationFactory,clock,startupOptionsProvider,ImmutableList.copyOf(blazeModules),eventBusExceptionHandler,projectFileProvider,serverBuilder.getInvocationPolicy(),serverBuilder.getCommands(),productName);
   runtime.initWorkspace(directories,binTools);
   return runtime;
 }

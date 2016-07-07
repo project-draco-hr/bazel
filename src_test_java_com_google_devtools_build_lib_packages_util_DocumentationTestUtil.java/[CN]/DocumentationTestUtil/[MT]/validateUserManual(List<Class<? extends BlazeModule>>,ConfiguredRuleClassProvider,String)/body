@@ -4,11 +4,12 @@
   for (  Class<? extends OptionsBase> optionsClass : BlazeCommandUtils.getStartupOptions(blazeModules)) {
     optionsMap.putAll(Options.getDefaults(optionsClass).asMap());
   }
-  List<BlazeCommand> blazeCommands=new ArrayList<>();
-  blazeCommands.addAll(BlazeRuntime.getBuiltinCommandList());
+  ServerBuilder serverBuilder=new ServerBuilder();
+  new BuiltinCommandModule().serverInit(null,serverBuilder);
   for (  BlazeModule module : blazeModules) {
-    Iterables.addAll(blazeCommands,module.getCommands());
+    module.serverInit(null,serverBuilder);
   }
+  List<BlazeCommand> blazeCommands=serverBuilder.getCommands();
   for (  BlazeCommand command : blazeCommands) {
     for (    Class<? extends OptionsBase> optionClass : BlazeCommandUtils.getOptions(command.getClass(),blazeModules,ruleClassProvider)) {
       optionsMap.putAll(Options.getDefaults(optionClass).asMap());

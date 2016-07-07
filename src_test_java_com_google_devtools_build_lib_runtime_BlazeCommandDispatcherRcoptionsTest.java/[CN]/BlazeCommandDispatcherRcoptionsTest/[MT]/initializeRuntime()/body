@@ -1,12 +1,13 @@
 {
   String productName=TestConstants.PRODUCT_NAME;
   BlazeDirectories directories=new BlazeDirectories(scratch.dir("install_base"),scratch.dir("output_base"),scratch.dir("pkg"),productName);
-  this.runtime=new BlazeRuntime.Builder().setProductName(productName).setDirectories(directories).setStartupOptionsProvider(OptionsParser.newOptionsParser(BlazeServerStartupOptions.class)).setConfigurationFactory(new ConfigurationFactory(Mockito.mock(ConfigurationCollectionFactory.class))).addBlazeModule(new BlazeModule(){
+  this.runtime=new BlazeRuntime.Builder().setProductName(productName).setDirectories(directories).setStartupOptionsProvider(OptionsParser.newOptionsParser(BlazeServerStartupOptions.class)).addBlazeModule(new BlazeModule(){
     @Override public void initializeRuleClasses(    ConfiguredRuleClassProvider.Builder builder){
       builder.addConfigurationOptions(BuildConfiguration.Options.class);
       builder.addConfigurationOptions(MockFragmentOptions.class);
       builder.setToolsRepository(TestConstants.TOOLS_REPOSITORY);
+      builder.setConfigurationCollectionFactory(Mockito.mock(ConfigurationCollectionFactory.class));
     }
   }
-).setInvocationPolicy(InvocationPolicyOuterClass.InvocationPolicy.getDefaultInstance()).build();
+).build();
 }
