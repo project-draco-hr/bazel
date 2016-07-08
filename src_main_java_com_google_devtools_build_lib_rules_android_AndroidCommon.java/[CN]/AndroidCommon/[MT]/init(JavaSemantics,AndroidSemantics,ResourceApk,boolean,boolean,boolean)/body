@@ -8,7 +8,8 @@
   Artifact resourcesJar=resourceApk.getResourceJavaSrcJar();
   if (resourcesJar != null) {
     filesBuilder.add(resourcesJar);
-    compileResources(javaSemantics,resourcesJar,artifactsBuilder,attributes,filesBuilder,jarsProducedForRuntime);
+    boolean useRClassGenerator=getAndroidConfig(ruleContext).useRClassGenerator() && isBinary && !resourceApk.isLegacy();
+    compileResources(javaSemantics,resourceApk,resourcesJar,artifactsBuilder,attributes,filesBuilder,jarsProducedForRuntime,useRClassGenerator);
     if (resourceApk.isLegacy()) {
       createJarJarActions(attributes,jarsProducedForRuntime,resourceApk.getResourceDependencies().getResources(),resourceApk.getPrimaryResource().getJavaPackage(),resourceClassJar);
     }

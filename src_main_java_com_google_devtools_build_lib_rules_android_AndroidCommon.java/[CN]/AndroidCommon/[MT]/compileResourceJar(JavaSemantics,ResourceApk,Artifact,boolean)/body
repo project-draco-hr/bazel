@@ -4,8 +4,14 @@
   JavaCompilationArtifacts.Builder javaArtifactsBuilder=new JavaCompilationArtifacts.Builder();
   JavaTargetAttributes.Builder javacAttributes=new JavaTargetAttributes.Builder(javaSemantics).addSourceJar(resourcesJar);
   JavaCompilationHelper javacHelper=new JavaCompilationHelper(ruleContext,javaSemantics,getJavacOpts(),javacAttributes);
-  Artifact outputDepsProto=javacHelper.createOutputDepsProtoArtifact(resourceClassJar,javaArtifactsBuilder);
-  javacHelper.createCompileActionWithInstrumentation(resourceClassJar,null,null,outputDepsProto,javaArtifactsBuilder);
+  if (useRClassGenerator) {
+    RClassGeneratorActionBuilder actionBuilder=new RClassGeneratorActionBuilder(ruleContext).withPrimary(resourceApk.getPrimaryResource()).withDependencies(resourceApk.getResourceDependencies()).setClassJarOut(resourceClassJar);
+    actionBuilder.build();
+  }
+ else {
+    Artifact outputDepsProto=javacHelper.createOutputDepsProtoArtifact(resourceClassJar,javaArtifactsBuilder);
+    javacHelper.createCompileActionWithInstrumentation(resourceClassJar,null,null,outputDepsProto,javaArtifactsBuilder);
+  }
   javacHelper.createSourceJarAction(resourceSourceJar,null);
   resourceIJar=javacHelper.createCompileTimeJarAction(resourceClassJar,javaArtifactsBuilder);
 }
