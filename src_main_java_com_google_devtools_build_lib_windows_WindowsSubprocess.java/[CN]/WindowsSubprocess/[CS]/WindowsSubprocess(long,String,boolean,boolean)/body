@@ -1,0 +1,14 @@
+{
+  this.commandLine=commandLine;
+  this.nativeProcess=nativeProcess;
+  stdoutStream=stdoutRedirected ? null : new ProcessInputStream(WindowsProcesses.nativeGetStdout(nativeProcess));
+  stderrStream=stderrRedirected ? null : new ProcessInputStream(WindowsProcesses.nativeGetStderr(nativeProcess));
+  stdinStream=new ProcessOutputStream();
+  waitLatch=new CountDownLatch(1);
+  WAITER_POOL.submit(new Runnable(){
+    @Override public void run(){
+      waiterThreadFunc();
+    }
+  }
+);
+}

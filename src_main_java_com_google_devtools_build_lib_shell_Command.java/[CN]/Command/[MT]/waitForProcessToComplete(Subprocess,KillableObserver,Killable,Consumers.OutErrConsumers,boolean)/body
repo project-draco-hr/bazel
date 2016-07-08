@@ -2,7 +2,6 @@
   log.finer("Waiting for process...");
   TerminationStatus status=waitForProcess(process,killSubprocessOnInterrupt);
   observer.stopObserving(processKillable);
-  process.close();
   log.finer(status.toString());
   try {
     if (Thread.currentThread().isInterrupted()) {
@@ -21,6 +20,9 @@
       String message=status + "; also encountered an error while attempting to retrieve output";
       throw status.exited() ? new BadExitStatusException(this,noOutputResult,message,ioe) : new AbnormalTerminationException(this,noOutputResult,message,ioe);
     }
+  }
+ finally {
+    process.close();
   }
   CommandResult result=new CommandResult(outErr.getAccumulatedOut(),outErr.getAccumulatedErr(),status);
   result.logThis();
