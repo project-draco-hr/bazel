@@ -1,7 +1,8 @@
 {
-  Map<SkyKey,NodeEntry> entries=getEntries(keys,thinGraph);
+  Map<SkyKey,NodeEntry> entries=graph.getBatchWithFieldHints(keys,EnumSet.of(NodeEntryField.DIRECT_DEPS));
   Map<SkyKey,Iterable<SkyKey>> result=new HashMap<>(entries.size());
   for (  Entry<SkyKey,NodeEntry> entry : entries.entrySet()) {
+    Preconditions.checkState(entry.getValue().isDone(),entry);
     result.put(entry.getKey(),entry.getValue().getDirectDeps());
   }
   return result;

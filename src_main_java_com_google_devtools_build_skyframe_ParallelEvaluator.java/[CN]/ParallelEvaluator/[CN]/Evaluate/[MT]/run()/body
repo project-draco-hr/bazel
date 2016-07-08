@@ -23,7 +23,7 @@
           return;
         }
       }
-      Map<SkyKey,NodeEntry> newlyRequestedDeps=graph.getBatch(env.newlyRequestedDeps);
+      Map<SkyKey,NodeEntry> newlyRequestedDeps=getBatchValues(env.newlyRequestedDeps);
       boolean isTransitivelyTransient=reifiedBuilderException.isTransient();
       for (      NodeEntry depEntry : Iterables.concat(env.directDeps.values(),newlyRequestedDeps.values())) {
         if (!isDoneForBuild(depEntry)) {
@@ -67,7 +67,7 @@ catch (  RuntimeException re) {
   if (value != null) {
     Preconditions.checkState(!env.valuesMissing(),"Evaluation of %s returned non-null value " + "but requested dependencies that weren't computed yet (one of %s), ValueEntry: %s",skyKey,newDirectDeps,state);
     env.setValue(value);
-    registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,graph.getBatch(env.newlyRequestedDeps),oldDeps,env);
+    registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,graph.getBatchWithFieldHints(env.newlyRequestedDeps,EnumSet.of(NodeEntryField.INDIVIDUAL_REVERSE_DEPS)),oldDeps,env);
     env.commit(true);
     return;
   }
