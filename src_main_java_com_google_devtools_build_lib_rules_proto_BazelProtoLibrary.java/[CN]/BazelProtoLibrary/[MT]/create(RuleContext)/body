@@ -5,5 +5,6 @@
   NestedSet<Artifact> transitiveImports=ProtoCommon.collectTransitiveImports(ruleContext,protoSources);
   RunfilesProvider runfilesProvider=ProtoCommon.createRunfilesProvider(transitiveImports,ruleContext);
   ProtoSourcesProvider sourcesProvider=ProtoSourcesProvider.create(transitiveImports,transitiveImports,protoSources,checkDepsProtoSources);
-  return new RuleConfiguredTargetBuilder(ruleContext).add(RunfilesProvider.class,runfilesProvider).addProvider(ProtoSourcesProvider.class,sourcesProvider).addSkylarkTransitiveInfo(ProtoSourcesProvider.SKYLARK_NAME,sourcesProvider).build();
+  final SupportData supportData=SupportData.create(Predicates.<TransitiveInfoCollection>alwaysTrue(),protoSources,transitiveImports,null,!protoSources.isEmpty());
+  return new RuleConfiguredTargetBuilder(ruleContext).add(RunfilesProvider.class,runfilesProvider).addProvider(ProtoSourcesProvider.class,sourcesProvider).addProvider(ProtoSupportDataProvider.class,new ProtoSupportDataProvider(supportData)).addSkylarkTransitiveInfo(ProtoSourcesProvider.SKYLARK_NAME,sourcesProvider).build();
 }
