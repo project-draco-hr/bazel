@@ -2,7 +2,11 @@
   Path socketFile=getSocketPath();
   if (socketFile.toString().length() >= 104) {
     Path socketLink=socketFile;
-    String tmpDir=System.getProperty("blaze.rpcserver.tmpdir","/tmp");
+    String tmpDirDefault=System.getenv("TMPDIR");
+    if (tmpDirDefault == null || tmpDirDefault.length() > 104 - "/blaze-4294967296/server.socket".length()) {
+      tmpDirDefault="/tmp";
+    }
+    String tmpDir=System.getProperty("blaze.rpcserver.tmpdir",tmpDirDefault);
     socketFile=createTempSocketDirectory(socketFile.getRelative(tmpDir)).getRelative("server.socket");
     LOG.info("Using symlinked socket at " + socketFile);
     socketLink.delete();
