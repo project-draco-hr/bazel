@@ -4,10 +4,18 @@
   }
  else {
     ImmutableList<String> formatKeys=FluentIterable.from(formats.keySet()).filter(not(equalTo(FLAGS))).filter(not(equalTo(ENUM))).toSortedList(Ordering.natural());
-    ValuesResourceDefinition definition=mergedDataWriter.define(key).derivedFrom(source).startTag("attr").named(key).optional().attribute("format").setFrom(formatKeys).joinedBy("|").closeTag().addCharactersOf("\n");
-    for (    ResourceXmlAttrValue value : formats.values()) {
-      definition=value.writeTo(definition);
+    StartTag startTag=mergedDataWriter.define(key).derivedFrom(source).startTag("attr").named(key).optional().attribute("format").setFrom(formatKeys).joinedBy("|");
+    ValuesResourceDefinition definition;
+    if (formats.keySet().contains(FLAGS) || formats.keySet().contains(ENUM)) {
+      definition=startTag.closeTag();
+      for (      ResourceXmlAttrValue value : formats.values()) {
+        definition=value.writeTo(definition);
+      }
+      definition=definition.addCharactersOf("\n").endTag();
     }
-    definition.endTag().save();
+ else {
+      definition=startTag.closeUnaryTag();
+    }
+    definition.save();
   }
 }
