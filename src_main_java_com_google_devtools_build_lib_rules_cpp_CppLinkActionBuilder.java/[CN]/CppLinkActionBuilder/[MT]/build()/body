@@ -5,8 +5,8 @@
   final ImmutableList<Artifact> buildInfoHeaderArtifacts=!linkstamps.isEmpty() ? analysisEnvironment.getBuildInfo(ruleContext,CppBuildInfo.KEY,configuration) : ImmutableList.<Artifact>of();
   boolean needWholeArchive=wholeArchive || needWholeArchive(linkStaticness,linkType,linkopts,isNativeDeps,cppConfiguration);
   NestedSet<LibraryToLink> uniqueLibraries=libraries.build();
-  final Iterable<Artifact> filteredNonLibraryArtifacts=filterLinkerInputArtifacts(LinkerInputs.toLibraryArtifacts(nonLibraries));
-  final Iterable<LinkerInput> linkerInputs=IterablesChain.<LinkerInput>builder().add(ImmutableList.copyOf(filterLinkerInputs(nonLibraries))).add(ImmutableIterable.from(Link.mergeInputsCmdLine(uniqueLibraries,needWholeArchive,cppConfiguration.archiveType()))).build();
+  final Iterable<Artifact> filteredNonLibraryArtifacts=CppLinkAction.filterLinkerInputArtifacts(LinkerInputs.toLibraryArtifacts(nonLibraries));
+  final Iterable<LinkerInput> linkerInputs=IterablesChain.<LinkerInput>builder().add(ImmutableList.copyOf(CppLinkAction.filterLinkerInputs(nonLibraries))).add(ImmutableIterable.from(Link.mergeInputsCmdLine(uniqueLibraries,needWholeArchive,cppConfiguration.archiveType()))).build();
   final ImmutableSet<String> features=(ruleContext == null) ? ImmutableSet.<String>of() : ruleContext.getFeatures();
   final LibraryToLink outputLibrary=LinkerInputs.newInputLibrary(output,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
   final LibraryToLink interfaceOutputLibrary=(interfaceOutput == null) ? null : LinkerInputs.newInputLibrary(interfaceOutput,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
