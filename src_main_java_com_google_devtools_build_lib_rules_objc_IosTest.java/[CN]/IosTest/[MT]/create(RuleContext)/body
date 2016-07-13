@@ -1,5 +1,16 @@
 {
-  ObjcCommon common=common(ruleContext);
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  ObjcProvider protosObjcProvider=null;
+  XcodeProvider protosXcodeProvider=null;
+  if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
+    XcodeProvider.Builder protosXcodeProviderBuilder=new XcodeProvider.Builder();
+    ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET).registerActions().addXcodeProviderOptions(protosXcodeProviderBuilder);
+    ObjcCommon protoCommon=protoSupport.getCommon();
+    protosObjcProvider=protoCommon.getObjcProvider();
+    new CompilationSupport(ruleContext,protoSupport.getIntermediateArtifacts(),new CompilationAttributes.Builder().build()).registerCompileAndArchiveActions(protoCommon,protoSupport.getUserHeaderSearchPaths()).addXcodeSettings(protosXcodeProviderBuilder,protoCommon);
+    protosXcodeProvider=protosXcodeProviderBuilder.build();
+  }
+  ObjcCommon common=common(ruleContext,protosObjcProvider);
   if (!common.getCompilationArtifacts().get().getArchive().isPresent()) {
     ruleContext.ruleError(REQUIRES_SOURCE_ERROR);
   }
@@ -7,14 +18,11 @@
     ruleContext.ruleError(NO_MULTI_CPUS_ERROR);
   }
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
+  if (protosXcodeProvider != null) {
+    xcodeProviderBuilder.addPropagatedDependencies(ImmutableList.of(protosXcodeProvider));
+  }
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
   addResourceFilesToBuild(ruleContext,common.getObjcProvider(),filesToBuild);
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
-    ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET).registerActions();
-    ObjcCommon protoCommon=protoSupport.getCommon();
-    new CompilationSupport(ruleContext,protoSupport.getIntermediateArtifacts(),new CompilationAttributes.Builder().build()).registerCompileAndArchiveActions(protoCommon,protoSupport.getUserHeaderSearchPaths());
-  }
   XcodeProductType productType=getProductType(ruleContext);
   ExtraLinkArgs extraLinkArgs;
   Iterable<Artifact> extraLinkInputs;

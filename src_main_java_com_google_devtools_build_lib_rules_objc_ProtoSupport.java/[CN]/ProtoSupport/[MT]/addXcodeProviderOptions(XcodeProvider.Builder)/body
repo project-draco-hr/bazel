@@ -1,4 +1,18 @@
 {
-  xcodeProviderBuilder.addUserHeaderSearchPaths(getUserHeaderSearchPaths()).addCopts(ObjcRuleClasses.objcConfiguration(ruleContext).getCopts()).addHeaders(getGeneratedHeaders()).setCompilationArtifacts(getCompilationArtifacts());
+  xcodeProviderBuilder.addUserHeaderSearchPaths(getUserHeaderSearchPaths()).addHeaders(getGeneratedHeaders()).setCompilationArtifacts(getCompilationArtifacts());
+  if (targetType == TargetType.PROTO_TARGET) {
+    xcodeProviderBuilder.addCopts(ObjcRuleClasses.objcConfiguration(ruleContext).getCopts());
+  }
+ else   if (targetType == TargetType.LINKING_TARGET) {
+    Label protosLabel=null;
+    try {
+      protosLabel=ruleContext.getLabel().getLocalTargetLabel(ruleContext.getLabel().getName() + "_BundledProtos");
+    }
+ catch (    LabelSyntaxException e) {
+      ruleContext.throwWithRuleError(e.getLocalizedMessage());
+    }
+    ObjcCommon protoCommon=getCommon();
+    new XcodeSupport(ruleContext,intermediateArtifacts,protosLabel).addXcodeSettings(xcodeProviderBuilder,protoCommon.getObjcProvider(),XcodeProductType.LIBRARY_STATIC).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET));
+  }
   return this;
 }

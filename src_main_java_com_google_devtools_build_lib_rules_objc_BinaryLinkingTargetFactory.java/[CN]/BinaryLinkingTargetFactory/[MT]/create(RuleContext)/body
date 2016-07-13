@@ -1,20 +1,28 @@
 {
-  ObjcCommon common=common(ruleContext);
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
+  ObjcProvider protosObjcProvider=null;
+  XcodeProvider protosXcodeProvider=null;
+  if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
+    XcodeProvider.Builder protosXcodeProviderBuilder=new XcodeProvider.Builder();
+    ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET).registerActions().addXcodeProviderOptions(protosXcodeProviderBuilder);
+    ObjcCommon protoCommon=protoSupport.getCommon();
+    protosObjcProvider=protoCommon.getObjcProvider();
+    new CompilationSupport(ruleContext,protoSupport.getIntermediateArtifacts(),new CompilationAttributes.Builder().build()).registerCompileAndArchiveActions(protoCommon,protoSupport.getUserHeaderSearchPaths()).addXcodeSettings(protosXcodeProviderBuilder,protoCommon);
+    protosXcodeProvider=protosXcodeProviderBuilder.build();
+  }
+  ObjcCommon common=common(ruleContext,protosObjcProvider);
   ObjcProvider objcProvider=common.getObjcProvider();
   assertLibraryOrSources(objcProvider,ruleContext);
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
+  if (protosXcodeProvider != null) {
+    xcodeProviderBuilder.addPropagatedDependencies(ImmutableList.of(protosXcodeProvider));
+  }
   IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(intermediateArtifacts.strippedSingleArchitectureBinary());
   new ResourceSupport(ruleContext).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
   ruleContext.assertNoErrors();
   J2ObjcMappingFileProvider j2ObjcMappingFileProvider=J2ObjcMappingFileProvider.union(ruleContext.getPrerequisites("deps",Mode.TARGET,J2ObjcMappingFileProvider.class));
   J2ObjcEntryClassProvider j2ObjcEntryClassProvider=new J2ObjcEntryClassProvider.Builder().addTransitive(ruleContext.getPrerequisites("deps",Mode.TARGET,J2ObjcEntryClassProvider.class)).build();
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
-    ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET).registerActions().addXcodeProviderOptions(xcodeProviderBuilder);
-    ObjcCommon protoCommon=protoSupport.getCommon();
-    new CompilationSupport(ruleContext,protoSupport.getIntermediateArtifacts(),new CompilationAttributes.Builder().build()).registerCompileAndArchiveActions(protoCommon,protoSupport.getUserHeaderSearchPaths());
-  }
   CompilationSupport compilationSupport=new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common).registerFullyLinkAction(common.getObjcProvider()).addXcodeSettings(xcodeProviderBuilder,common).registerLinkActions(objcProvider,j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,getExtraLinkArgs(ruleContext),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
   Optional<XcTestAppProvider> xcTestAppProvider;
   Optional<RunfilesSupport> maybeRunfilesSupport=Optional.absent();
