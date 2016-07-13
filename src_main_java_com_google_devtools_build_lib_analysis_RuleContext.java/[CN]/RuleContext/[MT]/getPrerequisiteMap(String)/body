@@ -1,0 +1,14 @@
+{
+  Attribute attributeDefinition=getAttribute(attributeName);
+  Preconditions.checkState(attributeDefinition.getType() == BuildType.LABEL_DICT_UNARY);
+  ImmutableMap.Builder<String,TransitiveInfoCollection> result=ImmutableMap.builder();
+  Map<String,Label> dict=attributes().get(attributeName,BuildType.LABEL_DICT_UNARY);
+  Map<Label,ConfiguredTarget> labelToDep=new HashMap<>();
+  for (  ConfiguredTarget dep : targetMap.get(attributeName)) {
+    labelToDep.put(dep.getLabel(),dep);
+  }
+  for (  Map.Entry<String,Label> entry : dict.entrySet()) {
+    result.put(entry.getKey(),Preconditions.checkNotNull(labelToDep.get(entry.getValue())));
+  }
+  return result.build();
+}
