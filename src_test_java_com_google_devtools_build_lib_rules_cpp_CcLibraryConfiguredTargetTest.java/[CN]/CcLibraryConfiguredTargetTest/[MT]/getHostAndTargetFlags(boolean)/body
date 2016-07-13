@@ -1,0 +1,19 @@
+{
+  AnalysisMock.get().ccSupport().setupCrosstool(mockToolsConfig,MockCcSupport.HOST_AND_NONHOST_CONFIGURATION);
+  scratch.overwriteFile("mode/BUILD","cc_library(name = 'a', srcs = ['a.cc'])");
+  useConfiguration();
+  ConfiguredTarget target;
+  String objectPath;
+  if (useHost) {
+    target=getHostConfiguredTarget("//mode:a");
+    objectPath="_objs/a/mode/a.o";
+  }
+ else {
+    target=getConfiguredTarget("//mode:a");
+    objectPath="_objs/a/mode/a.pic.o";
+  }
+  Artifact objectArtifact=getBinArtifact(objectPath,target);
+  CppCompileAction action=(CppCompileAction)getGeneratingAction(objectArtifact);
+  assertThat(action).isNotNull();
+  return action.getCompilerOptions();
+}
