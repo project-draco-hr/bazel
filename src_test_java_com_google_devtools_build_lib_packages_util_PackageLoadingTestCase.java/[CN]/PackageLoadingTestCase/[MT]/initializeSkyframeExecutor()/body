@@ -1,4 +1,5 @@
 {
+  loadingMock=LoadingMock.get();
   List<RuleDefinition> extraRules=getExtraRules();
   if (!extraRules.isEmpty()) {
     ConfiguredRuleClassProvider.Builder builder=new ConfiguredRuleClassProvider.Builder();
@@ -9,9 +10,9 @@
     ruleClassProvider=builder.build();
   }
  else {
-    ruleClassProvider=TestRuleClassProvider.getRuleClassProvider();
+    ruleClassProvider=loadingMock.createRuleClassProvider();
   }
-  packageFactory=TestConstants.PACKAGE_FACTORY_FACTORY_FOR_TESTING.create(ruleClassProvider,null,getEnvironmentExtensions(),scratch.getFileSystem());
+  packageFactory=loadingMock.getPackageFactoryForTesting().create(ruleClassProvider,null,getEnvironmentExtensions(),scratch.getFileSystem());
   skyframeExecutor=createSkyframeExecutor(getPreprocessorFactorySupplier());
   setUpSkyframe(parsePackageCacheOptions());
 }

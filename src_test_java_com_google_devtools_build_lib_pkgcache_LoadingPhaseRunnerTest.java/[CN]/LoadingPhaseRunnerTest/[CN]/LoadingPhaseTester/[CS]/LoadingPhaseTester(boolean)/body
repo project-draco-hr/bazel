@@ -3,15 +3,17 @@
   this.workspace=fs.getPath("/workspace");
   workspace.createDirectory();
   mockToolsConfig=new MockToolsConfig(workspace);
-  AnalysisMock.get().setupMockClient(mockToolsConfig);
+  analysisMock=AnalysisMock.get();
+  analysisMock.setupMockClient(mockToolsConfig);
   FileSystemUtils.deleteTree(workspace.getRelative("base"));
-  PackageFactory pkgFactory=TestConstants.PACKAGE_FACTORY_FACTORY_FOR_TESTING.create(TestRuleClassProvider.getRuleClassProvider(),fs);
+  ConfiguredRuleClassProvider ruleClassProvider=analysisMock.createRuleClassProvider();
+  PackageFactory pkgFactory=analysisMock.getPackageFactoryForTesting().create(ruleClassProvider,fs);
   PackageCacheOptions options=Options.getDefaults(PackageCacheOptions.class);
   storedErrors=new StoredEventHandler();
-  BlazeDirectories directories=new BlazeDirectories(fs.getPath("/install"),fs.getPath("/output"),workspace,TestConstants.PRODUCT_NAME);
-  skyframeExecutor=SequencedSkyframeExecutor.create(pkgFactory,directories,null,null,TestRuleClassProvider.getRuleClassProvider().getBuildInfoFactories(),ImmutableList.<DiffAwareness.Factory>of(),Predicates.<PathFragment>alwaysFalse(),Preprocessor.Factory.Supplier.NullSupplier.INSTANCE,AnalysisMock.get().getSkyFunctions(),ImmutableList.<PrecomputedValue.Injected>of(),ImmutableList.<SkyValueDirtinessChecker>of(),TestConstants.PRODUCT_NAME);
+  BlazeDirectories directories=new BlazeDirectories(fs.getPath("/install"),fs.getPath("/output"),workspace,analysisMock.getProductName());
+  skyframeExecutor=SequencedSkyframeExecutor.create(pkgFactory,directories,null,null,ruleClassProvider.getBuildInfoFactories(),ImmutableList.<DiffAwareness.Factory>of(),Predicates.<PathFragment>alwaysFalse(),Preprocessor.Factory.Supplier.NullSupplier.INSTANCE,analysisMock.getSkyFunctions(),ImmutableList.<PrecomputedValue.Injected>of(),ImmutableList.<SkyValueDirtinessChecker>of(),analysisMock.getProductName());
   PathPackageLocator pkgLocator=PathPackageLocator.create(null,options.packagePath,storedErrors,workspace,workspace);
-  skyframeExecutor.preparePackageLoading(pkgLocator,ConstantRuleVisibility.PRIVATE,true,7,TestRuleClassProvider.getRuleClassProvider().getDefaultsPackageContent(TestConstants.TEST_INVOCATION_POLICY),UUID.randomUUID(),new TimestampGranularityMonitor(clock));
+  skyframeExecutor.preparePackageLoading(pkgLocator,ConstantRuleVisibility.PRIVATE,true,7,analysisMock.getDefaultsPackageContent(),UUID.randomUUID(),new TimestampGranularityMonitor(clock));
   loadingPhaseRunner=skyframeExecutor.getLoadingPhaseRunner(pkgFactory.getRuleClassNames(),useNewImpl);
   this.options=Options.getDefaults(LoadingOptions.class);
 }
