@@ -1,0 +1,16 @@
+{
+  final AtomicBoolean someFound=new AtomicBoolean(false);
+  env.eval(args.get(0).getExpression(),context,new Callback<T>(){
+    @Override public void process(    Iterable<T> partialResult) throws QueryException, InterruptedException {
+      if (someFound.get() || Iterables.isEmpty(partialResult)) {
+        return;
+      }
+      callback.process(ImmutableSet.of(partialResult.iterator().next()));
+      someFound.set(true);
+    }
+  }
+);
+  if (!someFound.get()) {
+    throw new QueryException(expression,"argument set is empty");
+  }
+}

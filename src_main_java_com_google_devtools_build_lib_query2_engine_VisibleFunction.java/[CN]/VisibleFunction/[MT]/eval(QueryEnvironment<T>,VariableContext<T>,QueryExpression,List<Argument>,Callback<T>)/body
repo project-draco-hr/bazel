@@ -1,0 +1,13 @@
+{
+  final Set<T> toSet=QueryUtil.evalAll(env,context,args.get(0).getExpression());
+  env.eval(args.get(1).getExpression(),context,new Callback<T>(){
+    @Override public void process(    Iterable<T> partialResult) throws QueryException, InterruptedException {
+      for (      T t : partialResult) {
+        if (visibleToAll(env,toSet,t)) {
+          callback.process(ImmutableList.of(t));
+        }
+      }
+    }
+  }
+);
+}
