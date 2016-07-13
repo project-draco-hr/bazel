@@ -1,0 +1,22 @@
+{
+  final AnalysisMock original=BazelAnalysisMock.INSTANCE;
+  return new AnalysisMock.Delegate(original){
+    @Override public ConfigurationFactory createConfigurationFactory(){
+      return new ConfigurationFactory(createRuleClassProvider().getConfigurationCollectionFactory(),createRuleClassProvider().getConfigurationFragments());
+    }
+    @Override public ConfiguredRuleClassProvider createRuleClassProvider(){
+      ConfiguredRuleClassProvider.Builder builder=new ConfiguredRuleClassProvider.Builder();
+      builder.setToolsRepository("@bazel_tools");
+      BazelRuleClassProvider.initMinimal(builder);
+      BazelRuleClassProvider.initCpp(builder);
+      return builder.build();
+    }
+    @Override public InvocationPolicyEnforcer getInvocationPolicyEnforcer(){
+      return new InvocationPolicyEnforcer(null);
+    }
+    @Override public boolean isThisBazel(){
+      return true;
+    }
+  }
+;
+}
