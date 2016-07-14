@@ -1,27 +1,3 @@
 {
-  checkAttribute(attributeName,Mode.SPLIT);
-  Attribute attributeDefinition=getAttribute(attributeName);
-  SplitTransition<?> transition=attributeDefinition.getSplitTransition(rule);
-  List<BuildConfiguration> configurations=getConfiguration().getTransitions().getSplitConfigurations(transition);
-  if (configurations.size() == 1) {
-    String cpu=configurations.get(0).getCpu();
-    return ImmutableMap.of(Optional.fromNullable(cpu),targetMap.get(attributeName));
-  }
-  Set<String> cpus=new HashSet<>();
-  for (  BuildConfiguration config : configurations) {
-    Preconditions.checkNotNull(config.getCpu());
-    cpus.add(config.getCpu());
-  }
-  ImmutableListMultimap.Builder<Optional<String>,TransitiveInfoCollection> result=ImmutableListMultimap.builder();
-  for (  TransitiveInfoCollection t : targetMap.get(attributeName)) {
-    if (t.getConfiguration() != null) {
-      result.put(Optional.of(t.getConfiguration().getCpu()),t);
-    }
- else {
-      for (      String cpu : cpus) {
-        result.put(Optional.of(cpu),t);
-      }
-    }
-  }
-  return Multimaps.asMap(result.build());
+  return getSplitPrerequisites(attributeName,true);
 }
