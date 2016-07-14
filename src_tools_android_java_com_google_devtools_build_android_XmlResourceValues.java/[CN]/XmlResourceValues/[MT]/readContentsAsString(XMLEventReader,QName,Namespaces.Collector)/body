@@ -1,0 +1,17 @@
+{
+  StringWriter contents=new StringWriter();
+  XMLEventWriter writer=XML_OUTPUT_FACTORY.createXMLEventWriter(contents);
+  while (!isEndTag(eventReader.peek(),startTag)) {
+    XMLEvent xmlEvent=(XMLEvent)eventReader.next();
+    if (xmlEvent.isStartElement()) {
+      namespacesCollector.collectFrom(xmlEvent.asStartElement());
+      writer.add(xmlEvent);
+    }
+ else {
+      writer.add(xmlEvent);
+    }
+  }
+  EndElement endElement=eventReader.nextEvent().asEndElement();
+  Preconditions.checkArgument(endElement.getName().equals(startTag));
+  return contents.toString();
+}

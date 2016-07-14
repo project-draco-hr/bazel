@@ -1,0 +1,16 @@
+{
+  if (prefixToUri.isEmpty()) {
+    return other;
+  }
+  Map<String,String> combinedNamespaces=new LinkedHashMap<>();
+  combinedNamespaces.putAll(other.prefixToUri);
+  for (  Entry<String,String> namespace : prefixToUri.entrySet()) {
+    String prefix=namespace.getKey();
+    String namespaceUri=namespace.getValue();
+    if (combinedNamespaces.containsKey(prefix) && !combinedNamespaces.get(prefix).equals(namespaceUri)) {
+      logger.warning(String.format("%s has multiple namespaces: %s and %s. Using %s." + " This will be an error in the future.",prefix,namespaceUri,combinedNamespaces.get(prefix),namespaceUri));
+    }
+    combinedNamespaces.put(prefix,namespaceUri);
+  }
+  return Namespaces.from(combinedNamespaces);
+}

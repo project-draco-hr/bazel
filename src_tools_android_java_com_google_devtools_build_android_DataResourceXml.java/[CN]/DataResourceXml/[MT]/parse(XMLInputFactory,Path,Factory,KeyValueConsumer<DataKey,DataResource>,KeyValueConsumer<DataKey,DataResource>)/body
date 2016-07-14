@@ -3,6 +3,7 @@
   try {
     while (XmlResourceValues.moveToResources(eventReader)) {
       for (StartElement start=XmlResourceValues.findNextStart(eventReader); start != null; start=XmlResourceValues.findNextStart(eventReader)) {
+        Namespaces.Collector namespacesCollector=Namespaces.collector();
         if (XmlResourceValues.isEatComment(start) || XmlResourceValues.isSkip(start)) {
           continue;
         }
@@ -20,7 +21,8 @@
             throw new XMLStreamException(String.format("resource name is required for %s",resourceType),start.getLocation());
           }
           FullyQualifiedName key=fqnFactory.create(resourceType,elementName);
-          consumer.consume(key,DataResourceXml.of(path,parseXmlElements(resourceType,eventReader,start)));
+          XmlResourceValue xmlResourceValue=parseXmlElements(resourceType,eventReader,start,namespacesCollector);
+          consumer.consume(key,DataResourceXml.createWithNamespaces(path,xmlResourceValue,namespacesCollector.toNamespaces()));
         }
       }
     }

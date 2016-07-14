@@ -1,0 +1,26 @@
+{
+  Files.createDirectories(valuesPath.getParent());
+  try (BufferedWriter writer=Files.newBufferedWriter(valuesPath,StandardCharsets.UTF_8,StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE)){
+    writer.write(PRELUDE);
+    writer.write(START_RESOURCES_TAG);
+    for (    Entry<String,String> prefixToUri : namespaces) {
+      writer.write(" xmlns:");
+      writer.write(prefixToUri.getKey());
+      writer.write("=\"");
+      writer.write(prefixToUri.getValue());
+      writer.write("\"");
+    }
+    writer.write(">");
+    writer.write(LINE_END);
+    Path previousSource=null;
+    for (    FullyQualifiedName key : Ordering.natural().immutableSortedCopy(segments.keySet())) {
+      if (!adopted.contains(key)) {
+        for (        Segment segment : segments.get(key)) {
+          previousSource=segment.write(previousSource,writer);
+        }
+      }
+    }
+    writer.write(END_RESOURCES);
+  }
+   return Boolean.TRUE;
+}

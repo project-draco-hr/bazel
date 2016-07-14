@@ -9,13 +9,15 @@
     }
     String value=escapeXmlValues(attribute.getValue()).replace("\"","&quot;");
     if (!name.getNamespaceURI().isEmpty()) {
-      if (!(XLIFF_NAMESPACE.equals(name.getNamespaceURI()) && XLIFF_PREFIX.equals(name.getPrefix()))) {
-        attributeMap.put("xmlns:" + name.getPrefix(),name.getNamespaceURI());
-      }
       attributeMap.put(name.getPrefix() + ":" + attribute.getName().getLocalPart(),value);
     }
  else {
       attributeMap.put(attribute.getName().getLocalPart(),value);
+    }
+    Iterator<Namespace> namespaces=iterateNamespacesFrom(start);
+    while (namespaces.hasNext()) {
+      Namespace namespace=namespaces.next();
+      attributeMap.put("xmlns:" + namespace.getPrefix(),namespace.getNamespaceURI());
     }
   }
   return attributeMap;
