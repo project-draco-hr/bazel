@@ -1,0 +1,23 @@
+{
+  validateTypes(skylarkValue,SkylarkClassObject.class,javaKey.getSkylarkKeyName());
+  NestedSetBuilder<BundleableFile> result=NestedSetBuilder.stableOrder();
+  for (  SkylarkClassObject struct : (Iterable<SkylarkClassObject>)skylarkValue) {
+    Artifact artifact;
+    String path;
+    try {
+      artifact=struct.getValue(BUNDLED_FIELD,Artifact.class);
+      path=struct.getValue(BUNDLE_PATH_FIELD,String.class);
+    }
+ catch (    EvalException e) {
+      throw new IllegalArgumentException(e.getMessage());
+    }
+    if (artifact == null) {
+      throw new IllegalArgumentException(String.format(MISSING_KEY_ERROR,BUNDLED_FIELD));
+    }
+    if (path == null) {
+      throw new IllegalArgumentException(String.format(MISSING_KEY_ERROR,BUNDLE_PATH_FIELD));
+    }
+    result.add(new BundleableFile(artifact,path));
+  }
+  return result.build();
+}
