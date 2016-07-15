@@ -1,6 +1,15 @@
 {
   HazelcastInstance instance;
-  if (options.hazelcastNode != null) {
+  if (options.hazelcastClientConfig != null) {
+    try {
+      ClientConfig config=new XmlClientConfigBuilder(options.hazelcastClientConfig).build();
+      instance=HazelcastClient.newHazelcastClient(config);
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+ else   if (options.hazelcastNode != null) {
     ClientConfig config=new ClientConfig();
     ClientNetworkConfig net=config.getNetworkConfig();
     net.addAddress(options.hazelcastNode.split(","));
