@@ -1,7 +1,8 @@
 {
   TestCompletionValue.TestCompletionKey key=(TestCompletionValue.TestCompletionKey)skyKey.argument();
-  LabelAndConfiguration lac=key.getLabelAndConfiguration();
-  if (env.getValue(TargetCompletionValue.key(lac)) == null) {
+  LabelAndConfiguration lac=key.labelAndConfiguration();
+  TopLevelArtifactContext ctx=key.topLevelArtifactContext();
+  if (env.getValue(TargetCompletionValue.key(lac,ctx)) == null) {
     return null;
   }
   ConfiguredTargetValue ctValue=(ConfiguredTargetValue)env.getValue(ConfiguredTargetValue.key(lac.getLabel(),lac.getConfiguration()));
@@ -9,7 +10,7 @@
     return null;
   }
   ConfiguredTarget ct=ctValue.getConfiguredTarget();
-  if (key.isExclusiveTesting()) {
+  if (key.exclusiveTesting()) {
     for (    Artifact testArtifact : TestProvider.getTestStatusArtifacts(ct)) {
       if (env.getValue(ArtifactValue.key(testArtifact,true)) == null) {
         return null;
