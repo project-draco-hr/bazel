@@ -5,14 +5,14 @@ synchronized (runningCommands) {
     long shutdownTime=-1;
     while (true) {
       if (!wasIdle && idle) {
-        shutdownTime=System.currentTimeMillis() + ((long)maxIdleSeconds) * 1000;
+        shutdownTime=BlazeClock.nanoTime() + ((long)maxIdleSeconds) * 1000L * NANOSECONDS_IN_MS;
       }
       try {
         if (idle) {
           Verify.verify(shutdownTime > 0);
-          long waitTime=shutdownTime - System.currentTimeMillis();
+          long waitTime=shutdownTime - BlazeClock.nanoTime();
           if (waitTime > 0) {
-            runningCommands.wait(waitTime);
+            runningCommands.wait((waitTime + NANOSECONDS_IN_MS - 1) / NANOSECONDS_IN_MS);
           }
         }
  else {
@@ -23,7 +23,7 @@ synchronized (runningCommands) {
       }
       wasIdle=idle;
       idle=runningCommands.isEmpty();
-      if (wasIdle && idle && System.currentTimeMillis() >= shutdownTime) {
+      if (wasIdle && idle && BlazeClock.nanoTime() >= shutdownTime) {
         break;
       }
     }
