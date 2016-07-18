@@ -4,6 +4,12 @@
   if (env.valuesMissing()) {
     return null;
   }
-  MavenDownloader downloader=createMavenDownloader(directories,mapper,serverValue);
+  MavenDownloader downloader;
+  try {
+    downloader=createMavenDownloader(directories,mapper,serverValue);
+  }
+ catch (  IOException e) {
+    throw new RepositoryFunctionException(e,Transience.PERSISTENT);
+  }
   return createOutputTree(downloader);
 }
