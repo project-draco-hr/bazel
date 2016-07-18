@@ -3,14 +3,15 @@
     streamObserver.onCompleted();
     return;
   }
+  try (RunningCommand cancelCommand=new RunningCommand()){
 synchronized (runningCommands) {
-    RunningCommand command=runningCommands.get(request.getCommandId());
-    if (command != null) {
-      command.thread.interrupt();
+      RunningCommand pendingCommand=runningCommands.get(request.getCommandId());
+      if (pendingCommand != null) {
+        pendingCommand.thread.interrupt();
+      }
+      startSlowInterruptWatcher(ImmutableSet.of(request.getCommandId()));
     }
-    startSlowInterruptWatcher(ImmutableSet.of(request.getCommandId()));
+    streamObserver.onNext(CancelResponse.newBuilder().setCookie(responseCookie).build());
+    streamObserver.onCompleted();
   }
-  streamObserver.onNext(CancelResponse.newBuilder().setCookie(responseCookie).build());
-  streamObserver.onCompleted();
-  restartIdleTimeout();
-}
+ }

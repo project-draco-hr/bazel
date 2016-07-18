@@ -1,10 +1,11 @@
 {
   Preconditions.checkState(serving);
-  PingResponse.Builder response=PingResponse.newBuilder();
-  if (pingRequest.getCookie().equals(requestCookie)) {
-    response.setCookie(responseCookie);
+  try (RunningCommand command=new RunningCommand()){
+    PingResponse.Builder response=PingResponse.newBuilder();
+    if (pingRequest.getCookie().equals(requestCookie)) {
+      response.setCookie(responseCookie);
+    }
+    streamObserver.onNext(response.build());
+    streamObserver.onCompleted();
   }
-  streamObserver.onNext(response.build());
-  streamObserver.onCompleted();
-  restartIdleTimeout();
-}
+ }
