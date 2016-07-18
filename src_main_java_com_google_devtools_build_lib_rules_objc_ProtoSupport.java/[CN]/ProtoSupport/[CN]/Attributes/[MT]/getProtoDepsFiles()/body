@@ -1,6 +1,13 @@
 {
-  PrerequisiteArtifacts prerequisiteArtifacts=ruleContext.getPrerequisiteArtifacts("deps",Mode.TARGET);
-  ImmutableList<Artifact> protos=prerequisiteArtifacts.filter(FileType.of(".proto")).list();
+  ImmutableSet.Builder<Artifact> protoFiles=new ImmutableSet.Builder<>();
+  for (  FileProvider target : getDepsFilePrerequisites()) {
+    for (    Artifact file : target.getFilesToBuild()) {
+      if (file.getFilename().endsWith(".proto")) {
+        protoFiles.add(file);
+      }
+    }
+  }
+  ImmutableSet<Artifact> protos=protoFiles.build();
   if (!protos.isEmpty()) {
     ruleContext.attributeWarning("deps",FILES_DEPRECATED_WARNING);
   }
