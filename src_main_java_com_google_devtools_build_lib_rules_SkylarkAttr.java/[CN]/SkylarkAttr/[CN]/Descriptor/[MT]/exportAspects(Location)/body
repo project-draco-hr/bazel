@@ -1,0 +1,13 @@
+{
+  if (exported) {
+    return;
+  }
+  Attribute.Builder<?> attributeBuilder=getAttributeBuilder();
+  for (  SkylarkAspect skylarkAspect : getAspects()) {
+    if (!skylarkAspect.isExported()) {
+      throw new EvalException(definitionLocation,"All aspects applied to rule dependencies must be top-level values");
+    }
+    attributeBuilder.aspect(skylarkAspect);
+  }
+  exported=true;
+}
