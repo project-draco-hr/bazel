@@ -1,18 +1,25 @@
 {
   LinkedHashSet<String> matches=Sets.newLinkedHashSet();
+  boolean needsSorting=false;
   for (  SkyKey includeGlobKey : includesGlobKeys) {
     for (    PathFragment match : getGlobMatches(includeGlobKey,globValueMap)) {
+      needsSorting=true;
       matches.add(match.getPathString());
     }
   }
   matches.addAll(delegate.fetch(delegateIncludesToken));
   for (  SkyKey excludeGlobKey : excludesGlobKeys) {
     for (    PathFragment match : getGlobMatches(excludeGlobKey,globValueMap)) {
+      needsSorting=true;
       matches.remove(match.getPathString());
     }
   }
   for (  String delegateExcludeMatch : delegate.fetch(delegateExcludesToken)) {
     matches.remove(delegateExcludeMatch);
   }
-  return Lists.newArrayList(matches);
+  List<String> result=new ArrayList<>(matches);
+  if (needsSorting) {
+    Collections.sort(result);
+  }
+  return result;
 }
