@@ -6,7 +6,10 @@
   }
   Artifact manifest=runfilesSupport.getRunfilesManifest();
   PathFragment runfilesDir=runfilesSupport.getRunfilesDirectoryExecPath();
-  Path workingDir=env.getExecRoot().getRelative(runfilesDir).getRelative(runfilesSupport.getRunfiles().getSuffix());
+  Path workingDir=env.getExecRoot().getRelative(runfilesDir);
+  if (target.getConfiguration().runfilesEnabled()) {
+    workingDir=workingDir.getRelative(runfilesSupport.getRunfiles().getSuffix());
+  }
   if (!RUNFILES_MANIFEST.matches(manifest.getFilename())) {
     return workingDir;
   }
