@@ -3,4 +3,7 @@
   ConfiguredTarget wrapsophos=scratchConfiguredTarget("quality/malware/support","wrapsophos","cc_library(name = 'sophosengine',","           srcs = [ 'sophosengine.cc' ],","           deps = [ '//third_party/sophos_av_pua:savi' ])","cc_binary(name = 'wrapsophos',","          srcs = [ 'wrapsophos.cc' ],","          deps = [ ':sophosengine' ],","          linkstatic=1)");
   Iterable<Artifact> libraries=getLinkerInputs(wrapsophos);
   assertThat(baseArtifactNames(libraries)).containsAllOf("wrapsophos.pic.o","libsophosengine.a","libsavi.so");
+  if (emptyShouldOutputStaticLibrary()) {
+    assertThat(baseArtifactNames(libraries)).contains("libsavi.a");
+  }
 }
