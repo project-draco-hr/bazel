@@ -1,12 +1,13 @@
 {
   return new JavaCompiler(){
     @Override public CompilationTask getTask(    Writer out,    JavaFileManager fileManager,    DiagnosticListener<? super JavaFileObject> diagnosticListener,    Iterable<String> options,    Iterable<String> classes,    Iterable<? extends JavaFileObject> compilationUnits){
-      ImmutableList.Builder<String> fullOptions=ImmutableList.builder();
-      fullOptions.addAll(getDefaultJavacopts());
+      List<String> fullOptions=getDefaultJavacopts();
       if (options != null) {
-        fullOptions.addAll(options);
+        for (        String option : options) {
+          fullOptions.add(option);
+        }
       }
-      return delegate.getTask(out,fileManager,diagnosticListener,fullOptions.build(),classes,compilationUnits);
+      return delegate.getTask(out,fileManager,diagnosticListener,fullOptions,classes,compilationUnits);
     }
     @Override public StandardJavaFileManager getStandardFileManager(    DiagnosticListener<? super JavaFileObject> diagnosticListener,    Locale locale,    Charset charset){
       StandardJavaFileManager fileManager=delegate.getStandardFileManager(diagnosticListener,locale,charset);
@@ -20,7 +21,7 @@
     }
     @Override public int run(    InputStream in,    OutputStream out,    OutputStream err,    String... arguments){
       List<String> args=getDefaultJavacopts();
-      Collections.addAll(args,arguments);
+      args.addAll(Arrays.asList(arguments));
       return delegate.run(in,out,err,args.toArray(new String[0]));
     }
     @Override public Set<SourceVersion> getSourceVersions(){
