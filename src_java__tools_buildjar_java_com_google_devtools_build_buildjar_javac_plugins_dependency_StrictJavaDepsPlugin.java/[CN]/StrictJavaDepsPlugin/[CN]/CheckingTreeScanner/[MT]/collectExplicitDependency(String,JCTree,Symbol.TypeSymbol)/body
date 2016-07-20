@@ -1,14 +1,15 @@
 {
   if (strictJavaDepsMode.isEnabled() && !isStrictDepsExempt) {
-    String target=indirectJarsToTargets.get(jarName);
-    if (target != null && seenTargets.add(target)) {
-      String canonicalTargetName=canonicalizeTarget(target);
-      missingTargets.add(canonicalTargetName);
+    JarOwner owner=indirectJarsToTargets.get(jarName);
+    if (owner != null && seenTargets.add(owner)) {
+      String canonicalTargetName=canonicalizeTarget(owner.label());
+      missingTargets.add(owner);
+      String toolInfo=owner.aspect() == null ? canonicalTargetName : String.format("%s with aspect %s",canonicalTargetName,owner.aspect());
       if (strictJavaDepsMode == ERROR) {
-        log.error(node.pos,"proc.messager",MessageFormat.format(transitiveDepMessage,sym,canonicalTargetName));
+        log.error(node.pos,"proc.messager",MessageFormat.format(TRANSITIVE_DEP_MESSAGE,sym,toolInfo));
       }
  else {
-        log.warning(node.pos,"proc.messager",MessageFormat.format(transitiveDepMessage,sym,canonicalTargetName));
+        log.warning(node.pos,"proc.messager",MessageFormat.format(TRANSITIVE_DEP_MESSAGE,sym,toolInfo));
       }
     }
   }

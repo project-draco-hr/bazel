@@ -2,7 +2,7 @@
   Path deps=createClassJar("libdeps.jar",JavacTurbineTest.class,DirectDep.class);
   addSourceLines("Hello.java","import " + DirectDep.class.getCanonicalName() + ";","class Hello {","  public native DirectDep foo() /*-{","  }-*/;","}");
   optionsBuilder.addClassPathEntries(Collections.singleton(deps.toString()));
-  optionsBuilder.addDirectJarToTarget(deps.toString(),"//deps");
+  optionsBuilder.addDirectJarToTarget(deps.toString(),JarOwner.create("//deps"));
   compile();
   Map<String,byte[]> outputs=collectOutputs();
   assertThat(outputs.keySet()).containsExactly("Hello.class");
