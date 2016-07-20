@@ -1,0 +1,16 @@
+{
+  HashMap<ByteString,Artifact> r=reverseMap;
+  if (r != null) {
+    return r;
+  }
+  r=new HashMap<>(inputArtifactData.size());
+  for (  Map.Entry<Artifact,FileArtifactValue> e : inputArtifactData.entrySet()) {
+    byte[] bytes=e.getValue().getDigest();
+    if (bytes != null) {
+      ByteString digest=ByteString.copyFrom(BaseEncoding.base16().lowerCase().encode(bytes).getBytes(StandardCharsets.US_ASCII));
+      r.put(digest,e.getKey());
+    }
+  }
+  reverseMap=r;
+  return r;
+}

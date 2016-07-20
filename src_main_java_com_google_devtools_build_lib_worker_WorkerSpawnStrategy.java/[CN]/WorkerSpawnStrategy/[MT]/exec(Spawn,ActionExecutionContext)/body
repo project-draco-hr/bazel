@@ -28,9 +28,13 @@
     expandArgument(requestBuilder,Iterables.getLast(spawn.getArguments()));
     List<ActionInput> inputs=ActionInputHelper.expandArtifacts(spawn.getInputFiles(),actionExecutionContext.getArtifactExpander());
     for (    ActionInput input : inputs) {
-      ByteString digest=inputFileCache.getDigest(input);
-      if (digest == null) {
+      byte[] digestBytes=inputFileCache.getDigest(input);
+      ByteString digest;
+      if (digestBytes == null) {
         digest=ByteString.EMPTY;
+      }
+ else {
+        digest=ByteString.copyFromUtf8(HashCode.fromBytes(digestBytes).toString());
       }
       requestBuilder.addInputsBuilder().setPath(input.getExecPathString()).setDigest(digest).build();
     }
