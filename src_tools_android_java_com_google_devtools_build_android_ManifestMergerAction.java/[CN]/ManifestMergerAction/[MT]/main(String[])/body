@@ -8,9 +8,9 @@
     if (options.mergeType == MergeType.APPLICATION) {
       Path tmp=Files.createTempDirectory("manifest_merge_tmp");
       tmp.toFile().deleteOnExit();
-      ImmutableList.Builder<Path> mergeeManifests=ImmutableList.builder();
-      for (      Path mergeeManifest : options.mergeeManifests) {
-        mergeeManifests.add(removePermissions(mergeeManifest,tmp));
+      ImmutableMap.Builder<Path,String> mergeeManifests=ImmutableMap.builder();
+      for (      Entry<Path,String> mergeeManifest : options.mergeeManifests.entrySet()) {
+        mergeeManifests.put(removePermissions(mergeeManifest.getKey(),tmp),mergeeManifest.getValue());
       }
       mergedManifest=resourceProcessor.mergeManifest(options.manifest,mergeeManifests.build(),options.mergeType,options.manifestValues,options.manifestOutput);
     }

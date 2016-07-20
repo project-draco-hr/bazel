@@ -1,5 +1,5 @@
 {
-  Iterable<Artifact> mergeeManifests=getMergeeManifests(resourceDeps.getResources());
+  Map<Artifact,Label> mergeeManifests=getMergeeManifests(resourceDeps.getResources());
   boolean legacy=true;
   if (ruleContext.isLegalFragment(AndroidConfiguration.class) && ruleContext.getRule().isAttrDefined("manifest_merger",STRING)) {
     AndroidManifestMerger merger=AndroidManifestMerger.fromString(ruleContext.attributes().get("manifest_merger",STRING));
@@ -9,14 +9,14 @@
     legacy=merger == AndroidManifestMerger.LEGACY;
   }
   if (legacy) {
-    if (!Iterables.isEmpty(mergeeManifests)) {
+    if (!mergeeManifests.isEmpty()) {
       Artifact outputManifest=ruleContext.getUniqueDirectoryArtifact(ruleContext.getRule().getName() + "_merged","AndroidManifest.xml",ruleContext.getBinOrGenfilesDirectory());
-      AndroidManifestMergeHelper.createMergeManifestAction(ruleContext,getManifest(),mergeeManifests,ImmutableList.of("all"),outputManifest);
+      AndroidManifestMergeHelper.createMergeManifestAction(ruleContext,getManifest(),mergeeManifests.keySet(),ImmutableList.of("all"),outputManifest);
       return new ApplicationManifest(ruleContext,outputManifest);
     }
   }
  else {
-    if (!Iterables.isEmpty(mergeeManifests) || !manifestValues.isEmpty()) {
+    if (!mergeeManifests.isEmpty() || !manifestValues.isEmpty()) {
       Artifact outputManifest=ruleContext.getUniqueDirectoryArtifact(ruleContext.getRule().getName() + "_merged","AndroidManifest.xml",ruleContext.getBinOrGenfilesDirectory());
       new ManifestMergerActionBuilder(ruleContext).setManifest(getManifest()).setMergeeManifests(mergeeManifests).setLibrary(false).setManifestValues(manifestValues).setCustomPackage(AndroidCommon.getJavaPackage(ruleContext)).setManifestOutput(outputManifest).build(ruleContext);
       return new ApplicationManifest(ruleContext,outputManifest);

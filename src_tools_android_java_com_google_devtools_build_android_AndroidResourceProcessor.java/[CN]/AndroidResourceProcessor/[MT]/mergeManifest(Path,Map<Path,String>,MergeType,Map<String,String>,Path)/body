@@ -6,9 +6,11 @@
   if (mergeType == MergeType.APPLICATION) {
     manifestMerger.withFeatures(Feature.REMOVE_TOOLS_DECLARATIONS);
   }
-  for (  Path mergeeManifest : mergeeManifests) {
-    manifestMerger.addLibraryManifest(mergeeManifest.toFile());
+  List<Pair<String,File>> libraryManifests=new ArrayList<>();
+  for (  Entry<Path,String> mergeeManifest : mergeeManifests.entrySet()) {
+    libraryManifests.add(Pair.of(mergeeManifest.getValue(),mergeeManifest.getKey().toFile()));
   }
+  manifestMerger.addLibraryManifests(libraryManifests);
   Map<String,String> placeholders=new HashMap<>(values);
   for (  SystemProperty property : SystemProperty.values()) {
     if (values.containsKey(SYSTEM_PROPERTY_NAMES.get(property))) {

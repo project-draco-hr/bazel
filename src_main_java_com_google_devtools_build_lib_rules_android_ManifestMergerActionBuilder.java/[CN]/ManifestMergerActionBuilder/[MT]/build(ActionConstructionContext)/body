@@ -6,8 +6,13 @@
   builder.addExecPath("--manifest",manifest);
   inputs.add(manifest);
   if (mergeeManifests != null && !mergeeManifests.isEmpty()) {
-    builder.addJoinExecPaths("--mergeeManifests",":",mergeeManifests);
-    inputs.addAll(mergeeManifests);
+    builder.add("--mergeeManifests").add(mapToDictionaryString(mergeeManifests,new Function<Artifact,String>(){
+      @Override public String apply(      Artifact input){
+        return input.getExecPathString();
+      }
+    }
+,null));
+    inputs.addAll(mergeeManifests.keySet());
   }
   if (isLibrary) {
     builder.add("--mergeType").add("LIBRARY");
