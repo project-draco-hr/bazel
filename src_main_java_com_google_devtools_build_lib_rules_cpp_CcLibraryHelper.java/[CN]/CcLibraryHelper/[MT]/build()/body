@@ -27,7 +27,24 @@
   }
   CcLinkingOutputs originalLinkingOutputs=ccLinkingOutputs;
   if (!(staticLibraries.isEmpty() && picStaticLibraries.isEmpty() && dynamicLibraries.isEmpty())) {
-    ccLinkingOutputs=new CcLinkingOutputs.Builder().merge(ccLinkingOutputs).addStaticLibraries(staticLibraries).addPicStaticLibraries(picStaticLibraries).addDynamicLibraries(dynamicLibraries).addExecutionDynamicLibraries(dynamicLibraries).build();
+    CcLinkingOutputs.Builder newOutputsBuilder=new CcLinkingOutputs.Builder();
+    if (!ccOutputs.isEmpty()) {
+      newOutputsBuilder.merge(originalLinkingOutputs);
+      Iterable<LibraryToLink> allLibraries=Iterables.concat(staticLibraries,picStaticLibraries,dynamicLibraries);
+      for (      LibraryToLink precompiledLibrary : allLibraries) {
+        List<LibraryToLink> matchingLibs=originalLinkingOutputs.getLibrariesWithSameIdentifierAs(precompiledLibrary);
+        if (!matchingLibs.isEmpty()) {
+          Iterable<String> matchingLibArtifactNames=Iterables.transform(matchingLibs,new Function<LibraryToLink,String>(){
+            @Override public String apply(            LibraryToLink input){
+              return input.getOriginalLibraryArtifact().getFilename();
+            }
+          }
+);
+          ruleContext.ruleError("Can't put " + precompiledLibrary.getArtifact().getFilename() + " into the srcs of a "+ ruleContext.getRuleClassNameForLogging()+ " with the same name ("+ ruleContext.getRule().getName()+ ") which also contains other code or objects to link; it shares a name with "+ Joiner.on(", ").join(matchingLibArtifactNames)+ " (output compiled and linked from the non-library sources of this rule), "+ "which could cause confusion");
+        }
+      }
+    }
+    ccLinkingOutputs=newOutputsBuilder.addStaticLibraries(staticLibraries).addPicStaticLibraries(picStaticLibraries).addDynamicLibraries(dynamicLibraries).addExecutionDynamicLibraries(dynamicLibraries).build();
   }
   DwoArtifactsCollector dwoArtifacts=DwoArtifactsCollector.transitiveCollector(ccOutputs,implementationDeps);
   Runfiles cppStaticRunfiles=collectCppRunfiles(ccLinkingOutputs,true);

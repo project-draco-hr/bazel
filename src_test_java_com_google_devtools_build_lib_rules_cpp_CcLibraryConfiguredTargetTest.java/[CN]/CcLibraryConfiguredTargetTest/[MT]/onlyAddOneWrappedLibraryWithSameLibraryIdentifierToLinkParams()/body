@@ -1,0 +1,6 @@
+{
+  ConfiguredTarget target=scratchConfiguredTarget("a","foo","cc_library(name = 'foo', srcs = ['libfoo.lo', 'libfoo.so'])");
+  Iterable<Artifact> libraries=LinkerInputs.toNonSolibArtifacts(target.getProvider(CcLinkParamsProvider.class).getCcLinkParams(true,true).getLibraries());
+  assertThat(artifactsToStrings(libraries)).doesNotContain("src a/libfoo.so");
+  assertThat(artifactsToStrings(libraries)).contains("src a/libfoo.lo");
+}
