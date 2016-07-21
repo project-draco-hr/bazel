@@ -1,18 +1,11 @@
 {
   implicitDependencyExtractor.accumulate(context,checkingTreeScanner.getSeenClasses());
   if (!missingTargets.isEmpty()) {
-    StringBuilder missingTargetsStr=new StringBuilder();
+    String canonicalizedLabel=dependencyModule.getTargetLabel() == null ? null : canonicalizeTarget(dependencyModule.getTargetLabel());
+    List<JarOwner> canonicalizedMissing=new ArrayList<>();
     for (    JarOwner owner : Ordering.natural().onResultOf(JarOwner.LABEL).immutableSortedCopy(missingTargets)) {
-      missingTargetsStr.append(canonicalizeTarget(owner.label()));
-      missingTargetsStr.append(" ");
+      canonicalizedMissing.add(JarOwner.create(canonicalizeTarget(owner.label()),owner.aspect()));
     }
-    String canonicalizedLabel;
-    if (dependencyModule.getTargetLabel() == null) {
-      canonicalizedLabel=null;
-    }
- else {
-      canonicalizedLabel=canonicalizeTarget(dependencyModule.getTargetLabel());
-    }
-    errWriter.print(String.format(dependencyModule.getFixMessage(),USE_COLOR ? "\033[35m\033[1m" : "",USE_COLOR ? "\033[0m" : "",missingTargetsStr.toString(),canonicalizedLabel));
+    errWriter.print(dependencyModule.getFixMessage().get(canonicalizedMissing,canonicalizedLabel,USE_COLOR));
   }
 }
