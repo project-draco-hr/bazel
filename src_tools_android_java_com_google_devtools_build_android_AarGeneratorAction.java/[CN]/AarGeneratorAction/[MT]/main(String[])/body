@@ -4,8 +4,6 @@
   optionsParser.parseAndExitUponError(args);
   Options options=optionsParser.getOptions(Options.class);
   checkFlags(options);
-  FileSystem fileSystem=FileSystems.getDefault();
-  Path working=fileSystem.getPath("").toAbsolutePath();
   AndroidResourceProcessor resourceProcessor=new AndroidResourceProcessor(new StdLogger(com.android.utils.StdLogger.Level.VERBOSE));
   try (ScopedTemporaryDirectory scopedTmp=new ScopedTemporaryDirectory("aar_gen_tmp")){
     Path tmp=scopedTmp.getPath();
@@ -13,11 +11,8 @@
     Files.createDirectories(resourcesOut);
     Path assetsOut=tmp.resolve("merged_assets");
     Files.createDirectories(assetsOut);
-    Path expandedOut=tmp.resolve("tmp-expanded");
-    Path deduplicatedOut=tmp.resolve("tmp-deduplicated");
     logger.fine(String.format("Setup finished at %dms",timer.elapsed(TimeUnit.MILLISECONDS)));
-    ImmutableList<DirectoryModifier> modifiers=ImmutableList.of(new PackedResourceTarExpander(expandedOut,working),new FileDeDuplicator(Hashing.murmur3_128(),deduplicatedOut,working));
-    MergedAndroidData mergedData=resourceProcessor.mergeData(options.mainData,options.dependencyData,resourcesOut,assetsOut,modifiers,null,options.strictMerge);
+    MergedAndroidData mergedData=resourceProcessor.mergeData(options.mainData,options.dependencyData,ImmutableList.<DependencyAndroidData>of(),resourcesOut,assetsOut,null,VariantConfiguration.Type.LIBRARY,null);
     logger.fine(String.format("Merging finished at %dms",timer.elapsed(TimeUnit.MILLISECONDS)));
     writeAar(options.aarOutput,mergedData,options.manifest,options.rtxt,options.classes);
     logger.fine(String.format("Packaging finished at %dms",timer.elapsed(TimeUnit.MILLISECONDS)));

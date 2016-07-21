@@ -1,12 +1,17 @@
 {
   Path androidManifest=primaryData.getManifest();
-  Path resourceDir=primaryData.getResourceDir();
-  Path assetsDir=primaryData.getAssetDir();
+  final Path resourceDir=primaryData.getResourceDir();
+  final Path assetsDir=primaryData.getAssetDir();
   if (publicResourcesOut != null) {
     prepareOutputPath(publicResourcesOut.getParent());
   }
   AaptCommandBuilder commandBuilder=new AaptCommandBuilder(aapt).forBuildToolsVersion(buildToolsVersion).forVariantType(variantType).add("package").when(stdLogger.getLevel() == StdLogger.Level.VERBOSE).thenAdd("-v").add("-f").add("--no-crunch").whenVersionIsAtLeast(new FullRevision(23)).thenAdd("--no-version-vectors").add("-I",androidJar).add("-M",androidManifest.toAbsolutePath()).when(Files.isDirectory(resourceDir)).thenAdd("-S",resourceDir).when(Files.isDirectory(assetsDir)).thenAdd("-A",assetsDir).when(sourceOut != null).thenAdd("-m").add("-J",prepareOutputPath(sourceOut)).add("--output-text-symbols",prepareOutputPath(sourceOut)).add("-F",packageOut).add("-G",proguardOut).whenVersionIsAtLeast(new FullRevision(24)).thenAdd("-D",mainDexProguardOut).add("-P",publicResourcesOut).when(debug).thenAdd("--debug-mode").add("--custom-package",customPackageForR).whenVariantIs(VariantConfiguration.Type.LIBRARY).thenAdd("--non-constant-id").add("--ignore-assets",aaptOptions.getIgnoreAssets()).when(aaptOptions.getFailOnMissingConfigEntry()).thenAdd("--error-on-missing-config-entry").add("-0","apk").addRepeated("-0",aaptOptions.getNoCompress()).add("-c",Joiner.on(',').join(resourceConfigs)).whenVersionIsAtLeast(new FullRevision(23)).thenAddRepeated("--split",splits);
-  new CommandLineRunner(stdLogger).runCmdLine(commandBuilder.build(),null);
+  try {
+    new CommandLineRunner(stdLogger).runCmdLine(commandBuilder.build(),null);
+  }
+ catch (  LoggedErrorException e) {
+    throw new LoggedErrorException(e.getCmdLineError(),getOutputWithSourceContext(aapt,e.getOutput()),e.getCmdLine());
+  }
   if (sourceOut != null && variantType != VariantConfiguration.Type.LIBRARY) {
     writeDependencyPackageRJavaFiles(dependencyData,customPackageForR,androidManifest,sourceOut);
   }

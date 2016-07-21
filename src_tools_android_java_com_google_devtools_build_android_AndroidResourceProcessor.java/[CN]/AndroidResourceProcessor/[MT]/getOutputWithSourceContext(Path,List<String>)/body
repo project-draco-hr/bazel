@@ -1,0 +1,32 @@
+{
+  List<String> outputWithSourceContext=new ArrayList<>();
+  for (  String line : lines) {
+    if (line.contains("Duplicate file") || line.contains("Original")) {
+      String[] parts=line.split(":");
+      String fileName=parts[0].trim();
+      outputWithSourceContext.add("\n" + fileName + ":\n\t");
+      outputWithSourceContext.add(Joiner.on("\n\t").join(Files.readAllLines(aapt.getFileSystem().getPath(fileName),StandardCharsets.UTF_8)));
+    }
+ else     if (line.contains("error")) {
+      String[] parts=line.split(":");
+      String fileName=parts[0].trim();
+      try {
+        int lineNumber=Integer.valueOf(parts[1].trim());
+        StringBuilder expandedError=new StringBuilder("\nError at " + lineNumber + " : "+ line);
+        List<String> errorSource=Files.readAllLines(aapt.getFileSystem().getPath(fileName),StandardCharsets.UTF_8);
+        for (int i=Math.max(lineNumber - 5,0); i < Math.min(lineNumber + 5,errorSource.size()); i++) {
+          expandedError.append("\n").append(i).append("\t:  ").append(errorSource.get(i));
+        }
+        outputWithSourceContext.add(expandedError.toString());
+      }
+ catch (      IOException|NumberFormatException formatError) {
+        outputWithSourceContext.add("error parsing line" + line);
+        stdLogger.error(formatError,"error during reading source %s",fileName);
+      }
+    }
+ else {
+      outputWithSourceContext.add(line);
+    }
+  }
+  return outputWithSourceContext;
+}
