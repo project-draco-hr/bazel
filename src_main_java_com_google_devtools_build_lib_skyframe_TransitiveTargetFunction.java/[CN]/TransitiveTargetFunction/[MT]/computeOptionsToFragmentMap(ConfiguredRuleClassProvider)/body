@@ -1,12 +1,14 @@
 {
   Map<String,Class<? extends Fragment>> result=new LinkedHashMap<>();
-  Set<Class<? extends FragmentOptions>> visitedOptionsClasses=new HashSet<>();
+  Map<Class<? extends FragmentOptions>,Integer> visitedOptionsClasses=new HashMap<>();
   for (  ConfigurationFragmentFactory factory : ruleClassProvider.getConfigurationFragments()) {
-    for (    Class<? extends FragmentOptions> optionsClass : factory.requiredOptions()) {
-      if (visitedOptionsClasses.contains(optionsClass)) {
+    Set<Class<? extends FragmentOptions>> requiredOpts=factory.requiredOptions();
+    for (    Class<? extends FragmentOptions> optionsClass : requiredOpts) {
+      Integer previousBest=visitedOptionsClasses.get(optionsClass);
+      if (previousBest != null && previousBest <= requiredOpts.size()) {
         continue;
       }
-      visitedOptionsClasses.add(optionsClass);
+      visitedOptionsClasses.put(optionsClass,requiredOpts.size());
       for (      Field field : optionsClass.getFields()) {
         if (field.isAnnotationPresent(Option.class)) {
           result.put(field.getAnnotation(Option.class).name(),factory.creates());
