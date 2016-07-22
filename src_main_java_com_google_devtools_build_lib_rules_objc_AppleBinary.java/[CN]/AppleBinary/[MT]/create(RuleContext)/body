@@ -27,9 +27,9 @@
     }
     archivesToLipo.add(common.getCompilationArtifacts().get().getArchive().get());
     binariesToLipo.add(intermediateArtifacts.strippedSingleArchitectureBinary());
-    ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET,childConfig);
-    if (protoSupport.hasProtos()) {
-      protoSupport.registerActions();
+    ObjcConfiguration objcConfiguration=childConfig.getFragment(ObjcConfiguration.class);
+    if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
+      ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET).registerActions();
       ObjcCommon protoCommon=protoSupport.getCommon();
       new CompilationSupport(ruleContext,protoSupport.getIntermediateArtifacts(),new CompilationAttributes.Builder().build()).registerCompileAndArchiveActions(protoCommon,protoSupport.getUserHeaderSearchPaths());
     }

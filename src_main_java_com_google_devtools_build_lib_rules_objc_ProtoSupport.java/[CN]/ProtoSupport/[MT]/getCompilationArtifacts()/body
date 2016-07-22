@@ -4,8 +4,15 @@
   if (targetType == TargetType.PROTO_TARGET && !usesProtobufLibrary()) {
     builder.addAdditionalHdrs(generatedSources);
   }
-  if ((targetType == TargetType.PROTO_TARGET && !usesProtobufLibrary()) || targetType == TargetType.LINKING_TARGET) {
-    builder.addNonArcSrcs(generatedSources);
+  if (experimentalAutoUnion()) {
+    if ((targetType == TargetType.PROTO_TARGET && !usesProtobufLibrary()) || targetType == TargetType.LINKING_TARGET) {
+      builder.addNonArcSrcs(generatedSources);
+    }
+  }
+ else {
+    if (targetType == TargetType.PROTO_TARGET) {
+      builder.addNonArcSrcs(generatedSources);
+    }
   }
   return builder.build();
 }

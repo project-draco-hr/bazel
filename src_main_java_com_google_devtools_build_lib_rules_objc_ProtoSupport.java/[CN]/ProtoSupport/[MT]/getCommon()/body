@@ -1,11 +1,11 @@
 {
   ObjcCommon.Builder commonBuilder=new ObjcCommon.Builder(ruleContext).setIntermediateArtifacts(intermediateArtifacts).setHasModuleMap().setCompilationArtifacts(getCompilationArtifacts());
   if (targetType == TargetType.LINKING_TARGET) {
-    commonBuilder.addDepObjcProviders(attributes.getDepsObjcPrerequisites());
+    commonBuilder.addDepObjcProviders(ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProvider.class));
   }
  else   if (targetType == TargetType.PROTO_TARGET) {
-    commonBuilder.addDepObjcProviders(attributes.getProtoLibObjcPrerequisites());
-    if (usesProtobufLibrary()) {
+    commonBuilder.addDepObjcProviders(ruleContext.getPrerequisites(ObjcRuleClasses.PROTO_LIB_ATTR,Mode.TARGET,ObjcProvider.class));
+    if (usesProtobufLibrary() && experimentalAutoUnion()) {
       commonBuilder.addDirectDependencyHeaderSearchPaths(getUserHeaderSearchPaths());
     }
  else {
