@@ -1,0 +1,23 @@
+{
+  try {
+    HttpClient client=new DefaultHttpClient();
+    HttpGet get=new HttpGet(baseUrl + "/" + key);
+    HttpResponse response=client.execute(get);
+    int statusCode=response.getStatusLine().getStatusCode();
+    if (HttpStatus.SC_NOT_FOUND == statusCode) {
+      return null;
+    }
+    if (HttpStatus.SC_OK != statusCode) {
+      throw new RuntimeException("GET failed with status code " + statusCode);
+    }
+    ByteArrayOutputStream buffer=new ByteArrayOutputStream();
+    HttpEntity entity=response.getEntity();
+    entity.writeTo(buffer);
+    buffer.flush();
+    EntityUtils.consume(entity);
+    return buffer.toByteArray();
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+}
