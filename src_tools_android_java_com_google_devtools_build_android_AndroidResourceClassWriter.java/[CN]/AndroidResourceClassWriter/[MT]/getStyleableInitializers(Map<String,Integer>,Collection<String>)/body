@@ -1,0 +1,26 @@
+{
+  ImmutableList.Builder<FieldInitializer> initList=ImmutableList.builder();
+  for (  String field : styleableFields) {
+    Set<String> attrs=styleableAttrs.get(field).keySet();
+    ImmutableMap.Builder<String,Integer> arrayInitValues=ImmutableMap.builder();
+    for (    String attr : attrs) {
+      Integer attrId=attrAssignments.get(attr);
+      if (attrId == null) {
+        if (!attr.startsWith(NORMALIZED_ANDROID_PREFIX)) {
+          throw new AttrLookupException("App attribute not found: " + attr);
+        }
+        String attrWithoutPrefix=attr.substring(NORMALIZED_ANDROID_PREFIX.length());
+        attrId=androidIdProvider.getAttrId(attrWithoutPrefix);
+      }
+      arrayInitValues.put(attr,attrId);
+    }
+    ImmutableMap<String,Integer> arrayInitMap=arrayInitValues.orderEntriesByValue(Ordering.<Integer>natural()).build();
+    initList.add(new IntArrayFieldInitializer(field,arrayInitMap.values()));
+    int index=0;
+    for (    String attr : arrayInitMap.keySet()) {
+      initList.add(new IntFieldInitializer(field + "_" + attr,index));
+      ++index;
+    }
+  }
+  return initList.build();
+}

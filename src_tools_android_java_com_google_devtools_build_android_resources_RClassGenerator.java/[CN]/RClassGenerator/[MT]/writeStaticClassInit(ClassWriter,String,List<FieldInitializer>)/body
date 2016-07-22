@@ -1,0 +1,12 @@
+{
+  MethodVisitor visitor=classWriter.visitMethod(Opcodes.ACC_STATIC,"<clinit>","()V",null,null);
+  visitor.visitCode();
+  int stackSlotsNeeded=0;
+  InstructionAdapter insts=new InstructionAdapter(visitor);
+  for (  FieldInitializer fieldInit : initializers) {
+    stackSlotsNeeded=Math.max(stackSlotsNeeded,fieldInit.writeCLInit(insts,className));
+  }
+  insts.areturn(Type.VOID_TYPE);
+  visitor.visitMaxs(stackSlotsNeeded,0);
+  visitor.visitEnd();
+}

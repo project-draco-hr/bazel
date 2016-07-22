@@ -1,0 +1,19 @@
+{
+  Map<String,SymbolEntry> rowMap=symbols.row(typeName);
+  Set<String> symbolSet=rowMap.keySet();
+  List<String> symbolList=new ArrayList<>(symbolSet);
+  Collections.sort(symbolList);
+  List<FieldInitializer> initializers=new ArrayList<>();
+  for (  String symbolName : symbolList) {
+    SymbolEntry value=values.get(typeName,symbolName);
+    Preconditions.checkNotNull(value);
+    if (value.getType().equals("int")) {
+      initializers.add(IntFieldInitializer.of(value.getName(),value.getValue()));
+    }
+ else {
+      Preconditions.checkArgument(value.getType().equals("int[]"));
+      initializers.add(IntArrayFieldInitializer.of(value.getName(),value.getValue()));
+    }
+  }
+  return initializers;
+}

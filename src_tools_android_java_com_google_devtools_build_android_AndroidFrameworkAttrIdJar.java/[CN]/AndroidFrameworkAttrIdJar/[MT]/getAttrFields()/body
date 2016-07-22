@@ -1,0 +1,14 @@
+{
+  try {
+    URLClassLoader urlClassLoader=new URLClassLoader(new URL[]{androidJar.toUri().toURL()});
+    Class<?> attrClass=urlClassLoader.loadClass(ANDROID_ATTR_CLASS);
+    Map<String,Integer> attributeIds=new HashMap<>();
+    for (    Field field : attrClass.getFields()) {
+      attributeIds.put(field.getName(),field.getInt(null));
+    }
+    return attributeIds;
+  }
+ catch (  ClassNotFoundException|IllegalAccessException|MalformedURLException e) {
+    throw new AttrLookupException(e);
+  }
+}

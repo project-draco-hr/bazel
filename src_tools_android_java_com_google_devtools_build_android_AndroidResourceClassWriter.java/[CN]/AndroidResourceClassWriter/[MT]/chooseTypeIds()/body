@@ -1,0 +1,15 @@
+{
+  Map<ResourceType,Integer> allocatedTypeIds=new EnumMap<>(ResourceType.class);
+  allocatedTypeIds.put(ResourceType.ATTR,1);
+  int nextTypeId=2;
+  for (  ResourceType t : AAPT_TYPE_ORDERING) {
+    if (innerClasses.containsKey(t)) {
+      allocatedTypeIds.put(t,nextTypeId);
+      ++nextTypeId;
+    }
+  }
+  for (  ResourceType t : innerClasses.keySet()) {
+    Preconditions.checkArgument(t == ResourceType.STYLEABLE || allocatedTypeIds.containsKey(t));
+  }
+  return allocatedTypeIds;
+}

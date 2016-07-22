@@ -1,0 +1,20 @@
+{
+  ClassWriter innerClassWriter=new ClassWriter(ClassWriter.COMPUTE_MAXS);
+  String fullyQualifiedInnerClass=writeInnerClassHeader(fullyQualifiedOuterClass,innerClass,innerClassWriter);
+  List<FieldInitializer> deferredInitializers=new ArrayList<>();
+  int fieldAccessLevel=Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC;
+  if (finalFields) {
+    fieldAccessLevel|=Opcodes.ACC_FINAL;
+  }
+  for (  FieldInitializer init : initializers) {
+    if (init.writeFieldDefinition(innerClassWriter,fieldAccessLevel,finalFields)) {
+      deferredInitializers.add(init);
+    }
+  }
+  if (!deferredInitializers.isEmpty()) {
+    writeStaticClassInit(innerClassWriter,fullyQualifiedInnerClass,deferredInitializers);
+  }
+  innerClassWriter.visitEnd();
+  Path innerFile=packageDir.resolve("R$" + innerClass + ".class");
+  Files.write(innerFile,innerClassWriter.toByteArray());
+}

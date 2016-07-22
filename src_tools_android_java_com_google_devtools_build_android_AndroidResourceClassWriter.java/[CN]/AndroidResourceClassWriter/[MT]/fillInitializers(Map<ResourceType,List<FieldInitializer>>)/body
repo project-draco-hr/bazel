@@ -1,0 +1,21 @@
+{
+  Map<ResourceType,Integer> typeIdMap=chooseTypeIds();
+  Map<String,Integer> attrAssignments=assignAttrIds(typeIdMap.get(ResourceType.ATTR));
+  for (  Map.Entry<ResourceType,Set<String>> fieldEntries : innerClasses.entrySet()) {
+    ResourceType type=fieldEntries.getKey();
+    ImmutableList<String> sortedFields=Ordering.natural().immutableSortedCopy(fieldEntries.getValue());
+    List<FieldInitializer> fields;
+    if (type == ResourceType.STYLEABLE) {
+      fields=getStyleableInitializers(attrAssignments,sortedFields);
+    }
+ else     if (type == ResourceType.ATTR) {
+      fields=getAttrInitializers(attrAssignments,sortedFields);
+    }
+ else {
+      int typeId=typeIdMap.get(type);
+      fields=getResourceInitializers(typeId,sortedFields);
+    }
+    Preconditions.checkArgument(fields.size() < (1 << 16));
+    initializers.put(type,fields);
+  }
+}
