@@ -1,0 +1,24 @@
+{
+  String result=spec;
+  boolean allBeneath=false;
+  if (result.endsWith(ALL_BENEATH_SUFFIX)) {
+    allBeneath=true;
+    result=result.substring(0,result.length() - ALL_BENEATH_SUFFIX.length());
+    if (result.equals("/")) {
+      return AllPackages.EVERYTHING;
+    }
+  }
+  if (!spec.startsWith("//")) {
+    throw new InvalidPackageSpecificationException(String.format("invalid package name '%s': must start with '//'",spec));
+  }
+  PackageIdentifier packageId;
+  try {
+    packageId=PackageIdentifier.parse(result);
+  }
+ catch (  LabelSyntaxException e) {
+    throw new InvalidPackageSpecificationException(String.format("invalid package name '%s': %s",spec,e.getMessage()));
+  }
+  Verify.verify(packageId.getRepository().isDefault());
+  PackageIdentifier packageIdForSpecifiedRepository=PackageIdentifier.create(repositoryName,packageId.getPackageFragment());
+  return allBeneath ? new AllPackagesBeneath(packageIdForSpecifiedRepository) : new SinglePackage(packageIdForSpecifiedRepository);
+}
