@@ -1,5 +1,21 @@
 {
   TargetPatternList options=(TargetPatternList)key.argument();
+  PackageValue packageValue=null;
+  boolean workspaceError=false;
+  try {
+    packageValue=(PackageValue)env.getValueOrThrow(PackageValue.key(Label.EXTERNAL_PACKAGE_IDENTIFIER),NoSuchPackageException.class);
+  }
+ catch (  NoSuchPackageException e) {
+    env.getListener().handle(Event.error(e.getMessage()));
+    workspaceError=true;
+  }
+  if (env.valuesMissing()) {
+    return null;
+  }
+  String workspaceName="";
+  if (!workspaceError) {
+    workspaceName=packageValue.getPackage().getWorkspaceName();
+  }
   ResolvedTargets<Target> targets=getTargetsToBuild(env,options.getTargetPatterns(),options.getOffset(),options.getCompileOneDependency());
   ResolvedTargets<Target> testTargets=null;
   if (options.getDetermineTests() || options.getBuildTestsOnly()) {
@@ -68,5 +84,5 @@
   }
   ResolvedTargets<Target> expandedTargets=expandedTargetsBuilder.build();
   Set<Target> testSuiteTargets=Sets.difference(targets.getTargets(),expandedTargets.getTargets());
-  return new TargetPatternPhaseValue(expandedTargets.getTargets(),testsToRun,preExpansionError,expandedTargets.hasError(),filteredTargets,testFilteredTargets,targets.getTargets(),ImmutableSet.copyOf(testSuiteTargets));
+  return new TargetPatternPhaseValue(expandedTargets.getTargets(),testsToRun,preExpansionError,expandedTargets.hasError() || workspaceError,filteredTargets,testFilteredTargets,targets.getTargets(),ImmutableSet.copyOf(testSuiteTargets),workspaceName);
 }
