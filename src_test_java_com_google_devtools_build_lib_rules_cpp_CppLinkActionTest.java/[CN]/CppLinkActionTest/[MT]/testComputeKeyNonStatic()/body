@@ -5,7 +5,6 @@
   final Artifact oFile=getSourceArtifact("cc/a.o");
   final Artifact oFile2=getSourceArtifact("cc/a2.o");
   final Artifact interfaceSoBuilder=getBinArtifactWithNoOwner("foo/build_interface_so");
-  final FeatureConfiguration featureConfiguration=getMockFeatureConfiguration();
   ActionTester.runTest(128,new ActionCombinationFactory(){
     @Override public Action generate(    int i){
       CppLinkActionBuilder builder=new CppLinkActionBuilder(ruleContext,outputFile){
@@ -22,7 +21,7 @@
       builder.setWholeArchive((i & 16) == 0);
       builder.setFake((i & 32) == 0);
       builder.setRuntimeSolibDir((i & 64) == 0 ? null : new PathFragment("so1"));
-      builder.setFeatureConfiguration(featureConfiguration);
+      builder.setFeatureConfiguration(new FeatureConfiguration());
       return builder.build();
     }
   }

@@ -1,8 +1,4 @@
 {
-  if (linkTargetType.isStaticLibraryLink()) {
-    Preconditions.checkArgument(linkstamps.isEmpty(),"linkstamps may only be present on dynamic library or executable links");
-    Preconditions.checkArgument(buildInfoHeaderArtifacts.isEmpty(),"build info headers may only be present on dynamic library or executable links");
-  }
   ImmutableList<String> actualLinkstampCompileOptions;
   if (linkstampCompileOptions.isEmpty()) {
     actualLinkstampCompileOptions=DEFAULT_LINKSTAMP_OPTIONS;
@@ -10,6 +6,7 @@
  else {
     actualLinkstampCompileOptions=ImmutableList.copyOf(Iterables.concat(DEFAULT_LINKSTAMP_OPTIONS,linkstampCompileOptions));
   }
+  CcToolchainFeatures.Variables variables=null;
   if (ruleContext != null) {
     if (featureConfiguration == null) {
       if (toolchain != null) {
@@ -19,10 +16,9 @@
         featureConfiguration=CcCommon.configureFeatures(ruleContext);
       }
     }
+    CcToolchainFeatures.Variables.Builder buildVariables=new CcToolchainFeatures.Variables.Builder();
+    CppHelper.getFdoSupport(ruleContext).getLinkOptions(featureConfiguration,buildVariables);
+    variables=buildVariables.build();
   }
-  if (variables == null) {
-    variables=Variables.EMPTY;
-  }
-  String actionName=linkTargetType.getActionName();
-  return new LinkCommandLine(actionName,configuration,owner,output,interfaceOutput,buildInfoHeaderArtifacts,linkerInputs,runtimeInputs,linkTargetType,linkStaticness,linkopts,features,linkstamps,actualLinkstampCompileOptions,CppHelper.getFdoBuildStamp(ruleContext),runtimeSolibDir,nativeDeps,useTestOnlyFlags,needWholeArchive,paramFile,interfaceSoBuilder,noWholeArchiveFlags,variables,featureConfiguration);
+  return new LinkCommandLine(actionName,configuration,owner,output,interfaceOutput,symbolCountsOutput,buildInfoHeaderArtifacts,linkerInputs,runtimeInputs,linkTargetType,linkStaticness,linkopts,features,linkstamps,actualLinkstampCompileOptions,CppHelper.getFdoBuildStamp(ruleContext),runtimeSolibDir,nativeDeps,useTestOnlyFlags,needWholeArchive,allLTOBackendArtifacts,paramFile,interfaceSoBuilder,variables,featureConfiguration);
 }

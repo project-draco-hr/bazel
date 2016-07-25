@@ -9,12 +9,6 @@
     return toolchain;
   }
   try {
-    if (getTargetLibc().equals("macosx")) {
-      TextFormat.merge(CppLinkActionConfigs.getCppLinkActionConfigs(CppLinkPlatform.MAC),toolchainBuilder);
-    }
- else {
-      TextFormat.merge(CppLinkActionConfigs.getCppLinkActionConfigs(CppLinkPlatform.LINUX),toolchainBuilder);
-    }
     if (!features.contains("dependency_file")) {
       TextFormat.merge("" + "feature {" + "  name: 'dependency_file'"+ "  flag_set {"+ "    action: 'assemble'"+ "    action: 'preprocess-assemble'"+ "    action: 'c-compile'"+ "    action: 'c++-compile'"+ "    action: 'c++-module-compile'"+ "    action: 'objc-compile'"+ "    action: 'objc++-compile'"+ "    action: 'c++-header-preprocessing'"+ "    action: 'c++-header-parsing'"+ "    expand_if_all_available: 'dependency_file'"+ "    flag_group {"+ "      flag: '-MD'"+ "      flag: '-MF'"+ "      flag: '%{dependency_file}'"+ "    }"+ "  }"+ "}",toolchainBuilder);
     }
@@ -34,7 +28,7 @@
       TextFormat.merge("" + "feature {" + "  name: 'include_paths'"+ "  flag_set {"+ "    action: 'preprocess-assemble'"+ "    action: 'c-compile'"+ "    action: 'c++-compile'"+ "    action: 'c++-header-parsing'"+ "    action: 'c++-header-preprocessing'"+ "    action: 'c++-module-compile'"+ "    flag_group {"+ "      flag: '-iquote'"+ "      flag: '%{quote_include_paths}'"+ "    }"+ "    flag_group {"+ "      flag: '-I%{include_paths}'"+ "    }"+ "    flag_group {"+ "      flag: '-isystem'"+ "      flag: '%{system_include_paths}'"+ "    }"+ "  }"+ "}",toolchainBuilder);
     }
     if (!features.contains("fdo_instrument")) {
-      TextFormat.merge("" + "feature {" + "  name: 'fdo_instrument'"+ "  provides: 'profile'"+ "  flag_set {"+ "    action: 'c-compile'"+ "    action: 'c++-compile'"+ "    action: 'c++-link-interface-dynamic-library'"+ "    action: 'c++-link-dynamic-library'"+ "    action: 'c++-link-executable'"+ "    flag_group {"+ "      flag: '-Xgcc-only=-fprofile-generate=%{fdo_instrument_path}'"+ "      flag: '-Xclang-only=-fprofile-instr-generate=%{fdo_instrument_path}'"+ "    }"+ "    flag_group {"+ "      flag: '-fno-data-sections'"+ "    }"+ "  }"+ "}",toolchainBuilder);
+      TextFormat.merge("" + "feature {" + "  name: 'fdo_instrument'"+ "  provides: 'profile'"+ "  flag_set {"+ "    action: 'c-compile'"+ "    action: 'c++-compile'"+ "    action: 'c++-link-static-library'"+ "    action: 'c++-link-pic-static-library'"+ "    action: 'c++-link-interface-dynamic-library'"+ "    action: 'c++-link-dynamic-library'"+ "    action: 'c++-link-alwayslink-static-library'"+ "    action: 'c++-link-alwayslink-pic-static-library'"+ "    action: 'c++-link-executable'"+ "    flag_group {"+ "      flag: '-Xgcc-only=-fprofile-generate=%{fdo_instrument_path}'"+ "      flag: '-Xclang-only=-fprofile-instr-generate=%{fdo_instrument_path}'"+ "    }"+ "    flag_group {"+ "      flag: '-fno-data-sections'"+ "    }"+ "  }"+ "}",toolchainBuilder);
     }
     if (!features.contains("fdo_optimize")) {
       TextFormat.merge("" + "feature {" + "  name: 'fdo_optimize'"+ "  provides: 'profile'"+ "  flag_set {"+ "    action: 'c-compile'"+ "    action: 'c++-compile'"+ "    expand_if_all_available: 'fdo_profile_path'"+ "    flag_group {"+ "      flag: '-Xgcc-only=-fprofile-use=%{fdo_profile_path}'"+ "      flag: '-Xclang-only=-fprofile-instr-use=%{fdo_profile_path}'"+ "      flag: '-Xclang-only=-Wno-profile-instr-unprofiled'"+ "      flag: '-Xclang-only=-Wno-profile-instr-out-of-date'"+ "      flag: '-fprofile-correction'"+ "    }"+ "  }"+ "}",toolchainBuilder);
@@ -46,7 +40,7 @@
       TextFormat.merge("" + "feature {" + "  name: 'lipo'"+ "  requires { feature: 'autofdo' }"+ "  requires { feature: 'fdo_optimize' }"+ "  requires { feature: 'fdo_instrument' }"+ "  flag_set {"+ "    action: 'c-compile'"+ "    action: 'c++-compile'"+ "    flag_group {"+ "      flag: '-fripa'"+ "    }"+ "  }"+ "}",toolchainBuilder);
     }
     if (!features.contains("coverage")) {
-      TextFormat.merge("" + "feature {" + "  name: 'coverage'"+ "  provides: 'profile'"+ "  flag_set {"+ "    action: 'preprocess-assemble'"+ "    action: 'c-compile'"+ "    action: 'c++-compile'"+ "    action: 'c++-header-parsing'"+ "    action: 'c++-header-preprocessing'"+ "    action: 'c++-module-compile'"+ "    expand_if_all_available: 'gcov_gcno_file'"+ "    flag_group {"+ "      flag: '-fprofile-arcs'"+ "      flag: '-ftest-coverage'"+ "    }"+ "  }"+ "  flag_set {"+ "    action: 'c++-link-interface-dynamic-library'"+ "    action: 'c++-link-dynamic-library'"+ "    action: 'c++-link-executable'"+ "    flag_group {"+ "      flag: '-lgcov'"+ "    }"+ "  }"+ "}",toolchainBuilder);
+      TextFormat.merge("" + "feature {" + "  name: 'coverage'"+ "  provides: 'profile'"+ "  flag_set {"+ "    action: 'preprocess-assemble'"+ "    action: 'c-compile'"+ "    action: 'c++-compile'"+ "    action: 'c++-header-parsing'"+ "    action: 'c++-header-preprocessing'"+ "    action: 'c++-module-compile'"+ "    expand_if_all_available: 'gcov_gcno_file'"+ "    flag_group {"+ "      flag: '-fprofile-arcs'"+ "      flag: '-ftest-coverage'"+ "    }"+ "  }"+ "  flag_set {"+ "    action: 'c++-link-static-library'"+ "    action: 'c++-link-pic-static-library'"+ "    action: 'c++-link-interface-dynamic-library'"+ "    action: 'c++-link-dynamic-library'"+ "    action: 'c++-link-always-link-static-library'"+ "    action: 'c++-link-always-link-pic-static-library'"+ "    action: 'c++-link-executable'"+ "    flag_group {"+ "      flag: '-lgcov'"+ "    }"+ "  }"+ "}",toolchainBuilder);
     }
   }
  catch (  ParseException e) {

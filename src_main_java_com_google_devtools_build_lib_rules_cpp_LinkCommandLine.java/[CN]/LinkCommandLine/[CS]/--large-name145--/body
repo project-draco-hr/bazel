@@ -1,0 +1,44 @@
+{
+  Preconditions.checkArgument(linkTargetType != LinkTargetType.INTERFACE_DYNAMIC_LIBRARY,"you can't link an interface dynamic library directly");
+  if (linkTargetType != LinkTargetType.DYNAMIC_LIBRARY) {
+    Preconditions.checkArgument(interfaceOutput == null,"interface output may only be non-null for dynamic library links");
+  }
+  if (linkTargetType.isStaticLibraryLink()) {
+    Preconditions.checkArgument(linkstamps.isEmpty(),"linkstamps may only be present on dynamic library or executable links");
+    Preconditions.checkArgument(linkStaticness == LinkStaticness.FULLY_STATIC,"static library link must be static");
+    Preconditions.checkArgument(buildInfoHeaderArtifacts.isEmpty(),"build info headers may only be present on dynamic library or executable links");
+    Preconditions.checkArgument(symbolCountsOutput == null,"the symbol counts output must be null for static links");
+    Preconditions.checkArgument(runtimeSolibDir == null,"the runtime solib directory must be null for static links");
+    Preconditions.checkArgument(!nativeDeps,"the native deps flag must be false for static links");
+    Preconditions.checkArgument(!needWholeArchive,"the need whole archive flag must be false for static links");
+  }
+  this.actionName=actionName;
+  this.configuration=Preconditions.checkNotNull(configuration);
+  this.cppConfiguration=configuration.getFragment(CppConfiguration.class);
+  this.variables=variables;
+  this.featureConfiguration=featureConfiguration;
+  this.owner=Preconditions.checkNotNull(owner);
+  this.output=output;
+  this.interfaceOutput=interfaceOutput;
+  if (interfaceOutput != null) {
+    Preconditions.checkNotNull(this.output);
+  }
+  this.symbolCountsOutput=symbolCountsOutput;
+  this.buildInfoHeaderArtifacts=Preconditions.checkNotNull(buildInfoHeaderArtifacts);
+  this.linkerInputs=Preconditions.checkNotNull(linkerInputs);
+  this.runtimeInputs=Preconditions.checkNotNull(runtimeInputs);
+  this.linkTargetType=Preconditions.checkNotNull(linkTargetType);
+  this.linkStaticness=Preconditions.checkNotNull(linkStaticness);
+  this.linkopts=linkTargetType.isStaticLibraryLink() ? ImmutableList.<String>of() : Preconditions.checkNotNull(linkopts);
+  this.features=Preconditions.checkNotNull(features);
+  this.linkstamps=Preconditions.checkNotNull(linkstamps);
+  this.linkstampCompileOptions=linkstampCompileOptions;
+  this.fdoBuildStamp=fdoBuildStamp;
+  this.runtimeSolibDir=runtimeSolibDir;
+  this.nativeDeps=nativeDeps;
+  this.useTestOnlyFlags=useTestOnlyFlags;
+  this.needWholeArchive=needWholeArchive;
+  this.allLTOArtifacts=allLTOArtifacts;
+  this.paramFile=paramFile;
+  this.interfaceSoBuilder=((linkTargetType == LinkTargetType.DYNAMIC_LIBRARY) && (interfaceOutput != null)) ? Preconditions.checkNotNull(interfaceSoBuilder,"cannot build interface dynamic library without builder") : null;
+}
