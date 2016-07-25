@@ -1,13 +1,13 @@
 {
   SkyFunction.Environment env=ruleContext.getAnalysisEnvironment().getSkyframeEnv();
-  Pair<ImmutableMap<PackageIdentifier,Package>,Set<Label>> closureInfo=constructPackageMap(env,scope);
+  Pair<ImmutableMap<PackageIdentifier,Package>,ImmutableMap<Label,Target>> closureInfo=constructPackageMap(env,scope);
   if (closureInfo == null) {
     return null;
   }
   ImmutableMap<PackageIdentifier,Package> packageMap=closureInfo.first;
-  Set<Label> validTargets=closureInfo.second;
-  PackageProvider packageProvider=new PreloadedMapPackageProvider(packageMap,validTargets);
+  ImmutableMap<Label,Target> validTargetsMap=closureInfo.second;
+  PackageProvider packageProvider=new PreloadedMapPackageProvider(packageMap,validTargetsMap);
   TargetPatternEvaluator evaluator=new SkyframeEnvTargetPatternEvaluator(env);
-  Predicate<Label> labelFilter=Predicates.in(validTargets);
+  Predicate<Label> labelFilter=Predicates.in(validTargetsMap.keySet());
   return doQuery(queryOptions,packageProvider,labelFilter,evaluator,query,ruleContext);
 }

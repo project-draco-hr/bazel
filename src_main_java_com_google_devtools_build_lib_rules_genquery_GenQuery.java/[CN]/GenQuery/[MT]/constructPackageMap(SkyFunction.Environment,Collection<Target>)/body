@@ -17,5 +17,16 @@
     Preconditions.checkState(!pkg.getPackage().containsErrors(),pkgId);
     packageMapBuilder.put(pkg.getPackage().getPackageIdentifier(),pkg.getPackage());
   }
-  return Pair.of(packageMapBuilder.build(),validTargets.build().toSet());
+  ImmutableMap<PackageIdentifier,Package> packageMap=packageMapBuilder.build();
+  ImmutableMap.Builder<Label,Target> validTargetsMapBuilder=ImmutableMap.builder();
+  for (  Label label : validTargets.build()) {
+    try {
+      Target target=packageMap.get(label.getPackageIdentifier()).getTarget(label.getName());
+      validTargetsMapBuilder.put(label,target);
+    }
+ catch (    NoSuchTargetException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+  return Pair.of(packageMap,validTargetsMapBuilder.build());
 }
