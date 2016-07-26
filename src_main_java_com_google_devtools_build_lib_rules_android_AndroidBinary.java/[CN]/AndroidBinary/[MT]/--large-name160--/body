@@ -1,9 +1,9 @@
 {
   ImmutableList<Artifact> proguardSpecs=ProguardHelper.collectTransitiveProguardSpecs(ruleContext,ImmutableList.of(resourceApk.getResourceProguardConfig()));
-  if (shrinkResources) {
-    resourceApk=shrinkResources(ruleContext,androidCommon,resourceApk,binaryJar,proguardSpecs);
-  }
   ProguardOutput proguardOutput=applyProguard(ruleContext,androidCommon,javaSemantics,binaryJar,filesBuilder,proguardSpecs,proguardMapping);
+  if (shrinkResources) {
+    resourceApk=shrinkResources(ruleContext,resourceApk,proguardSpecs,proguardOutput);
+  }
   Artifact jarToDex=proguardOutput.getOutputJar();
   DexingOutput dexingOutput=shouldDexWithJack(ruleContext) ? dexWithJack(ruleContext,androidCommon,proguardSpecs) : dex(ruleContext,androidSemantics,binaryJar,jarToDex,isBinaryJarFiltered,androidCommon,resourceApk.getMainDexProguardConfig(),resourceClasses);
   Artifact unsignedApk=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_UNSIGNED_APK);

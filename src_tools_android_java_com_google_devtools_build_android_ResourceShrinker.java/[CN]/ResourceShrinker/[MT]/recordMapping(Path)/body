@@ -1,0 +1,32 @@
+{
+  if (mapping == null || !mapping.toFile().exists()) {
+    return;
+  }
+  final String arrowIndicator=" -> ";
+  final String resourceIndicator=".R$";
+  for (  String line : Files.readLines(mapping.toFile(),UTF_8)) {
+    if (line.startsWith(" ") || line.startsWith("\t")) {
+      continue;
+    }
+    int index=line.indexOf(resourceIndicator);
+    if (index == -1) {
+      continue;
+    }
+    int arrow=line.indexOf(arrowIndicator,index + 3);
+    if (arrow == -1) {
+      continue;
+    }
+    String typeName=line.substring(index + resourceIndicator.length(),arrow);
+    ResourceType type=ResourceType.getEnum(typeName);
+    if (type == null) {
+      continue;
+    }
+    int end=line.indexOf(':',arrow + arrowIndicator.length());
+    if (end == -1) {
+      end=line.length();
+    }
+    String target=line.substring(arrow + arrowIndicator.length(),end).trim();
+    String ownerName=target.replace('.','/');
+    resourceClassOwners.put(ownerName,type);
+  }
+}
