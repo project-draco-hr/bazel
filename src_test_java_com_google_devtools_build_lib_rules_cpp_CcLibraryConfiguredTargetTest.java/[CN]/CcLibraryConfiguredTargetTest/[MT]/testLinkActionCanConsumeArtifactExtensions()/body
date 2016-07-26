@@ -1,0 +1,8 @@
+{
+  AnalysisMock.get().ccSupport().setupCrosstool(mockToolsConfig,MockCcSupport.STATIC_LINK_AS_LIB_CONFIGURATION);
+  useConfiguration("--features=" + Link.LinkTargetType.STATIC_LIBRARY.getActionName());
+  ConfiguredTarget hello=getConfiguredTarget("//hello:hello");
+  Artifact archive=FileType.filter(getFilesToBuild(hello),FileType.of(".lib")).iterator().next();
+  CppLinkAction action=(CppLinkAction)getGeneratingAction(archive);
+  assertThat(action.getArgv()).contains(archive.getExecPathString());
+}

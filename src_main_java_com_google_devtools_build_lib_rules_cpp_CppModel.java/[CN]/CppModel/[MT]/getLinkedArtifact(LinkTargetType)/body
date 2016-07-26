@@ -1,0 +1,20 @@
+{
+  Artifact result=null;
+  Artifact linuxDefault=CppHelper.getLinuxLinkedArtifact(ruleContext,linkTargetType);
+  CcToolchainFeatures toolchain=CppHelper.getToolchain(ruleContext).getFeatures();
+  if (toolchain.hasPatternForArtifactCategory(linkTargetType.getLinkerOutput())) {
+    try {
+      result=toolchain.getArtifactForCategory(linkTargetType.getLinkerOutput(),ruleContext);
+    }
+ catch (    ExpansionException e) {
+      ruleContext.throwWithRuleError(e.getMessage());
+    }
+  }
+ else {
+    return linuxDefault;
+  }
+  if (!result.equals(linuxDefault)) {
+    ruleContext.registerAction(new FailAction(ruleContext.getActionOwner(),ImmutableList.of(linuxDefault),String.format("the given toolchain supports creation of %s instead of %s",linuxDefault.getExecPathString(),result.getExecPathString())));
+  }
+  return result;
+}
