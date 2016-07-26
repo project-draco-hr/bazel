@@ -1,0 +1,25 @@
+def main(input_file, output_file):
+    changelog_out = open(output_file, 'w')
+    time_stamp = None
+    with open(input_file, 'r') as changelog_in:
+        for line in changelog_in:
+            line = line.strip()
+            if (line.startswith('```') or line.startswith('Baseline')):
+                continue
+            if line.startswith('## Release'):
+                if time_stamp:
+                    changelog_out.write(('\n -- The Bazel Authors <bazel-dev@googlegroups.com>  %s\n\n' % time_stamp))
+                parts = line.split(' ')
+                version = parts[2]
+                time_stamp = datetime.strptime(parts[3], '(%Y-%m-%d)').strftime('%a, %d %b %Y %H:%M:%S +0100')
+                changelog_out.write(('bazel (%s) unstable; urgency=low\n' % version))
+            elif (line.startswith('+') or line.startswith('-')):
+                parts = line.split(' ')
+                line = ('*' + line[1:])
+                changelog_out.write(('  %s\n' % line))
+            elif line.endswith(':'):
+                changelog_out.write(('\n  %s\n' % line))
+            elif line:
+                changelog_out.write(('    %s\n' % line))
+        if time_stamp:
+            changelog_out.write(('\n -- The Bazel Authors <bazel-dev@googlegroups.com>  %s\n\n' % time_stamp))
