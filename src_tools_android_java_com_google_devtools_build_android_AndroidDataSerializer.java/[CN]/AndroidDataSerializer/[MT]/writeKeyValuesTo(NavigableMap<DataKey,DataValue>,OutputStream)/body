@@ -1,14 +1,14 @@
 {
-  NavigableSet<DataKey> keys=map.navigableKeySet();
-  int[] orderedValueSizes=new int[keys.size()];
+  Set<Entry<DataKey,DataValue>> entries=map.entrySet();
+  int[] orderedValueSizes=new int[entries.size()];
   int valueSizeIndex=0;
   ByteArrayOutputStream valuesOutputStream=new ByteArrayOutputStream(2048);
-  for (  DataKey key : keys) {
-    orderedValueSizes[valueSizeIndex++]=map.get(key).serializeTo(key,valuesOutputStream);
+  for (  Map.Entry<DataKey,DataValue> entry : entries) {
+    orderedValueSizes[valueSizeIndex++]=entry.getValue().serializeTo(entry.getKey(),valuesOutputStream);
   }
   valueSizeIndex=0;
-  for (  DataKey key : keys) {
-    key.serializeTo(outStream,orderedValueSizes[valueSizeIndex++]);
+  for (  Map.Entry<DataKey,DataValue> entry : entries) {
+    entry.getKey().serializeTo(outStream,orderedValueSizes[valueSizeIndex++]);
   }
   outStream.write(valuesOutputStream.toByteArray());
 }
