@@ -1,0 +1,22 @@
+{
+  Artifact linkerOutput=null;
+switch (type) {
+case STATIC_LIBRARY:
+case ALWAYS_LINK_STATIC_LIBRARY:
+    linkerOutput=getBinArtifact("lib" + target.getLabel().getName() + ".a",target);
+  break;
+case PIC_STATIC_LIBRARY:
+case ALWAYS_LINK_PIC_STATIC_LIBRARY:
+linkerOutput=getBinArtifact("lib" + target.getLabel().getName() + "pic.a",target);
+break;
+case DYNAMIC_LIBRARY:
+linkerOutput=getBinArtifact("lib" + target.getLabel().getName() + ".so",target);
+break;
+case EXECUTABLE:
+linkerOutput=getExecutable(target);
+break;
+default :
+throw new IllegalArgumentException(String.format("Cannot get CppLinkAction for link type %s",type));
+}
+return (CppLinkAction)getGeneratingAction(linkerOutput);
+}

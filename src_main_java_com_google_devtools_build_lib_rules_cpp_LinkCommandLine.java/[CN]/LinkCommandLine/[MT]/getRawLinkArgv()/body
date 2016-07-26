@@ -1,25 +1,25 @@
 {
   List<String> argv=new ArrayList<>();
-  if (featureConfiguration.actionIsConfigured(actionName)) {
-    argv.add(featureConfiguration.getToolForAction(actionName).getToolPath(cppConfiguration.getCrosstoolTopPathFragment()).getPathString());
-    argv.addAll(featureConfiguration.getCommandLine(actionName,variables));
-  }
- else {
 switch (linkTargetType) {
 case EXECUTABLE:
-      addCppArgv(argv);
-    break;
+    argv.add(cppConfiguration.getCppExecutable().getPathString());
+  argv.addAll(featureConfiguration.getCommandLine(actionName,variables));
+argv.addAll(noWholeArchiveFlags);
+addToolchainFlags(argv);
+break;
 case DYNAMIC_LIBRARY:
-  if (interfaceOutput != null) {
-    argv.add(configuration.getShExecutable().getPathString());
-    argv.add("-c");
-    argv.add("build_iface_so=\"$0\"; impl=\"$1\"; iface=\"$2\"; cmd=\"$3\"; shift 3; " + "\"$cmd\" \"$@\" && \"$build_iface_so\" \"$impl\" \"$iface\"");
-    argv.add(interfaceSoBuilder.getExecPathString());
-    argv.add(output.getExecPathString());
-    argv.add(interfaceOutput.getExecPathString());
-  }
-addCppArgv(argv);
-Iterables.removeIf(argv,Predicates.equalTo("-pie"));
+if (interfaceOutput != null) {
+argv.add(configuration.getShExecutable().getPathString());
+argv.add("-c");
+argv.add("build_iface_so=\"$0\"; impl=\"$1\"; iface=\"$2\"; cmd=\"$3\"; shift 3; " + "\"$cmd\" \"$@\" && \"$build_iface_so\" \"$impl\" \"$iface\"");
+argv.add(interfaceSoBuilder.getExecPathString());
+argv.add(output.getExecPathString());
+argv.add(interfaceOutput.getExecPathString());
+}
+argv.add(cppConfiguration.getCppExecutable().getPathString());
+argv.addAll(featureConfiguration.getCommandLine(actionName,variables));
+argv.addAll(noWholeArchiveFlags);
+addToolchainFlags(argv);
 break;
 case STATIC_LIBRARY:
 case PIC_STATIC_LIBRARY:
@@ -28,14 +28,11 @@ case ALWAYS_LINK_PIC_STATIC_LIBRARY:
 argv.add(cppConfiguration.getArExecutable().getPathString());
 argv.addAll(cppConfiguration.getArFlags(cppConfiguration.archiveType() == Link.ArchiveType.THIN));
 argv.add(output.getExecPathString());
-addInputFileLinkOptions(argv,false);
+argv.addAll(featureConfiguration.getCommandLine(actionName,variables));
+argv.addAll(noWholeArchiveFlags);
 break;
 default :
 throw new IllegalArgumentException();
-}
-}
-if (!linkTargetType.isStaticLibraryLink() && cppConfiguration.useFission()) {
-argv.add("-Wl,--gdb-index");
 }
 return argv;
 }
