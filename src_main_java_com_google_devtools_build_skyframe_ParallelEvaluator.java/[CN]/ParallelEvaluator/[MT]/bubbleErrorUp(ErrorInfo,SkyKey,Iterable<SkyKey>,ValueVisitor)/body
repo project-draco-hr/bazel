@@ -4,7 +4,7 @@
   Map<SkyKey,ValueWithMetadata> bubbleErrorInfo=new HashMap<>();
   boolean externalInterrupt=false;
   while (true) {
-    NodeEntry errorEntry=Preconditions.checkNotNull(graph.get(errorKey),errorKey);
+    NodeEntry errorEntry=Preconditions.checkNotNull(graph.get(null,Reason.ERROR_BUBBLING,errorKey),errorKey);
     Iterable<SkyKey> reverseDeps=errorEntry.isDone() ? errorEntry.getReverseDeps() : errorEntry.getInProgressReverseDeps();
     if (Iterables.isEmpty(reverseDeps)) {
       Preconditions.checkState(rootValues.contains(errorKey),"Current key %s has to be a top-level key: %s",errorKey,rootValues);
@@ -16,7 +16,7 @@
       if (bubbleErrorInfo.containsKey(bubbleParent)) {
         return null;
       }
-      NodeEntry bubbleParentEntry=Preconditions.checkNotNull(graph.get(bubbleParent),"parent %s of %s not in graph",bubbleParent,errorKey);
+      NodeEntry bubbleParentEntry=Preconditions.checkNotNull(graph.get(errorKey,Reason.ERROR_BUBBLING,bubbleParent),"parent %s of %s not in graph",bubbleParent,errorKey);
       if (bubbleParentEntry.isDone()) {
         Preconditions.checkState(errorEntry.isDone(),"%s %s",errorEntry,bubbleParentEntry);
         Version parentVersion=bubbleParentEntry.getVersion();
@@ -62,14 +62,14 @@ Thread.interrupted();
 ReifiedSkyFunctionException reifiedBuilderException=new ReifiedSkyFunctionException(builderException,parent);
 if (reifiedBuilderException.getRootCauseSkyKey().equals(parent)) {
 error=ErrorInfo.fromException(reifiedBuilderException,false);
-bubbleErrorInfo.put(errorKey,ValueWithMetadata.error(ErrorInfo.fromChildErrors(errorKey,ImmutableSet.of(error)),env.buildEvents(true)));
+bubbleErrorInfo.put(errorKey,ValueWithMetadata.error(ErrorInfo.fromChildErrors(errorKey,ImmutableSet.of(error)),env.buildEvents(parentEntry,true)));
 continue;
 }
 }
  finally {
 Thread.interrupted();
 }
-bubbleErrorInfo.put(errorKey,ValueWithMetadata.error(ErrorInfo.fromChildErrors(errorKey,ImmutableSet.of(error)),env.buildEvents(true)));
+bubbleErrorInfo.put(errorKey,ValueWithMetadata.error(ErrorInfo.fromChildErrors(errorKey,ImmutableSet.of(error)),env.buildEvents(parentEntry,true)));
 }
 if (externalInterrupt) {
 Thread.currentThread().interrupt();

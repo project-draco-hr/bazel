@@ -1,0 +1,19 @@
+{
+  Map<SkyKey,NodeEntry> batch=graph.getBatchWithFieldHints(skyKey,Reason.SIGNAL_DEP,keys,NodeEntryField.NO_FIELDS);
+  if (visitor != null) {
+    for (    SkyKey key : keys) {
+      NodeEntry entry=Preconditions.checkNotNull(batch.get(key),key);
+      if (entry.signalDep(version)) {
+        visitor.enqueueEvaluation(key);
+      }
+    }
+  }
+ else {
+    for (    SkyKey key : keys) {
+      NodeEntry entry=Preconditions.checkNotNull(batch.get(key),key);
+      if (!entry.isDone()) {
+        entry.signalDep(version);
+      }
+    }
+  }
+}

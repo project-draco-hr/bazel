@@ -15,12 +15,12 @@
         Runnable r=new Runnable(){
           public void run(){
             for (            SkyKey key : keys) {
-              NodeEntry entry=graph.get(key);
+              NodeEntry entry=graph.get(null,Reason.OTHER,key);
               if (entry == null) {
                 nodeCreated.add(key);
               }
             }
-            Map<SkyKey,NodeEntry> entries=graph.createIfAbsentBatch(keys);
+            Map<SkyKey,NodeEntry> entries=graph.createIfAbsentBatch(null,Reason.OTHER,keys);
             for (            Integer keyNum : ImmutableList.of(keyNum1,keyNum2)) {
               SkyKey key=key("foo" + keyNum);
               NodeEntry entry=entries.get(key);
@@ -30,7 +30,7 @@
                 assertThat(entry.isDone()).isTrue();
               }
             }
-            graph.createIfAbsentBatch(keys);
+            graph.createIfAbsentBatch(null,Reason.OTHER,keys);
           }
         }
 ;
@@ -44,7 +44,7 @@
     SkyKey key=key("foo" + i);
     assertTrue(nodeCreated.contains(key));
     assertTrue(valuesSet.contains(key));
-    assertThat(graph.get(key).getValue()).isEqualTo(new StringValue("bar" + i));
-    assertThat(graph.get(key).getVersion()).isEqualTo(startingVersion);
+    assertThat(graph.get(null,Reason.OTHER,key).getValue()).isEqualTo(new StringValue("bar" + i));
+    assertThat(graph.get(null,Reason.OTHER,key).getVersion()).isEqualTo(startingVersion);
   }
 }

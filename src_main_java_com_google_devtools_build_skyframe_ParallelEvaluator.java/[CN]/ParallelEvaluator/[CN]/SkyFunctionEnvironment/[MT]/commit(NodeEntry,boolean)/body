@@ -1,0 +1,30 @@
+{
+  finalizeErrorInfo();
+  NestedSet<TaggedEvents> events=buildEvents(primaryEntry,false);
+  Version valueVersion;
+  SkyValue valueWithMetadata;
+  if (value == null) {
+    Preconditions.checkNotNull(errorInfo,"%s %s",skyKey,primaryEntry);
+    valueWithMetadata=ValueWithMetadata.error(errorInfo,events);
+  }
+ else {
+    Preconditions.checkState(enqueueParents,"%s %s",skyKey,primaryEntry);
+    valueWithMetadata=ValueWithMetadata.normal(value,errorInfo,events);
+  }
+  if (!oldDeps.isEmpty()) {
+    Set<SkyKey> depsToRemove=Sets.difference(oldDeps,primaryEntry.getTemporaryDirectDeps().toSet());
+    Collection<NodeEntry> oldDepEntries=graph.getBatchWithFieldHints(skyKey,Reason.RDEP_REMOVAL,depsToRemove,EnumSet.of(NodeEntryField.INDIVIDUAL_REVERSE_DEPS)).values();
+    for (    NodeEntry oldDepEntry : oldDepEntries) {
+      oldDepEntry.removeReverseDep(skyKey);
+    }
+  }
+  Set<SkyKey> reverseDeps=primaryEntry.setValue(valueWithMetadata,graphVersion);
+  valueVersion=primaryEntry.getVersion();
+  Preconditions.checkState(valueVersion.atMost(graphVersion),"%s should be at most %s in the version partial ordering",valueVersion,graphVersion);
+  if (progressReceiver != null) {
+    progressReceiver.evaluated(skyKey,new SkyValueSupplier(primaryEntry),valueVersion.equals(graphVersion) ? EvaluationState.BUILT : EvaluationState.CLEAN);
+  }
+  signalValuesAndEnqueueIfReady(enqueueParents ? visitor : null,skyKey,reverseDeps,valueVersion);
+  visitor.notifyDone(skyKey);
+  replayingNestedSetEventVisitor.visit(events);
+}

@@ -1,13 +1,13 @@
 {
   checkActive();
   Preconditions.checkState(!depKeys.contains(ErrorTransienceValue.KEY),"Error transience key cannot be in requested deps of %s",skyKey);
-  Map<SkyKey,SkyValue> values=getValuesMaybeFromError(depKeys,bubbleErrorInfo,depKeys.size());
+  Map<SkyKey,SkyValue> values=getValuesMaybeFromError(skyKey,depKeys,bubbleErrorInfo,depKeys.size());
   for (  Map.Entry<SkyKey,SkyValue> depEntry : values.entrySet()) {
     SkyKey depKey=depEntry.getKey();
     SkyValue depValue=depEntry.getValue();
     if (depValue == NULL_MARKER) {
       if (directDeps.containsKey(depKey)) {
-        throw new IllegalStateException("Undone key " + depKey + " was already in deps of "+ skyKey+ "( dep: "+ graph.get(depKey)+ ", parent: "+ graph.get(skyKey));
+        throw new IllegalStateException("Undone key " + depKey + " was already in deps of "+ skyKey+ "( dep: "+ graph.get(skyKey,Reason.OTHER,depKey)+ ", parent: "+ graph.get(null,Reason.OTHER,skyKey));
       }
       valuesMissing=true;
       addDep(depKey);

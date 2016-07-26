@@ -1,5 +1,5 @@
 {
-  NodeEntry state=Preconditions.checkNotNull(graph.get(skyKey),skyKey);
+  NodeEntry state=Preconditions.checkNotNull(graph.get(null,Reason.EVALUATION,skyKey),skyKey);
   Preconditions.checkState(state.isReady(),"%s %s",skyKey,state);
   if (maybeHandleDirtyNode(state) == DirtyOutcome.ALREADY_PROCESSED) {
     return;
@@ -23,7 +23,7 @@
           return;
         }
       }
-      Map<SkyKey,NodeEntry> newlyRequestedDeps=getBatchValues(env.newlyRequestedDeps);
+      Map<SkyKey,NodeEntry> newlyRequestedDeps=getBatchValues(skyKey,Reason.RDEP_ADDITION,env.newlyRequestedDeps);
       boolean isTransitivelyTransient=reifiedBuilderException.isTransient();
       for (      NodeEntry depEntry : Iterables.concat(env.directDeps.values(),newlyRequestedDeps.values())) {
         if (!isDoneForBuild(depEntry)) {
@@ -36,8 +36,8 @@
       }
       ErrorInfo errorInfo=ErrorInfo.fromException(reifiedBuilderException,isTransitivelyTransient);
       registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,newlyRequestedDeps,oldDeps,env);
-      env.setError(errorInfo,reifiedBuilderException.isTransient());
-      env.commit(keepGoing);
+      env.setError(state,errorInfo,reifiedBuilderException.isTransient());
+      env.commit(state,keepGoing);
       if (!shouldFailFast) {
         return;
       }
@@ -67,14 +67,14 @@ catch (  RuntimeException re) {
   if (value != null) {
     Preconditions.checkState(!env.valuesMissing(),"Evaluation of %s returned non-null value " + "but requested dependencies that weren't computed yet (one of %s), ValueEntry: %s",skyKey,newDirectDeps,state);
     env.setValue(value);
-    registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,graph.getBatchWithFieldHints(env.newlyRequestedDeps,EnumSet.of(NodeEntryField.INDIVIDUAL_REVERSE_DEPS)),oldDeps,env);
-    env.commit(true);
+    registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,graph.getBatchWithFieldHints(skyKey,Reason.RDEP_ADDITION,env.newlyRequestedDeps,EnumSet.of(NodeEntryField.INDIVIDUAL_REVERSE_DEPS)),oldDeps,env);
+    env.commit(state,true);
     return;
   }
   if (env.getDepErrorKey() != null) {
     Preconditions.checkState(!keepGoing,"%s %s %s",skyKey,state,env.getDepErrorKey());
     SkyKey childErrorKey=env.getDepErrorKey();
-    NodeEntry childErrorEntry=Preconditions.checkNotNull(graph.get(childErrorKey),"skyKey: %s, state: %s childErrorKey: %s",skyKey,state,childErrorKey);
+    NodeEntry childErrorEntry=Preconditions.checkNotNull(graph.get(skyKey,Reason.OTHER,childErrorKey),"skyKey: %s, state: %s childErrorKey: %s",skyKey,state,childErrorKey);
     Preconditions.checkState(!state.getTemporaryDirectDeps().expensiveContains(childErrorKey),"Done error was already known: %s %s %s %s",skyKey,state,childErrorKey,childErrorEntry);
     Preconditions.checkState(newDirectDeps.contains(childErrorKey),"%s %s %s",state,childErrorKey,newDirectDeps);
     state.addTemporaryDirectDeps(GroupedListHelper.create(ImmutableList.of(childErrorKey)));
@@ -94,10 +94,10 @@ catch (  RuntimeException re) {
   if (newDirectDeps.isEmpty()) {
     Preconditions.checkState(!env.childErrorInfos.isEmpty(),"Evaluation of SkyKey failed and no dependencies were requested: %s %s",skyKey,state);
     Preconditions.checkState(keepGoing,"nokeep_going evaluation should have failed on first child error: %s %s %s",skyKey,state,env.childErrorInfos);
-    env.commit(true);
+    env.commit(state,true);
     return;
   }
-  for (  Map.Entry<SkyKey,NodeEntry> e : graph.createIfAbsentBatch(newDirectDeps).entrySet()) {
+  for (  Map.Entry<SkyKey,NodeEntry> e : graph.createIfAbsentBatch(skyKey,Reason.ENQUEUING_CHILD,newDirectDeps).entrySet()) {
     SkyKey newDirectDep=e.getKey();
     NodeEntry newDirectDepEntry=e.getValue();
     enqueueChild(skyKey,state,newDirectDep,newDirectDepEntry,oldDeps.contains(newDirectDep));

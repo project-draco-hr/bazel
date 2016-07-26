@@ -7,11 +7,11 @@ case CHECK_DEPENDENCIES:
     Collection<SkyKey> directDepsToCheck=state.getNextDirtyDirectDeps();
   if (invalidatedByErrorTransience(directDepsToCheck,state)) {
     state.forceRebuild();
-    graph.get(ErrorTransienceValue.KEY).removeReverseDep(skyKey);
+    graph.get(skyKey,Reason.RDEP_REMOVAL,ErrorTransienceValue.KEY).removeReverseDep(skyKey);
     return DirtyOutcome.NEEDS_EVALUATION;
   }
 if (!keepGoing) {
-  Map<SkyKey,NodeEntry> entriesToCheck=graph.getBatchWithFieldHints(directDepsToCheck,EnumSet.of(NodeEntryField.VALUE,NodeEntryField.INDIVIDUAL_REVERSE_DEPS));
+  Map<SkyKey,NodeEntry> entriesToCheck=graph.getBatchWithFieldHints(skyKey,Reason.EVALUATION,directDepsToCheck,EnumSet.of(NodeEntryField.VALUE,NodeEntryField.INDIVIDUAL_REVERSE_DEPS));
   for (  Map.Entry<SkyKey,NodeEntry> entry : entriesToCheck.entrySet()) {
     if (entry.getValue().isDone() && entry.getValue().getErrorInfo() != null) {
       SkyKey errorKey=entry.getKey();
@@ -31,7 +31,7 @@ if (!keepGoing) {
   }
 }
 state.addTemporaryDirectDepsGroupToDirtyEntry(directDepsToCheck);
-for (Map.Entry<SkyKey,NodeEntry> e : graph.createIfAbsentBatch(directDepsToCheck).entrySet()) {
+for (Map.Entry<SkyKey,NodeEntry> e : graph.createIfAbsentBatch(skyKey,Reason.ENQUEUING_CHILD,directDepsToCheck).entrySet()) {
 SkyKey directDep=e.getKey();
 NodeEntry directDepEntry=e.getValue();
 enqueueChild(skyKey,state,directDep,directDepEntry,true);
@@ -49,7 +49,7 @@ return DirtyOutcome.ALREADY_PROCESSED;
 }
 throw SchedulerException.ofError(state.getErrorInfo(),skyKey);
 }
-signalValuesAndEnqueueIfReady(visitor,reverseDeps,state.getVersion());
+signalValuesAndEnqueueIfReady(visitor,skyKey,reverseDeps,state.getVersion());
 return DirtyOutcome.ALREADY_PROCESSED;
 case NEEDS_REBUILDING:
 maybeMarkRebuilding(state);

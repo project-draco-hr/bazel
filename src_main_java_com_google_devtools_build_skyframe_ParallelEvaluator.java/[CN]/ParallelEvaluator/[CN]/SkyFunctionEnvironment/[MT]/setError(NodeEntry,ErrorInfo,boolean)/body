@@ -1,0 +1,18 @@
+{
+  Preconditions.checkState(value == null,"%s %s %s",skyKey,value,errorInfo);
+  Preconditions.checkState(this.errorInfo == null,"%s %s %s",skyKey,this.errorInfo,errorInfo);
+  if (isDirectlyTransient) {
+    NodeEntry errorTransienceNode=graph.get(skyKey,Reason.RDEP_ADDITION,ErrorTransienceValue.KEY);
+    DependencyState triState;
+    if (oldDeps.contains(ErrorTransienceValue.KEY)) {
+      triState=errorTransienceNode.checkIfDoneForDirtyReverseDep(skyKey);
+    }
+ else {
+      triState=errorTransienceNode.addReverseDepAndCheckIfDone(skyKey);
+    }
+    Preconditions.checkState(triState == DependencyState.DONE,"%s %s %s",skyKey,triState,errorInfo);
+    state.addTemporaryDirectDeps(GroupedListHelper.create(ImmutableList.of(ErrorTransienceValue.KEY)));
+    state.signalDep();
+  }
+  this.errorInfo=Preconditions.checkNotNull(errorInfo,skyKey);
+}

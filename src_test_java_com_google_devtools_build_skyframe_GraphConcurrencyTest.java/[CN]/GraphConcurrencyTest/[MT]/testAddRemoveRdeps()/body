@@ -1,6 +1,6 @@
 {
   SkyKey key=key("foo");
-  final NodeEntry entry=Iterables.getOnlyElement(graph.createIfAbsentBatch(ImmutableList.of(key)).values());
+  final NodeEntry entry=Iterables.getOnlyElement(graph.createIfAbsentBatch(null,Reason.OTHER,ImmutableList.of(key)).values());
   int numThreads=50;
   int numKeys=numThreads;
   final int chunkSize=40;
@@ -14,7 +14,7 @@
   for (int i=0; i < numKeys; i++) {
     rdepKeys.add(key("rdep" + i));
   }
-  graph.createIfAbsentBatch(rdepKeys);
+  graph.createIfAbsentBatch(null,Reason.OTHER,rdepKeys);
   for (int i=0; i < numKeys; i++) {
     final int j=i;
     Runnable r=new Runnable(){
@@ -44,14 +44,14 @@
   waitForSetValue.countDown();
   wrapper.waitForTasksAndMaybeThrow();
   assertFalse(ExecutorUtil.interruptibleShutdown(pool));
-  assertEquals(new StringValue("foo1"),graph.get(key).getValue());
-  assertEquals(numKeys + 1,Iterables.size(graph.get(key).getReverseDeps()));
+  assertEquals(new StringValue("foo1"),graph.get(null,Reason.OTHER,key).getValue());
+  assertEquals(numKeys + 1,Iterables.size(graph.get(null,Reason.OTHER,key).getReverseDeps()));
   graph=getGraph(getNextVersion(startingVersion));
-  NodeEntry sameEntry=Preconditions.checkNotNull(graph.get(key));
+  NodeEntry sameEntry=Preconditions.checkNotNull(graph.get(null,Reason.OTHER,key));
   sameEntry.markDirty(true);
   startEvaluation(sameEntry);
   sameEntry.markRebuilding();
   sameEntry.setValue(new StringValue("foo2"),getNextVersion(startingVersion));
-  assertEquals(new StringValue("foo2"),graph.get(key).getValue());
-  assertEquals(numKeys + 1,Iterables.size(graph.get(key).getReverseDeps()));
+  assertEquals(new StringValue("foo2"),graph.get(null,Reason.OTHER,key).getValue());
+  assertEquals(numKeys + 1,Iterables.size(graph.get(null,Reason.OTHER,key).getReverseDeps()));
 }

@@ -1,0 +1,13 @@
+{
+  List<ErrorInfo> allErrors=new ArrayList<>();
+  boolean foundCycle=false;
+  for (  NodeEntry childNode : getAndCheckDoneBatchForCycle(parent,children).values()) {
+    ErrorInfo errorInfo=childNode.getErrorInfo();
+    if (errorInfo != null) {
+      foundCycle|=!Iterables.isEmpty(errorInfo.getCycleInfo());
+      allErrors.add(errorInfo);
+    }
+  }
+  Preconditions.checkState(foundCycle,"",children,allErrors);
+  return allErrors;
+}
