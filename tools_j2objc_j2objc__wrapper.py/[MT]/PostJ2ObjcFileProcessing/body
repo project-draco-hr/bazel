@@ -1,0 +1,13 @@
+def PostJ2ObjcFileProcessing(normal_objc_files, genjar_objc_files, tmp_objc_file_root, final_objc_file_root, j2objc_source_paths, gen_src_jar, output_gen_source_zip, output_gen_header_zip, output_gen_source_dir, output_gen_header_dir):
+    'Performs cleanups on ObjC files and moves them to final output location.\n\n  Args:\n    normal_objc_files: The list of objc files translated from normal Java files.\n    genjar_objc_files: The list of ObjC sources translated from the gen srcjar.\n    tmp_objc_file_root: The temporary output root containing ObjC sources.\n    final_objc_file_root: The final output root.\n    j2objc_source_paths: The source paths used by J2ObjC.\n    gen_src_jar: The path of the gen srcjar.\n    output_gen_source_zip: The final output zip of ObjC source files generated\n        from gen srcjar. Maybe null.\n    output_gen_header_zip: The final output zip of ObjC header files generated\n        from gen srcjar. Maybe null.\n    output_gen_source_dir: The final output directory of ObjC source files\n        translated from gen srcjar. Maybe null.\n    output_gen_header_dir: The final output directory of ObjC header files\n        translated from gen srcjar. Maybe null.\n  Returns:\n    None.\n  '
+    RenameGenJarObjcFileRootInFileContent(tmp_objc_file_root, j2objc_source_paths, gen_src_jar, genjar_objc_files)
+    CopyObjcFileToFinalOutputRoot(normal_objc_files, tmp_objc_file_root, final_objc_file_root, '.m')
+    CopyObjcFileToFinalOutputRoot(normal_objc_files, tmp_objc_file_root, final_objc_file_root, '.h')
+    if output_gen_source_zip:
+        GenerateZipAndManifestForObjcFiles(genjar_objc_files, tmp_objc_file_root, output_gen_source_zip, '.m')
+    if output_gen_header_zip:
+        GenerateZipAndManifestForObjcFiles(genjar_objc_files, tmp_objc_file_root, output_gen_header_zip, '.h')
+    if output_gen_source_dir:
+        CopyObjcFileToFinalOutputRoot(genjar_objc_files, tmp_objc_file_root, output_gen_source_dir, '.m')
+    if output_gen_header_dir:
+        CopyObjcFileToFinalOutputRoot(genjar_objc_files, tmp_objc_file_root, output_gen_header_dir, '.h')

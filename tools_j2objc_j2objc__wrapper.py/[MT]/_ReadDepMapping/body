@@ -1,4 +1,4 @@
-def _ReadDepMapping(input_file_queue, output_dep_mapping_queue, error_message_queue, objc_file_path, file_open=open):
+def _ReadDepMapping(input_file_queue, output_dep_mapping_queue, error_message_queue, output_root, file_open=open):
     while True:
         try:
             input_file = input_file_queue.get_nowait()
@@ -7,10 +7,10 @@ def _ReadDepMapping(input_file_queue, output_dep_mapping_queue, error_message_qu
         try:
             try:
                 deps = []
-                entry = os.path.relpath(os.path.splitext(input_file)[0], objc_file_path)
+                entry = os.path.relpath(os.path.splitext(input_file)[0], output_root)
                 with file_open(input_file, 'r') as f:
                     for line in f:
-                        include = INCLUDE_RE.match(line)
+                        include = _INCLUDE_RE.match(line)
                         if include:
                             include_path = include.group(2)
                             dep = os.path.splitext(include_path)[0]

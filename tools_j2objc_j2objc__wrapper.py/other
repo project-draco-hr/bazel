@@ -1,26 +1,16 @@
 'A wrapper script for J2ObjC transpiler.\n\nThis script wraps around J2ObjC transpiler to also output a dependency mapping\nfile by scanning the import and include directives of the J2ObjC-translated\nfiles.\n'
 import argparse
+import errno
 import multiprocessing
 import os
 import Queue
 import re
+import shutil
 import subprocess
 import tempfile
 import threading
-INCLUDE_RE = re.compile('#(include|import) "([^"]+)"')
+import zipfile
+_INCLUDE_RE = re.compile('#(include|import) "([^"]+)"')
+_CONST_DATE_TIME = [1980, 1, 1, 0, 0, 0]
 if (__name__ == '__main__'):
-    parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
-    parser.add_argument('--java', required=True, help='The path to the Java executable.')
-    parser.add_argument('--jvm_flags', default='', help='A comma-separated list of flags to pass to the JVM.')
-    parser.add_argument('--j2objc', required=True, help='The path to the J2ObjC deploy jar.')
-    parser.add_argument('--main_class', required=True, help='The main class of the J2ObjC deploy jar to execute.')
-    parser.add_argument('--translated_source_files', required=True, help='A comma-separated list of file paths where J2ObjC will write the translated files to.')
-    parser.add_argument('--output_dependency_mapping_file', required=True, help='The file path of the dependency mapping file to write to.')
-    parser.add_argument('--objc_file_path', required=True, help='The file path which represents a directory where the generated ObjC files reside.')
-    parser.add_argument('--output_archive_source_mapping_file', help='The file path of the mapping file containing mappings between the translated source files and the to-be-generated archive file compiled from those source files. --compile_archive_file_path must be specified if this option is specified.')
-    parser.add_argument('--compiled_archive_file_path', required=False, help='The archive file path that will be produced by ObjC compile action later')
-    (args, pass_through_args) = parser.parse_known_args()
-    RunJ2ObjC(args.java, args.jvm_flags, args.j2objc, args.main_class, pass_through_args)
-    WriteDepMappingFile(args.translated_source_files, args.objc_file_path, args.output_dependency_mapping_file)
-    if args.output_archive_source_mapping_file:
-        WriteArchiveSourceMappingFile(args.compiled_archive_file_path, args.output_archive_source_mapping_file, args.translated_source_files, args.objc_file_path)
+    main()

@@ -1,0 +1,15 @@
+def GenerateZipAndManifestForObjcFiles(objc_files, tmp_objc_file_root, zip_path, suffix, zip_factory=zipfile.ZipFile, file_open=open):
+    'Zips up the ObjC sources from gen jar and writes a manifest file.\n\n  Args:\n    objc_files: The list of ObjC sources to zip up.\n    tmp_objc_file_root: The temporary directory that contains the ObjC files\n        to zip.\n    zip_path: The output path of the zip file.\n    suffix: The suffix of the files to zip. Can be either .m or .h.\n    zip_factory: The factory method to create zip file objects.\n    file_open: The method to open a file.\n  Returns:\n    None.\n  '
+    zf = zip_factory(zip_path, 'w', zipfile.ZIP_STORED)
+    files_zip = [(os.path.splitext(objc_file)[0] + suffix) for objc_file in objc_files]
+    for file_to_zip in files_zip:
+        file_path = os.path.join(tmp_objc_file_root, file_to_zip)
+        with file_open(file_path, 'r') as opened_file:
+            file_content = opened_file.read()
+            zip_entry_info = zipfile.ZipInfo(file_to_zip, _CONST_DATE_TIME)
+            zf.writestr(zip_entry_info, file_content)
+    zf.close()
+    manifest_file = (os.path.splitext(zip_path)[0] + '.txt')
+    with file_open(manifest_file, 'w') as f:
+        for file_to_zip in files_zip:
+            f.write((file_to_zip + '\n'))

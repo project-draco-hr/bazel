@@ -1,0 +1,14 @@
+def UnzipGenJarSources(gen_src_jar):
+    'Unzips the gen srcjar containing outputs from Java annotation processors.\n\n  Args:\n    gen_src_jar: The path of the gen srcjar.\n  Returns:\n    A tuple of the temporary output root and a list of root-relative paths of\n    unzipped Java files\n  '
+    genjar_java_files = []
+    if gen_src_jar:
+        tmp_input_root = tempfile.mkdtemp()
+        zip_ref = zipfile.ZipFile(gen_src_jar, 'r')
+        for file_entry in zip_ref.namelist():
+            if file_entry.endswith('.java'):
+                genjar_java_files.append(file_entry)
+        zip_ref.extractall(tmp_input_root, genjar_java_files)
+        zip_ref.close()
+        return (tmp_input_root, genjar_java_files)
+    else:
+        return None

@@ -1,13 +1,13 @@
-def WriteDepMappingFile(translated_source_files, objc_file_path, output_dependency_mapping_file, file_open=open):
-    'Scans J2ObjC-translated files and outputs a dependency mapping file.\n\n  The mapping file contains mappings between translated source files and their\n  imported source files scanned from the import and include directives.\n\n  Args:\n    translated_source_files: A comma-separated list of files translated by\n        J2ObjC.\n    objc_file_path: The file path which represents a directory where the\n        generated ObjC files reside.\n    output_dependency_mapping_file: The path of the dependency mapping file to\n        write to.\n    file_open: Reference to the builtin open function so it may be\n        overridden for testing.\n  Raises:\n    RuntimeError: If spawned threads throw errors during processing.\n  Returns:\n    None.\n  '
+def WriteDepMappingFile(objc_files, objc_file_root, output_dependency_mapping_file, file_open=open):
+    'Scans J2ObjC-translated files and outputs a dependency mapping file.\n\n  The mapping file contains mappings between translated source files and their\n  imported source files scanned from the import and include directives.\n\n  Args:\n    objc_files: A list of ObjC files translated by J2ObjC.\n    objc_file_root: The file path which represents a directory where the\n        generated ObjC files reside.\n    output_dependency_mapping_file: The path of the dependency mapping file to\n        write to.\n    file_open: Reference to the builtin open function so it may be\n        overridden for testing.\n  Raises:\n    RuntimeError: If spawned threads throw errors during processing.\n  Returns:\n    None.\n  '
     dep_mapping = dict()
     input_file_queue = Queue.Queue()
     output_dep_mapping_queue = Queue.Queue()
     error_message_queue = Queue.Queue()
-    for output_file in translated_source_files.split(','):
-        input_file_queue.put(output_file)
+    for objc_file in objc_files:
+        input_file_queue.put(os.path.join(objc_file_root, objc_file))
     for _ in xrange(multiprocessing.cpu_count()):
-        t = threading.Thread(target=_ReadDepMapping, args=(input_file_queue, output_dep_mapping_queue, error_message_queue, objc_file_path, file_open))
+        t = threading.Thread(target=_ReadDepMapping, args=(input_file_queue, output_dep_mapping_queue, error_message_queue, objc_file_root, file_open))
         t.start()
     input_file_queue.join()
     if (not error_message_queue.empty()):

@@ -1,0 +1,9 @@
+def RenameGenJarObjcFileRootInFileContent(tmp_objc_file_root, j2objc_source_paths, gen_src_jar, genjar_objc_files, execute=subprocess.check_call):
+    'Renames references to temporary root inside ObjC sources from gen srcjar.\n\n  Args:\n    tmp_objc_file_root: The temporary output root containing ObjC sources.\n    j2objc_source_paths: The source paths used by J2ObjC.\n    gen_src_jar: The path of the gen srcjar.\n    genjar_objc_files: The list of ObjC sources translated from the gen srcjar.\n    execute: The function used to execute shell commands.\n  Returns:\n    None.\n  '
+    if genjar_objc_files:
+        abs_genjar_objc_source_files = [os.path.join(tmp_objc_file_root, genjar_objc_file) for genjar_objc_file in genjar_objc_files]
+        abs_genjar_objc_header_files = [os.path.join(tmp_objc_file_root, (os.path.splitext(genjar_objc_file)[0] + '.h')) for genjar_objc_file in genjar_objc_files]
+        cmd = ['sed', '-i', '-e', ('s|%s/|%s::|g' % (j2objc_source_paths[1], gen_src_jar))]
+        cmd.extend(abs_genjar_objc_source_files)
+        cmd.extend(abs_genjar_objc_header_files)
+        execute(cmd, stderr=subprocess.STDOUT)

@@ -1,0 +1,13 @@
+def CopyObjcFileToFinalOutputRoot(objc_files, tmp_objc_file_root, final_objc_file_root, suffix, os_module=os, shutil_module=shutil):
+    'Copies ObjC files from temporary location to the final output location.\n\n  Args:\n    objc_files: The list of objc files to copy\n    tmp_objc_file_root: The temporary output root containing ObjC sources.\n    final_objc_file_root: The final output root.\n    suffix: The suffix of the files to copy.\n    os_module: The os python module.\n    shutil_module: The shutil python module.\n  Returns:\n    None.\n  '
+    for objc_file in objc_files:
+        file_with_suffix = (os_module.path.splitext(objc_file)[0] + suffix)
+        dest_path = os_module.path.join(final_objc_file_root, file_with_suffix)
+        dest_path_dir = os_module.path.dirname(dest_path)
+        if (not os_module.path.isdir(dest_path_dir)):
+            try:
+                os_module.makedirs(dest_path_dir)
+            except OSError as e:
+                if ((e.errno != errno.EEXIST) or (not os_module.path.isdir(dest_path_dir))):
+                    raise
+        shutil_module.copyfile(os_module.path.join(tmp_objc_file_root, file_with_suffix), dest_path)

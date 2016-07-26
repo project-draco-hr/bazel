@@ -1,7 +1,6 @@
-def RunJ2ObjC(java, jvm_flags, j2objc, main_class, j2objc_args):
-    'Runs J2ObjC transpiler to translate Java source files to ObjC.\n\n  Args:\n    java: The path of the Java executable.\n    jvm_flags: A comma-separated list of flags to pass to JVM.\n    j2objc: The deploy jar of J2ObjC.\n    main_class: The J2ObjC main class to invoke.\n    j2objc_args: A list of args to pass to J2ObjC transpiler.\n  Returns:\n    None.\n  '
-    (source_files, flags) = _ParseArgs(j2objc_args)
-    source_file_manifest_content = ' '.join(source_files)
+def RunJ2ObjC(java, jvm_flags, j2objc, main_class, output_file_path, j2objc_args, source_paths, files_to_translate):
+    'Runs J2ObjC transpiler to translate Java source files to ObjC.\n\n  Args:\n    java: The path of the Java executable.\n    jvm_flags: A comma-separated list of flags to pass to JVM.\n    j2objc: The deploy jar of J2ObjC.\n    main_class: The J2ObjC main class to invoke.\n    output_file_path: The output file directory.\n    j2objc_args: A list of args to pass to J2ObjC transpiler.\n    source_paths: A list of directories that contain sources to translate.\n    files_to_translate: A list of relative paths (relative to source_paths) that\n        point to sources to translate.\n  Returns:\n    None.\n  '
+    source_file_manifest_content = ' '.join(files_to_translate)
     fd = None
     param_filename = None
     try:
@@ -14,7 +13,9 @@ def RunJ2ObjC(java, jvm_flags, j2objc, main_class, j2objc_args):
         j2objc_cmd = [java]
         j2objc_cmd.extend(filter(None, jvm_flags.split(',')))
         j2objc_cmd.extend(['-cp', j2objc, main_class])
-        j2objc_cmd.extend(flags)
+        j2objc_cmd.extend(j2objc_args)
+        j2objc_cmd.extend(['-sourcepath', ':'.join(source_paths)])
+        j2objc_cmd.extend(['-d', output_file_path])
         j2objc_cmd.extend([('@%s' % param_filename)])
         subprocess.check_call(j2objc_cmd, stderr=subprocess.STDOUT)
     finally:
