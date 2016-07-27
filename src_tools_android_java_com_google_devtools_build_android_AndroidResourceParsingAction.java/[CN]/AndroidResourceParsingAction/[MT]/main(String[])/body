@@ -1,0 +1,15 @@
+{
+  OptionsParser optionsParser=OptionsParser.newOptionsParser(Options.class);
+  optionsParser.parseAndExitUponError(args);
+  Options options=optionsParser.getOptions(Options.class);
+  Preconditions.checkNotNull(options.primaryData);
+  Preconditions.checkNotNull(options.output);
+  final Stopwatch timer=Stopwatch.createStarted();
+  ParsedAndroidData parsedPrimary=ParsedAndroidData.from(options.primaryData);
+  logger.fine(String.format("Walked XML tree at %dms",timer.elapsed(TimeUnit.MILLISECONDS)));
+  UnwrittenMergedAndroidData unwrittenData=UnwrittenMergedAndroidData.of(null,parsedPrimary,ParsedAndroidData.from(ImmutableList.<DependencyAndroidData>of()));
+  AndroidDataSerializer serializer=AndroidDataSerializer.create();
+  unwrittenData.serializeTo(serializer);
+  serializer.flushTo(options.output);
+  logger.fine(String.format("Finished parse + serialize in %dms",timer.elapsed(TimeUnit.MILLISECONDS)));
+}
