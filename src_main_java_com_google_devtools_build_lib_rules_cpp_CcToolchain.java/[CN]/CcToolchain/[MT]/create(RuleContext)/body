@@ -82,7 +82,12 @@
   final CppCompilationContext context=contextBuilder.build();
   boolean supportsParamFiles=ruleContext.attributes().get("supports_param_files",BOOLEAN);
   boolean supportsHeaderParsing=ruleContext.attributes().get("supports_header_parsing",BOOLEAN);
-  CcToolchainProvider provider=new CcToolchainProvider(cppConfiguration,crosstool,fullInputsForCrosstool(ruleContext,crosstoolMiddleman),compile,strip,objcopy,fullInputsForLink(ruleContext,link),dwp,libcLink,staticRuntimeLinkInputs,staticRuntimeLinkMiddleman,dynamicRuntimeLinkInputs,dynamicRuntimeLinkMiddleman,runtimeSolibDir,context,supportsParamFiles,supportsHeaderParsing,getBuildVariables(ruleContext),getBuiltinIncludes(ruleContext));
+  NestedSetBuilder<Pair<String,String>> coverageEnvironment=NestedSetBuilder.compileOrder();
+  coverageEnvironment.add(Pair.of("COVERAGE_GCOV_PATH",cppConfiguration.getGcovExecutable().getPathString()));
+  if (cppConfiguration.getFdoInstrument() != null) {
+    coverageEnvironment.add(Pair.of("FDO_DIR",cppConfiguration.getFdoInstrument().getPathString()));
+  }
+  CcToolchainProvider provider=new CcToolchainProvider(cppConfiguration,crosstool,fullInputsForCrosstool(ruleContext,crosstoolMiddleman),compile,strip,objcopy,fullInputsForLink(ruleContext,link),dwp,libcLink,staticRuntimeLinkInputs,staticRuntimeLinkMiddleman,dynamicRuntimeLinkInputs,dynamicRuntimeLinkMiddleman,runtimeSolibDir,context,supportsParamFiles,supportsHeaderParsing,getBuildVariables(ruleContext),getBuiltinIncludes(ruleContext),coverageEnvironment.build());
   RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext).add(CcToolchainProvider.class,provider).add(FdoSupportProvider.class,new FdoSupportProvider(fdoSupport.getFdoSupport())).setFilesToBuild(new NestedSetBuilder<Artifact>(Order.STABLE_ORDER).build()).add(RunfilesProvider.class,RunfilesProvider.simple(Runfiles.EMPTY));
   License outputLicense=ruleContext.getRule().getToolOutputLicense(ruleContext.attributes());
   if (outputLicense != null && outputLicense != License.NO_LICENSE) {

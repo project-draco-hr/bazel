@@ -9,6 +9,7 @@
   inputsBuilder.addTransitive(testRuntime);
   TestTargetProperties testProperties=new TestTargetProperties(ruleContext,executionRequirements);
   final boolean collectCodeCoverage=config.isCodeCoverageEnabled() && instrumentedFiles != null;
+  TreeMap<String,String> testEnv=new TreeMap<>();
   TestTargetExecutionSettings executionSettings;
   if (collectCodeCoverage) {
     inputsBuilder.addTransitive(instrumentedFiles.getCoverageSupportFiles());
@@ -18,10 +19,14 @@
     Artifact instrumentedFileManifest=InstrumentedFileManifestAction.getInstrumentedFileManifest(ruleContext,instrumentedFiles.getInstrumentedFiles(),metadataFiles);
     executionSettings=new TestTargetExecutionSettings(ruleContext,runfilesSupport,executable,instrumentedFileManifest,shards);
     inputsBuilder.add(instrumentedFileManifest);
+    for (    Pair<String,String> coverageEnvEntry : instrumentedFiles.getCoverageEnvironment()) {
+      testEnv.put(coverageEnvEntry.getFirst(),coverageEnvEntry.getSecond());
+    }
   }
  else {
     executionSettings=new TestTargetExecutionSettings(ruleContext,runfilesSupport,executable,null,shards);
   }
+  testEnv.putAll(extraEnv);
   if (config.getRunUnder() != null) {
     Artifact runUnderExecutable=executionSettings.getRunUnderExecutable();
     if (runUnderExecutable != null) {
@@ -48,7 +53,7 @@
       if (collectCodeCoverage && config.isMicroCoverageEnabled()) {
         microCoverageArtifact=ruleContext.getPackageRelativeArtifact(targetName.getRelative("coverage" + suffix + ".micro.dat"),root);
       }
-      env.registerAction(new TestRunnerAction(ruleContext.getActionOwner(),inputs,testRuntime,testLog,cacheStatus,coverageArtifact,microCoverageArtifact,testProperties,extraEnv,executionSettings,shard,run,config,ruleContext.getWorkspaceName()));
+      env.registerAction(new TestRunnerAction(ruleContext.getActionOwner(),inputs,testRuntime,testLog,cacheStatus,coverageArtifact,microCoverageArtifact,testProperties,testEnv,executionSettings,shard,run,config,ruleContext.getWorkspaceName()));
       results.add(cacheStatus);
     }
   }

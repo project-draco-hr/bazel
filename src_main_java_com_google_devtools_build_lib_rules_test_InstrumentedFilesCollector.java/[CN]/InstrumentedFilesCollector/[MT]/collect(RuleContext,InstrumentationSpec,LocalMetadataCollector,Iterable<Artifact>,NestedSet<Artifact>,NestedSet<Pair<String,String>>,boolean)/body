@@ -8,6 +8,7 @@
   NestedSetBuilder<Artifact> metadataFilesBuilder=NestedSetBuilder.stableOrder();
   NestedSetBuilder<Artifact> baselineCoverageInstrumentedFilesBuilder=NestedSetBuilder.stableOrder();
   NestedSetBuilder<Artifact> coverageSupportFilesBuilder=NestedSetBuilder.<Artifact>stableOrder().addTransitive(coverageSupportFiles);
+  NestedSetBuilder<Pair<String,String>> coverageEnvironmentBuilder=NestedSetBuilder.<Pair<String,String>>compileOrder().addTransitive(coverageEnvironment);
   for (  TransitiveInfoCollection dep : getAllPrerequisites(ruleContext,spec.dependencyAttributes)) {
     InstrumentedFilesProvider provider=dep.getProvider(InstrumentedFilesProvider.class);
     if (provider != null) {
@@ -15,6 +16,7 @@
       metadataFilesBuilder.addTransitive(provider.getInstrumentationMetadataFiles());
       baselineCoverageInstrumentedFilesBuilder.addTransitive(provider.getBaselineCoverageInstrumentedFiles());
       coverageSupportFilesBuilder.addTransitive(provider.getCoverageSupportFiles());
+      coverageEnvironmentBuilder.addTransitive(provider.getCoverageEnvironment());
     }
   }
   NestedSet<Artifact> localSources=NestedSetBuilder.emptySet(Order.STABLE_ORDER);
@@ -41,5 +43,5 @@
   }
   NestedSet<Artifact> baselineCoverageFiles=baselineCoverageInstrumentedFilesBuilder.build();
   NestedSet<Artifact> baselineCoverageArtifacts=BaselineCoverageAction.create(ruleContext,baselineCoverageFiles);
-  return new InstrumentedFilesProviderImpl(instrumentedFilesBuilder.build(),metadataFilesBuilder.build(),baselineCoverageFiles,baselineCoverageArtifacts,coverageSupportFilesBuilder.build());
+  return new InstrumentedFilesProviderImpl(instrumentedFilesBuilder.build(),metadataFilesBuilder.build(),baselineCoverageFiles,baselineCoverageArtifacts,coverageSupportFilesBuilder.build(),coverageEnvironmentBuilder.build());
 }
