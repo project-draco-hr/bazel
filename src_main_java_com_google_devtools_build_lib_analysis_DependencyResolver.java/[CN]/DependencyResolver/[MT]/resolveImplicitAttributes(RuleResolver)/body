@@ -1,0 +1,33 @@
+{
+  Rule rule=depResolver.rule;
+  Label ruleLabel=rule.getLabel();
+  ConfiguredAttributeMapper attributeMap=depResolver.attributeMap;
+  ImmutableSet<String> mappedAttributes=ImmutableSet.copyOf(attributeMap.getAttributeNames());
+  for (  Attribute attribute : depResolver.attributes) {
+    if (!attribute.isImplicit() || !attribute.getCondition().apply(attributeMap)) {
+      continue;
+    }
+    if (attribute.getType() == BuildType.LABEL) {
+      Label label=mappedAttributes.contains(attribute.getName()) ? attributeMap.get(attribute.getName(),BuildType.LABEL) : BuildType.LABEL.cast(attribute.getDefaultValue(rule));
+      if (label != null) {
+        label=ruleLabel.resolveRepositoryRelative(label);
+        depResolver.resolveDep(attribute,label);
+      }
+    }
+ else     if (attribute.getType() == BuildType.LABEL_LIST) {
+      List<Label> labelList;
+      if (mappedAttributes.contains(attribute.getName())) {
+        labelList=new ArrayList<>();
+        for (        Label label : attributeMap.get(attribute.getName(),BuildType.LABEL_LIST)) {
+          labelList.add(label);
+        }
+      }
+ else {
+        labelList=BuildType.LABEL_LIST.cast(attribute.getDefaultValue(rule));
+      }
+      for (      Label label : labelList) {
+        depResolver.resolveDep(attribute,ruleLabel.resolveRepositoryRelative(label));
+      }
+    }
+  }
+}
