@@ -1,4 +1,5 @@
 {
+  final ArtifactExpander artifactExpander=ctx.getArtifactExpander();
   return new DeterministicWriter(){
     @Override public void writeOutputFile(    OutputStream out) throws IOException {
       StringBuilder content=new StringBuilder();
@@ -8,10 +9,10 @@
       content.append("module \"").append(cppModuleMap.getName()).append("\" {\n");
       content.append("  export *\n");
       HashSet<PathFragment> deduper=new HashSet<>();
-      for (      Artifact artifact : publicHeaders) {
+      for (      Artifact artifact : expandedHeaders(artifactExpander,publicHeaders)) {
         appendHeader(content,"",artifact.getExecPath(),leadingPeriods,true,deduper);
       }
-      for (      Artifact artifact : privateHeaders) {
+      for (      Artifact artifact : expandedHeaders(artifactExpander,privateHeaders)) {
         appendHeader(content,"private",artifact.getExecPath(),leadingPeriods,true,deduper);
       }
       for (      PathFragment additionalExportedHeader : additionalExportedHeaders) {

@@ -1,0 +1,10 @@
+{
+  CustomCommandLine commandLine=compileActionCommandLine(sourceFiles,objFiles,objcProvider,priorityHeaders,moduleMap,compilationArtifacts.getPchFile(),Optional.<Artifact>absent(),otherFlags,false,false,false);
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
+  Platform platform=appleConfiguration.getSingleArchPlatform();
+  NestedSet<Artifact> moduleMapInputs=NestedSetBuilder.emptySet(Order.STABLE_ORDER);
+  if (objcConfiguration.moduleMapsEnabled()) {
+    moduleMapInputs=objcProvider.get(MODULE_MAP);
+  }
+  ruleContext.registerAction(new SpawnActionTemplate.Builder(sourceFiles,objFiles).setMnemonics("ObjcCompileActionTemplate","ObjcCompile").setExecutable(xcrunwrapper(ruleContext)).setCommandLineTemplate(commandLine).setEnvironment(ObjcRuleClasses.appleToolchainEnvironment(appleConfiguration,platform)).setExecutionInfo(ObjcRuleClasses.darwinActionExecutionRequirement()).setOutputPathMapper(COMPILE_ACTION_TEMPLATE_OUTPUT_PATH_MAPPER).addCommonTransitiveInputs(objcProvider.get(HEADER)).addCommonTransitiveInputs(moduleMapInputs).addCommonInputs(compilationArtifacts.getPrivateHdrs()).addCommonTransitiveInputs(objcProvider.get(STATIC_FRAMEWORK_FILE)).addCommonTransitiveInputs(objcProvider.get(DYNAMIC_FRAMEWORK_FILE)).addCommonInputs(compilationArtifacts.getPchFile().asSet()).build(ruleContext.getActionOwner()));
+}

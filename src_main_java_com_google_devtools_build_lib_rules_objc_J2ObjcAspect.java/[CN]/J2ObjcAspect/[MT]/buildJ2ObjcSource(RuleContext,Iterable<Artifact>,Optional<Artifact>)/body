@@ -1,0 +1,16 @@
+{
+  PathFragment objcFileRootRelativePath=ruleContext.getUniqueDirectory("_j2objc");
+  PathFragment objcFileRootExecPath=ruleContext.getConfiguration().getBinFragment().getRelative(objcFileRootRelativePath);
+  Iterable<Artifact> objcSrcs=getOutputObjcFiles(ruleContext,javaInputSourceFiles,objcFileRootRelativePath,".m");
+  Iterable<Artifact> objcHdrs=getOutputObjcFiles(ruleContext,javaInputSourceFiles,objcFileRootRelativePath,".h");
+  Iterable<PathFragment> headerSearchPaths=J2ObjcLibrary.j2objcSourceHeaderSearchPaths(ruleContext,objcFileRootExecPath,javaInputSourceFiles);
+  Optional<Artifact> genJarTranslatedSrcs=Optional.absent();
+  Optional<Artifact> genJarTranslatedHdrs=Optional.absent();
+  Optional<PathFragment> genJarFileHeaderSearchPaths=Optional.absent();
+  if (genSrcJar.isPresent()) {
+    genJarTranslatedSrcs=Optional.of(j2ObjcGenJarTranslatedSourceFiles(ruleContext));
+    genJarTranslatedHdrs=Optional.of(j2objcGenJarTranslatedHeaderFiles(ruleContext));
+    genJarFileHeaderSearchPaths=Optional.of(genJarTranslatedHdrs.get().getExecPath());
+  }
+  return new J2ObjcSource(ruleContext.getRule().getLabel(),Iterables.concat(objcSrcs,genJarTranslatedSrcs.asSet()),Iterables.concat(objcHdrs,genJarTranslatedHdrs.asSet()),objcFileRootExecPath,SourceType.JAVA,Iterables.concat(headerSearchPaths,genJarFileHeaderSearchPaths.asSet()));
+}

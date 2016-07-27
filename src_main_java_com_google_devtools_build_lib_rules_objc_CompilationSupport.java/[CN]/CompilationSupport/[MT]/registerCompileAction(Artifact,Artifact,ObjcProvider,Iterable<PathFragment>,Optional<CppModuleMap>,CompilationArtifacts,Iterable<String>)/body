@@ -1,0 +1,19 @@
+{
+  boolean isCPlusPlusSource=ObjcRuleClasses.CPP_SOURCES.matches(sourceFile.getExecPath());
+  boolean runCodeCoverage=buildConfiguration.isCodeCoverageEnabled() && ObjcRuleClasses.isInstrumentable(sourceFile);
+  boolean hasSwiftSources=compilationArtifacts.hasSwiftSources();
+  CustomCommandLine commandLine=compileActionCommandLine(sourceFile,objFile,objcProvider,priorityHeaders,moduleMap,compilationArtifacts.getPchFile(),Optional.of(intermediateArtifacts.dotdFile(sourceFile)),otherFlags,runCodeCoverage,isCPlusPlusSource,hasSwiftSources);
+  Optional<Artifact> gcnoFile=Optional.absent();
+  if (runCodeCoverage) {
+    gcnoFile=Optional.of(intermediateArtifacts.gcnoFile(sourceFile));
+  }
+  Optional<Artifact> swiftHeader=Optional.absent();
+  if (hasSwiftSources) {
+    swiftHeader=Optional.of(intermediateArtifacts.swiftHeader());
+  }
+  NestedSet<Artifact> moduleMapInputs=NestedSetBuilder.emptySet(Order.STABLE_ORDER);
+  if (objcConfiguration.moduleMapsEnabled()) {
+    moduleMapInputs=objcProvider.get(MODULE_MAP);
+  }
+  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(appleConfiguration,appleConfiguration.getSingleArchPlatform()).setMnemonic("ObjcCompile").setExecutable(xcrunwrapper(ruleContext)).setCommandLine(commandLine).addInput(sourceFile).addInputs(swiftHeader.asSet()).addTransitiveInputs(moduleMapInputs).addOutput(objFile).addOutputs(gcnoFile.asSet()).addOutput(intermediateArtifacts.dotdFile(sourceFile)).addTransitiveInputs(objcProvider.get(HEADER)).addInputs(compilationArtifacts.getPrivateHdrs()).addTransitiveInputs(objcProvider.get(STATIC_FRAMEWORK_FILE)).addTransitiveInputs(objcProvider.get(DYNAMIC_FRAMEWORK_FILE)).addInputs(compilationArtifacts.getPchFile().asSet()).build(ruleContext));
+}
