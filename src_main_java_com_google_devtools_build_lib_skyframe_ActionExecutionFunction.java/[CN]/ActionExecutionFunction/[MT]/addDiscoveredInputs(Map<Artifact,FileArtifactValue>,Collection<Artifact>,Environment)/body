@@ -1,15 +1,12 @@
 {
-  Map<Artifact,FileArtifactValue> result=new HashMap<>(originalInputData);
   Set<SkyKey> keys=new HashSet<>();
   for (  Artifact artifact : discoveredInputs) {
-    if (!result.containsKey(artifact)) {
+    if (!inputData.containsKey(artifact)) {
       keys.add(ArtifactValue.key(artifact,false));
     }
   }
   Map<SkyKey,SkyValue> data=env.getValues(keys);
-  if (env.valuesMissing()) {
-    return null;
+  if (!env.valuesMissing()) {
+    inputData.putAll(transformArtifactMetadata(data));
   }
-  result.putAll(transformArtifactMetadata(data));
-  return result;
 }
