@@ -1,0 +1,31 @@
+{
+  Preconditions.checkArgument(attribute.isLateBound());
+  @SuppressWarnings("unchecked") LateBoundDefault<BuildConfiguration> lateBoundDefault=(LateBoundDefault<BuildConfiguration>)attribute.getLateBoundDefault();
+  if (!lateBoundDefault.getRequiredConfigurationFragments().isEmpty()) {
+    if (!config.hasAllFragments(lateBoundDefault.getRequiredConfigurationFragments())) {
+      return ImmutableList.<Label>of();
+    }
+  }
+  Object actualValue=lateBoundDefault.resolve(rule,attributeMap,config);
+  if (EvalUtils.isNullOrNone(actualValue)) {
+    return ImmutableList.<Label>of();
+  }
+  try {
+    ImmutableList.Builder<Label> deps=ImmutableList.builder();
+    if (attribute.getType() == BuildType.LABEL) {
+      deps.add(rule.getLabel().resolveRepositoryRelative(BuildType.LABEL.cast(actualValue)));
+    }
+ else     if (attribute.getType() == BuildType.LABEL_LIST) {
+      for (      Label label : BuildType.LABEL_LIST.cast(actualValue)) {
+        deps.add(rule.getLabel().resolveRepositoryRelative(label));
+      }
+    }
+ else {
+      throw new IllegalStateException(String.format("Late bound attribute '%s' is not a label or a label list",attribute.getName()));
+    }
+    return deps.build();
+  }
+ catch (  ClassCastException e) {
+    throw new EvalException(rule.getLocation(),String.format("When computing the default value of %s, expected '%s', got '%s'",attribute.getName(),attribute.getType(),EvalUtils.getDataTypeName(actualValue,true)));
+  }
+}

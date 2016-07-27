@@ -1,0 +1,23 @@
+{
+  ConfiguredAttributeMapper attributeMap=depResolver.attributeMap;
+  for (  Attribute attribute : depResolver.attributes) {
+    if (!attribute.isLateBound() || !attribute.getCondition().apply(attributeMap)) {
+      continue;
+    }
+    @SuppressWarnings("unchecked") LateBoundDefault<BuildConfiguration> lateBoundDefault=(LateBoundDefault<BuildConfiguration>)attribute.getLateBoundDefault();
+    if (attribute.hasSplitConfigurationTransition()) {
+      Verify.verify(attribute.getConfigurator() == null);
+      Verify.verify(!lateBoundDefault.useHostConfiguration());
+      for (      BuildConfiguration splitConfig : ruleConfig.getSplitConfigurations(attribute.getSplitTransition(depResolver.rule))) {
+        for (        Label dep : resolveLateBoundAttribute(depResolver.rule,attribute,splitConfig,attributeMap)) {
+          depResolver.resolveDep(attribute,dep,splitConfig);
+        }
+      }
+    }
+ else {
+      for (      Label dep : resolveLateBoundAttribute(depResolver.rule,attribute,lateBoundDefault.useHostConfiguration() ? hostConfig : ruleConfig,attributeMap)) {
+        depResolver.resolveDep(attribute,dep);
+      }
+    }
+  }
+}
