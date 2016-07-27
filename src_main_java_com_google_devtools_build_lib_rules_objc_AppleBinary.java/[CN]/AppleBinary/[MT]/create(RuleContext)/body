@@ -5,7 +5,6 @@
   Set<BuildConfiguration> childConfigurations=getChildConfigurations(ruleContext);
   IntermediateArtifacts ruleIntermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   NestedSetBuilder<Artifact> binariesToLipo=NestedSetBuilder.<Artifact>stableOrder();
-  NestedSetBuilder<Artifact> archivesToLipo=NestedSetBuilder.<Artifact>stableOrder();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(ruleIntermediateArtifacts.combinedArchitectureBinary());
   for (  BuildConfiguration childConfig : childConfigurations) {
     IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext,childConfig);
@@ -22,10 +21,6 @@
     }
     J2ObjcMappingFileProvider j2ObjcMappingFileProvider=J2ObjcMappingFileProvider.union(j2ObjcMappingFileProviders.build());
     J2ObjcEntryClassProvider j2ObjcEntryClassProvider=j2ObjcEntryClassProviderBuilder.build();
-    if (!common.getCompilationArtifacts().get().getArchive().isPresent()) {
-      ruleContext.throwWithRuleError(REQUIRES_AT_LEAST_ONE_SOURCE_FILE);
-    }
-    archivesToLipo.add(common.getCompilationArtifacts().get().getArchive().get());
     binariesToLipo.add(intermediateArtifacts.strippedSingleArchitectureBinary());
     ObjcConfiguration objcConfiguration=childConfig.getFragment(ObjcConfiguration.class);
     if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
@@ -37,7 +32,7 @@
     ruleContext.assertNoErrors();
   }
   AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
-  new LipoSupport(ruleContext).registerCombineArchitecturesAction(binariesToLipo.build(),ruleIntermediateArtifacts.combinedArchitectureBinary(),appleConfiguration.getMultiArchPlatform(platformType)).registerCombineArchitecturesAction(archivesToLipo.build(),ruleContext.getImplicitOutputArtifact(AppleBinaryRule.LIPO_ARCHIVE),appleConfiguration.getMultiArchPlatform(platformType));
+  new LipoSupport(ruleContext).registerCombineArchitecturesAction(binariesToLipo.build(),ruleIntermediateArtifacts.combinedArchitectureBinary(),appleConfiguration.getMultiArchPlatform(platformType));
   RuleConfiguredTargetBuilder targetBuilder=ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build());
   return targetBuilder.build();
 }
