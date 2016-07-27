@@ -1,0 +1,27 @@
+{
+  int retries=MAX_REDIRECTS;
+  for (int i=0; i < retries; ++i, connection=(HttpURLConnection)url.openConnection(proxy)) {
+    try {
+      connection.connect();
+    }
+ catch (    IllegalArgumentException e) {
+      throw new IOException("Failed to connect to " + url + " : "+ e.getMessage(),e);
+    }
+    int statusCode=connection.getResponseCode();
+switch (statusCode) {
+case HttpURLConnection.HTTP_OK:
+      return new HttpConnection(connection.getInputStream(),parseContentLength(connection));
+case HttpURLConnection.HTTP_MOVED_PERM:
+case HttpURLConnection.HTTP_MOVED_TEMP:
+    url=tryGetLocation(statusCode,connection);
+  connection.disconnect();
+break;
+case -1:
+throw new IOException("An HTTP error occured");
+default :
+throw new IOException(String.format("%s %s: %s",connection.getResponseCode(),connection.getResponseMessage(),readBody(connection)));
+}
+}
+;
+throw new IOException("Maximum redirects (" + MAX_REDIRECTS + ") exceeded");
+}
