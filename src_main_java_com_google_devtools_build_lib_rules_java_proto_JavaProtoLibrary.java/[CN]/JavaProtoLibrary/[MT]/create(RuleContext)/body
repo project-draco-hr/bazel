@@ -1,5 +1,8 @@
 {
   JavaCompilationArgsProvider dependencyArgsProviders=JavaCompilationArgsProvider.merge(Iterables.<JavaCompilationArgsAspectProvider,JavaCompilationArgsProvider>transform(this.<JavaCompilationArgsAspectProvider>getDeps(ruleContext,JavaCompilationArgsAspectProvider.class),JavaCompilationArgsAspectProvider.GET_PROVIDER));
+  if (!StrictDepsUtils.isStrictDepsJavaProtoLibrary(ruleContext)) {
+    dependencyArgsProviders=StrictDepsUtils.makeNonStrict(dependencyArgsProviders);
+  }
   Runfiles runfiles=new Runfiles.Builder(ruleContext.getWorkspaceName()).addArtifacts(dependencyArgsProviders.getRecursiveJavaCompilationArgs().getRuntimeJars()).build();
   JavaSourceJarsProvider sourceJarsProvider=JavaSourceJarsProvider.merge(Iterables.<JavaSourceJarsAspectProvider,JavaSourceJarsProvider>transform(this.<JavaSourceJarsAspectProvider>getDeps(ruleContext,JavaSourceJarsAspectProvider.class),JavaSourceJarsAspectProvider.GET_PROVIDER));
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
