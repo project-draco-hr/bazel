@@ -29,13 +29,13 @@
   for (  Map.Entry<PackageIdentifier,Set<Path>> entry : dirRootsMap.entrySet()) {
     PackageIdentifier dir=entry.getKey();
     if (!dir.getRepository().isMain()) {
-      FileSystemUtils.createDirectoryAndParents(workspace.getRelative(dir.getRepository().getPathFragment()));
+      FileSystemUtils.createDirectoryAndParents(workspace.getRelative(dir.getRepository().getSourceRoot()));
     }
     if (entry.getValue().size() > 1) {
       if (LOG_FINER) {
-        LOG.finer("mkdir " + workspace.getRelative(dir.getPathFragment()));
+        LOG.finer("mkdir " + workspace.getRelative(dir.getSourceRoot()));
       }
-      FileSystemUtils.createDirectoryAndParents(workspace.getRelative(dir.getPathFragment()));
+      FileSystemUtils.createDirectoryAndParents(workspace.getRelative(dir.getSourceRoot()));
     }
   }
   for (  Map.Entry<PackageIdentifier,Set<Path>> entry : dirRootsMap.entrySet()) {
@@ -47,9 +47,9 @@
       }
       Path root=roots.iterator().next();
       if (LOG_FINER) {
-        LOG.finer("ln -s " + root.getRelative(dir.getPathFragment()) + " "+ workspace.getRelative(dir.getPathFragment()));
+        LOG.finer("ln -s " + root.getRelative(dir.getSourceRoot()) + " "+ workspace.getRelative(dir.getSourceRoot()));
       }
-      workspace.getRelative(dir.getPathFragment()).createSymbolicLink(root.getRelative(dir.getPathFragment()));
+      workspace.getRelative(dir.getSourceRoot()).createSymbolicLink(root.getRelative(dir.getSourceRoot()));
     }
   }
   for (  Map.Entry<PackageIdentifier,Set<Path>> entry : dirRootsMap.entrySet()) {
@@ -59,10 +59,10 @@
       if (pkgId != null) {
         Path root=packageRoots.get(pkgId);
         try {
-          Path absdir=root.getRelative(dir.getPathFragment());
+          Path absdir=root.getRelative(dir.getSourceRoot());
           if (absdir.isDirectory()) {
             if (LOG_FINER) {
-              LOG.finer("ln -s " + absdir + "/* "+ workspace.getRelative(dir.getPathFragment())+ "/");
+              LOG.finer("ln -s " + absdir + "/* "+ workspace.getRelative(dir.getSourceRoot())+ "/");
             }
             for (            Path target : absdir.getDirectoryEntries()) {
               PathFragment p=target.relativeTo(root);
@@ -86,11 +86,11 @@
     if (!pkgId.getPackageFragment().equals(PathFragment.EMPTY_FRAGMENT)) {
       continue;
     }
-    Path execrootDirectory=workspace.getRelative(pkgId.getPathFragment());
+    Path execrootDirectory=workspace.getRelative(pkgId.getSourceRoot());
     if (!execrootDirectory.exists()) {
       FileSystemUtils.createDirectoryAndParents(execrootDirectory);
     }
-    Path sourceDirectory=entry.getValue().getRelative(pkgId.getPathFragment());
+    Path sourceDirectory=entry.getValue().getRelative(pkgId.getSourceRoot());
     for (    Path target : sourceDirectory.getDirectoryEntries()) {
       String baseName=target.getBaseName();
       Path execPath=execrootDirectory.getRelative(baseName);
