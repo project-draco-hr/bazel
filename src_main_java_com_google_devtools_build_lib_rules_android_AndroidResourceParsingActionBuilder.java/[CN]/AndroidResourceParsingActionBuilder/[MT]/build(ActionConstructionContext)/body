@@ -1,0 +1,15 @@
+{
+  CustomCommandLine.Builder builder=new CustomCommandLine.Builder();
+  NestedSetBuilder<Artifact> inputs=NestedSetBuilder.naiveLinkOrder();
+  inputs.addAll(ruleContext.getExecutablePrerequisite("$android_resource_parser",Mode.HOST).getRunfilesSupport().getRunfilesArtifactsWithoutMiddlemen());
+  Preconditions.checkNotNull(primary);
+  builder.add("--primaryData").add(RESOURCE_CONTAINER_TO_ARG.apply(primary));
+  inputs.addTransitive(RESOURCE_CONTAINER_TO_ARTIFACTS.apply(primary));
+  List<Artifact> outs=new ArrayList<>();
+  Preconditions.checkNotNull(output);
+  builder.addExecPath("--output",output);
+  outs.add(output);
+  SpawnAction.Builder spawnActionBuilder=new SpawnAction.Builder();
+  ruleContext.registerAction(spawnActionBuilder.addTransitiveInputs(inputs.build()).addOutputs(ImmutableList.copyOf(outs)).setCommandLine(builder.build()).setExecutable(ruleContext.getExecutablePrerequisite("$android_resource_parser",Mode.HOST)).setProgressMessage("Parsing Android resources for " + ruleContext.getLabel()).setMnemonic("AndroidResourceParser").build(context));
+  return output;
+}
