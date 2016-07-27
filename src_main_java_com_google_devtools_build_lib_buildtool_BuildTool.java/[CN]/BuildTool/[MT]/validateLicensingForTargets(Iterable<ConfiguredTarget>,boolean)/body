@@ -5,9 +5,8 @@
       continue;
     }
     final Set<DistributionType> distribs=target.getDistributions();
-    BuildConfiguration config=configuredTarget.getConfiguration();
-    boolean staticallyLinked=(config != null) && config.performsStaticLink();
-    staticallyLinked|=(config != null) && (target instanceof Rule) && ((Rule)target).getRuleClassObject().hasAttr("linkopts",Type.STRING_LIST)&& ConfiguredAttributeMapper.of((RuleConfiguredTarget)configuredTarget).get("linkopts",Type.STRING_LIST).contains("-static");
+    StaticallyLinkedMarkerProvider markerProvider=configuredTarget.getProvider(StaticallyLinkedMarkerProvider.class);
+    boolean staticallyLinked=markerProvider != null && markerProvider.isLinkedStatically();
     LicensesProvider provider=configuredTarget.getProvider(LicensesProvider.class);
     if (provider != null) {
       NestedSet<TargetLicense> licenses=provider.getTransitiveLicenses();
