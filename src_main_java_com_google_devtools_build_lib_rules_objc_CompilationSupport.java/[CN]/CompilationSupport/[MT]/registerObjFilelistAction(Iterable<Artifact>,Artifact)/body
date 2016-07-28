@@ -1,0 +1,15 @@
+{
+  ImmutableSet<Artifact> dedupedObjFiles=ImmutableSet.copyOf(objFiles);
+  CustomCommandLine.Builder objFilesToLinkParam=new CustomCommandLine.Builder();
+  ImmutableList.Builder<Artifact> treeObjFiles=new ImmutableList.Builder<>();
+  for (  Artifact objFile : dedupedObjFiles) {
+    if (objFile.isTreeArtifact()) {
+      treeObjFiles.add(objFile);
+      objFilesToLinkParam.addExpandedTreeArtifactExecPaths(objFile);
+    }
+ else {
+      objFilesToLinkParam.addPath(objFile.getExecPath());
+    }
+  }
+  ruleContext.registerAction(new ParameterFileWriteAction(ruleContext.getActionOwner(),treeObjFiles.build(),objList,objFilesToLinkParam.build(),ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1));
+}

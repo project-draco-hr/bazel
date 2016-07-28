@@ -1,0 +1,11 @@
+{
+  Preconditions.checkArgument(node.getTarget() instanceof Rule);
+  BuildConfiguration ruleConfig=Preconditions.checkNotNull(node.getConfiguration());
+  Rule rule=(Rule)node.getTarget();
+  ConfiguredAttributeMapper attributeMap=ConfiguredAttributeMapper.of(rule,configConditions);
+  attributeMap.validateAttributes();
+  RuleResolver depResolver=new RuleResolver(rule,ruleConfig,aspect,attributeMap,rootCauses,outgoingEdges);
+  visitTargetVisibility(node,rootCauses,outgoingEdges.get(null));
+  resolveEarlyBoundAttributes(depResolver);
+  resolveLateBoundAttributes(depResolver,ruleConfig,hostConfig);
+}

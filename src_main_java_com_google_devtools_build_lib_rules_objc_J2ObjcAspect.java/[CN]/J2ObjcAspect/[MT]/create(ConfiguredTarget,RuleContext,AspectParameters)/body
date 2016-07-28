@@ -2,13 +2,28 @@
   ConfiguredAspect.Builder builder=new ConfiguredAspect.Builder(NAME,ruleContext);
   JavaCompilationArgsProvider compilationArgsProvider=base.getProvider(JavaCompilationArgsProvider.class);
   JavaSourceInfoProvider sourceInfoProvider=base.getProvider(JavaSourceInfoProvider.class);
+  JavaGenJarsProvider genJarProvider=base.getProvider(JavaGenJarsProvider.class);
   ImmutableSet<Artifact> javaInputFiles=ImmutableSet.<Artifact>builder().addAll(sourceInfoProvider.getSourceFiles()).addAll(sourceInfoProvider.getSourceJars()).addAll(sourceInfoProvider.getSourceJarsForJarFiles()).build();
+  Optional<Artifact> genSrcJar;
+  boolean annotationProcessingEnabled=ruleContext.getFragment(J2ObjcConfiguration.class).annotationProcessingEnabled();
+  if (genJarProvider != null && annotationProcessingEnabled) {
+    genSrcJar=Optional.fromNullable(genJarProvider.getGenSourceJar());
+  }
+ else {
+    genSrcJar=Optional.<Artifact>absent();
+  }
   XcodeProvider xcodeProvider;
   ObjcCommon common;
   if (!javaInputFiles.isEmpty()) {
-    J2ObjcSource j2ObjcSource=buildJ2ObjcSource(ruleContext,javaInputFiles);
+    J2ObjcSource j2ObjcSource=buildJ2ObjcSource(ruleContext,javaInputFiles,genSrcJar);
     J2ObjcMappingFileProvider depJ2ObjcMappingFileProvider=depJ2ObjcMappingFileProvider(ruleContext);
-    createJ2ObjcTranspilationAction(ruleContext,depJ2ObjcMappingFileProvider.getHeaderMappingFiles(),depJ2ObjcMappingFileProvider.getClassMappingFiles(),javaInputFiles,compilationArgsProvider,j2ObjcSource);
+    createJ2ObjcTranspilationAction(ruleContext,depJ2ObjcMappingFileProvider.getHeaderMappingFiles(),depJ2ObjcMappingFileProvider.getClassMappingFiles(),javaInputFiles,compilationArgsProvider,j2ObjcSource,genSrcJar);
+    boolean zipTreeArtifact=ruleContext.getFragment(J2ObjcConfiguration.class).zipTreeArtifact();
+    if (genSrcJar.isPresent() && zipTreeArtifact) {
+      for (      Action action : genJarTreeArtifactCreationActions(ruleContext)) {
+        ruleContext.registerAction(action);
+      }
+    }
     common=common(ruleContext,j2ObjcSource.getObjcSrcs(),j2ObjcSource.getObjcHdrs(),j2ObjcSource.getHeaderSearchPaths(),DEPENDENT_ATTRIBUTES);
     xcodeProvider=xcodeProvider(ruleContext,common,j2ObjcSource.getObjcHdrs(),j2ObjcSource.getHeaderSearchPaths(),DEPENDENT_ATTRIBUTES);
     new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common,EXTRA_COMPILE_ARGS).registerFullyLinkAction(common.getObjcProvider());

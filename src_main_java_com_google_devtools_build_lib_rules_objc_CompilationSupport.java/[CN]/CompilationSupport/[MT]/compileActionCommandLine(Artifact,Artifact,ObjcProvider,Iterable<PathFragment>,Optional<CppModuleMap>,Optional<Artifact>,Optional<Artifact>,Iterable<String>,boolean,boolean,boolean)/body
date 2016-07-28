@@ -1,0 +1,54 @@
+{
+  CustomCommandLine.Builder commandLine=new CustomCommandLine.Builder().add(CLANG);
+  if (isCPlusPlusSource) {
+    commandLine.add("-stdlib=libc++");
+    commandLine.add("-std=gnu++11");
+  }
+  if (hasSwiftSources) {
+    commandLine.add("-I");
+    commandLine.addPath(intermediateArtifacts.swiftHeader().getExecPath().getParentDirectory());
+  }
+  if (objcConfiguration.shouldStripBinary()) {
+    commandLine.add("-g");
+  }
+  List<String> coverageFlags=ImmutableList.of();
+  if (collectCodeCoverage) {
+    coverageFlags=CLANG_COVERAGE_FLAGS;
+  }
+  commandLine.add(compileFlagsForClang(appleConfiguration)).add(commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration,appleConfiguration)).add(objcConfiguration.getCoptsForCompilationMode()).addBeforeEachPath("-iquote",ObjcCommon.userHeaderSearchPaths(buildConfiguration)).addBeforeEachExecPath("-include",pchFile.asSet()).addBeforeEachPath("-I",priorityHeaders).addBeforeEachPath("-I",objcProvider.get(INCLUDE)).addBeforeEachPath("-isystem",objcProvider.get(INCLUDE_SYSTEM)).add(otherFlags).addFormatEach("-D%s",objcProvider.get(DEFINE)).add(coverageFlags).add(getCompileRuleCopts());
+  commandLine.add("-c");
+  if (!sourceFile.getExecPath().isAbsolute() && objcConfiguration.getUseAbsolutePathsForActions()) {
+    String workspaceRoot=objcConfiguration.getXcodeWorkspaceRoot();
+    if (sourceFile.isTreeArtifact()) {
+      commandLine.addPlaceholderTreeArtifactFormattedExecPath(workspaceRoot + "/%s",sourceFile);
+    }
+ else {
+      commandLine.addPaths(workspaceRoot + "/%s",sourceFile.getExecPath());
+    }
+  }
+ else {
+    if (sourceFile.isTreeArtifact()) {
+      commandLine.addPlaceholderTreeArtifactExecPath(sourceFile);
+    }
+ else {
+      commandLine.addPath(sourceFile.getExecPath());
+    }
+  }
+  commandLine.add("-o");
+  if (objFile.isTreeArtifact()) {
+    commandLine.addPlaceholderTreeArtifactExecPath(objFile);
+  }
+ else {
+    commandLine.addPath(objFile.getExecPath());
+  }
+  if (dotdFile.isPresent()) {
+    commandLine.add("-MD").addExecPath("-MF",dotdFile.get());
+  }
+  if (moduleMap.isPresent()) {
+    if (!attributes.enableModules()) {
+      commandLine.add("-fmodule-maps");
+    }
+    commandLine.add("-iquote").add(moduleMap.get().getArtifact().getExecPath().getParentDirectory().toString()).add("-fmodule-name=" + moduleMap.get().getName());
+  }
+  return commandLine.build();
+}

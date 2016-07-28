@@ -1,0 +1,12 @@
+{
+  Preconditions.checkArgument(node.getTarget() instanceof Rule);
+  Rule rule=(Rule)node.getTarget();
+  ListMultimap<Attribute,Dependency> outgoingEdges=ArrayListMultimap.create();
+  RuleResolver depResolver=new RuleResolver(rule,node.getConfiguration(),null,null,rootCauses,outgoingEdges);
+  for (  Map.Entry<Attribute,Collection<Label>> entry : depLabels.asMap().entrySet()) {
+    for (    Label depLabel : entry.getValue()) {
+      depResolver.resolveDep(entry.getKey(),depLabel);
+    }
+  }
+  return outgoingEdges.values();
+}

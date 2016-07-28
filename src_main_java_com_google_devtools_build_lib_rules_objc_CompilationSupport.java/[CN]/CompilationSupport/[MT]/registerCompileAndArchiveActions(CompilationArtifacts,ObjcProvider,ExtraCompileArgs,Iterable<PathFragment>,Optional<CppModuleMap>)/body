@@ -1,0 +1,35 @@
+{
+  ImmutableList.Builder<Artifact> objFiles=new ImmutableList.Builder<>();
+  for (  Artifact sourceFile : compilationArtifacts.getSrcs()) {
+    Artifact objFile=intermediateArtifacts.objFile(sourceFile);
+    objFiles.add(objFile);
+    if (ObjcRuleClasses.SWIFT_SOURCES.matches(sourceFile.getFilename())) {
+      registerSwiftCompileAction(sourceFile,objFile,objcProvider);
+    }
+ else {
+      if (objFile.isTreeArtifact()) {
+        registerCompileActionTemplate(sourceFile,objFile,objcProvider,priorityHeaders,moduleMap,compilationArtifacts,Iterables.concat(extraCompileArgs,ImmutableList.of("-fobjc-arc")));
+      }
+ else {
+        registerCompileAction(sourceFile,objFile,objcProvider,priorityHeaders,moduleMap,compilationArtifacts,Iterables.concat(extraCompileArgs,ImmutableList.of("-fobjc-arc")));
+      }
+    }
+  }
+  for (  Artifact nonArcSourceFile : compilationArtifacts.getNonArcSrcs()) {
+    Artifact objFile=intermediateArtifacts.objFile(nonArcSourceFile);
+    objFiles.add(objFile);
+    if (objFile.isTreeArtifact()) {
+      registerCompileActionTemplate(nonArcSourceFile,objFile,objcProvider,priorityHeaders,moduleMap,compilationArtifacts,Iterables.concat(extraCompileArgs,ImmutableList.of("-fno-objc-arc")));
+    }
+ else {
+      registerCompileAction(nonArcSourceFile,objFile,objcProvider,priorityHeaders,moduleMap,compilationArtifacts,Iterables.concat(extraCompileArgs,ImmutableList.of("-fno-objc-arc")));
+    }
+  }
+  objFiles.addAll(compilationArtifacts.getPrecompiledSrcs());
+  if (compilationArtifacts.hasSwiftSources()) {
+    registerSwiftModuleMergeAction(compilationArtifacts,objcProvider);
+  }
+  for (  Artifact archive : compilationArtifacts.getArchive().asSet()) {
+    registerArchiveActions(objFiles.build(),archive);
+  }
+}

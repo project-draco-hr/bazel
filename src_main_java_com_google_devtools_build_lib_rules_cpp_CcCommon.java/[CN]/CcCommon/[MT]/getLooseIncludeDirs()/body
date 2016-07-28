@@ -1,10 +1,10 @@
 {
   List<PathFragment> result=new ArrayList<>();
-  PathFragment rulePackage=ruleContext.getLabel().getPackageIdentifier().getPathFragment();
+  PathFragment rulePackage=ruleContext.getLabel().getPackageIdentifier().getSourceRoot();
   result.add(rulePackage);
   if (hasAttribute("srcs",BuildType.LABEL_LIST)) {
     for (    TransitiveInfoCollection src : ruleContext.getPrerequisitesIf("srcs",Mode.TARGET,FileProvider.class)) {
-      PathFragment packageDir=src.getLabel().getPackageIdentifier().getPathFragment();
+      PathFragment packageDir=src.getLabel().getPackageIdentifier().getSourceRoot();
       for (      Artifact a : src.getProvider(FileProvider.class).getFilesToBuild()) {
         result.add(packageDir);
         result.add(a.getRootRelativePath().getParentDirectory());
@@ -12,7 +12,7 @@
     }
   }
   if (ruleContext.getRule().isAttributeValueExplicitlySpecified("includes")) {
-    PathFragment packageFragment=ruleContext.getLabel().getPackageIdentifier().getPathFragment();
+    PathFragment packageFragment=ruleContext.getLabel().getPackageIdentifier().getSourceRoot();
     result.add(packageFragment.getRelative("**"));
   }
   return result;

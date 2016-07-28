@@ -1,6 +1,12 @@
 {
-  ImmutableList<BlazeJavaCompilerPlugin> plugins=ImmutableList.<BlazeJavaCompilerPlugin>of(new ClassLoaderMaskingPlugin(),new ErrorPronePlugin());
-  JavaLibraryBuildRequest build=new JavaLibraryBuildRequest(args,plugins,new DependencyModule.Builder());
+  OptionsParser optionsParser=new OptionsParser(args);
+  ImmutableList.Builder<BlazeJavaCompilerPlugin> plugins=ImmutableList.builder();
+  plugins.add(new ClassLoaderMaskingPlugin());
+  boolean errorProneEnabled=processAndRemoveExtraChecksOptions(optionsParser.getJavacOpts());
+  if (errorProneEnabled) {
+    plugins.add(new ErrorPronePlugin());
+  }
+  JavaLibraryBuildRequest build=new JavaLibraryBuildRequest(optionsParser,plugins.build(),new DependencyModule.Builder());
   build.setJavacOpts(JavacOptions.normalizeOptions(build.getJavacOpts()));
   return build;
 }
