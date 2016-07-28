@@ -23,7 +23,7 @@
           return null;
         }
       }
-      if (state.discoveredInputs != null && !state.inputArtifactData.keySet().containsAll(state.discoveredInputs)) {
+      if (state.discoveredInputs != null && !containsAll(state.inputArtifactData.keySet(),state.discoveredInputs)) {
         addDiscoveredInputs(state.inputArtifactData,state.discoveredInputs,env);
         if (env.valuesMissing()) {
           return null;
@@ -47,16 +47,18 @@
     }
   }
   if (action.discoversInputs()) {
-    Map<Artifact,FileArtifactValue> metadataFoundDuringActionExecution=declareAdditionalDependencies(env,action,state.inputArtifactData.keySet());
+    Map<SkyKey,SkyValue> metadataFoundDuringActionExecution=declareAdditionalDependencies(env,action,state.inputArtifactData.keySet());
     if (state.discoveredInputs == null) {
-      state.discoveredInputs=metadataFoundDuringActionExecution.keySet();
+      state.discoveredInputs=artifacts(metadataFoundDuringActionExecution.keySet());
       if (env.valuesMissing()) {
         return null;
       }
       if (!metadataFoundDuringActionExecution.isEmpty()) {
         Map<Artifact,FileArtifactValue> inputArtifactData=new HashMap<>();
         inputArtifactData.putAll(state.inputArtifactData);
-        inputArtifactData.putAll(metadataFoundDuringActionExecution);
+        for (        Map.Entry<SkyKey,SkyValue> entry : metadataFoundDuringActionExecution.entrySet()) {
+          inputArtifactData.put(ArtifactValue.artifact(entry.getKey()),(FileArtifactValue)entry.getValue());
+        }
         state.inputArtifactData=inputArtifactData;
         metadataHandler=new ActionMetadataHandler(state.inputArtifactData,action.getOutputs(),tsgm.get());
       }
@@ -68,7 +70,7 @@
       }
       errorMessage+="additional inputs found were: ";
       int artifactPrinted=0;
-      for (      Artifact extraArtifact : metadataFoundDuringActionExecution.keySet()) {
+      for (      Artifact extraArtifact : artifacts(metadataFoundDuringActionExecution.keySet())) {
         if (artifactPrinted >= 10) {
           break;
         }
