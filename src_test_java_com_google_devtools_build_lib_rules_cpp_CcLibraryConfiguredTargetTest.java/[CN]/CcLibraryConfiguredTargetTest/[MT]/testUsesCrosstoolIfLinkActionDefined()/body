@@ -1,0 +1,9 @@
+{
+  String completeBrokenActionConfigs=Joiner.on("\n").join(MockCcSupport.INCOMPLETE_EXECUTABLE_ACTION_CONFIG,MockCcSupport.INCOMPLETE_DYNAMIC_LIBRARY_ACTION_CONFIG,MockCcSupport.INCOMPLETE_STATIC_LIBRARY_ACTION_CONFIG,MockCcSupport.INCOMPLETE_PIC_STATIC_LIBRARY_ACTION_CONFIG,MockCcSupport.INCOMPLETE_ALWAYS_LINK_STATIC_LIBRARY_ACTION_CONFIG,MockCcSupport.INCOMPLETE_ALWAYS_LINK_PIC_STATIC_LIBRARY_EXECUTABLE_ACTION_CONFIG,MockCcSupport.INCOMPLETE_INTERFACE_DYNAMIC_LIBRARY_ACTION_CONFIG);
+  AnalysisMock.get().ccSupport().setupCrosstool(mockToolsConfig,completeBrokenActionConfigs);
+  useConfiguration("--features=" + Link.LinkTargetType.EXECUTABLE.getActionName(),"--features=" + Link.LinkTargetType.DYNAMIC_LIBRARY.getActionName(),"--features=" + Link.LinkTargetType.STATIC_LIBRARY.getActionName(),"--features=" + Link.LinkTargetType.PIC_STATIC_LIBRARY.getActionName(),"--features=" + Link.LinkTargetType.ALWAYS_LINK_STATIC_LIBRARY.getActionName(),"--features=" + Link.LinkTargetType.ALWAYS_LINK_PIC_STATIC_LIBRARY.getActionName(),"--features=" + Link.LinkTargetType.INTERFACE_DYNAMIC_LIBRARY.getActionName());
+  ConfiguredTarget hello=getConfiguredTarget("//hello:hello_static");
+  Artifact archive=FileType.filter(getFilesToBuild(hello),CppFileTypes.ARCHIVE).iterator().next();
+  CppLinkAction action=(CppLinkAction)getGeneratingAction(archive);
+  assertThat(Joiner.on(" ").join(action.getArgv())).doesNotContain("hello.pic.o");
+}
