@@ -1,3 +1,12 @@
 {
-  runLoadAliasTestForSymbols("my_alias = 'lawl'","my_alias");
+  List<Statement> statements=parseFileForSkylark("load('/foo/bar/file', my_alias = 'lawl')\n");
+  LoadStatement stmt=(LoadStatement)statements.get(0);
+  ImmutableList<Identifier> actualSymbols=stmt.getSymbols();
+  assertThat(actualSymbols).hasSize(1);
+  Identifier sym=actualSymbols.get(0);
+  assertThat(sym.getName()).isEqualTo("my_alias");
+  int startOffset=sym.getLocation().getStartOffset();
+  int endOffset=sym.getLocation().getEndOffset();
+  assertThat(startOffset).named("getStartOffset()").isEqualTo(22);
+  assertThat(endOffset).named("getEndOffset()").isEqualTo(startOffset + 8);
 }
