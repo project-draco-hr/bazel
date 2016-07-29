@@ -2,21 +2,13 @@
   if (!data.exists()) {
     throw new FileNotFoundException(artifact.prettyPrint() + " does not exist");
   }
-  if (!artifact.hasParent()) {
-    boolean isFile=data.isFile();
-    if (isFile && data.getDigest() != null) {
-      return new Metadata(data.getDigest());
-    }
-    injectedDigest=injectedDigest != null || !isFile ? injectedDigest : data.getDigest();
-    FileArtifactValue value=FileArtifactValue.create((Artifact)artifact,isFile,isFile ? data.getSize() : 0,injectedDigest);
-    FileArtifactValue oldValue=additionalOutputData.putIfAbsent((Artifact)artifact,value);
-    checkInconsistentData(artifact,oldValue,value);
-    return metadataFromValue(value);
+  boolean isFile=data.isFile();
+  if (isFile && !artifact.hasParent() && data.getDigest() != null) {
+    return new Metadata(data.getDigest());
   }
- else {
-    FileArtifactValue value=FileArtifactValue.createWithDigest(artifact.getPath(),injectedDigest,data.getSize());
-    FileArtifactValue oldValue=additionalOutputData.putIfAbsent(artifact,value);
-    checkInconsistentData(artifact,oldValue,value);
-    return new Metadata(value.getDigest());
-  }
+  injectedDigest=injectedDigest != null || !isFile ? injectedDigest : data.getDigest();
+  FileArtifactValue value=FileArtifactValue.create(artifact,isFile,isFile ? data.getSize() : 0,injectedDigest);
+  FileArtifactValue oldValue=additionalOutputData.putIfAbsent(artifact,value);
+  checkInconsistentData(artifact,oldValue,value);
+  return metadataFromValue(value);
 }
