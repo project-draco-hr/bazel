@@ -1,13 +1,7 @@
 {
   super.init(context,log,compiler);
-  if (!enabled) {
-    return;
-  }
   setupMessageBundle(context);
-  JavaFileManager fileManager=context.get(JavaFileManager.class);
-  ClassLoader loader=fileManager.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) ? fileManager.getClassLoader(StandardLocation.ANNOTATION_PROCESSOR_PATH) : fileManager.getClass().getClassLoader();
-  Iterable<BugChecker> extraBugCheckers=ServiceLoader.load(BugChecker.class,loader);
-  ScannerSupplier result=scannerSupplier.plus(ScannerSupplier.fromBugCheckerClasses(Iterables.transform(extraBugCheckers,GET_CLASS)));
+  ScannerSupplier result=ErrorPronePlugins.loadPlugins(scannerSupplier,context);
   if (epOptions != null) {
     try {
       result=result.applyOverrides(epOptions);
