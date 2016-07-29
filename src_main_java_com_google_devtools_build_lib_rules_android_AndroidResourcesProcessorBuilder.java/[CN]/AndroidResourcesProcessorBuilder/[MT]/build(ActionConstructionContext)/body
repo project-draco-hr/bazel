@@ -13,15 +13,7 @@
   inputs.add(sdk.getAndroidJar());
   builder.add("--primaryData").add(RESOURCE_CONTAINER_TO_ARG.apply(primary));
   inputs.addTransitive(RESOURCE_CONTAINER_TO_ARTIFACTS.apply(primary));
-  if (dependencies != null) {
-    if (!dependencies.getTransitiveResources().isEmpty()) {
-      builder.addJoinStrings("--data",",",Iterables.unmodifiableIterable(Iterables.transform(dependencies.getTransitiveResources(),RESOURCE_DEP_TO_ARG)));
-    }
-    if (!dependencies.getDirectResources().isEmpty()) {
-      builder.addJoinStrings("--directData",",",Iterables.unmodifiableIterable(Iterables.transform(dependencies.getDirectResources(),RESOURCE_DEP_TO_ARG)));
-    }
-    inputs.addTransitive(NestedSetBuilder.wrap(Order.NAIVE_LINK_ORDER,FluentIterable.from(dependencies.getResources()).transformAndConcat(RESOURCE_DEP_TO_ARTIFACTS)));
-  }
+  ResourceContainerConverter.convertDependencies(dependencies,builder,inputs,RESOURCE_DEP_TO_ARG,RESOURCE_DEP_TO_ARTIFACTS);
   if (isLibrary) {
     builder.add("--packageType").add("LIBRARY");
   }

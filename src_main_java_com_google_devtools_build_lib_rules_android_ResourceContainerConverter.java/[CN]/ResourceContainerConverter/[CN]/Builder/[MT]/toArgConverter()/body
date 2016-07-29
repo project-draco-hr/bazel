@@ -1,0 +1,22 @@
+{
+  return new ToArg(){
+    @Override public String apply(    ResourceContainer container){
+      ImmutableList.Builder<String> cmdPieces=ImmutableList.builder();
+      if (includeResourceRoots) {
+        cmdPieces.add(convertRoots(container,ResourceType.RESOURCES));
+        cmdPieces.add(convertRoots(container,ResourceType.ASSETS));
+      }
+      if (includeManifest) {
+        cmdPieces.add(container.getManifest().getExecPathString());
+      }
+      if (includeRTxt) {
+        cmdPieces.add(container.getRTxt() == null ? "" : container.getRTxt().getExecPathString());
+      }
+      if (includeSymbolsBin) {
+        cmdPieces.add(container.getSymbolsTxt() == null ? "" : container.getSymbolsTxt().getExecPathString());
+      }
+      return ARG_JOINER.join(cmdPieces.build());
+    }
+  }
+;
+}
