@@ -8,9 +8,9 @@
   Map<Artifact,Collection<Artifact>> expandedArtifacts=new HashMap<>(populateInputData ? 128 : 0);
   ActionExecutionException firstActionExecutionException=null;
   for (  Map.Entry<SkyKey,ValueOrException2<MissingInputFileException,ActionExecutionException>> depsEntry : inputDeps.entrySet()) {
-    Artifact input=ArtifactValue.artifact(depsEntry.getKey());
+    Artifact input=ArtifactSkyKey.artifact(depsEntry.getKey());
     try {
-      ArtifactValue value=(ArtifactValue)depsEntry.getValue().get();
+      SkyValue value=depsEntry.getValue().get();
       if (populateInputData) {
         if (value instanceof AggregatingArtifactValue) {
           AggregatingArtifactValue aggregatingValue=(AggregatingArtifactValue)value;
@@ -30,7 +30,8 @@
           expandedArtifacts.put(input,expandedTreeArtifacts);
           inputArtifactData.put(input,setValue.getSelfData());
         }
- else         if (value instanceof FileArtifactValue) {
+ else {
+          Preconditions.checkState(value instanceof FileArtifactValue,depsEntry);
           inputArtifactData.put(input,(FileArtifactValue)value);
         }
       }

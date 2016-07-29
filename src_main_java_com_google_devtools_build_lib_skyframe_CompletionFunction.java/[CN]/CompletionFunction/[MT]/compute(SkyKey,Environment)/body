@@ -4,13 +4,13 @@
   if (env.valuesMissing()) {
     return null;
   }
-  Map<SkyKey,ValueOrException2<MissingInputFileException,ActionExecutionException>> inputDeps=env.getValuesOrThrow(ArtifactValue.mandatoryKeys(completor.getAllArtifactsToBuild(value,topLevelContext).getAllArtifacts()),MissingInputFileException.class,ActionExecutionException.class);
+  Map<SkyKey,ValueOrException2<MissingInputFileException,ActionExecutionException>> inputDeps=env.getValuesOrThrow(ArtifactSkyKey.mandatoryKeys(completor.getAllArtifactsToBuild(value,topLevelContext).getAllArtifacts()),MissingInputFileException.class,ActionExecutionException.class);
   int missingCount=0;
   ActionExecutionException firstActionExecutionException=null;
   MissingInputFileException missingInputException=null;
   NestedSetBuilder<Label> rootCausesBuilder=NestedSetBuilder.stableOrder();
   for (  Map.Entry<SkyKey,ValueOrException2<MissingInputFileException,ActionExecutionException>> depsEntry : inputDeps.entrySet()) {
-    Artifact input=ArtifactValue.artifact(depsEntry.getKey());
+    Artifact input=ArtifactSkyKey.artifact(depsEntry.getKey());
     try {
       depsEntry.getValue().get();
     }
