@@ -1,12 +1,12 @@
 {
   Target prerequisiteTarget=prerequisite.getTarget();
   RuleClass ruleClass=((Rule)prerequisiteTarget).getRuleClassObject();
-  Boolean allowed=null;
+  HashSet<String> unfulfilledRequirements=new HashSet<>();
   if (attribute.getAllowedRuleClassesPredicate() != Predicates.<RuleClass>alwaysTrue()) {
-    allowed=attribute.getAllowedRuleClassesPredicate().apply(ruleClass);
-    if (allowed) {
+    if (attribute.getAllowedRuleClassesPredicate().apply(ruleClass)) {
       return;
     }
+    unfulfilledRequirements.add(badPrerequisiteMessage(prerequisiteTarget.getTargetKind(),prerequisite,"expected " + attribute.getAllowedRuleClassesPredicate(),false));
   }
   if (attribute.getAllowedRuleClassesWarningPredicate() != Predicates.<RuleClass>alwaysTrue()) {
     Predicate<RuleClass> warningPredicate=attribute.getAllowedRuleClassesWarningPredicate();
@@ -15,20 +15,23 @@
       return;
     }
   }
-  if (!attribute.getMandatoryNativeProviders().isEmpty()) {
-    String missing=getMissingMandatoryNativeProviders(prerequisite,attribute);
-    if (missing != null) {
-      attributeError(attribute.getName(),"'" + prerequisite.getLabel() + "' does not have mandatory providers: "+ missing);
+  if (!attribute.getMandatoryNativeProviders().isEmpty() || !attribute.getMandatoryProvidersList().isEmpty()) {
+    boolean hadAllMandatoryProviders=true;
+    String missingNativeProviders=getMissingMandatoryNativeProviders(prerequisite,attribute);
+    if (missingNativeProviders != null) {
+      unfulfilledRequirements.add("'" + prerequisite.getLabel() + "' does not have mandatory providers: "+ missingNativeProviders);
+      hadAllMandatoryProviders=false;
+    }
+    String missingProviders=getMissingMandatoryProviders(prerequisite,attribute);
+    if (missingProviders != null) {
+      unfulfilledRequirements.add("'" + prerequisite.getLabel() + "' does not have mandatory provider "+ missingProviders);
+      hadAllMandatoryProviders=false;
+    }
+    if (hadAllMandatoryProviders) {
       return;
     }
   }
-  if (!attribute.getMandatoryProvidersList().isEmpty()) {
-    String missingMandatoryProviders=getMissingMandatoryProviders(prerequisite,attribute);
-    if (missingMandatoryProviders != null) {
-      attributeError(attribute.getName(),"'" + prerequisite.getLabel() + "' does not have mandatory provider "+ missingMandatoryProviders);
-    }
-  }
- else   if (Boolean.FALSE.equals(allowed)) {
-    reportBadPrerequisite(attribute,prerequisiteTarget.getTargetKind(),prerequisite,"expected " + attribute.getAllowedRuleClassesPredicate(),false);
+  if (!unfulfilledRequirements.isEmpty()) {
+    attributeError(attribute.getName(),StringUtil.joinEnglishList(unfulfilledRequirements,"and"));
   }
 }
