@@ -1,6 +1,9 @@
 {
   ConfiguredAspect.Builder aspect=new ConfiguredAspect.Builder(getClass().getSimpleName(),ruleContext);
+  if (!rpcSupport.checkAttributes(ruleContext,parameters)) {
+    return aspect.build();
+  }
   SupportData supportData=checkNotNull(base.getProvider(ProtoSupportDataProvider.class)).getSupportData();
-  aspect.addProviders(new Impl(ruleContext,supportData,protoRuntimeAttr,protoCompilerPluginOptions,javaSemantics).createProviders());
+  aspect.addProviders(new Impl(ruleContext,supportData,protoRuntimeAttr,protoCompilerPluginOptions,javaSemantics,rpcSupport).createProviders());
   return aspect.build();
 }
