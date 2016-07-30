@@ -1,0 +1,14 @@
+{
+  NdkPaths ndkPaths=new NdkPaths(REPOSITORY_NAME,HOST_PLATFORM,params.apiLevel);
+  ImmutableList.Builder<CrosstoolRelease> crosstools=ImmutableList.builder();
+  ImmutableMap.Builder<String,String> stlFilegroupsBuilder=ImmutableMap.builder();
+  for (  StlImpl ndkStlImpl : StlImpls.get(ndkPaths)) {
+    CrosstoolRelease crosstool=AndroidNdkCrosstools.create(params.ndkRelease,ndkPaths,ndkStlImpl,HOST_PLATFORM);
+    crosstools.add(crosstool);
+    stlFilegroupsBuilder.putAll(ndkStlImpl.getFilegroupNamesAndFilegroupFileGlobPatterns());
+  }
+  crosstoolReleases=crosstools.build();
+  stlFilegroups=stlFilegroupsBuilder.build();
+  ndkFiles=params.getNdkFiles();
+  ndkDirectories=params.getNdkDirectories();
+}

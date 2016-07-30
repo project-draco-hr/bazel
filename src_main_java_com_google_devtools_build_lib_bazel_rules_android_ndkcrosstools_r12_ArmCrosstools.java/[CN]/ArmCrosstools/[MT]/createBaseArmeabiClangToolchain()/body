@@ -1,0 +1,10 @@
+{
+  String toolchainName="arm-linux-androideabi-4.9";
+  String targetPlatform="arm-linux-androideabi";
+  String gccToolchain=ndkPaths.createGccToolchainPath("arm-linux-androideabi-4.9");
+  CToolchain.Builder toolchain=CToolchain.newBuilder().setTargetSystemName("arm-linux-androideabi").setCompiler("clang3.8").addAllToolPath(ndkPaths.createClangToolpaths(toolchainName,targetPlatform,null)).setBuiltinSysroot(ndkPaths.createBuiltinSysroot("arm")).addCompilerFlag("-gcc-toolchain").addCompilerFlag(gccToolchain).addCompilerFlag("-fpic").addCompilerFlag("-ffunction-sections").addCompilerFlag("-funwind-tables").addCompilerFlag("-fstack-protector-strong").addCompilerFlag("-Wno-invalid-command-line-argument").addCompilerFlag("-Wno-unused-command-line-argument").addCompilerFlag("-no-canonical-prefixes").addCompilerFlag("-fno-integrated-as").addLinkerFlag("-gcc-toolchain").addLinkerFlag(gccToolchain).addLinkerFlag("-no-canonical-prefixes");
+  toolchain.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.OPT).addCompilerFlag("-mthumb").addCompilerFlag("-Os").addCompilerFlag("-g").addCompilerFlag("-DNDEBUG"));
+  toolchain.addCompilationModeFlags(CompilationModeFlags.newBuilder().setMode(CompilationMode.DBG).addCompilerFlag("-g").addCompilerFlag("-fno-strict-aliasing").addCompilerFlag("-O0").addCompilerFlag("-UNDEBUG"));
+  ndkPaths.addToolchainIncludePaths(toolchain,toolchainName,targetPlatform,"4.9.x");
+  return toolchain;
+}
