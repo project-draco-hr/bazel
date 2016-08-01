@@ -1,0 +1,7 @@
+{
+  useConfiguration("--enforce_constraints=0");
+  new EnvironmentGroupMaker("buildenv/foo").setEnvironments("a","b","c").setDefaults().make();
+  scratch.file("hello/BUILD","genrule(","    name = 'gen',","    srcs = [],","    outs = ['gen.out'],","    cmd = '',","    tools = [':main'])",getDependencyRule(),getDependingRule(compatibleWith("//buildenv/foo:a")));
+  assertNotNull(getConfiguredTarget("//hello:gen"));
+  assertNoEvents();
+}
