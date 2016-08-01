@@ -6,13 +6,17 @@
   List<FieldInitializer> initializers=new ArrayList<>();
   for (  String symbolName : symbolList) {
     SymbolEntry value=values.get(typeName,symbolName);
-    Preconditions.checkNotNull(value);
-    if (value.getType().equals("int")) {
-      initializers.add(IntFieldInitializer.of(value.getName(),value.getValue()));
+    if (value != null) {
+      if (value.getType().equals("int")) {
+        initializers.add(IntFieldInitializer.of(value.getName(),value.getValue()));
+      }
+ else {
+        Preconditions.checkArgument(value.getType().equals("int[]"));
+        initializers.add(IntArrayFieldInitializer.of(value.getName(),value.getValue()));
+      }
     }
  else {
-      Preconditions.checkArgument(value.getType().equals("int[]"));
-      initializers.add(IntArrayFieldInitializer.of(value.getName(),value.getValue()));
+      logger.fine(String.format("Skipping R.%s.%s -- value not known in binary's R.txt",typeName,symbolName));
     }
   }
   return initializers;
