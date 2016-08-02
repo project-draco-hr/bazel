@@ -1,0 +1,16 @@
+{
+  Set<String> ctgFragmentNames=new HashSet<>();
+  for (  BuildConfiguration.Fragment fragment : ctgValue.getConfiguration().getAllFragments().values()) {
+    ctgFragmentNames.add(fragment.getClass().getSimpleName());
+  }
+  Set<String> depFragmentNames=new HashSet<>();
+  for (  Class<? extends BuildConfiguration.Fragment> fragmentClass : expectedDepFragments) {
+    depFragmentNames.add(fragmentClass.getSimpleName());
+  }
+  Set<String> missing=Sets.difference(depFragmentNames,ctgFragmentNames);
+  if (!missing.isEmpty()) {
+    String msg=String.format("%s: dependency %s from attribute \"%s\" is missing required config fragments: %s",ctgValue.getLabel(),dep.getLabel(),attribute,Joiner.on(", ").join(missing));
+    env.getListener().handle(Event.error(msg));
+    throw new DependencyEvaluationException(new InvalidConfigurationException(msg));
+  }
+}
