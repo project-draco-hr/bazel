@@ -1,0 +1,24 @@
+{
+  boolean hasError=false;
+  Multiset<Artifact> appResources=HashMultiset.create();
+  appResources.addAll(ruleContext.getPrerequisiteArtifacts("app_resources",Mode.TARGET).list());
+  appResources.addAll(ruleContext.getPrerequisiteArtifacts("app_strings",Mode.TARGET).list());
+  for (  Multiset.Entry<Artifact> entry : appResources.entrySet()) {
+    if (entry.getCount() > 1) {
+      ruleContext.ruleError("The same file was included multiple times in this rule: " + entry.getElement().getRootRelativePathString());
+      hasError=true;
+    }
+  }
+  Multiset<Artifact> extResources=HashMultiset.create();
+  extResources.addAll(ruleContext.getPrerequisiteArtifacts("ext_resources",Mode.TARGET).list());
+  extResources.addAll(ruleContext.getPrerequisiteArtifacts("ext_strings",Mode.TARGET).list());
+  for (  Multiset.Entry<Artifact> entry : extResources.entrySet()) {
+    if (entry.getCount() > 1) {
+      ruleContext.ruleError("The same file was included multiple times in this rule: " + entry.getElement().getRootRelativePathString());
+      hasError=true;
+    }
+  }
+  if (hasError) {
+    throw new RuleErrorException();
+  }
+}

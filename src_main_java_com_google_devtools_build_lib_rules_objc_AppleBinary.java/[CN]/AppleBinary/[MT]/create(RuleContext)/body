@@ -6,6 +6,7 @@
   IntermediateArtifacts ruleIntermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   NestedSetBuilder<Artifact> binariesToLipo=NestedSetBuilder.<Artifact>stableOrder();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(ruleIntermediateArtifacts.combinedArchitectureBinary());
+  ObjcProvider.Builder objcProviderBuilder=new ObjcProvider.Builder();
   for (  BuildConfiguration childConfig : childConfigurations) {
     IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext,childConfig);
     ObjcCommon common=common(ruleContext,childConfig,intermediateArtifacts,nullToEmptyList(configToDepsCollectionMap.get(childConfig)),nullToEmptyList(configurationToNonPropagatedObjcMap.get(childConfig)));
@@ -30,9 +31,12 @@
     }
     new CompilationSupport(ruleContext,childConfig).registerCompileAndArchiveActions(common).registerLinkActions(common.getObjcProvider(),j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,new ExtraLinkArgs(),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
     ruleContext.assertNoErrors();
+    objcProviderBuilder.addTransitiveAndPropagate(common.getObjcProvider());
   }
   AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   new LipoSupport(ruleContext).registerCombineArchitecturesAction(binariesToLipo.build(),ruleIntermediateArtifacts.combinedArchitectureBinary(),appleConfiguration.getMultiArchPlatform(platformType));
   RuleConfiguredTargetBuilder targetBuilder=ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build());
+  objcProviderBuilder.add(MULTI_ARCH_LINKED_BINARIES,ruleIntermediateArtifacts.combinedArchitectureBinary());
+  targetBuilder.addProvider(ObjcProvider.class,objcProviderBuilder.build());
   return targetBuilder.build();
 }

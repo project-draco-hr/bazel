@@ -1,0 +1,15 @@
+{
+  registerActions();
+  ReleaseBundling.Builder releaseBundling=new ReleaseBundling.Builder().setIpaArtifact(ipaArtifact).setBundleId(attributes.bundleId()).setAppIcon(attributes.appIcon()).setProvisioningProfile(attributes.provisioningProfile()).setProvisioningProfileAttributeName(WATCH_APP_PROVISIONING_PROFILE_ATTR).setTargetDeviceFamilies(families()).setIntermediateArtifacts(intermediateArtifacts).setInfoPlistsFromRule(attributes.infoPlists()).setArtifactPrefix(artifactPrefix).setEntitlements(attributes.entitlements());
+  if (attributes.isBundleIdExplicitySpecified()) {
+    releaseBundling.setPrimaryBundleId(attributes.bundleId());
+  }
+ else {
+    releaseBundling.setFallbackBundleId(attributes.bundleId());
+  }
+  ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,depsObjcProvider,LinkedBinary.DEPENDENCIES_ONLY,watchOSVersion.getApplicationBundleDirFormat(),bundleName,WatchUtils.determineMinimumOsVersion(ObjcRuleClasses.objcConfiguration(ruleContext).getMinimumOs()),releaseBundling.build()).registerActions(DsymOutputType.APP);
+  if (xcodeProviderBuilder.isPresent()) {
+    releaseBundlingSupport.addXcodeSettings(xcodeProviderBuilder.get());
+  }
+  releaseBundlingSupport.addFilesToBuild(filesToBuild,DsymOutputType.APP).validateResources().validateAttributes().addExportedDebugArtifacts(exposedObjcProviderBuilder,DsymOutputType.APP);
+}

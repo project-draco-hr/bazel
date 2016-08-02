@@ -1,0 +1,20 @@
+{
+  ObjcProvider.Builder releaseBundlingObjcProviderBuilder=new ObjcProvider.Builder();
+  releaseBundlingObjcProviderBuilder.addTransitiveAndPropagate(attributes.binaryDependencies());
+  releaseBundlingObjcProviderBuilder.addAll(GENERAL_RESOURCE_FILE,attributes.resources()).addAll(GENERAL_RESOURCE_FILE,attributes.strings()).addAll(GENERAL_RESOURCE_DIR,ObjcCommon.xcodeStructuredResourceDirs(attributes.structuredResources())).addAll(BUNDLE_FILE,BundleableFile.flattenedRawResourceFiles(attributes.resources())).addAll(BUNDLE_FILE,BundleableFile.structuredRawResourceFiles(attributes.structuredResources())).addAll(STRINGS,attributes.strings());
+  ObjcProvider releaseBundlingObjcProvider=releaseBundlingObjcProviderBuilder.build();
+  registerWatchExtensionAutomaticPlistAction();
+  ImmutableSet<TargetDeviceFamily> families=attributes.families();
+  if (families.isEmpty()) {
+    ruleContext.attributeError(FAMILIES_ATTR,ReleaseBundling.INVALID_FAMILIES_ERROR);
+  }
+  ReleaseBundling.Builder releaseBundling=new ReleaseBundling.Builder().setIpaArtifact(ipaArtifact).setBundleId(attributes.bundleId()).setProvisioningProfile(attributes.provisioningProfile()).setProvisioningProfileAttributeName(WATCH_EXT_PROVISIONING_PROFILE_ATTR).setTargetDeviceFamilies(families).setIntermediateArtifacts(intermediateArtifacts).setInfoPlistsFromRule(attributes.infoPlists()).addInfoplistInput(intermediateArtifacts.watchExtensionAutomaticPlist()).setEntitlements(attributes.entitlements());
+  if (attributes.isBundleIdExplicitySpecified()) {
+    releaseBundling.setPrimaryBundleId(attributes.bundleId());
+  }
+ else {
+    releaseBundling.setFallbackBundleId(attributes.bundleId());
+  }
+  ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,releaseBundlingObjcProvider,LinkedBinary.DEPENDENCIES_ONLY,ReleaseBundlingSupport.EXTENSION_BUNDLE_DIR_FORMAT,bundleName,WatchUtils.determineMinimumOsVersion(ObjcRuleClasses.objcConfiguration(ruleContext).getMinimumOs()),releaseBundling.build());
+  releaseBundlingSupport.registerActions(DsymOutputType.APP).validateResources().validateAttributes();
+}
