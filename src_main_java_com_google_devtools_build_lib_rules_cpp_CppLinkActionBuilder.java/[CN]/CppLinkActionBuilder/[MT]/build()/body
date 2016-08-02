@@ -8,14 +8,6 @@
   final Iterable<Artifact> filteredNonLibraryArtifacts=CppLinkAction.filterLinkerInputArtifacts(LinkerInputs.toLibraryArtifacts(nonLibraries));
   final Iterable<LinkerInput> linkerInputs=IterablesChain.<LinkerInput>builder().add(ImmutableList.copyOf(CppLinkAction.filterLinkerInputs(nonLibraries))).add(ImmutableIterable.from(Link.mergeInputsCmdLine(uniqueLibraries,needWholeArchive,cppConfiguration.archiveType()))).build();
   final ImmutableSet<String> features=(ruleContext == null) ? ImmutableSet.<String>of() : ruleContext.getFeatures();
-  if (featureConfiguration == null) {
-    if (toolchain != null) {
-      featureConfiguration=CcCommon.configureFeatures(ruleContext,toolchain,CcLibraryHelper.SourceCategory.CC);
-    }
- else {
-      featureConfiguration=CcCommon.configureFeatures(ruleContext);
-    }
-  }
   final LibraryToLink outputLibrary=LinkerInputs.newInputLibrary(output,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
   final LibraryToLink interfaceOutputLibrary=(interfaceOutput == null) ? null : LinkerInputs.newInputLibrary(interfaceOutput,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
   final ImmutableMap<Artifact,Artifact> linkstampMap=mapLinkstampsToOutputs(linkstamps,ruleContext,configuration,output,linkArtifactFactory);
@@ -35,30 +27,11 @@
  else {
     actionOutputs=constructOutputs(outputLibrary.getArtifact(),linkstampMap.values(),interfaceOutputLibrary == null ? null : interfaceOutputLibrary.getArtifact(),symbolCounts);
   }
-  ImmutableList<LinkerInput> runtimeLinkerInputs=ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs));
-  Variables.Builder buildVariablesBuilder=new Variables.Builder();
-  CppLinkVariablesExtension variablesExtension=isLTOIndexing ? new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,null) : new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,outputLibrary.getArtifact());
-  variablesExtension.addVariables(buildVariablesBuilder);
-  Variables buildVariables=buildVariablesBuilder.build();
   PathFragment paramRootPath=ParameterFile.derivePath(outputLibrary.getArtifact().getRootRelativePath(),(isLTOIndexing) ? "lto" : "2");
   @Nullable final Artifact paramFile=canSplitCommandLine() ? linkArtifactFactory.create(ruleContext,configuration,paramRootPath) : null;
-  Preconditions.checkArgument(linkType != LinkTargetType.INTERFACE_DYNAMIC_LIBRARY,"you can't link an interface dynamic library directly");
-  if (linkType != LinkTargetType.DYNAMIC_LIBRARY) {
-    Preconditions.checkArgument(interfaceOutput == null,"interface output may only be non-null for dynamic library links");
-  }
-  if (linkType.isStaticLibraryLink()) {
-    runtimeSolibDir=null;
-    Preconditions.checkArgument(linkStaticness == LinkStaticness.FULLY_STATIC,"static library link must be static");
-    Preconditions.checkArgument(symbolCounts == null,"the symbol counts output must be null for static links");
-    Preconditions.checkArgument(!isNativeDeps,"the native deps flag must be false for static links");
-    Preconditions.checkArgument(!needWholeArchive,"the need whole archive flag must be false for static links");
-  }
-  LinkCommandLine.Builder linkCommandLineBuilder=new LinkCommandLine.Builder(configuration,getOwner(),ruleContext).setLinkerInputs(linkerInputs).setRuntimeInputs(runtimeLinkerInputs).setLinkTargetType(linkType).setLinkStaticness(linkStaticness).setFeatures(features).setRuntimeSolibDir(linkType.isStaticLibraryLink() ? null : runtimeSolibDir).setNativeDeps(isNativeDeps).setUseTestOnlyFlags(useTestOnlyFlags).setParamFile(paramFile).setToolchain(toolchain).setBuildVariables(buildVariables).setFeatureConfiguration(featureConfiguration);
-  if (needWholeArchive) {
-    linkCommandLineBuilder.setNoWholeArchiveFlags(variablesExtension.getNoWholeArchiveInputs());
-  }
+  LinkCommandLine.Builder linkCommandLineBuilder=new LinkCommandLine.Builder(configuration,getOwner(),ruleContext).setActionName(getActionName()).setLinkerInputs(linkerInputs).setRuntimeInputs(ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs))).setLinkTargetType(linkType).setLinkStaticness(linkStaticness).setFeatures(features).setRuntimeSolibDir(linkType.isStaticLibraryLink() ? null : runtimeSolibDir).setNativeDeps(isNativeDeps).setUseTestOnlyFlags(useTestOnlyFlags).setNeedWholeArchive(needWholeArchive).setParamFile(paramFile).setAllLTOArtifacts(isLTOIndexing ? null : allLTOArtifacts).setToolchain(toolchain).setFeatureConfiguration(featureConfiguration);
   if (!isLTOIndexing) {
-    linkCommandLineBuilder.setOutput(outputLibrary.getArtifact()).setInterfaceOutput(interfaceOutput).setBuildInfoHeaderArtifacts(buildInfoHeaderArtifacts).setInterfaceSoBuilder(getInterfaceSoBuilder()).setLinkstamps(linkstampMap).setLinkopts(ImmutableList.copyOf(linkopts)).addLinkstampCompileOptions(linkstampOptions);
+    linkCommandLineBuilder.setOutput(outputLibrary.getArtifact()).setInterfaceOutput(interfaceOutput).setSymbolCountsOutput(symbolCounts).setBuildInfoHeaderArtifacts(buildInfoHeaderArtifacts).setInterfaceSoBuilder(getInterfaceSoBuilder()).setLinkstamps(linkstampMap).setLinkopts(ImmutableList.copyOf(linkopts)).addLinkstampCompileOptions(linkstampOptions);
   }
  else {
     List<String> opts=new ArrayList<>(linkopts);
@@ -78,6 +51,9 @@
     dependencyInputsBuilder.addAll(buildInfoHeaderArtifacts);
     dependencyInputsBuilder.addAll(linkstamps);
     dependencyInputsBuilder.addTransitive(compilationInputs.build());
+  }
+  if (featureConfiguration == null) {
+    this.featureConfiguration=new FeatureConfiguration();
   }
   Iterable<Artifact> expandedInputs=LinkerInputs.toLibraryArtifacts(Link.mergeInputsDependencies(uniqueLibraries,needWholeArchive,cppConfiguration.archiveType()));
   Iterable<Artifact> expandedNonLibraryInputs=LinkerInputs.toLibraryArtifacts(nonLibraries);
@@ -103,7 +79,7 @@
     for (    LTOBackendArtifacts a : allLTOArtifacts) {
       List<String> argv=new ArrayList<>();
       argv.addAll(cppConfiguration.getLinkOptions());
-      argv.addAll(featureConfiguration.getCommandLine(getActionName(),Variables.EMPTY));
+      argv.addAll(featureConfiguration.getCommandLine(getActionName(),buildVariables));
       argv.addAll(cppConfiguration.getCompilerOptions(features));
       a.setCommandLine(argv);
     }
