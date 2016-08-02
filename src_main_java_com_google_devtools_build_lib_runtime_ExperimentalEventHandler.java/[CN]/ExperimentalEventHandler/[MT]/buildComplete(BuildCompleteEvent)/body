@@ -1,13 +1,15 @@
 {
-  if (showTimestamp) {
-    stateTracker.buildComplete(event,TIMESTAMP_FORMAT.print(clock.currentTimeMillis()));
-  }
+synchronized (this) {
+    if (showTimestamp) {
+      stateTracker.buildComplete(event,TIMESTAMP_FORMAT.print(clock.currentTimeMillis()));
+    }
  else {
-    stateTracker.buildComplete(event);
+      stateTracker.buildComplete(event);
+    }
+    ignoreRefreshLimitOnce();
+    refresh();
+    buildComplete=true;
   }
-  ignoreRefreshLimitOnce();
-  refresh();
-  buildComplete=true;
   stopUpdateThread();
   flushStdOutStdErrBuffers();
 }
