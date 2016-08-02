@@ -19,7 +19,13 @@
     }
     eventReader.close();
   }
-   ImmutableSet<String> idResources=newIds.build();
+ catch (  XMLStreamException e) {
+    throw new XMLStreamException(source + ": " + e.getMessage(),e.getLocation(),e);
+  }
+catch (  RuntimeException e) {
+    throw new RuntimeException("Error parsing " + source,e);
+  }
+  ImmutableSet<String> idResources=newIds.build();
   overwritingConsumer.consume(fileKey,DataValueFile.of(source));
   for (  String id : idResources) {
     combiningConsumer.consume(fqnFactory.create(ResourceType.ID,id),DataResourceXml.createWithNoNamespace(source,IdXmlResourceValue.of()));
