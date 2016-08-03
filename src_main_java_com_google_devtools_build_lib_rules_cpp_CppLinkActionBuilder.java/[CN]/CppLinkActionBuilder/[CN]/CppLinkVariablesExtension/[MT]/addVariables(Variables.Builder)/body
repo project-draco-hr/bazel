@@ -1,0 +1,34 @@
+{
+  if (symbolCounts != null) {
+    buildVariables.addVariable(SYMBOL_COUNTS_OUTPUT_VARIABLE,symbolCounts.getExecPathString());
+  }
+  ImmutableSet.Builder<String> linkstampPaths=ImmutableSet.<String>builder();
+  for (  Artifact linkstampOutput : linkstampMap.values()) {
+    linkstampPaths.add(linkstampOutput.getExecPathString());
+  }
+  buildVariables.addSequenceVariable(LINKSTAMP_PATHS_VARIABLE,linkstampPaths.build());
+  boolean forcePic=cppConfiguration.forcePic();
+  if (forcePic) {
+    buildVariables.addVariable(FORCE_PIC_VARIABLE,"");
+  }
+  if (linkArgCollector.getRpathRoot() != null) {
+    buildVariables.addVariable(RUNTIME_ROOT_FLAGS_VARIABLE,linkArgCollector.getRpathRoot());
+  }
+  if (linkArgCollector.getRpathEntries() != null) {
+    buildVariables.addSequenceVariable(RUNTIME_ROOT_ENTRIES_VARIABLE,linkArgCollector.getRpathEntries());
+  }
+  buildVariables.addSequenceVariable(LIBOPTS_VARIABLE,linkArgCollector.getLibopts());
+  buildVariables.addSequenceVariable(LINKER_INPUT_PARAMS_VARIABLE,linkArgCollector.getLinkerInputParams());
+  buildVariables.addSequenceVariable(WHOLE_ARCHIVE_LINKER_INPUT_PARAMS_VARIABLE,linkArgCollector.getWholeArchiveLinkerInputParams());
+  if (needWholeArchive) {
+    buildVariables.addVariable(GLOBAL_WHOLE_ARCHIVE_VARIABLE,"");
+  }
+  if (linkStaticness == LinkStaticness.MOSTLY_STATIC && cppConfiguration.skipStaticOutputs()) {
+    buildVariables.addVariable(SKIP_MOSTLY_STATIC_VARIABLE,"");
+  }
+  if (this.outputArtifact != null) {
+    buildVariables.addVariable(OUTPUT_EXECPATH_VARIABLE,this.outputArtifact.getExecPathString());
+  }
+  buildVariables.addAllVariables(CppHelper.getToolchain(ruleContext).getBuildVariables()).build();
+  CppHelper.getFdoSupport(ruleContext).getLinkOptions(featureConfiguration,buildVariables);
+}

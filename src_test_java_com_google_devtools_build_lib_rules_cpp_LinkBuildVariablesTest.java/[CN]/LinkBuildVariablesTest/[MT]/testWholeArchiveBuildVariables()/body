@@ -1,0 +1,8 @@
+{
+  scratch.file("x/BUILD","cc_binary(","   name = 'bin.so',","   srcs = ['a.cc'],","   linkopts = ['-shared'],","   linkstatic = 1",")");
+  scratch.file("x/a.cc");
+  ConfiguredTarget target=getConfiguredTarget("//x:bin.so");
+  Variables variables=getLinkBuildVariables(target,Link.LinkTargetType.EXECUTABLE);
+  List<String> variableValue=getVariableValue(variables,CppLinkActionBuilder.GLOBAL_WHOLE_ARCHIVE_VARIABLE);
+  assertThat(variableValue).contains("");
+}
