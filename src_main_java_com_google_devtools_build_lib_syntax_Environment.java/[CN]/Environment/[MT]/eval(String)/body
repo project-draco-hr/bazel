@@ -1,13 +1,12 @@
 {
-  Object last=null;
-  for (  Statement statement : parseFile(input)) {
-    if (statement instanceof ExpressionStatement) {
-      last=((ExpressionStatement)statement).getExpression().eval(this);
-    }
- else {
-      statement.exec(this);
-      last=null;
-    }
+  BuildFileAST ast;
+  if (isSkylark) {
+    ast=BuildFileAST.parseSkylarkString(eventHandler,input);
+    ValidationEnvironment valid=new ValidationEnvironment(this);
+    valid.validateAst(ast.getStatements(),eventHandler);
   }
-  return last;
+ else {
+    ast=BuildFileAST.parseBuildString(eventHandler,input);
+  }
+  return ast.eval(this);
 }

@@ -2,17 +2,6 @@
   Lexer lexer=new Lexer(input,eventHandler,false);
   Parser parser=new Parser(lexer,eventHandler,SKYLARK);
   List<Statement> statements=parser.parseFileInput();
-  boolean hasSemanticalErrors=false;
-  try {
-    if (validationEnvironment != null) {
-      validationEnvironment.validateAst(statements);
-    }
-  }
- catch (  EvalException e) {
-    if (!e.isDueToIncompleteAST()) {
-      eventHandler.handle(Event.error(e.getLocation(),e.getMessage()));
-    }
-    hasSemanticalErrors=true;
-  }
+  boolean hasSemanticalErrors=validationEnvironment == null ? false : !validationEnvironment.validateAst(statements,eventHandler);
   return new ParseResult(statements,parser.comments,locationFromStatements(lexer,statements),parser.errorsCount > 0 || lexer.containsErrors() || hasSemanticalErrors);
 }

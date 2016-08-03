@@ -1,8 +1,8 @@
 {
-  Parser.ParseResult result=parseFileWithComments("# 1","# 2","","# 4 ","# 5","#","# 7 ","# 8","genrule(name = 'foo',","   srcs = ['input.csv'],","   # 11","   outs = [ 'result.txt',","           'result.log'], # 13","   cmd = 'touch result.txt result.log')","# 15");
-  assertThat(result.statements).hasSize(1);
+  BuildFileAST result=parseFileWithComments("# 1","# 2","","# 4 ","# 5","#","# 7 ","# 8","genrule(name = 'foo',","   srcs = ['input.csv'],","   # 11","   outs = [ 'result.txt',","           'result.log'], # 13","   cmd = 'touch result.txt result.log')","# 15");
+  assertThat(result.getStatements()).hasSize(1);
   StringBuilder commentLines=new StringBuilder();
-  for (  Comment comment : result.comments) {
+  for (  Comment comment : result.getComments()) {
     assertEquals(comment.getLocation().getStartLineAndColumn().getLine() + " ends on " + comment.getLocation().getEndLineAndColumn().getLine(),comment.getLocation().getStartLineAndColumn().getLine(),comment.getLocation().getEndLineAndColumn().getLine());
     commentLines.append('(');
     commentLines.append(comment.getLocation().getStartLineAndColumn().getLine());
@@ -10,5 +10,5 @@
     commentLines.append(comment.getLocation().getStartLineAndColumn().getColumn());
     commentLines.append(") ");
   }
-  assertWithMessage("Found: " + commentLines).that(result.comments.size()).isEqualTo(10);
+  assertWithMessage("Found: " + commentLines).that(result.getComments().size()).isEqualTo(10);
 }
