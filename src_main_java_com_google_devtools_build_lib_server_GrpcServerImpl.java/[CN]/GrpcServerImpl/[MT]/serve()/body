@@ -1,7 +1,13 @@
 {
   Preconditions.checkState(!serving);
-  server=NettyServerBuilder.forAddress(new InetSocketAddress("localhost",port)).addService(commandServer).build();
-  server.start();
+  InetSocketAddress address=new InetSocketAddress("[::1]",port);
+  try {
+    server=NettyServerBuilder.forAddress(address).addService(commandServer).build().start();
+  }
+ catch (  BindException e) {
+    address=new InetSocketAddress("127.0.0.1",port);
+    server=NettyServerBuilder.forAddress(address).addService(commandServer).build().start();
+  }
   if (maxIdleSeconds > 0) {
     Thread timeoutThread=new Thread(new Runnable(){
       @Override public void run(){
@@ -13,7 +19,7 @@
     timeoutThread.start();
   }
   serving=true;
-  writeServerFile(PORT_FILE,getAddressString());
+  writeServerFile(PORT_FILE,InetAddresses.toUriString(address.getAddress()) + ":" + server.getPort());
   writeServerFile(REQUEST_COOKIE_FILE,requestCookie);
   writeServerFile(RESPONSE_COOKIE_FILE,responseCookie);
   try {
