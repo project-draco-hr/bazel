@@ -11,14 +11,15 @@
  catch (  NoSuchPackageException|IOException|EvalException e) {
     throw new PackageLookupFunctionException(new BuildFileNotFoundException(id,e.getMessage()),Transience.PERSISTENT);
   }
-  PathFragment buildFileFragment=id.getPackageFragment().getChild("BUILD");
+  BuildFileName buildFileName=BuildFileName.BUILD;
+  PathFragment buildFileFragment=id.getPackageFragment().getChild(buildFileName.getFilename());
   RootedPath buildFileRootedPath=RootedPath.toRootedPath(repositoryValue.getPath(),buildFileFragment);
   FileValue fileValue=getFileValue(buildFileRootedPath,env,packageIdentifier);
   if (fileValue == null) {
     return null;
   }
   if (fileValue.isFile()) {
-    return PackageLookupValue.success(repositoryValue.getPath());
+    return PackageLookupValue.success(repositoryValue.getPath(),buildFileName);
   }
   return PackageLookupValue.NO_BUILD_FILE_VALUE;
 }

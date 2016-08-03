@@ -1,6 +1,5 @@
 {
   PackageIdentifier packageId=(PackageIdentifier)key.argument();
-  PathFragment packageNameFragment=packageId.getPackageFragment();
   SkyKey packageLookupKey=PackageLookupValue.key(packageId);
   PackageLookupValue packageLookupValue;
   try {
@@ -38,8 +37,7 @@ Package externalPkg=externalPackage.getPackage();
 if (externalPkg.containsErrors()) {
 throw new PackageFunctionException(new BuildFileContainsErrorsException(Label.EXTERNAL_PACKAGE_IDENTIFIER),Transience.PERSISTENT);
 }
-PathFragment buildFileFragment=packageNameFragment.getChild("BUILD");
-RootedPath buildFileRootedPath=RootedPath.toRootedPath(packageLookupValue.getRoot(),buildFileFragment);
+RootedPath buildFileRootedPath=packageLookupValue.getRootedPath(packageId);
 FileValue buildFileValue=null;
 Path buildFilePath=buildFileRootedPath.asPath();
 String replacementContents=null;
