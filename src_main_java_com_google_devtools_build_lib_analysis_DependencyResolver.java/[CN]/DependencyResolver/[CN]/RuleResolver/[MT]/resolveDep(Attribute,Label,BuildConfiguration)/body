@@ -4,9 +4,18 @@
     return;
   }
   BuildConfiguration.TransitionApplier transitionApplier=config.getTransitionApplier();
+  boolean applyNullTransition=false;
   if (BuildConfiguration.usesNullConfiguration(toTarget)) {
     transitionApplier.applyTransition(Attribute.ConfigurationTransition.NULL);
+    applyNullTransition=true;
   }
-  Dependency dep=Iterables.getOnlyElement(transitionApplier.getDependencies(depLabel,requiredAspects(aspect,attribute,toTarget,rule)));
+  ImmutableSet<AspectDescriptor> aspects=requiredAspects(aspect,attribute,toTarget,rule);
+  Dependency dep;
+  if (config.useDynamicConfigurations() && !applyNullTransition) {
+    dep=Dependency.withConfigurationAndAspects(depLabel,config,aspects);
+  }
+ else {
+    dep=Iterables.getOnlyElement(transitionApplier.getDependencies(depLabel,aspects));
+  }
   outgoingEdges.put(attribute,dep);
 }
