@@ -1,0 +1,17 @@
+{
+  Executor executor=actionExecutionContext.getExecutor();
+  try (AutoProfiler p=AutoProfiler.logged("running " + action.prettyPrint(),LOG,100)){
+    try {
+      SymlinkTreeHelper helper=new SymlinkTreeHelper(action.getInputManifest().getPath(),action.getOutputManifest().getPath().getParentDirectory(),action.isFilesetTree());
+      if (outputService != null && outputService.canCreateSymlinkTree()) {
+        outputService.createSymlinkTree(action.getInputManifest().getPath(),action.getOutputManifest().getPath(),action.isFilesetTree(),action.getOutputManifest().getExecPath().getParentDirectory());
+      }
+ else {
+        helper.createSymlinks(action,actionExecutionContext,binTools,shellEnvironment,enableRunfiles);
+      }
+    }
+ catch (    ExecException e) {
+      throw e.toActionExecutionException(action.getProgressMessage(),executor.getVerboseFailures(),action);
+    }
+  }
+ }

@@ -1,0 +1,17 @@
+{
+  if (enableRunfiles) {
+    List<String> args=getSpawnArgumentList(actionExecutionContext.getExecutor().getExecRoot(),binTools);
+    try (ResourceHandle handle=ResourceManager.instance().acquireResources(action,RESOURCE_SET)){
+      actionExecutionContext.getExecutor().getSpawnActionContext(action.getMnemonic()).exec(new BaseSpawn.Local(args,shellEnvironment,action),actionExecutionContext);
+    }
+   }
+ else {
+    try {
+      FileSystemUtils.createDirectoryAndParents(symlinkTreeRoot);
+      FileSystemUtils.copyFile(inputManifest,symlinkTreeRoot.getChild("MANIFEST"));
+    }
+ catch (    IOException e) {
+      throw new UserExecException(e.getMessage(),e);
+    }
+  }
+}
