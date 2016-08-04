@@ -1,0 +1,57 @@
+{
+  ImmutableList.Builder<Object> builder=ImmutableList.builder();
+  Class<?>[] params=method.getMethod().getParameterTypes();
+  SkylarkCallable callable=method.getAnnotation();
+  int i=0;
+  int nbPositional=callable.mandatoryPositionals();
+  if (nbPositional < 0) {
+    if (callable.parameters().length > 0) {
+      nbPositional=0;
+    }
+ else {
+      nbPositional=params.length;
+    }
+  }
+  if (nbPositional > args.size() || args.size() > nbPositional + callable.parameters().length) {
+    return null;
+  }
+  for (  Class<?> param : params) {
+    Object value=args.get(i);
+    if (!param.isAssignableFrom(value.getClass())) {
+      return null;
+    }
+    builder.add(value);
+    i++;
+    if (nbPositional >= 0 && i >= nbPositional) {
+      break;
+    }
+  }
+  Set<String> keys=new HashSet<>(kwargs.keySet());
+  for (  Param param : callable.parameters()) {
+    SkylarkType type=getType(param);
+    if (i < args.size()) {
+      if (!param.positional() || !type.contains(args.get(i))) {
+        return null;
+      }
+      builder.add(args.get(i));
+      i++;
+    }
+ else     if (param.named() && keys.remove(param.name())) {
+      Object value=kwargs.get(param.name());
+      if (!type.contains(value)) {
+        return null;
+      }
+      builder.add(value);
+    }
+ else {
+      if (param.defaultValue().isEmpty()) {
+        return null;
+      }
+      builder.add(SkylarkSignatureProcessor.getDefaultValue(param,null));
+    }
+  }
+  if (i < args.size() || !keys.isEmpty()) {
+    return null;
+  }
+  return builder.build();
+}

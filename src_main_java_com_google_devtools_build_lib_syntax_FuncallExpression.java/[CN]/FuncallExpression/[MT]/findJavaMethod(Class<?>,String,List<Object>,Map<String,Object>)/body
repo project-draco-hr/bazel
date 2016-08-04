@@ -1,0 +1,23 @@
+{
+  Pair<MethodDescriptor,List<Object>> matchingMethod=null;
+  List<MethodDescriptor> methods=getMethods(objClass,methodName,getLocation());
+  if (methods != null) {
+    for (    MethodDescriptor method : methods) {
+      if (!method.getAnnotation().structField()) {
+        List<Object> resultArgs=convertArgumentList(args,kwargs,method);
+        if (resultArgs != null) {
+          if (matchingMethod == null) {
+            matchingMethod=new Pair<>(method,resultArgs);
+          }
+ else {
+            throw new EvalException(getLocation(),String.format("Type %s has multiple matches for %s",EvalUtils.getDataTypeNameFromClass(objClass),formatMethod(args,kwargs)));
+          }
+        }
+      }
+    }
+  }
+  if (matchingMethod == null) {
+    throw new EvalException(getLocation(),String.format("Type %s has no %s",EvalUtils.getDataTypeNameFromClass(objClass),formatMethod(args,kwargs)));
+  }
+  return matchingMethod;
+}
