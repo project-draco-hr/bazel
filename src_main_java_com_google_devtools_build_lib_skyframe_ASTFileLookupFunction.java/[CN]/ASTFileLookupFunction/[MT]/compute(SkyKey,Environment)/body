@@ -44,7 +44,9 @@ catch (  InconsistentFilesystemException e) {
     long astFileSize=fileValue.getSize();
     if (parseAsSkylark) {
       try (Mutability mutability=Mutability.create("validate")){
-        ast=BuildFileAST.parseSkylarkFile(path,astFileSize,env.getListener(),new ValidationEnvironment(ruleClassProvider.createSkylarkRuleClassEnvironment(fileLabel,mutability,env.getListener(),null,null).setupDynamic(Runtime.PKG_NAME,Runtime.NONE).setupDynamic(Runtime.REPOSITORY_NAME,Runtime.NONE)));
+        ValidationEnvironment validationEnv=new ValidationEnvironment(ruleClassProvider.createSkylarkRuleClassEnvironment(fileLabel,mutability,env.getListener(),null,null).setupDynamic(Runtime.PKG_NAME,Runtime.NONE).setupDynamic(Runtime.REPOSITORY_NAME,Runtime.NONE));
+        ast=BuildFileAST.parseSkylarkFile(path,astFileSize,env.getListener());
+        ast=ast.validate(validationEnv,env.getListener());
       }
      }
  else {
