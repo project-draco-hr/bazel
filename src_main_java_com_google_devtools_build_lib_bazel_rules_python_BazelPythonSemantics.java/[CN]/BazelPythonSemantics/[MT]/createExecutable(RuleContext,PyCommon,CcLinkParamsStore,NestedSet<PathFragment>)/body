@@ -1,5 +1,6 @@
 {
-  String main=common.determineMainExecutableSource();
+  String main=common.determineMainExecutableSource(true);
+  Artifact executable=common.getExecutable();
   BazelPythonConfiguration config=ruleContext.getFragment(BazelPythonConfiguration.class);
   String pythonBinary;
 switch (common.getVersion()) {
@@ -12,5 +13,22 @@ break;
 default :
 throw new IllegalStateException();
 }
-ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),common.getExecutable(),STUB_TEMPLATE,ImmutableList.of(Substitution.of("%main%",main),Substitution.of("%python_binary%",pythonBinary),Substitution.of("%imports%",Joiner.on(":").join(imports)),Substitution.of("%workspace_name%",ruleContext.getWorkspaceName())),true));
+if (!ruleContext.getConfiguration().buildPythonZip()) {
+ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),executable,STUB_TEMPLATE,ImmutableList.of(Substitution.of("%main%",main),Substitution.of("%python_binary%",pythonBinary),Substitution.of("%imports%",Joiner.on(":").join(imports)),Substitution.of("%workspace_name%",ruleContext.getWorkspaceName())),true));
+}
+ else {
+Artifact zipFile=common.getPythonZipArtifact();
+PathFragment workspaceName=getWorkspaceNameForPythonZip(ruleContext.getWorkspaceName());
+PathFragment defaultWorkspacename=new PathFragment(Label.DEFAULT_REPOSITORY_DIRECTORY);
+StringBuilder importPaths=new StringBuilder();
+importPaths.append(File.pathSeparator).append("$0/").append(workspaceName);
+for (PathFragment path : imports) {
+if (path.startsWith(defaultWorkspacename)) {
+path=new PathFragment(workspaceName,path.subFragment(1,path.segmentCount()));
+}
+importPaths.append(File.pathSeparator).append("$0/").append(path.toString());
+}
+String zipHeader="#!/bin/sh\n" + "export PYTHONPATH=\"$PYTHONPATH" + importPaths + "\"\n"+ "exec "+ pythonBinary+ " $0 $@\n";
+ruleContext.registerAction(new SpawnAction.Builder().addInput(zipFile).addOutput(executable).setShellCommand("echo '" + zipHeader + "' | cat - "+ zipFile.getExecPathString()+ " > "+ executable.getExecPathString()).useDefaultShellEnvironment().setMnemonic("BuildBinary").build(ruleContext));
+}
 }

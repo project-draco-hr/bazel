@@ -1,0 +1,20 @@
+{
+  NestedSetBuilder<Artifact> inputsBuilder=NestedSetBuilder.stableOrder();
+  PathFragment workspaceName=getWorkspaceNameForPythonZip(ruleContext.getWorkspaceName());
+  CustomCommandLine.Builder argv=new CustomCommandLine.Builder();
+  argv.add("__main__.py=" + main);
+  argv.add("__init__.py=");
+  argv.add(getRunfilesPath("__init__.py",workspaceName) + "=");
+  for (  String path : runfilesSupport.getRunfiles().getEmptyFilenames()) {
+    argv.add(getRunfilesPath(path,workspaceName) + "=");
+  }
+  for (  Artifact artifact : runfilesSupport.getRunfiles().getArtifacts()) {
+    if (!artifact.equals(executable)) {
+      argv.add(getRunfilesPath(artifact.getExecPath(),workspaceName) + "=" + artifact.getExecPathString());
+      inputsBuilder.add(artifact);
+    }
+  }
+  Artifact paramFile=ruleContext.getDerivedArtifact(ParameterFile.derivePath(zipFile.getRootRelativePath()),zipFile.getRoot());
+  ruleContext.registerAction(new ParameterFileWriteAction(ruleContext.getActionOwner(),paramFile,argv.build(),ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1));
+  ruleContext.registerAction(new SpawnAction.Builder().addInput(paramFile).addTransitiveInputs(inputsBuilder.build()).addOutput(zipFile).setExecutable(zipper).useDefaultShellEnvironment().addArgument("cC").addArgument(zipFile.getExecPathString()).addArgument("@" + paramFile.getExecPathString()).setMnemonic("PythonZipper").build(ruleContext));
+}

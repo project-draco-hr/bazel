@@ -1,36 +1,3 @@
 {
-  String mainSourceName;
-  Rule target=ruleContext.getRule();
-  boolean explicitMain=target.isAttributeValueExplicitlySpecified("main");
-  if (explicitMain) {
-    mainSourceName=ruleContext.attributes().get("main",BuildType.LABEL).getName();
-    if (!mainSourceName.endsWith(".py")) {
-      ruleContext.attributeError("main","main must end in '.py'");
-    }
-  }
- else {
-    String ruleName=target.getName();
-    if (ruleName.endsWith(".py")) {
-      ruleContext.attributeError("name","name must not end in '.py'");
-    }
-    mainSourceName=ruleName + ".py";
-  }
-  PathFragment mainSourcePath=new PathFragment(mainSourceName);
-  Artifact mainArtifact=null;
-  for (  Artifact outItem : ruleContext.getPrerequisiteArtifacts("srcs",Mode.TARGET).list()) {
-    if (outItem.getRootRelativePath().endsWith(mainSourcePath)) {
-      if (mainArtifact == null) {
-        mainArtifact=outItem;
-      }
- else {
-        ruleContext.attributeError("srcs",buildMultipleMainMatchesErrorText(explicitMain,mainSourceName,mainArtifact.getRunfilesPath().toString(),outItem.getRunfilesPath().toString()));
-      }
-    }
-  }
-  if (mainArtifact == null) {
-    ruleContext.attributeError("srcs",buildNoMainMatchesErrorText(explicitMain,mainSourceName));
-    return null;
-  }
-  PathFragment workspaceName=new PathFragment(ruleContext.getRule().getPackage().getWorkspaceName());
-  return workspaceName.getRelative(mainArtifact.getRunfilesPath()).getPathString();
+  return determineMainExecutableSource(true);
 }
