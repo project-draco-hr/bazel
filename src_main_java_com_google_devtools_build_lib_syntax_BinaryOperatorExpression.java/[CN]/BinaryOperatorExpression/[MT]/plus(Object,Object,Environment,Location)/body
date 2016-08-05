@@ -17,8 +17,16 @@
   if (lval instanceof SkylarkDict && rval instanceof SkylarkDict) {
     return SkylarkDict.plus((SkylarkDict<?,?>)lval,(SkylarkDict<?,?>)rval,env);
   }
-  if (lval instanceof SkylarkClassObject && rval instanceof SkylarkClassObject) {
-    return SkylarkClassObject.concat((SkylarkClassObject)lval,(SkylarkClassObject)rval,location);
+  if (lval instanceof Concatable && rval instanceof Concatable) {
+    Concatable lobj=(Concatable)lval;
+    Concatable robj=(Concatable)rval;
+    Concatter concatter=lobj.getConcatter();
+    if (concatter != null && concatter.equals(robj.getConcatter())) {
+      return concatter.concat(lobj,robj,location);
+    }
+ else {
+      throw typeException(lval,rval,Operator.PLUS,location);
+    }
   }
   if (lval instanceof SkylarkNestedSet) {
     return new SkylarkNestedSet((SkylarkNestedSet)lval,rval,location);

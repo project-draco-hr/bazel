@@ -1,0 +1,9 @@
+{
+  SkylarkClassObject lval=(SkylarkClassObject)left;
+  SkylarkClassObject rval=(SkylarkClassObject)right;
+  SetView<String> commonFields=Sets.intersection(lval.values.keySet(),rval.values.keySet());
+  if (!commonFields.isEmpty()) {
+    throw new EvalException(loc,"Cannot concat structs with common field(s): " + Joiner.on(",").join(commonFields));
+  }
+  return new SkylarkClassObject(ImmutableMap.<String,Object>builder().putAll(lval.values).putAll(rval.values).build(),loc);
+}
