@@ -1,8 +1,15 @@
 {
-  currentConfiguration.getTransitions().configurationHook(fromRule,attribute,toTarget,this);
-  Rule associatedRule=toTarget.getAssociatedRule();
-  if (associatedRule != null) {
-    @SuppressWarnings("unchecked") RuleClass.Configurator<BuildConfiguration,Rule> func=associatedRule.getRuleClassObject().<BuildConfiguration,Rule>getConfigurator();
-    currentConfiguration=func.apply(associatedRule,currentConfiguration);
+  ImmutableList.Builder<BuildConfiguration> toConfigs=ImmutableList.builder();
+  for (  BuildConfiguration currentConfig : toConfigurations) {
+    StaticTransitionApplier delegate=new StaticTransitionApplier(currentConfig);
+    currentConfig.getTransitions().configurationHook(fromRule,attribute,toTarget,delegate);
+    currentConfig=Iterables.getOnlyElement(delegate.toConfigurations);
+    Rule associatedRule=toTarget.getAssociatedRule();
+    if (associatedRule != null) {
+      @SuppressWarnings("unchecked") RuleClass.Configurator<BuildConfiguration,Rule> func=associatedRule.getRuleClassObject().<BuildConfiguration,Rule>getConfigurator();
+      currentConfig=func.apply(associatedRule,currentConfig);
+    }
+    toConfigs.add(currentConfig);
   }
+  toConfigurations=toConfigs.build();
 }

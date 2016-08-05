@@ -1,0 +1,21 @@
+{
+  if (transition == Attribute.ConfigurationTransition.NONE) {
+    return ImmutableList.<BuildOptions>of(fromOptions);
+  }
+ else   if (transition instanceof PatchTransition) {
+    return ImmutableList.<BuildOptions>of(((PatchTransition)transition).apply(fromOptions));
+  }
+ else   if (transition instanceof Attribute.SplitTransition) {
+    @SuppressWarnings("unchecked") List<BuildOptions> toOptions=((Attribute.SplitTransition<BuildOptions>)transition).split(fromOptions);
+    if (toOptions.isEmpty()) {
+      Verify.verify(transition.defaultsToSelf());
+      return ImmutableList.<BuildOptions>of(fromOptions);
+    }
+ else {
+      return toOptions;
+    }
+  }
+ else {
+    throw new IllegalStateException(String.format("unsupported dynamic transition type: %s",transition.getClass().getName()));
+  }
+}

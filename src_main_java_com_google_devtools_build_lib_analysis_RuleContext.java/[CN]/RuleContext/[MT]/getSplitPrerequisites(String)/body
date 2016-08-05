@@ -1,18 +1,18 @@
 {
   checkAttribute(attributeName,Mode.SPLIT);
   Attribute attributeDefinition=getAttribute(attributeName);
-  SplitTransition<?> transition=attributeDefinition.getSplitTransition(rule);
-  List<BuildConfiguration> configurations=getConfiguration().getTransitions().getSplitConfigurationsNoSelf(transition);
-  if (configurations.isEmpty()) {
-    return ImmutableMap.of(Optional.<String>absent(),targetMap.get(attributeName));
+  @SuppressWarnings("unchecked") SplitTransition<BuildOptions> transition=(SplitTransition<BuildOptions>)attributeDefinition.getSplitTransition(rule);
+  List<ConfiguredTarget> deps=targetMap.get(attributeName);
+  List<BuildOptions> splitOptions=transition.split(getConfiguration().getOptions());
+  if (splitOptions.isEmpty()) {
+    return ImmutableMap.of(Optional.<String>absent(),deps);
   }
   Set<String> cpus=new HashSet<>();
-  for (  BuildConfiguration config : configurations) {
-    Preconditions.checkNotNull(config.getCpu());
-    cpus.add(config.getCpu());
+  for (  BuildOptions options : splitOptions) {
+    cpus.add(Verify.verifyNotNull(options.get(BuildConfiguration.Options.class).getCpu()));
   }
   ImmutableListMultimap.Builder<Optional<String>,TransitiveInfoCollection> result=ImmutableListMultimap.builder();
-  for (  TransitiveInfoCollection t : targetMap.get(attributeName)) {
+  for (  TransitiveInfoCollection t : deps) {
     if (t.getConfiguration() != null) {
       result.put(Optional.of(t.getConfiguration().getCpu()),t);
     }
