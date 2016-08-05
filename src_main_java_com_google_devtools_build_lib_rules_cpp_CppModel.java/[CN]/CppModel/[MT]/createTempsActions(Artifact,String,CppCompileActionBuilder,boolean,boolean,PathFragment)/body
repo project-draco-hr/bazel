@@ -1,0 +1,26 @@
+{
+  if (!cppConfiguration.getSaveTemps()) {
+    return ImmutableList.of();
+  }
+  String path=source.getFilename();
+  boolean isCFile=CppFileTypes.C_SOURCE.matches(path);
+  boolean isCppFile=CppFileTypes.CPP_SOURCE.matches(path);
+  if (!isCFile && !isCppFile) {
+    return ImmutableList.of();
+  }
+  ArtifactCategory category=isCFile ? ArtifactCategory.PREPROCESSED_C_SOURCE : ArtifactCategory.PREPROCESSED_CPP_SOURCE;
+  String outputArtifactNameBase=getOutputNameBaseWith(outputName,usePic);
+  CppCompileActionBuilder dBuilder=new CppCompileActionBuilder(builder);
+  dBuilder.setOutputs(category,outputArtifactNameBase,generateDotd);
+  setupCompileBuildVariables(dBuilder,usePic,ccRelativeName,source.getExecPath(),null,null,ImmutableMap.<String,String>of());
+  semantics.finalizeCompileActionBuilder(ruleContext,dBuilder);
+  CppCompileAction dAction=dBuilder.build();
+  ruleContext.registerAction(dAction);
+  CppCompileActionBuilder sdBuilder=new CppCompileActionBuilder(builder);
+  sdBuilder.setOutputs(ArtifactCategory.GENERATED_ASSEMBLY,outputArtifactNameBase,generateDotd);
+  setupCompileBuildVariables(sdBuilder,usePic,ccRelativeName,source.getExecPath(),null,null,ImmutableMap.<String,String>of());
+  semantics.finalizeCompileActionBuilder(ruleContext,sdBuilder);
+  CppCompileAction sdAction=sdBuilder.build();
+  ruleContext.registerAction(sdAction);
+  return ImmutableList.of(dAction.getOutputFile(),sdAction.getOutputFile());
+}

@@ -1,17 +1,13 @@
 {
   Artifact result=null;
   Artifact linuxDefault=CppHelper.getLinuxLinkedArtifact(ruleContext,linkTargetType);
-  CcToolchainFeatures toolchain=CppHelper.getToolchain(ruleContext).getFeatures();
-  if (toolchain.hasPatternForArtifactCategory(linkTargetType.getLinkerOutput())) {
-    try {
-      result=toolchain.getArtifactForCategory(linkTargetType.getLinkerOutput(),ruleContext);
-    }
- catch (    ExpansionException e) {
-      ruleContext.throwWithRuleError(e.getMessage());
-    }
+  try {
+    String templatedName=features.getArtifactNameForCategory(linkTargetType.getLinkerOutput(),ruleContext,ImmutableMap.<String,String>of());
+    PathFragment artifactFragment=new PathFragment(ruleContext.getLabel().getName()).getParentDirectory().getRelative(templatedName);
+    result=ruleContext.getPackageRelativeArtifact(artifactFragment,ruleContext.getConfiguration().getBinDirectory());
   }
- else {
-    return linuxDefault;
+ catch (  ExpansionException e) {
+    ruleContext.throwWithRuleError(e.getMessage());
   }
   if (!result.equals(linuxDefault)) {
     ruleContext.registerAction(new FailAction(ruleContext.getActionOwner(),ImmutableList.of(linuxDefault),String.format("the given toolchain supports creation of %s instead of %s",linuxDefault.getExecPathString(),result.getExecPathString())));

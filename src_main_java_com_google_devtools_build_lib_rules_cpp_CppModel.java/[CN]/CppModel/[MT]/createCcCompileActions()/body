@@ -2,24 +2,22 @@
   CcCompilationOutputs.Builder result=new CcCompilationOutputs.Builder();
   Preconditions.checkNotNull(context);
   AnalysisEnvironment env=ruleContext.getAnalysisEnvironment();
-  PathFragment objectDir=CppHelper.getObjDirectory(ruleContext.getLabel());
   if (shouldProvideHeaderModules()) {
     Artifact moduleMapArtifact=context.getCppModuleMap().getArtifact();
     Label moduleMapLabel=Label.parseAbsoluteUnchecked(context.getCppModuleMap().getName());
-    PathFragment outputName=getObjectOutputPath(moduleMapArtifact,objectDir);
     CppCompileActionBuilder builder=initializeCompileAction(moduleMapArtifact,moduleMapLabel,true);
-    createSourceAction(outputName,result,env,moduleMapArtifact,builder,".pcm",".pcm.d",false,false,false,ImmutableMap.<String,String>of());
+    createSourceAction(FileSystemUtils.removeExtension(semantics.getEffectiveSourcePath(moduleMapArtifact)).getPathString(),result,env,moduleMapArtifact,builder,ArtifactCategory.CPP_MODULE,false,false,false,CppFileTypes.mustProduceDotdFile(moduleMapArtifact.getFilename()),ImmutableMap.<String,String>of());
   }
   for (  CppSource source : sourceFiles) {
     Artifact sourceArtifact=source.getSource();
     Label sourceLabel=source.getLabel();
-    PathFragment outputName=getObjectOutputPath(sourceArtifact,objectDir);
+    String outputName=FileSystemUtils.removeExtension(semantics.getEffectiveSourcePath(sourceArtifact)).getPathString();
     CppCompileActionBuilder builder=initializeCompileAction(sourceArtifact,sourceLabel,false);
     if (CppFileTypes.CPP_HEADER.matches(source.getSource().getExecPath())) {
-      createHeaderAction(outputName,result,env,builder);
+      createHeaderAction(outputName,result,env,builder,CppFileTypes.mustProduceDotdFile(sourceArtifact.getFilename()));
     }
  else {
-      createSourceAction(outputName,result,env,sourceArtifact,builder,".o",".d",true,isCodeCoverageEnabled(),cppConfiguration.useFission(),source.getBuildVariables());
+      createSourceAction(outputName,result,env,sourceArtifact,builder,ArtifactCategory.OBJECT_FILE,true,isCodeCoverageEnabled(),cppConfiguration.useFission(),CppFileTypes.mustProduceDotdFile(sourceArtifact.getFilename()),source.getBuildVariables());
     }
   }
   compilationOutputs=result.build();

@@ -1,12 +1,27 @@
 {
   CToolchain.Builder toolchainBuilder=CToolchain.newBuilder();
+  toolchainBuilder.mergeFrom(toolchain);
+  Set<ArtifactCategory> definedCategories=new HashSet<>();
+  for (  ArtifactNamePattern pattern : toolchainBuilder.getArtifactNamePatternList()) {
+    try {
+      definedCategories.add(ArtifactCategory.valueOf(pattern.getCategoryName().toUpperCase()));
+    }
+ catch (    IllegalArgumentException e) {
+      continue;
+    }
+  }
+  for (  ArtifactCategory category : ArtifactCategory.values()) {
+    if (!definedCategories.contains(category) && category.getDefaultPattern() != null) {
+      toolchainBuilder.addArtifactNamePattern(ArtifactNamePattern.newBuilder().setCategoryName(category.toString().toLowerCase()).setPattern(category.getDefaultPattern()).build());
+    }
+  }
   ImmutableSet.Builder<String> featuresBuilder=ImmutableSet.builder();
   for (  CToolchain.Feature feature : toolchain.getFeatureList()) {
     featuresBuilder.add(feature.getName());
   }
   Set<String> features=featuresBuilder.build();
   if (features.contains(CppRuleClasses.NO_LEGACY_FEATURES)) {
-    return toolchain;
+    return toolchainBuilder.build();
   }
   try {
     if (!linkActionsAreConfigured(toolchain)) {
@@ -54,6 +69,5 @@
  catch (  ParseException e) {
     throw new RuntimeException(e);
   }
-  toolchainBuilder.mergeFrom(toolchain);
   return toolchainBuilder.build();
 }
