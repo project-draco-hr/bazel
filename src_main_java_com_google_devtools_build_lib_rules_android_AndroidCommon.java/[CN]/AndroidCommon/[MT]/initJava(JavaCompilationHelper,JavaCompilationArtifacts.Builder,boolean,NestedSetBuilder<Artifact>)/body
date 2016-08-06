@@ -20,12 +20,13 @@
   helper.createSourceJarAction(srcJar,genSourceJar);
   outputDepsProto=helper.createOutputDepsProtoArtifact(classJar,javaArtifactsBuilder);
   helper.createCompileActionWithInstrumentation(classJar,manifestProtoOutput,genSourceJar,outputDepsProto,javaArtifactsBuilder);
-  compileTimeDependencyArtifacts=javaCommon.collectCompileTimeDependencyArtifacts(outputDepsProto);
   filesToBuild=filesBuilder.build();
   if ((attributes.hasSourceFiles() || attributes.hasSourceJars()) && jar != null) {
     iJar=helper.createCompileTimeJarAction(jar,javaArtifactsBuilder);
   }
-  javaCommon.setJavaCompilationArtifacts(javaArtifactsBuilder.build());
+  JavaCompilationArtifacts javaArtifacts=javaArtifactsBuilder.build();
+  compileTimeDependencyArtifacts=javaCommon.collectCompileTimeDependencyArtifacts(javaArtifacts.getCompileTimeDependencyArtifact());
+  javaCommon.setJavaCompilationArtifacts(javaArtifacts);
   javaCommon.setClassPathFragment(new ClasspathConfiguredFragment(javaCommon.getJavaCompilationArtifacts(),attributes,asNeverLink,helper.getBootclasspathOrDefault()));
   transitiveNeverlinkLibraries=collectTransitiveNeverlinkLibraries(ruleContext,javaCommon.getDependencies(),javaCommon.getJavaCompilationArtifacts().getRuntimeJars());
   topLevelSourceJars=ImmutableList.of(srcJar);
