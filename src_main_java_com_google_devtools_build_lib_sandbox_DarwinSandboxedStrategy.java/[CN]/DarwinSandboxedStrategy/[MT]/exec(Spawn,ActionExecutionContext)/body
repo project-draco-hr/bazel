@@ -1,0 +1,45 @@
+{
+  Executor executor=actionExecutionContext.getExecutor();
+  if (!spawn.isRemotable()) {
+    StandaloneSpawnStrategy standaloneStrategy=Preconditions.checkNotNull(executor.getContext(StandaloneSpawnStrategy.class));
+    standaloneStrategy.exec(spawn,actionExecutionContext);
+    return;
+  }
+  if (executor.reportsSubcommands()) {
+    executor.reportSubcommand(Label.print(spawn.getOwner().getLabel()) + " [" + spawn.getResourceOwner().prettyPrint()+ "]",spawn.asShellCommand(executor.getExecRoot()));
+  }
+  executor.getEventBus().post(ActionStatusMessage.runningStrategy(spawn.getResourceOwner(),"sandbox"));
+  FileOutErr outErr=actionExecutionContext.getFileOutErr();
+  String execId=uuid + "-" + execCounter.getAndIncrement();
+  Path sandboxPath=blazeDirs.getOutputBase().getRelative(productName + "-sandbox").getRelative(execId);
+  ImmutableSet<PathFragment> createDirs=createImportantDirs(spawn.getEnvironment(),sandboxPath);
+  int timeout=getTimeout(spawn);
+  ImmutableSet.Builder<PathFragment> outputFiles=ImmutableSet.<PathFragment>builder();
+  final DarwinSandboxRunner runner=getRunnerForExec(spawn,actionExecutionContext,sandboxPath,createDirs,outputFiles);
+  try {
+    runner.run(spawn.getArguments(),spawn.getEnvironment(),outErr,outputFiles.build(),timeout);
+  }
+ catch (  IOException e) {
+    throw new UserExecException("I/O error during sandboxed execution",e);
+  }
+ finally {
+    backgroundWorkers.execute(new Runnable(){
+      @Override public void run(){
+        try {
+          while (!Thread.currentThread().isInterrupted()) {
+            try {
+              runner.cleanup();
+              return;
+            }
+ catch (            IOException e2) {
+              Thread.sleep(250);
+            }
+          }
+        }
+ catch (        InterruptedException e) {
+        }
+      }
+    }
+);
+  }
+}

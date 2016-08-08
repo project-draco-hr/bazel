@@ -5,5 +5,8 @@
   if (OS.getCurrent() == OS.LINUX) {
     strategies.add(new LinuxSandboxedStrategy(buildRequest.getOptions(SandboxOptions.class),env.getClientEnv(),env.getDirectories(),backgroundWorkers,verboseFailures,unblockNetwork,env.getRuntime().getProductName()));
   }
-  this.strategies=strategies.build();
+ else   if (OS.getCurrent() == OS.DARWIN) {
+    strategies.add(DarwinSandboxedStrategy.create(buildRequest.getOptions(SandboxOptions.class),env.getClientEnv(),env.getDirectories(),backgroundWorkers,verboseFailures,unblockNetwork,env.getRuntime().getProductName()));
+  }
+  return new SandboxActionContextProvider(strategies.build());
 }

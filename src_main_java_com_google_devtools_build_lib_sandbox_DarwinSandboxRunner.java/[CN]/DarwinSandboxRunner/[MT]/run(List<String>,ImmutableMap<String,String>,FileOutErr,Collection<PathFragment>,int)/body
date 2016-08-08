@@ -1,0 +1,20 @@
+{
+  createFileSystem(outputs);
+  List<String> commandLineArgs=sandboxPreperationAndGetArgs(spawnArguments,outErr);
+  Command cmd=new Command(commandLineArgs.toArray(new String[0]),env,sandboxExecRoot.getPathFile());
+  try {
+    cmd.execute(new byte[]{},(timeout >= 0) ? new TimeoutKillableObserver(timeout * 1000) : Command.NO_OBSERVER,outErr.getOutputStream(),outErr.getErrorStream(),true);
+  }
+ catch (  CommandException e) {
+    boolean timedOut=false;
+    if (e instanceof AbnormalTerminationException) {
+      TerminationStatus status=((AbnormalTerminationException)e).getResult().getTerminationStatus();
+      timedOut=!status.exited() && (status.getTerminatingSignal() == 15);
+    }
+    String message=CommandFailureUtils.describeCommandFailure(verboseFailures,commandLineArgs,env,sandboxExecRoot.getPathString());
+    throw new UserExecException(message,e,timedOut);
+  }
+ finally {
+    copyOutputs(outputs);
+  }
+}

@@ -1,0 +1,11 @@
+{
+  List<String> confVars=ImmutableList.of("DARWIN_USER_TEMP_DIR","DARWIN_USER_CACHE_DIR");
+  ImmutableList.Builder<Path> writablePaths=ImmutableList.builder();
+  for (  String confVar : confVars) {
+    Path path=blazeDirs.getFileSystem().getPath(getConfStr(confVar));
+    if (path.exists()) {
+      writablePaths.add(path);
+    }
+  }
+  return new DarwinSandboxedStrategy(options,clientEnv,blazeDirs,backgroundWorkers,verboseFailures,unblockNetwork,productName,writablePaths.build());
+}

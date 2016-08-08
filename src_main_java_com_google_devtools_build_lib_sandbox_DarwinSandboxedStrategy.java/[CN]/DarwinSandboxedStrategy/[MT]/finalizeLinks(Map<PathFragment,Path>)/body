@@ -1,0 +1,18 @@
+{
+  ImmutableMap.Builder<PathFragment,Path> finalizedLinks=new ImmutableMap.Builder<>();
+  for (  Map.Entry<PathFragment,Path> mount : unfinalized.entrySet()) {
+    PathFragment target=mount.getKey();
+    Path source=mount.getValue();
+    FileStatus stat=source.statNullable(Symlinks.NOFOLLOW);
+    if (stat != null && stat.isDirectory()) {
+      for (      Path subSource : FileSystemUtils.traverseTree(source,Predicates.alwaysTrue())) {
+        PathFragment subTarget=target.getRelative(subSource.relativeTo(source));
+        finalizeLinksPath(finalizedLinks,subTarget,subSource,subSource.statNullable(Symlinks.NOFOLLOW));
+      }
+    }
+ else {
+      finalizeLinksPath(finalizedLinks,target,source,stat);
+    }
+  }
+  return finalizedLinks.build();
+}

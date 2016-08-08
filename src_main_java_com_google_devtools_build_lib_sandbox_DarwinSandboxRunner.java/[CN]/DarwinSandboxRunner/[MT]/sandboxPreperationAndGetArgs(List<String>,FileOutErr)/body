@@ -1,0 +1,29 @@
+{
+  FileSystem fs=sandboxPath.getFileSystem();
+  PrintWriter errWriter=new PrintWriter(outErr.getErrorStream());
+  List<String> commandLineArgs=new ArrayList<>();
+  if (sandboxDebug) {
+    errWriter.printf("sandbox root is %s\n",sandboxPath.toString());
+    errWriter.printf("working dir is %s\n",sandboxExecRoot.toString());
+  }
+  for (  PathFragment createDir : createDirs) {
+    Path dir;
+    if (createDir.isAbsolute()) {
+      dir=fs.getPath(createDir);
+    }
+ else {
+      dir=sandboxPath.getRelative(createDir);
+    }
+    if (sandboxDebug) {
+      errWriter.printf("createdir: %s\n",dir);
+    }
+    FileSystemUtils.createDirectoryAndParents(dir);
+  }
+  linkInputs(linkPaths,errWriter);
+  errWriter.flush();
+  commandLineArgs.add("/usr/bin/sandbox-exec");
+  commandLineArgs.add("-f");
+  commandLineArgs.add(sandboxConfigPath.getPathString());
+  commandLineArgs.addAll(spawnArguments);
+  return commandLineArgs;
+}

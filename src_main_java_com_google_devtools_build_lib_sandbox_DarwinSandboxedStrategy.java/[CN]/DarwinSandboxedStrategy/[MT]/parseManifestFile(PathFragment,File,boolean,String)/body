@@ -1,0 +1,40 @@
+{
+  Map<PathFragment,Path> mounts=new HashMap<>();
+  int lineNum=0;
+  for (  String line : Files.readLines(manifestFile,StandardCharsets.UTF_8)) {
+    if (isFilesetManifest && (++lineNum % 2 == 0)) {
+      continue;
+    }
+    if (line.isEmpty()) {
+      continue;
+    }
+    String[] fields=line.trim().split(" ");
+    PathFragment targetPath;
+    if (isFilesetManifest) {
+      PathFragment targetPathFragment=new PathFragment(fields[0]);
+      if (!workspaceName.isEmpty()) {
+        if (!targetPathFragment.getSegment(0).equals(workspaceName)) {
+          throw new EnvironmentalExecException("Fileset manifest line must start with workspace name");
+        }
+        targetPathFragment=targetPathFragment.subFragment(1,targetPathFragment.segmentCount());
+      }
+      targetPath=targetDirectory.getRelative(targetPathFragment);
+    }
+ else {
+      targetPath=targetDirectory.getRelative(fields[0]);
+    }
+    Path source;
+switch (fields.length) {
+case 1:
+      source=blazeDirs.getFileSystem().getPath("/dev/null");
+    break;
+case 2:
+  source=blazeDirs.getFileSystem().getPath(fields[1]);
+break;
+default :
+throw new IllegalStateException("'" + line + "' splits into more than 2 parts");
+}
+mounts.put(targetPath,source);
+}
+return mounts;
+}

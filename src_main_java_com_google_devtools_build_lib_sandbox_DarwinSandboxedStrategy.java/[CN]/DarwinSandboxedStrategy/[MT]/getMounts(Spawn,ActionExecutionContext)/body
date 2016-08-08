@@ -1,0 +1,11 @@
+{
+  ImmutableMap.Builder<PathFragment,Path> result=new ImmutableMap.Builder<>();
+  result.putAll(mountInputs(spawn,executionContext));
+  Map<PathFragment,Path> unfinalized=new HashMap<>();
+  unfinalized.putAll(mountRunfilesFromManifests(spawn));
+  unfinalized.putAll(mountRunfilesFromSuppliers(spawn));
+  unfinalized.putAll(mountFilesFromFilesetManifests(spawn,executionContext));
+  unfinalized.putAll(mountRunUnderCommand(spawn));
+  result.putAll(finalizeLinks(unfinalized));
+  return result.build();
+}

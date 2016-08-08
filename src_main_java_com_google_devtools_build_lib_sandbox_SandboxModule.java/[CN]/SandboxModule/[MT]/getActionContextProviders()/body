@@ -2,7 +2,14 @@
   Preconditions.checkNotNull(buildRequest);
   Preconditions.checkNotNull(env);
   if (isSandboxingSupported(env)) {
-    return ImmutableList.<ActionContextProvider>of(new SandboxActionContextProvider(env,buildRequest,backgroundWorkers));
+    Iterable<ActionContextProvider> ret;
+    try {
+      ret=ImmutableList.<ActionContextProvider>of(SandboxActionContextProvider.create(env,buildRequest,backgroundWorkers));
+    }
+ catch (    IOException e) {
+      throw new IllegalArgumentException(e);
+    }
+    return ret;
   }
   if (!buildRequest.getOptions(SandboxOptions.class).ignoreUnsupportedSandboxing && OS.getCurrent() == OS.LINUX) {
     env.getReporter().handle(Event.warn(SANDBOX_NOT_SUPPORTED_MESSAGE));

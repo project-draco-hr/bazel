@@ -1,0 +1,21 @@
+{
+  java.nio.file.Path targetNio=java.nio.file.Paths.get(target.toString());
+  java.nio.file.Path sourceNio=java.nio.file.Paths.get(source.toString());
+  if (!source.exists() || target.exists()) {
+    return;
+  }
+  if (source.isFile()) {
+    Path parentDir=target.getParentDirectory();
+    if (!parentDir.exists()) {
+      FileSystemUtils.createDirectoryAndParents(parentDir);
+    }
+    Files.createLink(targetNio,sourceNio);
+  }
+ else   if (source.isDirectory()) {
+    Collection<Path> subpaths=source.getDirectoryEntries();
+    for (    Path sourceSubpath : subpaths) {
+      Path targetSubpath=target.getRelative(sourceSubpath.relativeTo(source));
+      createHardLink(targetSubpath,sourceSubpath);
+    }
+  }
+}

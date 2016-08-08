@@ -1,0 +1,16 @@
+{
+  Map<PathFragment,Path> mounts=new HashMap<>();
+  FileSystem fs=blazeDirs.getFileSystem();
+  Map<PathFragment,Map<PathFragment,Artifact>> rootsAndMappings=spawn.getRunfilesSupplier().getMappings();
+  for (  Entry<PathFragment,Map<PathFragment,Artifact>> rootAndMappings : rootsAndMappings.entrySet()) {
+    PathFragment root=fs.getRootDirectory().getRelative(rootAndMappings.getKey()).relativeTo(execRoot);
+    for (    Entry<PathFragment,Artifact> mapping : rootAndMappings.getValue().entrySet()) {
+      Artifact sourceArtifact=mapping.getValue();
+      Path source=(sourceArtifact != null) ? sourceArtifact.getPath() : fs.getPath("/dev/null");
+      Preconditions.checkArgument(!mapping.getKey().isAbsolute());
+      PathFragment target=root.getRelative(mapping.getKey());
+      mounts.put(target,source);
+    }
+  }
+  return mounts;
+}

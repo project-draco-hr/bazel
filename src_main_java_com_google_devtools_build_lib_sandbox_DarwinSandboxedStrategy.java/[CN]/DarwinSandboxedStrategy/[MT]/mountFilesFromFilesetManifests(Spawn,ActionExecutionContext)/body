@@ -1,0 +1,9 @@
+{
+  final FilesetActionContext filesetContext=executionContext.getExecutor().getContext(FilesetActionContext.class);
+  Map<PathFragment,Path> mounts=new HashMap<>();
+  for (  Artifact fileset : spawn.getFilesetManifests()) {
+    Path manifest=execRoot.getRelative(AnalysisUtils.getManifestPathFromFilesetPath(fileset.getExecPath()));
+    mounts.putAll(parseManifestFile(fileset.getExecPath(),manifest.getPathFile(),true,filesetContext.getWorkspaceName()));
+  }
+  return mounts;
+}
