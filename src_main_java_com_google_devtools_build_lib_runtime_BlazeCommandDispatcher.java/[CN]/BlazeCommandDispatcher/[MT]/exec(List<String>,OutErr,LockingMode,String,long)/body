@@ -37,9 +37,17 @@ Verify.verify(currentClientDescription == null);
 currentClientDescription=clientDescription;
 }
 try {
+if (shutdownReason != null) {
+outErr.printErrLn("Server shut down " + shutdownReason);
+return ExitCode.LOCAL_ENVIRONMENTAL_ERROR.getNumericExitCode();
+}
 return execExclusively(args,outErr,firstContactTime,commandName,command,waitTimeInMs);
 }
-  finally {
+ catch (ShutdownBlazeServerException e) {
+shutdownReason="explicitly by client " + currentClientDescription;
+throw e;
+}
+ finally {
 synchronized (commandLock) {
 currentClientDescription=null;
 commandLock.notify();
