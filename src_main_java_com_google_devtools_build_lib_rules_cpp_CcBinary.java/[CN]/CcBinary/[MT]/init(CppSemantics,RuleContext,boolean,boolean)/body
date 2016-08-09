@@ -47,6 +47,9 @@
     }
     linkActionBuilder.setLTOIndexing(false);
   }
+  if (isLinkShared(ruleContext)) {
+    linkActionBuilder.setLibraryIdentifier(CcLinkingOutputs.libraryIdentifierOf(binary));
+  }
   CppLinkAction linkAction=linkActionBuilder.build();
   ruleContext.registerAction(linkAction);
   LibraryToLink outputLibrary=linkAction.getOutputLibrary();
@@ -63,9 +66,10 @@
     }
   }
   for (  Artifact library : precompiledFiles.getSharedLibraries()) {
-    LibraryToLink symlink=common.getDynamicLibrarySymlink(library,true);
-    linkingOutputsBuilder.addDynamicLibrary(symlink);
-    linkingOutputsBuilder.addExecutionDynamicLibrary(symlink);
+    Artifact symlink=common.getDynamicLibrarySymlink(library,true);
+    LibraryToLink symlinkLibrary=LinkerInputs.solibLibraryToLink(symlink,library,CcLinkingOutputs.libraryIdentifierOf(library));
+    linkingOutputsBuilder.addDynamicLibrary(symlinkLibrary);
+    linkingOutputsBuilder.addExecutionDynamicLibrary(symlinkLibrary);
   }
   CcLinkingOutputs linkingOutputs=linkingOutputsBuilder.build();
   NestedSet<Artifact> filesToBuild=NestedSetBuilder.create(Order.STABLE_ORDER,executable);

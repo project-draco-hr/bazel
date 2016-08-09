@@ -12,10 +12,10 @@
   builder.addNonLibraryInputs(common.getLinkerScripts());
   for (  Artifact library : precompiledFiles.getLibraries()) {
     if (SHARED_LIBRARY_FILETYPES.matches(library.getFilename())) {
-      builder.addLibrary(common.getDynamicLibrarySymlink(library,true));
+      builder.addLibrary(LinkerInputs.solibLibraryToLink(common.getDynamicLibrarySymlink(library,true),library,CcLinkingOutputs.libraryIdentifierOf(library)));
     }
  else {
-      builder.addLibrary(LinkerInputs.opaqueLibraryToLink(library));
+      builder.addLibrary(LinkerInputs.precompiledLibraryToLink(library));
     }
   }
   CcLinkParams linkParams=collectCcLinkParams(context,linkStaticness != LinkStaticness.DYNAMIC,isLinkShared(context),linkopts);

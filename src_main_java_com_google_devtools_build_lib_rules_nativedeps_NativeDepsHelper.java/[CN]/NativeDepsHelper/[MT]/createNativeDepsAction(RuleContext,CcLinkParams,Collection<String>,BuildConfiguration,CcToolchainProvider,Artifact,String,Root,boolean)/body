@@ -6,7 +6,15 @@
   List<Artifact> buildInfoArtifacts=linkstamps.isEmpty() ? ImmutableList.<Artifact>of() : ruleContext.getAnalysisEnvironment().getBuildInfo(ruleContext,CppBuildInfo.KEY,configuration);
   boolean shareNativeDeps=configuration.getFragment(CppConfiguration.class).shareNativeDeps();
   NestedSet<LibraryToLink> linkerInputs=linkParams.getLibraries();
-  Artifact sharedLibrary=shareNativeDeps ? ruleContext.getShareableArtifact(getSharedNativeDepsPath(LinkerInputs.toLibraryArtifacts(linkerInputs),linkopts,linkstamps.keySet(),buildInfoArtifacts,ruleContext.getFeatures()),configuration.getBinDirectory()) : nativeDeps;
+  Artifact sharedLibrary;
+  if (shareNativeDeps) {
+    PathFragment sharedPath=getSharedNativeDepsPath(LinkerInputs.toLibraryArtifacts(linkerInputs),linkopts,linkstamps.keySet(),buildInfoArtifacts,ruleContext.getFeatures());
+    libraryIdentifier=sharedPath.getPathString();
+    sharedLibrary=ruleContext.getShareableArtifact(sharedPath.replaceName(sharedPath.getBaseName() + ".so"),configuration.getBinDirectory());
+  }
+ else {
+    sharedLibrary=nativeDeps;
+  }
   CppLinkActionBuilder builder=new CppLinkActionBuilder(ruleContext,sharedLibrary,configuration,toolchain);
   if (useDynamicRuntime) {
     builder.setRuntimeInputs(toolchain.getDynamicRuntimeLinkMiddleman(),toolchain.getDynamicRuntimeLinkInputs());
@@ -14,7 +22,7 @@
  else {
     builder.setRuntimeInputs(toolchain.getStaticRuntimeLinkMiddleman(),toolchain.getStaticRuntimeLinkInputs());
   }
-  CppLinkAction linkAction=builder.setLinkArtifactFactory(SHAREABLE_LINK_ARTIFACT_FACTORY).setCrosstoolInputs(toolchain.getLink()).addLibraries(linkerInputs).setLinkType(LinkTargetType.DYNAMIC_LIBRARY).setLinkStaticness(LinkStaticness.MOSTLY_STATIC).addLinkopts(linkopts).setNativeDeps(true).addLinkstamps(linkstamps).build();
+  CppLinkAction linkAction=builder.setLinkArtifactFactory(SHAREABLE_LINK_ARTIFACT_FACTORY).setCrosstoolInputs(toolchain.getLink()).addLibraries(linkerInputs).setLinkType(LinkTargetType.DYNAMIC_LIBRARY).setLinkStaticness(LinkStaticness.MOSTLY_STATIC).setLibraryIdentifier(libraryIdentifier).addLinkopts(linkopts).setNativeDeps(true).addLinkstamps(linkstamps).build();
   ruleContext.registerAction(linkAction);
   Artifact linkerOutput=linkAction.getPrimaryOutput();
   if (shareNativeDeps) {

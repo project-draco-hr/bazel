@@ -1,4 +1,5 @@
 {
+  Preconditions.checkState((libraryIdentifier == null) == (linkType == LinkTargetType.EXECUTABLE));
   if (interfaceOutput != null && (fake || linkType != LinkTargetType.DYNAMIC_LIBRARY)) {
     throw new RuntimeException("Interface output can only be used " + "with non-fake DYNAMIC_LIBRARY targets");
   }
@@ -16,12 +17,12 @@
       featureConfiguration=CcCommon.configureFeatures(ruleContext);
     }
   }
-  final LibraryToLink outputLibrary=LinkerInputs.newInputLibrary(output,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
-  final LibraryToLink interfaceOutputLibrary=(interfaceOutput == null) ? null : LinkerInputs.newInputLibrary(interfaceOutput,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
+  final LibraryToLink outputLibrary=LinkerInputs.newInputLibrary(output,libraryIdentifier,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
+  final LibraryToLink interfaceOutputLibrary=(interfaceOutput == null) ? null : LinkerInputs.newInputLibrary(interfaceOutput,libraryIdentifier,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
   final ImmutableMap<Artifact,Artifact> linkstampMap=mapLinkstampsToOutputs(linkstamps,ruleContext,configuration,output,linkArtifactFactory);
   PathFragment ltoOutputRootPrefix=null;
   if (isLTOIndexing && allLTOArtifacts == null) {
-    ltoOutputRootPrefix=FileSystemUtils.appendExtension(outputLibrary.getArtifact().getRootRelativePath(),".lto");
+    ltoOutputRootPrefix=FileSystemUtils.appendExtension(output.getRootRelativePath(),".lto");
     allLTOArtifacts=createLTOArtifacts(ltoOutputRootPrefix,uniqueLibraries);
   }
   final ImmutableList<Artifact> actionOutputs;
@@ -33,14 +34,14 @@
     actionOutputs=builder.build();
   }
  else {
-    actionOutputs=constructOutputs(outputLibrary.getArtifact(),linkstampMap.values(),interfaceOutputLibrary == null ? null : interfaceOutputLibrary.getArtifact(),symbolCounts);
+    actionOutputs=constructOutputs(output,linkstampMap.values(),interfaceOutputLibrary == null ? null : interfaceOutputLibrary.getArtifact(),symbolCounts);
   }
   ImmutableList<LinkerInput> runtimeLinkerInputs=ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs));
   Variables.Builder buildVariablesBuilder=new Variables.Builder();
-  CppLinkVariablesExtension variablesExtension=isLTOIndexing ? new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,null) : new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,outputLibrary.getArtifact());
+  CppLinkVariablesExtension variablesExtension=isLTOIndexing ? new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,null) : new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,output);
   variablesExtension.addVariables(buildVariablesBuilder);
   Variables buildVariables=buildVariablesBuilder.build();
-  PathFragment paramRootPath=ParameterFile.derivePath(outputLibrary.getArtifact().getRootRelativePath(),(isLTOIndexing) ? "lto" : "2");
+  PathFragment paramRootPath=ParameterFile.derivePath(output.getRootRelativePath(),(isLTOIndexing) ? "lto" : "2");
   @Nullable final Artifact paramFile=canSplitCommandLine() ? linkArtifactFactory.create(ruleContext,configuration,paramRootPath) : null;
   Preconditions.checkArgument(linkType != LinkTargetType.INTERFACE_DYNAMIC_LIBRARY,"you can't link an interface dynamic library directly");
   if (linkType != LinkTargetType.DYNAMIC_LIBRARY) {
@@ -58,7 +59,7 @@
     linkCommandLineBuilder.setNoWholeArchiveFlags(variablesExtension.getNoWholeArchiveInputs());
   }
   if (!isLTOIndexing) {
-    linkCommandLineBuilder.setOutput(outputLibrary.getArtifact()).setInterfaceOutput(interfaceOutput).setBuildInfoHeaderArtifacts(buildInfoHeaderArtifacts).setInterfaceSoBuilder(getInterfaceSoBuilder()).setLinkstamps(linkstampMap).setLinkopts(ImmutableList.copyOf(linkopts)).addLinkstampCompileOptions(linkstampOptions);
+    linkCommandLineBuilder.setOutput(output).setInterfaceOutput(interfaceOutput).setBuildInfoHeaderArtifacts(buildInfoHeaderArtifacts).setInterfaceSoBuilder(getInterfaceSoBuilder()).setLinkstamps(linkstampMap).setLinkopts(ImmutableList.copyOf(linkopts)).addLinkstampCompileOptions(linkstampOptions);
   }
  else {
     List<String> opts=new ArrayList<>(linkopts);

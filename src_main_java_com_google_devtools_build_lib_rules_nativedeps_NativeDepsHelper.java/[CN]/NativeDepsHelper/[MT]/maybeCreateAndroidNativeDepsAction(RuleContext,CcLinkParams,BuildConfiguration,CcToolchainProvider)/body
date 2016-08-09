@@ -3,6 +3,7 @@
     return null;
   }
   PathFragment labelName=new PathFragment(ruleContext.getLabel().getName());
+  String libraryIdentifier=ruleContext.getUniqueDirectory(ANDROID_UNIQUE_DIR).getRelative(labelName.replaceName("lib" + labelName.getBaseName())).getPathString();
   Artifact nativeDeps=ruleContext.getUniqueDirectoryArtifact(ANDROID_UNIQUE_DIR,labelName.replaceName("lib" + labelName.getBaseName() + ".so"),configuration.getBinDirectory());
-  return createNativeDepsAction(ruleContext,linkParams,ImmutableList.<String>of(),configuration,toolchain,nativeDeps,configuration.getBinDirectory(),false).getLibrary();
+  return createNativeDepsAction(ruleContext,linkParams,ImmutableList.<String>of(),configuration,toolchain,nativeDeps,libraryIdentifier,configuration.getBinDirectory(),false).getLibrary();
 }
