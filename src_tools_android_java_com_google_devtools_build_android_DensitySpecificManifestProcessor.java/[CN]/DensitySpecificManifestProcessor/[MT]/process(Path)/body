@@ -14,7 +14,7 @@
     NodeList screenElements=doc.getElementsByTagName("screen");
     for (int i=0; i < screenElements.getLength(); i++) {
       Node screen=screenElements.item(i);
-      existingDensities.add(SCREEN_DENSITIES.inverse().get(screen.getAttributes().getNamedItem("android:screenDensity").getNodeValue()));
+      existingDensities.add(PLAY_STORE_SUPPORTED_DENSITIES.inverse().get(screen.getAttributes().getNamedItem("android:screenDensity").getNodeValue()));
     }
     if (existingDensities.containsAll(densities)) {
       return manifest;
@@ -24,14 +24,25 @@
       Node compatibleScreensElement=compatibleScreensElements.item(i);
       compatibleScreensElement.getParentNode().removeChild(compatibleScreensElement);
     }
-    Node compatibleScreens=doc.createElement("compatible-screens");
-    manifestElement.appendChild(compatibleScreens);
+    boolean omitCompatibleScreens=false;
     for (    String density : densities) {
-      for (      String screenSize : SCREEN_SIZES) {
-        Element screen=doc.createElement("screen");
-        screen.setAttribute("android:screenSize",screenSize);
-        screen.setAttribute("android:screenDensity",SCREEN_DENSITIES.get(density));
-        compatibleScreens.appendChild(screen);
+      if (!PLAY_STORE_SUPPORTED_DENSITIES.containsKey(density)) {
+        omitCompatibleScreens=true;
+        System.out.println(density + " is not an accepted Play Store density.");
+        System.out.println("Omitting <compatible-screens> declaration from output manifest.");
+        break;
+      }
+    }
+    if (!omitCompatibleScreens) {
+      Node compatibleScreens=doc.createElement("compatible-screens");
+      manifestElement.appendChild(compatibleScreens);
+      for (      String density : densities) {
+        for (        String screenSize : SCREEN_SIZES) {
+          Element screen=doc.createElement("screen");
+          screen.setAttribute("android:screenSize",screenSize);
+          screen.setAttribute("android:screenDensity",PLAY_STORE_SUPPORTED_DENSITIES.get(density));
+          compatibleScreens.appendChild(screen);
+        }
       }
     }
     Files.createDirectories(out.getParent());
