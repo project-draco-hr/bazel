@@ -1,0 +1,7 @@
+{
+  useRuleClassProvider(LateBoundSplitUtil.getRuleClassProvider());
+  useConfigurationFactory(new ConfigurationFactory(ruleClassProvider.getConfigurationCollectionFactory(),ruleClassProvider.getConfigurationFragments()));
+  scratch.file("foo/BUILD","rule_with_latebound_split(","    name = 'foo')","sh_binary(","    name = 'latebound_dep',","    srcs = ['latebound_dep.sh'])");
+  update("//foo:foo");
+  assertNotNull(getConfiguredTarget("//foo:foo"));
+}

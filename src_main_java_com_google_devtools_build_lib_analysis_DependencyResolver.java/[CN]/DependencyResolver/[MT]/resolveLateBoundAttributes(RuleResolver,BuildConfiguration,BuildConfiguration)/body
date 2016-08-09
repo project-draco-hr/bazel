@@ -5,10 +5,21 @@
       continue;
     }
     @SuppressWarnings("unchecked") LateBoundDefault<BuildConfiguration> lateBoundDefault=(LateBoundDefault<BuildConfiguration>)attribute.getLateBoundDefault();
-    if (attribute.hasSplitConfigurationTransition()) {
+    Collection<BuildOptions> splitOptions=getSplitOptions(depResolver.rule,attribute,ruleConfig);
+    if (!splitOptions.isEmpty()) {
       Verify.verify(attribute.getConfigurator() == null);
       Verify.verify(!lateBoundDefault.useHostConfiguration());
-      for (      BuildConfiguration splitConfig : ruleConfig.getSplitConfigurations(attribute.getSplitTransition(depResolver.rule))) {
+      Iterable<BuildConfiguration> splitConfigs;
+      if (!ruleConfig.useDynamicConfigurations()) {
+        splitConfigs=ruleConfig.getSplitConfigurations(attribute.getSplitTransition(depResolver.rule));
+      }
+ else {
+        splitConfigs=getConfigurations(ruleConfig.fragmentClasses(),splitOptions);
+        if (splitConfigs == null) {
+          continue;
+        }
+      }
+      for (      BuildConfiguration splitConfig : splitConfigs) {
         for (        Label dep : resolveLateBoundAttribute(depResolver.rule,attribute,splitConfig,attributeMap)) {
           depResolver.resolveDep(attribute,dep,splitConfig);
         }

@@ -20,6 +20,15 @@ class SilentDependencyResolver extends DependencyResolver {
         throw new IllegalStateException(e);
       }
     }
+    @Override protected List<BuildConfiguration> getConfigurations(    Set<Class<? extends BuildConfiguration.Fragment>> fragments,    Iterable<BuildOptions> buildOptions){
+      Preconditions.checkArgument(ct.getConfiguration().fragmentClasses().equals(fragments));
+      Dependency asDep=Dependency.withTransitionAndAspects(ct.getLabel(),Attribute.ConfigurationTransition.NONE,ImmutableSet.<AspectDescriptor>of());
+      ImmutableList.Builder<BuildConfiguration> builder=ImmutableList.builder();
+      for (      BuildOptions options : buildOptions) {
+        builder.add(Iterables.getOnlyElement(skyframeExecutor.getConfigurations(eventHandler,options,ImmutableList.<Dependency>of(asDep)).values()));
+      }
+      return builder.build();
+    }
   }
   DependencyResolver dependencyResolver=new SilentDependencyResolver();
   TargetAndConfiguration ctgNode=new TargetAndConfiguration(ct.getTarget(),ct.getConfiguration());

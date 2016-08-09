@@ -1,0 +1,15 @@
+{
+  List<SkyKey> keys=new ArrayList<>();
+  for (  BuildOptions options : buildOptions) {
+    keys.add(BuildConfigurationValue.key(fragments,options));
+  }
+  Map<SkyKey,ValueOrException<InvalidConfigurationException>> configValues=env.getValuesOrThrow(keys,InvalidConfigurationException.class);
+  if (env.valuesMissing()) {
+    return null;
+  }
+  ImmutableList.Builder<BuildConfiguration> result=ImmutableList.builder();
+  for (  SkyKey key : keys) {
+    result.add(((BuildConfigurationValue)configValues.get(key).get()).getConfiguration());
+  }
+  return result.build();
+}
