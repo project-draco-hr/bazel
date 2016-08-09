@@ -1,10 +1,10 @@
 {
   NestedSetBuilder<ExtraArtifactSet> builder=NestedSetBuilder.stableOrder();
-  for (  ConfiguredTarget topLevel : topLevelTargets) {
-    ExtraActionArtifactsProvider provider=topLevel.getProvider(ExtraActionArtifactsProvider.class);
+  for (  Pair<Label,ExtraActionArtifactsProvider> labelAndProvider : providers) {
+    ExtraActionArtifactsProvider provider=labelAndProvider.getSecond();
     if (provider != null) {
       if (viewOptions.extraActionTopLevelOnly) {
-        builder.add(ExtraArtifactSet.of(topLevel.getLabel(),provider.getExtraActionArtifacts()));
+        builder.add(ExtraArtifactSet.of(labelAndProvider.getFirst(),provider.getExtraActionArtifacts()));
       }
  else {
         builder.addTransitive(provider.getTransitiveExtraActionArtifacts());

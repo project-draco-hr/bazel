@@ -1,6 +1,7 @@
 {
   Collection<Target> testsToRun=loadingResult.getTestsToRun();
   Collection<ConfiguredTarget> configuredTargets=skyframeAnalysisResult.getConfiguredTargets();
+  Collection<AspectValue> aspects=skyframeAnalysisResult.getAspects();
   Collection<ConfiguredTarget> allTargetsToTest=null;
   if (testsToRun != null) {
     allTargetsToTest=Lists.<ConfiguredTarget>newArrayList(filterTestsByTargets(configuredTargets,Sets.newHashSet(testsToRun)));
@@ -11,7 +12,7 @@
   Collection<Artifact> buildInfoArtifacts=skyframeExecutor.getWorkspaceStatusArtifacts(eventHandler);
   Preconditions.checkState(buildInfoArtifacts.size() == 2,buildInfoArtifacts);
   artifactsToBuild.addAll(buildInfoArtifacts);
-  addExtraActionsIfRequested(viewOptions,artifactsToBuild,configuredTargets);
+  addExtraActionsIfRequested(viewOptions,configuredTargets,aspects,artifactsToBuild);
   NestedSet<Artifact> baselineCoverageArtifacts=getBaselineCoverageArtifacts(configuredTargets);
   Iterables.addAll(artifactsToBuild,baselineCoverageArtifacts);
   if (coverageReportActionFactory != null) {
@@ -38,5 +39,5 @@
     }
   }
 ;
-  return new AnalysisResult(configuredTargets,skyframeAnalysisResult.getAspects(),allTargetsToTest,error,actionGraph,artifactsToBuild,parallelTests,exclusiveTests,topLevelOptions,skyframeAnalysisResult.getPackageRoots(),loadingResult.getWorkspaceName());
+  return new AnalysisResult(configuredTargets,aspects,allTargetsToTest,error,actionGraph,artifactsToBuild,parallelTests,exclusiveTests,topLevelOptions,skyframeAnalysisResult.getPackageRoots(),loadingResult.getWorkspaceName());
 }
