@@ -1,12 +1,13 @@
 {
   Preconditions.checkNotNull(productName);
+  Preconditions.checkNotNull(serverDirectories);
   Preconditions.checkNotNull(directories);
   Preconditions.checkNotNull(startupOptionsProvider);
   Clock clock=(this.clock == null) ? BlazeClock.instance() : this.clock;
   UUID instanceId=(this.instanceId == null) ? UUID.randomUUID() : this.instanceId;
   Preconditions.checkNotNull(clock);
   for (  BlazeModule module : blazeModules) {
-    module.blazeStartup(startupOptionsProvider,BlazeVersionInfo.instance(),instanceId,directories,clock);
+    module.blazeStartup(startupOptionsProvider,BlazeVersionInfo.instance(),instanceId,serverDirectories,clock);
   }
   ServerBuilder serverBuilder=new ServerBuilder();
   for (  BlazeModule module : blazeModules) {
@@ -23,7 +24,7 @@
   }
   Package.Builder.Helper packageBuilderHelper=null;
   for (  BlazeModule module : blazeModules) {
-    Package.Builder.Helper candidateHelper=module.getPackageBuilderHelper(ruleClassProvider,directories.getFileSystem());
+    Package.Builder.Helper candidateHelper=module.getPackageBuilderHelper(ruleClassProvider,serverDirectories.getFileSystem());
     if (candidateHelper != null) {
       Preconditions.checkState(packageBuilderHelper == null,"more than one module defines a package builder helper");
       packageBuilderHelper=candidateHelper;
