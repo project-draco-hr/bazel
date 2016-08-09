@@ -6,8 +6,8 @@
   final ImmutableList<Artifact> buildInfoHeaderArtifacts=!linkstamps.isEmpty() ? analysisEnvironment.getBuildInfo(ruleContext,CppBuildInfo.KEY,configuration) : ImmutableList.<Artifact>of();
   boolean needWholeArchive=wholeArchive || needWholeArchive(linkStaticness,linkType,linkopts,isNativeDeps,cppConfiguration);
   NestedSet<LibraryToLink> uniqueLibraries=libraries.build();
-  final Iterable<Artifact> objectArtifacts=LinkerInputs.toLibraryArtifacts(objectFiles);
-  final Iterable<LinkerInput> linkerInputs=IterablesChain.<LinkerInput>builder().add(ImmutableList.copyOf(objectFiles)).add(ImmutableIterable.from(Link.mergeInputsCmdLine(uniqueLibraries,needWholeArchive,cppConfiguration.archiveType()))).build();
+  final Iterable<Artifact> filteredNonLibraryArtifacts=CppLinkAction.filterLinkerInputArtifacts(LinkerInputs.toLibraryArtifacts(nonLibraries));
+  final Iterable<LinkerInput> linkerInputs=IterablesChain.<LinkerInput>builder().add(ImmutableList.copyOf(CppLinkAction.filterLinkerInputs(nonLibraries))).add(ImmutableIterable.from(Link.mergeInputsCmdLine(uniqueLibraries,needWholeArchive,cppConfiguration.archiveType()))).build();
   final ImmutableSet<String> features=(ruleContext == null) ? ImmutableSet.<String>of() : ruleContext.getFeatures();
   if (featureConfiguration == null) {
     if (toolchain != null) {
@@ -17,8 +17,8 @@
       featureConfiguration=CcCommon.configureFeatures(ruleContext);
     }
   }
-  final LibraryToLink outputLibrary=LinkerInputs.newInputLibrary(output,libraryIdentifier,objectArtifacts,this.ltoBitcodeFiles);
-  final LibraryToLink interfaceOutputLibrary=(interfaceOutput == null) ? null : LinkerInputs.newInputLibrary(interfaceOutput,libraryIdentifier,objectArtifacts,this.ltoBitcodeFiles);
+  final LibraryToLink outputLibrary=LinkerInputs.newInputLibrary(output,libraryIdentifier,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
+  final LibraryToLink interfaceOutputLibrary=(interfaceOutput == null) ? null : LinkerInputs.newInputLibrary(interfaceOutput,libraryIdentifier,filteredNonLibraryArtifacts,this.ltoBitcodeFiles);
   final ImmutableMap<Artifact,Artifact> linkstampMap=mapLinkstampsToOutputs(linkstamps,ruleContext,configuration,output,linkArtifactFactory);
   PathFragment ltoOutputRootPrefix=null;
   if (isLTOIndexing && allLTOArtifacts == null) {
@@ -85,7 +85,7 @@
     dependencyInputsBuilder.addTransitive(compilationInputs.build());
   }
   Iterable<Artifact> expandedInputs=LinkerInputs.toLibraryArtifacts(Link.mergeInputsDependencies(uniqueLibraries,needWholeArchive,cppConfiguration.archiveType()));
-  Iterable<Artifact> expandedNonLibraryInputs=LinkerInputs.toLibraryArtifacts(objectFiles);
+  Iterable<Artifact> expandedNonLibraryInputs=LinkerInputs.toLibraryArtifacts(nonLibraries);
   if (!isLTOIndexing && allLTOArtifacts != null) {
     Map<Artifact,Artifact> ltoMapping=new HashMap<>();
     for (    LTOBackendArtifacts a : allLTOArtifacts) {
@@ -113,7 +113,7 @@
       a.setCommandLine(argv);
     }
   }
-  IterablesChain.Builder<Artifact> inputsBuilder=IterablesChain.<Artifact>builder().add(ImmutableList.copyOf(expandedNonLibraryInputs)).add(ImmutableList.copyOf(nonCodeInputs)).add(dependencyInputsBuilder.build()).add(ImmutableIterable.from(expandedInputs));
+  IterablesChain.Builder<Artifact> inputsBuilder=IterablesChain.<Artifact>builder().add(ImmutableList.copyOf(expandedNonLibraryInputs)).add(dependencyInputsBuilder.build()).add(ImmutableIterable.from(expandedInputs));
   if (linkCommandLine.getParamFile() != null) {
     inputsBuilder.add(ImmutableList.of(linkCommandLine.getParamFile()));
     Action parameterFileWriteAction=new ParameterFileWriteAction(getOwner(),paramFile,linkCommandLine.paramCmdLine(),ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1);
