@@ -40,6 +40,9 @@
   Variables.Builder buildVariablesBuilder=new Variables.Builder();
   CppLinkVariablesExtension variablesExtension=isLTOIndexing ? new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,null) : new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,output);
   variablesExtension.addVariables(buildVariablesBuilder);
+  for (  VariablesExtension extraVariablesExtension : variablesExtensions) {
+    extraVariablesExtension.addVariables(buildVariablesBuilder);
+  }
   Variables buildVariables=buildVariablesBuilder.build();
   PathFragment paramRootPath=ParameterFile.derivePath(output.getRootRelativePath(),(isLTOIndexing) ? "lto" : "2");
   @Nullable final Artifact paramFile=canSplitCommandLine() ? linkArtifactFactory.create(ruleContext,configuration,paramRootPath) : null;
@@ -72,6 +75,7 @@
   LinkCommandLine linkCommandLine=linkCommandLineBuilder.build();
   NestedSetBuilder<Artifact> dependencyInputsBuilder=NestedSetBuilder.stableOrder();
   dependencyInputsBuilder.addTransitive(crosstoolInputs);
+  dependencyInputsBuilder.addAll(linkActionInputs);
   if (runtimeMiddleman != null) {
     dependencyInputsBuilder.add(runtimeMiddleman);
   }
