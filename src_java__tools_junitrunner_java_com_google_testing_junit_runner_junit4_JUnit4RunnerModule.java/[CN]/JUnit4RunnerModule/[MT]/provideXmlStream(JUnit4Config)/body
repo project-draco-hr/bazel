@@ -1,12 +1,29 @@
 {
-  Optional<Path> path=config.getXmlOutputPath();
-  if (path.isPresent()) {
+  @Nullable Path path=config.getXmlOutputPath();
+  if (path != null) {
     try {
-      return new FileOutputStream(path.get().toFile());
+      return new FileOutputStream(path.toFile());
     }
  catch (    FileNotFoundException e) {
       e.printStackTrace();
     }
   }
-  return ByteStreams.nullOutputStream();
+  return new OutputStream(){
+    @Override public void write(    int b){
+    }
+    @Override public void write(    byte[] b){
+      if (b == null) {
+        throw new NullPointerException();
+      }
+    }
+    @Override public void write(    byte[] b,    int off,    int len){
+      if (b == null) {
+        throw new NullPointerException();
+      }
+    }
+    @Override public String toString(){
+      return "null OutputStream";
+    }
+  }
+;
 }
