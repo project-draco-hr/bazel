@@ -3,12 +3,10 @@
   ThreadMXBean mb=ManagementFactory.getThreadMXBean();
   ThreadInfo[] threadInfos=mb.dumpAllThreads(true,true);
   Set<Thread> threads=Thread.getAllStackTraces().keySet();
-  ImmutableMap<Long,Thread> threadMap=Maps.uniqueIndex(threads,new Function<Thread,Long>(){
-    @Override public Long apply(    Thread thread){
-      return thread.getId();
-    }
+  Map<Long,Thread> threadMap=new HashMap<>();
+  for (  Thread thread : threads) {
+    threadMap.put(thread.getId(),thread);
   }
-);
   for (  ThreadInfo threadInfo : threadInfos) {
     Thread thread=threadMap.get(threadInfo.getThreadId());
     if (thread != null && !thread.isDaemon()) {
