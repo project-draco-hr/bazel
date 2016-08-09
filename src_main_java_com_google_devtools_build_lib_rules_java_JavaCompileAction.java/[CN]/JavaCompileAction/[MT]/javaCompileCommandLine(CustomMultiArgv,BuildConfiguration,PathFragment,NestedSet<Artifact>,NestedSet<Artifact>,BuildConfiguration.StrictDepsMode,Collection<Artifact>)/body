@@ -1,0 +1,18 @@
+{
+  CustomCommandLine.Builder result=CustomCommandLine.builder();
+  result.add(commonJavaBuilderArgs);
+  result.add("--classpath");
+  result.add(getClasspathArg(classpath,classDirectory,configuration.getHostPathSeparator()));
+  if (strictJavaDeps != BuildConfiguration.StrictDepsMode.OFF) {
+    result.add("--strict_java_deps");
+    result.add(strictJavaDeps.toString());
+    result.add(new JarsToTargetsArgv(classpath,directJars));
+    if (configuration.getFragment(JavaConfiguration.class).getReduceJavaClasspath() == JavaClasspathMode.JAVABUILDER) {
+      result.add("--reduce_classpath");
+      if (!compileTimeDependencyArtifacts.isEmpty()) {
+        result.addExecPaths("--deps_artifacts",compileTimeDependencyArtifacts);
+      }
+    }
+  }
+  return result;
+}

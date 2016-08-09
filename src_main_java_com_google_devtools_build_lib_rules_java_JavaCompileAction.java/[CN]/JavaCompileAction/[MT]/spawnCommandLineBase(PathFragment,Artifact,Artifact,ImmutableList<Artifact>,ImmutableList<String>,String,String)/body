@@ -1,0 +1,17 @@
+{
+  return new CustomMultiArgv(){
+    @Override public Iterable<String> argv(){
+      checkNotNull(langtoolsJar);
+      checkNotNull(javaBuilderJar);
+      CustomCommandLine.Builder builder=CustomCommandLine.builder().addPath(javaExecutable).addPaths("-Xbootclasspath/p:%s",langtoolsJar.getExecPath()).add(javaBuilderJvmFlags);
+      if (!instrumentationJars.isEmpty()) {
+        builder.addJoinExecPaths("-cp",pathDelimiter,Iterables.concat(instrumentationJars,ImmutableList.of(javaBuilderJar))).add(javaBuilderMainClass);
+      }
+ else {
+        builder.addExecPath("-jar",javaBuilderJar);
+      }
+      return builder.build().arguments();
+    }
+  }
+;
+}

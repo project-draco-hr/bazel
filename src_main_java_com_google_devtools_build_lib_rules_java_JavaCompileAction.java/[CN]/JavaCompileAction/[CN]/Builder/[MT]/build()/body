@@ -1,4 +1,5 @@
 {
+  final String pathSeparator=configuration.getHostPathSeparator();
   List<String> jcopts=new ArrayList<>(javacOpts);
   JavaConfiguration javaConfiguration=configuration.getFragment(JavaConfiguration.class);
   if (!javaConfiguration.getJavaWarns().isEmpty()) {
@@ -6,9 +7,9 @@
   }
   if (!bootclasspathEntries.isEmpty()) {
     jcopts.add("-bootclasspath");
-    jcopts.add(Artifact.joinExecPaths(configuration.getHostPathSeparator(),bootclasspathEntries));
+    jcopts.add(Artifact.joinExecPaths(pathSeparator,bootclasspathEntries));
   }
-  List<String> internedJcopts=new ArrayList<>();
+  final List<String> internedJcopts=new ArrayList<>();
   for (  String jcopt : jcopts) {
     internedJcopts.add(StringCanonicalizer.intern(jcopt));
   }
@@ -16,22 +17,24 @@
     directJars=NestedSetBuilder.emptySet(Order.NAIVE_LINK_ORDER);
     compileTimeDependencyArtifacts.clear();
   }
-  if (javaConfiguration.getReduceJavaClasspath() != JavaClasspathMode.JAVABUILDER) {
+  if (javaConfiguration.getReduceJavaClasspath() == JavaClasspathMode.OFF) {
     compileTimeDependencyArtifacts.clear();
   }
   if (paramFile == null) {
     paramFile=artifactFactory.create(ParameterFile.derivePath(outputJar.getRootRelativePath()),configuration.getBinDirectory());
   }
-  Iterable<Artifact> baseInputs=ImmutableIterable.from(Iterables.concat(javabaseInputs,bootclasspathEntries,extdirInputs,ImmutableList.of(paramFile)));
+  Iterable<Artifact> baseInputs=ImmutableIterable.from(Iterables.concat(processorPath,translations,resources.values(),sourceJars,sourceFiles,classpathResources,javabaseInputs,bootclasspathEntries,extdirInputs));
   Preconditions.checkState(javaExecutable != null,owner);
   Preconditions.checkState(javaExecutable.isAbsolute() ^ !javabaseInputs.isEmpty(),javaExecutable);
   ArrayList<Artifact> outputs=new ArrayList<>(Collections2.filter(Arrays.asList(outputJar,metadata,gensrcOutputJar,manifestProtoOutput,outputDepsProto),Predicates.notNull()));
-  CustomCommandLine.Builder paramFileContentsBuilder=javaCompileCommandLine(semantics,configuration,classDirectory,sourceGenDirectory,tempDirectory,outputJar,gensrcOutputJar,manifestProtoOutput,compressJar,outputDepsProto,classpathEntries,processorPath,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,extdirInputs,internedJcopts,directJars,strictJavaDeps,compileTimeDependencyArtifacts,ruleKind,targetLabel);
+  CustomMultiArgv commonJavaBuilderArgs=commonJavaBuilderArgs(semantics,classDirectory,sourceGenDirectory,tempDirectory,outputJar,gensrcOutputJar,manifestProtoOutput,compressJar,outputDepsProto,processorPath,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,extdirInputs,internedJcopts,ruleKind,targetLabel,pathSeparator);
+  CustomCommandLine.Builder paramFileContentsBuilder=javaCompileCommandLine(commonJavaBuilderArgs,configuration,classDirectory,classpathEntries,directJars,strictJavaDeps,compileTimeDependencyArtifacts);
   semantics.buildJavaCommandLine(outputs,configuration,paramFileContentsBuilder);
   CommandLine paramFileContents=paramFileContentsBuilder.build();
   Action parameterFileWriteAction=new ParameterFileWriteAction(owner,paramFile,paramFileContents,ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1);
   analysisEnvironment.registerAction(parameterFileWriteAction);
-  CommandLine javaBuilderCommandLine=spawnCommandLine(javaExecutable,javaBuilderJar,langtoolsJar,instrumentationJars,paramFile,javacJvmOpts,semantics.getJavaBuilderMainClass(),configuration.getHostPathSeparator());
+  CustomMultiArgv spawnCommandLineBase=spawnCommandLineBase(javaExecutable,javaBuilderJar,langtoolsJar,instrumentationJars,javacJvmOpts,semantics.getJavaBuilderMainClass(),pathSeparator);
+  CommandLine javaBuilderCommandLine=CustomCommandLine.builder().add(spawnCommandLineBase).addPaths("@%s",paramFile.getExecPath()).build();
   NestedSet<Artifact> tools=NestedSetBuilder.<Artifact>stableOrder().add(langtoolsJar).add(javaBuilderJar).addAll(instrumentationJars).build();
-  return new JavaCompileAction(owner,tools,baseInputs,outputs,paramFileContents,javaBuilderCommandLine,classDirectory,outputJar,classpathEntries,bootclasspathEntries,extdirInputs,processorPath,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,internedJcopts,directJars,executionInfo,strictJavaDeps,compileTimeDependencyArtifacts);
+  return new JavaCompileAction(owner,tools,baseInputs,outputs,paramFile,paramFileContents,javaBuilderCommandLine,classDirectory,outputJar,classpathEntries,bootclasspathEntries,extdirInputs,processorPath,processorNames,resources,sourceJars,sourceFiles,internedJcopts,directJars,executionInfo,strictJavaDeps,compileTimeDependencyArtifacts,resources.size() + classpathResources.size() + translations.size());
 }

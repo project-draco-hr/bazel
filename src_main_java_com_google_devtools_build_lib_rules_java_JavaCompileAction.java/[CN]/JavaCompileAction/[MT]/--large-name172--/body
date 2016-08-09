@@ -1,0 +1,82 @@
+{
+  return new CustomMultiArgv(){
+    @Override public Iterable<String> argv(){
+      checkNotNull(classDirectory);
+      checkNotNull(tempDirectory);
+      CustomCommandLine.Builder result=CustomCommandLine.builder();
+      result.add("--classdir").addPath(classDirectory);
+      result.add("--tempdir").addPath(tempDirectory);
+      if (outputJar != null) {
+        result.addExecPath("--output",outputJar);
+      }
+      if (sourceGenDirectory != null) {
+        result.add("--sourcegendir").addPath(sourceGenDirectory);
+      }
+      if (gensrcOutputJar != null) {
+        result.addExecPath("--generated_sources_output",gensrcOutputJar);
+      }
+      if (manifestProto != null) {
+        result.addExecPath("--output_manifest_proto",manifestProto);
+      }
+      if (compressJar) {
+        result.add("--compress_jar");
+      }
+      if (outputDepsProto != null) {
+        result.addExecPath("--output_deps_proto",outputDepsProto);
+      }
+      if (!extdirInputs.isEmpty()) {
+        result.add("--extdir");
+        LinkedHashSet<PathFragment> extdirs=new LinkedHashSet<>();
+        for (        Artifact extjar : extdirInputs) {
+          extdirs.add(extjar.getExecPath().getParentDirectory());
+        }
+        result.add(Joiner.on(pathSeparator).join(extdirs));
+      }
+      if (!processorPath.isEmpty()) {
+        result.addJoinExecPaths("--processorpath",pathSeparator,processorPath);
+      }
+      if (!processorNames.isEmpty()) {
+        result.add("--processors",processorNames);
+      }
+      if (!messages.isEmpty()) {
+        result.add("--messages");
+        for (        Artifact message : messages) {
+          addAsResourcePrefixedExecPath(semantics.getDefaultJavaResourcePath(message.getRootRelativePath()),message,result);
+        }
+      }
+      if (!resources.isEmpty()) {
+        result.add("--resources");
+        for (        Map.Entry<PathFragment,Artifact> resource : resources.entrySet()) {
+          addAsResourcePrefixedExecPath(resource.getKey(),resource.getValue(),result);
+        }
+      }
+      if (!classpathResources.isEmpty()) {
+        result.addExecPaths("--classpath_resources",classpathResources);
+      }
+      if (!sourceJars.isEmpty()) {
+        result.addExecPaths("--source_jars",sourceJars);
+      }
+      if (!sourceFiles.isEmpty()) {
+        result.addExecPaths("--sources",sourceFiles);
+      }
+      if (!javacOpts.isEmpty()) {
+        result.add("--javacopts",javacOpts);
+      }
+      if (ruleKind != null) {
+        result.add("--rule_kind");
+        result.add(ruleKind);
+      }
+      if (targetLabel != null) {
+        result.add("--target_label");
+        if (targetLabel.getPackageIdentifier().getRepository().isDefault() || targetLabel.getPackageIdentifier().getRepository().isMain()) {
+          result.add(targetLabel.toString());
+        }
+ else {
+          result.add("@" + targetLabel);
+        }
+      }
+      return result.build().arguments();
+    }
+  }
+;
+}
