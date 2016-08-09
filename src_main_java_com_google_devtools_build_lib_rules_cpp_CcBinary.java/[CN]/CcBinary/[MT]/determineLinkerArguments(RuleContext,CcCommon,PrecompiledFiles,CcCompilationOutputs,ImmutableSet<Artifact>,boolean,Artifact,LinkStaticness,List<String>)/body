@@ -1,15 +1,15 @@
 {
-  CppLinkActionBuilder builder=new CppLinkActionBuilder(context,binary).setCrosstoolInputs(CppHelper.getToolchain(context).getLink()).addNonLibraryInputs(compilationPrerequisites);
+  CppLinkActionBuilder builder=new CppLinkActionBuilder(context,binary).setCrosstoolInputs(CppHelper.getToolchain(context).getLink()).addNonCodeInputs(compilationPrerequisites);
   boolean usePic=CppHelper.usePic(context,!isLinkShared(context));
   Iterable<Artifact> objectFiles=compilationOutputs.getObjectFiles(usePic);
   if (fake) {
     builder.addFakeNonLibraryInputs(objectFiles);
   }
  else {
-    builder.addNonLibraryInputs(objectFiles);
+    builder.addObjectFiles(objectFiles);
   }
   builder.addLTOBitcodeFiles(compilationOutputs.getLtoBitcodeFiles());
-  builder.addNonLibraryInputs(common.getLinkerScripts());
+  builder.addNonCodeInputs(common.getLinkerScripts());
   for (  Artifact library : precompiledFiles.getLibraries()) {
     if (SHARED_LIBRARY_FILETYPES.matches(library.getFilename())) {
       builder.addLibrary(LinkerInputs.solibLibraryToLink(common.getDynamicLibrarySymlink(library,true),library,CcLinkingOutputs.libraryIdentifierOf(library)));
