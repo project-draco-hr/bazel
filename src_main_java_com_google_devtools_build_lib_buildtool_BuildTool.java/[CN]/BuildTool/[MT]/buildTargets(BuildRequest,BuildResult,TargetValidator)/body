@@ -26,19 +26,29 @@
       env.getEventBus().post(new MakeEnvironmentEvent(configurations.getTargetConfigurations().get(0).getMakeEnvironment()));
     }
     LOG.info("Configurations created");
-    AnalysisResult analysisResult=runAnalysisPhase(request,loadingResult,configurations);
-    result.setBuildConfigurationCollection(configurations);
-    result.setActualTargets(analysisResult.getTargetsToBuild());
-    result.setTestTargets(analysisResult.getTargetsToTest());
-    LoadedPackageProvider bridge=new LoadedPackageProvider(env.getPackageManager(),env.getReporter());
-    checkTargetEnvironmentRestrictions(analysisResult.getTargetsToBuild(),bridge);
-    reportTargets(analysisResult);
-    if (needsExecutionPhase(request.getBuildOptions())) {
-      executionTool.executeBuild(request.getId(),analysisResult,result,configurations,analysisResult.getPackageRoots(),request.getTopLevelArtifactContext());
+    if (request.getBuildOptions().performAnalysisPhase) {
+      AnalysisResult analysisResult=runAnalysisPhase(request,loadingResult,configurations);
+      result.setBuildConfigurationCollection(configurations);
+      result.setActualTargets(analysisResult.getTargetsToBuild());
+      result.setTestTargets(analysisResult.getTargetsToTest());
+      LoadedPackageProvider bridge=new LoadedPackageProvider(env.getPackageManager(),env.getReporter());
+      checkTargetEnvironmentRestrictions(analysisResult.getTargetsToBuild(),bridge);
+      reportTargets(analysisResult);
+      if (needsExecutionPhase(request.getBuildOptions())) {
+        executionTool.executeBuild(request.getId(),analysisResult,result,configurations,analysisResult.getPackageRoots(),request.getTopLevelArtifactContext());
+      }
+      String delayedErrorMsg=analysisResult.getError();
+      if (delayedErrorMsg != null) {
+        throw new BuildFailedException(delayedErrorMsg);
+      }
     }
-    String delayedErrorMsg=analysisResult.getError();
-    if (delayedErrorMsg != null) {
-      throw new BuildFailedException(delayedErrorMsg);
+ else {
+      getReporter().handle(Event.progress("Loading complete."));
+      LOG.info("No analysis requested, so finished");
+      String errorMessage=BuildView.createErrorMessage(loadingResult,null);
+      if (errorMessage != null) {
+        throw new BuildFailedException(errorMessage);
+      }
     }
   }
  catch (  RuntimeException e) {
@@ -61,8 +71,5 @@ catch (  Error e) {
       }
       env.getEventBus().post(new BuildInfoEvent(env.getBlazeWorkspace().getWorkspaceStatusActionFactory().createDummyWorkspaceStatus()));
     }
-  }
-  if (loadingResult != null && loadingResult.hasTargetPatternError()) {
-    throw new BuildFailedException("execution phase successful, but there were errors " + "parsing the target pattern");
   }
 }
