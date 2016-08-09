@@ -14,22 +14,22 @@ default :
 throw new IllegalStateException();
 }
 if (!ruleContext.getConfiguration().buildPythonZip()) {
-ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),executable,STUB_TEMPLATE,ImmutableList.of(Substitution.of("%main%",main),Substitution.of("%python_binary%",pythonBinary),Substitution.of("%imports%",Joiner.on(":").join(imports)),Substitution.of("%workspace_name%",ruleContext.getWorkspaceName())),true));
+ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),executable,STUB_TEMPLATE,ImmutableList.of(Substitution.of("%main%",main),Substitution.of("%python_binary%",pythonBinary),Substitution.of("%imports%",Joiner.on(":").join(imports)),Substitution.of("%workspace_name%",ruleContext.getWorkspaceName()),Substitution.of("%is_zipfile%","False")),true));
 }
  else {
-Artifact zipFile=common.getPythonZipArtifact();
+Artifact zipFile=getPythonZipArtifact(ruleContext,executable);
+Artifact templateMain=getPythonTemplateMainArtifact(ruleContext,executable);
 PathFragment workspaceName=getWorkspaceNameForPythonZip(ruleContext.getWorkspaceName());
 main=workspaceName.getRelative(common.determineMainExecutableSource(false)).toString();
 PathFragment defaultWorkspacename=new PathFragment(Label.DEFAULT_REPOSITORY_DIRECTORY);
-StringBuilder importPaths=new StringBuilder();
-importPaths.append(File.pathSeparator).append("$PYTHON_RUNFILES/").append(workspaceName);
+List<PathFragment> importPaths=new ArrayList<>();
 for (PathFragment path : imports) {
 if (path.startsWith(defaultWorkspacename)) {
 path=new PathFragment(workspaceName,path.subFragment(1,path.segmentCount()));
 }
-importPaths.append(File.pathSeparator).append("$PYTHON_RUNFILES/").append(path);
+importPaths.add(path);
 }
-String zipHeader="#!/bin/sh\n" + "export TMPDIR=${TMPDIR:-/tmp/Bazel}\n" + "mkdir -p \"${TMPDIR}\"\n"+ "export PYTHON_RUNFILES=$(mktemp -d \"${TMPDIR%%/}/runfiles.XXXXXXXX\")\n"+ "export PYTHONPATH=\"$PYTHONPATH" + importPaths + "\"\n"+ "unzip -q -o $0 -d \"$PYTHON_RUNFILES\" 2> /dev/null\n"+ "retCode=0\n"+ pythonBinary+ " \"$PYTHON_RUNFILES/"+ main+ "\" $@ || retCode=$?\n"+ "rm -rf \"$PYTHON_RUNFILES\"\n"+ "exit $retCode\n";
-ruleContext.registerAction(new SpawnAction.Builder().addInput(zipFile).addOutput(executable).setShellCommand("echo '" + zipHeader + "' | cat - "+ zipFile.getExecPathString()+ " > "+ executable.getExecPathString()).useDefaultShellEnvironment().setMnemonic("BuildBinary").build(ruleContext));
+ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),templateMain,STUB_TEMPLATE,ImmutableList.of(Substitution.of("%main%",main),Substitution.of("%python_binary%",pythonBinary),Substitution.of("%imports%",Joiner.on(":").join(importPaths)),Substitution.of("%workspace_name%",ruleContext.getWorkspaceName()),Substitution.of("%is_zipfile%","True")),true));
+ruleContext.registerAction(new SpawnAction.Builder().addInput(zipFile).addInput(templateMain).addOutput(executable).setShellCommand("cat " + templateMain.getExecPathString() + " "+ zipFile.getExecPathString()+ " > "+ executable.getExecPathString()).useDefaultShellEnvironment().setMnemonic("BuildBinary").build(ruleContext));
 }
 }
