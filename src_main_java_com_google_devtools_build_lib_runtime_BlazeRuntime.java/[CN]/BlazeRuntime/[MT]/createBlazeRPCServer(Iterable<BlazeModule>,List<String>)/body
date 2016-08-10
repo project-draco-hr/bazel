@@ -1,9 +1,8 @@
 {
-  OptionsProvider options=parseOptions(modules,args);
-  BlazeServerStartupOptions startupOptions=options.getOptions(BlazeServerStartupOptions.class);
-  BlazeRuntime runtime=newRuntime(modules,options);
+  BlazeRuntime runtime=newRuntime(modules,args);
   BlazeCommandDispatcher dispatcher=new BlazeCommandDispatcher(runtime);
   CommandExecutor commandExecutor=new CommandExecutor(runtime,dispatcher);
+  BlazeServerStartupOptions startupOptions=runtime.getStartupOptionsProvider().getOptions(BlazeServerStartupOptions.class);
   try {
     Class<?> factoryClass=Class.forName("com.google.devtools.build.lib.server.GrpcServerImpl$Factory");
     RPCServer.Factory factory=(RPCServer.Factory)factoryClass.newInstance();
