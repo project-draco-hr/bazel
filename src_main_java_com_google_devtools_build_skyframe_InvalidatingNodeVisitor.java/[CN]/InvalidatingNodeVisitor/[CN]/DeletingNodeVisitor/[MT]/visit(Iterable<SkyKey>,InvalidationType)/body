@@ -10,7 +10,7 @@
   for (  SkyKey key : unvisitedKeys) {
     pendingVisitations.add(Pair.of(key,InvalidationType.DELETED));
   }
-  final Map<SkyKey,NodeEntry> entries=graph.getBatchForInvalidation(unvisitedKeys);
+  final Map<SkyKey,NodeEntry> entries=graph.getBatch(null,Reason.INVALIDATION,unvisitedKeys);
   for (  final SkyKey key : unvisitedKeys) {
     executor.execute(new Runnable(){
       @Override public void run(){
@@ -24,7 +24,7 @@
           visit(entry.getReverseDeps(),InvalidationType.DELETED);
           Set<SkyKey> signalingDeps=entry.isDone() ? ImmutableSet.<SkyKey>of() : entry.getTemporaryDirectDeps().toSet();
           Iterable<SkyKey> directDeps=entry.isDone() ? entry.getDirectDeps() : entry.getAllDirectDepsForIncompleteNode();
-          Map<SkyKey,NodeEntry> depMap=graph.getBatchForInvalidation(directDeps);
+          Map<SkyKey,NodeEntry> depMap=graph.getBatch(key,Reason.INVALIDATION,directDeps);
           for (          Map.Entry<SkyKey,NodeEntry> directDepEntry : depMap.entrySet()) {
             NodeEntry dep=directDepEntry.getValue();
             if (dep != null) {
