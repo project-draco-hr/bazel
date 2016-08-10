@@ -2,9 +2,10 @@
   return new OutputFormatterCallback<Target>(){
     private final Set<Label> printed=CompactHashSet.create();
     private void outputRule(    Rule rule,    PrintStream out){
-      out.printf("# %s%n",rule.getLocation());
-      out.printf("%s(%n",rule.getRuleClass());
-      out.printf("  name = \"%s\",%n",rule.getName());
+      final String lineTerm=options.getLineTerminator();
+      out.printf("# %s%s",rule.getLocation(),lineTerm);
+      out.printf("%s(%s",rule.getRuleClass(),lineTerm);
+      out.printf("  name = \"%s\",%s",rule.getName(),lineTerm);
       for (      Attribute attr : rule.getAttributes()) {
         Pair<Iterable<Object>,AttributeValueSource> values=getPossibleAttributeValuesAndSources(rule,attr);
         if (Iterables.size(values.first) != 1) {
@@ -31,9 +32,9 @@
         StringBuilder builder=new StringBuilder();
         Printer.write(builder,value);
         out.print(builder);
-        out.println(",");
+        out.printf(",%s",lineTerm);
       }
-      out.printf(")\n%n");
+      out.printf(")\n%s",lineTerm);
     }
     @Override protected void processOutput(    Iterable<Target> partialResult) throws IOException, InterruptedException {
       for (      Target target : partialResult) {
