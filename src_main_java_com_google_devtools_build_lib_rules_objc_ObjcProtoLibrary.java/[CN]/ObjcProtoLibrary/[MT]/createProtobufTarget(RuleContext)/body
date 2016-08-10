@@ -1,0 +1,17 @@
+{
+  NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
+  XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
+  ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.PROTO_TARGET).addXcodeProviderOptions(xcodeProviderBuilder).addFilesToBuild(filesToBuild).registerActions();
+  ObjcCommon common=protoSupport.getCommon();
+  filesToBuild.addAll(common.getCompiledArchive().asSet());
+  new XcodeSupport(ruleContext).addFilesToBuild(filesToBuild).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),LIBRARY_STATIC).addDependencies(xcodeProviderBuilder,new Attribute(ObjcRuleClasses.PROTO_LIB_ATTR,Mode.TARGET)).registerActions(xcodeProviderBuilder.build());
+  boolean experimentalAutoUnion=ObjcRuleClasses.objcConfiguration(ruleContext).experimentalAutoTopLevelUnionObjCProtos();
+  CompilationSupport compilationSupport=new CompilationSupport(ruleContext);
+  if (!experimentalAutoUnion) {
+    compilationSupport.registerCompileAndArchiveActions(common);
+  }
+ else {
+    compilationSupport.registerGenerateModuleMapAction(common.getCompilationArtifacts());
+  }
+  return ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build()).addProvider(XcodeProvider.class,xcodeProviderBuilder.build()).addProvider(ObjcProvider.class,common.getObjcProvider()).build();
+}

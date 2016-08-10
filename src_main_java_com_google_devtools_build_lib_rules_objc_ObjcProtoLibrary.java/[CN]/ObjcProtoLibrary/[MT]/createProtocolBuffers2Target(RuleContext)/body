@@ -1,0 +1,7 @@
+{
+  NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
+  ProtocolBuffers2Support protoSupport=new ProtocolBuffers2Support(ruleContext).registerGenerationActions().registerCompilationActions().addFilesToBuild(filesToBuild);
+  XcodeProvider xcodeProvider=protoSupport.getXcodeProvider();
+  new XcodeSupport(ruleContext).registerActions(xcodeProvider).addFilesToBuild(filesToBuild);
+  return ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build()).addProvider(ObjcProvider.class,protoSupport.getObjcProvider()).addProvider(XcodeProvider.class,xcodeProvider).build();
+}
