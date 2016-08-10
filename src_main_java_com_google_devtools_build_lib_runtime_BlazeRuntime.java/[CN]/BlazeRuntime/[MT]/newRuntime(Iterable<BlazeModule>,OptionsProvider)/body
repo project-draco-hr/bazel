@@ -44,16 +44,8 @@
     ((UnixFileSystem)fs).setRootsWithAllowedHardlinks(Iterables.filter(Arrays.asList(installBasePath,outputBasePath,workspaceDirectoryPath),Predicates.notNull()));
   }
   ServerDirectories serverDirectories=new ServerDirectories(installBasePath,outputBasePath,startupOptions.installMD5);
-  BlazeDirectories directories=new BlazeDirectories(serverDirectories,workspaceDirectoryPath,startupOptions.deepExecRoot,productName);
   Clock clock=BlazeClock.instance();
-  BinTools binTools;
-  try {
-    binTools=BinTools.forProduction(directories);
-  }
- catch (  IOException e) {
-    throw new AbruptExitException("Cannot enumerate embedded binaries: " + e.getMessage(),ExitCode.LOCAL_ENVIRONMENTAL_ERROR);
-  }
-  BlazeRuntime.Builder runtimeBuilder=new BlazeRuntime.Builder().setProductName(productName).setServerDirectories(serverDirectories).setDirectories(directories).setStartupOptionsProvider(options).setBinTools(binTools).setClock(clock).setEventBusExceptionHandler(startupOptions.fatalEventBusExceptions || !BlazeVersionInfo.instance().isReleasedBlaze() ? new BlazeRuntime.BugReportingExceptionHandler() : new BlazeRuntime.RemoteExceptionHandler());
+  BlazeRuntime.Builder runtimeBuilder=new BlazeRuntime.Builder().setProductName(productName).setServerDirectories(serverDirectories).setStartupOptionsProvider(options).setClock(clock).setEventBusExceptionHandler(startupOptions.fatalEventBusExceptions || !BlazeVersionInfo.instance().isReleasedBlaze() ? new BlazeRuntime.BugReportingExceptionHandler() : new BlazeRuntime.RemoteExceptionHandler());
   if (System.getenv("TEST_TMPDIR") != null && System.getenv("NO_CRASH_ON_LOGGING_IN_TEST") == null) {
     LoggingUtil.installRemoteLogger(getTestCrashLogger());
   }
@@ -62,6 +54,15 @@
     runtimeBuilder.addBlazeModule(blazeModule);
   }
   BlazeRuntime runtime=runtimeBuilder.build();
+  BlazeDirectories directories=new BlazeDirectories(serverDirectories,workspaceDirectoryPath,startupOptions.deepExecRoot,productName);
+  BinTools binTools;
+  try {
+    binTools=BinTools.forProduction(directories);
+  }
+ catch (  IOException e) {
+    throw new AbruptExitException("Cannot enumerate embedded binaries: " + e.getMessage(),ExitCode.LOCAL_ENVIRONMENTAL_ERROR);
+  }
+  runtime.initWorkspace(directories,binTools);
   AutoProfiler.setClock(runtime.getClock());
   BugReport.setRuntime(runtime);
   return runtime;
