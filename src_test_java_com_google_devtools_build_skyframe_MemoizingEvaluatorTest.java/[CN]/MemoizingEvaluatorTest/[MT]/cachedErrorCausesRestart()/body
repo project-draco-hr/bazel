@@ -1,0 +1,54 @@
+{
+  final SkyKey errorKey=GraphTester.toSkyKey("error");
+  SkyKey invalidatedKey=GraphTester.toSkyKey("invalidated");
+  final SkyKey topKey=GraphTester.toSkyKey("top");
+  tester.getOrCreate(errorKey).addDependency(invalidatedKey).setHasError(true);
+  tester.getOrCreate(invalidatedKey).setConstantValue(new StringValue("constant"));
+  final CountDownLatch topSecondEval=new CountDownLatch(2);
+  final CountDownLatch topRequestedError=new CountDownLatch(1);
+  final CountDownLatch errorMarkedClean=new CountDownLatch(1);
+  injectGraphListenerForTesting(new Listener(){
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+      if (errorKey.equals(key) && type == EventType.MARK_CLEAN) {
+        if (order == Order.BEFORE) {
+          TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(topRequestedError,"top didn't request");
+        }
+ else {
+          errorMarkedClean.countDown();
+          TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(topSecondEval,"top didn't restart");
+          try {
+            Thread.sleep(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+          }
+ catch (          InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
+        }
+      }
+    }
+  }
+,false);
+  EvaluationResult<StringValue> result=tester.eval(false,errorKey);
+  assertThatEvaluationResult(result).hasError();
+  assertThatEvaluationResult(result).hasErrorEntryForKeyThat(errorKey).hasExceptionThat().isNotNull();
+  tester.getOrCreate(topKey).setBuilder(new SkyFunction(){
+    @Nullable @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException, InterruptedException {
+      topSecondEval.countDown();
+      env.getValue(errorKey);
+      topRequestedError.countDown();
+      assertThat(env.valuesMissing()).isTrue();
+      TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(errorMarkedClean,"error not marked clean");
+      return null;
+    }
+    @Nullable @Override public String extractTag(    SkyKey skyKey){
+      return null;
+    }
+  }
+);
+  tester.getOrCreate(invalidatedKey,true);
+  tester.invalidate();
+  EvaluationResult<StringValue> result2=tester.eval(false,errorKey,topKey);
+  assertThatEvaluationResult(result2).hasError();
+  assertThatEvaluationResult(result2).hasErrorEntryForKeyThat(errorKey).hasExceptionThat().isNotNull();
+  assertThatEvaluationResult(result2).hasErrorEntryForKeyThat(topKey).hasExceptionThat().isNotNull();
+  assertThatEvaluationResult(result2).hasErrorEntryForKeyThat(topKey).rootCauseOfExceptionIs(errorKey);
+}
