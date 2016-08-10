@@ -1,17 +1,17 @@
 {
   NestedSetBuilder<Artifact> inputsBuilder=NestedSetBuilder.stableOrder();
-  PathFragment workspaceName=getWorkspaceNameForPythonZip(ruleContext.getWorkspaceName());
+  PathFragment workspaceName=runfilesSupport.getWorkspaceName();
   CustomCommandLine.Builder argv=new CustomCommandLine.Builder();
   inputsBuilder.add(templateMain);
   argv.add("__main__.py=" + templateMain.getExecPathString());
   argv.add("__init__.py=");
-  argv.add(getRunfilesPath("__init__.py",workspaceName) + "=");
+  argv.add(getZipRunfilesPath("__init__.py",workspaceName) + "=");
   for (  String path : runfilesSupport.getRunfiles().getEmptyFilenames()) {
-    argv.add(getRunfilesPath(path,workspaceName) + "=");
+    argv.add(getZipRunfilesPath(path,workspaceName) + "=");
   }
   for (  Artifact artifact : runfilesSupport.getRunfiles().getArtifacts()) {
     if (!artifact.equals(executable)) {
-      argv.add(getRunfilesPath(artifact.getRunfilesPath(),workspaceName) + "=" + artifact.getExecPathString());
+      argv.add(getZipRunfilesPath(artifact.getRunfilesPath(),workspaceName) + "=" + artifact.getExecPathString());
       inputsBuilder.add(artifact);
     }
   }

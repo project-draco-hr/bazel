@@ -19,17 +19,7 @@ ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwne
  else {
 Artifact zipFile=getPythonZipArtifact(ruleContext,executable);
 Artifact templateMain=getPythonTemplateMainArtifact(ruleContext,executable);
-PathFragment workspaceName=getWorkspaceNameForPythonZip(ruleContext.getWorkspaceName());
-main=workspaceName.getRelative(common.determineMainExecutableSource(false)).toString();
-PathFragment defaultWorkspacename=new PathFragment(Label.DEFAULT_REPOSITORY_DIRECTORY);
-List<PathFragment> importPaths=new ArrayList<>();
-for (PathFragment path : imports) {
-if (path.startsWith(defaultWorkspacename)) {
-path=new PathFragment(workspaceName,path.subFragment(1,path.segmentCount()));
-}
-importPaths.add(path);
-}
-ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),templateMain,STUB_TEMPLATE,ImmutableList.of(Substitution.of("%main%",main),Substitution.of("%python_binary%",pythonBinary),Substitution.of("%imports%",Joiner.on(":").join(importPaths)),Substitution.of("%workspace_name%",ruleContext.getWorkspaceName()),Substitution.of("%is_zipfile%","True")),true));
+ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),templateMain,STUB_TEMPLATE,ImmutableList.of(Substitution.of("%main%",main),Substitution.of("%python_binary%",pythonBinary),Substitution.of("%imports%",Joiner.on(":").join(imports)),Substitution.of("%workspace_name%",ruleContext.getWorkspaceName()),Substitution.of("%is_zipfile%","True")),true));
 ruleContext.registerAction(new SpawnAction.Builder().addInput(zipFile).addOutput(executable).setShellCommand("echo '#!/usr/bin/env python' | cat - " + zipFile.getExecPathString() + " > "+ executable.getExecPathString()).useDefaultShellEnvironment().setMnemonic("BuildBinary").build(ruleContext));
 }
 }
