@@ -1,26 +1,15 @@
 {
   Set<String> globalNames=env.getGlobals().getDirectVariableNames();
-  for (  String name : globalNames) {
-    Object value=env.lookup(name);
-    if (name == null) {
-      throw new AssertionError(String.format("No such variable: '%s'",name));
-    }
-    if (value instanceof SkylarkAspect) {
-      SkylarkAspect skylarkAspect=(SkylarkAspect)value;
-      if (!skylarkAspect.isExported()) {
-        skylarkAspect.export(skylarkLabel,name);
+  for (  Class<? extends SkylarkExportable> exportable : EXPORTABLES) {
+    for (    String name : globalNames) {
+      Object value=env.lookup(name);
+      if (value == null) {
+        throw new AssertionError(String.format("No such variable: '%s'",name));
       }
-    }
-  }
-  for (  String name : globalNames) {
-    Object value=env.lookup(name);
-    if (value == null) {
-      throw new AssertionError(String.format("No such variable: '%s'",name));
-    }
-    if (value instanceof RuleFunction) {
-      RuleFunction function=(RuleFunction)value;
-      if (function.skylarkLabel == null) {
-        function.export(skylarkLabel,name);
+      if (exportable.isInstance(value)) {
+        if (!exportable.cast(value).isExported()) {
+          exportable.cast(value).export(skylarkLabel,name);
+        }
       }
     }
   }

@@ -1,6 +1,9 @@
 {
   SkylarkClassObject lval=(SkylarkClassObject)left;
   SkylarkClassObject rval=(SkylarkClassObject)right;
+  if (!lval.constructor.equals(rval.constructor)) {
+    throw new EvalException(loc,String.format("Cannot concat %s with %s",lval.constructor.getPrintableName(),rval.constructor.getPrintableName()));
+  }
   SetView<String> commonFields=Sets.intersection(lval.values.keySet(),rval.values.keySet());
   if (!commonFields.isEmpty()) {
     throw new EvalException(loc,"Cannot concat structs with common field(s): " + Joiner.on(",").join(commonFields));
