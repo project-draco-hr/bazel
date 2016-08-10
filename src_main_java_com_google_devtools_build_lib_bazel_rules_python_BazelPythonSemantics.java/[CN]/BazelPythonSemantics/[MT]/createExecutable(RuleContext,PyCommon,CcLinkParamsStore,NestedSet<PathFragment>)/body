@@ -30,6 +30,6 @@ path=new PathFragment(workspaceName,path.subFragment(1,path.segmentCount()));
 importPaths.add(path);
 }
 ruleContext.registerAction(new TemplateExpansionAction(ruleContext.getActionOwner(),templateMain,STUB_TEMPLATE,ImmutableList.of(Substitution.of("%main%",main),Substitution.of("%python_binary%",pythonBinary),Substitution.of("%imports%",Joiner.on(":").join(importPaths)),Substitution.of("%workspace_name%",ruleContext.getWorkspaceName()),Substitution.of("%is_zipfile%","True")),true));
-ruleContext.registerAction(new SpawnAction.Builder().addInput(zipFile).addInput(templateMain).addOutput(executable).setShellCommand("cat " + templateMain.getExecPathString() + " "+ zipFile.getExecPathString()+ " > "+ executable.getExecPathString()).useDefaultShellEnvironment().setMnemonic("BuildBinary").build(ruleContext));
+ruleContext.registerAction(new SpawnAction.Builder().addInput(zipFile).addOutput(executable).setShellCommand("echo '#!/usr/bin/env python' | cat - " + zipFile.getExecPathString() + " > "+ executable.getExecPathString()).useDefaultShellEnvironment().setMnemonic("BuildBinary").build(ruleContext));
 }
 }
