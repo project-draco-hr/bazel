@@ -15,12 +15,12 @@
   BuildLangTypedAttributeValuesMap attributeValues=new BuildLangTypedAttributeValuesMap((Map<String,Object>)args[0]);
   try {
     PackageContext pkgContext=(PackageContext)env.lookup(PackageFactory.PKG_CONTEXT);
+    if (pkgContext == null) {
+      throw new EvalException(ast.getLocation(),"Cannot instantiate a rule when loading a .bzl file. Rules can only called from " + "a BUILD file (possibly via a macro).");
+    }
     return RuleFactory.createAndAddRule(pkgContext,ruleClass,attributeValues,ast,env,pkgContext.getAttributeContainerFactory().apply(ruleClass));
   }
  catch (  InvalidRuleException|NameConflictException e) {
     throw new EvalException(ast.getLocation(),e.getMessage());
-  }
-catch (  NoSuchVariableException e) {
-    throw new EvalException(ast.getLocation(),"Cannot instantiate a rule when loading a .bzl file. Rules can only called from " + "a BUILD file (possibly via a macro).");
   }
 }
