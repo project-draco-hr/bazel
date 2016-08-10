@@ -1,5 +1,5 @@
 {
-  scratch.file("java/com/google/example/BUILD","java_library(","   name = 'foobar',","   srcs = ['FooBar.java'],",")","java_test(","   name = 'FooBarTest',","   srcs = ['FooBarTest.java'],","   size = 'large',","   deps = [':foobar'],",")");
+  scratch.file("java/com/google/example/BUILD","java_library(","   name = 'foobar',","   srcs = ['FooBar.java'],",")","java_test(","   name = 'FooBarTest',","   srcs = ['FooBarTest.java'],","   size = 'large',","   deps = [':foobar'],","   data = ['MyData'],",")");
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//java/com/google/example:FooBarTest");
   RuleIdeInfo testInfo=getRuleInfoAndVerifyLabel("//java/com/google/example:FooBarTest",ruleIdeInfos);
   if (testLegacyAswbPluginVersionCompatibility()) {
@@ -12,4 +12,5 @@
   assertThat(getIdeResolveFiles()).containsExactly("java/com/google/example/libfoobar.jar","java/com/google/example/libfoobar-ijar.jar","java/com/google/example/libfoobar-src.jar","java/com/google/example/FooBarTest.jar","java/com/google/example/FooBarTest-src.jar");
   assertThat(testInfo.getJavaRuleIdeInfo().getJdeps().getRelativePath()).isEqualTo("java/com/google/example/FooBarTest.jdeps");
   assertThat(testInfo.getTestInfo().getSize()).isEqualTo("large");
+  assertThat(testInfo.getTestInfo().getDataList()).containsExactly(ArtifactLocation.newBuilder().setIsSource(true).setRootPath(testLegacyAswbPluginVersionCompatibility() ? "/workspace" : "").setRelativePath("java/com/google/example/MyData").build());
 }
