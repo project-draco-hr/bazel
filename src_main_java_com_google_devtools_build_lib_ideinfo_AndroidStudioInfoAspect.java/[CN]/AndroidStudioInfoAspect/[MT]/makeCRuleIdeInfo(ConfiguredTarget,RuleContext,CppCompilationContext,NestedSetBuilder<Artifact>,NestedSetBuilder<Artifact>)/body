@@ -24,6 +24,12 @@
   for (  PathFragment pathFragment : transitiveSystemIncludeDirectories) {
     builder.addTransitiveSystemIncludeDirectory(pathFragment.getSafePathString());
   }
+  CcLinkParamsProvider ccLinkParams=base.getProvider(CcLinkParamsProvider.class);
+  if (ccLinkParams != null) {
+    for (    LinkerInput lib : ccLinkParams.getCcLinkParams(true,false).getLibraries()) {
+      ideCompileArtifacts.add(lib.getArtifact());
+    }
+  }
   androidStudioInfoSemantics.augmentCppRuleInfo(builder,base,ruleContext,cppCompilationContext,ideResolveArtifacts);
   return builder.build();
 }
