@@ -1,0 +1,13 @@
+{
+  PathFragment output=new PathFragment(outputName);
+  ArtifactNamePattern patternForCategory=null;
+  for (  ArtifactNamePattern artifactNamePattern : artifactNamePatterns) {
+    if (artifactNamePattern.getArtifactCategory() == artifactCategory) {
+      patternForCategory=artifactNamePattern;
+    }
+  }
+  if (patternForCategory == null) {
+    throw new ExpansionException(String.format(MISSING_ARTIFACT_NAME_PATTERN_ERROR_TEMPLATE,artifactCategory.getCategoryName()));
+  }
+  return patternForCategory.getArtifactName(ImmutableMap.of("output_name",outputName,"base_name",output.getBaseName(),"output_directory",output.getParentDirectory().getPathString()));
+}

@@ -1,5 +1,5 @@
 {
-  Preconditions.checkState(linkType.isStaticLibraryLink(),"can only handle static links");
+  Preconditions.checkState(linkType.staticness() == Staticness.STATIC,"can only handle static links");
   CcLinkingOutputs.Builder result=new CcLinkingOutputs.Builder();
   if (cppConfiguration.isLipoContextCollector()) {
     return result.build();
@@ -12,13 +12,17 @@
   String libraryIdentifier=ruleContext.getPackageDirectory().getRelative(labelName.replaceName("lib" + labelName.getBaseName())).getPathString();
   CppLinkAction maybePicAction=newLinkActionBuilder(linkedArtifact).addObjectFiles(ccOutputs.getObjectFiles(usePicForBinaries)).addNonCodeInputs(ccOutputs.getHeaderTokenFiles()).addNonCodeInputs(nonCodeLinkerInputs).addLTOBitcodeFiles(ccOutputs.getLtoBitcodeFiles()).setLinkType(linkType).setLinkStaticness(LinkStaticness.FULLY_STATIC).addActionInputs(linkActionInputs).setLibraryIdentifier(libraryIdentifier).addVariablesExtension(variablesExtensions).setFeatureConfiguration(featureConfiguration).build();
   env.registerAction(maybePicAction);
-  result.addStaticLibrary(maybePicAction.getOutputLibrary());
+  if (linkType != LinkTargetType.EXECUTABLE) {
+    result.addStaticLibrary(maybePicAction.getOutputLibrary());
+  }
   if (!usePicForBinaries && usePicForSharedLibs) {
     LinkTargetType picLinkType=(linkType == LinkTargetType.ALWAYS_LINK_STATIC_LIBRARY) ? LinkTargetType.ALWAYS_LINK_PIC_STATIC_LIBRARY : LinkTargetType.PIC_STATIC_LIBRARY;
     Artifact picArtifact=getLinkedArtifact(picLinkType);
     CppLinkAction picAction=newLinkActionBuilder(picArtifact).addObjectFiles(ccOutputs.getObjectFiles(true)).addNonCodeInputs(ccOutputs.getHeaderTokenFiles()).addLTOBitcodeFiles(ccOutputs.getLtoBitcodeFiles()).setLinkType(picLinkType).setLinkStaticness(LinkStaticness.FULLY_STATIC).addActionInputs(linkActionInputs).setLibraryIdentifier(libraryIdentifier).addVariablesExtension(variablesExtensions).setFeatureConfiguration(featureConfiguration).build();
     env.registerAction(picAction);
-    result.addPicStaticLibrary(picAction.getOutputLibrary());
+    if (linkType != LinkTargetType.EXECUTABLE) {
+      result.addPicStaticLibrary(picAction.getOutputLibrary());
+    }
   }
   if (!createDynamicLibrary) {
     return result.build();
@@ -39,7 +43,7 @@
     soInterface=CppHelper.getLinuxLinkedArtifact(ruleContext,LinkTargetType.INTERFACE_DYNAMIC_LIBRARY);
     sonameLinkopts=ImmutableList.of("-Wl,-soname=" + SolibSymlinkAction.getDynamicLibrarySoname(soImpl.getRootRelativePath(),false));
   }
-  CppLinkActionBuilder linkActionBuilder=newLinkActionBuilder(soImpl).setInterfaceOutput(soInterface).addObjectFiles(ccOutputs.getObjectFiles(usePicForSharedLibs)).addNonCodeInputs(ccOutputs.getHeaderTokenFiles()).addLTOBitcodeFiles(ccOutputs.getLtoBitcodeFiles()).setLinkType(LinkTargetType.DYNAMIC_LIBRARY).setLinkStaticness(LinkStaticness.DYNAMIC).addActionInputs(linkActionInputs).setLibraryIdentifier(mainLibraryIdentifier).addLinkopts(linkopts).addLinkopts(sonameLinkopts).setRuntimeInputs(CppHelper.getToolchain(ruleContext).getDynamicRuntimeLinkMiddleman(),CppHelper.getToolchain(ruleContext).getDynamicRuntimeLinkInputs()).setFeatureConfiguration(featureConfiguration).addVariablesExtension(variablesExtensions);
+  CppLinkActionBuilder linkActionBuilder=newLinkActionBuilder(soImpl).setInterfaceOutput(soInterface).addObjectFiles(ccOutputs.getObjectFiles(usePicForSharedLibs)).addNonCodeInputs(ccOutputs.getHeaderTokenFiles()).addLTOBitcodeFiles(ccOutputs.getLtoBitcodeFiles()).setLinkType(LinkTargetType.DYNAMIC_LIBRARY).setLinkStaticness(LinkStaticness.DYNAMIC).addActionInputs(linkActionInputs).setLibraryIdentifier(mainLibraryIdentifier).addLinkopts(linkopts).addLinkopts(sonameLinkopts).setRuntimeInputs(ArtifactCategory.DYNAMIC_LIBRARY,CppHelper.getToolchain(ruleContext).getDynamicRuntimeLinkMiddleman(),CppHelper.getToolchain(ruleContext).getDynamicRuntimeLinkInputs()).setFeatureConfiguration(featureConfiguration).addVariablesExtension(variablesExtensions);
   if (!ccOutputs.getLtoBitcodeFiles().isEmpty() && featureConfiguration.isEnabled(CppRuleClasses.THIN_LTO)) {
     linkActionBuilder.setLTOIndexing(true);
     CppLinkAction indexAction=linkActionBuilder.build();
@@ -51,13 +55,13 @@
   }
   CppLinkAction action=linkActionBuilder.build();
   env.registerAction(action);
+  if (linkType == LinkTargetType.EXECUTABLE) {
+    return result.build();
+  }
   LibraryToLink dynamicLibrary=action.getOutputLibrary();
   LibraryToLink interfaceLibrary=action.getInterfaceOutputLibrary();
   if (interfaceLibrary == null) {
     interfaceLibrary=dynamicLibrary;
-  }
-  if (linkType == LinkTargetType.EXECUTABLE) {
-    return result.build();
   }
   if (neverLink) {
     result.addDynamicLibrary(interfaceLibrary);

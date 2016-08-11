@@ -13,9 +13,9 @@
   }
  else {
     if (generatePicAction) {
-      String picOutputBase=CppHelper.getCompileArtifactName(ruleContext,ArtifactCategory.PIC_FILE,outputName);
+      String picOutputBase=CppHelper.getArtifactNameForCategory(ruleContext,ArtifactCategory.PIC_FILE,outputName);
       CppCompileActionBuilder picBuilder=copyAsPicBuilder(builder,picOutputBase,outputCategory,generateDotd);
-      String gcnoFileName=CppHelper.getCompileArtifactName(ruleContext,ArtifactCategory.COVERAGE_DATA_FILE,picOutputBase);
+      String gcnoFileName=CppHelper.getArtifactNameForCategory(ruleContext,ArtifactCategory.COVERAGE_DATA_FILE,picOutputBase);
       Artifact gcnoFile=enableCoverage ? CppHelper.getCompileOutputArtifact(ruleContext,gcnoFileName) : null;
       Artifact dwoFile=generateDwo ? getDwoFile(picBuilder.getOutputFile()) : null;
       setupCompileBuildVariables(picBuilder,true,ccRelativeName,sourceArtifact.getExecPath(),gcnoFile,dwoFile,sourceSpecificBuildVariables);
@@ -41,9 +41,9 @@
       }
     }
     if (generateNoPicAction) {
-      Artifact noPicOutputFile=CppHelper.getCompileOutputArtifact(ruleContext,CppHelper.getCompileArtifactName(ruleContext,outputCategory,outputName));
+      Artifact noPicOutputFile=CppHelper.getCompileOutputArtifact(ruleContext,CppHelper.getArtifactNameForCategory(ruleContext,outputCategory,outputName));
       builder.setOutputs(outputCategory,outputName,generateDotd);
-      String gcnoFileName=CppHelper.getCompileArtifactName(ruleContext,ArtifactCategory.COVERAGE_DATA_FILE,outputName);
+      String gcnoFileName=CppHelper.getArtifactNameForCategory(ruleContext,ArtifactCategory.COVERAGE_DATA_FILE,outputName);
       Artifact gcnoFile=!cppConfiguration.isLipoOptimization() && enableCoverage ? CppHelper.getCompileOutputArtifact(ruleContext,gcnoFileName) : null;
       Artifact noPicDwoFile=generateDwo ? getDwoFile(noPicOutputFile) : null;
       setupCompileBuildVariables(builder,false,ccRelativeName,sourceArtifact.getExecPath(),gcnoFile,noPicDwoFile,sourceSpecificBuildVariables);

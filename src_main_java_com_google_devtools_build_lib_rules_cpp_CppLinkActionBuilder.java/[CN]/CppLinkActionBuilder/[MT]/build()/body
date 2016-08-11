@@ -17,8 +17,8 @@
       featureConfiguration=CcCommon.configureFeatures(ruleContext);
     }
   }
-  final LibraryToLink outputLibrary=LinkerInputs.newInputLibrary(output,libraryIdentifier,objectArtifacts,this.ltoBitcodeFiles);
-  final LibraryToLink interfaceOutputLibrary=(interfaceOutput == null) ? null : LinkerInputs.newInputLibrary(interfaceOutput,libraryIdentifier,objectArtifacts,this.ltoBitcodeFiles);
+  final LibraryToLink outputLibrary=linkType == LinkTargetType.EXECUTABLE ? null : LinkerInputs.newInputLibrary(output,linkType.staticness() == Staticness.STATIC ? ArtifactCategory.STATIC_LIBRARY : ArtifactCategory.DYNAMIC_LIBRARY,libraryIdentifier,objectArtifacts,this.ltoBitcodeFiles);
+  final LibraryToLink interfaceOutputLibrary=(interfaceOutput == null) ? null : LinkerInputs.newInputLibrary(interfaceOutput,ArtifactCategory.DYNAMIC_LIBRARY,libraryIdentifier,objectArtifacts,this.ltoBitcodeFiles);
   final ImmutableMap<Artifact,Artifact> linkstampMap=mapLinkstampsToOutputs(linkstamps,ruleContext,configuration,output,linkArtifactFactory);
   PathFragment ltoOutputRootPrefix=null;
   if (isLTOIndexing && allLTOArtifacts == null) {
@@ -36,7 +36,7 @@
  else {
     actionOutputs=constructOutputs(output,linkstampMap.values(),interfaceOutputLibrary == null ? null : interfaceOutputLibrary.getArtifact(),symbolCounts);
   }
-  ImmutableList<LinkerInput> runtimeLinkerInputs=ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs));
+  ImmutableList<LinkerInput> runtimeLinkerInputs=ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs,runtimeType));
   Variables.Builder buildVariablesBuilder=new Variables.Builder();
   CppLinkVariablesExtension variablesExtension=isLTOIndexing ? new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,null) : new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,output);
   variablesExtension.addVariables(buildVariablesBuilder);
@@ -50,14 +50,14 @@
   if (linkType != LinkTargetType.DYNAMIC_LIBRARY) {
     Preconditions.checkArgument(interfaceOutput == null,"interface output may only be non-null for dynamic library links");
   }
-  if (linkType.isStaticLibraryLink()) {
+  if (linkType.staticness() == Staticness.STATIC) {
     runtimeSolibDir=null;
     Preconditions.checkArgument(linkStaticness == LinkStaticness.FULLY_STATIC,"static library link must be static");
     Preconditions.checkArgument(symbolCounts == null,"the symbol counts output must be null for static links");
     Preconditions.checkArgument(!isNativeDeps,"the native deps flag must be false for static links");
     Preconditions.checkArgument(!needWholeArchive,"the need whole archive flag must be false for static links");
   }
-  LinkCommandLine.Builder linkCommandLineBuilder=new LinkCommandLine.Builder(configuration,getOwner(),ruleContext).setLinkerInputs(linkerInputs).setRuntimeInputs(runtimeLinkerInputs).setLinkTargetType(linkType).setLinkStaticness(linkStaticness).setFeatures(features).setRuntimeSolibDir(linkType.isStaticLibraryLink() ? null : runtimeSolibDir).setNativeDeps(isNativeDeps).setUseTestOnlyFlags(useTestOnlyFlags).setParamFile(paramFile).setToolchain(toolchain).setBuildVariables(buildVariables).setFeatureConfiguration(featureConfiguration);
+  LinkCommandLine.Builder linkCommandLineBuilder=new LinkCommandLine.Builder(configuration,getOwner(),ruleContext).setLinkerInputs(linkerInputs).setRuntimeInputs(runtimeLinkerInputs).setLinkTargetType(linkType).setLinkStaticness(linkStaticness).setFeatures(features).setRuntimeSolibDir(linkType.staticness() == Staticness.STATIC ? null : runtimeSolibDir).setNativeDeps(isNativeDeps).setUseTestOnlyFlags(useTestOnlyFlags).setParamFile(paramFile).setToolchain(toolchain).setBuildVariables(buildVariables).setFeatureConfiguration(featureConfiguration);
   if (needWholeArchive) {
     linkCommandLineBuilder.setNoWholeArchiveFlags(variablesExtension.getNoWholeArchiveInputs());
   }
@@ -124,5 +124,5 @@
   if (featureConfiguration.actionIsConfigured(getActionName())) {
     executionRequirements.addAll(featureConfiguration.getToolForAction(getActionName()).getExecutionRequirements());
   }
-  return new CppLinkAction(getOwner(),inputsBuilder.deduplicate().build(),actionOutputs,cppConfiguration,outputLibrary,interfaceOutputLibrary,fake,isLTOIndexing,allLTOArtifacts,linkCommandLine,toolchainEnv,executionRequirements.build());
+  return new CppLinkAction(getOwner(),inputsBuilder.deduplicate().build(),actionOutputs,cppConfiguration,outputLibrary,output,interfaceOutputLibrary,fake,isLTOIndexing,allLTOArtifacts,linkCommandLine,toolchainEnv,executionRequirements.build());
 }

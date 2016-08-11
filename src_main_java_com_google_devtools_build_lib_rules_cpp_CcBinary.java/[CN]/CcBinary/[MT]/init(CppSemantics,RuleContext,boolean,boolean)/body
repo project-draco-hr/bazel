@@ -16,15 +16,19 @@
     binaryPath=new PathFragment(binaryPath.getPathString() + OsUtils.executableExtension());
   }
   Artifact binary=ruleContext.getBinArtifact(binaryPath);
+  if (isLinkShared(ruleContext) && !CppFileTypes.SHARED_LIBRARY.matches(binary.getFilename())) {
+    ruleContext.attributeError("linkshared","'linkshared' used in non-shared library");
+    return null;
+  }
   CppLinkActionBuilder linkActionBuilder=determineLinkerArguments(ruleContext,common,precompiledFiles,ccCompilationOutputs,cppCompilationContext.getTransitiveCompilationPrerequisites(),fake,binary,linkStaticness,linkopts);
   linkActionBuilder.setUseTestOnlyFlags(isTest);
   linkActionBuilder.addNonCodeInputs(ccCompilationOutputs.getHeaderTokenFiles());
   CcToolchainProvider ccToolchain=CppHelper.getToolchain(ruleContext);
   if (linkStaticness == LinkStaticness.DYNAMIC) {
-    linkActionBuilder.setRuntimeInputs(ccToolchain.getDynamicRuntimeLinkMiddleman(),ccToolchain.getDynamicRuntimeLinkInputs());
+    linkActionBuilder.setRuntimeInputs(ArtifactCategory.DYNAMIC_LIBRARY,ccToolchain.getDynamicRuntimeLinkMiddleman(),ccToolchain.getDynamicRuntimeLinkInputs());
   }
  else {
-    linkActionBuilder.setRuntimeInputs(ccToolchain.getStaticRuntimeLinkMiddleman(),ccToolchain.getStaticRuntimeLinkInputs());
+    linkActionBuilder.setRuntimeInputs(ArtifactCategory.STATIC_LIBRARY,ccToolchain.getStaticRuntimeLinkMiddleman(),ccToolchain.getStaticRuntimeLinkInputs());
     if (!ccToolchain.getStaticRuntimeLinkInputs().isEmpty()) {
       linkActionBuilder.addLinkopt("-static-libgcc");
     }
@@ -54,16 +58,11 @@
   ruleContext.registerAction(linkAction);
   LibraryToLink outputLibrary=linkAction.getOutputLibrary();
   Iterable<Artifact> fakeLinkerInputs=fake ? linkAction.getInputs() : ImmutableList.<Artifact>of();
-  Artifact executable=outputLibrary.getArtifact();
+  Artifact executable=linkAction.getLinkOutput();
   CcLinkingOutputs.Builder linkingOutputsBuilder=new CcLinkingOutputs.Builder();
   if (isLinkShared(ruleContext)) {
-    if (CppFileTypes.SHARED_LIBRARY.matches(binary.getFilename())) {
-      linkingOutputsBuilder.addDynamicLibrary(outputLibrary);
-      linkingOutputsBuilder.addExecutionDynamicLibrary(outputLibrary);
-    }
- else {
-      ruleContext.attributeError("linkshared","'linkshared' used in non-shared library");
-    }
+    linkingOutputsBuilder.addDynamicLibrary(outputLibrary);
+    linkingOutputsBuilder.addExecutionDynamicLibrary(outputLibrary);
   }
   for (  Artifact library : precompiledFiles.getSharedLibraries()) {
     Artifact symlink=common.getDynamicLibrarySymlink(library,true);

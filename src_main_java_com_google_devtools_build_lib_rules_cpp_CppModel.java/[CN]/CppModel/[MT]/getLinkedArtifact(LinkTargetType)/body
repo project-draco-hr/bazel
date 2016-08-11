@@ -2,8 +2,12 @@
   Artifact result=null;
   Artifact linuxDefault=CppHelper.getLinuxLinkedArtifact(ruleContext,linkTargetType);
   try {
-    String templatedName=features.getArtifactNameForCategory(linkTargetType.getLinkerOutput(),ruleContext,ImmutableMap.<String,String>of());
-    PathFragment artifactFragment=new PathFragment(ruleContext.getLabel().getName()).getParentDirectory().getRelative(templatedName);
+    String maybePicName=ruleContext.getLabel().getName();
+    if (linkTargetType.picness() == Picness.PIC) {
+      maybePicName=CppHelper.getArtifactNameForCategory(ruleContext,ArtifactCategory.PIC_FILE,maybePicName);
+    }
+    String linkedName=CppHelper.getArtifactNameForCategory(ruleContext,linkTargetType.getLinkerOutput(),maybePicName);
+    PathFragment artifactFragment=new PathFragment(ruleContext.getLabel().getName()).getParentDirectory().getRelative(linkedName);
     result=ruleContext.getBinArtifact(artifactFragment);
   }
  catch (  ExpansionException e) {
