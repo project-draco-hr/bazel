@@ -1,7 +1,9 @@
 {
   if (shardFile != null) {
     try {
-      Files.touch(shardFile);
+      if (!shardFile.createNewFile() && !shardFile.setLastModified(System.currentTimeMillis())) {
+        throw new IOException("Unable to update modification time of " + shardFile);
+      }
     }
  catch (    IOException e) {
       throw new RuntimeException("Error writing shard file " + shardFile,e);

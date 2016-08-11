@@ -1,0 +1,31 @@
+{
+  String basicAssertionMessage="Elements of collection " + actual + " are not the same as the "+ "elements of expected list "+ expectedDescriptions+ ". ";
+  if (actual.size() != expectedDescriptions.size()) {
+    throw new AssertionError(basicAssertionMessage + "The number of elements is different.");
+  }
+  List<Description> actualDescriptions=new ArrayList<Description>(actual);
+  Set<Description> reviewedDescriptions=new HashSet<>();
+  for (int i=0; i < actual.size(); i++) {
+    Description currDescription=actualDescriptions.get(i);
+    if (reviewedDescriptions.contains(currDescription)) {
+      continue;
+    }
+    int actualFreq=0;
+    int expectedFreq=0;
+    for (int j=0; j < actual.size(); j++) {
+      if (currDescription.equals(actualDescriptions.get(j))) {
+        actualFreq++;
+      }
+      if (currDescription.equals(expectedDescriptions.get(j))) {
+        expectedFreq++;
+      }
+    }
+    if (actualFreq < expectedFreq) {
+      throw new AssertionError(basicAssertionMessage + "There are " + (expectedFreq - actualFreq)+ " missing occurrences of "+ currDescription+ ".");
+    }
+ else     if (actualFreq > expectedFreq) {
+      throw new AssertionError(basicAssertionMessage + "There are " + (actualFreq - expectedFreq)+ " unexpected occurrences of "+ currDescription+ ".");
+    }
+    reviewedDescriptions.add(currDescription);
+  }
+}

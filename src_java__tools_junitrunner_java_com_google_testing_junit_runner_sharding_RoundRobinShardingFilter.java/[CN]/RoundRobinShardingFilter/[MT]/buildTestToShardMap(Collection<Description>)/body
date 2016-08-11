@@ -4,7 +4,9 @@
   Collections.sort(sortedDescriptions,new DescriptionComparator());
   int index=0;
   for (  Description description : sortedDescriptions) {
-    Preconditions.checkArgument(description.isTest(),"Test suite should not be included in the set of tests to shard: %s",description.getDisplayName());
+    if (!description.isTest()) {
+      throw new IllegalArgumentException("Test suite should not be included in the set of tests " + "to shard: " + description.getDisplayName());
+    }
     map.put(description,index);
     index++;
   }
