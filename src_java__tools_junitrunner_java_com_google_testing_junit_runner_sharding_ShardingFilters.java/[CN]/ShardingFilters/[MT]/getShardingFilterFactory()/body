@@ -9,10 +9,11 @@
   }
  catch (  IllegalArgumentException e) {
     try {
-      Class<?> strategyClass=Thread.currentThread().getContextClassLoader().loadClass(strategy);
-      shardingFilterFactory=(ShardingFilterFactory)strategyClass.newInstance();
+      ClassLoader classLoader=Thread.currentThread().getContextClassLoader();
+      Class<? extends ShardingFilterFactory> strategyClass=classLoader.loadClass(strategy).asSubclass(ShardingFilterFactory.class);
+      shardingFilterFactory=strategyClass.getConstructor().newInstance();
     }
- catch (    ClassNotFoundException|InstantiationException|IllegalAccessException|IllegalArgumentException e2) {
+ catch (    ReflectiveOperationException|IllegalArgumentException e2) {
       throw new RuntimeException("Could not create custom sharding strategy class " + strategy,e2);
     }
   }

@@ -5,10 +5,10 @@
   BlazeServerStartupOptions startupOptions=runtime.getStartupOptionsProvider().getOptions(BlazeServerStartupOptions.class);
   try {
     Class<?> factoryClass=Class.forName("com.google.devtools.build.lib.server.GrpcServerImpl$Factory");
-    RPCServer.Factory factory=(RPCServer.Factory)factoryClass.newInstance();
+    RPCServer.Factory factory=(RPCServer.Factory)factoryClass.getConstructor().newInstance();
     return factory.create(commandExecutor,runtime.getClock(),startupOptions.commandPort,runtime.getServerDirectory(),startupOptions.maxIdleSeconds);
   }
- catch (  ClassNotFoundException|InstantiationException|IllegalAccessException e) {
+ catch (  ReflectiveOperationException|IllegalArgumentException e) {
     throw new AbruptExitException("gRPC server not compiled in",ExitCode.BLAZE_INTERNAL_ERROR);
   }
 }
