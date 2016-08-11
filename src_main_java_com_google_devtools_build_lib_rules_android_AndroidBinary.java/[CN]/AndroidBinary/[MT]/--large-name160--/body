@@ -21,7 +21,7 @@
     dataDeps=ruleContext.getPrerequisiteArtifacts("data",Mode.DATA).list();
   }
   Artifact deployInfo=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.DEPLOY_INFO);
-  AndroidDeployInfoAction.createDeployInfoAction(ruleContext,deployInfo,applicationManifest.getManifest(),additionalMergedManifests,Iterables.concat(ImmutableList.of(zipAlignedApk),apksUnderTest),dataDeps);
+  AndroidDeployInfoAction.createDeployInfoAction(ruleContext,deployInfo,resourceApk.getManifest(),additionalMergedManifests,Iterables.concat(ImmutableList.of(zipAlignedApk),apksUnderTest),dataDeps);
   NestedSet<Artifact> coverageMetadata=(androidCommon.getInstrumentedJar() != null) ? NestedSetBuilder.create(Order.STABLE_ORDER,androidCommon.getInstrumentedJar()) : NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER);
   RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext);
   Artifact incrementalApk=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_BINARY_INCREMENTAL_APK);
@@ -43,7 +43,7 @@
   createInstallAction(ruleContext,false,fullDeployMarker,argsArtifact,incrementalDexManifest,incrementalResourceApk.getArtifact(),incrementalApk,nativeLibs,stubData);
   createInstallAction(ruleContext,true,incrementalDeployMarker,argsArtifact,incrementalDexManifest,incrementalResourceApk.getArtifact(),incrementalApk,nativeLibs,stubData);
   Artifact incrementalDeployInfo=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.DEPLOY_INFO_INCREMENTAL);
-  AndroidDeployInfoAction.createDeployInfoAction(ruleContext,incrementalDeployInfo,applicationManifest.getManifest(),additionalMergedManifests,ImmutableList.<Artifact>of(),dataDeps);
+  AndroidDeployInfoAction.createDeployInfoAction(ruleContext,incrementalDeployInfo,resourceApk.getManifest(),additionalMergedManifests,ImmutableList.<Artifact>of(),dataDeps);
   NestedSet<Artifact> fullInstallOutputGroup=NestedSetBuilder.<Artifact>stableOrder().add(fullDeployMarker).add(incrementalDeployInfo).build();
   NestedSet<Artifact> incrementalInstallOutputGroup=NestedSetBuilder.<Artifact>stableOrder().add(incrementalDeployMarker).add(incrementalDeployInfo).build();
   NestedSetBuilder<Artifact> splitApkSetBuilder=NestedSetBuilder.compileOrder();
@@ -76,7 +76,7 @@
   NestedSet<Artifact> allSplitApks=splitApkSetBuilder.build();
   createSplitInstallAction(ruleContext,splitDeployMarker,argsArtifact,splitMainApk,splitApks,stubData);
   Artifact splitDeployInfo=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.DEPLOY_INFO_SPLIT);
-  AndroidDeployInfoAction.createDeployInfoAction(ruleContext,splitDeployInfo,applicationManifest.getManifest(),additionalMergedManifests,ImmutableList.<Artifact>of(),dataDeps);
+  AndroidDeployInfoAction.createDeployInfoAction(ruleContext,splitDeployInfo,resourceApk.getManifest(),additionalMergedManifests,ImmutableList.<Artifact>of(),dataDeps);
   NestedSet<Artifact> splitInstallOutputGroup=NestedSetBuilder.<Artifact>stableOrder().addTransitive(allSplitApks).add(splitDeployMarker).add(splitDeployInfo).build();
   Artifact debugKeystore=androidSemantics.getApkDebugSigningKey(ruleContext);
   Artifact apkManifest=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.APK_MANIFEST);
