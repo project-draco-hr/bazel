@@ -2,6 +2,7 @@
   boolean critical=false;
   ErrorClassification errorClassification=errorClassifier.classify(e);
 switch (errorClassification) {
+case AS_CRITICAL_AS_POSSIBLE:
 case CRITICAL_AND_LOG:
     critical=true;
   LOG.log(Level.WARNING,"Found critical error in queue visitor",e);
@@ -13,10 +14,16 @@ default :
 break;
 }
 errorHandler.handle(e,errorClassification);
+if (unhandled == null || errorClassification.compareTo(errorClassifier.classify(unhandled)) > 0) {
+unhandled=e;
+exceptionLatch.countDown();
+}
+if (markToStopJobs) {
 synchronized (zeroRemainingTasks) {
 if (critical && !jobsMustBeStopped) {
 jobsMustBeStopped=true;
 zeroRemainingTasks.notify();
+}
 }
 }
 }

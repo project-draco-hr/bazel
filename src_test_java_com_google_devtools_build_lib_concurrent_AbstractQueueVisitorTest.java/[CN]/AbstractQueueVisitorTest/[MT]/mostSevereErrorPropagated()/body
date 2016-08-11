@@ -1,0 +1,49 @@
+{
+  ThreadPoolExecutor executor=new ThreadPoolExecutor(2,2,0,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>());
+  final Set<Throwable> seenErrors=Sets.newConcurrentHashSet();
+  final ClassifiedException criticalException=new ClassifiedException(ErrorClassification.CRITICAL);
+  final ClassifiedException criticalAndLogException=new ClassifiedException(ErrorClassification.CRITICAL_AND_LOG);
+  final ErrorClassifier errorClassifier=new ErrorClassifier(){
+    @Override protected ErrorClassification classifyException(    Exception e){
+      return (e instanceof ClassifiedException) ? ((ClassifiedException)e).classification : ErrorClassification.NOT_CRITICAL;
+    }
+  }
+;
+  ErrorHandler errorHandler=new ErrorHandler(){
+    @Override public void handle(    Throwable t,    ErrorClassification classification){
+      assertThat(classification).isEqualTo(errorClassifier.classify(t));
+      seenErrors.add(t);
+    }
+  }
+;
+  AbstractQueueVisitor visitor=new AbstractQueueVisitor(true,executor,true,false,errorClassifier,errorHandler);
+  final CountDownLatch exnLatch=visitor.getExceptionLatchForTestingOnly();
+  Runnable criticalExceptionRunnable=new Runnable(){
+    @Override public void run(){
+      throw criticalException;
+    }
+  }
+;
+  Runnable criticalAndLogExceptionRunnable=new Runnable(){
+    @Override public void run(){
+      try {
+        exnLatch.await();
+      }
+ catch (      InterruptedException e) {
+      }
+      throw criticalAndLogException;
+    }
+  }
+;
+  visitor.execute(criticalExceptionRunnable);
+  visitor.execute(criticalAndLogExceptionRunnable);
+  ClassifiedException exn=null;
+  try {
+    visitor.awaitQuiescence(true);
+  }
+ catch (  ClassifiedException e) {
+    exn=e;
+  }
+  assertEquals(criticalAndLogException,exn);
+  assertThat(seenErrors).containsExactly(criticalException,criticalAndLogException);
+}
