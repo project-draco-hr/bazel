@@ -1,5 +1,5 @@
 {
-  super(owner,makeInputs(mergedManifest,additionalMergedManifests,apksToDeploy),outputFile,false);
+  super(owner,makeInputs(mergedManifest,additionalMergedManifests,apksToDeploy,dataDeps),outputFile,false);
   AndroidDeployInfoOuterClass.AndroidDeployInfo.Builder builder=AndroidDeployInfoOuterClass.AndroidDeployInfo.newBuilder();
   builder.setMergedManifest(makeArtifactProto(mergedManifest));
   for (  Artifact additionMergedManifest : additionalMergedManifests) {
@@ -7,6 +7,9 @@
   }
   for (  Artifact apk : apksToDeploy) {
     builder.addApksToDeploy(makeArtifactProto(apk));
+  }
+  for (  Artifact dataDep : dataDeps) {
+    builder.addDataToDeploy(makeArtifactProto(dataDep));
   }
   this.byteString=builder.build().toByteString();
 }
