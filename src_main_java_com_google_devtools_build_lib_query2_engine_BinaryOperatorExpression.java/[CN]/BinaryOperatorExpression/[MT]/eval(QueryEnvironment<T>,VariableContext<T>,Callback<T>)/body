@@ -5,23 +5,24 @@
     }
     return;
   }
-  Set<T> lhsValue=QueryUtil.evalAll(env,context,operands.get(0));
+  final Set<T> lhsValue=QueryUtil.evalAll(env,context,operands.get(0));
+  if (operator == TokenKind.EXCEPT || operator == TokenKind.MINUS) {
+    for (int i=1; i < operands.size(); i++) {
+      env.eval(operands.get(i),context,new Callback<T>(){
+        @Override public void process(        Iterable<T> partialResult) throws QueryException, InterruptedException {
+          for (          T target : partialResult) {
+            lhsValue.remove(target);
+          }
+        }
+      }
+);
+    }
+    callback.process(lhsValue);
+    return;
+  }
+  Preconditions.checkState(operator == TokenKind.INTERSECT || operator == TokenKind.CARET,operator);
   for (int i=1; i < operands.size(); i++) {
-    Set<T> rhsValue=QueryUtil.evalAll(env,context,operands.get(i));
-switch (operator) {
-case INTERSECT:
-case CARET:
-      lhsValue.retainAll(rhsValue);
-    break;
-case EXCEPT:
-case MINUS:
-  lhsValue.removeAll(rhsValue);
-break;
-case UNION:
-case PLUS:
-default :
-throw new IllegalStateException("operator=" + operator);
-}
-}
-callback.process(lhsValue);
+    lhsValue.retainAll(QueryUtil.evalAll(env,context,operands.get(i)));
+  }
+  callback.process(lhsValue);
 }
