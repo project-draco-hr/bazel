@@ -3,12 +3,19 @@
   CompilationArtifacts compilationArtifacts=CompilationSupport.compilationArtifacts(ruleContext);
   CompilationAttributes compilationAttributes=CompilationAttributes.Builder.fromRuleContext(ruleContext).build();
   PrecompiledFiles precompiledFiles=new PrecompiledFiles(ruleContext);
+  CompilationSupport compilationSupport=new CompilationSupport(ruleContext);
+  IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
   ObjcCommon common=common(ruleContext,compilationAttributes,compilationArtifacts);
   Collection<Artifact> arcSources=Sets.newHashSet(compilationArtifacts.getSrcs());
   Collection<Artifact> nonArcSources=Sets.newHashSet(compilationArtifacts.getNonArcSrcs());
   Collection<Artifact> privateHdrs=Sets.newHashSet(compilationArtifacts.getPrivateHdrs());
   Collection<Artifact> publicHdrs=Sets.newHashSet(compilationAttributes.hdrs());
-  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,new ObjcCppSemantics(common.getObjcProvider()),getFeatureConfiguration(ruleContext),CcLibraryHelper.SourceCategory.CC_AND_OBJC).addSources(arcSources,ImmutableMap.of("objc_arc","")).addSources(nonArcSources,ImmutableMap.of("no_objc_arc","")).addSources(privateHdrs).enableCompileProviders().addPublicHeaders(publicHdrs).addPrecompiledFiles(precompiledFiles).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addVariableExtension(new ObjcVariablesExtension(ruleContext,common.getObjcProvider()));
+  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,new ObjcCppSemantics(common.getObjcProvider()),getFeatureConfiguration(ruleContext),CcLibraryHelper.SourceCategory.CC_AND_OBJC).addSources(arcSources,ImmutableMap.of("objc_arc","")).addSources(nonArcSources,ImmutableMap.of("no_objc_arc","")).addSources(privateHdrs).enableCompileProviders().addPublicHeaders(publicHdrs).addPrecompiledFiles(precompiledFiles).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addVariableExtension(new ObjcVariablesExtension(ruleContext,common.getObjcProvider(),compilationArtifacts));
+  if (isStaticArchive(compilationArtifacts)) {
+    Artifact objList=intermediateArtifacts.archiveObjList();
+    compilationSupport.registerObjFilelistAction(getObjFiles(compilationArtifacts,intermediateArtifacts),objList);
+    helper.setLinkType(LinkTargetType.OBJC_ARCHIVE).addLinkActionInput(objList);
+  }
   if (ObjcCommon.shouldUseObjcModules(ruleContext)) {
     helper.setCppModuleMap(ObjcRuleClasses.intermediateArtifacts(ruleContext).moduleMap());
   }
