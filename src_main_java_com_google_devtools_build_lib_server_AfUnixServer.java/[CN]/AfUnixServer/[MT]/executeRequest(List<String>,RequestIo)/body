@@ -1,0 +1,22 @@
+{
+  Preconditions.checkNotNull(request);
+  int exitStatus=2;
+  try {
+    exitStatus=rpcService.executeRequest(request,requestIo.requestOutErr,requestIo.firstContactTime);
+    LOG.info("Finished executing request");
+  }
+ catch (  UnknownCommandException e) {
+    requestIo.requestOutErr.printErrLn("SERVER ERROR: " + e.getMessage());
+    LOG.severe("SERVER ERROR: " + e.getMessage());
+  }
+catch (  Exception e) {
+    StringWriter trace=new StringWriter();
+    e.printStackTrace(new PrintWriter(trace,true));
+    requestIo.requestOutErr.printErr("SERVER ERROR: " + trace);
+    LOG.severe("SERVER ERROR: " + trace);
+  }
+  if (rpcService.getShutdown() != ShutdownMethod.NONE) {
+    closeServerSocket();
+  }
+  requestIo.writeExitStatus(exitStatus);
+}
