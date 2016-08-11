@@ -15,6 +15,9 @@
     for (    ProtoSourcesProvider protoProvider : protoProviders) {
       aspectObjcProtoProvider.addProtoSources(protoProvider.getTransitiveProtoSources());
     }
+    ObjcProvider protobufObjcProvider=ruleContext.getPrerequisite(ObjcRuleClasses.PROTO_LIB_ATTR,Mode.TARGET,ObjcProvider.class);
+    aspectObjcProtoProvider.addProtobufHeaders(protobufObjcProvider.get(ObjcProvider.HEADER));
+    aspectObjcProtoProvider.addProtobufHeaderSearchPaths(protobufObjcProvider.get(ObjcProvider.INCLUDE));
   }
   if (!aspectObjcProtoProvider.isEmpty()) {
     aspectBuilder.addProvider(ObjcProtoProvider.class,aspectObjcProtoProvider.build());
