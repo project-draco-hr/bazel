@@ -1,0 +1,13 @@
+{
+  Preconditions.checkArgument(node.getTarget() instanceof Rule);
+  Rule rule=(Rule)node.getTarget();
+  OrderedSetMultimap<Attribute,Dependency> outgoingEdges=OrderedSetMultimap.create();
+  RuleResolver depResolver=new RuleResolver(rule,node.getConfiguration(),null,null,rootCauses,outgoingEdges);
+  Map<Attribute,Collection<Label>> m=depLabels.asMap();
+  for (  Map.Entry<Attribute,Collection<Label>> entry : depLabels.asMap().entrySet()) {
+    for (    Label depLabel : entry.getValue()) {
+      depResolver.resolveDep(entry.getKey(),depLabel);
+    }
+  }
+  return outgoingEdges.values();
+}
