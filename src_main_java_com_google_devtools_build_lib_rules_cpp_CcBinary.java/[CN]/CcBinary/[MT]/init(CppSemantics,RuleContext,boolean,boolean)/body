@@ -15,7 +15,7 @@
   if (!isLinkShared(ruleContext)) {
     binaryPath=new PathFragment(binaryPath.getPathString() + OsUtils.executableExtension());
   }
-  Artifact binary=ruleContext.getPackageRelativeArtifact(binaryPath,ruleContext.getConfiguration().getBinDirectory());
+  Artifact binary=ruleContext.getBinArtifact(binaryPath);
   CppLinkActionBuilder linkActionBuilder=determineLinkerArguments(ruleContext,common,precompiledFiles,ccCompilationOutputs,cppCompilationContext.getTransitiveCompilationPrerequisites(),fake,binary,linkStaticness,linkopts);
   linkActionBuilder.setUseTestOnlyFlags(isTest);
   linkActionBuilder.addNonCodeInputs(ccCompilationOutputs.getHeaderTokenFiles());
@@ -34,7 +34,7 @@
   linkActionBuilder.setFake(fake);
   linkActionBuilder.setFeatureConfiguration(featureConfiguration);
   if (CppLinkAction.enableSymbolsCounts(cppConfiguration,fake,linkType)) {
-    linkActionBuilder.setSymbolCountsOutput(ruleContext.getPackageRelativeArtifact(CppLinkAction.symbolCountsFileName(binaryPath),ruleContext.getConfiguration().getBinDirectory()));
+    linkActionBuilder.setSymbolCountsOutput(ruleContext.getBinArtifact(CppLinkAction.symbolCountsFileName(binaryPath)));
   }
   CppLinkAction.Context linkContext=new CppLinkAction.Context(linkActionBuilder);
   if (featureConfiguration.isEnabled(CppRuleClasses.THIN_LTO)) {

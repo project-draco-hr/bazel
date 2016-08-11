@@ -3,7 +3,7 @@
   PathFragment packageFragment=ruleContext.getPackageDirectory();
   String expandedIncSymlinkAttr=ruleContext.attributes().get("prefix",Type.STRING);
   PathFragment includeDirectory=new PathFragment("_").getRelative(ruleContext.getTarget().getName());
-  PathFragment includePath=ruleContext.getConfiguration().getIncludeDirectory().getExecPath().getRelative(packageFragment).getRelative(includeDirectory);
+  PathFragment includePath=ruleContext.getConfiguration().getIncludeDirectory(ruleContext.getRule().getRepository()).getExecPath().getRelative(packageFragment).getRelative(includeDirectory);
   PathFragment prefixFragment=packageFragment.getRelative(expandedIncSymlinkAttr);
   if (!prefixFragment.isNormalized()) {
     ruleContext.attributeWarning("prefix","should not contain '.' or '..' elements");
@@ -18,7 +18,7 @@
     }
     PathFragment suffix=src.getRootRelativePath().relativeTo(prefixFragment);
     PathFragment virtualPath=includeDirectory.getRelative(packageFragment).getRelative(suffix);
-    Artifact virtualArtifact=ruleContext.getPackageRelativeArtifact(virtualPath,ruleContext.getConfiguration().getIncludeDirectory());
+    Artifact virtualArtifact=ruleContext.getPackageRelativeArtifact(virtualPath,ruleContext.getConfiguration().getIncludeDirectory(ruleContext.getRule().getRepository()));
     virtualArtifactMapBuilder.put(virtualArtifact,src);
   }
   ImmutableSortedMap<Artifact,Artifact> virtualArtifactMap=virtualArtifactMapBuilder.build();

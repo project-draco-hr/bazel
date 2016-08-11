@@ -5,6 +5,8 @@
   if (!paramFileInfo.always() && getParamFileSize(executableArgs,arguments,commandLine) < configuration.getMinParamFileSize()) {
     return null;
   }
-  PathFragment paramFilePath=ParameterFile.derivePath(Iterables.getFirst(outputs,null).getRootRelativePath());
-  return analysisEnvironment.getDerivedArtifact(paramFilePath,configuration.getBinDirectory());
+  Artifact output=Iterables.getFirst(outputs,null);
+  Preconditions.checkNotNull(output);
+  PathFragment paramFilePath=ParameterFile.derivePath(output.getRootRelativePath());
+  return analysisEnvironment.getDerivedArtifact(paramFilePath,output.getRoot());
 }

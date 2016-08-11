@@ -21,7 +21,7 @@
     compileTimeDependencyArtifacts.clear();
   }
   if (paramFile == null) {
-    paramFile=artifactFactory.create(ParameterFile.derivePath(outputJar.getRootRelativePath()),configuration.getBinDirectory());
+    paramFile=artifactFactory.create(ParameterFile.derivePath(outputJar.getRootRelativePath()),configuration.getBinDirectory(targetLabel.getPackageIdentifier().getRepository()));
   }
   Iterable<Artifact> baseInputs=ImmutableIterable.from(Iterables.concat(processorPath,translations,resources.values(),sourceJars,sourceFiles,classpathResources,javabaseInputs,bootclasspathEntries,extdirInputs));
   Preconditions.checkState(javaExecutable != null,owner);
@@ -29,7 +29,7 @@
   ArrayList<Artifact> outputs=new ArrayList<>(Collections2.filter(Arrays.asList(outputJar,metadata,gensrcOutputJar,manifestProtoOutput,outputDepsProto),Predicates.notNull()));
   CustomMultiArgv commonJavaBuilderArgs=commonJavaBuilderArgs(semantics,classDirectory,sourceGenDirectory,tempDirectory,outputJar,gensrcOutputJar,manifestProtoOutput,compressJar,outputDepsProto,processorPath,processorNames,translations,resources,classpathResources,sourceJars,sourceFiles,extdirInputs,internedJcopts,ruleKind,targetLabel,pathSeparator);
   CustomCommandLine.Builder paramFileContentsBuilder=javaCompileCommandLine(commonJavaBuilderArgs,configuration,classDirectory,classpathEntries,directJars,strictJavaDeps,compileTimeDependencyArtifacts);
-  semantics.buildJavaCommandLine(outputs,configuration,paramFileContentsBuilder);
+  semantics.buildJavaCommandLine(outputs,configuration,paramFileContentsBuilder,targetLabel);
   CommandLine paramFileContents=paramFileContentsBuilder.build();
   Action parameterFileWriteAction=new ParameterFileWriteAction(owner,paramFile,paramFileContents,ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1);
   analysisEnvironment.registerAction(parameterFileWriteAction);
