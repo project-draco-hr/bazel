@@ -10,7 +10,7 @@
   Collection<Artifact> nonArcSources=Sets.newHashSet(compilationArtifacts.getNonArcSrcs());
   Collection<Artifact> privateHdrs=Sets.newHashSet(compilationArtifacts.getPrivateHdrs());
   Collection<Artifact> publicHdrs=Sets.newHashSet(compilationAttributes.hdrs());
-  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,new ObjcCppSemantics(common.getObjcProvider()),getFeatureConfiguration(ruleContext),CcLibraryHelper.SourceCategory.CC_AND_OBJC).addSources(arcSources,ImmutableMap.of("objc_arc","")).addSources(nonArcSources,ImmutableMap.of("no_objc_arc","")).addSources(privateHdrs).enableCompileProviders().addPublicHeaders(publicHdrs).addPrecompiledFiles(precompiledFiles).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addVariableExtension(new ObjcVariablesExtension(ruleContext,common.getObjcProvider(),compilationArtifacts));
+  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,new ObjcCppSemantics(common.getObjcProvider()),getFeatureConfiguration(ruleContext),CcLibraryHelper.SourceCategory.CC_AND_OBJC).addSources(arcSources,ImmutableMap.of("objc_arc","")).addSources(nonArcSources,ImmutableMap.of("no_objc_arc","")).addSources(privateHdrs).enableCompileProviders().addPublicHeaders(publicHdrs).addPrecompiledFiles(precompiledFiles).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addCopts(compilationSupport.getCompileRuleCopts()).addVariableExtension(new ObjcVariablesExtension(ruleContext,common.getObjcProvider(),compilationArtifacts));
   if (isStaticArchive(compilationArtifacts)) {
     Artifact objList=intermediateArtifacts.archiveObjList();
     compilationSupport.registerObjFilelistAction(getObjFiles(compilationArtifacts,intermediateArtifacts),objList);
