@@ -4,4 +4,18 @@
   for (  Map.Entry<String,String> entry : env) {
     clientEnv.put(entry.getKey(),entry.getValue());
   }
+  if (commandId == null) {
+    String uuidString=clientEnv.get("BAZEL_INTERNAL_INVOCATION_ID");
+    if (uuidString != null) {
+      try {
+        commandId=UUID.fromString(uuidString);
+      }
+ catch (      IllegalArgumentException e) {
+      }
+    }
+  }
+  if (commandId == null) {
+    commandId=UUID.randomUUID();
+  }
+  setCommandIdInCrashData();
 }
