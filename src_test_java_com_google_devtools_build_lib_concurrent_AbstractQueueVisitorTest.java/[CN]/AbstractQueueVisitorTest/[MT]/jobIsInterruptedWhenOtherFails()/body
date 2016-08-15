@@ -1,19 +1,6 @@
 {
   ThreadPoolExecutor executor=new ThreadPoolExecutor(3,3,0,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>());
-  final AtomicBoolean throwableSeen=new AtomicBoolean(false);
-  ErrorHandler errorHandler=new ErrorHandler(){
-    @Override public void handle(    Throwable t,    ErrorClassification classification){
-      if (t == THROWABLE) {
-        assertThat(classification).isEqualTo(ErrorClassification.CRITICAL);
-        throwableSeen.compareAndSet(false,true);
-      }
- else {
-        fail();
-      }
-    }
-  }
-;
-  final AbstractQueueVisitor visitor=createQueueVisitorWithConstantErrorClassification(executor,ErrorClassification.CRITICAL,errorHandler);
+  final AbstractQueueVisitor visitor=createQueueVisitorWithConstantErrorClassification(executor,ErrorClassification.CRITICAL);
   final CountDownLatch latch1=new CountDownLatch(1);
   final AtomicBoolean wasInterrupted=new AtomicBoolean(false);
   Runnable r1=new Runnable(){
@@ -31,6 +18,7 @@
   visitor.execute(r1);
   latch1.await();
   visitor.execute(throwingRunnable());
+  CountDownLatch exnLatch=visitor.getExceptionLatchForTestingOnly();
   try {
     visitor.awaitQuiescence(true);
     fail();
@@ -40,5 +28,5 @@
   }
   assertTrue(wasInterrupted.get());
   assertTrue(executor.isShutdown());
-  assertTrue(throwableSeen.get());
+  assertTrue(exnLatch.await(0,TimeUnit.MILLISECONDS));
 }

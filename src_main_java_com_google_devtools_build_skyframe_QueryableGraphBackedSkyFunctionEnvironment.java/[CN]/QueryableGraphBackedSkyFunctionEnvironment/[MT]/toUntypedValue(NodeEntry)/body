@@ -1,0 +1,17 @@
+{
+  if (nodeEntry == null || !nodeEntry.isDone()) {
+    return ValueOrExceptionUtils.ofNull();
+  }
+  SkyValue maybeWrappedValue=nodeEntry.getValueMaybeWithMetadata();
+  SkyValue justValue=ValueWithMetadata.justValue(maybeWrappedValue);
+  if (justValue != null) {
+    return ValueOrExceptionUtils.ofValueUntyped(justValue);
+  }
+  ErrorInfo errorInfo=Preconditions.checkNotNull(ValueWithMetadata.getMaybeErrorInfo(maybeWrappedValue));
+  Exception exception=errorInfo.getException();
+  if (exception != null) {
+    return ValueOrExceptionUtils.ofExn(exception);
+  }
+  Preconditions.checkState(!Iterables.isEmpty(errorInfo.getCycleInfo()),"%s %s",errorInfo,maybeWrappedValue);
+  return ValueOrExceptionUtils.ofNull();
+}

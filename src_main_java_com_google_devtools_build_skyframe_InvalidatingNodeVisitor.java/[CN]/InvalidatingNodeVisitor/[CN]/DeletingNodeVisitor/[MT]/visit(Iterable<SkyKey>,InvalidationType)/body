@@ -10,7 +10,7 @@
   for (  SkyKey key : unvisitedKeys) {
     pendingVisitations.add(Pair.of(key,InvalidationType.DELETED));
   }
-  final Map<SkyKey,NodeEntry> entries=graph.getBatch(null,Reason.INVALIDATION,unvisitedKeys);
+  final Map<SkyKey,? extends NodeEntry> entries=graph.getBatch(null,Reason.INVALIDATION,unvisitedKeys);
   for (  final SkyKey key : unvisitedKeys) {
     executor.execute(new Runnable(){
       @Override public void run(){
@@ -23,9 +23,15 @@
         if (traverseGraph) {
           visit(entry.getReverseDeps(),InvalidationType.DELETED);
           Set<SkyKey> signalingDeps=entry.isDone() ? ImmutableSet.<SkyKey>of() : entry.getTemporaryDirectDeps().toSet();
-          Iterable<SkyKey> directDeps=entry.isDone() ? entry.getDirectDeps() : entry.getAllDirectDepsForIncompleteNode();
-          Map<SkyKey,NodeEntry> depMap=graph.getBatch(key,Reason.INVALIDATION,directDeps);
-          for (          Map.Entry<SkyKey,NodeEntry> directDepEntry : depMap.entrySet()) {
+          Iterable<SkyKey> directDeps;
+          try {
+            directDeps=entry.isDone() ? entry.getDirectDeps() : entry.getAllDirectDepsForIncompleteNode();
+          }
+ catch (          InterruptedException e) {
+            throw new IllegalStateException("Deletion cannot happen on a graph that may have blocking operations: " + key + ", "+ entry,e);
+          }
+          Map<SkyKey,? extends NodeEntry> depMap=graph.getBatch(key,Reason.INVALIDATION,directDeps);
+          for (          Map.Entry<SkyKey,? extends NodeEntry> directDepEntry : depMap.entrySet()) {
             NodeEntry dep=directDepEntry.getValue();
             if (dep != null) {
               if (dep.isDone() || !signalingDeps.contains(directDepEntry.getKey())) {

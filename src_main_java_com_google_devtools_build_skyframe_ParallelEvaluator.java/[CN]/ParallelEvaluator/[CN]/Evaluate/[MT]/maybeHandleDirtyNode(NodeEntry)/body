@@ -11,14 +11,14 @@ case CHECK_DEPENDENCIES:
     return DirtyOutcome.NEEDS_EVALUATION;
   }
 if (!keepGoing) {
-  Map<SkyKey,NodeEntry> entriesToCheck=graph.getBatch(skyKey,Reason.OTHER,directDepsToCheck);
-  for (  Map.Entry<SkyKey,NodeEntry> entry : entriesToCheck.entrySet()) {
+  Map<SkyKey,? extends NodeEntry> entriesToCheck=graph.getBatch(skyKey,Reason.OTHER,directDepsToCheck);
+  for (  Entry<SkyKey,? extends NodeEntry> entry : entriesToCheck.entrySet()) {
     if (entry.getValue().isDone() && entry.getValue().getErrorInfo() != null) {
       SkyKey errorKey=entry.getKey();
       NodeEntry errorEntry=entry.getValue();
       state.addTemporaryDirectDeps(GroupedListHelper.create(ImmutableList.of(errorKey)));
       errorEntry.checkIfDoneForDirtyReverseDep(skyKey);
-      for (      Map.Entry<SkyKey,NodeEntry> depEntry : entriesToCheck.entrySet()) {
+      for (      Entry<SkyKey,? extends NodeEntry> depEntry : entriesToCheck.entrySet()) {
         if (!depEntry.getKey().equals(errorKey)) {
           depEntry.getValue().removeReverseDep(skyKey);
         }
@@ -31,7 +31,7 @@ if (!keepGoing) {
   }
 }
 state.addTemporaryDirectDepsGroupToDirtyEntry(directDepsToCheck);
-for (Map.Entry<SkyKey,NodeEntry> e : graph.createIfAbsentBatch(skyKey,Reason.ENQUEUING_CHILD,directDepsToCheck).entrySet()) {
+for (Map.Entry<SkyKey,? extends NodeEntry> e : graph.createIfAbsentBatch(skyKey,Reason.ENQUEUING_CHILD,directDepsToCheck).entrySet()) {
 SkyKey directDep=e.getKey();
 NodeEntry directDepEntry=e.getValue();
 enqueueChild(skyKey,state,directDep,directDepEntry,true);

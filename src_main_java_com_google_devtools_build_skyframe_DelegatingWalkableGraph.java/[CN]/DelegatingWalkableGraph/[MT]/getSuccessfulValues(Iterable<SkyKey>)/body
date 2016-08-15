@@ -1,3 +1,11 @@
 {
-  return Maps.filterValues(Maps.transformValues(graph.getBatch(null,Reason.WALKABLE_GRAPH_VALUE,keys),GET_SKY_VALUE_FUNCTION),Predicates.notNull());
+  Map<SkyKey,? extends NodeEntry> batchGet=graph.getBatch(null,Reason.WALKABLE_GRAPH_VALUE,keys);
+  Map<SkyKey,SkyValue> result=Maps.newHashMapWithExpectedSize(batchGet.size());
+  for (  Entry<SkyKey,? extends NodeEntry> entryPair : batchGet.entrySet()) {
+    SkyValue value=getValue(entryPair.getValue());
+    if (value != null) {
+      result.put(entryPair.getKey(),value);
+    }
+  }
+  return result;
 }

@@ -1,6 +1,5 @@
 {
   ThreadPoolExecutor executor=new ThreadPoolExecutor(2,2,0,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>());
-  final Set<Throwable> seenErrors=Sets.newConcurrentHashSet();
   final ClassifiedException criticalException=new ClassifiedException(ErrorClassification.CRITICAL);
   final ClassifiedException criticalAndLogException=new ClassifiedException(ErrorClassification.CRITICAL_AND_LOG);
   final ErrorClassifier errorClassifier=new ErrorClassifier(){
@@ -9,14 +8,7 @@
     }
   }
 ;
-  ErrorHandler errorHandler=new ErrorHandler(){
-    @Override public void handle(    Throwable t,    ErrorClassification classification){
-      assertThat(classification).isEqualTo(errorClassifier.classify(t));
-      seenErrors.add(t);
-    }
-  }
-;
-  AbstractQueueVisitor visitor=new AbstractQueueVisitor(true,executor,true,false,errorClassifier,errorHandler);
+  AbstractQueueVisitor visitor=new AbstractQueueVisitor(true,executor,true,false,errorClassifier);
   final CountDownLatch exnLatch=visitor.getExceptionLatchForTestingOnly();
   Runnable criticalExceptionRunnable=new Runnable(){
     @Override public void run(){
@@ -45,5 +37,4 @@
     exn=e;
   }
   assertEquals(criticalAndLogException,exn);
-  assertThat(seenErrors).containsExactly(criticalException,criticalAndLogException);
 }

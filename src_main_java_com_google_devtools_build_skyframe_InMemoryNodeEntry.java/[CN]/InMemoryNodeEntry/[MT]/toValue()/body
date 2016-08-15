@@ -3,7 +3,14 @@
     return getErrorInfo() == null ? getValue() : null;
   }
  else   if (isChanged() || isDirty()) {
-    return (getDirtyBuildingState().getLastBuildValue() == null) ? null : ValueWithMetadata.justValue(getDirtyBuildingState().getLastBuildValue());
+    SkyValue lastBuildValue=null;
+    try {
+      lastBuildValue=getDirtyBuildingState().getLastBuildValue();
+    }
+ catch (    InterruptedException e) {
+      throw new IllegalStateException("Interruption unexpected: " + this,e);
+    }
+    return (lastBuildValue == null) ? null : ValueWithMetadata.justValue(lastBuildValue);
   }
  else {
     return null;

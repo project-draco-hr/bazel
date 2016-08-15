@@ -6,7 +6,7 @@
    SkyKey universeKey=graphFactory.getUniverseKey(universeScope,parserPrefix);
   checkEvaluationResult(result,universeKey);
   graph=result.getWalkableGraph();
-  blacklistPatternsSupplier=Suppliers.memoize(new BlacklistSupplier(graph));
+  blacklistPatternsSupplier=InterruptibleSupplier.Memoize.of(new BlacklistSupplier(graph));
   ImmutableList<TargetPatternKey> universeTargetPatternKeys=PrepareDepsOfPatternsFunction.getTargetPatternKeys(PrepareDepsOfPatternsFunction.getSkyKeys(universeKey,eventHandler));
   GraphBackedRecursivePackageProvider graphBackedRecursivePackageProvider=new GraphBackedRecursivePackageProvider(graph,universeTargetPatternKeys,pkgPath);
   resolver=new RecursivePackageProviderBackedTargetPatternResolver(graphBackedRecursivePackageProvider,eventHandler,TargetPatternEvaluator.DEFAULT_FILTERING_POLICY,threadPool);

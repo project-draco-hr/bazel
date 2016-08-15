@@ -5,14 +5,24 @@
   Runnable createRunnable=new Runnable(){
     @Override public void run(){
       TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(startThreads,"threads not started");
-      graph.createIfAbsentBatch(null,Reason.OTHER,ImmutableList.of(key));
+      try {
+        graph.createIfAbsentBatch(null,Reason.OTHER,ImmutableList.of(key));
+      }
+ catch (      InterruptedException e) {
+        throw new IllegalStateException(e);
+      }
     }
   }
 ;
   Runnable noCreateRunnable=new Runnable(){
     @Override public void run(){
       TrackingAwaiter.INSTANCE.awaitLatchAndTrackExceptions(startThreads,"threads not started");
-      graph.get(null,Reason.OTHER,key);
+      try {
+        graph.get(null,Reason.OTHER,key);
+      }
+ catch (      InterruptedException e) {
+        throw new IllegalStateException(e);
+      }
     }
   }
 ;

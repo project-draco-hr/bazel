@@ -11,7 +11,7 @@
   final Exception topException=new SomeErrorException("top exception");
   final AtomicInteger numComputes=new AtomicInteger(0);
   tester.getOrCreate(topKey).setBuilder(new SkyFunction(){
-    @Nullable @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+    @Nullable @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException, InterruptedException {
       Map<SkyKey,ValueOrException<SomeErrorException>> values=env.getValuesOrThrow(ImmutableList.of(errorKey,otherKey),SomeErrorException.class);
       if (numComputes.incrementAndGet() == 1) {
         assertThat(env.valuesMissing()).isTrue();

@@ -9,7 +9,7 @@
   final AtomicInteger numOtherParentInvocations=new AtomicInteger(0);
   final AtomicInteger numErrorParentInvocations=new AtomicInteger(0);
   tester.getOrCreate(otherParentKey).setBuilder(new SkyFunction(){
-    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException, InterruptedException {
       int invocations=numOtherParentInvocations.incrementAndGet();
       assertEquals("otherParentKey should not be restarted",1,invocations);
       return env.getValue(otherKey);
@@ -41,7 +41,7 @@
   }
 );
   tester.getOrCreate(errorParentKey).setBuilder(new SkyFunction(){
-    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException, InterruptedException {
       int invocations=numErrorParentInvocations.incrementAndGet();
       try {
         SkyValue value=env.getValueOrThrow(errorKey,SomeErrorException.class);

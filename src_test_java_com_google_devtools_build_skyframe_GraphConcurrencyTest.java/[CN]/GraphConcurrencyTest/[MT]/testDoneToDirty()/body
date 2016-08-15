@@ -6,7 +6,7 @@
   for (int i=0; i < numKeys; i++) {
     keys.add(key("foo" + i));
   }
-  Map<SkyKey,NodeEntry> entries=graph.createIfAbsentBatch(null,Reason.OTHER,keys);
+  Map<SkyKey,? extends NodeEntry> entries=graph.createIfAbsentBatch(null,Reason.OTHER,keys);
   for (int i=0; i < numKeys; i++) {
     NodeEntry entry=entries.get(key("foo" + i));
     startEvaluation(entry);
@@ -33,13 +33,29 @@
  catch (        InterruptedException e) {
           throw new AssertionError(e);
         }
-        NodeEntry entry=graph.get(null,Reason.OTHER,key("foo" + keyNum));
-        entry.markDirty(true);
+        NodeEntry entry=null;
+        try {
+          entry=graph.get(null,Reason.OTHER,key("foo" + keyNum));
+        }
+ catch (        InterruptedException e) {
+          throw new IllegalStateException(e);
+        }
+        try {
+          entry.markDirty(true);
+        }
+ catch (        InterruptedException e) {
+          throw new IllegalStateException(keyNum + ", " + entry,e);
+        }
         entry.addReverseDepAndCheckIfDone(key("rdep"));
         entry.markRebuilding();
         addTemporaryDirectDep(entry,key("dep"));
         entry.signalDep();
-        entry.setValue(new StringValue("bar" + keyNum),getNextVersion(startingVersion));
+        try {
+          entry.setValue(new StringValue("bar" + keyNum),getNextVersion(startingVersion));
+        }
+ catch (        InterruptedException e) {
+          throw new IllegalStateException(keyNum + ", " + entry,e);
+        }
       }
     }
 ;
@@ -51,7 +67,13 @@
  catch (        InterruptedException e) {
           throw new AssertionError(e);
         }
-        NodeEntry entry=graph.get(null,Reason.OTHER,key("foo" + keyNum));
+        NodeEntry entry=null;
+        try {
+          entry=graph.get(null,Reason.OTHER,key("foo" + keyNum));
+        }
+ catch (        InterruptedException e) {
+          throw new IllegalStateException(e);
+        }
         assertNotNull(entry);
         assertThat(entry.getVersion()).isAnyOf(startingVersion,getNextVersion(startingVersion));
         getCountDownLatch.countDown();
@@ -78,7 +100,13 @@
  catch (        InterruptedException e) {
           throw new AssertionError(e);
         }
-        Map<SkyKey,NodeEntry> batchMap=graph.getBatch(null,Reason.OTHER,batch);
+        Map<SkyKey,? extends NodeEntry> batchMap=null;
+        try {
+          batchMap=graph.getBatch(null,Reason.OTHER,batch);
+        }
+ catch (        InterruptedException e) {
+          throw new IllegalStateException(e);
+        }
         getBatchCountDownLatch.countDown();
         assertThat(batchMap).hasSize(batch.size());
         for (        NodeEntry entry : batchMap.values()) {

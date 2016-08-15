@@ -6,7 +6,7 @@
   final SkyKey childKey=GraphTester.toSkyKey("child");
   final AtomicBoolean errorPropagated=new AtomicBoolean(false);
   tester.getOrCreate(grandparentKey).setBuilder(new SkyFunction(){
-    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException, InterruptedException {
       try {
         return env.getValueOrThrow(parentKey,SomeErrorException.class);
       }
@@ -21,7 +21,7 @@
   }
 );
   tester.getOrCreate(parentKey).setBuilder(new SkyFunction(){
-    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException {
+    @Override public SkyValue compute(    SkyKey skyKey,    Environment env) throws SkyFunctionException, InterruptedException {
       if (explicitlyPropagateError) {
         try {
           return env.getValueOrThrow(childKey,SomeErrorException.class);

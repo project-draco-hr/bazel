@@ -5,7 +5,12 @@
     for (    NodeEntry entry : graph.getAllValues().values()) {
       nodes++;
       if (entry.isDone()) {
-        edges+=Iterables.size(entry.getDirectDeps());
+        try {
+          edges+=Iterables.size(entry.getDirectDeps());
+        }
+ catch (        InterruptedException e) {
+          throw new IllegalStateException("InMemoryGraph doesn't throw: " + entry,e);
+        }
       }
     }
     out.println("Node count: " + nodes);
@@ -18,13 +23,18 @@
       }
     }
 ;
-    for (    Entry<SkyKey,NodeEntry> mapPair : graph.getAllValues().entrySet()) {
+    for (    Entry<SkyKey,? extends NodeEntry> mapPair : graph.getAllValues().entrySet()) {
       SkyKey key=mapPair.getKey();
       NodeEntry entry=mapPair.getValue();
       if (entry.isDone()) {
         out.print(keyFormatter.apply(key));
         out.print("|");
-        out.println(Joiner.on('|').join(Iterables.transform(entry.getDirectDeps(),keyFormatter)));
+        try {
+          out.println(Joiner.on('|').join(Iterables.transform(entry.getDirectDeps(),keyFormatter)));
+        }
+ catch (        InterruptedException e) {
+          throw new IllegalStateException("InMemoryGraph doesn't throw: " + entry,e);
+        }
       }
     }
   }

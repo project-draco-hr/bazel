@@ -15,22 +15,44 @@
         Runnable r=new Runnable(){
           public void run(){
             for (            SkyKey key : keys) {
-              NodeEntry entry=graph.get(null,Reason.OTHER,key);
+              NodeEntry entry=null;
+              try {
+                entry=graph.get(null,Reason.OTHER,key);
+              }
+ catch (              InterruptedException e) {
+                throw new IllegalStateException(e);
+              }
               if (entry == null) {
                 nodeCreated.add(key);
               }
             }
-            Map<SkyKey,NodeEntry> entries=graph.createIfAbsentBatch(null,Reason.OTHER,keys);
+            Map<SkyKey,? extends NodeEntry> entries;
+            try {
+              entries=graph.createIfAbsentBatch(null,Reason.OTHER,keys);
+            }
+ catch (            InterruptedException e) {
+              throw new IllegalStateException(e);
+            }
             for (            Integer keyNum : ImmutableList.of(keyNum1,keyNum2)) {
               SkyKey key=key("foo" + keyNum);
               NodeEntry entry=entries.get(key);
               if (startEvaluation(entry).equals(DependencyState.NEEDS_SCHEDULING)) {
                 assertTrue(valuesSet.add(key));
-                entry.setValue(new StringValue("bar" + keyNum),startingVersion);
+                try {
+                  entry.setValue(new StringValue("bar" + keyNum),startingVersion);
+                }
+ catch (                InterruptedException e) {
+                  throw new IllegalStateException(key + ", " + entry,e);
+                }
                 assertThat(entry.isDone()).isTrue();
               }
             }
-            graph.createIfAbsentBatch(null,Reason.OTHER,keys);
+            try {
+              graph.createIfAbsentBatch(null,Reason.OTHER,keys);
+            }
+ catch (            InterruptedException e) {
+              throw new IllegalStateException(e);
+            }
           }
         }
 ;

@@ -5,10 +5,15 @@
     SkyValue newValue=entry.getValue();
     NodeEntry prevEntry=graph.get(null,Reason.OTHER,key);
     if (prevEntry != null && prevEntry.isDone()) {
-      Iterable<SkyKey> directDeps=prevEntry.getDirectDeps();
-      Preconditions.checkState(Iterables.isEmpty(directDeps),"existing entry for %s has deps: %s",key,directDeps);
-      if (newValue.equals(prevEntry.getValue()) && !valuesToDirty.contains(key) && !valuesToDelete.contains(key)) {
-        it.remove();
+      try {
+        Iterable<SkyKey> directDeps=prevEntry.getDirectDeps();
+        Preconditions.checkState(Iterables.isEmpty(directDeps),"existing entry for %s has deps: %s",key,directDeps);
+        if (newValue.equals(prevEntry.getValue()) && !valuesToDirty.contains(key) && !valuesToDelete.contains(key)) {
+          it.remove();
+        }
+      }
+ catch (      InterruptedException e) {
+        throw new IllegalStateException("InMemoryGraph does not throw: " + entry + ", "+ prevEntry,e);
       }
     }
   }
