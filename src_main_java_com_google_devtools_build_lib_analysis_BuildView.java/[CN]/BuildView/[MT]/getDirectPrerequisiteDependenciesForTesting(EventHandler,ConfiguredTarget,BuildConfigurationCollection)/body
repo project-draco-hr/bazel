@@ -12,9 +12,9 @@ class SilentDependencyResolver extends DependencyResolver {
     @Override protected void missingEdgeHook(    Target from,    Label to,    NoSuchThingException e){
       throw new RuntimeException("missing dependency from " + from.getLabel() + " to "+ to+ ": "+ e.getMessage(),e);
     }
-    @Override protected Target getTarget(    Target from,    Label label,    NestedSetBuilder<Label> rootCauses){
+    @Override protected Target getTarget(    Target from,    Label label,    NestedSetBuilder<Label> rootCauses) throws InterruptedException {
       try {
-        return LoadedPackageProvider.getLoadedTarget(skyframeExecutor.getPackageManager(),eventHandler,label);
+        return skyframeExecutor.getPackageManager().getTarget(eventHandler,label);
       }
  catch (      NoSuchThingException e) {
         throw new IllegalStateException(e);
