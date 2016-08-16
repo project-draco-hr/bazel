@@ -1,0 +1,8 @@
+{
+  JavaLibraryHelper helper=new JavaLibraryHelper(ruleContext).setOutput(outputJar).addSourceJars(sourceJar).setJavacOpts(getAndroidCompatibleJavacOpts());
+  helper.addDep(dependencyCompilationArgs);
+  helper.addDep(ruleContext.getPrerequisite(protoRuntimeAttr,Mode.TARGET,JavaCompilationArgsProvider.class)).setCompilationStrictDepsMode(StrictDepsMode.OFF);
+  JavaCompilationArgs artifacts=helper.build(javaSemantics);
+  compileTimeJarToRuntimeJar.put(Iterables.getOnlyElement(artifacts.getCompileTimeJars()),Iterables.getOnlyElement(artifacts.getRuntimeJars()));
+  return helper.buildCompilationArgsProvider(artifacts,true);
+}

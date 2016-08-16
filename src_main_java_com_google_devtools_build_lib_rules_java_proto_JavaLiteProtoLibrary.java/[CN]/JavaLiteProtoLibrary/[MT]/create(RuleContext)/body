@@ -1,0 +1,14 @@
+{
+  JavaCompilationArgsProvider dependencyArgsProviders=JavaCompilationArgsProvider.merge(transform(getDeps(ruleContext,JavaCompilationArgsAspectProvider.class),JavaCompilationArgsAspectProvider.GET_PROVIDER));
+  if (!StrictDepsUtils.isStrictDepsJavaProtoLibrary(ruleContext)) {
+    dependencyArgsProviders=StrictDepsUtils.makeNonStrict(dependencyArgsProviders);
+  }
+  Runfiles runfiles=new Runfiles.Builder(ruleContext.getWorkspaceName()).addArtifacts(dependencyArgsProviders.getRecursiveJavaCompilationArgs().getRuntimeJars()).build();
+  JavaSourceJarsProvider sourceJarsProvider=JavaSourceJarsProvider.merge(transform(getDeps(ruleContext,JavaSourceJarsAspectProvider.class),JavaSourceJarsAspectProvider.GET_PROVIDER));
+  NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
+  filesToBuild.addAll(sourceJarsProvider.getSourceJars());
+  for (  JavaProtoLibraryTransitiveFilesToBuildProvider provider : ruleContext.getPrerequisites("deps",Mode.TARGET,JavaProtoLibraryTransitiveFilesToBuildProvider.class)) {
+    filesToBuild.addTransitive(provider.getJars());
+  }
+  return new RuleConfiguredTargetBuilder(ruleContext).setFilesToBuild(filesToBuild.build()).addProvider(RunfilesProvider.class,RunfilesProvider.withData(Runfiles.EMPTY,runfiles)).addOutputGroup(OutputGroupProvider.DEFAULT,NestedSetBuilder.<Artifact>emptySet(STABLE_ORDER)).add(JavaRuntimeJarProvider.class,JavaRuntimeJarProvider.merge(transform(getDeps(ruleContext,JavaRuntimeJarAspectProvider.class),JavaRuntimeJarAspectProvider.GET_PROVIDER))).add(JavaCompilationArgsProvider.class,dependencyArgsProviders).add(JavaSourceJarsProvider.class,sourceJarsProvider).add(JavaRunfilesProvider.class,new JavaRunfilesProvider(runfiles)).add(ProguardSpecProvider.class,new ProguardSpecProvider(new ProguardLibrary(ruleContext).collectProguardSpecs(ImmutableMultimap.of(Mode.TARGET,protoRuntimeAttr)))).add(JavaRuleOutputJarsProvider.class,JavaRuleOutputJarsProvider.builder().build()).addSkylarkTransitiveInfo(JavaSkylarkApiProvider.NAME,new JavaSkylarkApiProvider()).build();
+}
