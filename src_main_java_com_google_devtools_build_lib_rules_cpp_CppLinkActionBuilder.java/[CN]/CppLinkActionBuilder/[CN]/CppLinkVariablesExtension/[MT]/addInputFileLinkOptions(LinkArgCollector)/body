@@ -41,7 +41,7 @@
     }
   }
   for (  LinkerInput input : linkerInputs) {
-    if (isDynamicLibrary(input)) {
+    if (input.getArtifactCategory() == ArtifactCategory.DYNAMIC_LIBRARY) {
       PathFragment libDir=input.getArtifact().getExecPath().getParentDirectory();
       Preconditions.checkState(libDir.startsWith(solibDir),"Artifact '%s' is not under directory '%s'.",input.getArtifact(),solibDir);
       if (libDir.equals(solibDir)) {
@@ -56,7 +56,7 @@
   boolean includeRuntimeSolibDir=false;
   for (  LinkerInput input : runtimeLinkerInputs) {
     List<String> optionsList=needWholeArchive ? noWholeArchiveInputs : linkerInputParameters;
-    if (isDynamicLibrary(input)) {
+    if (input.getArtifactCategory() == ArtifactCategory.DYNAMIC_LIBRARY) {
       PathFragment libDir=input.getArtifact().getExecPath().getParentDirectory();
       Preconditions.checkState(runtimeSolibDir != null && libDir.equals(runtimeSolibDir),"Artifact '%s' is not under directory '%s'.",input.getArtifact(),solibDir);
       includeRuntimeSolibDir=true;
