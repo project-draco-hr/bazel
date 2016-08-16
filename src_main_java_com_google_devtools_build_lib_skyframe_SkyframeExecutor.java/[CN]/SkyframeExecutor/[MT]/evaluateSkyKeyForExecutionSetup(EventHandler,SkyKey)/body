@@ -1,0 +1,14 @@
+{
+synchronized (valueLookupLock) {
+    EvaluationResult<SkyValue> result=buildDriver.evaluate(ImmutableList.of(key),true,ResourceUsage.getAvailableProcessors(),eventHandler);
+    if (!result.hasError()) {
+      return Preconditions.checkNotNull(result.get(key),"%s %s",result,key);
+    }
+    ErrorInfo errorInfo=Preconditions.checkNotNull(result.getError(key),"%s %s",key,result);
+    Throwables.propagateIfPossible(errorInfo.getException(),EnvironmentalExecException.class);
+    if (errorInfo.getException() != null) {
+      throw new IllegalStateException(errorInfo.getException());
+    }
+    throw new IllegalStateException(errorInfo.toString());
+  }
+}
