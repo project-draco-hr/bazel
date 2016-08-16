@@ -4,8 +4,11 @@
     Files.createDirectories(out.getParent());
   }
   try (OutputStream outStream=new BufferedOutputStream(Files.newOutputStream(out,StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE))){
-    Header.newBuilder().setEntryCount(entries.size()).build().writeDelimitedTo(outStream);
-    writeKeyValuesTo(entries,outStream);
+    SerializeFormat.Header.Builder headerBuilder=Header.newBuilder().setEntryCount(entries.size());
+    ByteArrayOutputStream sourceTableOutputStream=new ByteArrayOutputStream(2048);
+    DataSourceTable sourceTable=DataSourceTable.createAndWrite(entries,sourceTableOutputStream,headerBuilder);
+    headerBuilder.build().writeDelimitedTo(outStream);
+    writeKeyValuesTo(entries,outStream,sourceTable,sourceTableOutputStream.toByteArray());
   }
    logger.fine(String.format("Serialized merged in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
 }

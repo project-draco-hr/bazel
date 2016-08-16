@@ -1,0 +1,27 @@
+{
+  int numberOfEntries=header.getEntryCount();
+  Map<DataKey,KeyValueConsumer<DataKey,? extends DataValue>> keys=Maps.newLinkedHashMapWithExpectedSize(numberOfEntries);
+  for (int i=0; i < numberOfEntries; i++) {
+    SerializeFormat.DataKey protoKey=SerializeFormat.DataKey.parseDelimitedFrom(in);
+    if (protoKey.hasResourceType()) {
+      FullyQualifiedName resourceName=FullyQualifiedName.fromProto(protoKey);
+      keys.put(resourceName,FullyQualifiedName.isOverwritable(resourceName) ? consumers.overwritingConsumer : consumers.combiningConsumer);
+    }
+ else {
+      keys.put(RelativeAssetPath.fromProto(protoKey,currentFileSystem),consumers.assetConsumer);
+    }
+  }
+  DataSourceTable sourceTable=DataSourceTable.read(in,currentFileSystem,header);
+  for (  Entry<DataKey,KeyValueConsumer<DataKey,?>> entry : keys.entrySet()) {
+    SerializeFormat.DataValue protoValue=SerializeFormat.DataValue.parseDelimitedFrom(in);
+    Path source=sourceTable.sourceFromId(protoValue.getSourceId());
+    if (protoValue.hasXmlValue()) {
+      @SuppressWarnings("unchecked") KeyValueConsumer<DataKey,DataValue> value=(KeyValueConsumer<DataKey,DataValue>)entry.getValue();
+      value.consume(entry.getKey(),DataResourceXml.from(protoValue,source));
+    }
+ else {
+      @SuppressWarnings("unchecked") KeyValueConsumer<DataKey,DataValue> value=(KeyValueConsumer<DataKey,DataValue>)entry.getValue();
+      value.consume(entry.getKey(),DataValueFile.from(source));
+    }
+  }
+}
