@@ -1,0 +1,12 @@
+{
+  IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
+  CompilationArtifacts compilationArtifacts=CompilationSupport.compilationArtifacts(ruleContext);
+  ObjcCommon.Builder builder=new ObjcCommon.Builder(ruleContext).setCompilationAttributes(CompilationAttributes.Builder.fromRuleContext(ruleContext).build()).setCompilationArtifacts(compilationArtifacts).setResourceAttributes(new ResourceAttributes(ruleContext)).addDefines(ruleContext.getTokenizedStringListAttr("defines")).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addRuntimeDeps(ruleContext.getPrerequisites("runtime_deps",Mode.TARGET)).addDeps(ruleContext.getPrerequisites("bundles",Mode.TARGET)).addDepObjcProviders(protosObjcProvider.asSet()).addNonPropagatedDepObjcProviders(ruleContext.getPrerequisites("non_propagated_deps",Mode.TARGET,ObjcProvider.class)).setIntermediateArtifacts(intermediateArtifacts).setAlwayslink(false).setHasModuleMap().setLinkedBinary(intermediateArtifacts.strippedSingleArchitectureBinary());
+  if (ObjcRuleClasses.objcConfiguration(ruleContext).generateDsym()) {
+    builder.addDebugArtifacts(DsymOutputType.APP);
+  }
+  if (ObjcRuleClasses.objcConfiguration(ruleContext).generateLinkmap()) {
+    builder.setLinkmapFile(intermediateArtifacts.linkmap());
+  }
+  return builder.build();
+}

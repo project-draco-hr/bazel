@@ -1,0 +1,5 @@
+{
+  Artifact protoInputsFile=getProtoInputsFile(protoFileSuffix);
+  ruleContext.registerAction(new FileWriteAction(ruleContext.getActionOwner(),protoInputsFile,getProtoInputsFileContents(outputProtos),false));
+  ruleContext.registerAction(ObjcRuleClasses.spawnOnDarwinActionBuilder().setMnemonic("GenObjcBundledProtos").addInput(attributes.getProtoCompiler()).addInputs(attributes.getProtoCompilerSupport()).addTransitiveInputs(getPortableProtoFilters()).addInput(protoInputsFile).addInputs(inputProtos).addOutputs(getGeneratedProtoOutputs(outputProtos,".pbobjc.h")).addOutputs(getGeneratedProtoOutputs(outputProtos,".pbobjc.m")).setExecutable(new PathFragment("/usr/bin/python")).setCommandLine(getGenerationCommandLine(protoInputsFile)).build(ruleContext));
+}

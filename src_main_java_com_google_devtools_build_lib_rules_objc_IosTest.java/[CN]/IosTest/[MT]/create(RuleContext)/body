@@ -1,14 +1,11 @@
 {
   ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  ObjcProvider protosObjcProvider=null;
-  XcodeProvider protosXcodeProvider=null;
+  Optional<ObjcProvider> protosObjcProvider=Optional.absent();
+  Optional<XcodeProvider> protosXcodeProvider=Optional.absent();
   if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
-    XcodeProvider.Builder protosXcodeProviderBuilder=new XcodeProvider.Builder();
-    ProtoSupport protoSupport=new ProtoSupport(ruleContext,TargetType.LINKING_TARGET).registerActions().addXcodeProviderOptions(protosXcodeProviderBuilder);
-    ObjcCommon protoCommon=protoSupport.getCommon();
-    protosObjcProvider=protoCommon.getObjcProvider();
-    new CompilationSupport(ruleContext,protoSupport.getIntermediateArtifacts(),new CompilationAttributes.Builder().build()).registerCompileAndArchiveActions(protoCommon,protoSupport.getUserHeaderSearchPaths()).addXcodeSettings(protosXcodeProviderBuilder,protoCommon);
-    protosXcodeProvider=protosXcodeProviderBuilder.build();
+    ProtobufSupport protoSupport=new ProtobufSupport(ruleContext).registerGenerationActions().registerCompilationActions();
+    protosObjcProvider=Optional.of(protoSupport.getObjcProvider());
+    protosXcodeProvider=Optional.of(protoSupport.getXcodeProvider());
   }
   ObjcCommon common=common(ruleContext,protosObjcProvider);
   if (!common.getCompilationArtifacts().get().getArchive().isPresent()) {
@@ -17,10 +14,7 @@
   if (!ruleContext.getFragment(AppleConfiguration.class).getIosMultiCpus().isEmpty()) {
     ruleContext.ruleError(NO_MULTI_CPUS_ERROR);
   }
-  XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
-  if (protosXcodeProvider != null) {
-    xcodeProviderBuilder.addPropagatedDependencies(ImmutableList.of(protosXcodeProvider));
-  }
+  XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder().addPropagatedDependencies(protosXcodeProvider.asSet());
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
   addResourceFilesToBuild(ruleContext,common.getObjcProvider(),filesToBuild);
   XcodeProductType productType=getProductType(ruleContext);

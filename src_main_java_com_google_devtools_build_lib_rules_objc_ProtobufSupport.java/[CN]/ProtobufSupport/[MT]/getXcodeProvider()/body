@@ -1,0 +1,16 @@
+{
+  XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
+  IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
+  new XcodeSupport(ruleContext,intermediateArtifacts,getXcodeLabel(getBundledProtosSuffix())).addXcodeSettings(xcodeProviderBuilder,getObjcProvider(),LIBRARY_STATIC);
+  int actionId=0;
+  for (  ImmutableSet<Artifact> inputProtos : inputsToOutputsMap.keySet()) {
+    ImmutableSet<Artifact> outputProtos=inputsToOutputsMap.get(inputProtos);
+    IntermediateArtifacts bundleIntermediateArtifacts=getUniqueIntermediateArtifacts(actionId);
+    CompilationArtifacts compilationArtifacts=getCompilationArtifacts(bundleIntermediateArtifacts,inputProtos,outputProtos);
+    ObjcCommon common=getCommon(bundleIntermediateArtifacts,compilationArtifacts);
+    XcodeProvider bundleProvider=getBundleXcodeProvider(common,bundleIntermediateArtifacts,getUniqueBundledProtosSuffix(actionId));
+    xcodeProviderBuilder.addPropagatedDependencies(ImmutableSet.of(bundleProvider));
+    actionId++;
+  }
+  return xcodeProviderBuilder.build();
+}

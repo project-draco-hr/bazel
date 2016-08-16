@@ -1,0 +1,28 @@
+{
+  Iterable<ObjcProtoProvider> objcProtoProviders=ruleContext.getPrerequisites("deps",Mode.TARGET,ObjcProtoProvider.class);
+  Iterable<ProtoSourcesProvider> protoProviders=ruleContext.getPrerequisites("deps",Mode.TARGET,ProtoSourcesProvider.class);
+  ImmutableList.Builder<NestedSet<Artifact>> protoSets=new ImmutableList.Builder<NestedSet<Artifact>>();
+  for (  ObjcProtoProvider objcProtoProvider : objcProtoProviders) {
+    protoSets.addAll(objcProtoProvider.getProtoGroups());
+  }
+  for (  ProtoSourcesProvider protoProvider : protoProviders) {
+    protoSets.add(protoProvider.getTransitiveProtoSources());
+  }
+  HashMap<Artifact,ImmutableSet<Artifact>> protoToGroupMap=new HashMap<Artifact,ImmutableSet<Artifact>>();
+  for (  NestedSet<Artifact> nestedProtoSet : protoSets.build()) {
+    ImmutableSet<Artifact> protoSet=ImmutableSet.copyOf(nestedProtoSet.toSet());
+    for (    Artifact proto : protoSet) {
+      if (isProtoWellKnown(proto)) {
+        continue;
+      }
+      if (!protoToGroupMap.containsKey(proto) || protoToGroupMap.get(proto).size() > protoSet.size()) {
+        protoToGroupMap.put(proto,protoSet);
+      }
+    }
+  }
+  ImmutableSetMultimap.Builder<ImmutableSet<Artifact>,Artifact> inputsToOutputsMapBuilder=ImmutableSetMultimap.builder();
+  for (  Artifact proto : protoToGroupMap.keySet()) {
+    inputsToOutputsMapBuilder.put(protoToGroupMap.get(proto),proto);
+  }
+  return inputsToOutputsMapBuilder.build();
+}

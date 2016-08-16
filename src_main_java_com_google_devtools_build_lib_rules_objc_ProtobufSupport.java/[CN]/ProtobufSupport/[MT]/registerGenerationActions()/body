@@ -1,0 +1,13 @@
+{
+  int actionId=0;
+  for (  ImmutableSet<Artifact> inputProtos : inputsToOutputsMap.keySet()) {
+    Iterable<Artifact> outputProtos=inputsToOutputsMap.get(inputProtos);
+    registerGenerationAction(outputProtos,inputProtos,getUniqueBundledProtosSuffix(actionId));
+    IntermediateArtifacts intermediateArtifacts=getUniqueIntermediateArtifacts(actionId);
+    CompilationArtifacts compilationArtifacts=getCompilationArtifacts(intermediateArtifacts,inputProtos,outputProtos);
+    ObjcCommon common=getCommon(intermediateArtifacts,compilationArtifacts);
+    new CompilationSupport(ruleContext,intermediateArtifacts,new CompilationAttributes.Builder().build()).registerGenerateModuleMapAction(common.getCompilationArtifacts());
+    actionId++;
+  }
+  return this;
+}

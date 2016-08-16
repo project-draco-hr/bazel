@@ -1,0 +1,20 @@
+{
+  Iterable<PathFragment> userHeaderSearchPaths=ImmutableList.of(getWorkspaceRelativeOutputDir());
+  ObjcCommon.Builder commonBuilder=new ObjcCommon.Builder(ruleContext);
+  int actionId=0;
+  for (  ImmutableSet<Artifact> inputProtos : inputsToOutputsMap.keySet()) {
+    ImmutableSet<Artifact> outputProtos=inputsToOutputsMap.get(inputProtos);
+    IntermediateArtifacts intermediateArtifacts=getUniqueIntermediateArtifacts(actionId);
+    CompilationArtifacts compilationArtifacts=getCompilationArtifacts(intermediateArtifacts,inputProtos,outputProtos);
+    ObjcCommon common=getCommon(intermediateArtifacts,compilationArtifacts);
+    commonBuilder.addDepObjcProviders(ImmutableSet.of(common.getObjcProvider()));
+    actionId++;
+  }
+  if (ObjcRuleClasses.objcConfiguration(ruleContext).experimentalAutoTopLevelUnionObjCProtos()) {
+    commonBuilder.addDirectDependencyHeaderSearchPaths(userHeaderSearchPaths);
+  }
+ else {
+    commonBuilder.addUserHeaderSearchPaths(userHeaderSearchPaths);
+  }
+  return commonBuilder.build().getObjcProvider();
+}

@@ -1,0 +1,12 @@
+{
+  Iterable<PathFragment> userHeaderSearchPaths=ImmutableList.of(getWorkspaceRelativeOutputDir());
+  XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder().addUserHeaderSearchPaths(userHeaderSearchPaths).setCompilationArtifacts(common.getCompilationArtifacts().get());
+  XcodeSupport xcodeSupport=new XcodeSupport(ruleContext,intermediateArtifacts,getXcodeLabel(labelSuffix)).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),LIBRARY_STATIC);
+  if (isLinkingTarget()) {
+    xcodeProviderBuilder.addHeaders(getProtobufHeaders()).addUserHeaderSearchPaths(getProtobufHeaderSearchPaths());
+  }
+ else {
+    xcodeSupport.addDependencies(xcodeProviderBuilder,new Attribute(ObjcRuleClasses.PROTO_LIB_ATTR,Mode.TARGET));
+  }
+  return xcodeProviderBuilder.build();
+}

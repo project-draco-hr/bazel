@@ -1,0 +1,13 @@
+{
+  int actionId=0;
+  Iterable<PathFragment> userHeaderSearchPaths=ImmutableList.of(getWorkspaceRelativeOutputDir());
+  for (  ImmutableSet<Artifact> inputProtos : inputsToOutputsMap.keySet()) {
+    ImmutableSet<Artifact> outputProtos=inputsToOutputsMap.get(inputProtos);
+    IntermediateArtifacts intermediateArtifacts=getUniqueIntermediateArtifacts(actionId);
+    CompilationArtifacts compilationArtifacts=getCompilationArtifacts(intermediateArtifacts,inputProtos,outputProtos);
+    ObjcCommon common=getCommon(intermediateArtifacts,compilationArtifacts);
+    new CompilationSupport(ruleContext,intermediateArtifacts,new CompilationAttributes.Builder().build()).registerCompileAndArchiveActions(common,userHeaderSearchPaths);
+    actionId++;
+  }
+  return this;
+}

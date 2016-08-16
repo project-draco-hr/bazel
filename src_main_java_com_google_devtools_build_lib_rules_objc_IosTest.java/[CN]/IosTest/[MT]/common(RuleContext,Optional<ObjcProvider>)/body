@@ -1,0 +1,12 @@
+{
+  CompilationArtifacts compilationArtifacts=CompilationSupport.compilationArtifacts(ruleContext);
+  ObjcCommon.Builder builder=new ObjcCommon.Builder(ruleContext).setCompilationAttributes(CompilationAttributes.Builder.fromRuleContext(ruleContext).build()).setCompilationArtifacts(compilationArtifacts).setResourceAttributes(new ResourceAttributes(ruleContext)).addDefines(ruleContext.getTokenizedStringListAttr("defines")).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addRuntimeDeps(ruleContext.getPrerequisites("runtime_deps",Mode.TARGET)).addDeps(ruleContext.getPrerequisites("bundles",Mode.TARGET)).addDepObjcProviders(protosObjcProvider.asSet()).addNonPropagatedDepObjcProviders(ruleContext.getPrerequisites("non_propagated_deps",Mode.TARGET,ObjcProvider.class)).setIntermediateArtifacts(ObjcRuleClasses.intermediateArtifacts(ruleContext)).setHasModuleMap();
+  if (isXcTest(ruleContext)) {
+    builder.addExtraSdkFrameworks(AUTOMATIC_SDK_FRAMEWORKS_FOR_XCTEST).addDepObjcProviders(ImmutableList.of(xcTestAppProvider(ruleContext).getObjcProvider()));
+  }
+  ObjcConfiguration config=ruleContext.getFragment(ObjcConfiguration.class);
+  if (config.runMemleaks()) {
+    builder.addDepObjcProviders(ruleContext.getPrerequisites(MEMLEAKS_DEP_ATTR,Mode.TARGET,ObjcProvider.class));
+  }
+  return builder.build();
+}
