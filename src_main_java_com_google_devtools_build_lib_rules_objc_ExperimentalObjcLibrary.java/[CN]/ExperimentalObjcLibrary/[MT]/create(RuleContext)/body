@@ -10,7 +10,7 @@
   Collection<Artifact> nonArcSources=Sets.newHashSet(compilationArtifacts.getNonArcSrcs());
   Collection<Artifact> privateHdrs=Sets.newHashSet(compilationArtifacts.getPrivateHdrs());
   Collection<Artifact> publicHdrs=Sets.newHashSet(compilationAttributes.hdrs());
-  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,new ObjcCppSemantics(common.getObjcProvider()),getFeatureConfiguration(ruleContext),CcLibraryHelper.SourceCategory.CC_AND_OBJC).addSources(arcSources,ImmutableMap.of("objc_arc","")).addSources(nonArcSources,ImmutableMap.of("no_objc_arc","")).addSources(privateHdrs).enableCompileProviders().addPublicHeaders(publicHdrs).addPrecompiledFiles(precompiledFiles).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addCopts(compilationSupport.getCompileRuleCopts()).addVariableExtension(new ObjcVariablesExtension(ruleContext,common.getObjcProvider(),compilationArtifacts));
+  CcLibraryHelper helper=new CcLibraryHelper(ruleContext,new ObjcCppSemantics(common.getObjcProvider()),getFeatureConfiguration(ruleContext),CcLibraryHelper.SourceCategory.CC_AND_OBJC).addSources(arcSources,ImmutableMap.of("objc_arc","")).addSources(nonArcSources,ImmutableMap.of("no_objc_arc","")).addSources(privateHdrs).addDefines(common.getObjcProvider().get(DEFINE)).enableCompileProviders().addPublicHeaders(publicHdrs).addPrecompiledFiles(precompiledFiles).addDeps(ruleContext.getPrerequisites("deps",Mode.TARGET)).addCopts(compilationSupport.getCompileRuleCopts()).addVariableExtension(new ObjcVariablesExtension(ruleContext,common.getObjcProvider(),compilationArtifacts));
   if (isStaticArchive(compilationArtifacts)) {
     Artifact objList=intermediateArtifacts.archiveObjList();
     compilationSupport.registerObjFilelistAction(getObjFiles(compilationArtifacts,intermediateArtifacts),objList);
@@ -24,5 +24,5 @@
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   compilationSupport.addXcodeSettings(xcodeProviderBuilder,common);
   new XcodeSupport(ruleContext).addFilesToBuild(filesToBuild).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),LIBRARY_STATIC).addDependencies(xcodeProviderBuilder,new Attribute("bundles",Mode.TARGET)).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET)).addNonPropagatedDependencies(xcodeProviderBuilder,new Attribute("non_propagated_deps",Mode.TARGET)).registerActions(xcodeProviderBuilder.build());
-  return ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build()).addProviders(info.getProviders()).addProvider(XcodeProvider.class,xcodeProviderBuilder.build()).build();
+  return ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build()).addProvider(ObjcProvider.class,common.getObjcProvider()).addProviders(info.getProviders()).addProvider(XcodeProvider.class,xcodeProviderBuilder.build()).build();
 }
