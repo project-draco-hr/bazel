@@ -6,6 +6,16 @@
   this.port=port;
   this.maxIdleSeconds=maxIdleSeconds;
   this.serving=false;
+  final AtomicInteger counter=new AtomicInteger(1);
+  this.streamExecutor=Executors.newCachedThreadPool(new ThreadFactory(){
+    @Override public Thread newThread(    Runnable r){
+      Thread result=new Thread(r);
+      result.setName("streamer-" + counter.getAndAdd(1));
+      result.setDaemon(true);
+      return result;
+    }
+  }
+);
   SecureRandom random=new SecureRandom();
   requestCookie=generateCookie(random,16);
   responseCookie=generateCookie(random,16);
