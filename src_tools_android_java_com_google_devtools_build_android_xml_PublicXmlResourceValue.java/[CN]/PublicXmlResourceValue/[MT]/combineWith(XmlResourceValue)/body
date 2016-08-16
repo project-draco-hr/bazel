@@ -1,0 +1,16 @@
+{
+  if (!(value instanceof PublicXmlResourceValue)) {
+    throw new IllegalArgumentException(value + "is not combinable with " + this);
+  }
+  PublicXmlResourceValue other=(PublicXmlResourceValue)value;
+  Map<ResourceType,Optional<Integer>> combined=new EnumMap<>(ResourceType.class);
+  combined.putAll(typeToId);
+  for (  Entry<ResourceType,Optional<Integer>> entry : other.typeToId.entrySet()) {
+    Optional<Integer> existing=combined.get(entry.getKey());
+    if (existing != null && !existing.equals(entry.getValue())) {
+      throw new IllegalArgumentException(String.format("Public resource of type %s assigned two different id values 0x%x and 0x%x",entry.getKey(),existing.orNull(),entry.getValue().orNull()));
+    }
+    combined.put(entry.getKey(),entry.getValue());
+  }
+  return of(combined);
+}

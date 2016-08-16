@@ -1,15 +1,16 @@
 {
-  Map<ResourceType,Integer> allocatedTypeIds=new EnumMap<>(ResourceType.class);
-  allocatedTypeIds.put(ResourceType.ATTR,1);
-  int nextTypeId=2;
+  Map<ResourceType,Integer> allocatedTypeIds=assignTypeIdsForPublic();
+  Set<Integer> reservedTypeSlots=ImmutableSet.copyOf(allocatedTypeIds.values());
+  allocatedTypeIds.put(ResourceType.ATTR,ATTR_TYPE_ID);
+  int nextTypeId=nextFreeId(ATTR_TYPE_ID + 1,reservedTypeSlots);
   for (  ResourceType t : AAPT_TYPE_ORDERING) {
-    if (innerClasses.containsKey(t)) {
+    if (innerClasses.containsKey(t) && !allocatedTypeIds.containsKey(t)) {
       allocatedTypeIds.put(t,nextTypeId);
-      ++nextTypeId;
+      nextTypeId=nextFreeId(nextTypeId + 1,reservedTypeSlots);
     }
   }
   for (  ResourceType t : innerClasses.keySet()) {
-    Preconditions.checkArgument(t == ResourceType.STYLEABLE || allocatedTypeIds.containsKey(t));
+    Preconditions.checkState(t == ResourceType.STYLEABLE || allocatedTypeIds.containsKey(t),"Resource type %s is not allocated a type ID",t);
   }
   return allocatedTypeIds;
 }

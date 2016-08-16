@@ -1,0 +1,19 @@
+{
+  HashMap<Integer,String> assignedIds=new HashMap<>();
+  int prevId=getInitialIdForTypeId(typeId);
+  for (  Map.Entry<String,Optional<Integer>> entry : publicIds.entrySet()) {
+    Optional<Integer> id=entry.getValue();
+    if (id.isPresent()) {
+      prevId=id.get();
+    }
+ else {
+      prevId=nextFreeId(prevId + 1,assignedIds.keySet());
+    }
+    String previousMapping=assignedIds.put(prevId,entry.getKey());
+    if (previousMapping != null) {
+      logger.warning(String.format("Multiple entry names declared for public entry identifier 0x%x (%s and %s)",prevId,previousMapping,entry.getKey()));
+    }
+    idBuilder.put(entry.getKey(),prevId);
+  }
+  return assignedIds.keySet();
+}

@@ -1,0 +1,11 @@
+{
+  Map<String,String> protoValues=proto.getMappedStringValue();
+  ImmutableMap.Builder<ResourceType,Optional<Integer>> typeToId=ImmutableMap.builder();
+  for (  Entry<String,String> entry : protoValues.entrySet()) {
+    ResourceType type=ResourceType.getEnum(entry.getKey());
+    Preconditions.checkNotNull(type);
+    Optional<Integer> id=MISSING_ID_VALUE.equals(entry.getValue()) ? Optional.<Integer>absent() : Optional.of(Integer.decode(entry.getValue()));
+    typeToId.put(type,id);
+  }
+  return of(typeToId.build());
+}

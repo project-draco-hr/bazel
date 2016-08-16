@@ -1,0 +1,37 @@
+{
+  Map<ResourceType,Integer> allocatedTypeIds=new EnumMap<>(ResourceType.class);
+  if (publicIds.isEmpty()) {
+    return allocatedTypeIds;
+  }
+  Map<Integer,ResourceType> assignedIds=new HashMap<>();
+  for (  Map.Entry<ResourceType,SortedMap<String,Optional<Integer>>> publicTypeEntry : publicIds.entrySet()) {
+    ResourceType currentType=publicTypeEntry.getKey();
+    Integer reservedTypeSlot=null;
+    String previousResource=null;
+    for (    Map.Entry<String,Optional<Integer>> publicEntry : publicTypeEntry.getValue().entrySet()) {
+      Optional<Integer> reservedId=publicEntry.getValue();
+      if (!reservedId.isPresent()) {
+        continue;
+      }
+      Integer typePortion=extractTypeId(reservedId.get());
+      if (reservedTypeSlot == null) {
+        reservedTypeSlot=typePortion;
+        previousResource=publicEntry.getKey();
+      }
+ else {
+        if (!reservedTypeSlot.equals(typePortion)) {
+          logger.warning(String.format("%s has conflicting type codes for its public identifiers (%s=%s vs %s=%s)",currentType.getName(),previousResource,reservedTypeSlot,publicEntry.getKey(),typePortion));
+        }
+      }
+    }
+    if (currentType == ResourceType.ATTR && reservedTypeSlot != null && !reservedTypeSlot.equals(ATTR_TYPE_ID)) {
+      logger.warning(String.format("Cannot force ATTR to have type code other than 0x%02x (got 0x%02x from %s)",ATTR_TYPE_ID,reservedTypeSlot,previousResource));
+    }
+    allocatedTypeIds.put(currentType,reservedTypeSlot);
+    ResourceType alreadyAssigned=assignedIds.put(reservedTypeSlot,currentType);
+    if (alreadyAssigned != null) {
+      logger.warning(String.format("Multiple type names declared for public type identifier 0x%x (%s vs %s)",reservedTypeSlot,alreadyAssigned,currentType));
+    }
+  }
+  return allocatedTypeIds;
+}

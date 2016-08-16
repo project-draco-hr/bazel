@@ -1,0 +1,17 @@
+{
+  SortedMap<String,Optional<Integer>> publicMappings=publicIds.get(type);
+  if (publicMappings == null) {
+    publicMappings=new TreeMap<>();
+    publicIds.put(type,publicMappings);
+  }
+  Optional<Integer> oldValue=publicMappings.put(name,value);
+  if (oldValue != null && !oldValue.equals(value)) {
+    Integer lower=oldValue.orNull();
+    Integer higher=value.orNull();
+    if (Ordering.natural().compare(oldValue.orNull(),value.orNull()) > 0) {
+      lower=higher;
+      higher=oldValue.orNull();
+    }
+    logger.warning(String.format("resource %s/%s has conflicting public identifiers (0x%x vs 0x%x)",type,name,lower,higher));
+  }
+}

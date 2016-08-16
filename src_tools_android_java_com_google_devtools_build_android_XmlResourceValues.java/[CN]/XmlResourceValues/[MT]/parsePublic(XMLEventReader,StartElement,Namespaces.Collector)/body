@@ -1,0 +1,32 @@
+{
+  namespacesCollector.collectFrom(start);
+  if (!isEndTag(eventReader.peek(),start.getName())) {
+    throw new XMLStreamException(String.format("<public> tag should be unary %s",start),start.getLocation());
+  }
+  ImmutableMap<String,String> attributes=ImmutableMap.copyOf(parseTagAttributes(start));
+  String typeAttr=attributes.get(SdkConstants.ATTR_TYPE);
+  ResourceType type;
+  if (typeAttr != null) {
+    type=ResourceType.getEnum(typeAttr);
+    if (type == null || type == ResourceType.PUBLIC) {
+      throw new XMLStreamException(String.format("<public> tag has invalid type attribute %s",start),start.getLocation());
+    }
+  }
+ else {
+    throw new XMLStreamException(String.format("<public> tag missing type attribute %s",start),start.getLocation());
+  }
+  String idValueAttr=attributes.get(SdkConstants.ATTR_ID);
+  Optional<Integer> id=Optional.absent();
+  if (idValueAttr != null) {
+    try {
+      id=Optional.of(Integer.decode(idValueAttr));
+    }
+ catch (    NumberFormatException e) {
+      throw new XMLStreamException(String.format("<public> has invalid id number %s",start),start.getLocation());
+    }
+  }
+  if (attributes.size() > 2) {
+    throw new XMLStreamException(String.format("<public> has unexpected attributes %s",start),start.getLocation());
+  }
+  return PublicXmlResourceValue.create(type,id);
+}
