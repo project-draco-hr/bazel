@@ -1,14 +1,24 @@
 {
-  if (checkArgs(args)) {
-    try {
-      BuildEncyclopediaProcessor processor=new BuildEncyclopediaProcessor(createRuleClassProvider(args[1]));
-      processor.generateDocumentation(args[0].split(","),getArgsOrNull(args,2),getArgsOrNull(args,3));
-    }
- catch (    BuildEncyclopediaDocException e) {
-      fail(e,false);
-    }
-catch (    Throwable e) {
-      fail(e,true);
-    }
+  OptionsParser parser=OptionsParser.newOptionsParser(BuildEncyclopediaOptions.class);
+  parser.setAllowResidue(false);
+  parser.parseAndExitUponError(args);
+  BuildEncyclopediaOptions options=parser.getOptions(BuildEncyclopediaOptions.class);
+  if (options.help) {
+    printUsage(parser);
+    Runtime.getRuntime().exit(0);
+  }
+  if (options.inputDirs.size() == 0 || options.provider.isEmpty()) {
+    printUsage(parser);
+    Runtime.getRuntime().exit(1);
+  }
+  try {
+    BuildEncyclopediaProcessor processor=new BuildEncyclopediaProcessor(createRuleClassProvider(options.provider));
+    processor.generateDocumentation(options.inputDirs,options.outputDir,options.blacklist);
+  }
+ catch (  BuildEncyclopediaDocException e) {
+    fail(e,false);
+  }
+catch (  Throwable e) {
+    fail(e,true);
   }
 }
