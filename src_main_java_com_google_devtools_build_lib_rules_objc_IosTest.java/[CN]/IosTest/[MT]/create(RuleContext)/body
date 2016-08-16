@@ -1,12 +1,7 @@
 {
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  Optional<ObjcProvider> protosObjcProvider=Optional.absent();
-  Optional<XcodeProvider> protosXcodeProvider=Optional.absent();
-  if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
-    ProtobufSupport protoSupport=new ProtobufSupport(ruleContext).registerGenerationActions().registerCompilationActions();
-    protosObjcProvider=Optional.of(protoSupport.getObjcProvider());
-    protosXcodeProvider=Optional.of(protoSupport.getXcodeProvider());
-  }
+  ProtobufSupport protoSupport=new ProtobufSupport(ruleContext).registerGenerationActions().registerCompilationActions();
+  Optional<ObjcProvider> protosObjcProvider=protoSupport.getObjcProvider();
+  Optional<XcodeProvider> protosXcodeProvider=protoSupport.getXcodeProvider();
   ObjcCommon common=common(ruleContext,protosObjcProvider);
   if (!common.getCompilationArtifacts().get().getArchive().isPresent()) {
     ruleContext.ruleError(REQUIRES_SOURCE_ERROR);
@@ -39,6 +34,7 @@
   J2ObjcMappingFileProvider j2ObjcMappingFileProvider=J2ObjcMappingFileProvider.union(ruleContext.getPrerequisites("deps",Mode.TARGET,J2ObjcMappingFileProvider.class));
   J2ObjcEntryClassProvider j2ObjcEntryClassProvider=new J2ObjcEntryClassProvider.Builder().addTransitive(ruleContext.getPrerequisites("deps",Mode.TARGET,J2ObjcEntryClassProvider.class)).build();
   new CompilationSupport(ruleContext).registerLinkActions(common.getObjcProvider(),j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,extraLinkArgs,extraLinkInputs,DsymOutputType.TEST).registerCompileAndArchiveActions(common).registerFullyLinkAction(common.getObjcProvider()).addXcodeSettings(xcodeProviderBuilder,common).validateAttributes();
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
   new ReleaseBundlingSupport(ruleContext,common.getObjcProvider(),LinkedBinary.LOCAL_AND_DEPENDENCIES,bundleFormat,objcConfiguration.getMinimumOs()).registerActions(DsymOutputType.TEST).addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild,DsymOutputType.TEST).validateResources().validateAttributes();
   new ResourceSupport(ruleContext).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
   new XcodeSupport(ruleContext).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),productType).addDependencies(xcodeProviderBuilder,new Attribute("bundles",Mode.TARGET)).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET)).addNonPropagatedDependencies(xcodeProviderBuilder,new Attribute("non_propagated_deps",Mode.TARGET)).addFilesToBuild(filesToBuild).registerActions(xcodeProviderBuilder.build());

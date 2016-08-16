@@ -5,16 +5,14 @@
     Iterable<Artifact> generatedHeaders=getGeneratedProtoOutputs(outputProtoFiles,".pbobjc.h");
     filesToBuild.addAll(generatedSources).addAll(generatedHeaders);
   }
-  if (!ObjcRuleClasses.objcConfiguration(ruleContext).experimentalAutoTopLevelUnionObjCProtos()) {
-    int actionId=0;
-    for (    ImmutableSet<Artifact> inputProtos : inputsToOutputsMap.keySet()) {
-      ImmutableSet<Artifact> outputProtos=inputsToOutputsMap.get(inputProtos);
-      IntermediateArtifacts intermediateArtifacts=getUniqueIntermediateArtifacts(actionId);
-      CompilationArtifacts compilationArtifacts=getCompilationArtifacts(intermediateArtifacts,inputProtos,outputProtos);
-      ObjcCommon common=getCommon(intermediateArtifacts,compilationArtifacts);
-      filesToBuild.addAll(common.getCompiledArchive().asSet());
-      actionId++;
-    }
+  int actionId=0;
+  for (  ImmutableSet<Artifact> inputProtos : inputsToOutputsMap.keySet()) {
+    ImmutableSet<Artifact> outputProtos=inputsToOutputsMap.get(inputProtos);
+    IntermediateArtifacts intermediateArtifacts=getUniqueIntermediateArtifacts(actionId);
+    CompilationArtifacts compilationArtifacts=getCompilationArtifacts(intermediateArtifacts,inputProtos,outputProtos);
+    ObjcCommon common=getCommon(intermediateArtifacts,compilationArtifacts);
+    filesToBuild.addAll(common.getCompiledArchive().asSet());
+    actionId++;
   }
   return this;
 }

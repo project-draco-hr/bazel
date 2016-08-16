@@ -1,12 +1,7 @@
 {
-  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
-  Optional<ObjcProvider> protosObjcProvider=Optional.absent();
-  Optional<XcodeProvider> protosXcodeProvider=Optional.absent();
-  if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
-    ProtobufSupport protoSupport=new ProtobufSupport(ruleContext).registerGenerationActions().registerCompilationActions();
-    protosObjcProvider=Optional.of(protoSupport.getObjcProvider());
-    protosXcodeProvider=Optional.of(protoSupport.getXcodeProvider());
-  }
+  ProtobufSupport protoSupport=new ProtobufSupport(ruleContext).registerGenerationActions().registerCompilationActions();
+  Optional<ObjcProvider> protosObjcProvider=protoSupport.getObjcProvider();
+  Optional<XcodeProvider> protosXcodeProvider=protoSupport.getXcodeProvider();
   ObjcCommon common=common(ruleContext,protosObjcProvider);
   ObjcProvider objcProvider=common.getObjcProvider();
   assertLibraryOrSources(objcProvider,ruleContext);
@@ -20,6 +15,7 @@
   CompilationSupport compilationSupport=new CompilationSupport(ruleContext).registerCompileAndArchiveActions(common).registerFullyLinkAction(common.getObjcProvider()).addXcodeSettings(xcodeProviderBuilder,common).registerLinkActions(objcProvider,j2ObjcMappingFileProvider,j2ObjcEntryClassProvider,getExtraLinkArgs(ruleContext),ImmutableList.<Artifact>of(),DsymOutputType.APP).validateAttributes();
   Optional<XcTestAppProvider> xcTestAppProvider;
   Optional<RunfilesSupport> maybeRunfilesSupport=Optional.absent();
+  ObjcConfiguration objcConfiguration=ObjcRuleClasses.objcConfiguration(ruleContext);
 switch (hasReleaseBundlingSupport) {
 case YES:
     AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);

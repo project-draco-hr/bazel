@@ -1,7 +1,10 @@
 {
+  if (inputsToOutputsMap.isEmpty()) {
+    return Optional.absent();
+  }
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext);
-  new XcodeSupport(ruleContext,intermediateArtifacts,getXcodeLabel(getBundledProtosSuffix())).addXcodeSettings(xcodeProviderBuilder,getObjcProvider(),LIBRARY_STATIC);
+  new XcodeSupport(ruleContext,intermediateArtifacts,getXcodeLabel(getBundledProtosSuffix())).addXcodeSettings(xcodeProviderBuilder,getObjcProvider().get(),LIBRARY_STATIC);
   int actionId=0;
   for (  ImmutableSet<Artifact> inputProtos : inputsToOutputsMap.keySet()) {
     ImmutableSet<Artifact> outputProtos=inputsToOutputsMap.get(inputProtos);
@@ -12,5 +15,5 @@
     xcodeProviderBuilder.addPropagatedDependencies(ImmutableSet.of(bundleProvider));
     actionId++;
   }
-  return xcodeProviderBuilder.build();
+  return Optional.of(xcodeProviderBuilder.build());
 }

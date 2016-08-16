@@ -8,12 +8,9 @@
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().add(ruleIntermediateArtifacts.combinedArchitectureBinary());
   ObjcProvider.Builder objcProviderBuilder=new ObjcProvider.Builder();
   for (  BuildConfiguration childConfig : childConfigurations) {
-    Optional<ObjcProvider> protosObjcProvider=Optional.absent();
     ObjcConfiguration objcConfiguration=childConfig.getFragment(ObjcConfiguration.class);
-    if (objcConfiguration.experimentalAutoTopLevelUnionObjCProtos()) {
-      ProtobufSupport protoSupport=new ProtobufSupport(ruleContext).registerGenerationActions().registerCompilationActions();
-      protosObjcProvider=Optional.of(protoSupport.getObjcProvider());
-    }
+    ProtobufSupport protoSupport=new ProtobufSupport(ruleContext,childConfig).registerGenerationActions().registerCompilationActions();
+    Optional<ObjcProvider> protosObjcProvider=protoSupport.getObjcProvider();
     IntermediateArtifacts intermediateArtifacts=ObjcRuleClasses.intermediateArtifacts(ruleContext,childConfig);
     ObjcCommon common=common(ruleContext,childConfig,intermediateArtifacts,nullToEmptyList(configToDepsCollectionMap.get(childConfig)),nullToEmptyList(configurationToNonPropagatedObjcMap.get(childConfig)),protosObjcProvider);
     ImmutableList.Builder<J2ObjcMappingFileProvider> j2ObjcMappingFileProviders=ImmutableList.builder();

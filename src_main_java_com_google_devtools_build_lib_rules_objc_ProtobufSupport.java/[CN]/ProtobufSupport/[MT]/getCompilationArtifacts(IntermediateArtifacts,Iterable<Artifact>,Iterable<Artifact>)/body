@@ -1,8 +1,7 @@
 {
   Iterable<Artifact> filteredInputProtos=filterWellKnownProtos(inputProtoFiles);
   CompilationArtifacts.Builder compilationArtifacts=new CompilationArtifacts.Builder().setIntermediateArtifacts(intermediateArtifacts).setPchFile(Optional.<Artifact>absent()).addAdditionalHdrs(getGeneratedProtoOutputs(filteredInputProtos,".pbobjc.h")).addAdditionalHdrs(getProtobufHeaders());
-  boolean experimentalAutoUnion=ObjcRuleClasses.objcConfiguration(ruleContext).experimentalAutoTopLevelUnionObjCProtos();
-  if (!experimentalAutoUnion || isLinkingTarget()) {
+  if (isLinkingTarget()) {
     compilationArtifacts.addNonArcSrcs(getGeneratedProtoOutputs(outputProtoFiles,".pbobjc.m"));
   }
   return compilationArtifacts.build();
