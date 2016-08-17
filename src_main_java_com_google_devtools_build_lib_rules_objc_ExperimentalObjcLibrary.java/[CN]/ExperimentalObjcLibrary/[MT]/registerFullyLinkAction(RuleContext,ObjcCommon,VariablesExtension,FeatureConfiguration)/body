@@ -1,0 +1,7 @@
+{
+  Artifact fullyLinkedArchive=ruleContext.getImplicitOutputArtifact(CompilationSupport.FULLY_LINKED_LIB);
+  PathFragment labelName=new PathFragment(ruleContext.getLabel().getName());
+  String libraryIdentifier=ruleContext.getPackageDirectory().getRelative(labelName.replaceName("lib" + labelName.getBaseName())).getPathString();
+  CppLinkAction fullyLinkAction=new CppLinkActionBuilder(ruleContext,fullyLinkedArchive).addActionInputs(common.getObjcProvider().getObjcLibraries()).addActionInputs(common.getObjcProvider().getCcLibraries()).addActionInputs(common.getObjcProvider().get(IMPORTED_LIBRARY).toSet()).setLinkType(LinkTargetType.OBJC_FULLY_LINKED_ARCHIVE).setLinkStaticness(LinkStaticness.FULLY_STATIC).setLibraryIdentifier(libraryIdentifier).addVariablesExtension(variablesExtension).setFeatureConfiguration(featureConfiguration).build();
+  ruleContext.registerAction(fullyLinkAction);
+}
