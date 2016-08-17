@@ -3,7 +3,7 @@
   if (Link.useStartEndLib(input,cppConfiguration.archiveType())) {
     Iterable<Artifact> archiveMembers=input.getObjectFiles();
     if (!Iterables.isEmpty(archiveMembers)) {
-      options.add("-Wl,--start-lib");
+      standardOptions.add("-Wl,--start-lib");
       for (      Artifact member : archiveMembers) {
         if (ltoMap != null) {
           Artifact backend=ltoMap.remove(member);
@@ -11,12 +11,13 @@
             member=backend;
           }
         }
-        options.add(member.getExecPathString());
+        standardOptions.add(member.getExecPathString());
       }
-      options.add("-Wl,--end-lib");
+      standardOptions.add("-Wl,--end-lib");
     }
   }
  else {
+    List<String> options=inputNeedsWholeArchive(input) ? wholeArchiveOptions : standardOptions;
     Artifact inputArtifact=input.getArtifact();
     if (ltoMap != null) {
       Artifact ltoArtifact=ltoMap.remove(inputArtifact);
