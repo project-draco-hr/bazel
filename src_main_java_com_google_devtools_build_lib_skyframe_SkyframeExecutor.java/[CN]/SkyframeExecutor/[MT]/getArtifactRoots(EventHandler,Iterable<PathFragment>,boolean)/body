@@ -14,18 +14,8 @@
     }
   }
   EvaluationResult<ContainingPackageLookupValue> result;
-  try {
-    result=callUninterruptibly(new Callable<EvaluationResult<ContainingPackageLookupValue>>(){
-      @Override public EvaluationResult<ContainingPackageLookupValue> call() throws InterruptedException {
 synchronized (valueLookupLock) {
-          return buildDriver.evaluate(packageKeys,true,1,eventHandler);
-        }
-      }
-    }
-);
-  }
- catch (  Exception e) {
-    throw new IllegalStateException(e);
+    result=buildDriver.evaluate(packageKeys,true,1,eventHandler);
   }
   if (result.hasError()) {
     throw new PackageRootResolutionException("Exception encountered determining package roots",result.getError().getException());
