@@ -40,6 +40,9 @@
   if (CppLinkAction.enableSymbolsCounts(cppConfiguration,fake,linkType)) {
     linkActionBuilder.setSymbolCountsOutput(ruleContext.getBinArtifact(CppLinkAction.symbolCountsFileName(binaryPath)));
   }
+  if (isLinkShared(ruleContext)) {
+    linkActionBuilder.setLibraryIdentifier(CcLinkingOutputs.libraryIdentifierOf(binary));
+  }
   CppLinkAction.Context linkContext=new CppLinkAction.Context(linkActionBuilder);
   if (featureConfiguration.isEnabled(CppRuleClasses.THIN_LTO)) {
     linkActionBuilder.setLTOIndexing(true);
@@ -50,9 +53,6 @@
       ltoArtifacts.scheduleLTOBackendAction(ruleContext,usePic);
     }
     linkActionBuilder.setLTOIndexing(false);
-  }
-  if (isLinkShared(ruleContext)) {
-    linkActionBuilder.setLibraryIdentifier(CcLinkingOutputs.libraryIdentifierOf(binary));
   }
   CppLinkAction linkAction=linkActionBuilder.build();
   ruleContext.registerAction(linkAction);
