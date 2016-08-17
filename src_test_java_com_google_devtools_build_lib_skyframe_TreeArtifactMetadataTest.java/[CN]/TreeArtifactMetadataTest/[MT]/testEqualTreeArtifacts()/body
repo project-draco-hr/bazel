@@ -1,0 +1,15 @@
+{
+  Artifact treeArtifact=createTreeArtifact("out");
+  ImmutableList<PathFragment> children=ImmutableList.of(new PathFragment("one"),new PathFragment("two"));
+  TreeArtifactValue valueOne=evaluateTreeArtifact(treeArtifact,children);
+  MemoizingEvaluator evaluator=driver.getGraphForTesting();
+  evaluator.delete(new Predicate<SkyKey>(){
+    @Override public boolean apply(    SkyKey key){
+      return actions.contains(key.argument());
+    }
+  }
+);
+  TreeArtifactValue valueTwo=evaluateTreeArtifact(treeArtifact,children);
+  assertThat(valueOne.getDigest()).isNotSameAs(valueTwo.getDigest());
+  assertThat(valueOne).isEqualTo(valueTwo);
+}
