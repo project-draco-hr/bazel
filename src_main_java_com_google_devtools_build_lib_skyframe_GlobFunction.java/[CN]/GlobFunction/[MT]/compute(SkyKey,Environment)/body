@@ -48,8 +48,8 @@
       return null;
     }
     int direntsSize=listingValue.getDirents().size();
-    Map<Dirent,SkyKey> symlinkFileMap=Maps.newHashMapWithExpectedSize(direntsSize);
-    Map<Dirent,SkyKey> firstPassSubdirMap=Maps.newHashMapWithExpectedSize(direntsSize);
+    Map<SkyKey,Dirent> symlinkFileMap=Maps.newHashMapWithExpectedSize(direntsSize);
+    Map<SkyKey,Dirent> subdirMap=Maps.newHashMapWithExpectedSize(direntsSize);
     Map<Dirent,Object> sortedResultMap=Maps.newTreeMap();
     for (    Dirent dirent : listingValue.getDirents()) {
       Type direntType=dirent.getType();
@@ -58,59 +58,55 @@
         continue;
       }
       if (direntType == Dirent.Type.SYMLINK) {
-        symlinkFileMap.put(dirent,FileValue.key(RootedPath.toRootedPath(glob.getPackageRoot(),dirPathFragment.getRelative(fileName))));
+        symlinkFileMap.put(FileValue.key(RootedPath.toRootedPath(glob.getPackageRoot(),dirPathFragment.getRelative(fileName))),dirent);
         continue;
       }
       if (direntType == Dirent.Type.DIRECTORY) {
         SkyKey keyToRequest=getSkyKeyForSubdir(fileName,glob,subdirPattern);
         if (keyToRequest != null) {
-          firstPassSubdirMap.put(dirent,keyToRequest);
+          subdirMap.put(keyToRequest,dirent);
         }
       }
  else       if (globMatchesBareFile) {
         sortedResultMap.put(dirent,glob.getSubdir().getRelative(fileName));
       }
     }
-    Map<SkyKey,SkyValue> firstPassAndSymlinksResult=env.getValues(Iterables.concat(firstPassSubdirMap.values(),symlinkFileMap.values()));
+    Map<SkyKey,SkyValue> subdirAndSymlinksResult=env.getValues(Sets.union(subdirMap.keySet(),symlinkFileMap.keySet()));
     if (env.valuesMissing()) {
       return null;
     }
-    Map<Dirent,SkyKey> symlinkSubdirMap=Maps.newHashMapWithExpectedSize(symlinkFileMap.size());
-    for (    Map.Entry<Dirent,SkyKey> direntAndKey : symlinkFileMap.entrySet()) {
-      Dirent dirent=direntAndKey.getKey();
-      String fileName=dirent.getName();
-      Preconditions.checkState(dirent.getType() == Dirent.Type.SYMLINK,direntAndKey);
-      FileValue symlinkFileValue=Preconditions.checkNotNull((FileValue)firstPassAndSymlinksResult.get(direntAndKey.getValue()),direntAndKey);
-      if (!symlinkFileValue.isSymlink()) {
-        throw new GlobFunctionException(new InconsistentFilesystemException("readdir and stat disagree about whether " + ((RootedPath)direntAndKey.getValue().argument()).asPath() + " is a symlink."),Transience.TRANSIENT);
-      }
-      if (!symlinkFileValue.exists()) {
-        continue;
-      }
-      if (symlinkFileValue.isDirectory()) {
-        SkyKey keyToRequest=getSkyKeyForSubdir(fileName,glob,subdirPattern);
-        if (keyToRequest != null) {
-          symlinkSubdirMap.put(dirent,keyToRequest);
+    Map<SkyKey,Dirent> symlinkSubdirMap=Maps.newHashMapWithExpectedSize(symlinkFileMap.size());
+    for (    Map.Entry<SkyKey,SkyValue> lookedUpKeyAndValue : subdirAndSymlinksResult.entrySet()) {
+      if (symlinkFileMap.containsKey(lookedUpKeyAndValue.getKey())) {
+        FileValue symlinkFileValue=(FileValue)lookedUpKeyAndValue.getValue();
+        if (!symlinkFileValue.isSymlink()) {
+          throw new GlobFunctionException(new InconsistentFilesystemException("readdir and stat disagree about whether " + ((RootedPath)lookedUpKeyAndValue.getKey().argument()).asPath() + " is a symlink."),Transience.TRANSIENT);
+        }
+        if (!symlinkFileValue.exists()) {
+          continue;
+        }
+        Dirent dirent=symlinkFileMap.get(lookedUpKeyAndValue.getKey());
+        String fileName=dirent.getName();
+        if (symlinkFileValue.isDirectory()) {
+          SkyKey keyToRequest=getSkyKeyForSubdir(fileName,glob,subdirPattern);
+          if (keyToRequest != null) {
+            symlinkSubdirMap.put(keyToRequest,dirent);
+          }
+        }
+ else         if (globMatchesBareFile) {
+          sortedResultMap.put(dirent,glob.getSubdir().getRelative(fileName));
         }
       }
- else       if (globMatchesBareFile) {
-        sortedResultMap.put(dirent,glob.getSubdir().getRelative(fileName));
+ else {
+        processSubdir(lookedUpKeyAndValue,subdirMap,glob,sortedResultMap);
       }
     }
-    Map<SkyKey,SkyValue> secondResult=env.getValues(symlinkSubdirMap.values());
+    Map<SkyKey,SkyValue> symlinkSubdirResult=env.getValues(symlinkSubdirMap.keySet());
     if (env.valuesMissing()) {
       return null;
     }
-    for (    Map.Entry<Dirent,SkyKey> direntAndKey : Iterables.concat(firstPassSubdirMap.entrySet(),symlinkSubdirMap.entrySet())) {
-      Dirent dirent=direntAndKey.getKey();
-      String fileName=dirent.getName();
-      SkyKey key=direntAndKey.getValue();
-      SkyValue valueRequested=symlinkSubdirMap.containsKey(dirent) ? secondResult.get(key) : firstPassAndSymlinksResult.get(key);
-      Preconditions.checkNotNull(valueRequested,direntAndKey);
-      Object dirMatches=getSubdirMatchesFromSkyValue(fileName,glob,valueRequested);
-      if (dirMatches != null) {
-        sortedResultMap.put(dirent,dirMatches);
-      }
+    for (    Map.Entry<SkyKey,SkyValue> lookedUpKeyAndValue : symlinkSubdirResult.entrySet()) {
+      processSubdir(lookedUpKeyAndValue,symlinkSubdirMap,glob,sortedResultMap);
     }
     for (    Map.Entry<Dirent,Object> fileMatches : sortedResultMap.entrySet()) {
       addToMatches(fileMatches.getValue(),matches);
