@@ -2,52 +2,58 @@
   ImmutableList.Builder<Object> builder=ImmutableList.builder();
   Class<?>[] params=method.getMethod().getParameterTypes();
   SkylarkCallable callable=method.getAnnotation();
-  int i=0;
-  int nbPositional=callable.mandatoryPositionals();
-  if (nbPositional < 0) {
+  int mandatoryPositionals=callable.mandatoryPositionals();
+  if (mandatoryPositionals < 0) {
     if (callable.parameters().length > 0) {
-      nbPositional=0;
+      mandatoryPositionals=0;
     }
  else {
-      nbPositional=params.length;
+      mandatoryPositionals=params.length;
     }
   }
-  if (nbPositional > args.size() || args.size() > nbPositional + callable.parameters().length) {
+  if (mandatoryPositionals > args.size() || args.size() > mandatoryPositionals + callable.parameters().length) {
     return null;
   }
-  for (  Class<?> param : params) {
-    Object value=args.get(i);
-    if (!param.isAssignableFrom(value.getClass())) {
-      return null;
-    }
-    builder.add(value);
-    i++;
-    if (nbPositional >= 0 && i >= nbPositional) {
-      break;
+  int i=0;
+  if (mandatoryPositionals > 0) {
+    for (    Class<?> param : params) {
+      Object value=args.get(i);
+      if (!param.isAssignableFrom(value.getClass())) {
+        return null;
+      }
+      builder.add(value);
+      i++;
+      if (mandatoryPositionals >= 0 && i >= mandatoryPositionals) {
+        break;
+      }
     }
   }
   Set<String> keys=new HashSet<>(kwargs.keySet());
   for (  Param param : callable.parameters()) {
     SkylarkType type=getType(param);
+    Object value=null;
     if (i < args.size()) {
-      if (!param.positional() || !type.contains(args.get(i))) {
+      value=args.get(i);
+      if (!param.positional() || !type.contains(value)) {
         return null;
       }
-      builder.add(args.get(i));
       i++;
     }
  else     if (param.named() && keys.remove(param.name())) {
-      Object value=kwargs.get(param.name());
+      value=kwargs.get(param.name());
       if (!type.contains(value)) {
         return null;
       }
-      builder.add(value);
     }
  else {
       if (param.defaultValue().isEmpty()) {
         return null;
       }
-      builder.add(SkylarkSignatureProcessor.getDefaultValue(param,null));
+      value=SkylarkSignatureProcessor.getDefaultValue(param,null);
+    }
+    builder.add(value);
+    if (!param.noneable() && value instanceof NoneType) {
+      return null;
     }
   }
   if (i < args.size() || !keys.isEmpty()) {
