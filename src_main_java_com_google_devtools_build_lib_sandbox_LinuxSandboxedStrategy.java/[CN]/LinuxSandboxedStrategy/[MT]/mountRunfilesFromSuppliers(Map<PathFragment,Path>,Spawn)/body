@@ -1,0 +1,16 @@
+{
+  Map<PathFragment,Map<PathFragment,Artifact>> rootsAndMappings=spawn.getRunfilesSupplier().getMappings();
+  for (  Map.Entry<PathFragment,Map<PathFragment,Artifact>> rootAndMappings : rootsAndMappings.entrySet()) {
+    PathFragment root=rootAndMappings.getKey();
+    if (root.isAbsolute()) {
+      root=root.relativeTo(execRoot.asFragment());
+    }
+    for (    Map.Entry<PathFragment,Artifact> mapping : rootAndMappings.getValue().entrySet()) {
+      Artifact sourceArtifact=mapping.getValue();
+      PathFragment source=(sourceArtifact != null) ? sourceArtifact.getExecPath() : new PathFragment("/dev/null");
+      Preconditions.checkArgument(!mapping.getKey().isAbsolute());
+      PathFragment target=root.getRelative(mapping.getKey());
+      mounts.put(target,execRoot.getRelative(source));
+    }
+  }
+}

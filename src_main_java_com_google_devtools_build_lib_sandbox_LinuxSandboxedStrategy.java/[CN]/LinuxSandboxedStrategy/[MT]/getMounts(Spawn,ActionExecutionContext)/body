@@ -1,14 +1,8 @@
 {
-  ImmutableMap.Builder<Path,Path> result=new ImmutableMap.Builder<>();
-  result.putAll(mountUsualUnixDirs());
-  result.putAll(mountUserDefinedPath());
-  MountMap mounts=new MountMap();
-  mounts.putAll(setupBlazeUtils());
-  mounts.putAll(mountRunfilesFromManifests(spawn));
-  mounts.putAll(mountRunfilesFromSuppliers(spawn));
-  mounts.putAll(mountFilesFromFilesetManifests(spawn,executionContext));
-  mounts.putAll(mountInputs(spawn,executionContext));
-  mounts.putAll(mountRunUnderCommand(spawn));
-  result.putAll(finalizeMounts(mounts));
-  return result.build();
+  Map<PathFragment,Path> mounts=new HashMap<>();
+  mountRunfilesFromManifests(mounts,spawn);
+  mountRunfilesFromSuppliers(mounts,spawn);
+  mountFilesFromFilesetManifests(mounts,spawn,executionContext);
+  mountInputs(mounts,spawn,executionContext);
+  return mounts;
 }

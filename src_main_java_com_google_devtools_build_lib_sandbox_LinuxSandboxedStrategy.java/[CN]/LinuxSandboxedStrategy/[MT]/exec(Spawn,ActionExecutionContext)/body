@@ -11,15 +11,17 @@
   executor.getEventBus().post(ActionStatusMessage.runningStrategy(spawn.getResourceOwner(),"sandbox"));
   FileOutErr outErr=actionExecutionContext.getFileOutErr();
   String execId=uuid + "-" + execCounter.getAndIncrement();
-  Path sandboxPath=execRoot.getRelative(productName + "-sandbox").getRelative(execId);
-  ImmutableMap<Path,Path> mounts;
+  Path sandboxExecRoot=blazeDirs.getOutputBase().getRelative(productName + "-sandbox").getRelative(execId);
+  Map<PathFragment,Path> mounts;
   try {
     mounts=getMounts(spawn,actionExecutionContext);
   }
  catch (  IllegalArgumentException|IOException e) {
     throw new EnvironmentalExecException("Could not prepare mounts for sandbox execution",e);
   }
-  ImmutableSet<Path> createDirs=createImportantDirs(spawn.getEnvironment());
+  Map<String,String> env=new HashMap<>(spawn.getEnvironment());
+  ImmutableSet<Path> writablePaths=getWritablePaths(sandboxExecRoot,env);
+  ImmutableList<Path> inaccessiblePaths=getInaccessiblePaths();
   int timeout=getTimeout(spawn);
   ImmutableSet.Builder<PathFragment> outputFiles=ImmutableSet.builder();
   for (  PathFragment optionalOutput : spawn.getOptionalOutputFiles()) {
@@ -30,9 +32,9 @@
     outputFiles.add(new PathFragment(output.getExecPathString()));
   }
   try {
-    final LinuxSandboxRunner runner=new LinuxSandboxRunner(execRoot,sandboxPath,mounts,createDirs,verboseFailures,sandboxOptions.sandboxDebug);
+    final LinuxSandboxRunner runner=new LinuxSandboxRunner(execRoot,sandboxExecRoot,writablePaths,inaccessiblePaths,verboseFailures,sandboxOptions.sandboxDebug);
     try {
-      runner.run(spawn.getArguments(),spawn.getEnvironment(),execRoot.getPathFile(),outErr,outputFiles.build(),timeout,!this.unblockNetwork && !spawn.getExecutionInfo().containsKey("requires-network"));
+      runner.run(spawn.getArguments(),env,outErr,mounts,outputFiles.build(),timeout,!this.unblockNetwork && !spawn.getExecutionInfo().containsKey("requires-network"));
     }
   finally {
       backgroundWorkers.execute(new Runnable(){

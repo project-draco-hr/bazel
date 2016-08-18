@@ -1,10 +1,10 @@
 {
-  Path targetDir=workspaceDir.getRelative("runfiles");
-  targetDir.createDirectory();
+  PathFragment targetDir=new PathFragment("runfiles");
   Path testFile=workspaceDir.getRelative("testfile");
   FileSystemUtils.createEmptyFile(testFile);
   Path manifestFile=workspaceDir.getRelative("MANIFEST");
   FileSystemUtils.writeContent(manifestFile,Charset.defaultCharset(),String.format("x/testfile %s\nx/emptyfile \n",testFile.getPathString()));
-  Map mounts=LinuxSandboxedStrategy.parseManifestFile(targetDir,manifestFile.getPathFile(),false,"");
-  assertThat(userFriendlyMap(mounts)).isEqualTo(userFriendlyMap(ImmutableMap.of(fileSystem.getPath("/runfiles/x/testfile"),testFile,fileSystem.getPath("/runfiles/x/emptyfile"),fileSystem.getPath("/dev/null"))));
+  Map<PathFragment,Path> mounts=new TreeMap<>();
+  LinuxSandboxedStrategy.parseManifestFile(fileSystem,mounts,targetDir,manifestFile.getPathFile(),false,"");
+  assertThat(mounts).isEqualTo(ImmutableMap.of(new PathFragment("runfiles/x/testfile"),testFile,new PathFragment("runfiles/x/emptyfile"),fileSystem.getPath("/dev/null")));
 }

@@ -1,0 +1,49 @@
+{
+  createFileSystem(inputs,outputs);
+  List<String> fileArgs=new ArrayList<>();
+  List<String> commandLineArgs=new ArrayList<>();
+  commandLineArgs.add(execRoot.getRelative("_bin/linux-sandbox").getPathString());
+  if (sandboxDebug) {
+    fileArgs.add("-D");
+  }
+  fileArgs.add("-W");
+  fileArgs.add(sandboxExecRoot.toString());
+  if (timeout != -1) {
+    fileArgs.add("-T");
+    fileArgs.add(Integer.toString(timeout));
+  }
+  for (  Path writablePath : writablePaths) {
+    fileArgs.add("-w");
+    fileArgs.add(writablePath.getPathString());
+    if (writablePath.startsWith(sandboxExecRoot)) {
+      FileSystemUtils.createDirectoryAndParents(writablePath);
+    }
+  }
+  for (  Path inaccessiblePath : inaccessiblePaths) {
+    fileArgs.add("-i");
+    fileArgs.add(inaccessiblePath.getPathString());
+  }
+  if (blockNetwork) {
+    fileArgs.add("-N");
+  }
+  FileSystemUtils.writeLinesAs(argumentsFilePath,StandardCharsets.ISO_8859_1,fileArgs);
+  commandLineArgs.add("@" + argumentsFilePath.getPathString());
+  commandLineArgs.add("--");
+  commandLineArgs.addAll(spawnArguments);
+  Command cmd=new Command(commandLineArgs.toArray(new String[0]),env,sandboxExecRoot.getPathFile());
+  try {
+    cmd.execute(new byte[]{},Command.NO_OBSERVER,outErr.getOutputStream(),outErr.getErrorStream(),true);
+  }
+ catch (  CommandException e) {
+    boolean timedOut=false;
+    if (e instanceof AbnormalTerminationException) {
+      TerminationStatus status=((AbnormalTerminationException)e).getResult().getTerminationStatus();
+      timedOut=!status.exited() && (status.getTerminatingSignal() == 14);
+    }
+    String message=CommandFailureUtils.describeCommandFailure(verboseFailures,commandLineArgs,env,sandboxExecRoot.getPathString());
+    throw new UserExecException(message,e,timedOut);
+  }
+ finally {
+    copyOutputs(outputs);
+  }
+}

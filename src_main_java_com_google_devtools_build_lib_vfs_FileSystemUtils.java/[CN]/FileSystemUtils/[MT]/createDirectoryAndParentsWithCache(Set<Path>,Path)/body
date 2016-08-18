@@ -1,0 +1,39 @@
+{
+  if (dir.getParentDirectory() == null) {
+    return false;
+  }
+  if (createdDirs != null && createdDirs.contains(dir)) {
+    return false;
+  }
+  FileSystem filesystem=dir.getFileSystem();
+  if (filesystem instanceof UnionFileSystem) {
+    FileSystem delegate=((UnionFileSystem)filesystem).getDelegate(dir);
+    dir=delegate.getPath(dir.asFragment());
+  }
+  try {
+    boolean result=dir.createDirectory();
+    if (createdDirs != null) {
+      createdDirs.add(dir);
+    }
+    return result;
+  }
+ catch (  IOException e) {
+    if (e.getMessage().endsWith(" (No such file or directory)")) {
+      createDirectoryAndParentsWithCache(createdDirs,dir.getParentDirectory());
+      boolean result=dir.createDirectory();
+      if (createdDirs != null) {
+        createdDirs.add(dir);
+      }
+      return result;
+    }
+ else     if (e.getMessage().endsWith(" (File exists)") && dir.isDirectory()) {
+      if (createdDirs != null) {
+        createdDirs.add(dir);
+      }
+      return false;
+    }
+ else {
+      throw e;
+    }
+  }
+}

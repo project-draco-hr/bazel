@@ -1,25 +1,3 @@
 {
-  if (dir.getParentDirectory() == null) {
-    return false;
-  }
-  FileSystem filesystem=dir.getFileSystem();
-  if (filesystem instanceof UnionFileSystem) {
-    FileSystem delegate=((UnionFileSystem)filesystem).getDelegate(dir);
-    dir=delegate.getPath(dir.asFragment());
-  }
-  try {
-    return dir.createDirectory();
-  }
- catch (  IOException e) {
-    if (e.getMessage().endsWith(" (No such file or directory)")) {
-      createDirectoryAndParents(dir.getParentDirectory());
-      return dir.createDirectory();
-    }
- else     if (e.getMessage().endsWith(" (File exists)") && dir.isDirectory()) {
-      return false;
-    }
- else {
-      throw e;
-    }
-  }
+  return createDirectoryAndParentsWithCache(null,dir);
 }

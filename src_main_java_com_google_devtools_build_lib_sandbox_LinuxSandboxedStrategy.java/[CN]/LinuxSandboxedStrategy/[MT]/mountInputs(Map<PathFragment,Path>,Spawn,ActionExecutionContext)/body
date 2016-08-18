@@ -1,0 +1,16 @@
+{
+  List<ActionInput> inputs=ActionInputHelper.expandArtifacts(spawn.getInputFiles(),actionExecutionContext.getArtifactExpander());
+  if (spawn.getResourceOwner() instanceof CppCompileAction) {
+    CppCompileAction action=(CppCompileAction)spawn.getResourceOwner();
+    if (action.shouldScanIncludes()) {
+      inputs.addAll(action.getAdditionalInputs());
+    }
+  }
+  for (  ActionInput input : inputs) {
+    if (input.getExecPathString().contains("internal/_middlemen/")) {
+      continue;
+    }
+    PathFragment mount=new PathFragment(input.getExecPathString());
+    mounts.put(mount,execRoot.getRelative(mount));
+  }
+}
