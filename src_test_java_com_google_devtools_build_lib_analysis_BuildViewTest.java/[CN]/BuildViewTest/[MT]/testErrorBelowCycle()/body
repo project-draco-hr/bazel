@@ -2,6 +2,11 @@
   scratch.file("foo/BUILD","sh_library(name = 'top', deps = ['mid'])","sh_library(name = 'mid', deps = ['bad', 'cycle1'])","sh_library(name = 'bad', srcs = ['//badbuild:isweird'])","sh_library(name = 'cycle1', deps = ['cycle2', 'mid'])","sh_library(name = 'cycle2', deps = ['cycle1'])");
   scratch.file("badbuild/BUILD","");
   reporter.removeHandler(failFastHandler);
+  injectGraphListenerForTesting(new Listener(){
+    @Override public void accept(    SkyKey key,    EventType type,    Order order,    Object context){
+    }
+  }
+,true);
   try {
     update("//foo:top");
     fail();
@@ -10,9 +15,7 @@
   }
   assertContainsEvent("no such target '//badbuild:isweird': target 'isweird' not declared in " + "package 'badbuild'");
   assertContainsEvent("and referenced by '//foo:bad'");
-  if (eventCollector.count() > 1) {
-    assertContainsEvent("in sh_library rule //foo");
-    assertContainsEvent("cycle in dependency graph");
-    assertEventCount(3,eventCollector);
-  }
+  assertContainsEvent("in sh_library rule //foo");
+  assertContainsEvent("cycle in dependency graph");
+  assertEventCountAtLeast(2,eventCollector);
 }
