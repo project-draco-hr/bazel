@@ -24,5 +24,11 @@
   CommandLine commandLine=semantics.buildSingleJarCommandLine(ruleContext.getConfiguration(),outputJar,javaStartClass,deployManifestLines,buildInfoArtifacts,classpathResources,runtimeClasspath,includeBuildData,compression,launcher);
   List<String> jvmArgs=ImmutableList.of("-client",SINGLEJAR_MAX_MEMORY);
   ResourceSet resourceSet=ResourceSet.createWithRamCpuIo(200.0,.2,.2);
-  ruleContext.registerAction(new SpawnAction.Builder().addInputs(inputs.build()).addTransitiveInputs(JavaHelper.getHostJavabaseInputs(ruleContext)).addOutput(outputJar).setResources(resourceSet).setJarExecutable(ruleContext.getHostConfiguration().getFragment(Jvm.class).getJavaExecutable(),getSingleJar(ruleContext),jvmArgs).setCommandLine(commandLine).useParameterFile(ParameterFileType.SHELL_QUOTED).setProgressMessage("Building deploy jar " + outputJar.prettyPrint()).setMnemonic("JavaDeployJar").build(ruleContext));
+  Artifact singlejar=getSingleJar(ruleContext);
+  if (singlejar.getFilename().endsWith(".jar")) {
+    ruleContext.registerAction(new SpawnAction.Builder().addInputs(inputs.build()).addTransitiveInputs(JavaHelper.getHostJavabaseInputs(ruleContext)).addOutput(outputJar).setResources(resourceSet).setJarExecutable(ruleContext.getHostConfiguration().getFragment(Jvm.class).getJavaExecutable(),singlejar,jvmArgs).setCommandLine(commandLine).useParameterFile(ParameterFileType.SHELL_QUOTED).setProgressMessage("Building deploy jar " + outputJar.prettyPrint()).setMnemonic("JavaDeployJar").build(ruleContext));
+  }
+ else {
+    ruleContext.registerAction(new SpawnAction.Builder().addInputs(inputs.build()).addTransitiveInputs(JavaHelper.getHostJavabaseInputs(ruleContext)).addOutput(outputJar).setResources(resourceSet).setExecutable(singlejar).setCommandLine(commandLine).useParameterFile(ParameterFileType.SHELL_QUOTED).setProgressMessage("Building deploy jar " + outputJar.prettyPrint()).setMnemonic("JavaDeployJar").build(ruleContext));
+  }
 }
