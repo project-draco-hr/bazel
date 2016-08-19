@@ -23,7 +23,7 @@
           return null;
         }
       }
-      if (state.discoveredInputs != null && !containsAll(state.inputArtifactData.keySet(),state.discoveredInputs)) {
+      if (state.discoveredInputs != null) {
         addDiscoveredInputs(state.inputArtifactData,state.discoveredInputs,env);
         if (env.valuesMissing()) {
           return null;
@@ -47,13 +47,14 @@
     }
   }
   if (action.discoversInputs()) {
-    Map<SkyKey,SkyValue> metadataFoundDuringActionExecution=declareAdditionalDependencies(env,action,state.inputArtifactData.keySet());
+    Iterable<Artifact> newInputs=filterKnownInputs(action.getInputs(),state.inputArtifactData.keySet());
+    Map<SkyKey,SkyValue> metadataFoundDuringActionExecution=env.getValues(toKeys(newInputs,action.getMandatoryInputs()));
     if (state.discoveredInputs == null) {
-      state.discoveredInputs=artifacts(metadataFoundDuringActionExecution.keySet());
+      state.discoveredInputs=newInputs;
       if (env.valuesMissing()) {
         return null;
       }
-      if (!metadataFoundDuringActionExecution.isEmpty()) {
+      if (!Iterables.isEmpty(newInputs)) {
         Map<Artifact,FileArtifactValue> inputArtifactData=new HashMap<>();
         inputArtifactData.putAll(state.inputArtifactData);
         for (        Map.Entry<SkyKey,SkyValue> entry : metadataFoundDuringActionExecution.entrySet()) {
@@ -63,25 +64,24 @@
         metadataHandler=new ActionMetadataHandler(state.inputArtifactData,action.getOutputs(),tsgm.get());
       }
     }
- else     if (!metadataFoundDuringActionExecution.isEmpty()) {
-      String errorMessage=action.prettyPrint() + " discovered unexpected inputs. This indicates a mismatch between the build" + " system and the action's compiler. Please report this issue. The ";
-      if (metadataFoundDuringActionExecution.size() > 10) {
-        errorMessage+="first ten ";
-      }
-      errorMessage+="additional inputs found were: ";
+ else     if (!Iterables.isEmpty(newInputs)) {
+      String errorMessageStart=action.prettyPrint() + " discovered unexpected inputs. This indicates a mismatch between the build" + " system and the action's compiler. Please report this issue. The ";
+      String errorMessageEnd="";
       int artifactPrinted=0;
-      for (      Artifact extraArtifact : artifacts(metadataFoundDuringActionExecution.keySet())) {
+      for (      Artifact extraArtifact : newInputs) {
         if (artifactPrinted >= 10) {
+          errorMessageStart+="first ten ";
           break;
         }
         if (artifactPrinted > 0) {
-          errorMessage+=", ";
+          errorMessageEnd+=", ";
         }
         artifactPrinted++;
-        errorMessage+=extraArtifact.prettyPrint();
+        errorMessageEnd+=extraArtifact.prettyPrint();
       }
-      ActionExecutionException exception=new ActionExecutionException(errorMessage,action,false);
-      LoggingUtil.logToRemote(Level.SEVERE,errorMessage,exception);
+      errorMessageStart+="additional inputs found were: " + errorMessageEnd;
+      ActionExecutionException exception=new ActionExecutionException(errorMessageStart,action,false);
+      LoggingUtil.logToRemote(Level.SEVERE,errorMessageStart,exception);
       throw skyframeActionExecutor.processAndThrow(exception,action,actionExecutionContext.getFileOutErr());
     }
   }
