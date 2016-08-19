@@ -1,6 +1,14 @@
 {
-  if (!WindowsProcesses.nativeWaitFor(nativeProcess)) {
-    System.err.println("Waiting for process " + WindowsProcesses.nativeGetProcessPid(nativeProcess) + " failed");
-  }
-  waitLatch.countDown();
+switch (WindowsProcesses.nativeWaitFor(nativeProcess,timeoutMillis)) {
+case 0:
+    break;
+case 1:
+  timedout.set(true);
+WindowsProcesses.nativeTerminate(nativeProcess);
+break;
+case 2:
+System.err.println("Waiting for process " + WindowsProcesses.nativeGetProcessPid(nativeProcess) + " failed");
+break;
+}
+waitLatch.countDown();
 }

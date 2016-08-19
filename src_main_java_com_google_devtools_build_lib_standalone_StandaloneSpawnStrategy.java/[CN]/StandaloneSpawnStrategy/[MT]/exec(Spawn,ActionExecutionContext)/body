@@ -4,11 +4,11 @@
     executor.reportSubcommand(Label.print(spawn.getOwner().getLabel()) + " [" + spawn.getResourceOwner().prettyPrint()+ "]",spawn.asShellCommand(executor.getExecRoot()));
   }
   executor.getEventBus().post(ActionStatusMessage.runningStrategy(spawn.getResourceOwner(),"standalone"));
-  int timeout=-1;
+  int timeoutSeconds=-1;
   String timeoutStr=spawn.getExecutionInfo().get("timeout");
   if (timeoutStr != null) {
     try {
-      timeout=Integer.parseInt(timeoutStr);
+      timeoutSeconds=Integer.parseInt(timeoutStr);
     }
  catch (    NumberFormatException e) {
       throw new UserExecException("could not parse timeout: ",e);
@@ -17,21 +17,21 @@
   List<String> args=new ArrayList<>();
   if (OS.getCurrent() != OS.WINDOWS) {
     args.add(processWrapper.getPathString());
-    args.add(Integer.toString(timeout));
+    args.add(Integer.toString(timeoutSeconds));
     args.add("5");
     args.add("-");
     args.add("-");
   }
   args.addAll(spawn.getArguments());
   String cwd=executor.getExecRoot().getPathString();
-  Command cmd=new Command(args.toArray(new String[]{}),locallyDeterminedEnv(spawn.getEnvironment()),new File(cwd));
+  Command cmd=new Command(args.toArray(new String[]{}),locallyDeterminedEnv(spawn.getEnvironment()),new File(cwd),OS.getCurrent() == OS.WINDOWS && timeoutSeconds >= 0 ? timeoutSeconds * 1000 : -1);
   FileOutErr outErr=actionExecutionContext.getFileOutErr();
   try {
     cmd.execute(new byte[]{},Command.NO_OBSERVER,outErr.getOutputStream(),outErr.getErrorStream(),true);
   }
  catch (  AbnormalTerminationException e) {
     TerminationStatus status=e.getResult().getTerminationStatus();
-    boolean timedOut=!status.exited() && (status.getTerminatingSignal() == 14);
+    boolean timedOut=!status.exited() && (status.timedout() || status.getTerminatingSignal() == 14);
     String message=CommandFailureUtils.describeCommandFailure(verboseFailures,spawn.getArguments(),spawn.getEnvironment(),cwd);
     throw new UserExecException(String.format("%s: %s",message,e),timedOut);
   }
