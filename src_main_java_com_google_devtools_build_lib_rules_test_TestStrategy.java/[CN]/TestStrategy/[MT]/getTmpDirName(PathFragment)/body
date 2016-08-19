@@ -1,3 +1,8 @@
 {
-  return execPath.getBaseName() + "_" + tmpIndex.incrementAndGet();
+  String basename=execPath.getBaseName();
+synchronized (tmpIndex) {
+    int index=tmpIndex.containsKey(basename) ? tmpIndex.get(basename) : 1;
+    tmpIndex.put(basename,index + 1);
+    return basename + "_" + index;
+  }
 }
