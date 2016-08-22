@@ -1,14 +1,14 @@
 {
   if (descriptions.isEmpty()) {
-    return ArrayListMultimap.create();
+    return new HashMap<>();
   }
   Deque<Description> mutatingDescriptions=new LinkedList<>(descriptions);
-  ListMultimap<Filter,Description> descriptionsRun=ArrayListMultimap.create();
+  Map<Filter,List<Description>> descriptionsRun=new HashMap<>();
   for (  Filter filter : filters) {
     mutatingDescriptions.addLast(mutatingDescriptions.pollFirst());
     for (    Description description : descriptions) {
       if (filter.shouldRun(description)) {
-        descriptionsRun.put(filter,description);
+        addDescriptionForFilterToMap(descriptionsRun,filter,description);
       }
     }
   }
