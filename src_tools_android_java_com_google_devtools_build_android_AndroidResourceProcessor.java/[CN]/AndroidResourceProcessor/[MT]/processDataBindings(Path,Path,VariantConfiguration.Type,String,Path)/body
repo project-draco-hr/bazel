@@ -1,0 +1,38 @@
+{
+  if (dataBindingInfoOut == null) {
+    return resourceDir;
+  }
+ else   if (!Files.isDirectory(resourceDir)) {
+    Files.createFile(dataBindingInfoOut);
+    return resourceDir;
+  }
+  dataBindingInfoOut=dataBindingInfoOut.getParent();
+  if (Files.notExists(dataBindingInfoOut)) {
+    Files.createDirectory(dataBindingInfoOut);
+  }
+  Path processedResourceDir=resourceDir.resolveSibling("res_without_databindings");
+  if (Files.notExists(processedResourceDir)) {
+    Files.createDirectory(processedResourceDir);
+  }
+  ProcessXmlOptions options=new ProcessXmlOptions();
+  options.setAppId(packagePath);
+  options.setLibrary(variantType == VariantConfiguration.Type.LIBRARY);
+  options.setResInput(resourceDir.toFile());
+  options.setResOutput(processedResourceDir.toFile());
+  options.setLayoutInfoOutput(dataBindingInfoOut.toFile());
+  options.setZipLayoutInfo(true);
+  Object minSdk=new DefaultManifestParser().getMinSdkVersion(androidManifest.toFile());
+  if (minSdk instanceof Integer) {
+    options.setMinSdk(((Integer)minSdk).intValue());
+  }
+ else {
+    options.setMinSdk(15);
+  }
+  try {
+    AndroidDataBinding.doRun(options);
+  }
+ catch (  Throwable t) {
+    throw new RuntimeException(t);
+  }
+  return processedResourceDir;
+}
