@@ -1,26 +1,35 @@
 {
-  if (getProtoFiles().isEmpty()) {
-    ruleContext.throwWithRuleError(NO_PROTOS_ERROR);
-  }
   PrerequisiteArtifacts prerequisiteArtifacts=ruleContext.getPrerequisiteArtifacts("deps",Mode.TARGET);
   ImmutableList<Artifact> protos=prerequisiteArtifacts.filter(FileType.of(".proto")).list();
   if (!protos.isEmpty()) {
     ruleContext.attributeWarning("deps",FILES_DEPRECATED_WARNING);
   }
   if (ruleContext.attributes().isAttributeValueExplicitlySpecified(ObjcProtoLibraryRule.PORTABLE_PROTO_FILTERS_ATTR)) {
+    if (getProtoFiles().isEmpty() && !hasObjcProtoLibraryDependencies()) {
+      ruleContext.throwWithRuleError(NO_PROTOS_ERROR);
+    }
     if (getPortableProtoFilters().isEmpty()) {
       ruleContext.throwWithRuleError(PORTABLE_PROTO_FILTERS_EMPTY_ERROR);
     }
     if (outputsCpp() || usesObjcHeaderNames() || needsPerProtoIncludes()|| getOptionsFile().isPresent()) {
       ruleContext.throwWithRuleError(PORTABLE_PROTO_FILTERS_NOT_EXCLUSIVE_ERROR);
     }
+    if (hasPB2Dependencies()) {
+      ruleContext.throwWithRuleError(PROTOCOL_BUFFERS2_IN_PROTOBUF_DEPS_ERROR);
+    }
   }
  else {
+    if (getProtoFiles().isEmpty()) {
+      ruleContext.throwWithRuleError(NO_PROTOS_ERROR);
+    }
     if (outputsCpp()) {
       ruleContext.ruleWarning("The output_cpp attribute has been deprecated. Please " + "refer to b/29342376 for information on possible alternatives.");
     }
     if (!usesObjcHeaderNames()) {
       ruleContext.ruleWarning("As part of the migration process, it is recommended to enable " + "use_objc_header_names. Please refer to b/29368416 for more information.");
+    }
+    if (hasObjcProtoLibraryDependencies()) {
+      ruleContext.throwWithRuleError(OBJC_PROTO_LIB_DEP_IN_PROTOCOL_BUFFERS2_DEPS_ERROR);
     }
   }
 }
