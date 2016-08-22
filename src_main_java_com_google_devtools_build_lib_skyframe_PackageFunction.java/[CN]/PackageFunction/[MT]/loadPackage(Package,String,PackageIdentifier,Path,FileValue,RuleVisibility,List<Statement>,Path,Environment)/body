@@ -11,7 +11,7 @@
         if (showLoadingProgress.get()) {
           env.getListener().handle(Event.progress("Loading package: " + packageId));
         }
-        LegacyGlobber legacyGlobber=packageFactory.createLegacyGlobberThatDoesntSort(buildFilePath.getParentDirectory(),packageId,packageLocator);
+        Globber legacyGlobber=packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
         SkyframeHybridGlobber skyframeGlobber=new SkyframeHybridGlobber(packageId,packageRoot,env,legacyGlobber);
         Preprocessor.Result preprocessingResult;
         if (replacementContents == null) {
@@ -37,7 +37,7 @@
         StoredEventHandler astParsingEventHandler=new StoredEventHandler();
         BuildFileAST ast=PackageFactory.parseBuildFile(packageId,preprocessingResult.result,preludeStatements,astParsingEventHandler);
         Set<SkyKey> globDepsRequested=skyframeGlobber.getGlobDepsRequested();
-        LegacyGlobber legacyGlobberToStore=globDepsRequested.isEmpty() ? null : legacyGlobber;
+        Globber legacyGlobberToStore=globDepsRequested.isEmpty() ? null : legacyGlobber;
         astCacheEntry=new CacheEntryWithGlobDeps<>(new AstAfterPreprocessing(preprocessingResult,ast,astParsingEventHandler),globDepsRequested,legacyGlobberToStore);
         astCache.put(packageId,astCacheEntry);
       }
@@ -55,7 +55,7 @@
         return null;
       }
       astCache.invalidate(packageId);
-      LegacyGlobber legacyGlobber=astCacheEntry.legacyGlobber != null ? astCacheEntry.legacyGlobber : packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
+      Globber legacyGlobber=astCacheEntry.legacyGlobber != null ? astCacheEntry.legacyGlobber : packageFactory.createLegacyGlobber(buildFilePath.getParentDirectory(),packageId,packageLocator);
       SkyframeHybridGlobber skyframeGlobber=new SkyframeHybridGlobber(packageId,packageRoot,env,legacyGlobber);
       Package.Builder pkgBuilder=packageFactory.createPackageFromPreprocessingAst(externalPkg,packageId,buildFilePath,astAfterPreprocessing,importResult.importMap,importResult.fileDependencies,defaultVisibility,skyframeGlobber);
       Set<SkyKey> globDepsRequested=ImmutableSet.<SkyKey>builder().addAll(globDepsRequestedDuringPreprocessing).addAll(skyframeGlobber.getGlobDepsRequested()).build();

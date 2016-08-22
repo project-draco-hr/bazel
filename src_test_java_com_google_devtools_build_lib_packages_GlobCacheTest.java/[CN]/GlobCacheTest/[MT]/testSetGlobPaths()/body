@@ -1,0 +1,9 @@
+{
+  String pattern="fake*.java";
+  assertThat(cache.getKeySet()).doesNotContain(pattern);
+  List<String> results=cache.getGlob(pattern,false);
+  assertThat(cache.getKeySet()).contains(Pair.of(pattern,false));
+  assertThat(results).isEmpty();
+  cache.setGlobPaths(pattern,false,Futures.<List<Path>>immediateFuture(Lists.newArrayList(scratch.resolve("isolated/fake.txt"),scratch.resolve("isolated/fake.py"))));
+  assertThat(cache.getGlob(pattern,false)).containsExactly("fake.py","fake.txt");
+}
