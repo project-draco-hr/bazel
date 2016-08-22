@@ -1,0 +1,18 @@
+{
+  Map<String,SkylarkImport> imports=new HashMap<>();
+  boolean error=false;
+  for (  Statement stmt : stmts) {
+    if (stmt instanceof LoadStatement) {
+      String importString=((LoadStatement)stmt).getImport();
+      try {
+        SkylarkImport imp=SkylarkImports.create(importString);
+        imports.put(importString,imp);
+      }
+ catch (      SkylarkImportSyntaxException e) {
+        eventHandler.handle(Event.error(stmt.getLocation(),e.getMessage()));
+        error=true;
+      }
+    }
+  }
+  return Pair.of(error,imports);
+}

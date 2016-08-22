@@ -1,3 +1,11 @@
 {
-  return new BuildFileAST(stmts.subList(firstStatement,lastStatement),containsErrors,null,stmts.get(firstStatement).getLocation(),ImmutableList.<Comment>of());
+  ImmutableList<Statement> stmts=this.stmts.subList(firstStatement,lastStatement);
+  ImmutableMap.Builder<String,SkylarkImport> imports=ImmutableBiMap.builder();
+  for (  Statement stmt : stmts) {
+    if (stmt instanceof LoadStatement) {
+      String str=((LoadStatement)stmt).getImport();
+      imports.put(str,Preconditions.checkNotNull(this.imports.get(str),"%s cannot be found. This is an internal error.",str));
+    }
+  }
+  return new BuildFileAST(stmts,containsErrors,null,this.stmts.get(firstStatement).getLocation(),ImmutableList.<Comment>of(),imports.build());
 }
