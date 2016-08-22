@@ -1,41 +1,27 @@
 {
-  boolean wasInterrupted=false;
   try {
-    while (true) {
-      try {
-        future.get();
-        break;
+    Uninterruptibles.getUninterruptibly(future);
+  }
+ catch (  ExecutionException ee) {
+    Throwable nested=ee.getCause();
+    if (nested instanceof RuntimeException) {
+      final RuntimeException re=(RuntimeException)nested;
+      final Throwable cause=re.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException)cause;
       }
- catch (      InterruptedException ie) {
-        wasInterrupted=true;
-      }
-catch (      ExecutionException ee) {
-        Throwable nested=ee.getCause();
-        if (nested instanceof RuntimeException) {
-          final RuntimeException re=(RuntimeException)nested;
-          final Throwable cause=re.getCause();
-          if (cause instanceof IOException) {
-            throw (IOException)cause;
-          }
  else {
-            throw re;
-          }
-        }
- else         if (nested instanceof OutOfMemoryError) {
-          throw (OutOfMemoryError)nested;
-        }
- else         if (nested instanceof Error) {
-          throw new Error("unhandled Error in worker thread",ee);
-        }
- else {
-          throw new RuntimeException("unknown execution problem",ee);
-        }
+        throw re;
       }
     }
-  }
-  finally {
-    if (wasInterrupted) {
-      Thread.currentThread().interrupt();
+ else     if (nested instanceof OutOfMemoryError) {
+      throw (OutOfMemoryError)nested;
+    }
+ else     if (nested instanceof Error) {
+      throw new Error("unhandled Error in worker thread",ee);
+    }
+ else {
+      throw new RuntimeException("unknown execution problem",ee);
     }
   }
 }
