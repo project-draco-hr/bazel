@@ -3,11 +3,11 @@
   try {
     byte[] actionKeyBytes=entry.getActionKey().getBytes(ISO_8859_1);
     Collection<String> files=entry.getPaths();
-    int maxSize=VarInt.MAX_VARINT_SIZE + actionKeyBytes.length + Digest.MD5_SIZE+ VarInt.MAX_VARINT_SIZE+ files.size() * VarInt.MAX_VARINT_SIZE;
+    int maxSize=VarInt.MAX_VARINT_SIZE + actionKeyBytes.length + Md5Digest.MD5_SIZE+ VarInt.MAX_VARINT_SIZE+ files.size() * VarInt.MAX_VARINT_SIZE;
     ByteArrayOutputStream sink=new ByteArrayOutputStream(maxSize);
     VarInt.putVarInt(actionKeyBytes.length,sink);
     sink.write(actionKeyBytes);
-    entry.getFileDigest().write(sink);
+    DigestUtils.write(entry.getFileDigest(),sink);
     VarInt.putVarInt(entry.discoversInputs() ? files.size() : NO_INPUT_DISCOVERY_COUNT,sink);
     for (    String file : files) {
       VarInt.putVarInt(indexer.getOrCreateIndex(file),sink);
