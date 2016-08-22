@@ -1,16 +1,16 @@
 {
   setupJavaPythonCcConfigurationFiles();
-  ConfiguredTarget ccRuleA=getConfiguredTarget("//foo:a");
+  ConfiguredTarget ccRuleA=getConfiguredTarget("//foo:liba.so");
   List<Artifact> middleman1=getAggregatingMiddleman(ccRuleA,true);
   try {
-    ConfiguredTarget ccRuleB=getConfiguredTarget("//foo:b");
+    ConfiguredTarget ccRuleB=getConfiguredTarget("//foo:libb.so");
     getAggregatingMiddleman(ccRuleB,true);
     analysisEnvironment.registerWith(getMutableActionGraph());
     fail("Expected ActionConflictException due to same middleman artifact with different files");
   }
  catch (  UncheckedActionConflictException e) {
   }
-  ConfiguredTarget javaRuleD=getConfiguredTarget("//foo:d");
-  List<Artifact> middleman2=getAggregatingMiddleman(javaRuleD,false);
+  ConfiguredTarget javaRuleB=getDirectPrerequisite(getConfiguredTarget("//foo:d"),"//foo:libb.so");
+  List<Artifact> middleman2=getAggregatingMiddleman(javaRuleB,false);
   assertFalse(Iterables.getOnlyElement(middleman1).getExecPathString().equals(Iterables.getOnlyElement(middleman2).getExecPathString()));
 }
