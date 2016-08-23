@@ -36,5 +36,9 @@
   CustomMultiArgv spawnCommandLineBase=spawnCommandLineBase(javaExecutable,javaBuilderJar,langtoolsJar,instrumentationJars,javacJvmOpts,semantics.getJavaBuilderMainClass(),pathSeparator);
   CommandLine javaBuilderCommandLine=CustomCommandLine.builder().add(spawnCommandLineBase).addPaths("@%s",paramFile.getExecPath()).build();
   NestedSet<Artifact> tools=NestedSetBuilder.<Artifact>stableOrder().add(langtoolsJar).add(javaBuilderJar).addAll(instrumentationJars).build();
-  return new JavaCompileAction(owner,tools,baseInputs,outputs,paramFile,paramFileContents,javaBuilderCommandLine,classDirectory,outputJar,classpathEntries,bootclasspathEntries,extdirInputs,processorPath,processorNames,resources,sourceJars,sourceFiles,internedJcopts,directJars,executionInfo,strictJavaDeps,compileTimeDependencyArtifacts,resources.size() + classpathResources.size() + translations.size());
+  CommandLine minimumCommandLineBase=null;
+  if (javaConfiguration.getReduceJavaClasspath() == JavaClasspathMode.EXPERIMENTAL_BLAZE) {
+    minimumCommandLineBase=CustomCommandLine.builder().add(spawnCommandLineBase).add(commonJavaBuilderArgs).build();
+  }
+  return new JavaCompileAction(owner,tools,baseInputs,outputs,paramFile,paramFileContents,javaBuilderCommandLine,classDirectory,outputJar,classpathEntries,bootclasspathEntries,extdirInputs,processorPath,processorNames,resources,sourceJars,sourceFiles,internedJcopts,directJars,executionInfo,strictJavaDeps,compileTimeDependencyArtifacts,minimumCommandLineBase,pathSeparator,resources.size() + classpathResources.size() + translations.size());
 }

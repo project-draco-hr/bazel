@@ -1,0 +1,23 @@
+{
+  minCommandLine=null;
+  usedInputs=null;
+  if (minimumCommandLineBase != null) {
+    Set<String> usedInputJars=readJdeps(outputJar);
+    if (usedInputJars == null) {
+      return;
+    }
+    List<Artifact> orderedClasspath=classpathEntries.toList();
+    if (orderedClasspath.size() - usedInputJars.size() <= MINIMUM_REDUCTION_TO_SAVE_USED_INPUTS) {
+      return;
+    }
+    ImmutableList.Builder<Artifact> minInputsBuilder=ImmutableList.builder();
+    for (    Artifact artifact : orderedClasspath) {
+      if (usedInputJars.contains(artifact.getExecPathString())) {
+        minInputsBuilder.add(artifact);
+      }
+    }
+    final ImmutableList<Artifact> minimumInputs=minInputsBuilder.build();
+    minCommandLine=CustomCommandLine.builder().add(minimumCommandLineBase.arguments()).add("--classpath").add(getClasspathArg(minimumInputs,classDirectory,pathDelimiter)).add("--strict_java_deps").add(strictJavaDeps.toString()).add(new JarsToTargetsArgv(minimumInputs,directJars)).build();
+    usedInputs=Iterables.concat(minimumInputs,baseInputs,getTools());
+  }
+}

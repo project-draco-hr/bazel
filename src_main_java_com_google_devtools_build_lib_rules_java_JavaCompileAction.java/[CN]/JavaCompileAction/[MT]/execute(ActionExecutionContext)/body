@@ -1,9 +1,24 @@
 {
   Executor executor=actionExecutionContext.getExecutor();
-  try {
-    getContext(executor).exec(createSpawn(),actionExecutionContext);
+  boolean executeFullCompile=true;
+  if (usedInputs != null) {
+    try {
+      getContext(executor).exec(createSpawn(),actionExecutionContext);
+      executeFullCompile=false;
+    }
+ catch (    ExecException e) {
+      logger.info("Minimum classpath failed for " + getOwner().getLabel().toShorthandString());
+      minCommandLine=null;
+      usedInputs=null;
+    }
   }
- catch (  ExecException e) {
-    throw e.toActionExecutionException("Java compilation in rule '" + getOwner().getLabel() + "'",executor.getVerboseFailures(),this);
+  if (executeFullCompile) {
+    try {
+      getContext(executor).exec(createSpawn(),actionExecutionContext);
+    }
+ catch (    ExecException e) {
+      throw e.toActionExecutionException("Java compilation in rule '" + getOwner().getLabel() + "'",executor.getVerboseFailures(),this);
+    }
   }
+  maybeSaveUsedInputs();
 }

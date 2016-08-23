@@ -1,0 +1,24 @@
+{
+  Set<String> jdeps=new HashSet<>();
+  Path jdepsFile=FileSystemUtils.replaceExtension(outputJar.getPath(),".jdeps");
+  String label=outputJar.getOwnerLabel().toShorthandString();
+  if (!jdepsFile.exists() || !jdepsFile.isFile()) {
+    logger.warning("Jdeps file missing for " + label);
+    return null;
+  }
+  try (InputStream bis=new BufferedInputStream(jdepsFile.getInputStream())){
+    Deps.Dependencies deps=Deps.Dependencies.parseFrom(bis);
+    if (!deps.hasSuccess() || !deps.getSuccess() || !deps.hasRuleLabel()) {
+      logger.warning("Cannot use jdeps file for " + label);
+      return null;
+    }
+    for (    Deps.Dependency dep : deps.getDependencyList()) {
+      jdeps.add(dep.getPath());
+    }
+  }
+ catch (  IOException e) {
+    logger.warning("Failed to read jdeps file for " + label);
+    return null;
+  }
+  return jdeps;
+}
