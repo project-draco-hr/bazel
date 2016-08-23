@@ -3,5 +3,18 @@
   for (  Fragment fragment : fragments.values()) {
     fragment.setupShellEnvironment(builder);
   }
-  return builder.build();
+  Map<String,String> shellEnv=new HashMap(builder.build());
+  for (  Map.Entry<String,String> entry : options.actionEnvironment) {
+    shellEnv.put(entry.getKey(),entry.getValue());
+  }
+  Map<String,String> fixedShellEnv=new HashMap(shellEnv);
+  Set<String> variableShellEnv=new HashSet();
+  for (  Map.Entry<String,String> entry : shellEnv.entrySet()) {
+    if (entry.getValue() == null) {
+      String key=entry.getKey();
+      fixedShellEnv.remove(key);
+      variableShellEnv.add(key);
+    }
+  }
+  return Pair.of(ImmutableMap.copyOf(fixedShellEnv),ImmutableSet.copyOf(variableShellEnv));
 }
