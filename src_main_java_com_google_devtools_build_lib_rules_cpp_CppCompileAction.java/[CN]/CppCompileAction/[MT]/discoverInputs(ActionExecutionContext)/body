@@ -11,6 +11,18 @@
     this.additionalInputs=ImmutableList.of();
     return null;
   }
+  if (featureConfiguration.isEnabled(CppRuleClasses.PRUNE_HEADER_MODULES)) {
+    Set<Artifact> initialResultSet=Sets.newLinkedHashSet(initialResult);
+    List<String> usedModulePaths=Lists.newArrayList();
+    for (    Artifact usedModule : context.getUsedModules(usePic,initialResultSet)) {
+      initialResultSet.add(usedModule);
+      usedModulePaths.add(usedModule.getExecPathString());
+    }
+    CcToolchainFeatures.Variables.Builder variableBuilder=new CcToolchainFeatures.Variables.Builder();
+    variableBuilder.addSequenceVariable("module_files",usedModulePaths);
+    this.overwrittenVariables=variableBuilder.build();
+    initialResult=initialResultSet;
+  }
   this.additionalInputs=initialResult;
   Collection<Artifact> result=new HashSet<>();
   ArtifactResolver artifactResolver=executor.getContext(IncludeScanningContext.class).getArtifactResolver();

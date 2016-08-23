@@ -1,0 +1,22 @@
+{
+  Set<Artifact> result=new LinkedHashSet<>();
+  for (  TransitiveModuleHeaders transitiveModule : transitiveModuleHeaders) {
+    if (result.contains(transitiveModule.module)) {
+      continue;
+    }
+    boolean providesUsedHeader=false;
+    for (    Artifact header : transitiveModule.headers) {
+      if (usedHeaders.contains(header)) {
+        providesUsedHeader=true;
+        break;
+      }
+    }
+    if (providesUsedHeader) {
+      result.addAll(transitiveModule.transitiveModules.toCollection());
+      if (!transitiveModule.module.equals(headerModule)) {
+        result.add(transitiveModule.module);
+      }
+    }
+  }
+  return result;
+}

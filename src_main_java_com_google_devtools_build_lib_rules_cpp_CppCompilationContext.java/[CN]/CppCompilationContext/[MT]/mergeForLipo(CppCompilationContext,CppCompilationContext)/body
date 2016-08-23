@@ -2,5 +2,11 @@
   ImmutableSet.Builder<Artifact> prerequisites=ImmutableSet.builder();
   prerequisites.addAll(ownerContext.compilationPrerequisites);
   prerequisites.addAll(libContext.compilationPrerequisites);
-  return new CppCompilationContext(libContext.commandLineContext,prerequisites.build(),mergeSets(ownerContext.declaredIncludeDirs,libContext.declaredIncludeDirs),mergeSets(ownerContext.declaredIncludeWarnDirs,libContext.declaredIncludeWarnDirs),mergeSets(ownerContext.declaredIncludeSrcs,libContext.declaredIncludeSrcs),mergeSets(ownerContext.pregreppedHdrs,libContext.pregreppedHdrs),mergeSets(ownerContext.headerModuleSrcs,libContext.headerModuleSrcs),mergeSets(ownerContext.topLevelHeaderModules,libContext.topLevelHeaderModules),mergeSets(ownerContext.picTopLevelHeaderModules,libContext.picTopLevelHeaderModules),mergeSets(ownerContext.impliedHeaderModules,libContext.impliedHeaderModules),mergeSets(ownerContext.picImpliedHeaderModules,libContext.picImpliedHeaderModules),mergeSets(ownerContext.transitiveModuleMaps,libContext.transitiveModuleMaps),mergeSets(ownerContext.directModuleMaps,libContext.directModuleMaps),libContext.cppModuleMap,libContext.headerModule,libContext.picHeaderModule,libContext.provideTransitiveModuleMaps,libContext.useHeaderModules);
+  ModuleInfo.Builder moduleInfo=new ModuleInfo.Builder();
+  moduleInfo.merge(ownerContext.moduleInfo);
+  moduleInfo.merge(libContext.moduleInfo);
+  ModuleInfo.Builder picModuleInfo=new ModuleInfo.Builder();
+  picModuleInfo.merge(ownerContext.picModuleInfo);
+  picModuleInfo.merge(libContext.picModuleInfo);
+  return new CppCompilationContext(libContext.commandLineContext,prerequisites.build(),mergeSets(ownerContext.declaredIncludeDirs,libContext.declaredIncludeDirs),mergeSets(ownerContext.declaredIncludeWarnDirs,libContext.declaredIncludeWarnDirs),mergeSets(ownerContext.declaredIncludeSrcs,libContext.declaredIncludeSrcs),mergeSets(ownerContext.pregreppedHdrs,libContext.pregreppedHdrs),moduleInfo.build(),picModuleInfo.build(),mergeSets(ownerContext.transitiveModuleMaps,libContext.transitiveModuleMaps),mergeSets(ownerContext.directModuleMaps,libContext.directModuleMaps),libContext.cppModuleMap,libContext.provideTransitiveModuleMaps,libContext.useHeaderModules);
 }
