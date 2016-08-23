@@ -13,7 +13,12 @@
   }
   List<String> coverageFlags=ImmutableList.of();
   if (collectCodeCoverage) {
-    coverageFlags=CLANG_COVERAGE_FLAGS;
+    if (buildConfiguration.isLLVMCoverageMapFormatEnabled()) {
+      coverageFlags=CLANG_LLVM_COVERAGE_FLAGS;
+    }
+ else {
+      coverageFlags=CLANG_GCOV_COVERAGE_FLAGS;
+    }
   }
   commandLine.add(compileFlagsForClang(appleConfiguration)).add(commonLinkAndCompileFlagsForClang(objcProvider,objcConfiguration,appleConfiguration)).add(objcConfiguration.getCoptsForCompilationMode()).addBeforeEachPath("-iquote",ObjcCommon.userHeaderSearchPaths(buildConfiguration)).addBeforeEachExecPath("-include",pchFile.asSet()).addBeforeEachPath("-I",priorityHeaders).addBeforeEachPath("-I",objcProvider.get(INCLUDE)).addBeforeEachPath("-isystem",objcProvider.get(INCLUDE_SYSTEM)).add(otherFlags).addFormatEach("-D%s",objcProvider.get(DEFINE)).add(coverageFlags).add(getCompileRuleCopts());
   commandLine.add("-c");

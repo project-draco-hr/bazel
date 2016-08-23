@@ -26,7 +26,12 @@
   }
   commandLine.addExecPath("-o",linkedBinary).addBeforeEachExecPath("-force_load",forceLinkArtifacts).add(extraLinkArgs).add(objcProvider.get(ObjcProvider.LINKOPT));
   if (buildConfiguration.isCodeCoverageEnabled()) {
-    commandLine.add(LINKER_COVERAGE_FLAGS);
+    if (buildConfiguration.isLLVMCoverageMapFormatEnabled()) {
+      commandLine.add(LINKER_LLVM_COVERAGE_FLAGS);
+    }
+ else {
+      commandLine.add(LINKER_COVERAGE_FLAGS);
+    }
   }
   if (objcProvider.is(USES_SWIFT)) {
     commandLine.add("-L").add(AppleToolchain.swiftLibDir(appleConfiguration));
