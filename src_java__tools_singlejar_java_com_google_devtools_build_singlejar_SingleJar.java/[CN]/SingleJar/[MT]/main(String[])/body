@@ -1,7 +1,20 @@
 {
+  if (shouldRunInWorker(args)) {
+    if (!canRunInWorker()) {
+      System.err.println("Asked to run in a worker, but no worker support");
+      System.exit(1);
+    }
+    try {
+      runWorker(args);
+    }
+ catch (    Exception e) {
+      System.err.println("Error running worker : " + e.getMessage());
+      System.exit(1);
+    }
+    return;
+  }
   try {
-    SingleJar singlejar=new SingleJar(new JavaIoFileSystem());
-    System.exit(singlejar.run(Arrays.asList(args)));
+    System.exit(singleRun(args));
   }
  catch (  IOException e) {
     System.err.println("SingleJar threw exception : " + e.getMessage());
