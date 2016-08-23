@@ -1,5 +1,5 @@
 {
-  Interval runTime=null;
+  TestInterval runTime=null;
   int numTests=0, numFailures=0;
   LinkedList<TestResult> childResults=new LinkedList<>();
   for (  TestNode child : children) {
@@ -7,9 +7,9 @@
     childResults.add(childResult);
     numTests+=childResult.getNumTests();
     numFailures+=childResult.getNumFailures();
-    Interval childRunTime=childResult.getRunTimeInterval();
+    TestInterval childRunTime=childResult.getRunTimeInterval();
     if (childRunTime != null) {
-      runTime=runTime == null ? childRunTime : new Interval(Math.min(runTime.getStartMillis(),childRunTime.getStartMillis()),Math.max(runTime.getEndMillis(),childRunTime.getEndMillis()));
+      runTime=runTime == null ? childRunTime : new TestInterval(Math.min(runTime.getStartMillis(),childRunTime.getStartMillis()),Math.max(runTime.getEndMillis(),childRunTime.getEndMillis()));
     }
   }
   return new TestResult.Builder().name(getDescription().getDisplayName()).className("").properties(Collections.<String,String>emptyMap()).failures(Collections.<Throwable>emptyList()).runTimeInterval(runTime).status(Status.SKIPPED).numTests(numTests).numFailures(numFailures).childResults(childResults).build();
