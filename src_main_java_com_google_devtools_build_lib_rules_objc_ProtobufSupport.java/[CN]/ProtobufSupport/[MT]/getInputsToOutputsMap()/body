@@ -8,24 +8,21 @@
   for (  ProtoSourcesProvider protoProvider : protoProviders) {
     protoSets.add(protoProvider.getTransitiveProtoSources());
   }
-  HashMap<Artifact,Set<Artifact>> protoToGroupMap=new HashMap<>();
+  HashMap<Artifact,ImmutableSet<Artifact>> protoToGroupMap=new HashMap<Artifact,ImmutableSet<Artifact>>();
   for (  NestedSet<Artifact> nestedProtoSet : protoSets.build()) {
     ImmutableSet<Artifact> protoSet=ImmutableSet.copyOf(nestedProtoSet.toSet());
     for (    Artifact proto : protoSet) {
       if (attributes.isProtoWellKnown(proto)) {
         continue;
       }
-      if (!protoToGroupMap.containsKey(proto)) {
+      if (!protoToGroupMap.containsKey(proto) || protoToGroupMap.get(proto).size() > protoSet.size()) {
         protoToGroupMap.put(proto,protoSet);
-      }
- else {
-        protoToGroupMap.put(proto,Sets.intersection(protoSet,protoToGroupMap.get(proto)));
       }
     }
   }
   ImmutableSetMultimap.Builder<ImmutableSet<Artifact>,Artifact> inputsToOutputsMapBuilder=ImmutableSetMultimap.builder();
   for (  Artifact proto : protoToGroupMap.keySet()) {
-    inputsToOutputsMapBuilder.put(ImmutableSet.copyOf(protoToGroupMap.get(proto)),proto);
+    inputsToOutputsMapBuilder.put(protoToGroupMap.get(proto),proto);
   }
   return inputsToOutputsMapBuilder.build();
 }
