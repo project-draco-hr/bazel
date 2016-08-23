@@ -1,15 +1,15 @@
 {
-  graph=new InMemoryGraphImpl();
+  graph=new DeterministicHelper.DeterministicProcessableGraph(new InMemoryGraphImpl());
   SkyKey aKey=GraphTester.toSkyKey("a");
-  SkyKey bKey=GraphTester.toSkyKey("b");
+  SkyKey zKey=GraphTester.toSkyKey("z");
   SkyKey cKey=GraphTester.toSkyKey("c");
-  tester.getOrCreate(aKey).addDependency(bKey);
-  tester.getOrCreate(bKey).addDependency(cKey).addDependency(bKey);
+  tester.getOrCreate(aKey).addDependency(zKey);
+  tester.getOrCreate(zKey).addDependency(cKey).addDependency(zKey);
   tester.getOrCreate(cKey).addDependency(aKey);
   EvaluationResult<StringValue> result=eval(true,ImmutableList.of(aKey));
   assertEquals(null,result.get(aKey));
   ErrorInfo errorInfo=result.getError(aKey);
   CycleInfo cycleInfo=Iterables.getOnlyElement(errorInfo.getCycleInfo());
-  assertThat(cycleInfo.getCycle()).containsExactly(bKey).inOrder();
+  assertThat(cycleInfo.getCycle()).containsExactly(zKey).inOrder();
   assertThat(cycleInfo.getPathToCycle()).containsExactly(aKey).inOrder();
 }

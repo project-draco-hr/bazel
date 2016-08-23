@@ -1,0 +1,19 @@
+{
+  int keySize=depKeys.numElements();
+  List<SkyValue> result=new ArrayList<>(keySize);
+  int expectedMissingKeySize=Math.max(keySize - directDeps.size() - (bubbleErrorInfo == null ? 0 : bubbleErrorInfo.size()),0);
+  ArrayList<SkyKey> missingKeys=new ArrayList<>(expectedMissingKeySize);
+  for (  SkyKey key : Iterables.concat(depKeys)) {
+    SkyValue value=maybeGetValueFromErrorOrDeps(key);
+    if (value == null) {
+      missingKeys.add(key);
+    }
+ else {
+      result.add(value);
+    }
+  }
+  for (  NodeEntry entry : getBatchValues(skyKey,Reason.DEP_REQUESTED,missingKeys).values()) {
+    result.add(getValueOrNullMarker(entry));
+  }
+  return result;
+}
