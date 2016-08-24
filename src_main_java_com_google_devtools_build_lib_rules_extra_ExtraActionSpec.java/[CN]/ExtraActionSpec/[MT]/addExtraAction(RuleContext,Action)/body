@@ -22,10 +22,11 @@
   protoOutputs.add(extraActionInfoFile);
   String command=createExpandedCommand(owningRule,actionToShadow,extraActionInfoFile);
   Map<String,String> env=owningRule.getConfiguration().getLocalShellEnvironment();
+  Set<String> clientEnvVars=owningRule.getConfiguration().getVariableShellEnvironment();
   CommandHelper commandHelper=new CommandHelper(owningRule,ImmutableList.<TransitiveInfoCollection>of(),ImmutableMap.<Label,Iterable<Artifact>>of());
   String actionUniquifier=actionToShadow.getPrimaryOutput().getExecPath().getBaseName() + "." + actionToShadow.getKey();
   List<String> argv=commandHelper.buildCommandLine(command,extraActionInputs,"." + actionUniquifier + ".extra_action_script.sh",executionInfo);
   String commandMessage=String.format("Executing extra_action %s on %s",label,ownerLabel);
-  owningRule.registerAction(new ExtraAction(ImmutableSet.copyOf(extraActionInputs.build()),manifests,extraActionOutputs,actionToShadow,createDummyOutput,CommandLine.of(argv,false),env,executionInfo,commandMessage,label.getName()));
+  owningRule.registerAction(new ExtraAction(ImmutableSet.copyOf(extraActionInputs.build()),manifests,extraActionOutputs,actionToShadow,createDummyOutput,CommandLine.of(argv,false),env,clientEnvVars,executionInfo,commandMessage,label.getName()));
   return ImmutableSet.<Artifact>builder().addAll(extraActionOutputs).addAll(protoOutputs).build();
 }
