@@ -1,0 +1,16 @@
+{
+  try (AutoProfiler p=AutoProfiler.logged("Checking for Skyframe cycles",logger,10)){
+    for (    SkyKey root : badRoots) {
+      ErrorInfo errorInfo=checkForCycles(root,evaluatorContext);
+      if (errorInfo == null) {
+        Preconditions.checkState(!evaluatorContext.keepGoing(),"",root,badRoots);
+        continue;
+      }
+      Preconditions.checkState(!Iterables.isEmpty(errorInfo.getCycleInfo()),"%s was not evaluated, but was not part of a cycle",root);
+      result.addError(root,errorInfo);
+      if (!evaluatorContext.keepGoing()) {
+        return;
+      }
+    }
+  }
+ }

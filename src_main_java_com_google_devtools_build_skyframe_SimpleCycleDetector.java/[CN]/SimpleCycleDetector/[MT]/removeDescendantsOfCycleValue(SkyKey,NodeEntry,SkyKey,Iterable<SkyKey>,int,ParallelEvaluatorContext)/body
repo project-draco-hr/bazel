@@ -1,0 +1,28 @@
+{
+  GroupedList<SkyKey> directDeps=entry.getTemporaryDirectDeps();
+  Set<SkyKey> unvisitedDeps=Sets.newHashSetWithExpectedSize(directDeps.numElements());
+  Iterables.addAll(unvisitedDeps,Iterables.concat(directDeps));
+  unvisitedDeps.remove(cycleChild);
+  Set<SkyKey> removedDeps=removeIncompleteChildrenForCycle(key,entry,unvisitedDeps,evaluatorContext);
+  if (!entry.isReady()) {
+    entry.signalDep();
+  }
+  maybeMarkRebuilding(entry);
+  Preconditions.checkState(entry.isReady(),"%s %s %s",key,cycleChild,entry);
+  Iterator<SkyKey> it=toVisit.iterator();
+  while (it.hasNext()) {
+    SkyKey descendant=it.next();
+    if (descendant == CHILDREN_FINISHED) {
+      cycleLength--;
+      if (cycleLength == 0) {
+        return removedDeps;
+      }
+      continue;
+    }
+    if (cycleLength == 1) {
+      Preconditions.checkState(unvisitedDeps.contains(descendant),"%s %s %s %s %s",key,descendant,cycleChild,unvisitedDeps,entry);
+      it.remove();
+    }
+  }
+  throw new IllegalStateException(String.format("There were not %d groups of children in %s when trying to remove children of %s other " + "than %s",cycleLength,toVisit,key,cycleChild));
+}

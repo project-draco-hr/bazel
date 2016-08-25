@@ -1,0 +1,13 @@
+{
+  List<ErrorInfo> allErrors=new ArrayList<>();
+  Set<? extends Map.Entry<SkyKey,? extends NodeEntry>> childEntries=evaluatorContext.getBatchValues(null,Reason.CYCLE_CHECKING,children).entrySet();
+  for (  Map.Entry<SkyKey,? extends NodeEntry> childMapEntry : childEntries) {
+    SkyKey childKey=childMapEntry.getKey();
+    NodeEntry childNodeEntry=childMapEntry.getValue();
+    ErrorInfo errorInfo=getErrorMaybe(childKey,childNodeEntry,childKey.equals(unfinishedChild));
+    if (errorInfo != null) {
+      allErrors.add(errorInfo);
+    }
+  }
+  return allErrors;
+}
