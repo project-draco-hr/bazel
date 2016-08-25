@@ -1,0 +1,17 @@
+{
+  this.graph=graph;
+  this.graphVersion=graphVersion;
+  this.skyFunctions=skyFunctions;
+  this.reporter=reporter;
+  this.replayingNestedSetEventVisitor=new NestedSetVisitor<>(new NestedSetEventReceiver(reporter),emittedEventState);
+  this.keepGoing=keepGoing;
+  this.storeErrorsAlongsideValues=storeErrorsAlongsideValues;
+  this.progressReceiver=progressReceiver;
+  this.storedEventFilter=storedEventFilter;
+  visitorSupplier=Suppliers.memoize(new Supplier<NodeEntryVisitor>(){
+    @Override public NodeEntryVisitor get(){
+      return new NodeEntryVisitor(forkJoinPool,dirtyKeyTracker,progressReceiver,runnableMaker);
+    }
+  }
+);
+}

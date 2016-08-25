@@ -1,0 +1,19 @@
+{
+  Map<SkyKey,SkyValue> result=new HashMap<>();
+  ArrayList<SkyKey> missingKeys=new ArrayList<>();
+  for (  SkyKey key : keys) {
+    Preconditions.checkState(!key.equals(ErrorTransienceValue.KEY),"Error transience key cannot be in requested deps of %s",skyKey);
+    SkyValue value=maybeGetValueFromErrorOrDeps(key);
+    if (value == null) {
+      missingKeys.add(key);
+    }
+ else {
+      result.put(key,value);
+    }
+  }
+  Map<SkyKey,? extends NodeEntry> missingEntries=evaluatorContext.getBatchValues(skyKey,Reason.DEP_REQUESTED,missingKeys);
+  for (  SkyKey key : missingKeys) {
+    result.put(key,getValueOrNullMarker(missingEntries.get(key)));
+  }
+  return result;
+}

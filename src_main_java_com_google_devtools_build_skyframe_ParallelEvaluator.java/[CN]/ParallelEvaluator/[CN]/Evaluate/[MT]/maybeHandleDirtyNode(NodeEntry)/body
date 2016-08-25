@@ -10,7 +10,7 @@ case CHECK_DEPENDENCIES:
     graph.get(skyKey,Reason.RDEP_REMOVAL,ErrorTransienceValue.KEY).removeReverseDep(skyKey);
     return DirtyOutcome.NEEDS_EVALUATION;
   }
-if (!keepGoing) {
+if (!evaluatorContext.keepGoing()) {
   Map<SkyKey,? extends NodeEntry> entriesToCheck=graph.getBatch(skyKey,Reason.OTHER,directDepsToCheck);
   for (  Entry<SkyKey,? extends NodeEntry> entry : entriesToCheck.entrySet()) {
     if (entry.getValue().isDone() && entry.getValue().getErrorInfo() != null) {
@@ -23,7 +23,7 @@ if (!keepGoing) {
           depEntry.getValue().removeReverseDep(skyKey);
         }
       }
-      if (!visitor.preventNewEvaluations()) {
+      if (!evaluatorContext.getVisitor().preventNewEvaluations()) {
         return DirtyOutcome.ALREADY_PROCESSED;
       }
       throw SchedulerException.ofError(errorEntry.getErrorInfo(),entry.getKey());
@@ -38,18 +38,18 @@ enqueueChild(skyKey,state,directDep,directDepEntry,true);
 }
 return DirtyOutcome.ALREADY_PROCESSED;
 case VERIFIED_CLEAN:
-visitor.notifyDone(skyKey);
+evaluatorContext.getVisitor().notifyDone(skyKey);
 Set<SkyKey> reverseDeps=state.markClean();
-if (progressReceiver != null) {
-progressReceiver.evaluated(skyKey,new SkyValueSupplier(state),EvaluationState.CLEAN);
+if (evaluatorContext.getProgressReceiver() != null) {
+evaluatorContext.getProgressReceiver().evaluated(skyKey,new SkyValueSupplier(state),EvaluationState.CLEAN);
 }
-if (!keepGoing && state.getErrorInfo() != null) {
-if (!visitor.preventNewEvaluations()) {
+if (!evaluatorContext.keepGoing() && state.getErrorInfo() != null) {
+if (!evaluatorContext.getVisitor().preventNewEvaluations()) {
 return DirtyOutcome.ALREADY_PROCESSED;
 }
 throw SchedulerException.ofError(state.getErrorInfo(),skyKey);
 }
-signalValuesAndEnqueueIfReady(visitor,skyKey,reverseDeps,state.getVersion());
+evaluatorContext.signalValuesAndEnqueueIfReady(skyKey,reverseDeps,state.getVersion(),true);
 return DirtyOutcome.ALREADY_PROCESSED;
 case NEEDS_REBUILDING:
 maybeMarkRebuilding(state);

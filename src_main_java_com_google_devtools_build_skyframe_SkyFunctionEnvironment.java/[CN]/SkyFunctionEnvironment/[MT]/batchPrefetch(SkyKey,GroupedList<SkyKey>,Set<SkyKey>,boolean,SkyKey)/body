@@ -1,0 +1,22 @@
+{
+  Iterable<SkyKey> depKeysAsIterable=Iterables.concat(depKeys);
+  Iterable<SkyKey> keysToPrefetch=depKeysAsIterable;
+  if (PREFETCH_OLD_DEPS) {
+    ImmutableSet.Builder<SkyKey> keysToPrefetchBuilder=ImmutableSet.builder();
+    keysToPrefetchBuilder.addAll(depKeysAsIterable).addAll(oldDeps);
+    keysToPrefetch=keysToPrefetchBuilder.build();
+  }
+  Map<SkyKey,? extends NodeEntry> batchMap=evaluatorContext.getBatchValues(requestor,Reason.PREFETCH,keysToPrefetch);
+  if (PREFETCH_OLD_DEPS) {
+    batchMap=ImmutableMap.<SkyKey,NodeEntry>copyOf(Maps.filterKeys(batchMap,Predicates.in(ImmutableSet.copyOf(depKeysAsIterable))));
+  }
+  if (batchMap.size() != depKeys.numElements()) {
+    throw new IllegalStateException("Missing keys for " + keyForDebugging + ": "+ Sets.difference(depKeys.toSet(),batchMap.keySet()));
+  }
+  if (assertDone) {
+    for (    Map.Entry<SkyKey,? extends NodeEntry> entry : batchMap.entrySet()) {
+      Preconditions.checkState(entry.getValue().isDone(),"%s had not done %s",keyForDebugging,entry);
+    }
+  }
+  return batchMap;
+}

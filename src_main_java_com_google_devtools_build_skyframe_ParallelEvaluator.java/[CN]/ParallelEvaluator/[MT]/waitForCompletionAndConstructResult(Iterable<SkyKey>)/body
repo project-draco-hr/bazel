@@ -1,0 +1,29 @@
+{
+  Map<SkyKey,ValueWithMetadata> bubbleErrorInfo=null;
+  boolean catastrophe=false;
+  try {
+    evaluatorContext.getVisitor().waitForCompletion();
+  }
+ catch (  final SchedulerException e) {
+    if (!evaluatorContext.getVisitor().getCrashes().isEmpty()) {
+      evaluatorContext.getReporter().handle(Event.error("Crashes detected: " + evaluatorContext.getVisitor().getCrashes()));
+      throw Iterables.getFirst(evaluatorContext.getVisitor().getCrashes(),null);
+    }
+    Throwables.propagateIfPossible(e.getCause(),InterruptedException.class);
+    if (Thread.interrupted()) {
+      throw new InterruptedException();
+    }
+    SkyKey errorKey=Preconditions.checkNotNull(e.getFailedValue(),e);
+    ErrorInfo errorInfo=Preconditions.checkNotNull(e.getErrorInfo(),errorKey);
+    if (!evaluatorContext.keepGoing()) {
+      bubbleErrorInfo=bubbleErrorUp(errorInfo,errorKey,skyKeys);
+    }
+ else {
+      Preconditions.checkState(errorInfo.isCatastrophic(),"Scheduler exception only thrown for catastrophe in keep_going evaluation: %s",e);
+      catastrophe=true;
+      bubbleErrorInfo=ImmutableMap.of(errorKey,ValueWithMetadata.wrapWithMetadata(graph.get(null,Reason.ERROR_BUBBLING,errorKey).getValueMaybeWithMetadata()));
+    }
+  }
+  Preconditions.checkState(evaluatorContext.getVisitor().getCrashes().isEmpty(),evaluatorContext.getVisitor().getCrashes());
+  return constructResult(skyKeys,bubbleErrorInfo,catastrophe);
+}

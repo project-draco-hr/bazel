@@ -1,0 +1,18 @@
+{
+  NestedSetBuilder<TaggedEvents> eventBuilder=NestedSetBuilder.stableOrder();
+  ImmutableList<Event> events=eventHandler.getEvents();
+  if (!events.isEmpty()) {
+    eventBuilder.add(new TaggedEvents(getTagFromKey(),events));
+  }
+  if (evaluatorContext.getStoredEventFilter().storeEvents()) {
+    GroupedList<SkyKey> depKeys=entry.getTemporaryDirectDeps();
+    Collection<SkyValue> deps=getDepValuesForDoneNodeMaybeFromError(depKeys);
+    if (!missingChildren && depKeys.numElements() != deps.size()) {
+      throw new IllegalStateException("Missing keys for " + skyKey + ". Present values: "+ deps+ "requested from: "+ depKeys+ ", "+ entry);
+    }
+    for (    SkyValue value : deps) {
+      eventBuilder.addTransitive(ValueWithMetadata.getEvents(value));
+    }
+  }
+  return eventBuilder.build();
+}

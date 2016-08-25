@@ -1,7 +1,7 @@
 {
   ImmutableSet<SkyKey> skyKeySet=ImmutableSet.copyOf(skyKeys);
   boolean allAreDone=true;
-  Map<SkyKey,? extends NodeEntry> batch=getBatchValues(null,Reason.PRE_OR_POST_EVALUATION,skyKeySet);
+  Map<SkyKey,? extends NodeEntry> batch=evaluatorContext.getBatchValues(null,Reason.PRE_OR_POST_EVALUATION,skyKeySet);
   for (  SkyKey key : skyKeySet) {
     if (!isDoneForBuild(batch.get(key))) {
       allAreDone=false;
@@ -12,9 +12,9 @@
     for (    SkyKey skyKey : skyKeySet) {
       informProgressReceiverThatValueIsDone(skyKey,batch.get(skyKey));
     }
-    return constructResult(null,skyKeySet,null,false);
+    return constructResult(skyKeySet,null,false);
   }
-  if (!keepGoing) {
+  if (!evaluatorContext.keepGoing()) {
     Set<SkyKey> cachedErrorKeys=new HashSet<>();
     for (    SkyKey skyKey : skyKeySet) {
       NodeEntry entry=graph.get(null,Reason.PRE_OR_POST_EVALUATION,skyKey);
@@ -27,14 +27,13 @@
       }
     }
     if (!cachedErrorKeys.isEmpty()) {
-      return constructResult(null,cachedErrorKeys,null,false);
+      return constructResult(cachedErrorKeys,null,false);
     }
   }
-  Preconditions.checkState(keepGoing || !(graph instanceof InMemoryGraphImpl) || ((InMemoryGraphImpl)graph).keepsEdges(),"nokeep_going evaluations are not allowed if graph edges are not kept: %s",skyKeys);
+  Preconditions.checkState(evaluatorContext.keepGoing() || !(graph instanceof InMemoryGraphImpl) || ((InMemoryGraphImpl)graph).keepsEdges(),"nokeep_going evaluations are not allowed if graph edges are not kept: %s",skyKeys);
   Profiler.instance().startTask(ProfilerTask.SKYFRAME_EVAL,skyKeySet);
   try {
-    ValueVisitor valueVisitor=forkJoinPool == null ? new ValueVisitor(threadCount) : new ValueVisitor(forkJoinPool);
-    return eval(skyKeySet,valueVisitor);
+    return doMutatingEvaluation(skyKeySet);
   }
   finally {
     Profiler.instance().completeTask(ProfilerTask.SKYFRAME_EVAL);

@@ -1,17 +1,17 @@
 {
   Set<SkyKey> unfinishedDeps=new HashSet<>();
-  for (  SkyKey dep : env.newlyRequestedDeps) {
+  for (  SkyKey dep : env.getNewlyRequestedDeps()) {
     if (!isDoneForBuild(newlyRequestedDepMap.get(dep))) {
       unfinishedDeps.add(dep);
     }
   }
-  env.newlyRequestedDeps.remove(unfinishedDeps);
-  entry.addTemporaryDirectDeps(env.newlyRequestedDeps);
-  for (  SkyKey newDep : env.newlyRequestedDeps) {
+  env.getNewlyRequestedDeps().remove(unfinishedDeps);
+  entry.addTemporaryDirectDeps(env.getNewlyRequestedDeps());
+  for (  SkyKey newDep : env.getNewlyRequestedDeps()) {
     NodeEntry depEntry=Preconditions.checkNotNull(newlyRequestedDepMap.get(newDep),newDep);
     DependencyState triState=oldDeps.contains(newDep) ? depEntry.checkIfDoneForDirtyReverseDep(skyKey) : depEntry.addReverseDepAndCheckIfDone(skyKey);
     Preconditions.checkState(DependencyState.DONE == triState,"new dep %s was not already done for %s. ValueEntry: %s. DepValueEntry: %s",newDep,skyKey,entry,depEntry);
     entry.signalDep();
   }
-  Preconditions.checkState(entry.isReady(),"%s %s %s",skyKey,entry,env.newlyRequestedDeps);
+  Preconditions.checkState(entry.isReady(),"%s %s %s",skyKey,entry,env.getNewlyRequestedDeps());
 }

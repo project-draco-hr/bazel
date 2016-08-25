@@ -1,9 +1,9 @@
 {
-  if (progressReceiver != null) {
+  if (evaluatorContext.getProgressReceiver() != null) {
     Preconditions.checkState(entry.isDone(),entry);
     SkyValue value=entry.getValue();
     Version valueVersion=entry.getVersion();
-    Preconditions.checkState(valueVersion.atMost(graphVersion),"%s should be at most %s in the version partial ordering",valueVersion,graphVersion);
-    progressReceiver.evaluated(key,Suppliers.ofInstance(value),valueVersion.equals(graphVersion) ? EvaluationState.BUILT : EvaluationState.CLEAN);
+    Preconditions.checkState(valueVersion.atMost(evaluatorContext.getGraphVersion()),"%s should be at most %s in the version partial ordering",valueVersion,evaluatorContext.getGraphVersion());
+    evaluatorContext.getProgressReceiver().evaluated(key,Suppliers.ofInstance(value),valueVersion.equals(evaluatorContext.getGraphVersion()) ? EvaluationState.BUILT : EvaluationState.CLEAN);
   }
 }
