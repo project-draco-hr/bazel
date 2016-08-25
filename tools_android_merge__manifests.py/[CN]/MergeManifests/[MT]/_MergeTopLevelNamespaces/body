@@ -1,0 +1,13 @@
+def _MergeTopLevelNamespaces(self, mergee_dom):
+    'Merge the xmlns declarations in the top-level manifest nodes.\n\n    This does not handle and ignores xmlns declarations in child nodes.\n    Overall, this manifest merger does not try to interpret any attributes that\n    use the android "tools" namespace either. E.g., tools:node="remove".\n\n    This functionality is just to help migrate from this manifest merger,\n    to a new manifest merger that does handle tools annotations (a manifest\n    may be sent to both mergers during migration).\n\n    Args:\n      mergee_dom: The dom of the mergee manifest.\n    Raises:\n      MalformedManifestException: if the mergee and merger manifests contain\n      xmlns declarations that don\'t agree.\n    '
+    manifest = self._merger_dom.getElementsByTagName('manifest')[0]
+    mergee_manifest = mergee_dom.getElementsByTagName('manifest')[0]
+    for i in range(mergee_manifest.attributes.length):
+        attr = mergee_manifest.attributes.item(i)
+        if (attr.prefix and (attr.prefix == 'xmlns')):
+            if manifest.hasAttribute(attr.name):
+                main_attr_value = manifest.getAttribute(attr.name)
+                if (main_attr_value != attr.value):
+                    raise MalformedManifestException(('different values for namespace %s ("%s" vs "%s")' % (attr.name, main_attr_value, attr.value)))
+            else:
+                manifest.setAttribute(attr.name, attr.value)
