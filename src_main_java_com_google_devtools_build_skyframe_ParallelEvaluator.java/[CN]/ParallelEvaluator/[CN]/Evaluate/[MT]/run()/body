@@ -37,7 +37,7 @@
         ErrorInfo errorInfo=ErrorInfo.fromException(reifiedBuilderException,isTransitivelyTransient);
         registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,newlyRequestedDeps,oldDeps,env);
         env.setError(state,errorInfo,reifiedBuilderException.isTransient());
-        env.commit(state,evaluatorContext.keepGoing());
+        env.commit(state,evaluatorContext.keepGoing() ? EnqueueParentBehavior.ENQUEUE : EnqueueParentBehavior.SIGNAL);
         if (!shouldFailFast) {
           return;
         }
@@ -65,7 +65,7 @@ catch (    RuntimeException re) {
       Preconditions.checkState(!env.valuesMissing(),"Evaluation of %s returned non-null value " + "but requested dependencies that weren't computed yet (one of %s), ValueEntry: %s",skyKey,newDirectDeps,state);
       env.setValue(value);
       registerNewlyDiscoveredDepsForDoneEntry(skyKey,state,graph.getBatch(skyKey,Reason.RDEP_ADDITION,env.getNewlyRequestedDeps()),oldDeps,env);
-      env.commit(state,true);
+      env.commit(state,EnqueueParentBehavior.ENQUEUE);
       return;
     }
     if (env.getDepErrorKey() != null) {
@@ -91,7 +91,7 @@ catch (    RuntimeException re) {
     if (newDirectDeps.isEmpty()) {
       Preconditions.checkState(!env.getChildErrorInfos().isEmpty(),"Evaluation of SkyKey failed and no dependencies were requested: %s %s",skyKey,state);
       Preconditions.checkState(evaluatorContext.keepGoing(),"nokeep_going evaluation should have failed on first child error: %s %s %s",skyKey,state,env.getChildErrorInfos());
-      env.commit(state,true);
+      env.commit(state,EnqueueParentBehavior.ENQUEUE);
       return;
     }
     for (    Entry<SkyKey,? extends NodeEntry> e : graph.createIfAbsentBatch(skyKey,Reason.ENQUEUING_CHILD,newDirectDeps).entrySet()) {

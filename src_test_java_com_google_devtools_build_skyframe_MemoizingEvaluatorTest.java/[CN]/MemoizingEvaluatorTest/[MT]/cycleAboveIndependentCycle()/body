@@ -19,11 +19,21 @@
   tester.set(leafKey,new StringValue("leafy"));
   EvaluationResult<StringValue> result=tester.eval(true,aKey);
   assertEquals(null,result.get(aKey));
-  assertThat(result.getError(aKey).getCycleInfo()).containsExactly(new CycleInfo(ImmutableList.of(aKey,bKey,cKey)),new CycleInfo(ImmutableList.of(aKey),ImmutableList.of(bKey,cKey)));
+  if (cyclesDetected()) {
+    assertThatEvaluationResult(result).hasErrorEntryForKeyThat(aKey).hasCycleInfoThat().containsExactly(new CycleInfo(ImmutableList.of(aKey,bKey,cKey)),new CycleInfo(ImmutableList.of(aKey),ImmutableList.of(bKey,cKey)));
+  }
+ else {
+    assertThatEvaluationResult(result).hasErrorEntryForKeyThat(aKey).hasCycleInfoThat().hasSize(1);
+  }
   tester.set(leafKey,new StringValue("crunchy"));
   tester.getOrCreate(cKey,true);
   tester.invalidate();
   EvaluationResult<StringValue> result2=tester.eval(true,aKey);
   assertEquals(null,result2.get(aKey));
-  assertThat(result2.getError(aKey).getCycleInfo()).containsExactly(new CycleInfo(ImmutableList.of(aKey,bKey,cKey)),new CycleInfo(ImmutableList.of(aKey),ImmutableList.of(bKey,cKey)));
+  if (cyclesDetected()) {
+    assertThatEvaluationResult(result).hasErrorEntryForKeyThat(aKey).hasCycleInfoThat().containsExactly(new CycleInfo(ImmutableList.of(aKey,bKey,cKey)),new CycleInfo(ImmutableList.of(aKey),ImmutableList.of(bKey,cKey)));
+  }
+ else {
+    assertThatEvaluationResult(result).hasErrorEntryForKeyThat(aKey).hasCycleInfoThat().hasSize(1);
+  }
 }

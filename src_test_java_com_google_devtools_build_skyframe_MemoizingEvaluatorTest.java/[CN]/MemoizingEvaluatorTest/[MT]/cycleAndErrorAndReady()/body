@@ -46,10 +46,12 @@
   tester.invalidate();
   secondBuild.set(true);
   EvaluationResult<StringValue> result=tester.eval(false,otherTop,topKey,exceptionMarker);
-  assertThat(result.errorMap().keySet()).containsExactly(topKey);
   Iterable<CycleInfo> cycleInfos=result.getError(topKey).getCycleInfo();
   assertWithMessage(result.toString()).that(cycleInfos).isNotEmpty();
   CycleInfo cycleInfo=Iterables.getOnlyElement(cycleInfos);
-  assertThat(cycleInfo.getPathToCycle()).containsExactly(topKey);
-  assertThat(cycleInfo.getCycle()).containsExactly(cycle1Key,cycle2Key);
+  if (cyclesDetected()) {
+    assertThat(result.errorMap().keySet()).containsExactly(topKey);
+    assertThat(cycleInfo.getPathToCycle()).containsExactly(topKey);
+    assertThat(cycleInfo.getCycle()).containsExactly(cycle1Key,cycle2Key);
+  }
 }

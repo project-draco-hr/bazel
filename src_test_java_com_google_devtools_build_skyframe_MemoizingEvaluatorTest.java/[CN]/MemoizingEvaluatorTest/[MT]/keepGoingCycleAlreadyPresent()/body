@@ -4,13 +4,17 @@
   EvaluationResult<StringValue> result=tester.eval(true,selfEdge);
   assertThatEvaluationResult(result).hasError();
   CycleInfo cycleInfo=Iterables.getOnlyElement(result.getError(selfEdge).getCycleInfo());
-  CycleInfoSubjectFactory.assertThat(cycleInfo).hasCycleThat().containsExactly(selfEdge);
-  CycleInfoSubjectFactory.assertThat(cycleInfo).hasPathToCycleThat().isEmpty();
+  if (cyclesDetected()) {
+    CycleInfoSubjectFactory.assertThat(cycleInfo).hasCycleThat().containsExactly(selfEdge);
+    CycleInfoSubjectFactory.assertThat(cycleInfo).hasPathToCycleThat().isEmpty();
+  }
   SkyKey parent=GraphTester.toSkyKey("parent");
   tester.getOrCreate(parent).addDependency(selfEdge).setComputedValue(CONCATENATE);
   EvaluationResult<StringValue> result2=tester.eval(true,parent);
   assertThatEvaluationResult(result).hasError();
   CycleInfo cycleInfo2=Iterables.getOnlyElement(result2.getError(parent).getCycleInfo());
-  CycleInfoSubjectFactory.assertThat(cycleInfo2).hasCycleThat().containsExactly(selfEdge);
-  CycleInfoSubjectFactory.assertThat(cycleInfo2).hasPathToCycleThat().containsExactly(parent);
+  if (cyclesDetected()) {
+    CycleInfoSubjectFactory.assertThat(cycleInfo2).hasCycleThat().containsExactly(selfEdge);
+    CycleInfoSubjectFactory.assertThat(cycleInfo2).hasPathToCycleThat().containsExactly(parent);
+  }
 }

@@ -1,0 +1,25 @@
+{
+  Map<SkyKey,? extends NodeEntry> batch=graph.getBatch(skyKey,Reason.SIGNAL_DEP,keys);
+switch (enqueueParents) {
+case ENQUEUE:
+    for (    SkyKey key : keys) {
+      NodeEntry entry=Preconditions.checkNotNull(batch.get(key),key);
+      if (entry.signalDep(version)) {
+        getVisitor().enqueueEvaluation(key);
+      }
+    }
+  return;
+case SIGNAL:
+for (SkyKey key : keys) {
+  NodeEntry entry=Preconditions.checkNotNull(batch.get(key),key);
+  if (!entry.isDone()) {
+    entry.signalDep(version);
+  }
+}
+return;
+case NO_ACTION:
+return;
+default :
+throw new IllegalStateException(enqueueParents + ", " + skyKey);
+}
+}

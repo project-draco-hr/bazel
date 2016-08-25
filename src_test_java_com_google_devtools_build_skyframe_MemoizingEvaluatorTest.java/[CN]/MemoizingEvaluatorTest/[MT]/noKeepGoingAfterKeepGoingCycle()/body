@@ -16,13 +16,17 @@
   assertEquals(null,result.get(topKey));
   ErrorInfo errorInfo=result.getError(topKey);
   CycleInfo cycleInfo=Iterables.getOnlyElement(errorInfo.getCycleInfo());
-  assertThat(cycleInfo.getCycle()).containsExactly(aKey,bKey).inOrder();
-  assertThat(cycleInfo.getPathToCycle()).containsExactly(topKey,midKey).inOrder();
+  if (cyclesDetected()) {
+    assertThat(cycleInfo.getCycle()).containsExactly(aKey,bKey).inOrder();
+    assertThat(cycleInfo.getPathToCycle()).containsExactly(topKey,midKey).inOrder();
+  }
   tester.invalidate();
   result=tester.eval(false,topKey,goodKey);
   assertEquals(null,result.get(topKey));
   errorInfo=result.getError(topKey);
   cycleInfo=Iterables.getOnlyElement(errorInfo.getCycleInfo());
-  assertThat(cycleInfo.getCycle()).containsExactly(aKey,bKey).inOrder();
-  assertThat(cycleInfo.getPathToCycle()).containsExactly(topKey,midKey).inOrder();
+  if (cyclesDetected()) {
+    assertThat(cycleInfo.getCycle()).containsExactly(aKey,bKey).inOrder();
+    assertThat(cycleInfo.getPathToCycle()).containsExactly(topKey,midKey).inOrder();
+  }
 }

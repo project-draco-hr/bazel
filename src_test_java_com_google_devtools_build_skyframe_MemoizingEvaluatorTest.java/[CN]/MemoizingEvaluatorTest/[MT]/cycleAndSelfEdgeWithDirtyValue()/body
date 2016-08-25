@@ -9,17 +9,23 @@
   assertEquals(null,result.get(cycleKey1));
   ErrorInfo errorInfo=result.getError(cycleKey1);
   CycleInfo cycleInfo=Iterables.getOnlyElement(errorInfo.getCycleInfo());
-  assertThat(cycleInfo.getCycle()).containsExactly(cycleKey1).inOrder();
-  assertThat(cycleInfo.getPathToCycle()).isEmpty();
+  if (cyclesDetected()) {
+    assertThat(cycleInfo.getCycle()).containsExactly(cycleKey1).inOrder();
+    assertThat(cycleInfo.getPathToCycle()).isEmpty();
+  }
   tester.getOrCreate(cycleKey1,true);
   tester.invalidate();
   result=tester.eval(true,cycleKey1,cycleKey2);
   assertEquals(null,result.get(cycleKey1));
   errorInfo=result.getError(cycleKey1);
   cycleInfo=Iterables.getOnlyElement(errorInfo.getCycleInfo());
-  assertThat(cycleInfo.getCycle()).containsExactly(cycleKey1).inOrder();
-  assertThat(cycleInfo.getPathToCycle()).isEmpty();
+  if (cyclesDetected()) {
+    assertThat(cycleInfo.getCycle()).containsExactly(cycleKey1).inOrder();
+    assertThat(cycleInfo.getPathToCycle()).isEmpty();
+  }
   cycleInfo=Iterables.getOnlyElement(tester.driver.getExistingErrorForTesting(cycleKey2).getCycleInfo());
-  assertThat(cycleInfo.getCycle()).containsExactly(cycleKey1).inOrder();
-  assertThat(cycleInfo.getPathToCycle()).containsExactly(cycleKey2).inOrder();
+  if (cyclesDetected()) {
+    assertThat(cycleInfo.getCycle()).containsExactly(cycleKey1).inOrder();
+    assertThat(cycleInfo.getPathToCycle()).containsExactly(cycleKey2).inOrder();
+  }
 }

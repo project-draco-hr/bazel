@@ -8,12 +8,16 @@
   assertThatEvaluationResult(result).hasError();
   assertThatEvaluationResult(result).hasErrorEntryForKeyThat(aKey).hasCycleInfoThat().isNotEmpty();
   CycleInfo aCycleInfo=Iterables.getOnlyElement(result.getError(aKey).getCycleInfo());
-  assertThat(aCycleInfo.getCycle()).containsExactly(aKey,bKey).inOrder();
-  assertThat(aCycleInfo.getPathToCycle()).isEmpty();
+  if (cyclesDetected()) {
+    assertThat(aCycleInfo.getCycle()).containsExactly(aKey,bKey).inOrder();
+    assertThat(aCycleInfo.getPathToCycle()).isEmpty();
+  }
   assertThatEvaluationResult(result).hasErrorEntryForKeyThat(bKey).hasCycleInfoThat().isNotEmpty();
   CycleInfo bCycleInfo=Iterables.getOnlyElement(result.getError(bKey).getCycleInfo());
-  assertThat(bCycleInfo.getCycle()).containsExactly(bKey,aKey).inOrder();
-  assertThat(bCycleInfo.getPathToCycle()).isEmpty();
+  if (cyclesDetected()) {
+    assertThat(bCycleInfo.getCycle()).containsExactly(bKey,aKey).inOrder();
+    assertThat(bCycleInfo.getPathToCycle()).isEmpty();
+  }
   tester.getOrCreate(bKey).removeDependency(aKey);
   tester.set(bKey,new StringValue("bValue"));
   tester.getOrCreate(aKey).removeDependency(bKey);

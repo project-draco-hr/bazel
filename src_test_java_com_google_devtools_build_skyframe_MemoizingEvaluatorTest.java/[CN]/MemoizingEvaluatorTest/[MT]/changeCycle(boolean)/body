@@ -12,8 +12,10 @@
   assertEquals(null,result.get(topKey));
   ErrorInfo errorInfo=result.getError(topKey);
   CycleInfo cycleInfo=Iterables.getOnlyElement(errorInfo.getCycleInfo());
-  assertThat(cycleInfo.getCycle()).containsExactly(aKey,bKey).inOrder();
-  assertThat(cycleInfo.getPathToCycle()).containsExactly(topKey,midKey).inOrder();
+  if (cyclesDetected()) {
+    assertThat(cycleInfo.getCycle()).containsExactly(aKey,bKey).inOrder();
+    assertThat(cycleInfo.getPathToCycle()).containsExactly(topKey,midKey).inOrder();
+  }
   tester.getOrCreate(bKey).removeDependency(aKey);
   tester.set(bKey,new StringValue("bValue"));
   tester.invalidate();

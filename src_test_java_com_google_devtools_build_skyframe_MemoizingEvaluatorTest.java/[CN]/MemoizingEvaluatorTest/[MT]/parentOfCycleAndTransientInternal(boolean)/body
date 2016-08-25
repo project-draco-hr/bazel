@@ -24,6 +24,11 @@
     assertThatErrorInfo(errorInfo).isNotTransient();
     assertThatErrorInfo(errorInfo).hasExceptionThat().isNull();
   }
-  assertWithMessage(errorInfo.toString()).that(errorInfo.getCycleInfo()).containsExactly(new CycleInfo(ImmutableList.of(top),ImmutableList.of(cycleKey1,cycleKey2)));
+  if (cyclesDetected()) {
+    assertThatErrorInfo(errorInfo).hasCycleInfoThat().containsExactly(new CycleInfo(ImmutableList.of(top),ImmutableList.of(cycleKey1,cycleKey2)));
+  }
+ else {
+    assertThatErrorInfo(errorInfo).hasCycleInfoThat().hasSize(1);
+  }
   assertThatEvaluationResult(evalResult).hasDirectDepsInGraphThat(top).doesNotContain(ErrorTransienceValue.KEY);
 }

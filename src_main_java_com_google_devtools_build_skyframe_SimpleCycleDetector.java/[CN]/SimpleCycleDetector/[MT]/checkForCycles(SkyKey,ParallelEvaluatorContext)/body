@@ -30,7 +30,7 @@
       Preconditions.checkState(!errorDeps.isEmpty(),"Node %s was not successfully evaluated, but had no child errors. NodeEntry: %s",key,entry);
       SkyFunctionEnvironment env=new SkyFunctionEnvironment(key,directDeps,Sets.difference(entry.getAllRemainingDirtyDirectDeps(),removedDeps),evaluatorContext);
       env.setError(entry,ErrorInfo.fromChildErrors(key,errorDeps),false);
-      env.commit(entry,false);
+      env.commit(entry,EnqueueParentBehavior.SIGNAL);
     }
  else {
       entry=evaluatorContext.getGraph().get(null,Reason.CYCLE_CHECKING,key);
@@ -62,7 +62,7 @@
         CycleInfo cycleInfo=new CycleInfo(cycle);
         allErrors.add(ErrorInfo.fromCycle(cycleInfo));
         env.setError(entry,ErrorInfo.fromChildErrors(key,allErrors),false);
-        env.commit(entry,false);
+        env.commit(entry,EnqueueParentBehavior.SIGNAL);
         continue;
       }
  else {
