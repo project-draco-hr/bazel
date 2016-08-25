@@ -4,6 +4,7 @@
   throwPendingException();
   outputService=null;
   BlazeModule outputModule=null;
+  ImmutableList.Builder<ActionInputPrefetcher> prefetchersBuilder=ImmutableList.builder();
   for (  BlazeModule module : runtime.getBlazeModules()) {
     OutputService moduleService=module.getOutputService();
     if (moduleService != null) {
@@ -13,7 +14,12 @@
       outputService=moduleService;
       outputModule=module;
     }
+    ActionInputPrefetcher actionInputPrefetcher=module.getPrefetcher();
+    if (actionInputPrefetcher != null) {
+      prefetchersBuilder.add(actionInputPrefetcher);
+    }
   }
+  actionInputPrefetchers=prefetchersBuilder.build();
   SkyframeExecutor skyframeExecutor=getSkyframeExecutor();
   skyframeExecutor.setOutputService(outputService);
   Path workspace=getWorkspace();
