@@ -1,6 +1,13 @@
 {
   Iterable<Artifact> jars=IterablesChain.concat(resourceClasses.getArchiveInputs(true),androidCommon.getRuntimeJars());
+  Iterable<AndroidLibraryResourceClassJarProvider> libraryResourceJarProviders=AndroidCommon.getTransitivePrerequisites(ruleContext,Mode.TARGET,AndroidLibraryResourceClassJarProvider.class);
+  NestedSetBuilder<Artifact> libraryResourceJarsBuilder=NestedSetBuilder.naiveLinkOrder();
+  for (  AndroidLibraryResourceClassJarProvider provider : libraryResourceJarProviders) {
+    libraryResourceJarsBuilder.addTransitive(provider.getResourceClassJars());
+  }
+  NestedSet<Artifact> libraryResourceJars=libraryResourceJarsBuilder.build();
+  Iterable<Artifact> filteredJars=ImmutableList.copyOf(filter(jars,not(in(libraryResourceJars.toSet()))));
   AndroidSdkProvider sdk=AndroidSdkProvider.fromRuleContext(ruleContext);
-  ApkManifestAction manifestAction=new ApkManifestAction(ruleContext.getActionOwner(),apkManfiest,textProto,sdk,jars,resourceApk,nativeLibs,debugKeystore);
+  ApkManifestAction manifestAction=new ApkManifestAction(ruleContext.getActionOwner(),apkManfiest,textProto,sdk,filteredJars,resourceApk,nativeLibs,debugKeystore);
   ruleContext.registerAction(manifestAction);
 }
