@@ -1,14 +1,16 @@
-def CreateDeb(output, data, preinst=None, postinst=None, prerm=None, postrm=None, **kwargs):
+def CreateDeb(output, data, preinst=None, postinst=None, prerm=None, postrm=None, conffiles=None, **kwargs):
     'Create a full debian package.'
     extrafiles = {}
     if preinst:
-        extrafiles['preinst'] = preinst
+        extrafiles['preinst'] = (preinst, 493)
     if postinst:
-        extrafiles['postinst'] = postinst
+        extrafiles['postinst'] = (postinst, 493)
     if prerm:
-        extrafiles['prerm'] = prerm
+        extrafiles['prerm'] = (prerm, 493)
     if postrm:
-        extrafiles['postrm'] = postrm
+        extrafiles['postrm'] = (postrm, 493)
+    if conffiles:
+        extrafiles['conffiles'] = ('\n'.join(conffiles), 420)
     control = CreateDebControl(extrafiles=extrafiles, **kwargs)
     with open(output, 'w') as f:
         f.write('!<arch>\n')
