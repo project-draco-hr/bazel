@@ -1,11 +1,10 @@
 {
   boolean verboseFailures=buildRequest.getOptions(ExecutionOptions.class).verboseFailures;
-  boolean unblockNetwork=buildRequest.getOptions(BuildConfiguration.Options.class).testArguments.contains("--wrapper_script_flag=--debug");
   ImmutableList.Builder<ActionContext> contexts=ImmutableList.builder();
 switch (OS.getCurrent()) {
 case LINUX:
     if (LinuxSandboxedStrategy.isSupported(env)) {
-      contexts.add(new LinuxSandboxedStrategy(buildRequest.getOptions(SandboxOptions.class),env.getDirectories(),backgroundWorkers,verboseFailures,unblockNetwork,env.getRuntime().getProductName()));
+      contexts.add(new LinuxSandboxedStrategy(buildRequest,env.getDirectories(),backgroundWorkers,verboseFailures,env.getRuntime().getProductName()));
     }
  else     if (!buildRequest.getOptions(SandboxOptions.class).ignoreUnsupportedSandboxing) {
       env.getReporter().handle(Event.warn(SANDBOX_NOT_SUPPORTED_MESSAGE));
@@ -13,7 +12,7 @@ case LINUX:
   break;
 case DARWIN:
 if (DarwinSandboxRunner.isSupported()) {
-  contexts.add(DarwinSandboxedStrategy.create(buildRequest.getOptions(SandboxOptions.class),env.getClientEnv(),env.getDirectories(),backgroundWorkers,verboseFailures,unblockNetwork,env.getRuntime().getProductName()));
+  contexts.add(DarwinSandboxedStrategy.create(buildRequest,env.getClientEnv(),env.getDirectories(),backgroundWorkers,verboseFailures,env.getRuntime().getProductName()));
 }
 break;
 default :
