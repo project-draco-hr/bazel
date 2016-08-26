@@ -1,0 +1,21 @@
+{
+  super(ImmutableList.copyOf(argv.arguments()),ImmutableMap.<String,String>of(),executionInfo,inputManifests,SpawnAction.this,resourceSet);
+  for (  Artifact input : getInputs()) {
+    if (input.isFileset()) {
+      filesets.add(input);
+    }
+  }
+  LinkedHashMap<String,String> env=new LinkedHashMap<>(SpawnAction.this.getEnvironment());
+  if (clientEnv != null) {
+    for (    String var : SpawnAction.this.getClientEnvironmentVariables()) {
+      String value=clientEnv.get(var);
+      if (value == null) {
+        env.remove(var);
+      }
+ else {
+        env.put(var,value);
+      }
+    }
+  }
+  effectiveEnvironment=ImmutableMap.copyOf(env);
+}
