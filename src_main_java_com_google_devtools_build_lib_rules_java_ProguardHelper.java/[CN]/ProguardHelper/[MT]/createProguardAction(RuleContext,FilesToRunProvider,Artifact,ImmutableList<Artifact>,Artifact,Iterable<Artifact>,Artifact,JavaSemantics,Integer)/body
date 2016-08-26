@@ -4,18 +4,18 @@
   Preconditions.checkArgument(optMode != JavaOptimizationMode.LEGACY || !proguardSpecs.isEmpty());
   ProguardOutput output=getProguardOutputs(proguardOutputJar,ruleContext,semantics);
   if (optimizationPasses == null) {
-    Builder builder=makeBuilder(proguard,programJar,proguardSpecs,proguardMapping,libraryJars,output.getOutputJar(),output.getMapping(),output.getProtoMapping(),output.getConfig()).setProgressMessage("Trimming binary with Proguard").addOutput(proguardOutputJar);
+    Builder builder=makeBuilder(proguard,programJar,proguardSpecs,proguardMapping,libraryJars,output.getOutputJar(),output.getMapping(),output.getProtoMapping(),output.getSeeds(),output.getUsage(),output.getConfig()).setProgressMessage("Trimming binary with Proguard").addOutput(proguardOutputJar);
     ruleContext.registerAction(builder.build(ruleContext));
   }
  else {
     Artifact lastStageOutput=getProguardTempArtifact(ruleContext,optMode.name().toLowerCase(),"proguard_preoptimization.jar");
-    ruleContext.registerAction(makeBuilder(proguard,programJar,proguardSpecs,proguardMapping,libraryJars,output.getOutputJar(),null,null,null).setProgressMessage("Trimming binary with Proguard: Verification/Shrinking Pass").addArgument("-runtype INITIAL").addArgument("-nextstageoutput").addOutputArgument(lastStageOutput).build(ruleContext));
+    ruleContext.registerAction(makeBuilder(proguard,programJar,proguardSpecs,proguardMapping,libraryJars,output.getOutputJar(),null,null,null,null,null).setProgressMessage("Trimming binary with Proguard: Verification/Shrinking Pass").addArgument("-runtype INITIAL").addArgument("-nextstageoutput").addOutputArgument(lastStageOutput).build(ruleContext));
     for (int i=0; i < optimizationPasses; i++) {
       Artifact optimizationOutput=getProguardTempArtifact(ruleContext,optMode.name().toLowerCase(),"proguard_optimization_" + (i + 1) + ".jar");
-      ruleContext.registerAction(makeBuilder(proguard,programJar,proguardSpecs,proguardMapping,libraryJars,output.getOutputJar(),null,null,null).setProgressMessage("Trimming binary with Proguard: Optimization Pass " + (i + 1)).addArgument("-runtype OPTIMIZATION").addArgument("-laststageoutput").addInputArgument(lastStageOutput).addArgument("-nextstageoutput").addOutputArgument(optimizationOutput).build(ruleContext));
+      ruleContext.registerAction(makeBuilder(proguard,programJar,proguardSpecs,proguardMapping,libraryJars,output.getOutputJar(),null,null,null,null,null).setProgressMessage("Trimming binary with Proguard: Optimization Pass " + (i + 1)).addArgument("-runtype OPTIMIZATION").addArgument("-laststageoutput").addInputArgument(lastStageOutput).addArgument("-nextstageoutput").addOutputArgument(optimizationOutput).build(ruleContext));
       lastStageOutput=optimizationOutput;
     }
-    Builder builder=makeBuilder(proguard,programJar,proguardSpecs,proguardMapping,libraryJars,output.getOutputJar(),output.getMapping(),output.getProtoMapping(),output.getConfig()).setProgressMessage("Trimming binary with Proguard: Obfuscation and Final Ouput Pass").addArgument("-runtype FINAL").addArgument("-laststageoutput").addInputArgument(lastStageOutput).addOutput(proguardOutputJar);
+    Builder builder=makeBuilder(proguard,programJar,proguardSpecs,proguardMapping,libraryJars,output.getOutputJar(),output.getMapping(),output.getProtoMapping(),output.getSeeds(),output.getUsage(),output.getConfig()).setProgressMessage("Trimming binary with Proguard: Obfuscation and Final Ouput Pass").addArgument("-runtype FINAL").addArgument("-laststageoutput").addInputArgument(lastStageOutput).addOutput(proguardOutputJar);
     ruleContext.registerAction(builder.build(ruleContext));
   }
   return output;
