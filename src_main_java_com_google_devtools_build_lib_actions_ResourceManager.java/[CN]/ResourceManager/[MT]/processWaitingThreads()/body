@@ -2,9 +2,14 @@
   Iterator<Pair<ResourceSet,CountDownLatch>> iterator=requestList.iterator();
   while (iterator.hasNext()) {
     Pair<ResourceSet,CountDownLatch> request=iterator.next();
-    if (areResourcesAvailable(request.first)) {
-      incrementResources(request.first);
-      request.second.countDown();
+    if (request.second.getCount() != 0) {
+      if (areResourcesAvailable(request.first)) {
+        incrementResources(request.first);
+        request.second.countDown();
+        iterator.remove();
+      }
+    }
+ else {
       iterator.remove();
     }
   }

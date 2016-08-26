@@ -1,0 +1,35 @@
+{
+  assertFalse(rm.inUse());
+  TestThread smallThread=new TestThread(){
+    @Override public void runTest() throws InterruptedException {
+      acquire(1,0,0,0);
+    }
+  }
+;
+  smallThread.start();
+  smallThread.joinAndAssertState(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+  TestThread thread1=new TestThread(){
+    @Override public void runTest(){
+      Thread.currentThread().interrupt();
+      try {
+        acquire(1999,0,0,0);
+        fail("Didn't throw interrupted exception");
+      }
+ catch (      InterruptedException e) {
+      }
+    }
+  }
+;
+  thread1.start();
+  thread1.joinAndAssertState(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+  rm.setAvailableResources(ResourceSet.create(2000.0,1.0,1.0,2));
+  TestThread thread2=new TestThread(){
+    @Override public void runTest() throws InterruptedException {
+      acquire(1999,0,0,0);
+      release(1999,0,0,0);
+    }
+  }
+;
+  thread2.start();
+  thread2.joinAndAssertState(TestUtils.WAIT_TIMEOUT_MILLISECONDS);
+}

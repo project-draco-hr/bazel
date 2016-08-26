@@ -9,7 +9,18 @@
       latch.await();
     }
   }
-  finally {
+ catch (  InterruptedException e) {
+synchronized (this) {
+      if (latch.getCount() == 0) {
+        release(resources);
+      }
+ else {
+        latch.countDown();
+      }
+    }
+    throw e;
+  }
+ finally {
     threadLocked.set(resources.getCpuUsage() != 0 || resources.getMemoryMb() != 0 || resources.getIoUsage() != 0 || resources.getLocalTestCount() != 0);
     acquired(owner);
     if (latch != null) {
