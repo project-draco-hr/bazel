@@ -2,7 +2,6 @@
   if (!objcProvider.is(USES_SWIFT)) {
     return;
   }
-  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
-  CustomCommandLine.Builder commandLine=CustomCommandLine.builder().addPath(intermediateArtifacts.swiftFrameworksFileZip().getExecPath()).add("Frameworks").add("--platform").add(AppleToolchain.swiftPlatform(appleConfiguration)).addExecPath("--scan-executable",intermediateArtifacts.combinedArchitectureBinary());
-  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext).setMnemonic("SwiftStdlibCopy").setExecutable(attributes.swiftStdlibToolWrapper()).setCommandLine(commandLine.build()).addOutput(intermediateArtifacts.swiftFrameworksFileZip()).addInput(intermediateArtifacts.combinedArchitectureBinary()).build(ruleContext));
+  CustomCommandLine.Builder commandLine=CustomCommandLine.builder().addPath(intermediateArtifacts.swiftFrameworksFileZip().getExecPath()).add("Frameworks").add("--platform").add(platform.getLowerCaseNameInPlist()).addExecPath("--scan-executable",intermediateArtifacts.combinedArchitectureBinary());
+  ruleContext.registerAction(ObjcRuleClasses.spawnAppleEnvActionBuilder(ruleContext,platform).setMnemonic("SwiftStdlibCopy").setExecutable(attributes.swiftStdlibToolWrapper()).setCommandLine(commandLine.build()).addOutput(intermediateArtifacts.swiftFrameworksFileZip()).addInput(intermediateArtifacts.combinedArchitectureBinary()).build(ruleContext));
 }
