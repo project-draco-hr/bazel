@@ -1,4 +1,6 @@
 {
+  Preconditions.checkNotNull(resources,"tryAcquire called with resources == NULL during %s",owner);
+  Preconditions.checkState(!threadHasResources(),"tryAcquire with existing resource lock during %s",owner);
   boolean acquired=false;
 synchronized (this) {
     if (areResourcesAvailable(resources)) {
@@ -7,7 +9,7 @@ synchronized (this) {
     }
   }
   if (acquired) {
-    threadLocked.set(resources.getCpuUsage() != 0 || resources.getMemoryMb() != 0 || resources.getIoUsage() != 0 || resources.getLocalTestCount() != 0);
+    threadLocked.set(resources != ResourceSet.ZERO);
     acquired(owner);
     return new ResourceHandle(this,owner,resources);
   }

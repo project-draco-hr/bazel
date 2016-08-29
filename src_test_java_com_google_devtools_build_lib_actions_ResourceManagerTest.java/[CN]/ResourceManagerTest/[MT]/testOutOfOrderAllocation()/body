@@ -1,4 +1,6 @@
 {
+  final CyclicBarrier sync3=new CyclicBarrier(2);
+  final CyclicBarrier sync4=new CyclicBarrier(2);
   assertFalse(rm.inUse());
   TestThread thread1=new TestThread(){
     @Override public void runTest() throws Exception {
@@ -26,7 +28,29 @@
     }
   }
 ;
-  acquire(900,0.9,0,0);
+  TestThread thread3=new TestThread(){
+    @Override public void runTest() throws Exception {
+      acquire(100,0.4,0,0);
+      sync3.await();
+      sync3.await();
+      release(100,0.4,0,0);
+    }
+  }
+;
+  TestThread thread4=new TestThread(){
+    @Override public void runTest() throws Exception {
+      acquire(750,0.3,0,0);
+      sync4.await();
+      sync4.await();
+      release(750,0.3,0,0);
+    }
+  }
+;
+  acquire(50,0.2,0,0);
+  thread3.start();
+  thread4.start();
+  sync3.await(1,TimeUnit.SECONDS);
+  sync4.await(1,TimeUnit.SECONDS);
   validate(1);
   thread1.start();
   sync.await(1,TimeUnit.SECONDS);
@@ -36,12 +60,14 @@
     Thread.yield();
   }
   validate(3);
-  release(100,0.4,0,0);
+  sync3.await(1,TimeUnit.SECONDS);
   sync2.await(1,TimeUnit.SECONDS);
-  release(750,0.3,0,0);
+  sync4.await(1,TimeUnit.SECONDS);
   sync.await(1,TimeUnit.SECONDS);
   release(50,0.2,0,0);
   thread1.join();
   thread2.join();
+  thread3.join();
+  thread4.join();
   assertFalse(rm.inUse());
 }

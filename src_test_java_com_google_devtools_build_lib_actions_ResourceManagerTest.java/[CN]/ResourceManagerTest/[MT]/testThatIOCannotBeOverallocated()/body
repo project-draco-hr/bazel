@@ -1,5 +1,12 @@
 {
   assertFalse(rm.inUse());
   acquire(0,0,0.5,0);
-  assertThat(acquireNonblocking(0,0,0.6,0)).isNull();
+  TestThread thread1=new TestThread(){
+    @Override public void runTest() throws Exception {
+      assertThat(acquireNonblocking(0,0,0.6,0)).isNull();
+    }
+  }
+;
+  thread1.start();
+  thread1.joinAndAssertState(10000);
 }

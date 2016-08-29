@@ -1,5 +1,6 @@
 {
-  Preconditions.checkNotNull(resources);
+  Preconditions.checkNotNull(resources,"acquireResources called with resources == NULL during %s",owner);
+  Preconditions.checkState(!threadHasResources(),"acquireResources with existing resource lock during %s",owner);
   AutoProfiler p=profiled(owner,ProfilerTask.ACTION_LOCK);
   CountDownLatch latch=null;
   try {
@@ -21,7 +22,7 @@ synchronized (this) {
     throw e;
   }
  finally {
-    threadLocked.set(resources.getCpuUsage() != 0 || resources.getMemoryMb() != 0 || resources.getIoUsage() != 0 || resources.getLocalTestCount() != 0);
+    threadLocked.set(resources != ResourceSet.ZERO);
     acquired(owner);
     if (latch != null) {
       p.complete();

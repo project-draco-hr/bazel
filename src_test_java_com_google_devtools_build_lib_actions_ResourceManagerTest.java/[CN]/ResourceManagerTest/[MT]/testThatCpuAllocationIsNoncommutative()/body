@@ -1,9 +1,24 @@
 {
   assertFalse(rm.inUse());
   acquire(0,0.099,0,0);
-  assertThat(acquireNonblocking(0,0.99,0,0)).isNotNull();
-  release(0,1.089,0,0);
+  TestThread thread1=new TestThread(){
+    @Override public void runTest() throws Exception {
+      assertThat(acquireNonblocking(0,0.99,0,0)).isNotNull();
+      release(0,0.99,0,0);
+    }
+  }
+;
+  thread1.start();
+  thread1.joinAndAssertState(10000);
+  release(0,0.099,0,0);
   assertFalse(rm.inUse());
   acquire(0,0.99,0,0);
-  assertThat(acquireNonblocking(0,0.099,0,0)).isNull();
+  TestThread thread2=new TestThread(){
+    @Override public void runTest() throws Exception {
+      assertThat(acquireNonblocking(0,0.099,0,0)).isNull();
+    }
+  }
+;
+  thread2.start();
+  thread2.joinAndAssertState(10000);
 }
