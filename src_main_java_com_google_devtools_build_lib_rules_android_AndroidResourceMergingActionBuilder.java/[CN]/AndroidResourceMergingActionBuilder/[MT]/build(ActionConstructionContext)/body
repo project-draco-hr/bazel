@@ -1,0 +1,32 @@
+{
+  CustomCommandLine.Builder builder=new CustomCommandLine.Builder();
+  NestedSetBuilder<Artifact> inputs=NestedSetBuilder.naiveLinkOrder();
+  inputs.addAll(ruleContext.getExecutablePrerequisite("$android_resource_merger",Mode.HOST).getRunfilesSupport().getRunfilesArtifactsWithoutMiddlemen());
+  builder.addExecPath("--androidJar",sdk.getAndroidJar());
+  inputs.add(sdk.getAndroidJar());
+  Preconditions.checkNotNull(primary);
+  builder.add("--primaryData").add(RESOURCE_CONTAINER_TO_ARG.apply(primary));
+  inputs.addTransitive(RESOURCE_CONTAINER_TO_ARTIFACTS.apply(primary));
+  Preconditions.checkNotNull(primary.getManifest());
+  builder.addExecPath("--primaryManifest",primary.getManifest());
+  inputs.add(primary.getManifest());
+  ResourceContainerConverter.convertDependencies(dependencies,builder,inputs,RESOURCE_CONTAINER_TO_ARG,RESOURCE_CONTAINER_TO_ARTIFACTS);
+  Preconditions.checkNotNull(classJarOut);
+  List<Artifact> outs=new ArrayList<>();
+  builder.addExecPath("--classJarOutput",classJarOut);
+  outs.add(classJarOut);
+  if (mergedResourcesOut != null) {
+    builder.addExecPath("--resourcesOutput",mergedResourcesOut);
+    outs.add(mergedResourcesOut);
+  }
+  if (manifestOut != null) {
+    builder.addExecPath("--manifestOutput",manifestOut);
+    outs.add(manifestOut);
+  }
+  if (!Strings.isNullOrEmpty(customJavaPackage)) {
+    builder.add("--packageForR").add(customJavaPackage);
+  }
+  SpawnAction.Builder spawnActionBuilder=new SpawnAction.Builder();
+  ruleContext.registerAction(spawnActionBuilder.addTransitiveInputs(inputs.build()).addOutputs(ImmutableList.copyOf(outs)).setCommandLine(builder.build()).setExecutable(ruleContext.getExecutablePrerequisite("$android_resource_merger",Mode.HOST)).setProgressMessage("Merging Android resources for " + ruleContext.getLabel()).setMnemonic("AndroidResourceMerger").build(context));
+  return new ResourceContainer(primary.getLabel(),primary.getJavaPackage(),primary.getRenameManifestPackage(),primary.getConstantsInlined(),primary.getApk(),manifestOut != null ? manifestOut : primary.getManifest(),primary.getJavaSourceJar(),primary.getArtifacts(ResourceType.ASSETS),primary.getArtifacts(ResourceType.RESOURCES),primary.getRoots(ResourceType.ASSETS),primary.getRoots(ResourceType.RESOURCES),primary.isManifestExported(),primary.getRTxt(),primary.getSymbolsTxt());
+}

@@ -1,0 +1,30 @@
+{
+  Stopwatch timer=Stopwatch.createStarted();
+  final ListeningExecutorService executorService=MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(15));
+  try (Closeable closeable=ExecutorServiceCloser.createWith(executorService)){
+    AndroidDataMerger merger=AndroidDataMerger.createWithPathDeduplictor(executorService);
+    UnwrittenMergedAndroidData merged=merger.loadAndMerge(transitive,direct,primary,primaryManifest,type != VariantConfiguration.Type.LIBRARY);
+    logger.fine(String.format("merge finished in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    timer.reset().start();
+    if (symbolsOut != null) {
+      AndroidDataSerializer serializer=AndroidDataSerializer.create();
+      merged.serializeTo(serializer);
+      serializer.flushTo(symbolsOut);
+      logger.fine(String.format("serialize merge finished in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+      timer.reset().start();
+    }
+    if (rclassWriter != null) {
+      merged.writeResourceClass(rclassWriter);
+      logger.fine(String.format("write classes finished in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+      timer.reset().start();
+    }
+    AndroidDataWriter writer=AndroidDataWriter.createWith(resourcesOut.getParent(),resourcesOut,assetsOut,cruncher,executorService);
+    return merged.write(writer);
+  }
+ catch (  IOException e) {
+    throw new MergingException(e);
+  }
+ finally {
+    logger.fine(String.format("write merge finished in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+  }
+}

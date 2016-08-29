@@ -1,0 +1,48 @@
+{
+  final Stopwatch timer=Stopwatch.createStarted();
+  OptionsParser optionsParser=OptionsParser.newOptionsParser(Options.class,AaptConfigOptions.class);
+  optionsParser.parseAndExitUponError(args);
+  AaptConfigOptions aaptConfigOptions=optionsParser.getOptions(AaptConfigOptions.class);
+  Options options=optionsParser.getOptions(Options.class);
+  final AndroidResourceProcessor resourceProcessor=new AndroidResourceProcessor(stdLogger);
+  Preconditions.checkNotNull(options.primaryData);
+  Preconditions.checkNotNull(options.primaryManifest);
+  Preconditions.checkNotNull(options.classJarOutput);
+  try (ScopedTemporaryDirectory scopedTmp=new ScopedTemporaryDirectory("android_resource_merge_tmp")){
+    Path tmp=scopedTmp.getPath();
+    Path mergedAssets=tmp.resolve("merged_assets");
+    Path mergedResources=tmp.resolve("merged_resources");
+    Path generatedSources=tmp.resolve("generated_resources");
+    Path processedManifest=tmp.resolve("manifest-processed/AndroidManifest.xml");
+    logger.fine(String.format("Setup finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    VariantConfiguration.Type packageType=Type.LIBRARY;
+    String packageName=options.packageForR;
+    AndroidResourceClassWriter resourceClassWriter=new AndroidResourceClassWriter(new AndroidFrameworkAttrIdJar(aaptConfigOptions.androidJar),generatedSources,packageName);
+    resourceClassWriter.setIncludeClassFile(true);
+    resourceClassWriter.setIncludeJavaFile(false);
+    final MergedAndroidData mergedData=resourceProcessor.mergeData(options.primaryData,options.primaryManifest,options.directData,options.transitiveData,mergedResources,mergedAssets,new StubPngCruncher(),packageType,resourceClassWriter);
+    logger.fine(String.format("Merging finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    if (options.manifestOutput != null) {
+      MergedAndroidData processedData=resourceProcessor.processManifest(packageType,options.packageForR,null,-1,null,mergedData,processedManifest);
+      resourceProcessor.copyManifestToOutput(processedData,options.manifestOutput);
+    }
+    resourceProcessor.createClassJar(generatedSources,options.classJarOutput);
+    logger.fine(String.format("Create classJar finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    if (options.resourcesOutput != null) {
+      resourceProcessor.createResourcesZip(mergedData.getResourceDir(),mergedData.getAssetDir(),options.resourcesOutput,true);
+      logger.fine(String.format("Create resources.zip finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    }
+  }
+ catch (  MergingException e) {
+    logger.log(Level.SEVERE,"Error during merging resources",e);
+    throw e;
+  }
+catch (  Exception e) {
+    logger.log(Level.SEVERE,"Unexpected",e);
+    throw e;
+  }
+ finally {
+    resourceProcessor.shutdown();
+  }
+  logger.fine(String.format("Resources merged in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+}

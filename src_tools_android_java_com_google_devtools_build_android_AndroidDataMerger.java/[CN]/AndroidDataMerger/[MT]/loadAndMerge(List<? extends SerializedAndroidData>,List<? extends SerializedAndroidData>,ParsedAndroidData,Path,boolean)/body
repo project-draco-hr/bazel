@@ -1,0 +1,23 @@
+{
+  Stopwatch timer=Stopwatch.createStarted();
+  try {
+    final ParsedAndroidData.Builder directBuilder=ParsedAndroidData.Builder.newBuilder();
+    final ParsedAndroidData.Builder transitiveBuilder=ParsedAndroidData.Builder.newBuilder();
+    final AndroidDataSerializer serializer=AndroidDataSerializer.create();
+    final List<ListenableFuture<Boolean>> tasks=new ArrayList<>();
+    for (    final SerializedAndroidData dependency : direct) {
+      tasks.add(executorService.submit(new ParseDependencyDataTask(serializer,dependency,directBuilder)));
+    }
+    for (    final SerializedAndroidData dependency : transitive) {
+      tasks.add(executorService.submit(new ParseDependencyDataTask(serializer,dependency,transitiveBuilder)));
+    }
+    FailedFutureAggregator<MergingException> aggregator=FailedFutureAggregator.createForMergingExceptionWithMessage("Failure(s) during dependency parsing");
+    aggregator.aggregateAndMaybeThrow(tasks);
+    logger.fine(String.format("Merged dependencies read in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    timer.reset().start();
+    return doMerge(transitiveBuilder.build(),directBuilder.build(),primary,primaryManifest,allowPrimaryOverrideAll);
+  }
+  finally {
+    logger.fine(String.format("Resources merged in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+  }
+}
