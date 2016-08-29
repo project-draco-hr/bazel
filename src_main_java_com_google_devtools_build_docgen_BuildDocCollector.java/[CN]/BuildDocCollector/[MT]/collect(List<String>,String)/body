@@ -1,23 +1,4 @@
 {
-  Set<String> blacklistedRules=readBlackList(blackList);
-  Map<String,RuleDocumentation> ruleDocEntries=new TreeMap<>();
-  ListMultimap<String,RuleDocumentationAttribute> attributeDocEntries=LinkedListMultimap.create();
-  Map<String,File> ruleClassFiles=new HashMap<>();
-  Set<File> processedFiles=new HashSet<>();
-  for (  String inputDir : inputDirs) {
-    if (printMessages) {
-      System.out.println(" Processing input directory: " + inputDir);
-    }
-    int ruleNum=ruleDocEntries.size();
-    collectDocs(processedFiles,ruleClassFiles,ruleDocEntries,blacklistedRules,attributeDocEntries,new File(inputDir));
-    if (printMessages) {
-      System.out.println(" " + (ruleDocEntries.size() - ruleNum) + " rule documentations found.");
-    }
-  }
-  processAttributeDocs(ruleDocEntries.values(),attributeDocEntries);
-  RuleLinkExpander expander=buildRuleLinkExpander(ruleDocEntries.values());
-  for (  RuleDocumentation rule : ruleDocEntries.values()) {
-    rule.setRuleLinkExpander(expander);
-  }
-  return ruleDocEntries;
+  RuleLinkExpander expander=new RuleLinkExpander(false);
+  return collect(inputDirs,blackList,expander);
 }

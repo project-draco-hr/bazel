@@ -1,0 +1,17 @@
+{
+  BuildDocCollector collector=new BuildDocCollector(ruleClassProvider,false);
+  RuleLinkExpander expander=new RuleLinkExpander(true);
+  Map<String,RuleDocumentation> ruleDocEntries=collector.collect(inputDirs,blackList,expander);
+  warnAboutUndocumentedRules(Sets.difference(ruleClassProvider.getRuleClassMap().keySet(),ruleDocEntries.keySet()));
+  RuleFamilies ruleFamilies=assembleRuleFamilies(ruleDocEntries.values());
+  Page page=TemplateEngine.newPage(DocgenConsts.SINGLE_BE_TEMPLATE);
+  page.add("expander",expander);
+  page.add("commonAttributes",expandCommonAttributes(PredefinedAttributes.COMMON_ATTRIBUTES,expander));
+  page.add("testAttributes",expandCommonAttributes(PredefinedAttributes.TEST_ATTRIBUTES,expander));
+  page.add("binaryAttributes",expandCommonAttributes(PredefinedAttributes.BINARY_ATTRIBUTES,expander));
+  page.add("langSpecificRuleFamilies",ruleFamilies.langSpecific);
+  page.add("genericRuleFamilies",ruleFamilies.generic);
+  page.add("ruleFamilies",ruleFamilies.all);
+  page.add("singlePage",true);
+  writePage(page,outputDir,"build-encyclopedia.html");
+}
