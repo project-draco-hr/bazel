@@ -1,0 +1,10 @@
+{
+  Map<String,String> builder=new LinkedHashMap<>();
+  CppConfiguration cppConfiguration=ruleContext.getFragment(CppConfiguration.class);
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
+  builder.putAll(appleConfiguration.getAppleHostSystemEnv());
+  if (Platform.isApplePlatform(cppConfiguration.getTargetCpu())) {
+    builder.putAll(appleConfiguration.appleTargetPlatformEnv(Platform.forTargetCpu(cppConfiguration.getTargetCpu())));
+  }
+  return ImmutableMap.copyOf(builder);
+}
