@@ -28,8 +28,7 @@
       resourceProcessor.copyManifestToOutput(processedData,options.manifestOutput);
     }
     if (options.packageType == Type.LIBRARY) {
-      Files.createDirectories(dummyManifest.getParent());
-      Files.write(dummyManifest,String.format("<?xml version=\"1.0\" encoding=\"utf-8\"?>" + "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"" + " package=\"%s\">"+ "</manifest>",options.packageForR).getBytes(UTF_8));
+      resourceProcessor.writeDummyManifestForAapt(dummyManifest,options.packageForR);
       processedData=new MergedAndroidData(processedData.getResourceDir(),processedData.getAssetDir(),dummyManifest);
     }
     resourceProcessor.processResources(aaptConfigOptions.aapt,aaptConfigOptions.androidJar,aaptConfigOptions.buildToolsVersion,options.packageType,aaptConfigOptions.debug,options.packageForR,new FlagAaptOptions(aaptConfigOptions),aaptConfigOptions.resourceConfigs,aaptConfigOptions.splits,processedData,data,generatedSources,options.packagePath,options.proguardOutput,options.mainDexProguardOutput,options.resourcesOutput != null ? processedData.getResourceDir().resolve("values").resolve("public.xml") : null,options.dataBindingInfoOut);

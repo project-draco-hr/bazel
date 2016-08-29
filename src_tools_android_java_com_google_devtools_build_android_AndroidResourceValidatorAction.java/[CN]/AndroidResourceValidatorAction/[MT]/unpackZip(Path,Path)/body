@@ -1,0 +1,19 @@
+{
+  byte[] buffer=new byte[4096];
+  try (ZipInputStream zis=new ZipInputStream(new BufferedInputStream(Files.newInputStream(mergedResources)))){
+    ZipEntry z=zis.getNextEntry();
+    while (z != null) {
+      String entryName=z.getName();
+      Path outputPath=expandedOut.resolve(entryName);
+      Files.createDirectories(outputPath.getParent());
+      try (OutputStream out=new BufferedOutputStream(Files.newOutputStream(outputPath))){
+        int count=zis.read(buffer);
+        while (count != -1) {
+          out.write(buffer,0,count);
+          count=zis.read(buffer);
+        }
+      }
+       z=zis.getNextEntry();
+    }
+  }
+ }

@@ -1,0 +1,34 @@
+{
+  final Stopwatch timer=Stopwatch.createStarted();
+  OptionsParser optionsParser=OptionsParser.newOptionsParser(Options.class,AaptConfigOptions.class);
+  optionsParser.parseAndExitUponError(args);
+  AaptConfigOptions aaptConfigOptions=optionsParser.getOptions(AaptConfigOptions.class);
+  Options options=optionsParser.getOptions(Options.class);
+  final AndroidResourceProcessor resourceProcessor=new AndroidResourceProcessor(stdLogger);
+  VariantConfiguration.Type packageType=Type.LIBRARY;
+  Preconditions.checkNotNull(options.rOutput);
+  Preconditions.checkNotNull(options.srcJarOutput);
+  try (ScopedTemporaryDirectory scopedTmp=new ScopedTemporaryDirectory("resource_validator_tmp")){
+    Path tmp=scopedTmp.getPath();
+    Path expandedOut=tmp.resolve("tmp-expanded");
+    Path resources=expandedOut.resolve("res");
+    Path assets=expandedOut.resolve("assets");
+    Path generatedSources=tmp.resolve("generated_resources");
+    Path dummyManifest=tmp.resolve("manifest-aapt-dummy/AndroidManifest.xml");
+    unpackZip(options.mergedResources,expandedOut);
+    logger.fine(String.format("unpacked zip at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    resourceProcessor.writeDummyManifestForAapt(dummyManifest,options.packageForR);
+    resourceProcessor.runAapt(aaptConfigOptions.aapt,aaptConfigOptions.androidJar,aaptConfigOptions.buildToolsVersion,packageType,aaptConfigOptions.debug,options.packageForR,new FlagAaptOptions(aaptConfigOptions),aaptConfigOptions.resourceConfigs,ImmutableList.<String>of(),dummyManifest,resources,assets,generatedSources,null,null,null,null);
+    logger.fine(String.format("aapt finished at %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+    resourceProcessor.copyRToOutput(generatedSources,options.rOutput,VariantConfiguration.Type.LIBRARY == packageType);
+    resourceProcessor.createSrcJar(generatedSources,options.srcJarOutput,VariantConfiguration.Type.LIBRARY == packageType);
+  }
+ catch (  Exception e) {
+    logger.log(java.util.logging.Level.SEVERE,"Unexpected",e);
+    throw e;
+  }
+ finally {
+    resourceProcessor.shutdown();
+  }
+  logger.fine(String.format("Resources merged in %sms",timer.elapsed(TimeUnit.MILLISECONDS)));
+}

@@ -1,0 +1,34 @@
+{
+  CustomCommandLine.Builder builder=new CustomCommandLine.Builder();
+  if (!Strings.isNullOrEmpty(sdk.getBuildToolsVersion())) {
+    builder.add("--buildToolsVersion").add(sdk.getBuildToolsVersion());
+  }
+  builder.addExecPath("--aapt",sdk.getAapt().getExecutable());
+  NestedSetBuilder<Artifact> inputs=NestedSetBuilder.naiveLinkOrder();
+  inputs.addAll(ruleContext.getExecutablePrerequisite("$android_resource_validator",Mode.HOST).getRunfilesSupport().getRunfilesArtifactsWithoutMiddlemen());
+  builder.addExecPath("--annotationJar",sdk.getAnnotationsJar());
+  inputs.add(sdk.getAnnotationsJar());
+  builder.addExecPath("--androidJar",sdk.getAndroidJar());
+  inputs.add(sdk.getAndroidJar());
+  Preconditions.checkNotNull(mergedResources);
+  builder.addExecPath("--mergedResources",mergedResources);
+  inputs.add(mergedResources);
+  builder.addExecPath("--manifest",primary.getManifest());
+  inputs.add(primary.getManifest());
+  if (debug) {
+    builder.add("--debug");
+  }
+  if (!Strings.isNullOrEmpty(customJavaPackage)) {
+    builder.add("--packageForR").add(customJavaPackage);
+  }
+  List<Artifact> outs=new ArrayList<>();
+  Preconditions.checkNotNull(rTxtOut);
+  builder.addExecPath("--rOutput",rTxtOut);
+  outs.add(rTxtOut);
+  Preconditions.checkNotNull(sourceJarOut);
+  builder.addExecPath("--srcJarOutput",sourceJarOut);
+  outs.add(sourceJarOut);
+  SpawnAction.Builder spawnActionBuilder=new SpawnAction.Builder();
+  ruleContext.registerAction(spawnActionBuilder.addTool(sdk.getAapt()).addTransitiveInputs(inputs.build()).addOutputs(ImmutableList.copyOf(outs)).setCommandLine(builder.build()).setExecutable(ruleContext.getExecutablePrerequisite("$android_resource_validator",Mode.HOST)).setProgressMessage("Validating Android resources for " + ruleContext.getLabel()).setMnemonic("AndroidResourceValidator").build(context));
+  return new ResourceContainer(primary.getLabel(),primary.getJavaPackage(),primary.getRenameManifestPackage(),primary.getConstantsInlined(),primary.getApk(),primary.getManifest(),sourceJarOut,primary.getArtifacts(ResourceType.ASSETS),primary.getArtifacts(ResourceType.RESOURCES),primary.getRoots(ResourceType.ASSETS),primary.getRoots(ResourceType.RESOURCES),primary.isManifestExported(),rTxtOut,primary.getSymbolsTxt());
+}
