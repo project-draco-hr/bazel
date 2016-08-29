@@ -32,7 +32,13 @@
     outputFiles.add(new PathFragment(output.getExecPathString()));
   }
   try {
-    final LinuxSandboxRunner runner=new LinuxSandboxRunner(execRoot,sandboxExecRoot,writablePaths,inaccessiblePaths,verboseFailures,sandboxOptions.sandboxDebug);
+    final LinuxSandboxRunner runner;
+    if (fullySupported) {
+      runner=new LinuxSandboxRunner(execRoot,sandboxExecRoot,writablePaths,inaccessiblePaths,verboseFailures,sandboxOptions.sandboxDebug);
+    }
+ else {
+      runner=new LinuxAlmostSandboxRunner(execRoot,sandboxExecRoot,writablePaths,inaccessiblePaths,verboseFailures,sandboxOptions.sandboxDebug);
+    }
     try {
       runner.run(spawn.getArguments(),env,outErr,mounts,outputFiles.build(),timeout,SandboxHelpers.shouldAllowNetwork(buildRequest,spawn));
     }
