@@ -3,7 +3,8 @@
   ObjcCommon common=common(ruleContext);
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
-  ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,common.getObjcProvider(),LinkedBinary.DEPENDENCIES_ONLY,bundleDirFormat,bundleName(ruleContext),bundleMinimumOsVersion(ruleContext));
+  AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
+  ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,common.getObjcProvider(),LinkedBinary.DEPENDENCIES_ONLY,bundleDirFormat,bundleName(ruleContext),bundleMinimumOsVersion(ruleContext),appleConfiguration.getMultiArchPlatform(PlatformType.IOS));
   releaseBundlingSupport.registerActions(DsymOutputType.APP).addXcodeSettings(xcodeProviderBuilder).addFilesToBuild(filesToBuild,DsymOutputType.APP).validateResources().validateAttributes();
   XcodeSupport xcodeSupport=new XcodeSupport(ruleContext).addFilesToBuild(filesToBuild).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),xcodeProductType,ruleContext.getFragment(AppleConfiguration.class).getDependencySingleArchitecture(),configurationDistinguisher).addDummySource(xcodeProviderBuilder);
   for (  Attribute attribute : dependencyAttributes) {

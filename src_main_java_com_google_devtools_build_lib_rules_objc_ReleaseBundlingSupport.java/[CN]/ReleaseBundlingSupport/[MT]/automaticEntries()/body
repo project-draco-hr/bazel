@@ -1,13 +1,12 @@
 {
   List<Integer> uiDeviceFamily=TargetDeviceFamily.UI_DEVICE_FAMILY_VALUES.get(bundleSupport.targetDeviceFamilies());
   AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
-  Platform platform=appleConfiguration.getMultiArchPlatform(PlatformType.IOS);
   NSDictionary result=new NSDictionary();
   if (uiDeviceFamily != null) {
     result.put("UIDeviceFamily",uiDeviceFamily.toArray());
   }
   result.put("DTPlatformName",platform.getLowerCaseNameInPlist());
-  result.put("DTSDKName",platform.getLowerCaseNameInPlist() + appleConfiguration.getIosSdkVersion());
+  result.put("DTSDKName",platform.getLowerCaseNameInPlist() + appleConfiguration.getSdkVersionForPlatform(platform));
   result.put("CFBundleSupportedPlatforms",new NSArray(NSObject.wrap(platform.getNameInPlist())));
   result.put("MinimumOSVersion",bundling.getMinimumOsVersion().toString());
   return result;
