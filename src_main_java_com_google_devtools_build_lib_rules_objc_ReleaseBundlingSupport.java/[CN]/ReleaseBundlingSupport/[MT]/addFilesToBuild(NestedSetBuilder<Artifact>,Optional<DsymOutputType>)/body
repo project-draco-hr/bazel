@@ -3,14 +3,14 @@
   for (  Artifact linkmapFile : getLinkmapFiles().values()) {
     filesToBuild.add(linkmapFile);
   }
-  if (ObjcRuleClasses.objcConfiguration(ruleContext).generateDsym()) {
-    filesToBuild.addAll(getDsymFiles(dsymOutputType).values());
+  if (ObjcRuleClasses.objcConfiguration(ruleContext).generateDsym() && dsymOutputType.isPresent()) {
+    filesToBuild.addAll(getDsymFiles(dsymOutputType.get()).values());
     Artifact cpuPlist=getAnyCpuSpecificDsymPlist();
     if (cpuPlist != null) {
-      filesToBuild.add(intermediateArtifacts.dsymPlist(dsymOutputType));
+      filesToBuild.add(intermediateArtifacts.dsymPlist(dsymOutputType.get()));
     }
     if (linkedBinary == LinkedBinary.LOCAL_AND_DEPENDENCIES) {
-      debugSymbolBuilder.add(intermediateArtifacts.dsymPlist(dsymOutputType)).add(intermediateArtifacts.dsymSymbol(dsymOutputType));
+      debugSymbolBuilder.add(intermediateArtifacts.dsymPlist(dsymOutputType.get())).add(intermediateArtifacts.dsymSymbol(dsymOutputType.get()));
     }
   }
   filesToBuild.add(releaseBundling.getIpaArtifact()).addTransitive(debugSymbolBuilder.build()).addTransitive(objcProvider.get(ObjcProvider.EXPORTED_DEBUG_ARTIFACTS));

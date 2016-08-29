@@ -1,14 +1,13 @@
 {
   ObjcProvider.Builder extensionObjcProviderBuilder=new ObjcProvider.Builder();
-  ObjcProvider.Builder exposedObjcProviderBuilder=new ObjcProvider.Builder();
   XcodeProvider.Builder applicationXcodeProviderBuilder=new XcodeProvider.Builder();
   XcodeProvider.Builder extensionXcodeProviderBuilder=new XcodeProvider.Builder();
   NestedSetBuilder<Artifact> applicationFilesToBuild=NestedSetBuilder.stableOrder();
   NestedSetBuilder<Artifact> extensionfilesToBuild=NestedSetBuilder.stableOrder();
-  createWatchApplicationBundle(ruleContext,applicationXcodeProviderBuilder,applicationFilesToBuild,exposedObjcProviderBuilder);
+  createWatchApplicationBundle(ruleContext,applicationXcodeProviderBuilder,applicationFilesToBuild);
   createWatchExtensionBundle(ruleContext,extensionXcodeProviderBuilder,applicationXcodeProviderBuilder,extensionObjcProviderBuilder,extensionfilesToBuild);
   registerWatchApplicationUnBundlingAction(ruleContext);
   RuleConfiguredTargetBuilder targetBuilder=ObjcRuleClasses.ruleConfiguredTarget(ruleContext,extensionfilesToBuild.build()).addProvider(XcodeProvider.class,extensionXcodeProviderBuilder.build()).addProvider(InstrumentedFilesProvider.class,InstrumentedFilesCollector.forward(ruleContext,"binary"));
-  exposeObjcProvider(ruleContext,targetBuilder,exposedObjcProviderBuilder);
+  exposeObjcProvider(ruleContext,targetBuilder,extensionObjcProviderBuilder);
   return targetBuilder.build();
 }

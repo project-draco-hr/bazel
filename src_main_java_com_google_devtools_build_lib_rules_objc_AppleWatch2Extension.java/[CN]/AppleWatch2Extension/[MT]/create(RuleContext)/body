@@ -1,10 +1,10 @@
 {
   validateAttributes(ruleContext);
   ObjcProvider.Builder exposedObjcProviderBuilder=new ObjcProvider.Builder();
-  NestedSetBuilder<Artifact> applicationFilesToBuild=NestedSetBuilder.stableOrder();
-  createWatchExtensionBundle(ruleContext);
-  createWatchApplicationBundle(ruleContext,watchExtensionIpaArtifact(ruleContext),applicationFilesToBuild,exposedObjcProviderBuilder);
-  RuleConfiguredTargetBuilder targetBuilder=ObjcRuleClasses.ruleConfiguredTarget(ruleContext,applicationFilesToBuild.build()).addProvider(InstrumentedFilesProvider.class,InstrumentedFilesCollector.forward(ruleContext,"binary"));
+  NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.stableOrder();
+  createWatchExtensionBundle(ruleContext,filesToBuild,exposedObjcProviderBuilder);
+  createWatchApplicationBundle(ruleContext,watchExtensionIpaArtifact(ruleContext),filesToBuild);
+  RuleConfiguredTargetBuilder targetBuilder=ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build()).addProvider(InstrumentedFilesProvider.class,InstrumentedFilesCollector.forward(ruleContext,"binary"));
   exposedObjcProviderBuilder.add(MERGE_ZIP,ruleContext.getImplicitOutputArtifact(APP_NAME_IPA));
   WatchUtils.registerActionsToAddWatchSupport(ruleContext,exposedObjcProviderBuilder,WatchOSVersion.OS2);
   exposedObjcProviderBuilder.add(FLAG,HAS_WATCH2_EXTENSION);
