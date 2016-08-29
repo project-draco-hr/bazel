@@ -4,13 +4,18 @@
   JavaCompilationArtifacts.Builder javaArtifactsBuilder=new JavaCompilationArtifacts.Builder();
   JavaTargetAttributes.Builder javacAttributes=new JavaTargetAttributes.Builder(javaSemantics).addSourceJar(resourcesJar);
   JavaCompilationHelper javacHelper=new JavaCompilationHelper(ruleContext,javaSemantics,getJavacOpts(),javacAttributes);
-  if (useRClassGenerator) {
-    RClassGeneratorActionBuilder actionBuilder=new RClassGeneratorActionBuilder(ruleContext).withPrimary(resourceApk.getPrimaryResource()).withDependencies(resourceApk.getResourceDependencies()).setClassJarOut(resourceClassJar);
-    actionBuilder.build();
+  if (resourceApk.getResourceJavaClassJar() == null) {
+    if (useRClassGenerator) {
+      RClassGeneratorActionBuilder actionBuilder=new RClassGeneratorActionBuilder(ruleContext).withPrimary(resourceApk.getPrimaryResource()).withDependencies(resourceApk.getResourceDependencies()).setClassJarOut(resourceClassJar);
+      actionBuilder.build();
+    }
+ else {
+      Artifact outputDepsProto=javacHelper.createOutputDepsProtoArtifact(resourceClassJar,javaArtifactsBuilder);
+      javacHelper.createCompileActionWithInstrumentation(resourceClassJar,null,null,outputDepsProto,javaArtifactsBuilder);
+    }
   }
  else {
-    Artifact outputDepsProto=javacHelper.createOutputDepsProtoArtifact(resourceClassJar,javaArtifactsBuilder);
-    javacHelper.createCompileActionWithInstrumentation(resourceClassJar,null,null,outputDepsProto,javaArtifactsBuilder);
+    Preconditions.checkArgument(resourceApk.getResourceJavaClassJar().equals(ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_CLASS_JAR)));
   }
   javacHelper.createSourceJarAction(resourceSourceJar,null);
 }
