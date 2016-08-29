@@ -1,7 +1,7 @@
 {
   Executor executor=actionExecutionContext.getExecutor();
+  StandaloneSpawnStrategy standaloneStrategy=Preconditions.checkNotNull(executor.getContext(StandaloneSpawnStrategy.class));
   if (!spawn.isRemotable()) {
-    StandaloneSpawnStrategy standaloneStrategy=Preconditions.checkNotNull(executor.getContext(StandaloneSpawnStrategy.class));
     standaloneStrategy.exec(spawn,actionExecutionContext);
     return;
   }
@@ -12,12 +12,12 @@
   FileOutErr outErr=actionExecutionContext.getFileOutErr();
   String execId=uuid + "-" + execCounter.getAndIncrement();
   Path sandboxPath=blazeDirs.getOutputBase().getRelative(productName + "-sandbox").getRelative(execId);
-  ImmutableSet<PathFragment> createDirs=createImportantDirs(spawn.getEnvironment(),sandboxPath);
+  ImmutableSet<PathFragment> createDirs=createImportantDirs(standaloneStrategy.locallyDeterminedEnv(spawn.getEnvironment()),sandboxPath);
   int timeout=getTimeout(spawn);
   ImmutableSet.Builder<PathFragment> outputFiles=ImmutableSet.<PathFragment>builder();
   final DarwinSandboxRunner runner=getRunnerForExec(spawn,actionExecutionContext,sandboxPath,createDirs,outputFiles);
   try {
-    runner.run(spawn.getArguments(),spawn.getEnvironment(),outErr,outputFiles.build(),timeout);
+    runner.run(spawn.getArguments(),standaloneStrategy.locallyDeterminedEnv(spawn.getEnvironment()),outErr,outputFiles.build(),timeout);
   }
  catch (  IOException e) {
     throw new UserExecException("I/O error during sandboxed execution",e);
