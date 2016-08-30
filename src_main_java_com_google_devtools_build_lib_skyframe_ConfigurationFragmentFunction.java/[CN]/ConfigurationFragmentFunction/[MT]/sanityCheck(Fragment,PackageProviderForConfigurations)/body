@@ -7,14 +7,13 @@
     return;
   }
   Set<Label> reachableLabels=new HashSet<>();
-  for (  Map.Entry<String,Label> entry : buildOptions.getAllLabels().entries()) {
-    Label label=entry.getValue();
+  for (  Label root : fragment.getSanityCheckRoots()) {
     try {
-      collectAllTransitiveLabels(packageProvider,reachableLabels,label);
+      collectAllTransitiveLabels(packageProvider,reachableLabels,root);
     }
  catch (    NoSuchThingException e) {
       packageProvider.getEventHandler().handle(Event.error(e.getMessage()));
-      throw new InvalidConfigurationException(String.format("Failed to load required %s target: '%s'",entry.getKey(),label));
+      throw new InvalidConfigurationException(String.format("Failed to load transitive closure of '%s': %s",root,e.getMessage()));
     }
   }
   if (packageProvider.valuesMissing()) {
