@@ -1,66 +1,33 @@
 {
   Executor executor=actionExecutionContext.getExecutor();
   if (!spawn.isRemotable()) {
-    StandaloneSpawnStrategy standaloneStrategy=Preconditions.checkNotNull(executor.getContext(StandaloneSpawnStrategy.class));
-    standaloneStrategy.exec(spawn,actionExecutionContext);
+    SandboxHelpers.fallbackToNonSandboxedExecution(spawn,actionExecutionContext,executor);
     return;
   }
-  if (executor.reportsSubcommands()) {
-    executor.reportSubcommand(Label.print(spawn.getOwner().getLabel()) + " [" + spawn.getResourceOwner().prettyPrint()+ "]",spawn.asShellCommand(executor.getExecRoot()));
-  }
-  executor.getEventBus().post(ActionStatusMessage.runningStrategy(spawn.getResourceOwner(),"sandbox"));
-  FileOutErr outErr=actionExecutionContext.getFileOutErr();
-  String execId=uuid + "-" + execCounter.getAndIncrement();
-  Path sandboxExecRoot=blazeDirs.getOutputBase().getRelative(productName + "-sandbox").getRelative(execId);
-  Map<PathFragment,Path> mounts;
+  SandboxHelpers.reportSubcommand(executor,spawn);
+  SandboxHelpers.postActionStatusMessage(executor,spawn);
+  Path sandboxPath=SandboxHelpers.getSandboxRoot(blazeDirs,productName,uuid,execCounter);
+  Path sandboxExecRoot=sandboxPath.getRelative("execroot");
+  Set<Path> writableDirs=getWritableDirs(sandboxExecRoot,spawn.getEnvironment());
   try {
-    mounts=getMounts(spawn,actionExecutionContext);
-  }
- catch (  IllegalArgumentException|IOException e) {
-    throw new EnvironmentalExecException("Could not prepare mounts for sandbox execution",e);
-  }
-  Map<String,String> env=new HashMap<>(spawn.getEnvironment());
-  ImmutableSet<Path> writablePaths=getWritablePaths(sandboxExecRoot,env);
-  ImmutableList<Path> inaccessiblePaths=getInaccessiblePaths();
-  int timeout=getTimeout(spawn);
-  ImmutableSet.Builder<PathFragment> outputFiles=ImmutableSet.builder();
-  for (  PathFragment optionalOutput : spawn.getOptionalOutputFiles()) {
-    Preconditions.checkArgument(!optionalOutput.isAbsolute());
-    outputFiles.add(optionalOutput);
-  }
-  for (  ActionInput output : spawn.getOutputFiles()) {
-    outputFiles.add(new PathFragment(output.getExecPathString()));
-  }
-  try {
-    final LinuxSandboxRunner runner;
+    SymlinkedExecRoot symlinkedExecRoot=new SymlinkedExecRoot(sandboxExecRoot);
+    ImmutableSet<PathFragment> outputs=SandboxHelpers.getOutputFiles(spawn);
+    symlinkedExecRoot.createFileSystem(getMounts(spawn,actionExecutionContext),outputs,writableDirs);
+    final SandboxRunner runner;
     if (fullySupported) {
-      runner=new LinuxSandboxRunner(execRoot,sandboxExecRoot,writablePaths,inaccessiblePaths,verboseFailures,sandboxOptions.sandboxDebug);
+      runner=new LinuxSandboxRunner(execRoot,sandboxPath,sandboxExecRoot,getWritableDirs(sandboxExecRoot,spawn.getEnvironment()),getInaccessiblePaths(),verboseFailures,sandboxOptions.sandboxDebug);
     }
  else {
-      runner=new LinuxAlmostSandboxRunner(execRoot,sandboxExecRoot,writablePaths,inaccessiblePaths,verboseFailures,sandboxOptions.sandboxDebug);
+      runner=new ProcessWrapperRunner(execRoot,sandboxPath,sandboxExecRoot,verboseFailures);
     }
     try {
-      runner.run(spawn.getArguments(),env,outErr,mounts,outputFiles.build(),timeout,SandboxHelpers.shouldAllowNetwork(buildRequest,spawn));
+      runner.run(spawn.getArguments(),spawn.getEnvironment(),actionExecutionContext.getFileOutErr(),SandboxHelpers.getTimeout(spawn),SandboxHelpers.shouldAllowNetwork(buildRequest,spawn));
     }
   finally {
-      backgroundWorkers.execute(new Runnable(){
-        @Override public void run(){
-          try {
-            while (!Thread.currentThread().isInterrupted()) {
-              try {
-                runner.cleanup();
-                return;
-              }
- catch (              IOException e2) {
-                Thread.sleep(250);
-              }
-            }
-          }
- catch (          InterruptedException e) {
-          }
-        }
+      symlinkedExecRoot.copyOutputs(execRoot,outputs);
+      if (!sandboxOptions.sandboxDebug) {
+        SandboxHelpers.lazyCleanup(backgroundWorkers,runner);
       }
-);
     }
   }
  catch (  IOException e) {

@@ -1,0 +1,15 @@
+{
+  Command cmd=getCommand(arguments,environment,timeout,allowNetwork);
+  try {
+    cmd.execute(new byte[]{},getCommandObserver(timeout),outErr.getOutputStream(),outErr.getErrorStream(),true);
+  }
+ catch (  CommandException e) {
+    boolean timedOut=false;
+    if (e instanceof AbnormalTerminationException) {
+      TerminationStatus status=((AbnormalTerminationException)e).getResult().getTerminationStatus();
+      timedOut=!status.exited() && (status.getTerminatingSignal() == getSignalOnTimeout());
+    }
+    String message=CommandFailureUtils.describeCommandFailure(verboseFailures,Arrays.asList(cmd.getCommandLineElements()),environment,sandboxExecRoot.getPathString());
+    throw new UserExecException(message,e,timedOut);
+  }
+}

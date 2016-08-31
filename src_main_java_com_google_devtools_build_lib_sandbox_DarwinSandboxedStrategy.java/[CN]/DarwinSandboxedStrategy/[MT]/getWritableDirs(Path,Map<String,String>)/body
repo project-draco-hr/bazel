@@ -1,0 +1,17 @@
+{
+  FileSystem fs=sandboxExecRoot.getFileSystem();
+  ImmutableSet.Builder<Path> writableDirs=ImmutableSet.builder();
+  writableDirs.addAll(super.getWritableDirs(sandboxExecRoot,env));
+  writableDirs.add(fs.getPath("/dev"));
+  String sysTmpDir=System.getenv("TMPDIR");
+  if (sysTmpDir != null) {
+    writableDirs.add(fs.getPath(sysTmpDir));
+  }
+  writableDirs.add(fs.getPath("/tmp"));
+  for (  Path path : confPaths) {
+    if (path.exists()) {
+      writableDirs.add(path);
+    }
+  }
+  return writableDirs.build();
+}

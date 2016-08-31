@@ -1,0 +1,19 @@
+{
+  Path inputsDir=sandboxPath.getRelative("inputs");
+  if (!inputsDir.exists()) {
+    inputsDir.createDirectory();
+  }
+  for (  ImmutableMap.Entry<PathFragment,Path> entry : inputs.entrySet()) {
+    Path source=entry.getValue().resolveSymbolicLinks();
+    Path target=source.startsWith(execRoot) ? inputsDir.getRelative(source.relativeTo(execRoot)) : inputsDir.getRelative(entry.getKey());
+    try {
+      createHardLink(target,source);
+    }
+ catch (    IOException e) {
+      target.createSymbolicLink(source);
+    }
+    Path symlinkNewPath=sandboxExecRoot.getRelative(entry.getKey());
+    FileSystemUtils.createDirectoryAndParents(symlinkNewPath.getParentDirectory());
+    symlinkNewPath.createSymbolicLink(target);
+  }
+}

@@ -1,0 +1,11 @@
+{
+  Set<Path> createdDirs=new HashSet<>();
+  for (  PathFragment output : outputs) {
+    Path source=sandboxExecRoot.getRelative(output);
+    if (source.isFile() || source.isSymbolicLink()) {
+      FileSystemUtils.createDirectoryAndParentsWithCache(createdDirs,execRoot.getRelative(output.getParentDirectory()));
+      Path target=execRoot.getRelative(output);
+      Files.move(source.getPathFile(),target.getPathFile());
+    }
+  }
+}
