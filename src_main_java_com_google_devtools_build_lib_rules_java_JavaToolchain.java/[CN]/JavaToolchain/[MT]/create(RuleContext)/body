@@ -14,10 +14,10 @@
   Artifact singleJar=getArtifact("singlejar",ruleContext);
   Artifact genClass=getArtifact("genclass",ruleContext);
   FilesToRunProvider ijar=ruleContext.getExecutablePrerequisite("ijar",Mode.HOST);
-  ImmutableMap<String,ImmutableList<String>> compatibleJavacOptions=getCompatibleJavacOptions(ruleContext);
+  ImmutableListMultimap<String,String> compatibleJavacOptions=getCompatibleJavacOptions(ruleContext);
   final JavaToolchainData toolchainData=new JavaToolchainData(source,target,Artifact.toExecPaths(bootclasspath),Artifact.toExecPaths(extclasspath),encoding,xlint,misc,jvmOpts,javacSupportsWorkers ? SupportsWorkers.YES : SupportsWorkers.NO);
   final JavaConfiguration configuration=ruleContext.getFragment(JavaConfiguration.class);
-  JavaToolchainProvider provider=new JavaToolchainProvider(toolchainData,bootclasspath,extclasspath,configuration.getDefaultJavacFlags(),javac,javabuilder,headerCompiler,singleJar,genClass,ijar,compatibleJavacOptions);
+  JavaToolchainProvider provider=JavaToolchainProvider.create(toolchainData,bootclasspath,extclasspath,configuration.getDefaultJavacFlags(),javac,javabuilder,headerCompiler,singleJar,genClass,ijar,compatibleJavacOptions);
   RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext).addSkylarkTransitiveInfo(JavaToolchainSkylarkApiProvider.NAME,new JavaToolchainSkylarkApiProvider()).add(JavaToolchainProvider.class,provider).setFilesToBuild(new NestedSetBuilder<Artifact>(Order.STABLE_ORDER).build()).add(RunfilesProvider.class,RunfilesProvider.simple(Runfiles.EMPTY));
   return builder.build();
 }
