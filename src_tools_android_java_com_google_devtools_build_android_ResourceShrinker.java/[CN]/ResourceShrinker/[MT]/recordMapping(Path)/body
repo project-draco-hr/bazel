@@ -4,9 +4,36 @@
   }
   final String arrowIndicator=" -> ";
   final String resourceIndicator=".R$";
+  Map<String,String> nameMap=null;
   for (  String line : Files.readLines(mapping.toFile(),UTF_8)) {
     if (line.startsWith(" ") || line.startsWith("\t")) {
+      if (nameMap != null) {
+        int n=line.length();
+        int i=0;
+        for (; i < n; i++) {
+          if (!Character.isWhitespace(line.charAt(i))) {
+            break;
+          }
+        }
+        if (i < n && line.startsWith("int",i)) {
+          int start=line.indexOf(' ',i + 3) + 1;
+          int arrow=line.indexOf(arrowIndicator);
+          if (start > 0 && arrow != -1) {
+            int end=line.indexOf(' ',start + 1);
+            if (end != -1) {
+              String oldName=line.substring(start,end);
+              String newName=line.substring(arrow + arrowIndicator.length()).trim();
+              if (!newName.equals(oldName)) {
+                nameMap.put(newName,oldName);
+              }
+            }
+          }
+        }
+      }
       continue;
+    }
+ else {
+      nameMap=null;
     }
     int index=line.indexOf(resourceIndicator);
     if (index == -1) {
@@ -27,6 +54,8 @@
     }
     String target=line.substring(arrow + arrowIndicator.length(),end).trim();
     String ownerName=target.replace('.','/');
-    resourceClassOwners.put(ownerName,type);
+    nameMap=Maps.newHashMap();
+    Pair<ResourceType,Map<String,String>> pair=Pair.of(type,nameMap);
+    resourceObfuscation.put(ownerName,pair);
   }
 }
