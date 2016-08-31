@@ -12,6 +12,11 @@
   FilesToRunProvider aidl=ruleContext.getExecutablePrerequisite("aidl",Mode.HOST);
   FilesToRunProvider aapt=ruleContext.getExecutablePrerequisite("aapt",Mode.HOST);
   FilesToRunProvider apkBuilder=ruleContext.getExecutablePrerequisite("apkbuilder",Mode.HOST);
+  FilesToRunProvider apkSigner=ruleContext.getExecutablePrerequisite("apksigner",Mode.HOST);
+  ApkSigningMethod apkSigningMethod=ruleContext.getFragment(AndroidConfiguration.class).getApkSigningMethod();
+  if (apkSigner == null && !apkSigningMethod.signLegacy()) {
+    ruleContext.throwWithRuleError("android_sdk attribute apksigner must be set to use signing method " + apkSigningMethod);
+  }
   FilesToRunProvider adb=ruleContext.getExecutablePrerequisite("adb",Mode.HOST);
   FilesToRunProvider dx=ruleContext.getExecutablePrerequisite("dx",Mode.HOST);
   FilesToRunProvider mainDexListCreator=ruleContext.getExecutablePrerequisite("main_dex_list_creator",Mode.HOST);
@@ -29,5 +34,5 @@
   if (ruleContext.hasErrors()) {
     return null;
   }
-  return new RuleConfiguredTargetBuilder(ruleContext).add(AndroidSdkProvider.class,AndroidSdkProvider.create(buildToolsVersion,aaptSupportsMainDexGeneration,frameworkAidl,androidJar,shrinkedAndroidJar,androidBaseClasspathForJack,javaBaseClasspathForJack,annotationsJar,mainDexClasses,adb,dx,mainDexListCreator,aidl,aapt,apkBuilder,proguard,zipalign,jack,jill,resourceExtractor)).add(RunfilesProvider.class,RunfilesProvider.EMPTY).setFilesToBuild(NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER)).build();
+  return new RuleConfiguredTargetBuilder(ruleContext).add(AndroidSdkProvider.class,AndroidSdkProvider.create(buildToolsVersion,aaptSupportsMainDexGeneration,frameworkAidl,androidJar,shrinkedAndroidJar,androidBaseClasspathForJack,javaBaseClasspathForJack,annotationsJar,mainDexClasses,adb,dx,mainDexListCreator,aidl,aapt,apkBuilder,apkSigner,proguard,zipalign,jack,jill,resourceExtractor)).add(RunfilesProvider.class,RunfilesProvider.EMPTY).setFilesToBuild(NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER)).build();
 }

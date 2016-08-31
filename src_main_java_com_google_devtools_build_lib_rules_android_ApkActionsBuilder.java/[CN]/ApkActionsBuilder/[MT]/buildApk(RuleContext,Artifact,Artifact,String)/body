@@ -1,0 +1,29 @@
+{
+  SpawnAction.Builder actionBuilder=new SpawnAction.Builder().setExecutable(AndroidSdkProvider.fromRuleContext(ruleContext).getApkBuilder()).setProgressMessage(message).setMnemonic("AndroidApkBuilder").addOutputArgument(outApk);
+  if (javaResourceZip != null) {
+    actionBuilder.addArgument("-rj").addInputArgument(javaResourceZip);
+  }
+  Artifact nativeSymlinks=nativeLibs.createApkBuilderSymlinks(ruleContext);
+  if (nativeSymlinks != null) {
+    PathFragment nativeSymlinksDir=nativeSymlinks.getExecPath().getParentDirectory();
+    actionBuilder.addInputManifest(nativeSymlinks,nativeSymlinksDir).addInput(nativeSymlinks).addInputs(nativeLibs.getAllNativeLibs()).addArgument("-nf").addArgument(nativeSymlinksDir.getPathString());
+  }
+  if (nativeLibs.getName() != null) {
+    actionBuilder.addArgument("-rf").addArgument(nativeLibs.getName().getExecPath().getParentDirectory().getPathString()).addInput(nativeLibs.getName());
+  }
+  if (javaResourceFile != null) {
+    actionBuilder.addArgument("-rf").addArgument((javaResourceFile.getExecPath().getParentDirectory().getPathString())).addInput(javaResourceFile);
+  }
+  if (signingKey == null) {
+    actionBuilder.addArgument("-u");
+  }
+ else {
+    actionBuilder.addArgument("-ks").addArgument(signingKey.getExecPathString());
+    actionBuilder.addInput(signingKey);
+  }
+  actionBuilder.addArgument("-z").addInputArgument(resourceApk);
+  if (classesDex != null) {
+    actionBuilder.addArgument(classesDex.getFilename().endsWith(".dex") ? "-f" : "-z").addInputArgument(classesDex);
+  }
+  return actionBuilder.build(ruleContext);
+}

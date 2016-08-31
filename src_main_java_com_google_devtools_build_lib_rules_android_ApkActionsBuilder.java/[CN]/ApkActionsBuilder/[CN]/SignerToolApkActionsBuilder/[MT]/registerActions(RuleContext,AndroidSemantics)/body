@@ -1,0 +1,16 @@
+{
+  Preconditions.checkState(signedApk == null || signedAndZipalignedApk == null,"ApkSignerTool cannot generate separate signedApk and signedAndZipalignedApk because " + "zipaligning is done between the v1 signing and v2 signing in the same action.");
+  Preconditions.checkNotNull(apkName,"APK name must be set to create progress messages for APK actions.");
+  Artifact finalApk=signedApk == null ? signedAndZipalignedApk : signedApk;
+  if (finalApk != null) {
+    Artifact intermediateUnsignedApk=this.unsignedApk;
+    if (intermediateUnsignedApk == null) {
+      intermediateUnsignedApk=AndroidBinary.getDxArtifact(ruleContext,"unsigned_" + finalApk.getFilename());
+    }
+    ruleContext.registerAction(buildApk(ruleContext,intermediateUnsignedApk,null,"Generating unsigned " + apkName));
+    ruleContext.registerAction(sign(ruleContext,semantics.getApkDebugSigningKey(ruleContext),intermediateUnsignedApk,finalApk));
+  }
+ else   if (unsignedApk != null) {
+    ruleContext.registerAction(buildApk(ruleContext,unsignedApk,null,"Generating unsigned " + apkName));
+  }
+}
