@@ -24,6 +24,7 @@
   NestedSetBuilder<Artifact> filesToBuild=NestedSetBuilder.<Artifact>stableOrder().addAll(common.getCompiledArchive().asSet());
   XcodeProvider.Builder xcodeProviderBuilder=new XcodeProvider.Builder();
   compilationSupport.addXcodeSettings(xcodeProviderBuilder,common);
+  new ResourceSupport(ruleContext).validateAttributes().addXcodeSettings(xcodeProviderBuilder);
   new XcodeSupport(ruleContext).addFilesToBuild(filesToBuild).addXcodeSettings(xcodeProviderBuilder,common.getObjcProvider(),LIBRARY_STATIC).addDependencies(xcodeProviderBuilder,new Attribute("bundles",Mode.TARGET)).addDependencies(xcodeProviderBuilder,new Attribute("deps",Mode.TARGET)).addNonPropagatedDependencies(xcodeProviderBuilder,new Attribute("non_propagated_deps",Mode.TARGET)).registerActions(xcodeProviderBuilder.build());
   return ObjcRuleClasses.ruleConfiguredTarget(ruleContext,filesToBuild.build()).addProvider(ObjcProvider.class,common.getObjcProvider()).addProviders(info.getProviders()).addProvider(ObjcProvider.class,common.getObjcProvider()).addProvider(XcodeProvider.class,xcodeProviderBuilder.build()).build();
 }
