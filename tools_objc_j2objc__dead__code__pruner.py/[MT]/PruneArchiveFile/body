@@ -4,6 +4,7 @@ def PruneArchiveFile(input_archive, output_archive, dummy_archive, dependency_ma
     header_map = BuildHeaderMapping(header_mapping_files, file_open)
     archive_source_file_mapping = BuildArchiveSourceFileMapping(archive_source_mapping_files, file_open)
     reachable_files_set = BuildReachableFileSet(entry_classes, reachability_file_mapping, header_map, archive_source_file_mapping)
+    cmd_env = {}
     j2objc_cmd = ''
     if (input_archive in archive_source_file_mapping):
         source_files = archive_source_file_mapping[input_archive]
@@ -15,13 +16,18 @@ def PruneArchiveFile(input_archive, output_archive, dummy_archive, dependency_ma
             if (len(unreachable_object_names) == len(source_files)):
                 j2objc_cmd = ('cp %s %s' % (dummy_archive, output_archive))
             else:
+                cmd_env['ZERO_AR_DATE'] = '1'
                 j2objc_cmd += ('cp %s %s;' % (input_archive, output_archive))
                 j2objc_cmd += ('chmod +w %s;' % output_archive)
                 unreachable_object_names = MatchObjectNamesInArchive(xcrunwrapper, input_archive, unreachable_object_names)
                 j2objc_cmd += ('%s ar -d -s %s %s;' % (xcrunwrapper, output_archive, ' '.join(unreachable_object_names)))
-                j2objc_cmd += ('%s ranlib -a %s' % (xcrunwrapper, output_archive))
+                j2objc_cmd += ('%s ranlib %s' % (xcrunwrapper, output_archive))
         else:
             j2objc_cmd = ('cp %s %s' % (input_archive, output_archive))
     else:
         j2objc_cmd = ('cp %s %s' % (input_archive, output_archive))
-    subprocess.check_output(j2objc_cmd, stderr=subprocess.STDOUT, shell=True)
+    subprocess.check_output(j2objc_cmd, stderr=subprocess.STDOUT, shell=True, env=cmd_env)
+    if os.path.exists(output_archive):
+        os.utime(output_archive, None)
+    else:
+        open(output_archive, 'a').close()
