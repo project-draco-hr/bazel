@@ -1,54 +1,10 @@
 {
-  NestedSetBuilder<Artifact> inputs=NestedSetBuilder.stableOrder();
   if (getDotdFile() == null) {
-    return inputs.build();
+    return NestedSetBuilder.<Artifact>stableOrder().build();
   }
-  try {
-    DependencySet depSet=processDepset(execRoot,reply);
-    CppConfiguration toolchain=cppConfiguration;
-    List<Path> systemIncludePrefixes=new ArrayList<>();
-    for (    PathFragment includePath : toolchain.getBuiltInIncludeDirectories()) {
-      if (includePath.isAbsolute()) {
-        systemIncludePrefixes.add(execRoot.getFileSystem().getPath(includePath));
-      }
-    }
-    IncludeProblems problems=new IncludeProblems();
-    Map<PathFragment,Artifact> allowedDerivedInputsMap=getAllowedDerivedInputsMap();
-    for (    Path execPath : depSet.getDependencies()) {
-      if (execPath.getBaseName().endsWith(".pcm")) {
-        continue;
-      }
-      PathFragment execPathFragment=execPath.asFragment();
-      if (execPathFragment.isAbsolute()) {
-        if (FileSystemUtils.startsWithAny(execPath,systemIncludePrefixes)) {
-          continue;
-        }
-        if (execPath.startsWith(execRoot)) {
-          execPathFragment=execPath.relativeTo(execRoot);
-        }
- else {
-          problems.add(execPathFragment.getPathString());
-          continue;
-        }
-      }
-      Artifact artifact=allowedDerivedInputsMap.get(execPathFragment);
-      if (artifact == null) {
-        artifact=artifactResolver.resolveSourceArtifact(execPathFragment);
-      }
-      if (artifact != null) {
-        inputs.add(artifact);
-        inputs.addAll(specialInputsHandler.getInputsForIncludedFile(artifact,artifactResolver));
-      }
- else {
-        problems.add(execPathFragment.getPathString());
-      }
-    }
-    if (semantics.needsIncludeValidation()) {
-      problems.assertProblemFree(this,getSourceFile());
-    }
+  HeaderDiscovery.Builder discoveryBuilder=new HeaderDiscovery.Builder().setAction(this).setDotdFile(getDotdFile()).setSourceFile(getSourceFile()).setSpecialInputsHandler(specialInputsHandler).setDependencySet(processDepset(execRoot,reply)).setPermittedSystemIncludePrefixes(getPermittedSystemIncludePrefixes(execRoot)).setAllowedDerivedinputsMap(getAllowedDerivedInputsMap());
+  if (cppSemantics.needsIncludeValidation()) {
+    discoveryBuilder.shouldValidateInclusions();
   }
- catch (  IOException e) {
-    throw new ActionExecutionException("error while parsing .d file",e,this,false);
-  }
-  return inputs.build();
+  return discoveryBuilder.build().discoverInputsFromDotdFiles(execRoot,artifactResolver);
 }

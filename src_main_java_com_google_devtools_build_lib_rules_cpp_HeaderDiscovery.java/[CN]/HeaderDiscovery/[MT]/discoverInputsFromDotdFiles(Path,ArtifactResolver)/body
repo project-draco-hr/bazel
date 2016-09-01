@@ -1,0 +1,43 @@
+{
+  NestedSetBuilder<Artifact> inputs=NestedSetBuilder.stableOrder();
+  if (dotdFile == null) {
+    return inputs.build();
+  }
+  List<Path> systemIncludePrefixes=permittedSystemIncludePrefixes;
+  IncludeProblems problems=new IncludeProblems();
+  for (  Path execPath : depSet.getDependencies()) {
+    if (execPath.getBaseName().endsWith(".pcm")) {
+      continue;
+    }
+    PathFragment execPathFragment=execPath.asFragment();
+    if (execPathFragment.isAbsolute()) {
+      if (FileSystemUtils.startsWithAny(execPath,systemIncludePrefixes)) {
+        continue;
+      }
+      if (execPath.startsWith(execRoot)) {
+        execPathFragment=execPath.relativeTo(execRoot);
+      }
+ else {
+        problems.add(execPathFragment.getPathString());
+        continue;
+      }
+    }
+    Artifact artifact=allowedDerivedInputsMap.get(execPathFragment);
+    if (artifact == null) {
+      artifact=artifactResolver.resolveSourceArtifact(execPathFragment);
+    }
+    if (artifact != null) {
+      inputs.add(artifact);
+      if (specialInputsHandler != null) {
+        inputs.addAll(specialInputsHandler.getInputsForIncludedFile(artifact,artifactResolver));
+      }
+    }
+ else {
+      problems.add(execPathFragment.getPathString());
+    }
+  }
+  if (shouldValidateInclusions) {
+    problems.assertProblemFree(action,sourceFile);
+  }
+  return inputs.build();
+}
