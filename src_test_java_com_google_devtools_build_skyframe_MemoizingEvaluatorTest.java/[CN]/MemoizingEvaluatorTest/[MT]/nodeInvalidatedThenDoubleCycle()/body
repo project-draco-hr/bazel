@@ -31,4 +31,11 @@
     assertThatEvaluationResult(result2).hasErrorEntryForKeyThat(topKey).hasCycleInfoThat().hasSize(1);
     assertThatEvaluationResult(result2).hasErrorEntryForKeyThat(depKey).hasCycleInfoThat().hasSize(1);
   }
+  tester.getOrCreate(topKey,true).setBuilder(null).addDependency(depKey).setConstantValue(new StringValue("a"));
+  tester.getOrCreate(depKey,true).removeDependency(depKey);
+  tester.invalidate();
+  EvaluationResult<StringValue> result3=tester.eval(true,topKey,depKey);
+  assertThatEvaluationResult(result3).hasEntryThat(topKey).isEqualTo(new StringValue("a"));
+  assertThatEvaluationResult(result3).hasEntryThat(depKey).isEqualTo(new StringValue("b"));
+  assertThatEvaluationResult(result3).hasNoError();
 }
