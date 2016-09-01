@@ -1,0 +1,13 @@
+{
+  scratch.file("test/extension.bzl","my_provider = provider()","def _impl(ctx):","   return struct(providers = [my_provider(x = 1)])","my_rule = rule(_impl)");
+  scratch.file("test/BUILD","load(':extension.bzl', 'my_rule')","my_rule(name = 'r')");
+  AnalysisResult analysisResult=update("//test:r");
+  ConfiguredTarget configuredTarget=analysisResult.getTargetsToBuild().iterator().next();
+  SkylarkClassObjectConstructor.Key key=new SkylarkClassObjectConstructor.Key(Label.create(configuredTarget.getLabel().getPackageIdentifier(),"extension.bzl"),"my_provider");
+  SkylarkProviders skylarkProviders=configuredTarget.getProvider(SkylarkProviders.class);
+  assertThat(skylarkProviders).isNotNull();
+  SkylarkClassObject declaredProvider=skylarkProviders.getDeclaredProvider(key);
+  assertThat(declaredProvider).isNotNull();
+  assertThat(declaredProvider.getConstructor().getKey()).isEqualTo(key);
+  assertThat(declaredProvider.getValue("x")).isEqualTo(1);
+}

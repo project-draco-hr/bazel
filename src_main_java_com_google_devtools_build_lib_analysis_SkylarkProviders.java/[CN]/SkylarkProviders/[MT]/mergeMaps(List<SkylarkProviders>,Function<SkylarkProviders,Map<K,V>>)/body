@@ -1,0 +1,14 @@
+{
+  ImmutableMap.Builder<K,V> resultBuilder=new ImmutableMap.Builder<>();
+  Set<K> seenKeys=new HashSet<>();
+  for (  SkylarkProviders provider : providers) {
+    Map<K,V> map=mapGetter.apply(provider);
+    for (    K key : map.keySet()) {
+      if (!seenKeys.add(key)) {
+        throw new IllegalStateException("Skylark provider " + key + " provided twice");
+      }
+      resultBuilder.put(key,map.get(key));
+    }
+  }
+  return resultBuilder.build();
+}

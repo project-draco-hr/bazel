@@ -5,15 +5,7 @@
   if (providers.size() == 1) {
     return providers.get(0);
   }
-  ImmutableMap.Builder<String,Object> resultBuilder=new ImmutableMap.Builder<>();
-  Set<String> seenKeys=new HashSet<>();
-  for (  SkylarkProviders provider : providers) {
-    for (    String key : provider.skylarkProviders.keySet()) {
-      if (!seenKeys.add(key)) {
-        throw new IllegalStateException("Skylark provider " + key + " provided twice");
-      }
-      resultBuilder.put(key,provider.getValue(key));
-    }
-  }
-  return new SkylarkProviders(resultBuilder.build());
+  ImmutableMap<String,Object> skylarkProviders=mergeMaps(providers,SKYLARK_PROVIDERS_MAP_FUNCTION);
+  ImmutableMap<SkylarkClassObjectConstructor.Key,SkylarkClassObject> declaredProviders=mergeMaps(providers,DECLARED_PROVIDERS_MAP_FUNCTION);
+  return new SkylarkProviders(skylarkProviders,declaredProviders);
 }
