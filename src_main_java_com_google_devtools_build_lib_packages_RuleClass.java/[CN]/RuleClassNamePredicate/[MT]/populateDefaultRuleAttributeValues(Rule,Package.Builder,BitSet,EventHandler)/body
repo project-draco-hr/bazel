@@ -19,6 +19,15 @@
     }
   }
   for (  Attribute attr : attrsWithComputedDefaults) {
-    rule.setAttributeValue(attr,attr.getDefaultValue(rule),false);
+    Object valueToSet;
+    Object defaultValue=attr.getDefaultValue(rule);
+    if (defaultValue instanceof SkylarkComputedDefaultTemplate) {
+      SkylarkComputedDefaultTemplate template=(SkylarkComputedDefaultTemplate)defaultValue;
+      valueToSet=template.computePossibleValues(attr,rule,eventHandler);
+    }
+ else {
+      valueToSet=defaultValue;
+    }
+    rule.setAttributeValue(attr,valueToSet,false);
   }
 }
