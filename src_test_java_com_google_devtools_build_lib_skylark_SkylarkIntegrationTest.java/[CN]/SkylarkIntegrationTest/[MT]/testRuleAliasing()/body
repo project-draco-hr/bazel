@@ -1,0 +1,9 @@
+{
+  scratch.file("test/skylark/implementation.bzl","def impl(ctx): return struct()","custom_rule = rule(implementation = impl)");
+  scratch.file("test/skylark/ext.bzl","load('/test/skylark/implementation', 'custom_rule')","def impl(ctx): return struct()","custom_rule1 = rule(implementation = impl)","custom_rule2 = custom_rule1","custom_rule3 = custom_rule");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/ext', 'custom_rule1', 'custom_rule2', 'custom_rule3')","custom_rule4 = custom_rule3","custom_rule1(name = 'cr1')","custom_rule2(name = 'cr2')","custom_rule3(name = 'cr3')","custom_rule4(name = 'cr4')");
+  getConfiguredTarget("//test/skylark:cr1");
+  getConfiguredTarget("//test/skylark:cr2");
+  getConfiguredTarget("//test/skylark:cr3");
+  getConfiguredTarget("//test/skylark:cr4");
+}

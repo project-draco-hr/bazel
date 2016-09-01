@@ -1,0 +1,13 @@
+{
+  scratch.file("test/skylark/ext2.bzl","load('/test/skylark/ext1', 'symbol2')");
+  scratch.file("test/skylark/ext1.bzl","load('/test/skylark/ext2', 'symbol1')");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/ext1', 'custom_rule')","genrule(name = 'rule')");
+  reporter.removeHandler(failFastHandler);
+  try {
+    getTarget("//test/skylark:rule");
+    fail();
+  }
+ catch (  BuildFileContainsErrorsException e) {
+  }
+  assertContainsEvent("test/skylark/BUILD: cycle in referenced extension files: \n" + "  * //test/skylark:ext1.bzl\n" + "    //test/skylark:ext2.bzl\n"+ "  * //test/skylark:ext1.bzl");
+}

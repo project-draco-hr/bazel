@@ -1,0 +1,7 @@
+{
+  scratch.file("test/skylark/extension.bzl","def custom_rule_impl(ctx):","  return struct(","      o1=ctx.outputs.o1,","      o2=ctx.outputs.o2)","","custom_rule = rule(implementation = custom_rule_impl,","  attrs = {'o1': attr.output(), 'o2': attr.output_list()})");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'custom_rule')","","custom_rule(name = 'cr')");
+  ConfiguredTarget target=getConfiguredTarget("//test/skylark:cr");
+  assertEquals(Runtime.NONE,target.get("o1"));
+  assertEquals(MutableList.EMPTY,target.get("o2"));
+}

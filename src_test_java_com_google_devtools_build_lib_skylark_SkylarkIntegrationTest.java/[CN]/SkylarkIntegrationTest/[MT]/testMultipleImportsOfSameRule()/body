@@ -1,0 +1,7 @@
+{
+  scratch.file("test/skylark/BUILD");
+  scratch.file("test/skylark/extension.bzl","def custom_rule_impl(ctx):","  return None","","custom_rule = rule(implementation = custom_rule_impl,","     attrs = {'dep': attr.label_list(allow_files=True)})");
+  scratch.file("test/skylark1/BUILD","load('/test/skylark/extension', 'custom_rule')","custom_rule(name = 'cr1')");
+  scratch.file("test/skylark2/BUILD","load('/test/skylark/extension', 'custom_rule')","custom_rule(name = 'cr2', dep = ['//test/skylark1:cr1'])");
+  getConfiguredTarget("//test/skylark2:cr2");
+}

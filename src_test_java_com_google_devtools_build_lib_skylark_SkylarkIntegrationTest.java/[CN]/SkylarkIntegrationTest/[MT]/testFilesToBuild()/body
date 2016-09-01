@@ -1,0 +1,7 @@
+{
+  scratch.file("test/skylark/extension.bzl","def custom_rule_impl(ctx):","  attr1 = ctx.files.attr1","  ftb = set(attr1)","  return struct(runfiles = ctx.runfiles(), files = ftb)","","custom_rule = rule(implementation = custom_rule_impl,","  attrs = {'attr1': attr.label_list(mandatory=True, allow_files=True)})");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'custom_rule')","","custom_rule(name = 'cr', attr1 = [':a.txt'])");
+  ConfiguredTarget target=getConfiguredTarget("//test/skylark:cr");
+  assertEquals("//test/skylark:cr",target.getLabel().toString());
+  assertThat(ActionsTestUtil.baseArtifactNames(target.getProvider(FileProvider.class).getFilesToBuild())).containsExactly("a.txt");
+}

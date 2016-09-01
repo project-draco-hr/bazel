@@ -1,0 +1,19 @@
+{
+  scratch.file("test/skylark/ext2.bzl","load('/test/skylark/ext1', 'symbol2')");
+  scratch.file("test/skylark/ext1.bzl","load('/test/skylark/ext2', 'symbol1')");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/ext1', 'custom_rule')","genrule(name = 'rule')");
+  reporter.removeHandler(failFastHandler);
+  try {
+    ensureTargetsVisited("//test/skylark:rule");
+    getTarget("//test/skylark:rule");
+    fail();
+  }
+ catch (  BuildFileContainsErrorsException e) {
+  }
+  assertContainsEvent("cycle in referenced extension files");
+  assertContainsEvent("test/skylark:ext1.bzl");
+  assertContainsEvent("test/skylark:ext2.bzl");
+  assertContainsEvent("Skylark import cycle");
+  assertContainsEvent("Loading of target '//test/skylark:rule' failed; build aborted");
+  assertThat(eventCollector).hasSize(2);
+}

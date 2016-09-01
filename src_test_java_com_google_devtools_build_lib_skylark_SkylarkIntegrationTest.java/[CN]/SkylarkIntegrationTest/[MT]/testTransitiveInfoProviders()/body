@@ -1,0 +1,6 @@
+{
+  scratch.file("test/skylark/extension.bzl","def custom_rule_impl(ctx):","  attr1 = ctx.files.attr1","  ftb = set(attr1)","  return struct(provider_key = ftb)","","custom_rule = rule(implementation = custom_rule_impl,","  attrs = {'attr1': attr.label_list(mandatory=True, allow_files=True)})");
+  scratch.file("test/skylark/BUILD","load('/test/skylark/extension', 'custom_rule')","","custom_rule(name = 'cr', attr1 = [':a.txt'])");
+  RuleConfiguredTarget target=(RuleConfiguredTarget)getConfiguredTarget("//test/skylark:cr");
+  assertThat(ActionsTestUtil.baseArtifactNames(((SkylarkNestedSet)target.get("provider_key")).getSet(Artifact.class))).containsExactly("a.txt");
+}
