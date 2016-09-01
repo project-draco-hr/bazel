@@ -4,16 +4,22 @@
     inputsDir.createDirectory();
   }
   for (  ImmutableMap.Entry<PathFragment,Path> entry : inputs.entrySet()) {
-    Path source=entry.getValue().resolveSymbolicLinks();
-    Path target=source.startsWith(execRoot) ? inputsDir.getRelative(source.relativeTo(execRoot)) : inputsDir.getRelative(entry.getKey());
+    Path target=entry.getValue().resolveSymbolicLinks();
+    Path hardlinkName=target.startsWith(execRoot) ? inputsDir.getRelative(target.relativeTo(execRoot)) : inputsDir.getRelative(entry.getKey());
+    if (errWriter != null) {
+      errWriter.printf("hardlink: %s -> %s\n",hardlinkName,target);
+    }
     try {
-      createHardLink(target,source);
+      createHardLink(hardlinkName,target);
     }
  catch (    IOException e) {
-      target.createSymbolicLink(source);
+      hardlinkName.createSymbolicLink(target);
     }
-    Path symlinkNewPath=sandboxExecRoot.getRelative(entry.getKey());
-    FileSystemUtils.createDirectoryAndParents(symlinkNewPath.getParentDirectory());
-    symlinkNewPath.createSymbolicLink(target);
+    Path symlinkName=sandboxExecRoot.getRelative(entry.getKey());
+    if (errWriter != null) {
+      errWriter.printf("symlink: %s -> %s\n",symlinkName,hardlinkName);
+    }
+    FileSystemUtils.createDirectoryAndParents(symlinkName.getParentDirectory());
+    symlinkName.createSymbolicLink(hardlinkName);
   }
 }
