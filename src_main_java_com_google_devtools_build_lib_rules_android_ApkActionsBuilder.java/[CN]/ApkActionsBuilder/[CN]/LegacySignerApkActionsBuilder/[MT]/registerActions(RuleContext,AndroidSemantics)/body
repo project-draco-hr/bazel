@@ -3,15 +3,17 @@
   if (unsignedApk != null) {
     ruleContext.registerAction(buildApk(ruleContext,unsignedApk,null,"Generating unsigned " + apkName));
   }
-  if (signedAndZipalignedApk != null) {
-    Artifact intermediateSignedApk=this.signedApk;
-    if (intermediateSignedApk == null) {
-      intermediateSignedApk=AndroidBinary.getDxArtifact(ruleContext,"signed_" + signedAndZipalignedApk.getFilename());
+  if (signedApk != null) {
+    Artifact intermediateSignedApk;
+    if (zipalignApk) {
+      intermediateSignedApk=AndroidBinary.getDxArtifact(ruleContext,"signed_" + signedApk.getFilename());
+    }
+ else {
+      intermediateSignedApk=signedApk;
     }
     ruleContext.registerAction(buildApk(ruleContext,intermediateSignedApk,semantics.getApkDebugSigningKey(ruleContext),"Generating signed " + apkName));
-    ruleContext.registerAction(zipalignApk(ruleContext,intermediateSignedApk,signedAndZipalignedApk));
-  }
- else   if (signedApk != null) {
-    ruleContext.registerAction(buildApk(ruleContext,signedApk,semantics.getApkDebugSigningKey(ruleContext),"Generating signed " + apkName));
+    if (zipalignApk) {
+      ruleContext.registerAction(zipalignApk(ruleContext,intermediateSignedApk,signedApk));
+    }
   }
 }
