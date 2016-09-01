@@ -10,12 +10,13 @@
   Path sandboxExecRoot=sandboxPath.getRelative("execroot");
   ImmutableMap<String,String> spawnEnvironment=StandaloneSpawnStrategy.locallyDeterminedEnv(execRoot,productName,spawn.getEnvironment());
   Set<Path> writableDirs=getWritableDirs(sandboxExecRoot,spawn.getEnvironment());
+  Path runUnderPath=getRunUnderPath(spawn);
   try {
     HardlinkedExecRoot hardlinkedExecRoot=new HardlinkedExecRoot(execRoot,sandboxPath,sandboxExecRoot);
     ImmutableSet<PathFragment> outputs=SandboxHelpers.getOutputFiles(spawn);
     hardlinkedExecRoot.createFileSystem(getMounts(spawn,actionExecutionContext),outputs,writableDirs);
     DarwinSandboxRunner runner;
-    runner=new DarwinSandboxRunner(sandboxPath,sandboxExecRoot,getWritableDirs(sandboxExecRoot,spawnEnvironment),getInaccessiblePaths(),verboseFailures);
+    runner=new DarwinSandboxRunner(sandboxPath,sandboxExecRoot,getWritableDirs(sandboxExecRoot,spawnEnvironment),getInaccessiblePaths(),runUnderPath,verboseFailures);
     try {
       runner.run(spawn.getArguments(),spawnEnvironment,actionExecutionContext.getFileOutErr(),SandboxHelpers.getTimeout(spawn),SandboxHelpers.shouldAllowNetwork(buildRequest,spawn));
     }
