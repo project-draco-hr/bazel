@@ -1,0 +1,10 @@
+{
+  scratch.file("x/BUILD","cc_binary(","  name = 'foo',","  srcs = ['some-dir/bar.so', 'some-other-dir/qux.so'],","  linkopts = [","    '-ldl',","    '-lutil',","  ],",")");
+  scratch.file("x/some-dir/bar.so");
+  scratch.file("x/some-other-dir/qux.so");
+  ConfiguredTarget configuredTarget=getConfiguredTarget("//x:foo");
+  CppLinkAction linkAction=(CppLinkAction)getGeneratingAction(configuredTarget,"x/foo");
+  List<String> arguments=linkAction.getLinkCommandLine().arguments();
+  assertThat(Joiner.on(" ").join(arguments)).matches(".* -L[^ ]*some-dir(?= ).* -L[^ ]*some-other-dir -lbar -lqux(?= ).* -ldl -lutil .*");
+  assertThat(Joiner.on(" ").join(arguments)).matches(".* -Wl,-rpath[^ ]*some-dir(?= ).* -Wl,-rpath[^ ]*some-other-dir .*");
+}
