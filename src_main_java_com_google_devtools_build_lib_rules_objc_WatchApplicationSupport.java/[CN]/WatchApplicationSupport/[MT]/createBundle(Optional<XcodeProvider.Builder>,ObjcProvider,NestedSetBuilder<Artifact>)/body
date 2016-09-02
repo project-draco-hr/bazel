@@ -9,7 +9,9 @@
   }
   AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
   PlatformType appPlatformType=watchOSVersion == WatchOSVersion.OS1 ? PlatformType.IOS : PlatformType.WATCHOS;
-  ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,depsObjcProvider,LinkedBinary.DEPENDENCIES_ONLY,watchOSVersion.getApplicationBundleDirFormat(),bundleName,WatchUtils.determineMinimumOsVersion(ObjcRuleClasses.objcConfiguration(ruleContext).getMinimumOs()),releaseBundling.build(),appleConfiguration.getMultiArchPlatform(appPlatformType)).registerActions(DsymOutputType.APP);
+  Platform appPlatform=appleConfiguration.getMultiArchPlatform(appPlatformType);
+  DottedVersion minimumOsVersion=appPlatformType == PlatformType.IOS ? WatchUtils.determineMinimumIosVersion(ObjcRuleClasses.objcConfiguration(ruleContext).getMinimumOs()) : appleConfiguration.getSdkVersionForPlatform(appPlatform);
+  ReleaseBundlingSupport releaseBundlingSupport=new ReleaseBundlingSupport(ruleContext,depsObjcProvider,LinkedBinary.DEPENDENCIES_ONLY,watchOSVersion.getApplicationBundleDirFormat(),bundleName,minimumOsVersion,releaseBundling.build(),appleConfiguration.getMultiArchPlatform(appPlatformType)).registerActions(DsymOutputType.APP);
   if (xcodeProviderBuilder.isPresent()) {
     releaseBundlingSupport.addXcodeSettings(xcodeProviderBuilder.get());
   }
