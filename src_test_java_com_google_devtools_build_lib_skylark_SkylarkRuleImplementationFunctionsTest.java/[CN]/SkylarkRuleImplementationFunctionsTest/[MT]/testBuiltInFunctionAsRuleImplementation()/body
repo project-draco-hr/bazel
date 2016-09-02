@@ -1,0 +1,8 @@
+{
+  scratch.file("test/rule.bzl","silly_rule = rule(","    implementation = int,","    attrs = {","       \"srcs\": attr.label_list(allow_files=True),","    }",")");
+  scratch.file("test/BUILD","load('/test/rule', 'silly_rule')","silly_rule(name = 'silly')");
+  thrown.handleAssertionErrors();
+  thrown.expect(AssertionError.class);
+  thrown.expectMessage("//test:silly is not of type string or int or bool");
+  getConfiguredTarget("//test:silly");
+}
