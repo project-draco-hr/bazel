@@ -2,11 +2,11 @@
   Preconditions.checkState(!serving);
   InetSocketAddress address=new InetSocketAddress("[::1]",port);
   try {
-    server=NettyServerBuilder.forAddress(address).addService(commandServer).build().start();
+    server=NettyServerBuilder.forAddress(address).addService(commandServer).directExecutor().build().start();
   }
  catch (  IOException e) {
     address=new InetSocketAddress("127.0.0.1",port);
-    server=NettyServerBuilder.forAddress(address).addService(commandServer).build().start();
+    server=NettyServerBuilder.forAddress(address).addService(commandServer).directExecutor().build().start();
   }
   if (maxIdleSeconds > 0) {
     Thread timeoutThread=new Thread(new Runnable(){
@@ -15,6 +15,7 @@
       }
     }
 );
+    timeoutThread.setName("grpc-timeout");
     timeoutThread.setDaemon(true);
     timeoutThread.start();
   }

@@ -1,0 +1,54 @@
+{
+  sink.setCommandThread(Thread.currentThread());
+  if (!request.getCookie().equals(requestCookie) || request.getClientDescription().isEmpty()) {
+    try {
+      observer.onNext(RunResponse.newBuilder().setExitCode(ExitCode.LOCAL_ENVIRONMENTAL_ERROR.getNumericExitCode()).build());
+      observer.onCompleted();
+    }
+ catch (    StatusRuntimeException e) {
+      log.info("Client cancelled command while rejecting it: " + e.getMessage());
+    }
+    return;
+  }
+  if (sink.disconnected()) {
+    return;
+  }
+  ImmutableList.Builder<String> args=ImmutableList.builder();
+  for (  ByteString requestArg : request.getArgList()) {
+    args.add(requestArg.toString(CHARSET));
+  }
+  String commandId;
+  int exitCode;
+  try (RunningCommand command=new RunningCommand()){
+    commandId=command.id;
+    OutErr rpcOutErr=OutErr.create(new RpcOutputStream(command.id,StreamType.STDOUT,sink),new RpcOutputStream(command.id,StreamType.STDERR,sink));
+    exitCode=commandExecutor.exec(args.build(),rpcOutErr,request.getBlockForLock() ? LockingMode.WAIT : LockingMode.ERROR_OUT,request.getClientDescription(),clock.currentTimeMillis());
+  }
+ catch (  InterruptedException e) {
+    exitCode=ExitCode.INTERRUPTED.getNumericExitCode();
+    commandId="";
+  }
+  if (sink.finish()) {
+    return;
+  }
+  Thread.interrupted();
+  RunResponse response=RunResponse.newBuilder().setCookie(responseCookie).setCommandId(commandId).setFinished(true).setExitCode(exitCode).build();
+  try {
+    observer.onNext(response);
+    observer.onCompleted();
+  }
+ catch (  StatusRuntimeException e) {
+    log.info(String.format("Client cancelled command %s just right before its end: %s",commandId,e.getMessage()));
+  }
+switch (commandExecutor.shutdown()) {
+case NONE:
+    break;
+case CLEAN:
+  server.shutdown();
+break;
+case EXPUNGE:
+disableShutdownHooks();
+server.shutdown();
+break;
+}
+}

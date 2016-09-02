@@ -1,0 +1,22 @@
+{
+  MockObserver observer=new MockObserver();
+  final GrpcServerImpl.GrpcSink sink=new GrpcServerImpl.GrpcSink(observer,executor);
+  assertThat(sink.offer(runResponse())).isTrue();
+  observer.waitForMessages(1,100,TimeUnit.MILLISECONDS);
+  observer.ready.set(false);
+  TestThread sender=new TestThread(){
+    @Override public void runTest(){
+      assertThat(sink.offer(runResponse())).isTrue();
+    }
+  }
+;
+  sender.setDaemon(true);
+  sender.start();
+  Uninterruptibles.sleepUninterruptibly(100,TimeUnit.MILLISECONDS);
+  assertThat(observer.getMessageCount()).isEqualTo(1);
+  observer.ready.set(true);
+  observer.onReadyHandler.run();
+  assertThat(sink.finish()).isFalse();
+  sender.joinAndAssertState(1000);
+  observer.waitForMessages(2,100,TimeUnit.MILLISECONDS);
+}

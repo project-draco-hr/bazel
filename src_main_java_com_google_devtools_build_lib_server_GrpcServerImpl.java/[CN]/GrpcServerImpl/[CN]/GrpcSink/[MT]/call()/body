@@ -1,0 +1,32 @@
+{
+  boolean itemPending=false;
+  while (true) {
+    SinkThreadAction action;
+    action=Uninterruptibles.takeUninterruptibly(actionQueue);
+switch (action) {
+case FINISH:
+      Thread.interrupted();
+    return;
+case READY:
+  if (itemPending) {
+    sendPendingItem();
+    itemPending=false;
+  }
+break;
+case DISCONNECT:
+log.info("Client disconnected for stream thread " + Thread.currentThread().getName());
+disconnected.set(true);
+break;
+case SEND:
+if (disconnected()) {
+exchange(new SinkThreadItem(false,null),true);
+}
+ else if (observer.isReady()) {
+sendPendingItem();
+}
+ else {
+itemPending=true;
+}
+}
+}
+}

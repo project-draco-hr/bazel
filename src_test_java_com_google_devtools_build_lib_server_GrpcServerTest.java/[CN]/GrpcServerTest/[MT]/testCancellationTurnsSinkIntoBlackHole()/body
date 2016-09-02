@@ -1,0 +1,9 @@
+{
+  MockObserver observer=new MockObserver();
+  GrpcServerImpl.GrpcSink sink=new GrpcServerImpl.GrpcSink(observer,executor);
+  observer.cancelled.set(true);
+  observer.onCancelHandler.run();
+  assertThat(sink.offer(runResponse())).isFalse();
+  assertThat(sink.finish()).isTrue();
+  assertThat(observer.getMessageCount()).isEqualTo(0);
+}

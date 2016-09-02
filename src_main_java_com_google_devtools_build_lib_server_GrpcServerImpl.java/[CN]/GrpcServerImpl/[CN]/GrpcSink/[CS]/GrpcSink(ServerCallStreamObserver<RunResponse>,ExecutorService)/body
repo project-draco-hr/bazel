@@ -1,0 +1,28 @@
+{
+  this.actionQueue=new LinkedBlockingQueue<>();
+  this.exchanger=new Exchanger<>();
+  this.observer=observer;
+  this.observer.setOnCancelHandler(new Runnable(){
+    @Override public void run(){
+      Thread commandThread=GrpcSink.this.commandThread.get();
+      if (commandThread != null) {
+        log.info(String.format("Interrupting thread %s due to gRPC cancel",commandThread.getName()));
+        commandThread.interrupt();
+      }
+      actionQueue.offer(SinkThreadAction.DISCONNECT);
+    }
+  }
+);
+  this.observer.setOnReadyHandler(new Runnable(){
+    @Override public void run(){
+      actionQueue.offer(SinkThreadAction.READY);
+    }
+  }
+);
+  this.future=executor.submit(new Runnable(){
+    @Override public void run(){
+      GrpcSink.this.call();
+    }
+  }
+);
+}

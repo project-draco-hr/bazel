@@ -11,5 +11,8 @@ break;
 default :
 throw new IllegalStateException();
 }
-work.offer(Optional.of(response.build()));
+if (!sink.offer(response.build())) {
+log.info(String.format("Client disconnected received for command %s on thread %s",commandId,Thread.currentThread().getName()));
+throw new IOException("Client disconnected");
+}
 }
