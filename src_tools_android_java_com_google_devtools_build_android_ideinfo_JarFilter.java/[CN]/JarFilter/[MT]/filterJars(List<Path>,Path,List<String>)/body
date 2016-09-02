@@ -1,0 +1,25 @@
+{
+  final int bufferSize=8 * 1024;
+  byte[] buffer=new byte[bufferSize];
+  try (ZipOutputStream outputStream=new ZipOutputStream(new FileOutputStream(output.toFile()))){
+    for (    Path jar : jars) {
+      try (ZipFile sourceZipFile=new ZipFile(jar.toFile())){
+        Enumeration<? extends ZipEntry> entries=sourceZipFile.entries();
+        while (entries.hasMoreElements()) {
+          ZipEntry entry=entries.nextElement();
+          if (!shouldKeep(archiveFileNamePrefixes,entry.getName())) {
+            continue;
+          }
+          ZipEntry newEntry=new ZipEntry(entry.getName());
+          outputStream.putNextEntry(newEntry);
+          try (InputStream inputStream=sourceZipFile.getInputStream(entry)){
+            int len;
+            while ((len=inputStream.read(buffer)) != -1) {
+              outputStream.write(buffer,0,len);
+            }
+          }
+         }
+      }
+     }
+  }
+ }

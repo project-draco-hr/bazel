@@ -1,0 +1,46 @@
+{
+  NestedSetBuilder<Artifact> ideResolveArtifacts=providerBuilder.ideResolveFilesBuilder();
+  JavaRuleIdeInfo.Builder builder=JavaRuleIdeInfo.newBuilder();
+  List<Artifact> javaSources=Lists.newArrayList();
+  List<Artifact> generatedJavaSources=Lists.newArrayList();
+  getJavaSourcesForPackageManifest(ruleContext,javaSources,generatedJavaSources);
+  if (!javaSources.isEmpty()) {
+    Artifact packageManifest=derivedArtifact(base,ruleContext,".manifest");
+    providerBuilder.ideInfoFilesBuilder().add(packageManifest);
+    ruleContext.registerAction(makePackageManifestAction(ruleContext,packageManifest,javaSources));
+    builder.setPackageManifest(makeArtifactLocation(packageManifest));
+  }
+  if (!javaSources.isEmpty() && !generatedJavaSources.isEmpty()) {
+    Artifact generatedPackageManifest=derivedArtifact(base,ruleContext,"-filtered-gen.manifest");
+    ruleContext.registerAction(makePackageManifestAction(ruleContext,generatedPackageManifest,generatedJavaSources));
+    Artifact filteredGenJar=derivedArtifact(base,ruleContext,"-filtered-gen.jar");
+    List<Artifact> jars=Lists.newArrayList();
+    for (    OutputJar outputJar : outputJarsProvider.getOutputJars()) {
+      Artifact jar=outputJar.getIJar();
+      if (jar == null) {
+        jar=outputJar.getClassJar();
+      }
+      if (jar == null) {
+        continue;
+      }
+      jars.add(jar);
+    }
+    ruleContext.registerAction(makeFilteredJarAction(ruleContext,jars,generatedPackageManifest,filteredGenJar));
+    ideResolveArtifacts.add(filteredGenJar);
+    builder.setFilteredGenJar(makeLibraryArtifact(ideResolveArtifacts,filteredGenJar,null,null));
+  }
+  collectJarsFromOutputJarsProvider(builder,ideResolveArtifacts,outputJarsProvider);
+  Artifact jdeps=outputJarsProvider.getJdeps();
+  if (jdeps != null) {
+    builder.setJdeps(makeArtifactLocation(jdeps));
+  }
+  JavaGenJarsProvider genJarsProvider=base.getProvider(JavaGenJarsProvider.class);
+  if (genJarsProvider != null) {
+    collectGenJars(builder,ideResolveArtifacts,genJarsProvider);
+  }
+  Collection<Artifact> sourceFiles=getSources(ruleContext);
+  for (  Artifact sourceFile : sourceFiles) {
+    builder.addSources(makeArtifactLocation(sourceFile));
+  }
+  return builder.build();
+}
