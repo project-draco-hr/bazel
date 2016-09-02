@@ -18,11 +18,11 @@
   Path runUnderPath=getRunUnderPath(spawn);
   try {
     HardlinkedExecRoot hardlinkedExecRoot=new HardlinkedExecRoot(execRoot,sandboxPath,sandboxExecRoot,errWriter);
+    ImmutableSet<PathFragment> outputs=SandboxHelpers.getOutputFiles(spawn);
+    hardlinkedExecRoot.createFileSystem(getMounts(spawn,actionExecutionContext),outputs,writableDirs);
     if (errWriter != null) {
       errWriter.flush();
     }
-    ImmutableSet<PathFragment> outputs=SandboxHelpers.getOutputFiles(spawn);
-    hardlinkedExecRoot.createFileSystem(getMounts(spawn,actionExecutionContext),outputs,writableDirs);
     DarwinSandboxRunner runner;
     runner=new DarwinSandboxRunner(sandboxPath,sandboxExecRoot,getWritableDirs(sandboxExecRoot,spawnEnvironment),getInaccessiblePaths(),runUnderPath,verboseFailures);
     try {
