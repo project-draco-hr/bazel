@@ -5,13 +5,8 @@
     update("//cycle:foo");
     fail();
   }
- catch (  LoadingFailedException|ViewCreationFailedException expected) {
+ catch (  ViewCreationFailedException expected) {
     assertContainsEvent("in cc_library rule //cycle:foo: cycle in dependency graph:");
-    if (defaultFlags().contains(Flag.SKYFRAME_LOADING_PHASE)) {
-      assertThat(expected.getMessage()).contains("Analysis of target '//cycle:foo' failed; build aborted");
-    }
- else {
-      assertContainsEvent("Loading of target '//cycle:foo' failed; build aborted");
-    }
+    assertThat(expected.getMessage()).contains("Analysis of target '//cycle:foo' failed; build aborted");
   }
 }

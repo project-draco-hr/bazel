@@ -9,19 +9,7 @@
   update(eventBus,defaultFlags().with(Flag.KEEP_GOING),"//cycle:foo","//cycle:bat","//cycle:baz");
   assertContainsEvent("in cc_library rule //cycle:foo: cycle in dependency graph:");
   assertContainsEvent("in cc_library rule //cycle:bas: cycle in dependency graph:");
-  if (defaultFlags().contains(Flag.SKYFRAME_LOADING_PHASE)) {
-    assertContainsEvent("errors encountered while analyzing target '//cycle:foo': it will not be built");
-    assertContainsEvent("errors encountered while analyzing target '//cycle:bat': it will not be built");
-    assertThat(Iterables.transform(analysisFailureRecorder.events,ANALYSIS_EVENT_TO_STRING_PAIR)).containsExactly(Pair.of("//cycle:foo","//cycle:foo"),Pair.of("//cycle:bat","//cycle:bas"));
-  }
- else {
-    assertContainsEvent("errors encountered while loading target '//cycle:foo'");
-    assertContainsEvent("errors encountered while loading target '//cycle:bat'");
-    assertThat(Iterables.transform(loadingFailureRecorder.events,new Function<Pair<Label,Label>,Pair<String,String>>(){
-      @Override public Pair<String,String> apply(      Pair<Label,Label> labelPair){
-        return Pair.of(labelPair.getFirst().toString(),labelPair.getSecond().toString());
-      }
-    }
-)).containsExactly(Pair.of("//cycle:foo","//cycle:foo"),Pair.of("//cycle:bat","//cycle:bas"));
-  }
+  assertContainsEvent("errors encountered while analyzing target '//cycle:foo': it will not be built");
+  assertContainsEvent("errors encountered while analyzing target '//cycle:bat': it will not be built");
+  assertThat(Iterables.transform(analysisFailureRecorder.events,ANALYSIS_EVENT_TO_STRING_PAIR)).containsExactly(Pair.of("//cycle:foo","//cycle:foo"),Pair.of("//cycle:bat","//cycle:bas"));
 }
