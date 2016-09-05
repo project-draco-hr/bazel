@@ -13,18 +13,7 @@
     }
   }
   IncludeScanningContext scanningContext=executor.getContext(IncludeScanningContext.class);
-  Path execRoot=executor.getExecRoot();
-  NestedSet<Artifact> discoveredInputs;
-  if (getDotdFile() == null) {
-    discoveredInputs=NestedSetBuilder.<Artifact>stableOrder().build();
-  }
- else {
-    HeaderDiscovery.Builder discoveryBuilder=new HeaderDiscovery.Builder().setAction(this).setDotdFile(getDotdFile()).setSourceFile(getSourceFile()).setSpecialInputsHandler(specialInputsHandler).setDependencySet(processDepset(execRoot,reply)).setPermittedSystemIncludePrefixes(getPermittedSystemIncludePrefixes(execRoot)).setAllowedDerivedinputsMap(getAllowedDerivedInputsMap());
-    if (cppSemantics.needsIncludeValidation()) {
-      discoveryBuilder.shouldValidateInclusions();
-    }
-    discoveredInputs=discoveryBuilder.build().discoverInputsFromDotdFiles(execRoot,scanningContext.getArtifactResolver());
-  }
+  NestedSet<Artifact> discoveredInputs=discoverInputsFromDotdFiles(executor.getExecRoot(),scanningContext.getArtifactResolver(),reply);
   reply=null;
   try {
     validateInclusions(discoveredInputs,actionExecutionContext.getArtifactExpander(),executor.getEventHandler());
