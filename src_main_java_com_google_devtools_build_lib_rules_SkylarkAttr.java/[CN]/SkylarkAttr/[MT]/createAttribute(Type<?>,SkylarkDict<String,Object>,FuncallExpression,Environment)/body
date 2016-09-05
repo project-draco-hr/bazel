@@ -3,7 +3,8 @@
   Object defaultValue=arguments.get(DEFAULT_ARG);
   if (!EvalUtils.isNullOrNone(defaultValue)) {
     if (defaultValue instanceof UserDefinedFunction) {
-      builder.value(new SkylarkLateBound(new SkylarkCallbackFunction((UserDefinedFunction)defaultValue,ast,env)));
+      SkylarkCallbackFunction callback=new SkylarkCallbackFunction((UserDefinedFunction)defaultValue,ast,env);
+      builder.value(new SkylarkComputedDefaultTemplate(type,callback.getParameterNames(),callback,ast.getLocation()));
     }
  else {
       builder.defaultValue(defaultValue);
