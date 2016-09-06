@@ -1,5 +1,5 @@
 {
-  CrosstoolConfigurationHelper.overwriteCrosstoolWithToolchain(directories.getWorkspace(),CrosstoolConfig.CToolchain.newBuilder().setNeedsPic(true).buildPartial());
+  getAnalysisMock().ccSupport().setupCrosstool(mockToolsConfig,CrosstoolConfig.CToolchain.newBuilder().setNeedsPic(true).buildPartial());
   useConfiguration("--fat_apk_cpu=" + CrosstoolConfigurationHelper.defaultCpu());
   scratch.file("a/BUILD","cc_binary(name = 'pic',","           srcs = [ 'binary.cc' ])","cc_binary(name = 'libpic.so',","           srcs = [ 'binary.cc' ])","cc_library(name = 'piclib',","           srcs = [ 'library.cc' ])","cc_binary(name = 'nopic',","           srcs = [ 'binary.cc' ],","           nocopts = '-fPIC')","cc_binary(name = 'libnopic.so',","           srcs = [ 'binary.cc' ],","           nocopts = '-fPIC')","cc_library(name = 'nopiclib',","           srcs = [ 'library.cc' ],","           nocopts = '-fPIC')");
   assertThat(getCppCompileAction("//a:pic").getArgv()).contains("-fPIC");

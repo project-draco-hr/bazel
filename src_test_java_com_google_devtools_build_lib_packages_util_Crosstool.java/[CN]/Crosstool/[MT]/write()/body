@@ -14,16 +14,20 @@
       compilationTools.append(String.format("filegroup(name = '%s', srcs = [':everything-multilib'])\n",archTarget));
     }
   }
-  List<String> compilerRules=Lists.newArrayList();
+  CrosstoolConfig.CrosstoolRelease.Builder configBuilder=CrosstoolConfig.CrosstoolRelease.newBuilder();
+  TextFormat.merge(crosstoolFileContents,configBuilder);
+  StringBuilder compilerMap=new StringBuilder();
+  for (  CrosstoolConfig.CToolchain toolchain : configBuilder.build().getToolchainList()) {
+    compilerMap.append(String.format("'%s|%s': ':cc-compiler-%s',\n",toolchain.getTargetCpu(),toolchain.getCompiler(),toolchain.getTargetCpu()));
+  }
   for (  String arch : archs) {
     String compilerRule;
     String staticRuntimesString=staticRuntimesLabel == null ? "" : ", '" + staticRuntimesLabel + "'";
     String dynamicRuntimesString=dynamicRuntimesLabel == null ? "" : ", '" + dynamicRuntimesLabel + "'";
     compilerRule=Joiner.on("\n").join("cc_toolchain(","    name = 'cc-compiler-" + arch + "',","    output_licenses = ['unencumbered'],",addModuleMap ? "    module_map = 'crosstool.cppmap'," : "","    cpu = '" + arch + "',","    compiler_files = 'compile-" + arch + "',","    dwp_files = 'dwp-" + arch + "',","    linker_files = 'link-" + arch + "',","    strip_files = ':every-file',","    objcopy_files = 'objcopy-" + arch + "',","    all_files = ':every-file',","    licenses = ['unencumbered'],",supportsHeaderParsing ? "    supports_header_parsing = 1," : "","    dynamic_runtime_libs = ['dynamic-runtime-libs-" + arch + "'"+ dynamicRuntimesString+ "],","    static_runtime_libs = ['static-runtime-libs-" + arch + "'"+ staticRuntimesString+ "])");
     compilationTools.append(compilerRule + "\n");
-    compilerRules.add(":cc-compiler-" + arch);
   }
-  String build=Joiner.on("\n").join("package(default_visibility=['//visibility:public'])","licenses(['restricted'])","","filegroup(name = 'everything-multilib',","          srcs = glob(['" + version + "/**/*'],","              exclude_directories = 1),","          output_licenses = ['unencumbered'])","",String.format("filegroup(name = 'everything', srcs = ['%s', ':every-file'])",Joiner.on("', '").join(compilerRules)),"",String.format("filegroup(name = 'every-file', srcs = ['%s'%s%s])",Joiner.on("', '").join(CROSSTOOL_BINARIES),addEmbeddedRuntimes ? ", ':dynamic-runtime-libs-k8'" : "",addEmbeddedRuntimes ? ", ':static-runtime-libs-k8'" : ""),"",compilationTools.toString(),runtimes,"","cc_library(name = 'malloc')");
+  String build=Joiner.on("\n").join("package(default_visibility=['//visibility:public'])","licenses(['restricted'])","","alias(name = 'toolchain', actual = 'everything')","filegroup(name = 'everything-multilib',","          srcs = glob(['" + version + "/**/*'],","              exclude_directories = 1),","          output_licenses = ['unencumbered'])","",String.format("cc_toolchain_suite(name = 'everything', toolchains = {%s})",compilerMap),"",String.format("filegroup(name = 'every-file', srcs = ['%s'%s%s])",Joiner.on("', '").join(CROSSTOOL_BINARIES),addEmbeddedRuntimes ? ", ':dynamic-runtime-libs-k8'" : "",addEmbeddedRuntimes ? ", ':static-runtime-libs-k8'" : ""),"",compilationTools.toString(),runtimes,"","cc_library(name = 'malloc')");
   config.create(crosstoolTop + "/" + version+ "/x86/bin/gcc");
   config.create(crosstoolTop + "/" + version+ "/x86/bin/ld");
   config.getPath(crosstoolTop + "/CROSSTOOL");

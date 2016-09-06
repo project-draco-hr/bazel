@@ -1,5 +1,9 @@
 {
-  useConfiguration("--compiler=compiler_no_dyn_linker");
+  CrosstoolConfig.CrosstoolRelease.Builder release=CrosstoolConfig.CrosstoolRelease.newBuilder().mergeFrom(CrosstoolConfigurationHelper.simpleCompleteToolchainProto());
+  release.getToolchainBuilder(0).setTargetCpu("k8").setCompiler("compiler").clearLinkingModeFlags();
+  scratch.file("crosstool/BUILD","cc_toolchain_suite(","    name = 'crosstool',","    toolchains = {'k8|compiler': ':cc-compiler-k8'})","filegroup(name = 'empty')","cc_toolchain(","    name = 'cc-compiler-k8',","    output_licenses = ['unencumbered'],","    cpu = 'k8',","    compiler_files = ':empty',","    dwp_files = ':empty',","    linker_files = ':empty',","    strip_files = ':empty',","    objcopy_files = ':empty',","    static_runtime_libs = [':empty'],","    dynamic_runtime_libs = [':empty'],","    all_files = ':empty',","    licenses = ['unencumbered'])");
+  scratch.file("crosstool/CROSSTOOL",TextFormat.printToString(release));
+  useConfiguration("--crosstool_top=//crosstool:crosstool","--compiler=compiler","--cpu=k8","--host_cpu=k8");
   ConfiguredTarget hello=getConfiguredTarget("//hello:hello");
   Artifact archive=getBinArtifact("libhello.a",hello);
   assertThat(getFilesToBuild(hello)).containsExactly(archive);
