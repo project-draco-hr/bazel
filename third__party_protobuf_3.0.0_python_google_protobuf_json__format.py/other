@@ -1,0 +1,25 @@
+"Contains routines for printing protocol messages in JSON format.\n\nSimple usage example:\n\n  # Create a proto object and serialize it to a json format string.\n  message = my_proto_pb2.MyMessage(foo='bar')\n  json_string = json_format.MessageToJson(message)\n\n  # Parse a json format string to proto object.\n  message = json_format.Parse(json_string, my_proto_pb2.MyMessage())\n"
+__author__ = 'jieluo@google.com (Jie Luo)'
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
+import base64
+import json
+import math
+import re
+import six
+import sys
+from operator import methodcaller
+from google.protobuf import descriptor
+from google.protobuf import symbol_database
+_TIMESTAMPFOMAT = '%Y-%m-%dT%H:%M:%S'
+_INT_TYPES = frozenset([descriptor.FieldDescriptor.CPPTYPE_INT32, descriptor.FieldDescriptor.CPPTYPE_UINT32, descriptor.FieldDescriptor.CPPTYPE_INT64, descriptor.FieldDescriptor.CPPTYPE_UINT64])
+_INT64_TYPES = frozenset([descriptor.FieldDescriptor.CPPTYPE_INT64, descriptor.FieldDescriptor.CPPTYPE_UINT64])
+_FLOAT_TYPES = frozenset([descriptor.FieldDescriptor.CPPTYPE_FLOAT, descriptor.FieldDescriptor.CPPTYPE_DOUBLE])
+_INFINITY = 'Infinity'
+_NEG_INFINITY = '-Infinity'
+_NAN = 'NaN'
+_UNPAIRED_SURROGATE_PATTERN = re.compile(six.u('[\\ud800-\\udbff](?![\\udc00-\\udfff])|(?<![\\ud800-\\udbff])[\\udc00-\\udfff]'))
+_INT_OR_FLOAT = (six.integer_types + (float,))
+_WKTJSONMETHODS = {'google.protobuf.Any': ['_AnyMessageToJsonObject', '_ConvertAnyMessage'], 'google.protobuf.Duration': ['_GenericMessageToJsonObject', '_ConvertGenericMessage'], 'google.protobuf.FieldMask': ['_GenericMessageToJsonObject', '_ConvertGenericMessage'], 'google.protobuf.ListValue': ['_ListValueMessageToJsonObject', '_ConvertListValueMessage'], 'google.protobuf.Struct': ['_StructMessageToJsonObject', '_ConvertStructMessage'], 'google.protobuf.Timestamp': ['_GenericMessageToJsonObject', '_ConvertGenericMessage'], 'google.protobuf.Value': ['_ValueMessageToJsonObject', '_ConvertValueMessage'], }

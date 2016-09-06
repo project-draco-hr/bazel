@@ -1,0 +1,14 @@
+def testSimpleTokenCases(self):
+    text = 'identifier1:"string1"\n     \n\nidentifier2 : \n \n123  \n  identifier3 :\'string\'\nidentifiER_4 : 1.1e+2 ID5:-0.23 ID6:\'aaaa\\\'bbbb\'\nID7 : "aa\\"bb"\n\n\n\n ID8: {A:inf B:-inf C:true D:false}\nID9: 22 ID10: -111111111111111111 ID11: -22\nID12: 2222222222222222222 ID13: 1.23456f ID14: 1.2e+2f false_bool:  0 true_BOOL:t \n true_bool1:  1 false_BOOL1:f '
+    tokenizer = text_format.Tokenizer(text.splitlines())
+    methods = [(tokenizer.ConsumeIdentifier, 'identifier1'), ':', (tokenizer.ConsumeString, 'string1'), (tokenizer.ConsumeIdentifier, 'identifier2'), ':', (tokenizer.ConsumeInteger, 123), (tokenizer.ConsumeIdentifier, 'identifier3'), ':', (tokenizer.ConsumeString, 'string'), (tokenizer.ConsumeIdentifier, 'identifiER_4'), ':', (tokenizer.ConsumeFloat, 110.0), (tokenizer.ConsumeIdentifier, 'ID5'), ':', (tokenizer.ConsumeFloat, (-0.23)), (tokenizer.ConsumeIdentifier, 'ID6'), ':', (tokenizer.ConsumeString, "aaaa'bbbb"), (tokenizer.ConsumeIdentifier, 'ID7'), ':', (tokenizer.ConsumeString, 'aa"bb'), (tokenizer.ConsumeIdentifier, 'ID8'), ':', '{', (tokenizer.ConsumeIdentifier, 'A'), ':', (tokenizer.ConsumeFloat, float('inf')), (tokenizer.ConsumeIdentifier, 'B'), ':', (tokenizer.ConsumeFloat, (- float('inf'))), (tokenizer.ConsumeIdentifier, 'C'), ':', (tokenizer.ConsumeBool, True), (tokenizer.ConsumeIdentifier, 'D'), ':', (tokenizer.ConsumeBool, False), '}', (tokenizer.ConsumeIdentifier, 'ID9'), ':', (tokenizer.ConsumeInteger, 22), (tokenizer.ConsumeIdentifier, 'ID10'), ':', (tokenizer.ConsumeInteger, (-111111111111111111)), (tokenizer.ConsumeIdentifier, 'ID11'), ':', (tokenizer.ConsumeInteger, (-22)), (tokenizer.ConsumeIdentifier, 'ID12'), ':', (tokenizer.ConsumeInteger, 2222222222222222222), (tokenizer.ConsumeIdentifier, 'ID13'), ':', (tokenizer.ConsumeFloat, 1.23456), (tokenizer.ConsumeIdentifier, 'ID14'), ':', (tokenizer.ConsumeFloat, 120.0), (tokenizer.ConsumeIdentifier, 'false_bool'), ':', (tokenizer.ConsumeBool, False), (tokenizer.ConsumeIdentifier, 'true_BOOL'), ':', (tokenizer.ConsumeBool, True), (tokenizer.ConsumeIdentifier, 'true_bool1'), ':', (tokenizer.ConsumeBool, True), (tokenizer.ConsumeIdentifier, 'false_BOOL1'), ':', (tokenizer.ConsumeBool, False)]
+    i = 0
+    while (not tokenizer.AtEnd()):
+        m = methods[i]
+        if isinstance(m, str):
+            token = tokenizer.token
+            self.assertEqual(token, m)
+            tokenizer.NextToken()
+        else:
+            self.assertEqual(m[1], m[0]())
+        i += 1

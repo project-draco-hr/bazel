@@ -1,0 +1,22 @@
+def testMessageMap(self):
+    msg = map_unittest_pb2.TestMap()
+    self.assertEqual(0, len(msg.map_int32_foreign_message))
+    self.assertFalse((5 in msg.map_int32_foreign_message))
+    msg.map_int32_foreign_message[123]
+    msg.map_int32_foreign_message.get_or_create((-456))
+    self.assertEqual(2, len(msg.map_int32_foreign_message))
+    self.assertIn(123, msg.map_int32_foreign_message)
+    self.assertIn((-456), msg.map_int32_foreign_message)
+    self.assertEqual(2, len(msg.map_int32_foreign_message))
+    with self.assertRaises(TypeError):
+        msg.map_int32_foreign_message['123']
+    with self.assertRaises(ValueError):
+        msg.map_int32_foreign_message[999] = msg.map_int32_foreign_message[123]
+    self.assertEqual(2, len(msg.map_int32_foreign_message))
+    serialized = msg.SerializeToString()
+    msg2 = map_unittest_pb2.TestMap()
+    msg2.ParseFromString(serialized)
+    self.assertEqual(2, len(msg2.map_int32_foreign_message))
+    self.assertIn(123, msg2.map_int32_foreign_message)
+    self.assertIn((-456), msg2.map_int32_foreign_message)
+    self.assertEqual(2, len(msg2.map_int32_foreign_message))

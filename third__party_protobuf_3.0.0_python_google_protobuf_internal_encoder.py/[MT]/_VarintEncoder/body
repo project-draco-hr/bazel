@@ -1,0 +1,12 @@
+def _VarintEncoder():
+    'Return an encoder for a basic varint value (does not include tag).'
+
+    def EncodeVarint(write, value):
+        bits = (value & 127)
+        value >>= 7
+        while value:
+            write(six.int2byte((128 | bits)))
+            bits = (value & 127)
+            value >>= 7
+        return write(six.int2byte(bits))
+    return EncodeVarint

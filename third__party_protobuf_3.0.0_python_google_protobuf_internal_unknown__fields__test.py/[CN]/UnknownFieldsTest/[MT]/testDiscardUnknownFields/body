@@ -1,0 +1,13 @@
+def testDiscardUnknownFields(self):
+    self.empty_message.DiscardUnknownFields()
+    self.assertEqual('', self.empty_message.SerializeToString())
+    message = unittest_pb2.TestAllTypes()
+    other_message = unittest_pb2.TestAllTypes()
+    other_message.optional_string = 'discard'
+    message.optional_nested_message.ParseFromString(other_message.SerializeToString())
+    message.repeated_nested_message.add().ParseFromString(other_message.SerializeToString())
+    self.assertNotEqual('', message.optional_nested_message.SerializeToString())
+    self.assertNotEqual('', message.repeated_nested_message[0].SerializeToString())
+    message.DiscardUnknownFields()
+    self.assertEqual('', message.optional_nested_message.SerializeToString())
+    self.assertEqual('', message.repeated_nested_message[0].SerializeToString())

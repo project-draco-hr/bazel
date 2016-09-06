@@ -1,0 +1,13 @@
+def testPackWithCustomTypeUrl(self):
+    submessage = any_test_pb2.TestAny()
+    submessage.int_value = 12345
+    msg = any_pb2.Any()
+    msg.Pack(submessage, 'type.myservice.com')
+    self.assertEqual(msg.type_url, ('type.myservice.com/%s' % submessage.DESCRIPTOR.full_name))
+    msg.Pack(submessage, 'type.myservice.com/')
+    self.assertEqual(msg.type_url, ('type.myservice.com/%s' % submessage.DESCRIPTOR.full_name))
+    msg.Pack(submessage, '')
+    self.assertEqual(msg.type_url, ('/%s' % submessage.DESCRIPTOR.full_name))
+    unpacked_message = any_test_pb2.TestAny()
+    self.assertTrue(msg.Unpack(unpacked_message))
+    self.assertEqual(submessage, unpacked_message)

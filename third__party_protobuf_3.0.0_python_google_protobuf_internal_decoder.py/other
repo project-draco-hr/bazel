@@ -1,0 +1,32 @@
+'Code for decoding protocol buffer primitives.\n\nThis code is very similar to encoder.py -- read the docs for that module first.\n\nA "decoder" is a function with the signature:\n  Decode(buffer, pos, end, message, field_dict)\nThe arguments are:\n  buffer:     The string containing the encoded message.\n  pos:        The current position in the string.\n  end:        The position in the string where the current message ends.  May be\n              less than len(buffer) if we\'re reading a sub-message.\n  message:    The message object into which we\'re parsing.\n  field_dict: message._fields (avoids a hashtable lookup).\nThe decoder reads the field and stores it into field_dict, returning the new\nbuffer position.  A decoder for a repeated field may proactively decode all of\nthe elements of that field, if they appear consecutively.\n\nNote that decoders may throw any of the following:\n  IndexError:  Indicates a truncated message.\n  struct.error:  Unpacking of a fixed-width field failed.\n  message.DecodeError:  Other errors.\n\nDecoders are expected to raise an exception if they are called with pos > end.\nThis allows callers to be lax about bounds checking:  it\'s fineto read past\n"end" as long as you are sure that someone else will notice and throw an\nexception later on.\n\nSomething up the call stack is expected to catch IndexError and struct.error\nand convert them to message.DecodeError.\n\nDecoders are constructed using decoder constructors with the signature:\n  MakeDecoder(field_number, is_repeated, is_packed, key, new_default)\nThe arguments are:\n  field_number:  The field number of the field we want to decode.\n  is_repeated:   Is the field a repeated field? (bool)\n  is_packed:     Is the field a packed field? (bool)\n  key:           The key to use when looking up the field within field_dict.\n                 (This is actually the FieldDescriptor but nothing in this\n                 file should depend on that.)\n  new_default:   A function which takes a message object as a parameter and\n                 returns a new instance of the default value for this field.\n                 (This is called for repeated fields and sub-messages, when an\n                 instance does not already exist.)\n\nAs with encoders, we define a decoder constructor for every type of field.\nThen, for every field of every message class we construct an actual decoder.\nThat decoder goes into a dict indexed by tag, so when we decode a message\nwe repeatedly read a tag, look up the corresponding decoder, and invoke it.\n'
+__author__ = 'kenton@google.com (Kenton Varda)'
+import struct
+import six
+if six.PY3:
+    long = int
+from google.protobuf.internal import encoder
+from google.protobuf.internal import wire_format
+from google.protobuf import message
+_POS_INF = inf
+_NEG_INF = (- _POS_INF)
+_NAN = (_POS_INF * 0)
+_DecodeError = message.DecodeError
+_DecodeVarint = _VarintDecoder(((1 << 64) - 1), long)
+_DecodeSignedVarint = _SignedVarintDecoder(((1 << 64) - 1), long)
+_DecodeVarint32 = _VarintDecoder(((1 << 32) - 1), int)
+_DecodeSignedVarint32 = _SignedVarintDecoder(((1 << 32) - 1), int)
+Int32Decoder = _SimpleDecoder(wire_format.WIRETYPE_VARINT, _DecodeSignedVarint32)
+Int64Decoder = _SimpleDecoder(wire_format.WIRETYPE_VARINT, _DecodeSignedVarint)
+UInt32Decoder = _SimpleDecoder(wire_format.WIRETYPE_VARINT, _DecodeVarint32)
+UInt64Decoder = _SimpleDecoder(wire_format.WIRETYPE_VARINT, _DecodeVarint)
+SInt32Decoder = _ModifiedDecoder(wire_format.WIRETYPE_VARINT, _DecodeVarint32, wire_format.ZigZagDecode)
+SInt64Decoder = _ModifiedDecoder(wire_format.WIRETYPE_VARINT, _DecodeVarint, wire_format.ZigZagDecode)
+Fixed32Decoder = _StructPackDecoder(wire_format.WIRETYPE_FIXED32, '<I')
+Fixed64Decoder = _StructPackDecoder(wire_format.WIRETYPE_FIXED64, '<Q')
+SFixed32Decoder = _StructPackDecoder(wire_format.WIRETYPE_FIXED32, '<i')
+SFixed64Decoder = _StructPackDecoder(wire_format.WIRETYPE_FIXED64, '<q')
+FloatDecoder = _FloatDecoder()
+DoubleDecoder = _DoubleDecoder()
+BoolDecoder = _ModifiedDecoder(wire_format.WIRETYPE_VARINT, _DecodeVarint, bool)
+MESSAGE_SET_ITEM_TAG = encoder.TagBytes(1, wire_format.WIRETYPE_START_GROUP)
+SkipField = _FieldSkipper()

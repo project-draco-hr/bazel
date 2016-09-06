@@ -1,0 +1,10 @@
+def testInvalidAny(self):
+    message = any_pb2.Any()
+    text = '{"@type": "type.googleapis.com/google.protobuf.Int32Value"}'
+    self.assertRaisesRegexp(KeyError, 'value', json_format.Parse, text, message)
+    text = '{"value": 1234}'
+    self.assertRaisesRegexp(json_format.ParseError, '@type is missing when parsing any message.', json_format.Parse, text, message)
+    text = '{"@type": "type.googleapis.com/MessageNotExist", "value": 1234}'
+    self.assertRaisesRegexp(TypeError, 'Can not find message descriptor by type_url: type.googleapis.com/MessageNotExist.', json_format.Parse, text, message)
+    text = '{"@type": "incorrect.googleapis.com/google.protobuf.Int32Value","value": 1234}'
+    json_format.Parse(text, message)

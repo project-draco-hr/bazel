@@ -1,0 +1,10 @@
+def testPrintMessageSetByFieldNumber(self):
+    out = text_format.TextWriter(False)
+    message = unittest_mset_pb2.TestMessageSetContainer()
+    ext1 = unittest_mset_pb2.TestMessageSetExtension1.message_set_extension
+    ext2 = unittest_mset_pb2.TestMessageSetExtension2.message_set_extension
+    message.message_set.Extensions[ext1].i = 23
+    message.message_set.Extensions[ext2].str = 'foo'
+    text_format.PrintMessage(message, out, use_field_number=True)
+    self.CompareToGoldenText(out.getvalue(), '1 {\n  1545008 {\n    15: 23\n  }\n  1547769 {\n    25: "foo"\n  }\n}\n')
+    out.close()

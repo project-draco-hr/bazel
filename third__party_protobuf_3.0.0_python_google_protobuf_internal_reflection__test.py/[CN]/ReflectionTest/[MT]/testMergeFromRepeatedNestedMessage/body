@@ -1,0 +1,18 @@
+def testMergeFromRepeatedNestedMessage(self):
+    proto1 = unittest_pb2.TestAllTypes()
+    m = proto1.repeated_nested_message.add()
+    m.bb = 123
+    m = proto1.repeated_nested_message.add()
+    m.bb = 321
+    proto2 = unittest_pb2.TestAllTypes()
+    m = proto2.repeated_nested_message.add()
+    m.bb = 999
+    proto2.MergeFrom(proto1)
+    self.assertEqual(999, proto2.repeated_nested_message[0].bb)
+    self.assertEqual(123, proto2.repeated_nested_message[1].bb)
+    self.assertEqual(321, proto2.repeated_nested_message[2].bb)
+    proto3 = unittest_pb2.TestAllTypes()
+    proto3.repeated_nested_message.MergeFrom(proto2.repeated_nested_message)
+    self.assertEqual(999, proto3.repeated_nested_message[0].bb)
+    self.assertEqual(123, proto3.repeated_nested_message[1].bb)
+    self.assertEqual(321, proto3.repeated_nested_message[2].bb)

@@ -1,0 +1,31 @@
+def _AddHasFieldMethod(message_descriptor, cls):
+    'Helper for _AddMessageMethods().'
+    is_proto3 = (message_descriptor.syntax == 'proto3')
+    error_msg = (_Proto3HasError if is_proto3 else _Proto2HasError)
+    hassable_fields = {}
+    for field in message_descriptor.fields:
+        if (field.label == _FieldDescriptor.LABEL_REPEATED):
+            continue
+        if (is_proto3 and (field.cpp_type != _FieldDescriptor.CPPTYPE_MESSAGE) and (not field.containing_oneof)):
+            continue
+        hassable_fields[field.name] = field
+    if (not is_proto3):
+        for oneof in message_descriptor.oneofs:
+            hassable_fields[oneof.name] = oneof
+
+    def HasField(self, field_name):
+        try:
+            field = hassable_fields[field_name]
+        except KeyError:
+            raise ValueError((error_msg % field_name))
+        if isinstance(field, descriptor_mod.OneofDescriptor):
+            try:
+                return HasField(self, self._oneofs[field].name)
+            except KeyError:
+                return False
+        elif (field.cpp_type == _FieldDescriptor.CPPTYPE_MESSAGE):
+            value = self._fields.get(field)
+            return ((value is not None) and value._is_present_in_parent)
+        else:
+            return (field in self._fields)
+    cls.HasField = HasField

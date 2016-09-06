@@ -1,0 +1,9 @@
+def _MakeServiceDescriptor(self, service_proto, service_index, scope, package, file_desc):
+    'Make a protobuf ServiceDescriptor given a ServiceDescriptorProto.\n\n    Args:\n      service_proto: The descriptor_pb2.ServiceDescriptorProto protobuf message.\n      service_index: The index of the service in the File.\n      scope: Dict mapping short and full symbols to message and enum types.\n      package: Optional package name for the new message EnumDescriptor.\n      file_desc: The file containing the service descriptor.\n\n    Returns:\n      The added descriptor.\n    '
+    if package:
+        service_name = '.'.join((package, service_proto.name))
+    else:
+        service_name = service_proto.name
+    methods = [self._MakeMethodDescriptor(method_proto, service_name, package, scope, index) for (index, method_proto) in enumerate(service_proto.method)]
+    desc = descriptor.ServiceDescriptor(name=service_proto.name, full_name=service_name, index=service_index, methods=methods, options=service_proto.options, file=file_desc)
+    return desc

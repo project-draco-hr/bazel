@@ -1,0 +1,12 @@
+def testCamelcaseName(self):
+    descriptor_proto = descriptor_pb2.DescriptorProto()
+    descriptor_proto.name = 'Bar'
+    names = ['foo_foo', 'FooBar', 'fooBaz', 'fooFoo', 'foobar']
+    camelcase_names = ['fooFoo', 'fooBar', 'fooBaz', 'fooFoo', 'foobar']
+    for index in range(len(names)):
+        field = descriptor_proto.field.add()
+        field.number = (index + 1)
+        field.name = names[index]
+    result = descriptor.MakeDescriptor(descriptor_proto)
+    for index in range(len(camelcase_names)):
+        self.assertEqual(result.fields[index].camelcase_name, camelcase_names[index])

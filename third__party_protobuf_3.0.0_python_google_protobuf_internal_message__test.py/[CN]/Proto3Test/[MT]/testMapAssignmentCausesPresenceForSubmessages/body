@@ -1,0 +1,19 @@
+def testMapAssignmentCausesPresenceForSubmessages(self):
+    msg = map_unittest_pb2.TestMapSubmessage()
+    msg.test_map.map_int32_foreign_message[123].c = 5
+    serialized = msg.SerializeToString()
+    msg2 = map_unittest_pb2.TestMapSubmessage()
+    msg2.ParseFromString(serialized)
+    self.assertEqual(msg, msg2)
+    msg.test_map.map_int32_foreign_message[888].c = 7
+    serialized = msg.SerializeToString()
+    msg2.ParseFromString(serialized)
+    self.assertEqual(msg, msg2)
+    msg.test_map.map_int32_foreign_message[888].MergeFrom(msg.test_map.map_int32_foreign_message[123])
+    serialized = msg.SerializeToString()
+    msg2.ParseFromString(serialized)
+    self.assertEqual(msg, msg2)
+    msg.test_map.map_int32_foreign_message.clear()
+    serialized = msg.SerializeToString()
+    msg2.ParseFromString(serialized)
+    self.assertEqual(msg, msg2)

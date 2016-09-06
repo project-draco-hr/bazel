@@ -1,0 +1,16 @@
+def testSortingRepeatedCompositeFieldsCustomComparator(self, message_module):
+    'Check passing a custom comparator to sort a repeated composite field.'
+    message = message_module.TestAllTypes()
+    message.repeated_nested_message.add().bb = 1
+    message.repeated_nested_message.add().bb = 3
+    message.repeated_nested_message.add().bb = 2
+    message.repeated_nested_message.add().bb = 6
+    message.repeated_nested_message.add().bb = 5
+    message.repeated_nested_message.add().bb = 4
+    message.repeated_nested_message.sort(key=operator.attrgetter('bb'))
+    self.assertEqual(message.repeated_nested_message[0].bb, 1)
+    self.assertEqual(message.repeated_nested_message[1].bb, 2)
+    self.assertEqual(message.repeated_nested_message[2].bb, 3)
+    self.assertEqual(message.repeated_nested_message[3].bb, 4)
+    self.assertEqual(message.repeated_nested_message[4].bb, 5)
+    self.assertEqual(message.repeated_nested_message[5].bb, 6)

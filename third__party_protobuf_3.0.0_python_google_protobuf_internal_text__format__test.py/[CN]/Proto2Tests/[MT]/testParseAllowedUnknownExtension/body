@@ -1,0 +1,28 @@
+def testParseAllowedUnknownExtension(self):
+    message = unittest_mset_pb2.TestMessageSetContainer()
+    text = 'message_set {\n  [unknown_extension] {\n    i: 23\n    bin: "\xe0"    [nested_unknown_ext]: {\n      i: 23\n      test: "test_string"\n      floaty_float: -0.315\n      num: -inf\n      multiline_str: "abc"\n          "def"\n          "xyz."\n      [nested_unknown_ext]: <\n        i: 23\n        i: 24\n        pointfloat: .3\n        test: "test_string"\n        floaty_float: -0.315\n        num: -inf\n        long_string: "test" "test2" \n      >\n    }\n  }\n  [unknown_extension]: 5\n}\n'
+    text_format.Parse(text, message, allow_unknown_extension=True)
+    golden = 'message_set {\n}\n'
+    self.CompareToGoldenText(text_format.MessageToString(message), golden)
+    message = unittest_mset_pb2.TestMessageSetContainer()
+    malformed = 'message_set {\n  [unknown_extension] {\n    i:\n  }\n}\n'
+    six.assertRaisesRegex(self, text_format.ParseError, 'Invalid field value: }', text_format.Parse, malformed, message, allow_unknown_extension=True)
+    message = unittest_mset_pb2.TestMessageSetContainer()
+    malformed = 'message_set {\n  [unknown_extension] {\n    str: "malformed string\n  }\n}\n'
+    six.assertRaisesRegex(self, text_format.ParseError, 'Invalid field value: "', text_format.Parse, malformed, message, allow_unknown_extension=True)
+    message = unittest_mset_pb2.TestMessageSetContainer()
+    malformed = 'message_set {\n  [unknown_extension] {\n    str: "malformed\n multiline\n string\n  }\n}\n'
+    six.assertRaisesRegex(self, text_format.ParseError, 'Invalid field value: "', text_format.Parse, malformed, message, allow_unknown_extension=True)
+    message = unittest_mset_pb2.TestMessageSetContainer()
+    malformed = 'message_set {\n  [malformed_extension] <\n    i: -5\n  \n}\n'
+    six.assertRaisesRegex(self, text_format.ParseError, '5:1 : Expected ">".', text_format.Parse, malformed, message, allow_unknown_extension=True)
+    message = unittest_mset_pb2.TestMessageSetContainer()
+    malformed = 'message_set {\n  unknown_field: true\n  \n}\n'
+    six.assertRaisesRegex(self, text_format.ParseError, '2:3 : Message type "proto2_wireformat_unittest.TestMessageSet" has no field named "unknown_field".', text_format.Parse, malformed, message, allow_unknown_extension=True)
+    message = unittest_mset_pb2.TestMessageSetContainer()
+    text = 'message_set {\n  [protobuf_unittest.TestMessageSetExtension1] {\n    i: 23\n  }\n  [protobuf_unittest.TestMessageSetExtension2] {\n    str: "foo"\n  }\n}\n'
+    text_format.Parse(text, message, allow_unknown_extension=True)
+    ext1 = unittest_mset_pb2.TestMessageSetExtension1.message_set_extension
+    ext2 = unittest_mset_pb2.TestMessageSetExtension2.message_set_extension
+    self.assertEqual(23, message.message_set.Extensions[ext1].i)
+    self.assertEqual('foo', message.message_set.Extensions[ext2].str)

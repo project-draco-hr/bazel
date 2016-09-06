@@ -1,0 +1,31 @@
+def testDefaultValueForCustomMessages(self):
+    'Check the value returned by non-existent fields.'
+
+    def _CheckValueAndType(value, expected_value, expected_type):
+        self.assertEqual(value, expected_value)
+        self.assertIsInstance(value, expected_type)
+
+    def _CheckDefaultValues(msg):
+        try:
+            int64 = long
+        except NameError:
+            int64 = int
+        try:
+            unicode_type = unicode
+        except NameError:
+            unicode_type = str
+        _CheckValueAndType(msg.optional_int32, 0, int)
+        _CheckValueAndType(msg.optional_uint64, 0, (int64, int))
+        _CheckValueAndType(msg.optional_float, 0, (float, int))
+        _CheckValueAndType(msg.optional_double, 0, (float, int))
+        _CheckValueAndType(msg.optional_bool, False, bool)
+        _CheckValueAndType(msg.optional_string, u'', unicode_type)
+        _CheckValueAndType(msg.optional_bytes, '', bytes)
+        _CheckValueAndType(msg.optional_nested_enum, msg.FOO, int)
+    _CheckDefaultValues(unittest_pb2.TestAllTypes())
+    pool = descriptor_pool.DescriptorPool()
+    pool.Add(descriptor_pb2.FileDescriptorProto.FromString(unittest_import_public_pb2.DESCRIPTOR.serialized_pb))
+    pool.Add(descriptor_pb2.FileDescriptorProto.FromString(unittest_import_pb2.DESCRIPTOR.serialized_pb))
+    pool.Add(descriptor_pb2.FileDescriptorProto.FromString(unittest_pb2.DESCRIPTOR.serialized_pb))
+    message_class = message_factory.MessageFactory(pool).GetPrototype(pool.FindMessageTypeByName(unittest_pb2.TestAllTypes.DESCRIPTOR.full_name))
+    _CheckDefaultValues(message_class())

@@ -1,0 +1,45 @@
+def testStruct(self):
+    struct = struct_pb2.Struct()
+    struct_class = struct.__class__
+    struct['key1'] = 5
+    struct['key2'] = 'abc'
+    struct['key3'] = True
+    struct.get_or_create_struct('key4')['subkey'] = 11.0
+    struct_list = struct.get_or_create_list('key5')
+    struct_list.extend([6, 'seven', True, False, None])
+    struct_list.add_struct()['subkey2'] = 9
+    self.assertTrue(isinstance(struct, well_known_types.Struct))
+    self.assertEquals(5, struct['key1'])
+    self.assertEquals('abc', struct['key2'])
+    self.assertIs(True, struct['key3'])
+    self.assertEquals(11, struct['key4']['subkey'])
+    inner_struct = struct_class()
+    inner_struct['subkey2'] = 9
+    self.assertEquals([6, 'seven', True, False, None, inner_struct], list(struct['key5'].items()))
+    serialized = struct.SerializeToString()
+    struct2 = struct_pb2.Struct()
+    struct2.ParseFromString(serialized)
+    self.assertEquals(struct, struct2)
+    self.assertTrue(isinstance(struct2, well_known_types.Struct))
+    self.assertEquals(5, struct2['key1'])
+    self.assertEquals('abc', struct2['key2'])
+    self.assertIs(True, struct2['key3'])
+    self.assertEquals(11, struct2['key4']['subkey'])
+    self.assertEquals([6, 'seven', True, False, None, inner_struct], list(struct2['key5'].items()))
+    struct_list = struct2['key5']
+    self.assertEquals(6, struct_list[0])
+    self.assertEquals('seven', struct_list[1])
+    self.assertEquals(True, struct_list[2])
+    self.assertEquals(False, struct_list[3])
+    self.assertEquals(None, struct_list[4])
+    self.assertEquals(inner_struct, struct_list[5])
+    struct_list[1] = 7
+    self.assertEquals(7, struct_list[1])
+    struct_list.add_list().extend([1, 'two', True, False, None])
+    self.assertEquals([1, 'two', True, False, None], list(struct_list[6].items()))
+    text_serialized = str(struct)
+    struct3 = struct_pb2.Struct()
+    text_format.Merge(text_serialized, struct3)
+    self.assertEquals(struct, struct3)
+    struct.get_or_create_struct('key3')['replace'] = 12
+    self.assertEquals(12, struct['key3']['replace'])

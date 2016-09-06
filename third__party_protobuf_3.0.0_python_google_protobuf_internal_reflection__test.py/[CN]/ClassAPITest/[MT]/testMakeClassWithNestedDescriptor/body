@@ -1,0 +1,10 @@
+@unittest.skipIf(((api_implementation.Type() == 'cpp') and (api_implementation.Version() == 2)), 'C++ implementation requires a call to MakeDescriptor()')
+def testMakeClassWithNestedDescriptor(self):
+    leaf_desc = descriptor.Descriptor('leaf', 'package.parent.child.leaf', '', containing_type=None, fields=[], nested_types=[], enum_types=[], extensions=[])
+    child_desc = descriptor.Descriptor('child', 'package.parent.child', '', containing_type=None, fields=[], nested_types=[leaf_desc], enum_types=[], extensions=[])
+    sibling_desc = descriptor.Descriptor('sibling', 'package.parent.sibling', '', containing_type=None, fields=[], nested_types=[], enum_types=[], extensions=[])
+    parent_desc = descriptor.Descriptor('parent', 'package.parent', '', containing_type=None, fields=[], nested_types=[child_desc, sibling_desc], enum_types=[], extensions=[])
+    message_class = reflection.MakeClass(parent_desc)
+    self.assertIn('child', message_class.__dict__)
+    self.assertIn('sibling', message_class.__dict__)
+    self.assertIn('leaf', message_class.child.__dict__)

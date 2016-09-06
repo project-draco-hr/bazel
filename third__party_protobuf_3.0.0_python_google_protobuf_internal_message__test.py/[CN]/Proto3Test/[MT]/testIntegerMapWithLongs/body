@@ -1,0 +1,13 @@
+def testIntegerMapWithLongs(self):
+    msg = map_unittest_pb2.TestMap()
+    msg.map_int32_int32[long((-123))] = long((-456))
+    msg.map_int64_int64[long((- (2 ** 33)))] = long((- (2 ** 34)))
+    msg.map_uint32_uint32[long(123)] = long(456)
+    msg.map_uint64_uint64[long((2 ** 33))] = long((2 ** 34))
+    serialized = msg.SerializeToString()
+    msg2 = map_unittest_pb2.TestMap()
+    msg2.ParseFromString(serialized)
+    self.assertEqual((-456), msg2.map_int32_int32[(-123)])
+    self.assertEqual((- (2 ** 34)), msg2.map_int64_int64[(- (2 ** 33))])
+    self.assertEqual(456, msg2.map_uint32_uint32[123])
+    self.assertEqual((2 ** 34), msg2.map_uint64_uint64[(2 ** 33)])

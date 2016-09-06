@@ -1,0 +1,19 @@
+@unittest.skipIf(((api_implementation.Type() != 'cpp') or (api_implementation.Version() != 2)), 'Errors are only available from the most recent C++ implementation.')
+def testFileDescriptorErrors(self):
+    file_name = 'test_file_descriptor_errors.proto'
+    package_name = 'test_file_descriptor_errors.proto'
+    file_descriptor_proto = descriptor_pb2.FileDescriptorProto()
+    file_descriptor_proto.name = file_name
+    file_descriptor_proto.package = package_name
+    m1 = file_descriptor_proto.message_type.add()
+    m1.name = 'msg1'
+    descriptor.FileDescriptor(file_name, package_name, serialized_pb=file_descriptor_proto.SerializeToString())
+    another_file_name = 'another_test_file_descriptor_errors.proto'
+    file_descriptor_proto.name = another_file_name
+    m2 = file_descriptor_proto.message_type.add()
+    m2.name = 'msg2'
+    with self.assertRaises(TypeError) as cm:
+        descriptor.FileDescriptor(another_file_name, package_name, serialized_pb=file_descriptor_proto.SerializeToString())
+        self.assertTrue(hasattr(cm, 'exception'), ('%s not raised' % getattr(cm.expected, '__name__', cm.expected)))
+        self.assertIn('test_file_descriptor_errors.proto', str(cm.exception))
+        self.assertIn('test_file_descriptor_errors.msg1', str(cm.exception))

@@ -1,0 +1,17 @@
+def testAnyMessage(self):
+    message = json_format_proto3_pb2.TestAny()
+    value1 = json_format_proto3_pb2.MessageType()
+    value2 = json_format_proto3_pb2.MessageType()
+    value1.value = 1234
+    value2.value = 5678
+    message.value.Pack(value1)
+    message.repeated_value.add().Pack(value1)
+    message.repeated_value.add().Pack(value2)
+    message.repeated_value.add()
+    self.assertEqual(json.loads(json_format.MessageToJson(message, True)), json.loads('{\n  "repeatedValue": [ {\n    "@type": "type.googleapis.com/proto3.MessageType",\n    "value": 1234\n  }, {\n    "@type": "type.googleapis.com/proto3.MessageType",\n    "value": 5678\n  },\n  {}],\n  "value": {\n    "@type": "type.googleapis.com/proto3.MessageType",\n    "value": 1234\n  }\n}\n'))
+    parsed_message = json_format_proto3_pb2.TestAny()
+    self.CheckParseBack(message, parsed_message)
+    test_message = json_format_proto3_pb2.TestMessage(bool_value=True, int32_value=20, int64_value=(-20), uint32_value=20, uint64_value=20, double_value=3.14, string_value='foo')
+    message.Clear()
+    message.value.Pack(test_message)
+    self.assertEqual(json_format.MessageToJson(message, False)[0:68], '{\n  "value": {\n    "@type": "type.googleapis.com/proto3.TestMessage"')

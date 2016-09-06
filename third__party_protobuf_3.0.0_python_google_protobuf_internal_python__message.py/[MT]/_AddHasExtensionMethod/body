@@ -1,0 +1,13 @@
+def _AddHasExtensionMethod(cls):
+    'Helper for _AddMessageMethods().'
+
+    def HasExtension(self, extension_handle):
+        _VerifyExtensionHandle(self, extension_handle)
+        if (extension_handle.label == _FieldDescriptor.LABEL_REPEATED):
+            raise KeyError(('"%s" is repeated.' % extension_handle.full_name))
+        if (extension_handle.cpp_type == _FieldDescriptor.CPPTYPE_MESSAGE):
+            value = self._fields.get(extension_handle)
+            return ((value is not None) and value._is_present_in_parent)
+        else:
+            return (extension_handle in self._fields)
+    cls.HasExtension = HasExtension

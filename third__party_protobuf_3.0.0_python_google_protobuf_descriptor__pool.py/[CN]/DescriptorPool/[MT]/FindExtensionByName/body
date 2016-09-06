@@ -1,0 +1,9 @@
+def FindExtensionByName(self, full_name):
+    'Loads the named extension descriptor from the pool.\n\n    Args:\n      full_name: The full name of the extension descriptor to load.\n\n    Returns:\n      A FieldDescriptor, describing the named extension.\n    '
+    full_name = _NormalizeFullyQualifiedName(full_name)
+    (message_name, _, extension_name) = full_name.rpartition('.')
+    try:
+        scope = self.FindMessageTypeByName(message_name)
+    except KeyError:
+        scope = self.FindFileContainingSymbol(full_name)
+    return scope.extensions_by_name[extension_name]

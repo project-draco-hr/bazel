@@ -1,0 +1,11 @@
+def testGetPrototype(self):
+    db = descriptor_database.DescriptorDatabase()
+    pool = descriptor_pool.DescriptorPool(db)
+    db.Add(self.factory_test1_fd)
+    db.Add(self.factory_test2_fd)
+    factory = message_factory.MessageFactory()
+    cls = factory.GetPrototype(pool.FindMessageTypeByName('google.protobuf.python.internal.Factory2Message'))
+    self.assertFalse((cls is factory_test2_pb2.Factory2Message))
+    self._ExerciseDynamicClass(cls)
+    cls2 = factory.GetPrototype(pool.FindMessageTypeByName('google.protobuf.python.internal.Factory2Message'))
+    self.assertTrue((cls is cls2))

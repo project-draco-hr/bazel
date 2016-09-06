@@ -1,0 +1,20 @@
+def MessageEncoder(field_number, is_repeated, is_packed):
+    'Returns an encoder for a message field.'
+    tag = TagBytes(field_number, wire_format.WIRETYPE_LENGTH_DELIMITED)
+    local_EncodeVarint = _EncodeVarint
+    assert (not is_packed)
+    if is_repeated:
+
+        def EncodeRepeatedField(write, value):
+            for element in value:
+                write(tag)
+                local_EncodeVarint(write, element.ByteSize())
+                element._InternalSerialize(write)
+        return EncodeRepeatedField
+    else:
+
+        def EncodeField(write, value):
+            write(tag)
+            local_EncodeVarint(write, value.ByteSize())
+            return value._InternalSerialize(write)
+        return EncodeField

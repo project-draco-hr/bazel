@@ -1,0 +1,21 @@
+def testCanonicalSerializationOrder(self):
+    proto = more_messages_pb2.OutOfOrderFields()
+    proto.optional_sint32 = 5
+    proto.Extensions[more_messages_pb2.optional_uint64] = 4
+    proto.optional_uint32 = 3
+    proto.Extensions[more_messages_pb2.optional_int64] = 2
+    proto.optional_int32 = 1
+    serialized = proto.SerializeToString()
+    self.assertEqual(proto.ByteSize(), len(serialized))
+    d = _MiniDecoder(serialized)
+    ReadTag = d.ReadFieldNumberAndWireType
+    self.assertEqual((1, wire_format.WIRETYPE_VARINT), ReadTag())
+    self.assertEqual(1, d.ReadInt32())
+    self.assertEqual((2, wire_format.WIRETYPE_VARINT), ReadTag())
+    self.assertEqual(2, d.ReadInt64())
+    self.assertEqual((3, wire_format.WIRETYPE_VARINT), ReadTag())
+    self.assertEqual(3, d.ReadUInt32())
+    self.assertEqual((4, wire_format.WIRETYPE_VARINT), ReadTag())
+    self.assertEqual(4, d.ReadUInt64())
+    self.assertEqual((5, wire_format.WIRETYPE_VARINT), ReadTag())
+    self.assertEqual(5, d.ReadSInt32())

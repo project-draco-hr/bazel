@@ -1,0 +1,11 @@
+def testPrintFloatFormat(self, message_module):
+    message = message_module.NestedTestAllTypes()
+    message.payload.optional_float = 1.25
+    message.payload.optional_double = (-3.456789012345678e-06)
+    message.payload.repeated_float.append((-5642))
+    message.payload.repeated_double.append(7.89e-05)
+    formatted_fields = ['optional_float: 1.25', 'optional_double: -3.45678901234568e-6', 'repeated_float: -5642', 'repeated_double: 7.89e-5']
+    text_message = text_format.MessageToString(message, float_format='.15g')
+    self.CompareToGoldenText(self.RemoveRedundantZeros(text_message), 'payload {{\n  {0}\n  {1}\n  {2}\n  {3}\n}}\n'.format(*formatted_fields))
+    text_message = text_format.MessageToString(message, as_one_line=True, float_format='.15g')
+    self.CompareToGoldenText(self.RemoveRedundantZeros(text_message), 'payload {{ {0} {1} {2} {3} }}'.format(*formatted_fields))

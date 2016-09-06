@@ -1,0 +1,20 @@
+def _ConvertAnyMessage(self, value, message):
+    'Convert a JSON representation into Any message.'
+    if (isinstance(value, dict) and (not value)):
+        return
+    try:
+        type_url = value['@type']
+    except KeyError:
+        raise ParseError('@type is missing when parsing any message.')
+    sub_message = _CreateMessageFromTypeUrl(type_url)
+    message_descriptor = sub_message.DESCRIPTOR
+    full_name = message_descriptor.full_name
+    if _IsWrapperMessage(message_descriptor):
+        self._ConvertWrapperMessage(value['value'], sub_message)
+    elif (full_name in _WKTJSONMETHODS):
+        methodcaller(_WKTJSONMETHODS[full_name][1], value['value'], sub_message)(self)
+    else:
+        del value['@type']
+        self._ConvertFieldValuePair(value, sub_message)
+    message.value = sub_message.SerializeToString()
+    message.type_url = type_url

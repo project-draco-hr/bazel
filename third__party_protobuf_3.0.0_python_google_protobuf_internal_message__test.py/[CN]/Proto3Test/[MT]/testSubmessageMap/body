@@ -1,0 +1,12 @@
+def testSubmessageMap(self):
+    msg = map_unittest_pb2.TestMap()
+    submsg = msg.map_int32_foreign_message[111]
+    self.assertIs(submsg, msg.map_int32_foreign_message[111])
+    self.assertIsInstance(submsg, unittest_pb2.ForeignMessage)
+    submsg.c = 5
+    serialized = msg.SerializeToString()
+    msg2 = map_unittest_pb2.TestMap()
+    msg2.ParseFromString(serialized)
+    self.assertEqual(5, msg2.map_int32_foreign_message[111].c)
+    with self.assertRaises(ValueError):
+        msg.map_int32_foreign_message[88] = unittest_pb2.ForeignMessage()

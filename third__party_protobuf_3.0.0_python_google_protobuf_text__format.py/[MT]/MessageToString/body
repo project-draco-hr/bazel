@@ -1,0 +1,10 @@
+def MessageToString(message, as_utf8=False, as_one_line=False, pointy_brackets=False, use_index_order=False, float_format=None, use_field_number=False, descriptor_pool=None, indent=0):
+    'Convert protobuf message to text format.\n\n  Floating point values can be formatted compactly with 15 digits of\n  precision (which is the most that IEEE 754 "double" can guarantee)\n  using float_format=\'.15g\'. To ensure that converting to text and back to a\n  proto will result in an identical value, float_format=\'.17g\' should be used.\n\n  Args:\n    message: The protocol buffers message.\n    as_utf8: Produce text output in UTF8 format.\n    as_one_line: Don\'t introduce newlines between fields.\n    pointy_brackets: If True, use angle brackets instead of curly braces for\n      nesting.\n    use_index_order: If True, print fields of a proto message using the order\n      defined in source code instead of the field number. By default, use the\n      field number order.\n    float_format: If set, use this to specify floating point number formatting\n      (per the "Format Specification Mini-Language"); otherwise, str() is used.\n    use_field_number: If True, print field numbers instead of names.\n    descriptor_pool: A DescriptorPool used to resolve Any types.\n    indent: The indent level, in terms of spaces, for pretty print.\n\n  Returns:\n    A string of the text formatted protocol buffer message.\n  '
+    out = TextWriter(as_utf8)
+    printer = _Printer(out, indent, as_utf8, as_one_line, pointy_brackets, use_index_order, float_format, use_field_number, descriptor_pool)
+    printer.PrintMessage(message)
+    result = out.getvalue()
+    out.close()
+    if as_one_line:
+        return result.rstrip()
+    return result

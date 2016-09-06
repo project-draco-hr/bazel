@@ -1,0 +1,11 @@
+def testValueMessage(self):
+    message = json_format_proto3_pb2.TestValue()
+    message.value.string_value = 'hello'
+    message.repeated_value.add().number_value = 11.1
+    message.repeated_value.add().bool_value = False
+    message.repeated_value.add().null_value = 0
+    self.assertEqual(json.loads(json_format.MessageToJson(message, False)), json.loads('{  "value": "hello",  "repeatedValue": [11.1, false, null]}'))
+    parsed_message = json_format_proto3_pb2.TestValue()
+    self.CheckParseBack(message, parsed_message)
+    message.repeated_value.add()
+    self.assertEqual(json.loads(json_format.MessageToJson(message, False)), json.loads('{  "value": "hello",  "repeatedValue": [11.1, false, null, null]}'))

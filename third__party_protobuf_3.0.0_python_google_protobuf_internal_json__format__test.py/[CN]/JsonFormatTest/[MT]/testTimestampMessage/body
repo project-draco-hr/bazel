@@ -1,0 +1,23 @@
+def testTimestampMessage(self):
+    message = json_format_proto3_pb2.TestTimestamp()
+    message.value.seconds = 0
+    message.value.nanos = 0
+    message.repeated_value.add().seconds = 20
+    message.repeated_value[0].nanos = 1
+    message.repeated_value.add().seconds = 0
+    message.repeated_value[1].nanos = 10000
+    message.repeated_value.add().seconds = 100000000
+    message.repeated_value[2].nanos = 0
+    message.repeated_value.add().seconds = 253402300799
+    message.repeated_value[3].nanos = 999999999
+    message.repeated_value.add().seconds = (-62135596800)
+    message.repeated_value[4].nanos = 0
+    self.assertEqual(json.loads(json_format.MessageToJson(message, True)), json.loads('{"value": "1970-01-01T00:00:00Z","repeatedValue": [  "1970-01-01T00:00:20.000000001Z",  "1970-01-01T00:00:00.000010Z",  "1973-03-03T09:46:40Z",  "9999-12-31T23:59:59.999999999Z",  "0001-01-01T00:00:00Z"]}'))
+    parsed_message = json_format_proto3_pb2.TestTimestamp()
+    self.CheckParseBack(message, parsed_message)
+    text = '{"value": "1970-01-01T00:00:00.01+08:00","repeatedValue":[  "1970-01-01T00:00:00.01+08:30",  "1970-01-01T00:00:00.01-01:23"]}'
+    json_format.Parse(text, parsed_message)
+    self.assertEqual(parsed_message.value.seconds, ((-8) * 3600))
+    self.assertEqual(parsed_message.value.nanos, 10000000)
+    self.assertEqual(parsed_message.repeated_value[0].seconds, ((-8.5) * 3600))
+    self.assertEqual(parsed_message.repeated_value[1].seconds, (3600 + (23 * 60)))

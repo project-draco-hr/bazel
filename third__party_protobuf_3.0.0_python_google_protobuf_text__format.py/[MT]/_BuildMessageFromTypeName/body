@@ -1,0 +1,10 @@
+def _BuildMessageFromTypeName(type_name, descriptor_pool):
+    "Returns a protobuf message instance.\n\n  Args:\n    type_name: Fully-qualified protobuf  message type name string.\n    descriptor_pool: DescriptorPool instance.\n\n  Returns:\n    A Message instance of type matching type_name, or None if the a Descriptor\n    wasn't found matching type_name.\n  "
+    from google.protobuf import message_factory
+    factory = message_factory.MessageFactory(descriptor_pool)
+    try:
+        message_descriptor = descriptor_pool.FindMessageTypeByName(type_name)
+    except KeyError:
+        return None
+    message_type = factory.GetPrototype(message_descriptor)
+    return message_type()

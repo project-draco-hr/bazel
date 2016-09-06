@@ -1,0 +1,26 @@
+'Contains a metaclass and helper functions used to create\nprotocol message classes from Descriptor objects at runtime.\n\nRecall that a metaclass is the "type" of a class.\n(A class is to a metaclass what an instance is to a class.)\n\nIn this case, we use the GeneratedProtocolMessageType metaclass\nto inject all the useful functionality into the classes\noutput by the protocol compiler at compile-time.\n\nThe upshot of all this is that the real implementation\ndetails for ALL pure-Python protocol buffers are *here in\nthis file*.\n'
+__author__ = 'robinson@google.com (Will Robinson)'
+from io import BytesIO
+import sys
+import struct
+import weakref
+import six
+try:
+    import six.moves.copyreg as copyreg
+except ImportError:
+    import copy_reg as copyreg
+from google.protobuf.internal import containers
+from google.protobuf.internal import decoder
+from google.protobuf.internal import encoder
+from google.protobuf.internal import enum_type_wrapper
+from google.protobuf.internal import message_listener as message_listener_mod
+from google.protobuf.internal import type_checkers
+from google.protobuf.internal import well_known_types
+from google.protobuf.internal import wire_format
+from google.protobuf import descriptor as descriptor_mod
+from google.protobuf import message as message_mod
+from google.protobuf import text_format
+_FieldDescriptor = descriptor_mod.FieldDescriptor
+_AnyFullTypeName = 'google.protobuf.Any'
+_Proto3HasError = 'Protocol message has no non-repeated submessage field "%s"'
+_Proto2HasError = 'Protocol message has no non-repeated field "%s"'

@@ -1,0 +1,40 @@
+def _RegularMessageToJsonObject(self, message, js):
+    'Converts normal message according to Proto3 JSON Specification.'
+    fields = message.ListFields()
+    try:
+        for (field, value) in fields:
+            name = field.camelcase_name
+            if _IsMapEntry(field):
+                v_field = field.message_type.fields_by_name['value']
+                js_map = {}
+                for key in value:
+                    if isinstance(key, bool):
+                        if key:
+                            recorded_key = 'true'
+                        else:
+                            recorded_key = 'false'
+                    else:
+                        recorded_key = key
+                    js_map[recorded_key] = self._FieldToJsonObject(v_field, value[key])
+                js[name] = js_map
+            elif (field.label == descriptor.FieldDescriptor.LABEL_REPEATED):
+                js[name] = [self._FieldToJsonObject(field, k) for k in value]
+            else:
+                js[name] = self._FieldToJsonObject(field, value)
+        if self.including_default_value_fields:
+            message_descriptor = message.DESCRIPTOR
+            for field in message_descriptor.fields:
+                if (((field.label != descriptor.FieldDescriptor.LABEL_REPEATED) and (field.cpp_type == descriptor.FieldDescriptor.CPPTYPE_MESSAGE)) or field.containing_oneof):
+                    continue
+                name = field.camelcase_name
+                if (name in js):
+                    continue
+                if _IsMapEntry(field):
+                    js[name] = {}
+                elif (field.label == descriptor.FieldDescriptor.LABEL_REPEATED):
+                    js[name] = []
+                else:
+                    js[name] = self._FieldToJsonObject(field, field.default_value)
+    except ValueError as e:
+        raise SerializeToJsonError('Failed to serialize {0} field: {1}.'.format(field.name, e))
+    return js

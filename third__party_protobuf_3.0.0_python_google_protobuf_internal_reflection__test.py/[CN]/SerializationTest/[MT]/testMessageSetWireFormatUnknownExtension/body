@@ -1,0 +1,25 @@
+def testMessageSetWireFormatUnknownExtension(self):
+    raw = unittest_mset_pb2.RawMessageSet()
+    item = raw.item.add()
+    item.type_id = 98418603
+    extension_message1 = message_set_extensions_pb2.TestMessageSetExtension1
+    message1 = message_set_extensions_pb2.TestMessageSetExtension1()
+    message1.i = 12345
+    item.message = message1.SerializeToString()
+    item = raw.item.add()
+    item.type_id = 98418604
+    extension_message1 = message_set_extensions_pb2.TestMessageSetExtension1
+    message1 = message_set_extensions_pb2.TestMessageSetExtension1()
+    message1.i = 12346
+    item.message = message1.SerializeToString()
+    item = raw.item.add()
+    item.type_id = 98418605
+    message1 = message_set_extensions_pb2.TestMessageSetExtension2()
+    message1.str = 'foo'
+    item.message = message1.SerializeToString()
+    serialized = raw.SerializeToString()
+    proto = message_set_extensions_pb2.TestMessageSet()
+    self.assertEqual(len(serialized), proto.MergeFromString(serialized))
+    extension_message1 = message_set_extensions_pb2.TestMessageSetExtension1
+    extension1 = extension_message1.message_set_extension
+    self.assertEqual(12345, proto.Extensions[extension1].i)

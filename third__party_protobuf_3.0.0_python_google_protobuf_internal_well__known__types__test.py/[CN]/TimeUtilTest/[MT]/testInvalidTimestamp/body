@@ -1,0 +1,8 @@
+def testInvalidTimestamp(self):
+    message = timestamp_pb2.Timestamp()
+    self.assertRaisesRegexp(ValueError, "time data '10000-01-01T00:00:00' does not match format '%Y-%m-%dT%H:%M:%S'", message.FromJsonString, '10000-01-01T00:00:00.00Z')
+    self.assertRaisesRegexp(well_known_types.ParseError, 'nanos 0123456789012 more than 9 fractional digits.', message.FromJsonString, '1970-01-01T00:00:00.0123456789012Z')
+    self.assertRaisesRegexp(well_known_types.ParseError, 'Invalid timezone offset value: \\+08.', message.FromJsonString, '1972-01-01T01:00:00.01+08')
+    self.assertRaisesRegexp(ValueError, 'year is out of range', message.FromJsonString, '0000-01-01T00:00:00Z')
+    message.seconds = 253402300800
+    self.assertRaisesRegexp(OverflowError, 'date value out of range', message.ToJsonString)

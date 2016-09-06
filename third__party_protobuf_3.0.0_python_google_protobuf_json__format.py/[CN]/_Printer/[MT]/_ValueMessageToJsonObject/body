@@ -1,0 +1,13 @@
+def _ValueMessageToJsonObject(self, message):
+    'Converts Value message according to Proto3 JSON Specification.'
+    which = message.WhichOneof('kind')
+    if ((which is None) or (which == 'null_value')):
+        return None
+    if (which == 'list_value'):
+        return self._ListValueMessageToJsonObject(message.list_value)
+    if (which == 'struct_value'):
+        value = message.struct_value
+    else:
+        value = getattr(message, which)
+    oneof_descriptor = message.DESCRIPTOR.fields_by_name[which]
+    return self._FieldToJsonObject(oneof_descriptor, value)

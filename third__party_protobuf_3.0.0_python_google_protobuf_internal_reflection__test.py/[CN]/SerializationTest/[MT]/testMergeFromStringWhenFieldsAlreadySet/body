@@ -1,0 +1,15 @@
+def testMergeFromStringWhenFieldsAlreadySet(self):
+    first_proto = unittest_pb2.TestAllTypes()
+    first_proto.repeated_string.append('foobar')
+    first_proto.optional_int32 = 23
+    first_proto.optional_nested_message.bb = 42
+    serialized = first_proto.SerializeToString()
+    second_proto = unittest_pb2.TestAllTypes()
+    second_proto.repeated_string.append('baz')
+    second_proto.optional_int32 = 100
+    second_proto.optional_nested_message.bb = 999
+    bytes_parsed = second_proto.MergeFromString(serialized)
+    self.assertEqual(len(serialized), bytes_parsed)
+    self.assertEqual(['baz', 'foobar'], list(second_proto.repeated_string))
+    self.assertEqual(23, second_proto.optional_int32)
+    self.assertEqual(42, second_proto.optional_nested_message.bb)

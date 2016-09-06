@@ -1,0 +1,18 @@
+def _AddPropertiesForRepeatedField(field, cls):
+    'Adds a public property for a "repeated" protocol message field.  Clients\n  can use this property to get the value of the field, which will be either a\n  _RepeatedScalarFieldContainer or _RepeatedCompositeFieldContainer (see\n  below).\n\n  Note that when clients add values to these containers, we perform\n  type-checking in the case of repeated scalar fields, and we also set any\n  necessary "has" bits as a side-effect.\n\n  Args:\n    field: A FieldDescriptor for this field.\n    cls: The class we\'re constructing.\n  '
+    proto_field_name = field.name
+    property_name = _PropertyName(proto_field_name)
+
+    def getter(self):
+        field_value = self._fields.get(field)
+        if (field_value is None):
+            field_value = field._default_constructor(self)
+            field_value = self._fields.setdefault(field, field_value)
+        return field_value
+    getter.__module__ = None
+    getter.__doc__ = ('Getter for %s.' % proto_field_name)
+
+    def setter(self, new_value):
+        raise AttributeError(('Assignment not allowed to repeated field "%s" in protocol message object.' % proto_field_name))
+    doc = ('Magic attribute generated for "%s" proto field.' % proto_field_name)
+    setattr(cls, property_name, property(getter, setter, doc=doc))

@@ -1,0 +1,55 @@
+def _MergeMessageField(self, tokenizer, message, field):
+    'Merges a single scalar field into a message.\n\n    Args:\n      tokenizer: A tokenizer to parse the field value.\n      message: The message of which field is a member.\n      field: The descriptor of the field to be merged.\n\n    Raises:\n      ParseError: In case of text parsing problems.\n    '
+    is_map_entry = _IsMapEntry(field)
+    if tokenizer.TryConsume('<'):
+        end_token = '>'
+    else:
+        tokenizer.Consume('{')
+        end_token = '}'
+    if ((field.message_type.full_name == _ANY_FULL_TYPE_NAME) and tokenizer.TryConsume('[')):
+        packed_type_name = self._ConsumeAnyTypeUrl(tokenizer)
+        tokenizer.Consume(']')
+        tokenizer.TryConsume(':')
+        if tokenizer.TryConsume('<'):
+            expanded_any_end_token = '>'
+        else:
+            tokenizer.Consume('{')
+            expanded_any_end_token = '}'
+        if (not self.descriptor_pool):
+            raise ParseError('Descriptor pool required to parse expanded Any field')
+        expanded_any_sub_message = _BuildMessageFromTypeName(packed_type_name, self.descriptor_pool)
+        if (not expanded_any_sub_message):
+            raise ParseError(('Type %s not found in descriptor pool' % packed_type_name))
+        while (not tokenizer.TryConsume(expanded_any_end_token)):
+            if tokenizer.AtEnd():
+                raise tokenizer.ParseErrorPreviousToken(('Expected "%s".' % (expanded_any_end_token,)))
+            self._MergeField(tokenizer, expanded_any_sub_message)
+        if (field.label == descriptor.FieldDescriptor.LABEL_REPEATED):
+            any_message = getattr(message, field.name).add()
+        else:
+            any_message = getattr(message, field.name)
+        any_message.Pack(expanded_any_sub_message)
+    elif (field.label == descriptor.FieldDescriptor.LABEL_REPEATED):
+        if field.is_extension:
+            sub_message = message.Extensions[field].add()
+        elif is_map_entry:
+            sub_message = field.message_type._concrete_class()
+        else:
+            sub_message = getattr(message, field.name).add()
+    else:
+        if field.is_extension:
+            sub_message = message.Extensions[field]
+        else:
+            sub_message = getattr(message, field.name)
+        sub_message.SetInParent()
+    while (not tokenizer.TryConsume(end_token)):
+        if tokenizer.AtEnd():
+            raise tokenizer.ParseErrorPreviousToken(('Expected "%s".' % (end_token,)))
+        self._MergeField(tokenizer, sub_message)
+    if is_map_entry:
+        value_cpptype = field.message_type.fields_by_name['value'].cpp_type
+        if (value_cpptype == descriptor.FieldDescriptor.CPPTYPE_MESSAGE):
+            value = getattr(message, field.name)[sub_message.key]
+            value.MergeFrom(sub_message.value)
+        else:
+            getattr(message, field.name)[sub_message.key] = sub_message.value

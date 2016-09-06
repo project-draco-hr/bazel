@@ -1,0 +1,14 @@
+def testAssignUnknownEnum(self):
+    'Assigning an unknown enum value is allowed and preserves the value.'
+    m = unittest_proto3_arena_pb2.TestAllTypes()
+    m.optional_nested_enum = 1234567
+    self.assertEqual(1234567, m.optional_nested_enum)
+    m.repeated_nested_enum.append(22334455)
+    self.assertEqual(22334455, m.repeated_nested_enum[0])
+    m.repeated_nested_enum[0] = 7654321
+    self.assertEqual(7654321, m.repeated_nested_enum[0])
+    serialized = m.SerializeToString()
+    m2 = unittest_proto3_arena_pb2.TestAllTypes()
+    m2.ParseFromString(serialized)
+    self.assertEqual(1234567, m2.optional_nested_enum)
+    self.assertEqual(7654321, m2.repeated_nested_enum[0])

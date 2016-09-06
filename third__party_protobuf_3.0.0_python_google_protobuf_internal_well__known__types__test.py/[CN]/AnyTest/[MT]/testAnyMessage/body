@@ -1,0 +1,21 @@
+def testAnyMessage(self):
+    msg = any_test_pb2.TestAny()
+    msg_descriptor = msg.DESCRIPTOR
+    all_types = unittest_pb2.TestAllTypes()
+    all_descriptor = all_types.DESCRIPTOR
+    all_types.repeated_string.append(u'\xfc\ua71f')
+    msg.value.Pack(all_types)
+    self.assertEqual(msg.value.type_url, ('type.googleapis.com/%s' % all_descriptor.full_name))
+    self.assertEqual(msg.value.value, all_types.SerializeToString())
+    self.assertTrue(msg.value.Is(all_descriptor))
+    self.assertFalse(msg.value.Is(msg_descriptor))
+    unpacked_message = unittest_pb2.TestAllTypes()
+    self.assertTrue(msg.value.Unpack(unpacked_message))
+    self.assertEqual(all_types, unpacked_message)
+    self.assertFalse(msg.value.Unpack(msg))
+    try:
+        msg.Pack(all_types)
+    except AttributeError:
+        pass
+    else:
+        raise AttributeError(('%s should not have Pack method.' % msg_descriptor.full_name))

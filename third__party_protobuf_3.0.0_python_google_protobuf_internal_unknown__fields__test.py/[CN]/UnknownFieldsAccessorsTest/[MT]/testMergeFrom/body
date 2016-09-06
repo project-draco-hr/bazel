@@ -1,0 +1,16 @@
+def testMergeFrom(self):
+    message = unittest_pb2.TestAllTypes()
+    message.optional_int32 = 1
+    message.optional_uint32 = 2
+    source = unittest_pb2.TestEmptyMessage()
+    source.ParseFromString(message.SerializeToString())
+    message.ClearField('optional_int32')
+    message.optional_int64 = 3
+    message.optional_uint32 = 4
+    destination = unittest_pb2.TestEmptyMessage()
+    destination.ParseFromString(message.SerializeToString())
+    destination.MergeFrom(source)
+    message.ParseFromString(destination.SerializeToString())
+    self.assertEqual(message.optional_int32, 1)
+    self.assertEqual(message.optional_uint32, 2)
+    self.assertEqual(message.optional_int64, 3)

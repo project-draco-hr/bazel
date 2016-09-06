@@ -1,0 +1,11 @@
+def testInvalidIntegerValue(self):
+    message = json_format_proto3_pb2.TestMessage()
+    text = '{"int32Value": 0x12345}'
+    self.assertRaises(json_format.ParseError, json_format.Parse, text, message)
+    self.CheckError('{"int32Value": 012345}', "Failed to load JSON: Expecting \\'?,\\'? delimiter: line 1.")
+    self.CheckError('{"int32Value": 1.0}', "Failed to parse int32Value field: Couldn't parse integer: 1.0.")
+    self.CheckError('{"int32Value": " 1 "}', 'Failed to parse int32Value field: Couldn\'t parse integer: " 1 ".')
+    self.CheckError('{"int32Value": "1 "}', 'Failed to parse int32Value field: Couldn\'t parse integer: "1 ".')
+    self.CheckError('{"int32Value": 12345678901234567890}', 'Failed to parse int32Value field: Value out of range: 12345678901234567890.')
+    self.CheckError('{"int32Value": 1e5}', "Failed to parse int32Value field: Couldn't parse integer: 100000.0.")
+    self.CheckError('{"uint32Value": -1}', 'Failed to parse uint32Value field: Value out of range: -1.')

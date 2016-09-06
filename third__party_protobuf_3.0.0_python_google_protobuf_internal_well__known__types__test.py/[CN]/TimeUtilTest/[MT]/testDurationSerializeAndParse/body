@@ -1,0 +1,21 @@
+def testDurationSerializeAndParse(self):
+    message = duration_pb2.Duration()
+    message.seconds = 0
+    message.nanos = 0
+    self.CheckDurationConversion(message, '0s')
+    message.nanos = 10000000
+    self.CheckDurationConversion(message, '0.010s')
+    message.nanos = 10000
+    self.CheckDurationConversion(message, '0.000010s')
+    message.nanos = 10
+    self.CheckDurationConversion(message, '0.000000010s')
+    message.seconds = 315576000000
+    message.nanos = 999999999
+    self.CheckDurationConversion(message, '315576000000.999999999s')
+    message.seconds = (-315576000000)
+    message.nanos = (-999999999)
+    self.CheckDurationConversion(message, '-315576000000.999999999s')
+    message.FromJsonString('0.1s')
+    self.assertEqual(100000000, message.nanos)
+    message.FromJsonString('0.0000001s')
+    self.assertEqual(100, message.nanos)

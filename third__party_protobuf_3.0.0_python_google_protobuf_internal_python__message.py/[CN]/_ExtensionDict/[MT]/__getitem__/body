@@ -1,0 +1,18 @@
+def __getitem__(self, extension_handle):
+    'Returns the current value of the given extension handle.'
+    _VerifyExtensionHandle(self._extended_message, extension_handle)
+    result = self._extended_message._fields.get(extension_handle)
+    if (result is not None):
+        return result
+    if (extension_handle.label == _FieldDescriptor.LABEL_REPEATED):
+        result = extension_handle._default_constructor(self._extended_message)
+    elif (extension_handle.cpp_type == _FieldDescriptor.CPPTYPE_MESSAGE):
+        result = extension_handle.message_type._concrete_class()
+        try:
+            result._SetListener(self._extended_message._listener_for_children)
+        except ReferenceError:
+            pass
+    else:
+        return extension_handle.default_value
+    result = self._extended_message._fields.setdefault(extension_handle, result)
+    return result

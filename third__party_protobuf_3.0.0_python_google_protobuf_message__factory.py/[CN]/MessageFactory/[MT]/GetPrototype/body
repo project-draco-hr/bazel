@@ -1,0 +1,17 @@
+def GetPrototype(self, descriptor):
+    'Builds a proto2 message class based on the passed in descriptor.\n\n    Passing a descriptor with a fully qualified name matching a previous\n    invocation will cause the same class to be returned.\n\n    Args:\n      descriptor: The descriptor to build from.\n\n    Returns:\n      A class describing the passed in descriptor.\n    '
+    if (descriptor.full_name not in self._classes):
+        descriptor_name = descriptor.name
+        if (str is bytes):
+            descriptor_name = descriptor.name.encode('ascii', 'ignore')
+        result_class = reflection.GeneratedProtocolMessageType(descriptor_name, (message.Message,), {'DESCRIPTOR': descriptor, '__module__': None, })
+        self._classes[descriptor.full_name] = result_class
+        for field in descriptor.fields:
+            if field.message_type:
+                self.GetPrototype(field.message_type)
+        for extension in result_class.DESCRIPTOR.extensions:
+            if (extension.containing_type.full_name not in self._classes):
+                self.GetPrototype(extension.containing_type)
+            extended_class = self._classes[extension.containing_type.full_name]
+            extended_class.RegisterExtension(extension)
+    return self._classes[descriptor.full_name]

@@ -1,0 +1,17 @@
+def testMergeFromExtensionsNestedMessage(self):
+    proto1 = unittest_pb2.TestAllExtensions()
+    ext1 = proto1.Extensions[unittest_pb2.repeated_nested_message_extension]
+    m = ext1.add()
+    m.bb = 222
+    m = ext1.add()
+    m.bb = 333
+    proto2 = unittest_pb2.TestAllExtensions()
+    ext2 = proto2.Extensions[unittest_pb2.repeated_nested_message_extension]
+    m = ext2.add()
+    m.bb = 111
+    proto2.MergeFrom(proto1)
+    ext2 = proto2.Extensions[unittest_pb2.repeated_nested_message_extension]
+    self.assertEqual(3, len(ext2))
+    self.assertEqual(111, ext2[0].bb)
+    self.assertEqual(222, ext2[1].bb)
+    self.assertEqual(333, ext2[2].bb)

@@ -1,0 +1,14 @@
+def Parse(text, message, ignore_unknown_fields=False):
+    'Parses a JSON representation of a protocol message into a message.\n\n  Args:\n    text: Message JSON representation.\n    message: A protocol beffer message to merge into.\n    ignore_unknown_fields: If True, do not raise errors for unknown fields.\n\n  Returns:\n    The same message passed as argument.\n\n  Raises::\n    ParseError: On JSON parsing problems.\n  '
+    if (not isinstance(text, six.text_type)):
+        text = text.decode('utf-8')
+    try:
+        if (sys.version_info < (2, 7)):
+            js = json.loads(text)
+        else:
+            js = json.loads(text, object_pairs_hook=_DuplicateChecker)
+    except ValueError as e:
+        raise ParseError('Failed to load JSON: {0}.'.format(str(e)))
+    parser = _Parser(ignore_unknown_fields)
+    parser.ConvertMessage(js, message)
+    return message

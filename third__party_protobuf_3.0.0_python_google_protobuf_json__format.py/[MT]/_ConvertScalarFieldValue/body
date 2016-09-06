@@ -1,0 +1,20 @@
+def _ConvertScalarFieldValue(value, field, require_str=False):
+    'Convert a single scalar field value.\n\n  Args:\n    value: A scalar value to convert the scalar field value.\n    field: The descriptor of the field to convert.\n    require_str: If True, the field value must be a str.\n\n  Returns:\n    The converted scalar field value\n\n  Raises:\n    ParseError: In case of convert problems.\n  '
+    if (field.cpp_type in _INT_TYPES):
+        return _ConvertInteger(value)
+    elif (field.cpp_type in _FLOAT_TYPES):
+        return _ConvertFloat(value)
+    elif (field.cpp_type == descriptor.FieldDescriptor.CPPTYPE_BOOL):
+        return _ConvertBool(value, require_str)
+    elif (field.cpp_type == descriptor.FieldDescriptor.CPPTYPE_STRING):
+        if (field.type == descriptor.FieldDescriptor.TYPE_BYTES):
+            return base64.b64decode(value)
+        else:
+            if _UNPAIRED_SURROGATE_PATTERN.search(value):
+                raise ParseError('Unpaired surrogate')
+            return value
+    elif (field.cpp_type == descriptor.FieldDescriptor.CPPTYPE_ENUM):
+        enum_value = field.enum_type.values_by_name.get(value, None)
+        if (enum_value is None):
+            raise ParseError('Enum value must be a string literal with double quotes. Type "{0}" has no value named {1}.'.format(field.enum_type.full_name, value))
+        return enum_value.number

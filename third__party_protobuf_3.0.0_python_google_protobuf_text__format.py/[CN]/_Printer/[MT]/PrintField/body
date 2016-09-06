@@ -1,0 +1,24 @@
+def PrintField(self, field, value):
+    'Print a single field name/value pair.'
+    out = self.out
+    out.write((' ' * self.indent))
+    if self.use_field_number:
+        out.write(str(field.number))
+    elif field.is_extension:
+        out.write('[')
+        if (field.containing_type.GetOptions().message_set_wire_format and (field.type == descriptor.FieldDescriptor.TYPE_MESSAGE) and (field.label == descriptor.FieldDescriptor.LABEL_OPTIONAL)):
+            out.write(field.message_type.full_name)
+        else:
+            out.write(field.full_name)
+        out.write(']')
+    elif (field.type == descriptor.FieldDescriptor.TYPE_GROUP):
+        out.write(field.message_type.name)
+    else:
+        out.write(field.name)
+    if (field.cpp_type != descriptor.FieldDescriptor.CPPTYPE_MESSAGE):
+        out.write(': ')
+    self.PrintFieldValue(field, value)
+    if self.as_one_line:
+        out.write(' ')
+    else:
+        out.write('\n')

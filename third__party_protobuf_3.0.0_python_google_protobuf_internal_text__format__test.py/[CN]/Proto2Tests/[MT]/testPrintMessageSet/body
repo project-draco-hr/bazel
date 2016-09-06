@@ -1,0 +1,11 @@
+def testPrintMessageSet(self):
+    message = unittest_mset_pb2.TestMessageSetContainer()
+    ext1 = unittest_mset_pb2.TestMessageSetExtension1.message_set_extension
+    ext2 = unittest_mset_pb2.TestMessageSetExtension2.message_set_extension
+    message.message_set.Extensions[ext1].i = 23
+    message.message_set.Extensions[ext2].str = 'foo'
+    self.CompareToGoldenText(text_format.MessageToString(message), 'message_set {\n  [protobuf_unittest.TestMessageSetExtension1] {\n    i: 23\n  }\n  [protobuf_unittest.TestMessageSetExtension2] {\n    str: "foo"\n  }\n}\n')
+    message = message_set_extensions_pb2.TestMessageSet()
+    ext = message_set_extensions_pb2.message_set_extension3
+    message.Extensions[ext].text = 'bar'
+    self.CompareToGoldenText(text_format.MessageToString(message), '[google.protobuf.internal.TestMessageSetExtension3] {\n  text: "bar"\n}\n')

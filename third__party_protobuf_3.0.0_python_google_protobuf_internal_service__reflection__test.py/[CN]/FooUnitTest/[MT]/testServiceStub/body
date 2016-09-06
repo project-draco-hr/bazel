@@ -1,0 +1,24 @@
+def testServiceStub(self):
+
+
+    class MockRpcChannel(service.RpcChannel):
+
+        def CallMethod(self, method, controller, request, response_class, callback):
+            self.method = method
+            self.controller = controller
+            self.request = request
+            callback(response_class())
+    self.callback_response = None
+
+    def MyCallback(response):
+        self.callback_response = response
+    channel = MockRpcChannel()
+    stub = unittest_pb2.TestService_Stub(channel)
+    rpc_controller = 'controller'
+    request = 'request'
+    self.assertEqual(unittest_pb2.TestService_Stub.GetDescriptor(), stub.GetDescriptor())
+    stub.Foo(rpc_controller, request, MyCallback)
+    self.assertIsInstance(self.callback_response, unittest_pb2.FooResponse)
+    self.assertEqual(request, channel.request)
+    self.assertEqual(rpc_controller, channel.controller)
+    self.assertEqual(stub.GetDescriptor().methods[0], channel.method)

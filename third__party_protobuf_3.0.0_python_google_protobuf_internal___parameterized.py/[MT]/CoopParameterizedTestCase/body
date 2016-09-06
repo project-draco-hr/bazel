@@ -1,0 +1,4 @@
+def CoopParameterizedTestCase(other_base_class):
+    'Returns a new base class with a cooperative metaclass base.\n\n  This enables the ParameterizedTestCase to be used in combination\n  with other base classes that have custom metaclasses, such as\n  mox.MoxTestBase.\n\n  Only works with metaclasses that do not override type.__new__.\n\n  Example:\n\n    import google3\n    import mox\n\n    from google3.testing.pybase import parameterized\n\n    class ExampleTest(parameterized.CoopParameterizedTestCase(mox.MoxTestBase)):\n      ...\n\n  Args:\n    other_base_class: (class) A test case base class.\n\n  Returns:\n    A new class object.\n  '
+    metaclass = type('CoopMetaclass', (other_base_class.__metaclass__, TestGeneratorMetaclass), {})
+    return metaclass('CoopParameterizedTestCase', (other_base_class, ParameterizedTestCase), {})

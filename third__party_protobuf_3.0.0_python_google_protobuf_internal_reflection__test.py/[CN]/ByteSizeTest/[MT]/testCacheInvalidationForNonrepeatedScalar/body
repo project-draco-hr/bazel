@@ -1,0 +1,14 @@
+def testCacheInvalidationForNonrepeatedScalar(self):
+    self.proto.optional_int32 = 1
+    self.assertEqual(2, self.proto.ByteSize())
+    self.proto.optional_int32 = 128
+    self.assertEqual(3, self.proto.ByteSize())
+    self.proto.ClearField('optional_int32')
+    self.assertEqual(0, self.proto.ByteSize())
+    extension = more_extensions_pb2.optional_int_extension
+    self.extended_proto.Extensions[extension] = 1
+    self.assertEqual(2, self.extended_proto.ByteSize())
+    self.extended_proto.Extensions[extension] = 128
+    self.assertEqual(3, self.extended_proto.ByteSize())
+    self.extended_proto.ClearExtension(extension)
+    self.assertEqual(0, self.extended_proto.ByteSize())

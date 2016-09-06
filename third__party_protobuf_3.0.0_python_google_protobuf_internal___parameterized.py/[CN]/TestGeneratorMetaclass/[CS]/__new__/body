@@ -1,0 +1,8 @@
+def __new__(mcs, class_name, bases, dct):
+    dct['_id_suffix'] = id_suffix = {}
+    for (name, obj) in dct.items():
+        if (name.startswith(unittest.TestLoader.testMethodPrefix) and _NonStringIterable(obj)):
+            iterator = iter(obj)
+            dct.pop(name)
+            _UpdateClassDictForParamTestCase(dct, id_suffix, name, iterator)
+    return type.__new__(mcs, class_name, bases, dct)

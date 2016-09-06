@@ -1,0 +1,15 @@
+def testParsingFlatClassWithExplicitClassDeclaration(self):
+    'Test that the generated class can parse a flat message.'
+    if (api_implementation.Type() != 'python'):
+        return
+    file_descriptor = descriptor_pb2.FileDescriptorProto()
+    file_descriptor.ParseFromString(self._GetSerializedFileDescriptor('A'))
+    msg_descriptor = descriptor.MakeDescriptor(file_descriptor.message_type[0])
+
+
+    class MessageClass(six.with_metaclass(reflection.GeneratedProtocolMessageType, message.Message)):
+        DESCRIPTOR = msg_descriptor
+    msg = MessageClass()
+    msg_str = 'flat: 0 flat: 1 flat: 2 '
+    text_format.Merge(msg_str, msg)
+    self.assertEqual(msg.flat, [0, 1, 2])

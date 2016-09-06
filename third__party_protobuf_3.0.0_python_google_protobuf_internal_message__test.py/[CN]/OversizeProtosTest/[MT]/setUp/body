@@ -1,0 +1,10 @@
+def setUp(self):
+    self.file_desc = '\n      name: "f/f.msg2"\n      package: "f"\n      message_type {\n        name: "msg1"\n        field {\n          name: "payload"\n          number: 1\n          label: LABEL_OPTIONAL\n          type: TYPE_STRING\n        }\n      }\n      message_type {\n        name: "msg2"\n        field {\n          name: "field"\n          number: 1\n          label: LABEL_OPTIONAL\n          type: TYPE_MESSAGE\n          type_name: "msg1"\n        }\n      }\n    '
+    pool = descriptor_pool.DescriptorPool()
+    desc = descriptor_pb2.FileDescriptorProto()
+    text_format.Parse(self.file_desc, desc)
+    pool.Add(desc)
+    self.proto_cls = message_factory.MessageFactory(pool).GetPrototype(pool.FindMessageTypeByName('f.msg2'))
+    self.p = self.proto_cls()
+    self.p.field.payload = ('c' * (((1024 * 1024) * 64) + 1))
+    self.p_serialized = self.p.SerializeToString()

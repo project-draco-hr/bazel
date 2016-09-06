@@ -1,0 +1,7 @@
+def ReadTag(buffer, pos):
+    'Read a tag from the buffer, and return a (tag_bytes, new_pos) tuple.\n\n  We return the raw bytes of the tag rather than decoding them.  The raw\n  bytes can then be used to look up the proper decoder.  This effectively allows\n  us to trade some work that would be done in pure-python (decoding a varint)\n  for work that is done in C (searching for a byte string in a hash table).\n  In a low-level language it would be much cheaper to decode the varint and\n  use that, but not in Python.\n  '
+    start = pos
+    while (six.indexbytes(buffer, pos) & 128):
+        pos += 1
+    pos += 1
+    return (buffer[start:pos], pos)

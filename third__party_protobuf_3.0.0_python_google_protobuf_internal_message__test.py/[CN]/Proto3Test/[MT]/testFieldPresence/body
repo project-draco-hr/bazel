@@ -1,0 +1,39 @@
+def testFieldPresence(self):
+    message = unittest_proto3_arena_pb2.TestAllTypes()
+    with self.assertRaises(ValueError):
+        message.HasField('optional_int32')
+    with self.assertRaises(ValueError):
+        message.HasField('optional_float')
+    with self.assertRaises(ValueError):
+        message.HasField('optional_string')
+    with self.assertRaises(ValueError):
+        message.HasField('optional_bool')
+    self.assertFalse(message.HasField('optional_nested_message'))
+    with self.assertRaises(ValueError):
+        message.HasField('field_doesnt_exist')
+    with self.assertRaises(ValueError):
+        message.HasField('repeated_int32')
+    with self.assertRaises(ValueError):
+        message.HasField('repeated_nested_message')
+    self.assertEqual(0, message.optional_int32)
+    self.assertEqual(0, message.optional_float)
+    self.assertEqual('', message.optional_string)
+    self.assertEqual(False, message.optional_bool)
+    self.assertEqual(0, message.optional_nested_message.bb)
+    message.optional_nested_message.bb = 0
+    self.assertTrue(message.HasField('optional_nested_message'))
+    message.optional_int32 = 5
+    message.optional_float = 1.1
+    message.optional_string = 'abc'
+    message.optional_bool = True
+    message.optional_nested_message.bb = 15
+    message.ClearField('optional_int32')
+    message.ClearField('optional_float')
+    message.ClearField('optional_string')
+    message.ClearField('optional_bool')
+    message.ClearField('optional_nested_message')
+    self.assertEqual(0, message.optional_int32)
+    self.assertEqual(0, message.optional_float)
+    self.assertEqual('', message.optional_string)
+    self.assertEqual(False, message.optional_bool)
+    self.assertEqual(0, message.optional_nested_message.bb)

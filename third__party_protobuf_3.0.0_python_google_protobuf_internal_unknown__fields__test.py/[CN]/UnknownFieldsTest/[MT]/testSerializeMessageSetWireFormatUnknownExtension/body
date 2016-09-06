@@ -1,0 +1,14 @@
+def testSerializeMessageSetWireFormatUnknownExtension(self):
+    raw = unittest_mset_pb2.RawMessageSet()
+    item = raw.item.add()
+    item.type_id = 98418603
+    message1 = message_set_extensions_pb2.TestMessageSetExtension1()
+    message1.i = 12345
+    item.message = message1.SerializeToString()
+    serialized = raw.SerializeToString()
+    proto = message_set_extensions_pb2.TestMessageSet()
+    proto.MergeFromString(serialized)
+    reserialized = proto.SerializeToString()
+    new_raw = unittest_mset_pb2.RawMessageSet()
+    new_raw.MergeFromString(reserialized)
+    self.assertEqual(raw, new_raw)

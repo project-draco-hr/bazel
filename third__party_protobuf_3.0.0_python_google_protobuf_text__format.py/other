@@ -1,0 +1,18 @@
+"Contains routines for printing protocol messages in text format.\n\nSimple usage example:\n\n  # Create a proto object and serialize it to a text proto string.\n  message = my_proto_pb2.MyMessage(foo='bar')\n  text_proto = text_format.MessageToString(message)\n\n  # Parse a text proto string.\n  message = text_format.Parse(text_proto, my_proto_pb2.MyMessage())\n"
+__author__ = 'kenton@google.com (Kenton Varda)'
+import io
+import re
+import six
+if six.PY3:
+    long = int
+from google.protobuf.internal import type_checkers
+from google.protobuf import descriptor
+from google.protobuf import text_encoding
+__all__ = ['MessageToString', 'PrintMessage', 'PrintField', 'PrintFieldValue', 'Merge']
+_INTEGER_CHECKERS = (type_checkers.Uint32ValueChecker(), type_checkers.Int32ValueChecker(), type_checkers.Uint64ValueChecker(), type_checkers.Int64ValueChecker())
+_FLOAT_INFINITY = re.compile('-?inf(?:inity)?f?', re.IGNORECASE)
+_FLOAT_NAN = re.compile('nanf?', re.IGNORECASE)
+_FLOAT_TYPES = frozenset([descriptor.FieldDescriptor.CPPTYPE_FLOAT, descriptor.FieldDescriptor.CPPTYPE_DOUBLE])
+_QUOTES = frozenset(("'", '"'))
+_ANY_FULL_TYPE_NAME = 'google.protobuf.Any'
+_Tokenizer = Tokenizer

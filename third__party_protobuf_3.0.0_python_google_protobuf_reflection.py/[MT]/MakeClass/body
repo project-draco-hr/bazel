@@ -1,0 +1,7 @@
+def MakeClass(descriptor):
+    'Construct a class object for a protobuf described by descriptor.\n\n  Composite descriptors are handled by defining the new class as a member of the\n  parent class, recursing as deep as necessary.\n  This is the dynamic equivalent to:\n\n  class Parent(message.Message):\n    __metaclass__ = GeneratedProtocolMessageType\n    DESCRIPTOR = descriptor\n    class Child(message.Message):\n      __metaclass__ = GeneratedProtocolMessageType\n      DESCRIPTOR = descriptor.nested_types[0]\n\n  Sample usage:\n    file_descriptor = descriptor_pb2.FileDescriptorProto()\n    file_descriptor.ParseFromString(proto2_string)\n    msg_descriptor = descriptor.MakeDescriptor(file_descriptor.message_type[0])\n    msg_class = reflection.MakeClass(msg_descriptor)\n    msg = msg_class()\n\n  Args:\n    descriptor: A descriptor.Descriptor object describing the protobuf.\n  Returns:\n    The Message class object described by the descriptor.\n  '
+    attributes = {}
+    for (name, nested_type) in descriptor.nested_types_by_name.items():
+        attributes[name] = MakeClass(nested_type)
+    attributes[GeneratedProtocolMessageType._DESCRIPTOR_KEY] = descriptor
+    return GeneratedProtocolMessageType(str(descriptor.name), (message.Message,), attributes)

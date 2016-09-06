@@ -1,0 +1,16 @@
+def FindFileByName(self, file_name):
+    'Gets a FileDescriptor by file name.\n\n    Args:\n      file_name: The path to the file to get a descriptor for.\n\n    Returns:\n      A FileDescriptor for the named file.\n\n    Raises:\n      KeyError: if the file can not be found in the pool.\n    '
+    try:
+        return self._file_descriptors[file_name]
+    except KeyError:
+        pass
+    try:
+        file_proto = self._internal_db.FindFileByName(file_name)
+    except KeyError as error:
+        if self._descriptor_db:
+            file_proto = self._descriptor_db.FindFileByName(file_name)
+        else:
+            raise error
+    if (not file_proto):
+        raise KeyError(('Cannot find a file named %s' % file_name))
+    return self._ConvertFileProtoToFileDescriptor(file_proto)

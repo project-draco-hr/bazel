@@ -1,0 +1,15 @@
+def _InternalUnpackAny(msg):
+    'Unpacks Any message and returns the unpacked message.\n\n  This internal method is differnt from public Any Unpack method which takes\n  the target message as argument. _InternalUnpackAny method does not have\n  target message type and need to find the message type in descriptor pool.\n\n  Args:\n    msg: An Any message to be unpacked.\n\n  Returns:\n    The unpacked message.\n  '
+    from google.protobuf import symbol_database
+    factory = symbol_database.Default()
+    type_url = msg.type_url
+    if (not type_url):
+        return None
+    type_name = type_url.split('/')[(-1)]
+    descriptor = factory.pool.FindMessageTypeByName(type_name)
+    if (descriptor is None):
+        return None
+    message_class = factory.GetPrototype(descriptor)
+    message = message_class()
+    message.ParseFromString(msg.value)
+    return message

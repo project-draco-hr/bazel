@@ -1,0 +1,17 @@
+def NextToken(self):
+    'Reads the next meaningful token.'
+    self._previous_line = self._line
+    self._previous_column = self._column
+    self._column += len(self.token)
+    self._SkipWhitespace()
+    if (not self._more_lines):
+        self.token = ''
+        return
+    match = self._TOKEN.match(self._current_line, self._column)
+    if ((not match) and (not self._skip_comments)):
+        match = self._COMMENT.match(self._current_line, self._column)
+    if match:
+        token = match.group(0)
+        self.token = token
+    else:
+        self.token = self._current_line[self._column]

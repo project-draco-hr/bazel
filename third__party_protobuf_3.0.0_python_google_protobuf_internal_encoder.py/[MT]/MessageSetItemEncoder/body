@@ -1,0 +1,12 @@
+def MessageSetItemEncoder(field_number):
+    'Encoder for extensions of MessageSet.\n\n  The message set message looks like this:\n    message MessageSet {\n      repeated group Item = 1 {\n        required int32 type_id = 2;\n        required string message = 3;\n      }\n    }\n  '
+    start_bytes = ''.join([TagBytes(1, wire_format.WIRETYPE_START_GROUP), TagBytes(2, wire_format.WIRETYPE_VARINT), _VarintBytes(field_number), TagBytes(3, wire_format.WIRETYPE_LENGTH_DELIMITED)])
+    end_bytes = TagBytes(1, wire_format.WIRETYPE_END_GROUP)
+    local_EncodeVarint = _EncodeVarint
+
+    def EncodeField(write, value):
+        write(start_bytes)
+        local_EncodeVarint(write, value.ByteSize())
+        value._InternalSerialize(write)
+        return write(end_bytes)
+    return EncodeField

@@ -1,0 +1,50 @@
+def testDescriptorProtoSupport(self):
+    if (api_implementation.Type() != 'python'):
+        return
+
+    def AddDescriptorField(proto, field_name, field_type):
+        AddDescriptorField.field_index += 1
+        new_field = proto.field.add()
+        new_field.name = field_name
+        new_field.type = field_type
+        new_field.number = AddDescriptorField.field_index
+        new_field.label = descriptor_pb2.FieldDescriptorProto.LABEL_OPTIONAL
+    AddDescriptorField.field_index = 0
+    desc_proto = descriptor_pb2.DescriptorProto()
+    desc_proto.name = 'Car'
+    fdp = descriptor_pb2.FieldDescriptorProto
+    AddDescriptorField(desc_proto, 'name', fdp.TYPE_STRING)
+    AddDescriptorField(desc_proto, 'year', fdp.TYPE_INT64)
+    AddDescriptorField(desc_proto, 'automatic', fdp.TYPE_BOOL)
+    AddDescriptorField(desc_proto, 'price', fdp.TYPE_DOUBLE)
+    AddDescriptorField.field_index += 1
+    new_field = desc_proto.field.add()
+    new_field.name = 'owners'
+    new_field.type = fdp.TYPE_STRING
+    new_field.number = AddDescriptorField.field_index
+    new_field.label = descriptor_pb2.FieldDescriptorProto.LABEL_REPEATED
+    desc = descriptor.MakeDescriptor(desc_proto)
+    self.assertTrue(('name' in desc.fields_by_name))
+    self.assertTrue(('year' in desc.fields_by_name))
+    self.assertTrue(('automatic' in desc.fields_by_name))
+    self.assertTrue(('price' in desc.fields_by_name))
+    self.assertTrue(('owners' in desc.fields_by_name))
+
+
+    class CarMessage(six.with_metaclass(reflection.GeneratedProtocolMessageType, message.Message)):
+        DESCRIPTOR = desc
+    prius = CarMessage()
+    prius.name = 'prius'
+    prius.year = 2010
+    prius.automatic = True
+    prius.price = 25134.75
+    prius.owners.extend(['bob', 'susan'])
+    serialized_prius = prius.SerializeToString()
+    new_prius = reflection.ParseMessage(desc, serialized_prius)
+    self.assertTrue((new_prius is not prius))
+    self.assertEqual(prius, new_prius)
+    self.assertEqual(prius.name, new_prius.name)
+    self.assertEqual(prius.year, new_prius.year)
+    self.assertEqual(prius.automatic, new_prius.automatic)
+    self.assertEqual(prius.price, new_prius.price)
+    self.assertEqual(prius.owners, new_prius.owners)

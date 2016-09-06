@@ -1,0 +1,32 @@
+def testPythonicInit(self):
+    message = unittest_pb2.TestAllTypes(optional_int32=100, optional_fixed32=200, optional_float=300.5, optional_bytes='x', optionalgroup={'a': 400, }, optional_nested_message={'bb': 500, }, optional_nested_enum='BAZ', repeatedgroup=[{'a': 600, }, {'a': 700, }], repeated_nested_enum=['FOO', unittest_pb2.TestAllTypes.BAR], default_int32=800, oneof_string='y')
+    self.assertIsInstance(message, unittest_pb2.TestAllTypes)
+    self.assertEqual(100, message.optional_int32)
+    self.assertEqual(200, message.optional_fixed32)
+    self.assertEqual(300.5, message.optional_float)
+    self.assertEqual('x', message.optional_bytes)
+    self.assertEqual(400, message.optionalgroup.a)
+    self.assertIsInstance(message.optional_nested_message, unittest_pb2.TestAllTypes.NestedMessage)
+    self.assertEqual(500, message.optional_nested_message.bb)
+    self.assertEqual(unittest_pb2.TestAllTypes.BAZ, message.optional_nested_enum)
+    self.assertEqual(2, len(message.repeatedgroup))
+    self.assertEqual(600, message.repeatedgroup[0].a)
+    self.assertEqual(700, message.repeatedgroup[1].a)
+    self.assertEqual(2, len(message.repeated_nested_enum))
+    self.assertEqual(unittest_pb2.TestAllTypes.FOO, message.repeated_nested_enum[0])
+    self.assertEqual(unittest_pb2.TestAllTypes.BAR, message.repeated_nested_enum[1])
+    self.assertEqual(800, message.default_int32)
+    self.assertEqual('y', message.oneof_string)
+    self.assertFalse(message.HasField('optional_int64'))
+    self.assertEqual(0, len(message.repeated_float))
+    self.assertEqual(42, message.default_int64)
+    message = unittest_pb2.TestAllTypes(optional_nested_enum=u'BAZ')
+    self.assertEqual(unittest_pb2.TestAllTypes.BAZ, message.optional_nested_enum)
+    with self.assertRaises(ValueError):
+        unittest_pb2.TestAllTypes(optional_nested_message={'INVALID_NESTED_FIELD': 17, })
+    with self.assertRaises(TypeError):
+        unittest_pb2.TestAllTypes(optional_nested_message={'bb': 'INVALID_VALUE_TYPE', })
+    with self.assertRaises(ValueError):
+        unittest_pb2.TestAllTypes(optional_nested_enum='INVALID_LABEL')
+    with self.assertRaises(ValueError):
+        unittest_pb2.TestAllTypes(repeated_nested_enum='FOO')

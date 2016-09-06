@@ -1,0 +1,10 @@
+def _TestEnum(self, prefix):
+    pool = descriptor_pool.DescriptorPool()
+    pool.AddEnumDescriptor(unittest_pb2.ForeignEnum.DESCRIPTOR)
+    self.assertEqual('protobuf_unittest.ForeignEnum', pool.FindEnumTypeByName((prefix + 'protobuf_unittest.ForeignEnum')).full_name)
+    with self.assertRaises(KeyError):
+        pool.FindEnumTypeByName((prefix + 'protobuf_unittest.ForeignEnum.NestedEnum'))
+    pool.AddEnumDescriptor(unittest_pb2.TestAllTypes.NestedEnum.DESCRIPTOR)
+    self.assertEqual('protobuf_unittest.TestAllTypes.NestedEnum', pool.FindEnumTypeByName((prefix + 'protobuf_unittest.TestAllTypes.NestedEnum')).full_name)
+    self.assertEqual('google/protobuf/unittest.proto', pool.FindFileByName('google/protobuf/unittest.proto').name)
+    self.assertEqual('google/protobuf/unittest.proto', pool.FindFileContainingSymbol((prefix + 'protobuf_unittest.TestAllTypes.NestedEnum')).name)

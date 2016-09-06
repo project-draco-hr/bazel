@@ -1,0 +1,14 @@
+def testDurationMessage(self):
+    message = json_format_proto3_pb2.TestDuration()
+    message.value.seconds = 1
+    message.repeated_value.add().seconds = 0
+    message.repeated_value[0].nanos = 10
+    message.repeated_value.add().seconds = (-1)
+    message.repeated_value[1].nanos = (-1000)
+    message.repeated_value.add().seconds = 10
+    message.repeated_value[2].nanos = 11000000
+    message.repeated_value.add().seconds = (-315576000000)
+    message.repeated_value.add().seconds = 315576000000
+    self.assertEqual(json.loads(json_format.MessageToJson(message, True)), json.loads('{"value": "1s","repeatedValue": [  "0.000000010s",  "-1.000001s",  "10.011s",  "-315576000000s",  "315576000000s"]}'))
+    parsed_message = json_format_proto3_pb2.TestDuration()
+    self.CheckParseBack(message, parsed_message)

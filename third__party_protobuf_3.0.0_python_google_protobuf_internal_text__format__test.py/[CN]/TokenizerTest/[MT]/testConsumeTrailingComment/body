@@ -1,0 +1,12 @@
+def testConsumeTrailingComment(self):
+    text = 'some_number: 4\n# some comment'
+    tokenizer = text_format.Tokenizer(text.splitlines(), skip_comments=False)
+    self.assertRaises(text_format.ParseError, tokenizer.ConsumeComment)
+    self.assertEqual('some_number', tokenizer.ConsumeIdentifier())
+    self.assertEqual(tokenizer.token, ':')
+    tokenizer.NextToken()
+    self.assertRaises(text_format.ParseError, tokenizer.ConsumeComment)
+    self.assertEqual(4, tokenizer.ConsumeInteger())
+    self.assertFalse(tokenizer.AtEnd())
+    self.assertEqual('# some comment', tokenizer.ConsumeComment())
+    self.assertTrue(tokenizer.AtEnd())

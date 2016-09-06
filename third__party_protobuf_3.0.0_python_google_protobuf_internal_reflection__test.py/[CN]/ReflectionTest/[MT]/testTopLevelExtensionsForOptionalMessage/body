@@ -1,0 +1,17 @@
+def testTopLevelExtensionsForOptionalMessage(self):
+    extendee_proto = unittest_pb2.TestAllExtensions()
+    extension = unittest_pb2.optional_foreign_message_extension
+    self.assertTrue((not extendee_proto.HasExtension(extension)))
+    self.assertEqual(0, extendee_proto.Extensions[extension].c)
+    self.assertTrue((not extendee_proto.HasExtension(extension)))
+    extendee_proto.Extensions[extension].c = 23
+    self.assertEqual(23, extendee_proto.Extensions[extension].c)
+    self.assertTrue(extendee_proto.HasExtension(extension))
+    foreign_message = extendee_proto.Extensions[extension]
+    extendee_proto.ClearExtension(extension)
+    self.assertTrue((foreign_message is not extendee_proto.Extensions[extension]))
+    foreign_message.c = 42
+    self.assertEqual(42, foreign_message.c)
+    self.assertTrue(foreign_message.HasField('c'))
+    self.assertTrue((not extendee_proto.HasExtension(extension)))
+    self.assertRaises(TypeError, operator.setitem, extendee_proto.Extensions, extension, 'a')

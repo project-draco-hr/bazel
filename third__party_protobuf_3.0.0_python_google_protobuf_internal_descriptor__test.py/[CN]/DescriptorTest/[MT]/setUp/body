@@ -1,0 +1,18 @@
+def setUp(self):
+    file_proto = descriptor_pb2.FileDescriptorProto(name='some/filename/some.proto', package='protobuf_unittest')
+    message_proto = file_proto.message_type.add(name='NestedMessage')
+    message_proto.field.add(name='bb', number=1, type=descriptor_pb2.FieldDescriptorProto.TYPE_INT32, label=descriptor_pb2.FieldDescriptorProto.LABEL_OPTIONAL)
+    enum_proto = message_proto.enum_type.add(name='ForeignEnum')
+    enum_proto.value.add(name='FOREIGN_FOO', number=4)
+    enum_proto.value.add(name='FOREIGN_BAR', number=5)
+    enum_proto.value.add(name='FOREIGN_BAZ', number=6)
+    file_proto.message_type.add(name='ResponseMessage')
+    service_proto = file_proto.service.add(name='Service')
+    method_proto = service_proto.method.add(name='CallMethod', input_type='.protobuf_unittest.NestedMessage', output_type='.protobuf_unittest.ResponseMessage')
+    self.pool = self.GetDescriptorPool()
+    self.pool.Add(file_proto)
+    self.my_file = self.pool.FindFileByName(file_proto.name)
+    self.my_message = self.my_file.message_types_by_name[message_proto.name]
+    self.my_enum = self.my_message.enum_types_by_name[enum_proto.name]
+    self.my_service = self.my_file.services_by_name[service_proto.name]
+    self.my_method = self.my_service.methods_by_name[method_proto.name]

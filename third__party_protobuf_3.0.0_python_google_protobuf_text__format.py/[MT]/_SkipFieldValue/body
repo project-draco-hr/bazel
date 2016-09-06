@@ -1,0 +1,8 @@
+def _SkipFieldValue(tokenizer):
+    'Skips over a field value.\n\n  Args:\n    tokenizer: A tokenizer to parse the field name and values.\n\n  Raises:\n    ParseError: In case an invalid field value is found.\n  '
+    if tokenizer.TryConsumeByteString():
+        while tokenizer.TryConsumeByteString():
+            pass
+        return
+    if ((not tokenizer.TryConsumeIdentifier()) and (not _TryConsumeInt64(tokenizer)) and (not _TryConsumeUint64(tokenizer)) and (not tokenizer.TryConsumeFloat())):
+        raise ParseError(('Invalid field value: ' + tokenizer.token))

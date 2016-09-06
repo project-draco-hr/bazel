@@ -1,0 +1,6 @@
+def testSurrogates(self):
+    message = json_format_proto3_pb2.TestMessage()
+    json_format.Parse('{"stringValue": "\\uD83D\\uDE01"}', message)
+    self.assertEqual(message.string_value, '\xf0\x9f\x98\x81'.decode('utf-8', 'strict'))
+    self.CheckError('{"stringValue": "\\uD83D"}', 'Invalid \\\\uXXXX escape|Unpaired.*surrogate')
+    self.CheckError('{"stringValue": "\\uDE01"}', 'Invalid \\\\uXXXX escape|Unpaired.*surrogate')

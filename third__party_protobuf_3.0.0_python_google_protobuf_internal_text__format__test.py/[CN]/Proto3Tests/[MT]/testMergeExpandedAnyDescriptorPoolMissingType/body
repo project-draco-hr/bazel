@@ -1,0 +1,7 @@
+def testMergeExpandedAnyDescriptorPoolMissingType(self):
+    message = any_test_pb2.TestAny()
+    text = 'any_value {\n  [type.googleapis.com/protobuf_unittest.OneString] {\n    data: "string"\n  }\n}\n'
+    with self.assertRaises(text_format.ParseError) as e:
+        empty_pool = descriptor_pool.DescriptorPool()
+        text_format.Merge(text, message, descriptor_pool=empty_pool)
+    self.assertEqual(str(e.exception), 'Type protobuf_unittest.OneString not found in descriptor pool')

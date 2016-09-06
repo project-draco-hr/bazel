@@ -1,0 +1,16 @@
+def _FloatDecoder():
+    'Returns a decoder for a float field.\n\n  This code works around a bug in struct.unpack for non-finite 32-bit\n  floating-point values.\n  '
+    local_unpack = struct.unpack
+
+    def InnerDecode(buffer, pos):
+        new_pos = (pos + 4)
+        float_bytes = buffer[pos:new_pos]
+        if ((float_bytes[3:4] in '\x7f\xff') and (float_bytes[2:3] >= '\x80')):
+            if (float_bytes[0:3] != '\x00\x00\x80'):
+                return (_NAN, new_pos)
+            if (float_bytes[3:4] == '\xff'):
+                return (_NEG_INF, new_pos)
+            return (_POS_INF, new_pos)
+        result = local_unpack('<f', float_bytes)[0]
+        return (result, new_pos)
+    return _SimpleDecoder(wire_format.WIRETYPE_FIXED32, InnerDecode)

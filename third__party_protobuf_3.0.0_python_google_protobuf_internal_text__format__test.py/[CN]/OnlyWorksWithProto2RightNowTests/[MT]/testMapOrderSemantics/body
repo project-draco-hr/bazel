@@ -1,0 +1,9 @@
+def testMapOrderSemantics(self):
+    golden_lines = self.ReadGolden('map_test_data.txt')
+    line_blacklist = ('  key: 0\n', '  value: 0\n', '  key: false\n', '  value: false\n')
+    golden_lines = [line for line in golden_lines if (line not in line_blacklist)]
+    message = map_unittest_pb2.TestMap()
+    text_format.ParseLines(golden_lines, message)
+    candidate = text_format.MessageToString(message)
+    candidate = candidate.replace('1.0', '1', 2)
+    self.assertMultiLineEqual(candidate, ''.join(golden_lines))

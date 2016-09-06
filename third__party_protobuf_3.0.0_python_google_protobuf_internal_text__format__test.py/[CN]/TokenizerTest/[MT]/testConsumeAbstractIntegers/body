@@ -1,0 +1,14 @@
+def testConsumeAbstractIntegers(self):
+    int64_max = ((1 << 63) - 1)
+    uint32_max = ((1 << 32) - 1)
+    text = ('-1 %d %d' % ((uint32_max + 1), (int64_max + 1)))
+    tokenizer = text_format.Tokenizer(text.splitlines())
+    self.assertEqual((-1), tokenizer.ConsumeInteger())
+    self.assertEqual((uint32_max + 1), tokenizer.ConsumeInteger())
+    self.assertEqual((int64_max + 1), tokenizer.ConsumeInteger())
+    self.assertTrue(tokenizer.AtEnd())
+    text = '-0 0'
+    tokenizer = text_format.Tokenizer(text.splitlines())
+    self.assertEqual(0, tokenizer.ConsumeInteger())
+    self.assertEqual(0, tokenizer.ConsumeInteger())
+    self.assertTrue(tokenizer.AtEnd())

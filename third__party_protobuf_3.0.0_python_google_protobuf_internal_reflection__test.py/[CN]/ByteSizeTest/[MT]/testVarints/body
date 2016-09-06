@@ -1,0 +1,13 @@
+def testVarints(self):
+
+    def Test(i, expected_varint_size):
+        self.proto.Clear()
+        self.proto.optional_int64 = i
+        self.assertEqual((expected_varint_size + 1), self.Size())
+    Test(0, 1)
+    Test(1, 1)
+    for (i, num_bytes) in zip(range(7, 63, 7), range(1, 10000)):
+        Test(((1 << i) - 1), num_bytes)
+    Test((-1), 10)
+    Test((-2), 10)
+    Test((- (1 << 63)), 10)

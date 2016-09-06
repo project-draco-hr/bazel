@@ -1,0 +1,42 @@
+def _AddMergeFromStringMethod(message_descriptor, cls):
+    'Helper for _AddMessageMethods().'
+
+    def MergeFromString(self, serialized):
+        length = len(serialized)
+        try:
+            if (self._InternalParse(serialized, 0, length) != length):
+                raise message_mod.DecodeError('Unexpected end-group tag.')
+        except (IndexError, TypeError):
+            raise message_mod.DecodeError('Truncated message.')
+        except struct.error as e:
+            raise message_mod.DecodeError(e)
+        return length
+    cls.MergeFromString = MergeFromString
+    local_ReadTag = decoder.ReadTag
+    local_SkipField = decoder.SkipField
+    decoders_by_tag = cls._decoders_by_tag
+    is_proto3 = (message_descriptor.syntax == 'proto3')
+
+    def InternalParse(self, buffer, pos, end):
+        self._Modified()
+        field_dict = self._fields
+        unknown_field_list = self._unknown_fields
+        while (pos != end):
+            (tag_bytes, new_pos) = local_ReadTag(buffer, pos)
+            (field_decoder, field_desc) = decoders_by_tag.get(tag_bytes, (None, None))
+            if (field_decoder is None):
+                value_start_pos = new_pos
+                new_pos = local_SkipField(buffer, new_pos, end, tag_bytes)
+                if (new_pos == (-1)):
+                    return pos
+                if (not is_proto3):
+                    if (not unknown_field_list):
+                        unknown_field_list = self._unknown_fields = []
+                    unknown_field_list.append((tag_bytes, buffer[value_start_pos:new_pos]))
+                pos = new_pos
+            else:
+                pos = field_decoder(buffer, new_pos, end, self, field_dict)
+                if field_desc:
+                    self._UpdateOneofState(field_desc)
+        return pos
+    cls._InternalParse = InternalParse

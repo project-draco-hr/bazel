@@ -1,0 +1,12 @@
+def testDisconnectingNestedMessageAfterSettingField(self):
+    proto = unittest_pb2.TestAllTypes()
+    nested = proto.optional_nested_message
+    nested.bb = 5
+    self.assertTrue(proto.HasField('optional_nested_message'))
+    proto.ClearField('optional_nested_message')
+    self.assertEqual(5, nested.bb)
+    self.assertEqual(0, proto.optional_nested_message.bb)
+    self.assertTrue((nested is not proto.optional_nested_message))
+    nested.bb = 23
+    self.assertTrue((not proto.HasField('optional_nested_message')))
+    self.assertEqual(0, proto.optional_nested_message.bb)
