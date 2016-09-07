@@ -5,13 +5,14 @@
   runfiles=new HashMap<>();
   InputStream fis=new FileInputStream(System.getenv("RUNFILES_MANIFEST_FILE"));
   InputStreamReader isr=new InputStreamReader(fis,Charset.forName("UTF-8"));
-  BufferedReader br=new BufferedReader(isr);
-  String line;
-  while ((line=br.readLine()) != null) {
-    String[] splitLine=line.split(" ");
-    if (splitLine.length != 2) {
-      continue;
+  try (BufferedReader br=new BufferedReader(isr)){
+    String line;
+    while ((line=br.readLine()) != null) {
+      String[] splitLine=line.split(" ");
+      if (splitLine.length != 2) {
+        continue;
+      }
+      runfiles.put(splitLine[0],splitLine[1]);
     }
-    runfiles.put(splitLine[0],splitLine[1]);
   }
-}
+ }
