@@ -1,0 +1,20 @@
+{
+  Path outputDir=new CompressedTarFunction(){
+    @Override protected InputStream getDecompressorStream(    DecompressorDescriptor descriptor) throws IOException {
+      return new GZIPInputStream(new FileInputStream(descriptor.archivePath().getPathFile()));
+    }
+  }
+.decompress(descriptorBuilder.build());
+  assertThat(outputDir.exists()).isTrue();
+  assertThat(outputDir.getRelative(REGULAR_FILE_NAME).exists()).isTrue();
+  assertThat(outputDir.getRelative(REGULAR_FILE_NAME).getFileSize()).isNotEqualTo(0);
+  assertThat(outputDir.getRelative(REGULAR_FILE_NAME).isSymbolicLink()).isFalse();
+  assertThat(outputDir.getRelative(HARD_LINK_FILE_NAME).exists()).isTrue();
+  assertThat(outputDir.getRelative(HARD_LINK_FILE_NAME).getFileSize()).isNotEqualTo(0);
+  assertThat(outputDir.getRelative(HARD_LINK_FILE_NAME).isSymbolicLink()).isFalse();
+  assertThat(outputDir.getRelative(SYMBOLIC_LINK_FILE_NAME).exists()).isTrue();
+  assertThat(outputDir.getRelative(SYMBOLIC_LINK_FILE_NAME).getFileSize()).isNotEqualTo(0);
+  assertThat(outputDir.getRelative(SYMBOLIC_LINK_FILE_NAME).isSymbolicLink()).isTrue();
+  assertThat(Files.isSameFile(java.nio.file.Paths.get(outputDir.getRelative(REGULAR_FILE_NAME).toString()),java.nio.file.Paths.get(outputDir.getRelative(HARD_LINK_FILE_NAME).toString()))).isTrue();
+  assertThat(Files.isSameFile(java.nio.file.Paths.get(outputDir.getRelative(REGULAR_FILE_NAME).toString()),java.nio.file.Paths.get(outputDir.getRelative(SYMBOLIC_LINK_FILE_NAME).toString()))).isTrue();
+}

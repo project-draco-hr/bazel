@@ -1,0 +1,17 @@
+{
+  if (originalPath.equals(rootPath)) {
+    throw Error.EACCES.exception(originalPath);
+  }
+  InMemoryDirectoryInfo linkParent;
+synchronized (this) {
+    linkParent=getDirectory(linkPath.getParentDirectory());
+    if (!linkParent.outOfScope()) {
+      if (linkParent.getChild(linkPath.getBaseName()) != null) {
+        throw Error.EEXIST.exception(linkPath);
+      }
+      insert(linkParent,linkPath.getBaseName(),getDirectory(originalPath.getParentDirectory()).getChild(originalPath.getBaseName()),linkPath);
+      return;
+    }
+  }
+  getDelegatedPath(linkParent.getEscapingPath(),originalPath).createHardLink(linkPath);
+}

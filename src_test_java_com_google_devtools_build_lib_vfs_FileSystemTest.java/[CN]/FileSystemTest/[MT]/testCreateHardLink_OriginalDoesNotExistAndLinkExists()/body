@@ -1,0 +1,16 @@
+{
+  if (!supportsHardlinks) {
+    return;
+  }
+  xFile.delete();
+  FileSystemUtils.createEmptyFile(xLink);
+  try {
+    xFile.createHardLink(xLink);
+    fail("expected FileNotFoundException: File \"xFile\" linked from \"xLink\" does not exist");
+  }
+ catch (  FileNotFoundException expected) {
+    assertThat(expected).hasMessage("File \"xFile\" linked from \"xLink\" does not exist");
+  }
+  assertFalse(xFile.exists());
+  assertTrue(xLink.exists());
+}

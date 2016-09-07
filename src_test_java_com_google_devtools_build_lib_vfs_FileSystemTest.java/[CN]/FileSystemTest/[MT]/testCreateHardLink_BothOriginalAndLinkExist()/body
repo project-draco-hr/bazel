@@ -1,0 +1,16 @@
+{
+  if (!supportsHardlinks) {
+    return;
+  }
+  FileSystemUtils.createEmptyFile(xLink);
+  try {
+    xFile.createHardLink(xLink);
+    fail("expected FileAlreadyExistsException: New link file \"xLink\" already exists");
+  }
+ catch (  FileAlreadyExistsException expected) {
+    assertThat(expected).hasMessage("New link file \"xLink\" already exists");
+  }
+  assertTrue(xFile.exists());
+  assertTrue(xLink.exists());
+  assertFalse(isHardLinked(xFile,xLink));
+}
