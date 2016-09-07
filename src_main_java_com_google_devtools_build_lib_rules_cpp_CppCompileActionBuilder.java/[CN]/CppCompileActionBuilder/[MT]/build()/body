@@ -1,17 +1,17 @@
 {
   Preconditions.checkNotNull(shouldScanIncludes);
+  boolean fake=tempOutputFile != null;
   NestedSetBuilder<Artifact> realMandatoryInputsBuilder=NestedSetBuilder.compileOrder();
   realMandatoryInputsBuilder.addTransitive(mandatoryInputsBuilder.build());
-  if (tempOutputFile == null && !shouldScanIncludes) {
+  if (!fake && !shouldScanIncludes) {
     realMandatoryInputsBuilder.addTransitive(context.getDeclaredIncludeSrcs());
   }
-  boolean shouldPruneModules=shouldScanIncludes && !getActionName().equals(CppCompileAction.CPP_MODULE_COMPILE) && featureConfiguration.isEnabled(CppRuleClasses.PRUNE_HEADER_MODULES);
+  boolean shouldPruneModules=shouldScanIncludes && !fake && !getActionName().equals(CppCompileAction.CPP_MODULE_COMPILE)&& featureConfiguration.isEnabled(CppRuleClasses.PRUNE_HEADER_MODULES);
   if (featureConfiguration.isEnabled(CppRuleClasses.USE_HEADER_MODULES) && !shouldPruneModules) {
     realMandatoryInputsBuilder.addTransitive(context.getTransitiveModules(usePic));
   }
   realMandatoryInputsBuilder.addTransitive(context.getAdditionalInputs());
   realMandatoryInputsBuilder.add(sourceFile);
-  boolean fake=tempOutputFile != null;
   ImmutableSet<String> executionRequirements=ImmutableSet.of();
   if (featureConfiguration.actionIsConfigured(getActionName())) {
     executionRequirements=featureConfiguration.getToolForAction(getActionName()).getExecutionRequirements();
