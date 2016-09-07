@@ -3,7 +3,7 @@
   beforeEvaluateQuery();
   final BatchStreamedCallback aggregator=new BatchStreamedCallback(callback,BATCH_CALLBACK_SIZE);
   final AtomicBoolean empty=new AtomicBoolean(true);
-  Callback<Target> callbackWithEmptyCheck=new Callback<Target>(){
+  ThreadSafeCallback<Target> callbackWithEmptyCheck=new ThreadSafeCallback<Target>(){
     @Override public void process(    Iterable<Target> partialResult) throws QueryException, InterruptedException {
       empty.compareAndSet(true,Iterables.isEmpty(partialResult));
       aggregator.process(partialResult);
@@ -12,12 +12,7 @@
 ;
   try (final AutoProfiler p=AutoProfiler.logged("evaluating query",LOG)){
     try {
-      if (expr.canEvalConcurrently()) {
-        expr.evalConcurrently(this,VariableContext.<Target>empty(),callbackWithEmptyCheck,threadPool);
-      }
- else {
-        expr.eval(this,VariableContext.<Target>empty(),callbackWithEmptyCheck);
-      }
+      eval(expr,VariableContext.<Target>empty(),callbackWithEmptyCheck);
     }
  catch (    QueryException e) {
       throw new QueryException(e,expr);
