@@ -26,22 +26,13 @@
     }
   }
   String actionOutputKey=hasher.hash().toString();
-  int timeout=120;
-  String timeoutStr=spawn.getExecutionInfo().get("timeout");
-  if (timeoutStr != null) {
-    try {
-      timeout=Integer.parseInt(timeoutStr);
-    }
- catch (    NumberFormatException e) {
-      throw new UserExecException("could not parse timeout: ",e);
-    }
-  }
+  final int timeoutSeconds=Spawns.getTimeoutSeconds(spawn,120);
   try {
     if (writeActionOutput(spawn.getMnemonic(),actionOutputKey,eventHandler,true)) {
       return;
     }
     FileOutErr outErr=actionExecutionContext.getFileOutErr();
-    if (executeWorkRemotely(inputFileCache,spawn.getMnemonic(),actionOutputKey,spawn.getArguments(),inputs,spawn.getEnvironment(),spawn.getOutputFiles(),timeout,eventHandler,outErr)) {
+    if (executeWorkRemotely(inputFileCache,spawn.getMnemonic(),actionOutputKey,spawn.getArguments(),inputs,spawn.getEnvironment(),spawn.getOutputFiles(),timeoutSeconds,eventHandler,outErr)) {
       return;
     }
     standaloneStrategy.exec(spawn,actionExecutionContext);

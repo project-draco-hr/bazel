@@ -4,16 +4,7 @@
     executor.reportSubcommand(Label.print(spawn.getOwner().getLabel()) + " [" + spawn.getResourceOwner().prettyPrint()+ "]",spawn.asShellCommand(executor.getExecRoot()));
   }
   executor.getEventBus().post(ActionStatusMessage.runningStrategy(spawn.getResourceOwner(),"standalone"));
-  int timeoutSeconds=-1;
-  String timeoutStr=spawn.getExecutionInfo().get("timeout");
-  if (timeoutStr != null) {
-    try {
-      timeoutSeconds=Integer.parseInt(timeoutStr);
-    }
- catch (    NumberFormatException e) {
-      throw new UserExecException("could not parse timeout: ",e);
-    }
-  }
+  int timeoutSeconds=Spawns.getTimeoutSeconds(spawn);
   List<String> args=new ArrayList<>();
   if (OS.getCurrent() != OS.WINDOWS) {
     args.add(processWrapper.getPathString());
