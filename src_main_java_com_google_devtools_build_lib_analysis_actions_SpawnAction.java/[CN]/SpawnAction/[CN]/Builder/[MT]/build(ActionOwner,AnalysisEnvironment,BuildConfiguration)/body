@@ -1,10 +1,14 @@
 {
   Iterable<String> arguments=argumentsBuilder.build();
   Artifact paramsFile=ParamFileHelper.getParamsFileMaybe(buildExecutableArgs(configuration.getShExecutable()),arguments,commandLine,paramFileInfo,configuration,analysisEnvironment,outputs);
-  List<Action> actions=new ArrayList<>(2);
-  actions.add(buildSpawnAction(owner,configuration.getLocalShellEnvironment(),configuration.getShExecutable(),paramsFile));
+  ParameterFileWriteAction paramFileWriteAction=null;
   if (paramsFile != null) {
-    actions.add(ParamFileHelper.createParameterFileWriteAction(arguments,commandLine,owner,paramsFile,paramFileInfo));
+    paramFileWriteAction=ParamFileHelper.createParameterFileWriteAction(arguments,commandLine,owner,paramsFile,paramFileInfo);
+  }
+  List<Action> actions=new ArrayList<>(2);
+  actions.add(buildSpawnAction(owner,configuration.getLocalShellEnvironment(),configuration.getShExecutable(),paramsFile,paramFileWriteAction));
+  if (paramFileWriteAction != null) {
+    actions.add(paramFileWriteAction);
   }
   return actions.toArray(new Action[actions.size()]);
 }
