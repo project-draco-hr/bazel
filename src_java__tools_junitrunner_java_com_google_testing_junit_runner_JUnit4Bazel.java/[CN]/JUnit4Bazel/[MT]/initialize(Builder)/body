@@ -1,0 +1,28 @@
+{
+  this.topLevelSuiteSupplier=TopLevelSuiteFactory.create(builder.suiteClass);
+  this.requestMemoizingSupplier=new MemoizingSupplier<>(RequestFactory.create(topLevelSuiteSupplier));
+  this.cancellableRequestFactorySupplier=new MemoizingSupplier<>(CancellableRequestFactoryFactory.create());
+  this.topLevelSuiteNameSupplier=TopLevelSuiteNameFactory.create(topLevelSuiteSupplier);
+  this.shardingFiltersSupplier=ShardingFiltersFactory.create(ShardingEnvironmentFactory.create(),ShardingFilterFactoryFactory.create());
+  this.resultWriterSupplier=ResultWriterFactory.create(AntXmlResultWriterFactory.create());
+  this.builderSupplier=TestSuiteModelBuilderFactory.create(TickerFactory.create(),shardingFiltersSupplier,ShardingEnvironmentFactory.create(),resultWriterSupplier);
+  this.jUnit4TestModelBuilderMemoizingSupplier=new MemoizingSupplier<>(JUnit4TestModelBuilderFactory.create(requestMemoizingSupplier,topLevelSuiteNameSupplier,builderSupplier));
+  this.provideTestSuiteModelSupplierMemoizingSupplier=new MemoizingSupplier<>(TestSuiteModelSupplierFactory.create(jUnit4TestModelBuilderMemoizingSupplier));
+  this.stdoutStreamMemoizingSupplier=new MemoizingSupplier<>(StdoutStreamFactory.create());
+  this.optionsMemoizingSupplier=new MemoizingSupplier<>(JUnit4OptionsFactory.create(builder.config));
+  this.configMemoizingSupplier=new MemoizingSupplier<>(JUnit4ConfigFactory.create(optionsMemoizingSupplier));
+  this.signalHandlersSupplier=SignalHandlersFactory.create(SignalHandlerInstallerFactory.create());
+  this.stderrStreamMemoizingSupplier=new MemoizingSupplier<>(StderrStreamFactory.create());
+  this.jUnit4TestStackTraceListenerMemoizingSupplier=new MemoizingSupplier<>(JUnit4TestStackTraceListenerFactory.create(signalHandlersSupplier,stderrStreamMemoizingSupplier));
+  this.stackTraceListenerSupplier=StackTraceListenerFactory.create(jUnit4TestStackTraceListenerMemoizingSupplier);
+  this.provideXmlStreamMemoizingSupplier=new MemoizingSupplier<>(ProvideXmlStreamFactory.create(configMemoizingSupplier));
+  this.jUnit4TestXmlListenerMemoizingSupplier=new MemoizingSupplier<>(JUnit4TestXmlListenerFactory.create(provideTestSuiteModelSupplierMemoizingSupplier,cancellableRequestFactorySupplier,signalHandlersSupplier,provideXmlStreamMemoizingSupplier,stderrStreamMemoizingSupplier));
+  this.xmlListenerSupplier=XmlListenerFactory.create(jUnit4TestXmlListenerMemoizingSupplier);
+  this.provideCurrentRunningTestMemoizingSupplier=new MemoizingSupplier<>(CurrentRunningTestFactory.create(builder.jUnit4RunnerModule));
+  this.jUnit4TestNameListenerMemoizingSupplier=new MemoizingSupplier<>(JUnit4TestNameListenerFactory.create(provideCurrentRunningTestMemoizingSupplier));
+  this.nameListenerSupplier=NameListenerFactory.create(jUnit4TestNameListenerMemoizingSupplier);
+  this.provideTextListenerMemoizingSupplier=new MemoizingSupplier<>(ProvideTextListenerFactory.create(stdoutStreamMemoizingSupplier));
+  this.textListenerSupplier=TextListenerFactory.create(provideTextListenerMemoizingSupplier);
+  this.setOfRunListenerProvider=SetFactory.<RunListener>builder(4,0).addSupplier(stackTraceListenerSupplier).addSupplier(xmlListenerSupplier).addSupplier(nameListenerSupplier).addSupplier(textListenerSupplier).build();
+  this.jUnit4RunnerProvider=JUnit4RunnerFactory.create(requestMemoizingSupplier,cancellableRequestFactorySupplier,provideTestSuiteModelSupplierMemoizingSupplier,stdoutStreamMemoizingSupplier,configMemoizingSupplier,setOfRunListenerProvider,SetFactory.<JUnit4Runner.Initializer>empty());
+}
