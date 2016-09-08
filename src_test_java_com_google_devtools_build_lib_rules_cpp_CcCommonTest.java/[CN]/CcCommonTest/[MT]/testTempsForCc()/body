@@ -1,8 +1,13 @@
 {
-  useConfiguration("--save_temps");
-  ConfiguredTarget fooTarget=getConfiguredTarget("//foo:foo");
-  List<Artifact> temps=ImmutableList.copyOf(getOutputGroup(fooTarget,OutputGroupProvider.TEMP_FILES));
-  assertThat(temps).hasSize(2);
-  assertThat(filter(temps,fileTypePredicate(CppFileTypes.PIC_PREPROCESSED_CPP))).hasSize(1);
-  assertThat(filter(temps,fileTypePredicate(CppFileTypes.PIC_ASSEMBLER))).hasSize(1);
+  for (  String cpu : new String[]{"k8","piii"}) {
+    useConfiguration("--cpu=" + cpu,"--save_temps");
+    ConfiguredTarget foo=getConfiguredTarget("//foo:foo");
+    List<String> temps=ActionsTestUtil.baseArtifactNames(getOutputGroup(foo,OutputGroupProvider.TEMP_FILES));
+    if (getTargetConfiguration().getFragment(CppConfiguration.class).usePicForBinaries()) {
+      assertThat(temps).named(cpu).containsExactly("foo.pic.ii","foo.pic.s");
+    }
+ else {
+      assertThat(temps).named(cpu).containsExactly("foo.ii","foo.s");
+    }
+  }
 }
