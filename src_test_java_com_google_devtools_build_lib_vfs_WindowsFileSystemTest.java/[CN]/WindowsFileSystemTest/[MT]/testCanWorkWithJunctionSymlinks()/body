@@ -1,0 +1,26 @@
+{
+  testUtil.scratchFile("dir\\hello.txt","hello");
+  testUtil.scratchDir("non_existent");
+  testUtil.createJunctions(ImmutableMap.of("junc","dir","junc_bad","non_existent"));
+  Path juncPath=testUtil.createVfsPath(fs,"junc");
+  Path dirPath=testUtil.createVfsPath(fs,"dir");
+  Path juncBadPath=testUtil.createVfsPath(fs,"junc_bad");
+  Path nonExistentPath=testUtil.createVfsPath(fs,"non_existent");
+  assertThat(fs.exists(juncPath,false)).isTrue();
+  assertThat(fs.exists(dirPath,false)).isTrue();
+  assertThat(fs.exists(juncBadPath,false)).isTrue();
+  assertThat(fs.exists(nonExistentPath,false)).isTrue();
+  assertThat(fs.isSymbolicLink(juncPath)).isTrue();
+  assertThat(fs.isDirectory(juncPath,true)).isTrue();
+  assertThat(fs.isDirectory(juncPath,false)).isFalse();
+  assertThat(fs.getDirectoryEntries(juncPath)).containsExactly(testUtil.createVfsPath(fs,"junc\\hello.txt"));
+  assertThat(fs.delete(juncPath)).isTrue();
+  assertThat(fs.exists(juncPath,false)).isFalse();
+  assertThat(fs.delete(nonExistentPath)).isTrue();
+  assertThat(fs.exists(nonExistentPath,false)).isFalse();
+  assertThat(fs.exists(juncBadPath,false)).isTrue();
+  assertThat(fs.isDirectory(juncBadPath,true)).isFalse();
+  assertThat(fs.isDirectory(juncBadPath,false)).isFalse();
+  assertThat(fs.delete(juncBadPath)).isTrue();
+  assertThat(fs.exists(juncBadPath,false)).isFalse();
+}

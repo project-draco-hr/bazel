@@ -1,3 +1,15 @@
 {
-  return p.compareTo(p.toRealPath()) != 0;
+  if (Files.exists(p,symlinkOpts(false))) {
+    DosFileAttributes attributes=Files.readAttributes(p,DosFileAttributes.class,symlinkOpts(false));
+    if (attributes.isRegularFile()) {
+      return false;
+    }
+    if (attributes.isDirectory()) {
+      return attributes.isOther();
+    }
+ else {
+      return attributes.isSymbolicLink();
+    }
+  }
+  return false;
 }
