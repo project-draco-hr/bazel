@@ -1,13 +1,12 @@
 {
-  ImmutableMap.Builder<String,Integer> attrToIdBuilder=ImmutableMap.builder();
   if (!innerClasses.containsKey(ResourceType.ATTR)) {
-    return attrToIdBuilder.build();
+    return ImmutableMap.of();
   }
+  Map<String,Integer> attrToId=Maps.newHashMapWithExpectedSize(innerClasses.get(ResourceType.ATTR).size());
   Set<Integer> assignedIds=ImmutableSet.of();
   if (publicIds.containsKey(ResourceType.ATTR)) {
-    assignedIds=assignPublicIds(attrToIdBuilder,publicIds.get(ResourceType.ATTR),attrTypeId);
+    assignedIds=assignPublicIds(attrToId,publicIds.get(ResourceType.ATTR),attrTypeId);
   }
-  ImmutableMap<String,Integer> publicAttrs=attrToIdBuilder.build();
   Set<String> inlineAttrs=new HashSet<>();
   Set<String> styleablesWithInlineAttrs=new TreeSet<>();
   for (  Map.Entry<String,Map<String,Boolean>> styleableAttrEntry : styleableAttrs.entrySet()) {
@@ -22,19 +21,19 @@
   int nextId=nextFreeId(getInitialIdForTypeId(attrTypeId),assignedIds);
   ImmutableList<String> sortedAttrs=Ordering.natural().immutableSortedCopy(innerClasses.get(ResourceType.ATTR));
   for (  String attr : sortedAttrs) {
-    if (!inlineAttrs.contains(attr) && !publicAttrs.containsKey(attr)) {
-      attrToIdBuilder.put(attr,nextId);
+    if (!inlineAttrs.contains(attr) && !attrToId.containsKey(attr)) {
+      attrToId.put(attr,nextId);
       nextId=nextFreeId(nextId + 1,assignedIds);
     }
   }
   for (  String styleable : styleablesWithInlineAttrs) {
     Map<String,Boolean> attrs=styleableAttrs.get(styleable);
     for (    Map.Entry<String,Boolean> attrEntry : attrs.entrySet()) {
-      if (attrEntry.getValue() && !publicAttrs.containsKey(attrEntry.getKey())) {
-        attrToIdBuilder.put(attrEntry.getKey(),nextId);
+      if (attrEntry.getValue() && !attrToId.containsKey(attrEntry.getKey())) {
+        attrToId.put(attrEntry.getKey(),nextId);
         nextId=nextFreeId(nextId + 1,assignedIds);
       }
     }
   }
-  return attrToIdBuilder.build();
+  return attrToId;
 }

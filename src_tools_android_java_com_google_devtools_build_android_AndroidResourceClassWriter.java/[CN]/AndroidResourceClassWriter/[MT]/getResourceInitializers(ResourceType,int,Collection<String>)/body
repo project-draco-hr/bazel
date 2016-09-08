@@ -1,14 +1,13 @@
 {
   ImmutableList.Builder<FieldInitializer> initList=ImmutableList.builder();
-  ImmutableMap.Builder<String,Integer> publicBuilder=ImmutableMap.builder();
+  Map<String,Integer> publicNameToId=new HashMap<>();
   Set<Integer> assignedIds=ImmutableSet.of();
   if (publicIds.containsKey(type)) {
-    assignedIds=assignPublicIds(publicBuilder,publicIds.get(type),typeId);
+    assignedIds=assignPublicIds(publicNameToId,publicIds.get(type),typeId);
   }
-  Map<String,Integer> publicAssignments=publicBuilder.build();
   int resourceIds=nextFreeId(getInitialIdForTypeId(typeId),assignedIds);
   for (  String field : sortedFields) {
-    Integer fieldValue=publicAssignments.get(field);
+    Integer fieldValue=publicNameToId.get(field);
     if (fieldValue == null) {
       fieldValue=resourceIds;
       resourceIds=nextFreeId(resourceIds + 1,assignedIds);
