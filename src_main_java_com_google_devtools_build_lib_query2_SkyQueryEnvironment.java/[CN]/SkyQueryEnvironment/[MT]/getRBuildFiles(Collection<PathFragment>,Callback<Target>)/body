@@ -1,6 +1,7 @@
 {
   Collection<SkyKey> files=getSkyKeysForFileFragments(fileIdentifiers);
-  Collection<SkyKey> current=graph.getSuccessfulValues(files).keySet();
+  Uniquifier<SkyKey> keyUniquifier=new ThreadSafeSkyKeyUniquifier(1);
+  Collection<SkyKey> current=keyUniquifier.unique(graph.getSuccessfulValues(files).keySet());
   Set<SkyKey> resultKeys=CompactHashSet.create();
   while (!current.isEmpty()) {
     Collection<Iterable<SkyKey>> reverseDeps=graph.getReverseDeps(current).values();
@@ -9,11 +10,15 @@
       if (rdep.functionName().equals(SkyFunctions.PACKAGE)) {
         resultKeys.add(rdep);
         if (rdep.equals(PackageValue.key(Label.EXTERNAL_PACKAGE_IDENTIFIER))) {
-          current.add(rdep);
+          if (keyUniquifier.unique(rdep)) {
+            current.add(rdep);
+          }
         }
       }
  else       if (!rdep.functionName().equals(SkyFunctions.PACKAGE_LOOKUP)) {
-        current.add(rdep);
+        if (keyUniquifier.unique(rdep)) {
+          current.add(rdep);
+        }
       }
     }
     if (resultKeys.size() >= BATCH_CALLBACK_SIZE) {
