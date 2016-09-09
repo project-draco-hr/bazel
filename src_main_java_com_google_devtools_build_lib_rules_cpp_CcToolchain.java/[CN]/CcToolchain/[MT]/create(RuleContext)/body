@@ -49,31 +49,30 @@
   }
   Preconditions.checkState((staticRuntimeLinkMiddleman == null) == staticRuntimeLinkInputs.isEmpty());
   TransitiveInfoCollection dynamicRuntimeLibDep=selectDep(ruleContext,"dynamic_runtime_libs",cppConfiguration.getDynamicRuntimeLibsLabel());
-  final NestedSet<Artifact> dynamicRuntimeLinkInputs;
-  final Artifact dynamicRuntimeLinkMiddleman;
+  NestedSet<Artifact> dynamicRuntimeLinkSymlinks;
+  List<Artifact> dynamicRuntimeLinkInputs=new ArrayList<>();
+  Artifact dynamicRuntimeLinkMiddleman;
   if (cppConfiguration.supportsEmbeddedRuntimes()) {
-    NestedSetBuilder<Artifact> dynamicRuntimeLinkInputsBuilder=NestedSetBuilder.stableOrder();
+    NestedSetBuilder<Artifact> dynamicRuntimeLinkSymlinksBuilder=NestedSetBuilder.stableOrder();
     for (    Artifact artifact : dynamicRuntimeLibDep.getProvider(FileProvider.class).getFilesToBuild()) {
       if (CppHelper.SHARED_LIBRARY_FILETYPES.matches(artifact.getFilename())) {
-        dynamicRuntimeLinkInputsBuilder.add(SolibSymlinkAction.getCppRuntimeSymlink(ruleContext,artifact,runtimeSolibDirBase,ruleContext.getConfiguration()));
-      }
- else {
-        dynamicRuntimeLinkInputsBuilder.add(artifact);
+        dynamicRuntimeLinkInputs.add(artifact);
+        dynamicRuntimeLinkSymlinksBuilder.add(SolibSymlinkAction.getCppRuntimeSymlink(ruleContext,artifact,runtimeSolibDirBase,ruleContext.getConfiguration()));
       }
     }
-    dynamicRuntimeLinkInputs=dynamicRuntimeLinkInputsBuilder.build();
+    dynamicRuntimeLinkSymlinks=dynamicRuntimeLinkSymlinksBuilder.build();
   }
  else {
-    dynamicRuntimeLinkInputs=NestedSetBuilder.emptySet(Order.STABLE_ORDER);
+    dynamicRuntimeLinkSymlinks=NestedSetBuilder.emptySet(Order.STABLE_ORDER);
   }
   if (!dynamicRuntimeLinkInputs.isEmpty()) {
-    List<Artifact> dynamicRuntimeLinkMiddlemanSet=CppHelper.getAggregatingMiddlemanForCppRuntimes(ruleContext,purposePrefix + "dynamic_runtime_link",dynamicRuntimeLibDep,runtimeSolibDirBase,ruleContext.getConfiguration());
+    List<Artifact> dynamicRuntimeLinkMiddlemanSet=CppHelper.getAggregatingMiddlemanForCppRuntimes(ruleContext,purposePrefix + "dynamic_runtime_link",dynamicRuntimeLinkInputs,runtimeSolibDirBase,ruleContext.getConfiguration());
     dynamicRuntimeLinkMiddleman=dynamicRuntimeLinkMiddlemanSet.isEmpty() ? null : Iterables.getOnlyElement(dynamicRuntimeLinkMiddlemanSet);
   }
  else {
     dynamicRuntimeLinkMiddleman=null;
   }
-  Preconditions.checkState((dynamicRuntimeLinkMiddleman == null) == dynamicRuntimeLinkInputs.isEmpty());
+  Preconditions.checkState((dynamicRuntimeLinkMiddleman == null) == dynamicRuntimeLinkSymlinks.isEmpty());
   CppCompilationContext.Builder contextBuilder=new CppCompilationContext.Builder(ruleContext);
   CppModuleMap moduleMap=createCrosstoolModuleMap(ruleContext);
   if (moduleMap != null) {
@@ -87,7 +86,7 @@
   if (cppConfiguration.getFdoInstrument() != null) {
     coverageEnvironment.add(Pair.of("FDO_DIR",cppConfiguration.getFdoInstrument().getPathString()));
   }
-  CcToolchainProvider provider=new CcToolchainProvider(cppConfiguration,crosstool,fullInputsForCrosstool(ruleContext,crosstoolMiddleman),compile,strip,objcopy,fullInputsForLink(ruleContext,link),dwp,libcLink,staticRuntimeLinkInputs,staticRuntimeLinkMiddleman,dynamicRuntimeLinkInputs,dynamicRuntimeLinkMiddleman,runtimeSolibDir,context,supportsParamFiles,supportsHeaderParsing,getBuildVariables(ruleContext),getBuiltinIncludes(ruleContext),coverageEnvironment.build(),getEnvironment(ruleContext));
+  CcToolchainProvider provider=new CcToolchainProvider(cppConfiguration,crosstool,fullInputsForCrosstool(ruleContext,crosstoolMiddleman),compile,strip,objcopy,fullInputsForLink(ruleContext,link),dwp,libcLink,staticRuntimeLinkInputs,staticRuntimeLinkMiddleman,dynamicRuntimeLinkSymlinks,dynamicRuntimeLinkMiddleman,runtimeSolibDir,context,supportsParamFiles,supportsHeaderParsing,getBuildVariables(ruleContext),getBuiltinIncludes(ruleContext),coverageEnvironment.build(),getEnvironment(ruleContext));
   RuleConfiguredTargetBuilder builder=new RuleConfiguredTargetBuilder(ruleContext).add(CcToolchainProvider.class,provider).add(FdoSupportProvider.class,new FdoSupportProvider(fdoSupport.getFdoSupport())).setFilesToBuild(new NestedSetBuilder<Artifact>(Order.STABLE_ORDER).build()).add(RunfilesProvider.class,RunfilesProvider.simple(Runfiles.EMPTY));
   License outputLicense=ruleContext.getRule().getToolOutputLicense(ruleContext.attributes());
   if (outputLicense != null && outputLicense != License.NO_LICENSE) {
