@@ -67,7 +67,6 @@
 ));
   CcLibraryHelper.Info info=helper.build();
   CcLinkingOutputs linkedLibraries=info.getCcLinkingOutputsExcludingPrecompiledLibraries();
-  NestedSet<Artifact> artifactsToForce=collectHiddenTopLevelArtifacts(ruleContext,info.getCcCompilationOutputs());
   NestedSetBuilder<Artifact> filesBuilder=NestedSetBuilder.stableOrder();
   filesBuilder.addAll(LinkerInputs.toLibraryArtifacts(linkedLibraries.getStaticLibraries()));
   filesBuilder.addAll(LinkerInputs.toLibraryArtifacts(linkedLibraries.getPicStaticLibraries()));
@@ -83,5 +82,5 @@
   instrumentedObjectFiles.addAll(info.getCcCompilationOutputs().getObjectFiles(true));
   InstrumentedFilesProvider instrumentedFilesProvider=common.getInstrumentedFilesProvider(instrumentedObjectFiles,true);
   CppHelper.maybeAddStaticLinkMarkerProvider(targetBuilder,ruleContext);
-  targetBuilder.setFilesToBuild(filesToBuild).addProviders(info.getProviders()).addSkylarkTransitiveInfo(CcSkylarkApiProvider.NAME,new CcSkylarkApiProvider()).addOutputGroups(info.getOutputGroups()).add(InstrumentedFilesProvider.class,instrumentedFilesProvider).add(RunfilesProvider.class,RunfilesProvider.withData(staticRunfiles,sharedRunfiles)).add(CppRunfilesProvider.class,new CppRunfilesProvider(staticRunfiles,sharedRunfiles)).addOutputGroup(OutputGroupProvider.HIDDEN_TOP_LEVEL,artifactsToForce);
+  targetBuilder.setFilesToBuild(filesToBuild).addProviders(info.getProviders()).addSkylarkTransitiveInfo(CcSkylarkApiProvider.NAME,new CcSkylarkApiProvider()).addOutputGroups(info.getOutputGroups()).add(InstrumentedFilesProvider.class,instrumentedFilesProvider).add(RunfilesProvider.class,RunfilesProvider.withData(staticRunfiles,sharedRunfiles)).add(CppRunfilesProvider.class,new CppRunfilesProvider(staticRunfiles,sharedRunfiles)).addOutputGroup(OutputGroupProvider.HIDDEN_TOP_LEVEL,collectHiddenTopLevelArtifacts(ruleContext,info.getCcCompilationOutputs())).addOutputGroup(CcLibraryHelper.HIDDEN_HEADER_TOKENS,CcLibraryHelper.collectHeaderTokens(ruleContext,info.getCcCompilationOutputs()));
 }

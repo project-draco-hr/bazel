@@ -1,0 +1,10 @@
+{
+  NestedSetBuilder<Artifact> headerTokens=NestedSetBuilder.stableOrder();
+  for (  OutputGroupProvider dep : ruleContext.getPrerequisites("deps",Mode.TARGET,OutputGroupProvider.class)) {
+    headerTokens.addTransitive(dep.getOutputGroup(CcLibraryHelper.HIDDEN_HEADER_TOKENS));
+  }
+  if (ruleContext.getFragment(CppConfiguration.class).processHeadersInDependencies()) {
+    headerTokens.addAll(ccCompilationOutputs.getHeaderTokenFiles());
+  }
+  return headerTokens.build();
+}

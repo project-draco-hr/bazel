@@ -10,7 +10,7 @@
   Artifact linkedArtifact=getLinkedArtifact(linkType);
   PathFragment labelName=new PathFragment(ruleContext.getLabel().getName());
   String libraryIdentifier=ruleContext.getPackageDirectory().getRelative(labelName.replaceName("lib" + labelName.getBaseName())).getPathString();
-  CppLinkAction maybePicAction=newLinkActionBuilder(linkedArtifact).addObjectFiles(ccOutputs.getObjectFiles(usePicForBinaries)).addNonCodeInputs(ccOutputs.getHeaderTokenFiles()).addNonCodeInputs(nonCodeLinkerInputs).addLTOBitcodeFiles(ccOutputs.getLtoBitcodeFiles()).setLinkType(linkType).setLinkStaticness(LinkStaticness.FULLY_STATIC).addActionInputs(linkActionInputs).setLibraryIdentifier(libraryIdentifier).addVariablesExtensions(variablesExtensions).setFeatureConfiguration(featureConfiguration).build();
+  CppLinkAction maybePicAction=newLinkActionBuilder(linkedArtifact).addObjectFiles(ccOutputs.getObjectFiles(usePicForBinaries)).addNonCodeInputs(nonCodeLinkerInputs).addLTOBitcodeFiles(ccOutputs.getLtoBitcodeFiles()).setLinkType(linkType).setLinkStaticness(LinkStaticness.FULLY_STATIC).addActionInputs(linkActionInputs).setLibraryIdentifier(libraryIdentifier).addVariablesExtensions(variablesExtensions).setFeatureConfiguration(featureConfiguration).build();
   env.registerAction(maybePicAction);
   if (linkType != LinkTargetType.EXECUTABLE) {
     result.addStaticLibrary(maybePicAction.getOutputLibrary());
@@ -18,7 +18,7 @@
   if (!usePicForBinaries && usePicForSharedLibs) {
     LinkTargetType picLinkType=(linkType == LinkTargetType.ALWAYS_LINK_STATIC_LIBRARY) ? LinkTargetType.ALWAYS_LINK_PIC_STATIC_LIBRARY : LinkTargetType.PIC_STATIC_LIBRARY;
     Artifact picArtifact=getLinkedArtifact(picLinkType);
-    CppLinkAction picAction=newLinkActionBuilder(picArtifact).addObjectFiles(ccOutputs.getObjectFiles(true)).addNonCodeInputs(ccOutputs.getHeaderTokenFiles()).addLTOBitcodeFiles(ccOutputs.getLtoBitcodeFiles()).setLinkType(picLinkType).setLinkStaticness(LinkStaticness.FULLY_STATIC).addActionInputs(linkActionInputs).setLibraryIdentifier(libraryIdentifier).addVariablesExtensions(variablesExtensions).setFeatureConfiguration(featureConfiguration).build();
+    CppLinkAction picAction=newLinkActionBuilder(picArtifact).addObjectFiles(ccOutputs.getObjectFiles(true)).addLTOBitcodeFiles(ccOutputs.getLtoBitcodeFiles()).setLinkType(picLinkType).setLinkStaticness(LinkStaticness.FULLY_STATIC).addActionInputs(linkActionInputs).setLibraryIdentifier(libraryIdentifier).addVariablesExtensions(variablesExtensions).setFeatureConfiguration(featureConfiguration).build();
     env.registerAction(picAction);
     if (linkType != LinkTargetType.EXECUTABLE) {
       result.addPicStaticLibrary(picAction.getOutputLibrary());
