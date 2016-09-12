@@ -17,9 +17,13 @@
     helper.createGenJarAction(classJar,manifestProtoOutput,genClassJar);
   }
   srcJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_SOURCE_JAR);
+  javaSourceJarsProviderBuilder.addSourceJar(srcJar).addAllTransitiveSourceJars(javaCommon.collectTransitiveSourceJars(srcJar));
   helper.createSourceJarAction(srcJar,genSourceJar);
   outputDepsProto=helper.createOutputDepsProtoArtifact(classJar,javaArtifactsBuilder);
   helper.createCompileActionWithInstrumentation(classJar,manifestProtoOutput,genSourceJar,outputDepsProto,javaArtifactsBuilder);
+  if (isBinary) {
+    generatedExtensionRegistryProvider=javaSemantics.createGeneratedExtensionRegistry(ruleContext,javaCommon,filesBuilder,javaArtifactsBuilder,javaRuleOutputJarsProviderBuilder,javaSourceJarsProviderBuilder);
+  }
   filesToBuild=filesBuilder.build();
   if ((attributes.hasSourceFiles() || attributes.hasSourceJars()) && jar != null) {
     iJar=helper.createCompileTimeJarAction(jar,javaArtifactsBuilder);
@@ -29,8 +33,6 @@
   javaCommon.setJavaCompilationArtifacts(javaArtifacts);
   javaCommon.setClassPathFragment(new ClasspathConfiguredFragment(javaCommon.getJavaCompilationArtifacts(),attributes,asNeverLink,helper.getBootclasspathOrDefault()));
   transitiveNeverlinkLibraries=collectTransitiveNeverlinkLibraries(ruleContext,javaCommon.getDependencies(),javaCommon.getJavaCompilationArtifacts().getRuntimeJars());
-  topLevelSourceJars=ImmutableList.of(srcJar);
-  transitiveSourceJars=javaCommon.collectTransitiveSourceJars(srcJar);
   if (collectJavaCompilationArgs) {
     boolean hasSources=attributes.hasSourceFiles() || attributes.hasSourceJars();
     this.javaCompilationArgs=collectJavaCompilationArgs(exportDeps,asNeverLink,hasSources);

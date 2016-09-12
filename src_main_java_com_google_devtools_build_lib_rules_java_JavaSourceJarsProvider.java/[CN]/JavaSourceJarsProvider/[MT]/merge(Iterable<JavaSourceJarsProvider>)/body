@@ -1,9 +1,7 @@
 {
-  NestedSetBuilder<Artifact> transitiveSourceJars=NestedSetBuilder.stableOrder();
-  ImmutableList.Builder<Artifact> sourceJars=ImmutableList.builder();
+  JavaSourceJarsProvider.Builder result=builder();
   for (  JavaSourceJarsProvider provider : providers) {
-    transitiveSourceJars.addTransitive(provider.getTransitiveSourceJars());
-    sourceJars.addAll(provider.getSourceJars());
+    result.mergeFrom(provider);
   }
-  return JavaSourceJarsProvider.create(transitiveSourceJars.build(),sourceJars.build());
+  return result.build();
 }
