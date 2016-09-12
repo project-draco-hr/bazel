@@ -1,6 +1,10 @@
 {
   AppleConfiguration appleConfiguration=ruleContext.getFragment(AppleConfiguration.class);
-  CustomCommandLine.Builder commandLine=CustomCommandLine.builder().addPath(zipOutput.getExecPath()).add("--platform").add(appleConfiguration.getMultiArchPlatform(PlatformType.IOS).getLowerCaseNameInPlist()).addExecPath("--output-partial-info-plist",partialInfoPlist).add("--minimum-deployment-target").add(bundling.getMinimumOsVersion().toString());
+  PlatformType platformType=PlatformType.IOS;
+  if (isBuildingForWatch() && bundling.getBundleDir().startsWith("Watch")) {
+    platformType=PlatformType.WATCHOS;
+  }
+  CustomCommandLine.Builder commandLine=CustomCommandLine.builder().addPath(zipOutput.getExecPath()).add("--platform").add(appleConfiguration.getMultiArchPlatform(platformType).getLowerCaseNameInPlist()).addExecPath("--output-partial-info-plist",partialInfoPlist).add("--minimum-deployment-target").add(bundling.getMinimumOsVersion().toString());
   for (  TargetDeviceFamily targetDeviceFamily : targetDeviceFamiliesForResources()) {
     commandLine.add("--target-device").add(targetDeviceFamily.name().toLowerCase(Locale.US));
   }
