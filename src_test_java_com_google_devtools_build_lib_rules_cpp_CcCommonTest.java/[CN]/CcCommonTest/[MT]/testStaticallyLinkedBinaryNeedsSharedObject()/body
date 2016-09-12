@@ -1,6 +1,6 @@
 {
   scratch.file("third_party/sophos_av_pua/BUILD","licenses(['notice'])","cc_library(name = 'savi',","           srcs = [ 'lib/libsavi.so' ])");
   ConfiguredTarget wrapsophos=scratchConfiguredTarget("quality/malware/support","wrapsophos","cc_library(name = 'sophosengine',","           srcs = [ 'sophosengine.cc' ],","           deps = [ '//third_party/sophos_av_pua:savi' ])","cc_binary(name = 'wrapsophos',","          srcs = [ 'wrapsophos.cc' ],","          deps = [ ':sophosengine' ],","          linkstatic=1)");
-  Iterable<Artifact> libraries=getLinkerInputs(wrapsophos);
-  assertThat(baseArtifactNames(libraries)).containsAllOf("wrapsophos.pic.o","libsophosengine.a","libsavi.so");
+  List<String> artifactNames=baseArtifactNames(getLinkerInputs(wrapsophos));
+  assertThat(artifactNames).contains("libsavi.so");
 }

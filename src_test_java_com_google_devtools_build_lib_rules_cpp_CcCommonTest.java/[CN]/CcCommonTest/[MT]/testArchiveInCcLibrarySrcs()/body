@@ -1,5 +1,7 @@
 {
+  useConfiguration("--cpu=k8");
   ConfiguredTarget archiveInSrcsTest=scratchConfiguredTarget("archive_in_srcs","archive_in_srcs_test","cc_test(name = 'archive_in_srcs_test',","           srcs = ['archive_in_srcs_test.cc'],","           deps = [':archive_in_srcs_lib'])","cc_library(name = 'archive_in_srcs_lib',","           srcs = ['libstatic.a', 'libboth.a', 'libboth.so'])");
-  Iterable<Artifact> libraries=getLinkerInputs(archiveInSrcsTest);
-  assertThat(baseArtifactNames(libraries)).containsAllOf("archive_in_srcs_test.pic.o","libboth.so","libstatic.a");
+  List<String> artifactNames=baseArtifactNames(getLinkerInputs(archiveInSrcsTest));
+  assertThat(artifactNames).containsAllOf("libboth.so","libstatic.a");
+  assertThat(artifactNames).doesNotContain("libboth.a");
 }

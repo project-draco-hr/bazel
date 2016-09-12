@@ -1,11 +1,12 @@
 {
   useConfiguration("--interface_shared_objects");
   ConfiguredTarget hello=getConfiguredTarget("//hello:hello");
+  String cpu=getTargetConfiguration().getCpu();
   Artifact archive=getBinArtifact("libhello.a",hello);
   Artifact sharedObject=getBinArtifact("libhello.ifso",hello);
   Artifact implSharedObject=getBinArtifact("libhello.so",hello);
-  Artifact sharedObjectLink=getSharedArtifact("_solib_k8/libhello_Slibhello.ifso",hello);
-  Artifact implSharedObjectLink=getSharedArtifact("_solib_k8/libhello_Slibhello.so",hello);
+  Artifact sharedObjectLink=getSharedArtifact("_solib_" + cpu + "/libhello_Slibhello.ifso",hello);
+  Artifact implSharedObjectLink=getSharedArtifact("_solib_" + cpu + "/libhello_Slibhello.so",hello);
   assertThat(getFilesToBuild(hello)).containsExactly(archive,sharedObject,implSharedObject);
   assertThat(LinkerInputs.toLibraryArtifacts(hello.getProvider(CcNativeLibraryProvider.class).getTransitiveCcNativeLibraries())).containsExactly(sharedObjectLink);
   assertThat(hello.getProvider(CcExecutionDynamicLibrariesProvider.class).getExecutionDynamicLibraryArtifacts()).containsExactly(implSharedObjectLink);
