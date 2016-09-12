@@ -19,7 +19,13 @@ catch (  RepositoryFunction.RepositoryFunctionException ex) {
     return;
   }
   if (repositoryRule.getRuleClass().equals(NewLocalRepositoryRule.NAME) && repositoryPath.segmentCount() == 1) {
-    PathFragment pathDir=RepositoryFunction.getTargetPath(repositoryRule,directories.getWorkspace());
+    PathFragment pathDir;
+    try {
+      pathDir=RepositoryFunction.getTargetPath(repositoryRule,directories.getWorkspace());
+    }
+ catch (    RepositoryFunctionException e) {
+      throw new IOException(e.getMessage());
+    }
     FileSystem fs=directories.getWorkspace().getFileSystem();
     SkyKey dirKey=DirectoryListingValue.key(RootedPath.toRootedPath(fs.getRootDirectory(),fs.getPath(pathDir)));
     try {

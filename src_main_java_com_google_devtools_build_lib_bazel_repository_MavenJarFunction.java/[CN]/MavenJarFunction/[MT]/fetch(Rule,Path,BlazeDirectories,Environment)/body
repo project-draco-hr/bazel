@@ -1,14 +1,16 @@
 {
-  AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(rule);
   MavenServerValue serverValue=getServer(rule,env);
   if (env.valuesMissing()) {
     return null;
   }
   MavenDownloader downloader;
   try {
-    downloader=createMavenDownloader(directories,mapper,serverValue);
+    downloader=createMavenDownloader(directories,rule,serverValue);
   }
  catch (  IOException e) {
+    throw new RepositoryFunctionException(e,Transience.PERSISTENT);
+  }
+catch (  EvalException e) {
     throw new RepositoryFunctionException(e,Transience.PERSISTENT);
   }
   return createOutputTree(downloader);

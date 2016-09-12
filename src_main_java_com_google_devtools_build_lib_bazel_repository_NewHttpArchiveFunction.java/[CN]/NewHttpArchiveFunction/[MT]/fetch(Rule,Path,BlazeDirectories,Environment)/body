@@ -11,10 +11,15 @@
   }
   Path downloadedPath=HttpDownloader.download(rule,outputDirectory,env.getListener(),clientEnvironment);
   Path decompressed;
-  AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(rule);
+  WorkspaceAttributeMapper mapper=WorkspaceAttributeMapper.of(rule);
   String prefix=null;
-  if (mapper.has("strip_prefix",Type.STRING) && !mapper.get("strip_prefix",Type.STRING).isEmpty()) {
-    prefix=mapper.get("strip_prefix",Type.STRING);
+  if (mapper.isAttributeValueExplicitlySpecified("strip_prefix")) {
+    try {
+      prefix=mapper.get("strip_prefix",Type.STRING);
+    }
+ catch (    EvalException e) {
+      throw new RepositoryFunctionException(e,Transience.PERSISTENT);
+    }
   }
   decompressed=DecompressorValue.decompress(DecompressorDescriptor.builder().setTargetKind(rule.getTargetKind()).setTargetName(rule.getName()).setArchivePath(downloadedPath).setRepositoryPath(outputDirectory).setPrefix(prefix).build());
   createWorkspaceFile(decompressed,rule.getTargetKind(),rule.getName());

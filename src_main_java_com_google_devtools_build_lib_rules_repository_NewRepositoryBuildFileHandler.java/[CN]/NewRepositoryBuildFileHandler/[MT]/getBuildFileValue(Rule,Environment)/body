@@ -1,6 +1,12 @@
 {
-  AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(rule);
-  String buildFileAttribute=mapper.get("build_file",Type.STRING);
+  WorkspaceAttributeMapper mapper=WorkspaceAttributeMapper.of(rule);
+  String buildFileAttribute;
+  try {
+    buildFileAttribute=mapper.get("build_file",Type.STRING);
+  }
+ catch (  EvalException e) {
+    throw new RepositoryFunctionException(e,Transience.PERSISTENT);
+  }
   RootedPath rootedBuild;
   if (LabelValidator.isAbsolute(buildFileAttribute)) {
     try {

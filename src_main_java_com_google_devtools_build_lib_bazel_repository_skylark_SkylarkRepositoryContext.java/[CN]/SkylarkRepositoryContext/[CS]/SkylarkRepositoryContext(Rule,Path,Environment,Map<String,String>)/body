@@ -3,12 +3,11 @@
   this.outputDirectory=outputDirectory;
   this.env=environment;
   this.osObject=new SkylarkOS(env);
-  AggregatingAttributeMapper attrs=AggregatingAttributeMapper.of(rule);
+  WorkspaceAttributeMapper attrs=WorkspaceAttributeMapper.of(rule);
   ImmutableMap.Builder<String,Object> attrBuilder=new ImmutableMap.Builder<>();
   for (  String name : attrs.getAttributeNames()) {
     if (!name.equals("$local")) {
-      Type<?> type=attrs.getAttributeType(name);
-      Object val=attrs.get(name,type);
+      Object val=attrs.getObject(name);
       attrBuilder.put(attributeToSkylark(name),val == null ? Runtime.NONE : SkylarkType.convertToSkylark(val,null));
     }
   }

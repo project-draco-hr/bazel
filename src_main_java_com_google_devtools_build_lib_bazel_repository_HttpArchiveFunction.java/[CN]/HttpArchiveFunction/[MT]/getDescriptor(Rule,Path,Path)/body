@@ -1,8 +1,13 @@
 {
   DecompressorDescriptor.Builder builder=DecompressorDescriptor.builder().setTargetKind(rule.getTargetKind()).setTargetName(rule.getName()).setArchivePath(downloadPath).setRepositoryPath(outputDirectory);
-  AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(rule);
-  if (mapper.has("strip_prefix",Type.STRING)) {
-    builder.setPrefix(mapper.get("strip_prefix",Type.STRING));
+  WorkspaceAttributeMapper mapper=WorkspaceAttributeMapper.of(rule);
+  if (mapper.isAttributeValueExplicitlySpecified("strip_prefix")) {
+    try {
+      builder.setPrefix(mapper.get("strip_prefix",Type.STRING));
+    }
+ catch (    EvalException e) {
+      throw new RepositoryFunctionException(e,Transience.PERSISTENT);
+    }
   }
   return builder.build();
 }

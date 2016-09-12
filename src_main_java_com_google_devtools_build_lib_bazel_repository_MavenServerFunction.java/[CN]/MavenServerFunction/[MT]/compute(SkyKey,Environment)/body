@@ -25,23 +25,28 @@
     }
   }
  else {
-    AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(repositoryRule);
+    WorkspaceAttributeMapper mapper=WorkspaceAttributeMapper.of(repositoryRule);
     serverName=repositoryRule.getName();
-    url=mapper.get("url",Type.STRING);
-    if (!mapper.has("settings_file",Type.STRING) || mapper.get("settings_file",Type.STRING).isEmpty()) {
-      settingsFiles=getDefaultSettingsFile(directories,env);
-    }
+    try {
+      url=mapper.get("url",Type.STRING);
+      if (!mapper.isAttributeValueExplicitlySpecified("settings_file")) {
+        settingsFiles=getDefaultSettingsFile(directories,env);
+      }
  else {
-      PathFragment settingsFilePath=new PathFragment(mapper.get("settings_file",Type.STRING));
-      RootedPath settingsPath=RootedPath.toRootedPath(directories.getWorkspace().getRelative(settingsFilePath),PathFragment.EMPTY_FRAGMENT);
-      FileValue fileValue=(FileValue)env.getValue(FileValue.key(settingsPath));
-      if (fileValue == null) {
-        return null;
+        PathFragment settingsFilePath=new PathFragment(mapper.get("settings_file",Type.STRING));
+        RootedPath settingsPath=RootedPath.toRootedPath(directories.getWorkspace().getRelative(settingsFilePath),PathFragment.EMPTY_FRAGMENT);
+        FileValue fileValue=(FileValue)env.getValue(FileValue.key(settingsPath));
+        if (fileValue == null) {
+          return null;
+        }
+        if (!fileValue.exists()) {
+          throw new RepositoryFunctionException(new IOException("Could not find settings file " + settingsPath),Transience.TRANSIENT);
+        }
+        settingsFiles=ImmutableMap.<String,FileValue>builder().put(USER_KEY,fileValue).build();
       }
-      if (!fileValue.exists()) {
-        throw new RepositoryFunctionException(new IOException("Could not find settings file " + settingsPath),Transience.TRANSIENT);
-      }
-      settingsFiles=ImmutableMap.<String,FileValue>builder().put(USER_KEY,fileValue).build();
+    }
+ catch (    EvalException e) {
+      throw new RepositoryFunctionException(e,Transience.PERSISTENT);
     }
   }
   if (settingsFiles == null) {

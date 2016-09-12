@@ -1,8 +1,16 @@
 {
-  AggregatingAttributeMapper mapper=AggregatingAttributeMapper.of(rule);
-  String url=mapper.get("url",Type.STRING);
-  String sha256=mapper.get("sha256",Type.STRING);
-  String type=mapper.has("type",Type.STRING) ? mapper.get("type",Type.STRING) : "";
+  WorkspaceAttributeMapper mapper=WorkspaceAttributeMapper.of(rule);
+  String url;
+  String sha256;
+  String type;
+  try {
+    url=mapper.get("url",Type.STRING);
+    sha256=mapper.get("sha256",Type.STRING);
+    type=mapper.isAttributeValueExplicitlySpecified("type") ? mapper.get("type",Type.STRING) : "";
+  }
+ catch (  EvalException e) {
+    throw new RepositoryFunctionException(e,Transience.PERSISTENT);
+  }
   try {
     return new HttpDownloader(eventHandler,url,sha256,outputDirectory,type,clientEnv).download();
   }
