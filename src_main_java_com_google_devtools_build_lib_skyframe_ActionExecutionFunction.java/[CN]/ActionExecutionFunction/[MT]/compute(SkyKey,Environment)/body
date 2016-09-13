@@ -4,6 +4,7 @@
   if ((action.isVolatile() && !(action instanceof SkyframeAwareAction)) || action instanceof NotifyOnActionCacheHit) {
     PrecomputedValue.BUILD_ID.get(env);
   }
+  Map<String,String> clientEnv=PrecomputedValue.CLIENT_ENV.get(env);
   boolean sharedActionAlreadyRan=skyframeActionExecutor.probeActionExecution(action);
   ContinuationState state;
   if (action.discoversInputs()) {
@@ -52,7 +53,7 @@
   }
   ActionExecutionValue result;
   try {
-    result=checkCacheAndExecuteIfNeeded(action,state,env);
+    result=checkCacheAndExecuteIfNeeded(action,state,env,clientEnv);
   }
  catch (  ActionExecutionException e) {
     stateMap.remove(action);

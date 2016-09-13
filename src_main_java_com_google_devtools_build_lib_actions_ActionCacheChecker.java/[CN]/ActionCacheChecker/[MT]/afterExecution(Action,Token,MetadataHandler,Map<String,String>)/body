@@ -1,0 +1,25 @@
+{
+  Preconditions.checkArgument(token != null);
+  String key=token.cacheKey;
+  if (actionCache.get(key) != null) {
+    return;
+  }
+  Map<String,String> usedClientEnv=computeUsedClientEnv(action,clientEnv);
+  ActionCache.Entry entry=new ActionCache.Entry(action.getKey(),usedClientEnv,action.discoversInputs());
+  for (  Artifact output : action.getOutputs()) {
+    String execPath=output.getExecPathString();
+    if (!key.equals(execPath)) {
+      actionCache.remove(execPath);
+    }
+    if (!metadataHandler.artifactOmitted(output)) {
+      Metadata metadata=metadataHandler.getMetadata(output);
+      Preconditions.checkState(metadata != null);
+      entry.addFile(output.getExecPath(),metadata);
+    }
+  }
+  for (  Artifact input : action.getInputs()) {
+    entry.addFile(input.getExecPath(),metadataHandler.getMetadataMaybe(input));
+  }
+  entry.getFileDigest();
+  actionCache.put(key,entry);
+}

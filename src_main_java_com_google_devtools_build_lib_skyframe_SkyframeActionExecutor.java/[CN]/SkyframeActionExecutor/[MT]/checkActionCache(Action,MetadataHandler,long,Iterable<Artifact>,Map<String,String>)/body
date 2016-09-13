@@ -1,0 +1,21 @@
+{
+  profiler.startTask(ProfilerTask.ACTION_CHECK,action);
+  Token token=actionCacheChecker.getTokenIfNeedToExecute(action,resolvedCacheArtifacts,clientEnv,explain ? reporter : null,metadataHandler);
+  profiler.completeTask(ProfilerTask.ACTION_CHECK);
+  if (token == null) {
+    boolean eventPosted=false;
+    if (action.getActionType().isMiddleman()) {
+      postEvent(new ActionMiddlemanEvent(action,actionStartTime));
+      eventPosted=true;
+    }
+    if (action instanceof NotifyOnActionCacheHit) {
+      NotifyOnActionCacheHit notify=(NotifyOnActionCacheHit)action;
+      notify.actionCacheHit(executorEngine);
+    }
+    checkOutputs(action,metadataHandler);
+    if (!eventPosted) {
+      postEvent(new CachedActionEvent(action,actionStartTime));
+    }
+  }
+  return token;
+}

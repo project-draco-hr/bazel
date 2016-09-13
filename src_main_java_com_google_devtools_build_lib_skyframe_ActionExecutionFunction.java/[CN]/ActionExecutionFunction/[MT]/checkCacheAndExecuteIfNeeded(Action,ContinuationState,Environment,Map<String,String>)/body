@@ -1,0 +1,91 @@
+{
+  if (!state.hasArtifactData()) {
+    return skyframeActionExecutor.executeAction(action,null,-1,null);
+  }
+  ActionMetadataHandler metadataHandler=new ActionMetadataHandler(state.inputArtifactData,action.getOutputs(),tsgm.get());
+  long actionStartTime=System.nanoTime();
+  if (!state.hasCheckedActionCache()) {
+    state.token=skyframeActionExecutor.checkActionCache(action,metadataHandler,actionStartTime,state.allInputs.actionCacheInputs,clientEnv);
+  }
+  if (state.token == null) {
+    return new ActionExecutionValue(metadataHandler.getOutputArtifactData(),metadataHandler.getOutputTreeArtifactData(),metadataHandler.getAdditionalOutputData());
+  }
+  PerActionFileCache perActionFileCache=new PerActionFileCache(state.inputArtifactData);
+  ActionExecutionContext actionExecutionContext=null;
+  try {
+    if (action.discoversInputs()) {
+      if (!state.hasDiscoveredInputs()) {
+        try {
+          state.discoveredInputs=skyframeActionExecutor.discoverInputs(action,perActionFileCache,metadataHandler,env);
+        }
+ catch (        MissingDepException e) {
+          Preconditions.checkState(env.valuesMissing(),action);
+          return null;
+        }
+      }
+      if (state.discoveredInputs != null) {
+        addDiscoveredInputs(state.inputArtifactData,state.discoveredInputs,env);
+        if (env.valuesMissing()) {
+          return null;
+        }
+        perActionFileCache=new PerActionFileCache(state.inputArtifactData);
+        metadataHandler=new ActionMetadataHandler(state.inputArtifactData,action.getOutputs(),tsgm.get());
+      }
+    }
+    actionExecutionContext=skyframeActionExecutor.getContext(perActionFileCache,metadataHandler,state.expandedArtifacts);
+    if (!state.hasExecutedAction()) {
+      state.value=skyframeActionExecutor.executeAction(action,metadataHandler,actionStartTime,actionExecutionContext);
+    }
+  }
+  finally {
+    if (actionExecutionContext != null) {
+      try {
+        actionExecutionContext.getFileOutErr().close();
+      }
+ catch (      IOException e) {
+      }
+    }
+  }
+  if (action.discoversInputs()) {
+    Iterable<Artifact> newInputs=filterKnownInputs(action.getInputs(),state.inputArtifactData.keySet());
+    Map<SkyKey,SkyValue> metadataFoundDuringActionExecution=env.getValues(toKeys(newInputs,action.getMandatoryInputs()));
+    if (state.discoveredInputs == null) {
+      state.discoveredInputs=newInputs;
+      if (env.valuesMissing()) {
+        return null;
+      }
+      if (!Iterables.isEmpty(newInputs)) {
+        Map<Artifact,FileArtifactValue> inputArtifactData=new HashMap<>();
+        inputArtifactData.putAll(state.inputArtifactData);
+        for (        Map.Entry<SkyKey,SkyValue> entry : metadataFoundDuringActionExecution.entrySet()) {
+          inputArtifactData.put(ArtifactSkyKey.artifact(entry.getKey()),(FileArtifactValue)entry.getValue());
+        }
+        state.inputArtifactData=inputArtifactData;
+        metadataHandler=new ActionMetadataHandler(state.inputArtifactData,action.getOutputs(),tsgm.get());
+      }
+    }
+ else     if (!Iterables.isEmpty(newInputs)) {
+      String errorMessageStart=action.prettyPrint() + " discovered unexpected inputs. This indicates a mismatch between the build" + " system and the action's compiler. Please report this issue. The ";
+      String errorMessageEnd="";
+      int artifactPrinted=0;
+      for (      Artifact extraArtifact : newInputs) {
+        if (artifactPrinted >= 10) {
+          errorMessageStart+="first ten ";
+          break;
+        }
+        if (artifactPrinted > 0) {
+          errorMessageEnd+=", ";
+        }
+        artifactPrinted++;
+        errorMessageEnd+=extraArtifact.prettyPrint();
+      }
+      errorMessageStart+="additional inputs found were: " + errorMessageEnd;
+      ActionExecutionException exception=new ActionExecutionException(errorMessageStart,action,false);
+      LoggingUtil.logToRemote(Level.SEVERE,errorMessageStart,exception);
+      throw skyframeActionExecutor.processAndThrow(exception,action,actionExecutionContext.getFileOutErr());
+    }
+  }
+  Preconditions.checkState(!env.valuesMissing(),action);
+  skyframeActionExecutor.afterExecution(action,metadataHandler,state.token,clientEnv);
+  return state.value;
+}

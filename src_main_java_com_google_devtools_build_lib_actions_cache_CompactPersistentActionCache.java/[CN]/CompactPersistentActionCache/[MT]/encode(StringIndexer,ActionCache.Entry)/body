@@ -3,7 +3,7 @@
   try {
     byte[] actionKeyBytes=entry.getActionKey().getBytes(ISO_8859_1);
     Collection<String> files=entry.getPaths();
-    int maxSize=VarInt.MAX_VARINT_SIZE + actionKeyBytes.length + Md5Digest.MD5_SIZE+ VarInt.MAX_VARINT_SIZE+ files.size() * VarInt.MAX_VARINT_SIZE;
+    int maxSize=VarInt.MAX_VARINT_SIZE + actionKeyBytes.length + Md5Digest.MD5_SIZE+ VarInt.MAX_VARINT_SIZE+ files.size() * VarInt.MAX_VARINT_SIZE + Md5Digest.MD5_SIZE;
     ByteArrayOutputStream sink=new ByteArrayOutputStream(maxSize);
     VarInt.putVarInt(actionKeyBytes.length,sink);
     sink.write(actionKeyBytes);
@@ -12,6 +12,7 @@
     for (    String file : files) {
       VarInt.putVarInt(indexer.getOrCreateIndex(file),sink);
     }
+    DigestUtils.write(entry.getUsedClientEnvDigest(),sink);
     return sink.toByteArray();
   }
  catch (  IOException e) {

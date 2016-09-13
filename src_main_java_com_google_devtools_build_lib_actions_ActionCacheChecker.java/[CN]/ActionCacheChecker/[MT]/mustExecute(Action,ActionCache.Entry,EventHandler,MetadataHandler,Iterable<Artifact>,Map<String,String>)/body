@@ -1,0 +1,30 @@
+{
+  if (unconditionalExecution(action)) {
+    Preconditions.checkState(action.isVolatile());
+    reportUnconditionalExecution(handler,action);
+    return true;
+  }
+  if (entry == null) {
+    reportNewAction(handler,action);
+    return true;
+  }
+  if (entry.isCorrupted()) {
+    reportCorruptedCacheEntry(handler,action);
+    return true;
+  }
+ else   if (validateArtifacts(entry,action,actionInputs,metadataHandler,true)) {
+    reportChanged(handler,action);
+    return true;
+  }
+ else   if (!entry.getActionKey().equals(action.getKey())) {
+    reportCommand(handler,action);
+    return true;
+  }
+  Map<String,String> usedClientEnv=computeUsedClientEnv(action,clientEnv);
+  if (!entry.getUsedClientEnvDigest().equals(DigestUtils.fromEnv(usedClientEnv))) {
+    reportClientEnv(handler,action,usedClientEnv);
+    return true;
+  }
+  entry.getFileDigest();
+  return false;
+}
