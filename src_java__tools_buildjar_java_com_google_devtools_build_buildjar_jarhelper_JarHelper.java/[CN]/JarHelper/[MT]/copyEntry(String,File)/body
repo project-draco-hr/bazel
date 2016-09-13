@@ -24,10 +24,17 @@
  else {
         outEntry.setMethod(storageMethod);
         if (storageMethod == JarEntry.STORED) {
-          outEntry.setCrc(Files.hash(file,Hashing.crc32()).padToLong());
+          byte[] bytes=Files.readAllBytes(file.toPath());
+          CRC32 crc=new CRC32();
+          crc.update(bytes);
+          outEntry.setCrc(crc.getValue());
+          out.putNextEntry(outEntry);
+          out.write(bytes);
         }
-        out.putNextEntry(outEntry);
-        Files.copy(file,out);
+ else {
+          out.putNextEntry(outEntry);
+          Files.copy(file.toPath(),out);
+        }
       }
       out.closeEntry();
     }
