@@ -24,14 +24,14 @@
           assertThat(entry.addReverseDepAndCheckIfDone(key("rdep" + j))).isNotEqualTo(DependencyState.DONE);
           waitForAddedRdep.countDown();
           waitForSetValue.await(TestUtils.WAIT_TIMEOUT_SECONDS,TimeUnit.SECONDS);
+          for (int k=chunkSize; k <= numIterations; k++) {
+            entry.removeReverseDep(key("rdep" + j));
+            entry.addReverseDepAndCheckIfDone(key("rdep" + j));
+            entry.getReverseDeps();
+          }
         }
  catch (        InterruptedException e) {
           fail("Test failed: " + e.toString());
-        }
-        for (int k=chunkSize; k <= numIterations; k++) {
-          entry.removeReverseDep(key("rdep" + j));
-          entry.addReverseDepAndCheckIfDone(key("rdep" + j));
-          entry.getReverseDeps();
         }
       }
     }

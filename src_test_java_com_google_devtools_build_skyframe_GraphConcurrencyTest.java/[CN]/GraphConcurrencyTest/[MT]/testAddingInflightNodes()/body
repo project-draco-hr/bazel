@@ -13,7 +13,7 @@
         final SkyKey key2=key("foo" + keyNum2);
         final Iterable<SkyKey> keys=ImmutableList.of(key1,key2);
         Runnable r=new Runnable(){
-          public void run(){
+          @Override public void run(){
             for (            SkyKey key : keys) {
               NodeEntry entry=null;
               try {
@@ -36,15 +36,15 @@
             for (            Integer keyNum : ImmutableList.of(keyNum1,keyNum2)) {
               SkyKey key=key("foo" + keyNum);
               NodeEntry entry=entries.get(key);
-              if (startEvaluation(entry).equals(DependencyState.NEEDS_SCHEDULING)) {
-                assertTrue(valuesSet.add(key));
-                try {
+              try {
+                if (startEvaluation(entry).equals(DependencyState.NEEDS_SCHEDULING)) {
+                  assertTrue(valuesSet.add(key));
                   entry.setValue(new StringValue("bar" + keyNum),startingVersion);
+                  assertThat(entry.isDone()).isTrue();
                 }
- catch (                InterruptedException e) {
-                  throw new IllegalStateException(key + ", " + entry,e);
-                }
-                assertThat(entry.isDone()).isTrue();
+              }
+ catch (              InterruptedException e) {
+                throw new IllegalStateException(key + ", " + entry,e);
               }
             }
             try {

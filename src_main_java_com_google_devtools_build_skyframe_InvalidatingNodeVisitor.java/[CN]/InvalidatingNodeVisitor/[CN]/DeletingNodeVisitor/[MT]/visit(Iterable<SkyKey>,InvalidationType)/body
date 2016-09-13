@@ -21,7 +21,12 @@
           return;
         }
         if (traverseGraph) {
-          visit(entry.getReverseDeps(),InvalidationType.DELETED);
+          try {
+            visit(entry.getReverseDeps(),InvalidationType.DELETED);
+          }
+ catch (          InterruptedException e) {
+            throw new IllegalStateException("Deletion cannot happen on a graph that may have blocking operations: " + key + ", "+ entry,e);
+          }
           Set<SkyKey> signalingDeps=entry.isDone() ? ImmutableSet.<SkyKey>of() : entry.getTemporaryDirectDeps().toSet();
           Iterable<SkyKey> directDeps;
           try {
@@ -35,7 +40,12 @@
             NodeEntry dep=directDepEntry.getValue();
             if (dep != null) {
               if (dep.isDone() || !signalingDeps.contains(directDepEntry.getKey())) {
-                dep.removeReverseDep(key);
+                try {
+                  dep.removeReverseDep(key);
+                }
+ catch (                InterruptedException e) {
+                  throw new IllegalStateException("Deletion cannot happen on a graph that may have blocking " + "operations: " + key + ", "+ entry,e);
+                }
               }
  else {
                 dep.removeInProgressReverseDep(key);
