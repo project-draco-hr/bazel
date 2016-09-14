@@ -1,0 +1,16 @@
+{
+  RuleConfiguredTargetBuilder ruleBuilder=new RuleConfiguredTargetBuilder(ruleContext);
+  Artifact aar=ruleContext.getPrerequisiteArtifact("aar",Mode.TARGET);
+  Artifact classesJar=createAarArtifact(ruleContext,CLASSES_JAR);
+  ruleContext.registerAction(createSingleFileExtractor(ruleContext,aar,CLASSES_JAR,classesJar));
+  Artifact androidManifestArtifact=createAarArtifact(ruleContext,ANDROID_MANIFEST);
+  ruleContext.registerAction(createSingleFileExtractor(ruleContext,aar,ANDROID_MANIFEST,androidManifestArtifact));
+  Artifact resourcesManifest=createAarArtifact(ruleContext,"resource_manifest");
+  ruleContext.registerAction(createManifestExtractor(ruleContext,aar,"res/.*",resourcesManifest));
+  Artifact resources=createResourcesTreeArtifact(ruleContext);
+  ruleContext.registerAction(createTreePopulater(ruleContext,aar,resourcesManifest,resources));
+  ApplicationManifest androidManifest=ApplicationManifest.fromExplicitManifest(ruleContext,androidManifestArtifact).renamePackage(ruleContext,AndroidCommon.getJavaPackage(ruleContext));
+  FileProvider resourcesProvider=new FileProvider(new NestedSetBuilder<Artifact>(Order.NAIVE_LINK_ORDER).add(resources).build());
+  ResourceApk resourceApk=androidManifest.packWithDataAndResources(ruleContext,new LocalResourceContainer.Builder(ruleContext).withResources(ImmutableList.of(resourcesProvider)).build(),ResourceDependencies.fromRuleDeps(ruleContext,JavaCommon.isNeverLink(ruleContext)));
+  return ruleBuilder.setFilesToBuild(NestedSetBuilder.<Artifact>stableOrder().add(resources).add(classesJar).build()).add(RunfilesProvider.class,RunfilesProvider.EMPTY).add(AndroidResourcesProvider.class,resourceApk.toResourceProvider(ruleContext.getLabel())).add(JavaRuleOutputJarsProvider.class,new JavaRuleOutputJarsProvider.Builder().addOutputJar(classesJar,null,null).build()).build();
+}
