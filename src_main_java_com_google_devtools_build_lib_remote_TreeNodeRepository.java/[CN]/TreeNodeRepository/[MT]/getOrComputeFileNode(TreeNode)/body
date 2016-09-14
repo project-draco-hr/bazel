@@ -1,0 +1,24 @@
+{
+  FileNode fileNode=fileNodeCache.get(node);
+  if (fileNode == null) {
+    FileNode.Builder b=FileNode.newBuilder();
+    if (node.isLeaf()) {
+      ContentDigest fileDigest=fileContentsDigestCache.get(node.getActionInput());
+      Preconditions.checkState(fileDigest != null);
+      b.getFileMetadataBuilder().setDigest(fileDigest).setExecutable(execRoot.getRelative(node.getActionInput().getExecPathString()).isExecutable());
+    }
+ else {
+      for (      TreeNode.ChildEntry entry : node.getChildEntries()) {
+        ContentDigest childDigest=treeNodeDigestCache.get(entry.getChild());
+        Preconditions.checkState(childDigest != null);
+        b.addChildBuilder().setPath(entry.getSegment()).setDigest(childDigest);
+      }
+    }
+    fileNode=b.build();
+    fileNodeCache.put(node,fileNode);
+    ContentDigest digest=ContentDigests.computeDigest(fileNode);
+    treeNodeDigestCache.put(node,digest);
+    digestTreeNodeCache.put(digest,node);
+  }
+  return fileNode;
+}

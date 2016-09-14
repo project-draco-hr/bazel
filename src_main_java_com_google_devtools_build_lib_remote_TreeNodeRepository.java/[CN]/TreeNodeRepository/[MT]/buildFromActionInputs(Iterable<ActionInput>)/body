@@ -1,0 +1,12 @@
+{
+  TreeMap<PathFragment,ActionInput> sortedMap=new TreeMap<>();
+  for (  ActionInput input : actionInputs) {
+    sortedMap.put(new PathFragment(input.getExecPathString()),input);
+  }
+  ImmutableList.Builder<ImmutableList<String>> segments=ImmutableList.builder();
+  for (  PathFragment path : sortedMap.keySet()) {
+    segments.add(path.getSegments());
+  }
+  ImmutableList<ActionInput> inputs=ImmutableList.copyOf(sortedMap.values());
+  return buildParentNode(inputs,segments.build(),0,inputs.size(),0);
+}
