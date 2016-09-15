@@ -1,0 +1,15 @@
+{
+  this.ruleContext=ruleContext;
+  Iterable<Artifact> blacklistProtoFiles=ruleContext.getPrerequisiteArtifacts(blacklistAttribute,Mode.HOST).list();
+  ImmutableSet.Builder<PathFragment> blacklistProtoFilePathsBuilder=new ImmutableSet.Builder<>();
+  for (  Artifact blacklistProtoFile : blacklistProtoFiles) {
+    PathFragment execPath=blacklistProtoFile.getExecPath();
+    if (execPath.startsWith(BAZEL_TOOLS_PREFIX)) {
+      blacklistProtoFilePathsBuilder.add(execPath.relativeTo(BAZEL_TOOLS_PREFIX));
+    }
+ else {
+      blacklistProtoFilePathsBuilder.add(execPath);
+    }
+  }
+  blacklistProtoFilePaths=blacklistProtoFilePathsBuilder.build();
+}

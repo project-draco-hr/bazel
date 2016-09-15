@@ -1,0 +1,16 @@
+{
+  List<Artifact> blacklisted=new ArrayList<>();
+  List<Artifact> nonBlacklisted=new ArrayList<>();
+  for (  Artifact protoFile : protoFiles) {
+    if (isBlacklisted(protoFile)) {
+      blacklisted.add(protoFile);
+    }
+ else {
+      nonBlacklisted.add(protoFile);
+    }
+  }
+  if (!nonBlacklisted.isEmpty() && !blacklisted.isEmpty()) {
+    ruleContext.attributeError("srcs",createBlacklistedProtosMixError(Artifact.toRootRelativePaths(blacklisted),Artifact.toRootRelativePaths(nonBlacklisted),ruleContext.getLabel().toString(),topLevelProtoRuleName));
+  }
+  return blacklisted.isEmpty();
+}

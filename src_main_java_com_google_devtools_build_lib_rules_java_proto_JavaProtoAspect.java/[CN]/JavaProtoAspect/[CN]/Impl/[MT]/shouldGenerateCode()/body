@@ -2,19 +2,6 @@
   if (!supportData.hasProtoSources()) {
     return false;
   }
-  Set<Artifact> blacklist=Sets.newHashSet(ruleContext.getPrerequisiteArtifacts(PROTO_SOURCE_FILE_BLACKLIST_ATTR,Mode.HOST).list());
-  List<Artifact> blacklisted=new ArrayList<>();
-  List<Artifact> nonBlacklisted=new ArrayList<>();
-  for (  Artifact src : supportData.getDirectProtoSources()) {
-    if (blacklist.contains(src)) {
-      blacklisted.add(src);
-    }
- else {
-      nonBlacklisted.add(src);
-    }
-  }
-  if (!nonBlacklisted.isEmpty() && !blacklisted.isEmpty()) {
-    ruleContext.attributeError("srcs",createBlacklistedProtosMixError(Artifact.toRootRelativePaths(blacklisted),Artifact.toRootRelativePaths(nonBlacklisted),ruleContext.getLabel().toString()));
-  }
-  return blacklisted.isEmpty();
+  ProtoSourceFileBlacklist protoBlackList=new ProtoSourceFileBlacklist(ruleContext,PROTO_SOURCE_FILE_BLACKLIST_ATTR);
+  return protoBlackList.checkSrcs(supportData.getDirectProtoSources(),"java_proto_library");
 }
