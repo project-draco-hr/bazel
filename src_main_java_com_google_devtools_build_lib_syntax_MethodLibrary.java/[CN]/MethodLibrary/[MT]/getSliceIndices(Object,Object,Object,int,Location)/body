@@ -1,9 +1,13 @@
 {
+  if (!(stepObj instanceof Integer)) {
+    throw new EvalException(loc,"slice step must be an integer");
+  }
+  int step=((Integer)stepObj).intValue();
   if (step == 0) {
     throw new EvalException(loc,"slice step cannot be zero");
   }
-  int start=getIndex(startObj,step,0,length - 1,length,loc);
-  int end=getIndex(endObj,step,length,-1,length,loc);
+  int start=getSliceIndex(startObj,step,0,length - 1,length,loc);
+  int end=getSliceIndex(endObj,step,length,-1,length,loc);
   Comparator<Integer> comparator=getOrderingForStep(step);
   ImmutableList.Builder<Integer> indices=ImmutableList.builder();
   for (int current=start; comparator.compare(current,end) < 0; current+=step) {
