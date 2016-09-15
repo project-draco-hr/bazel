@@ -24,6 +24,10 @@
   }
   if (containsNonNoneKey(arguments,EXECUTABLE_ARG) && (Boolean)arguments.get(EXECUTABLE_ARG)) {
     builder.setPropertyFlag("EXECUTABLE");
+    if (!containsNonNoneKey(arguments,CONFIGURATION_ARG)) {
+      String message="Argument `cfg = \"host\"` or `cfg = \"data\"` is required if" + " `executable = True` is provided for a label";
+      env.handleEvent(Event.warn(loc,message));
+    }
   }
   if (containsNonNoneKey(arguments,SINGLE_FILE_ARG) && (Boolean)arguments.get(SINGLE_FILE_ARG)) {
     if (containsNonNoneKey(arguments,ALLOW_SINGLE_FILE_ARG)) {
@@ -74,6 +78,8 @@
   if (containsNonNoneKey(arguments,CONFIGURATION_ARG)) {
     Object trans=arguments.get(CONFIGURATION_ARG);
     if (trans instanceof ConfigurationTransition) {
+      String message="Variables HOST_CFG and DATA_CFG are deprecated in favor of strings" + " \"host\" and \"data\" correspondingly";
+      env.handleEvent(Event.warn(loc,message));
       builder.cfg((ConfigurationTransition)trans);
     }
  else     if (trans.equals("data")) {
