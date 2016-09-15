@@ -9,17 +9,18 @@
     modifiedOutputFiles=outputService.startBuild(buildId,request.getBuildOptions().finalizeActions);
   }
  else {
-    startLocalOutputBuild();
+    startLocalOutputBuild(analysisResult.getWorkspaceName());
   }
   List<BuildConfiguration> targetConfigurations=configurations.getTargetConfigurations();
   BuildConfiguration targetConfiguration=targetConfigurations.size() == 1 ? targetConfigurations.get(0) : null;
   if (targetConfigurations.size() == 1) {
     String productName=runtime.getProductName();
-    OutputDirectoryLinksUtils.createOutputDirectoryLinks(env.getWorkspaceName(),env.getWorkspace(),getExecRoot(),env.getOutputPath(),getReporter(),targetConfiguration,request.getBuildOptions().getSymlinkPrefix(productName),productName);
+    String workspaceName=analysisResult.getWorkspaceName();
+    OutputDirectoryLinksUtils.createOutputDirectoryLinks(workspaceName,env.getWorkspace(),env.getDirectories().getExecRoot(workspaceName),env.getDirectories().getOutputPath(workspaceName),getReporter(),targetConfiguration,request.getBuildOptions().getSymlinkPrefix(productName),productName);
   }
   ActionCache actionCache=getActionCache();
   SkyframeExecutor skyframeExecutor=env.getSkyframeExecutor();
-  Builder builder=createBuilder(request,executor,actionCache,skyframeExecutor,modifiedOutputFiles);
+  Builder builder=createBuilder(request,actionCache,skyframeExecutor,modifiedOutputFiles,analysisResult.getWorkspaceName());
   Collection<ConfiguredTarget> configuredTargets=buildResult.getActualTargets();
   env.getEventBus().post(new ExecutionStartingEvent(configuredTargets));
   getReporter().handle(Event.progress("Building..."));
@@ -39,7 +40,6 @@
     skyframeExecutor.drainChangedFiles();
     if (request.getViewOptions().discardAnalysisCache) {
       env.getSkyframeBuildView().clearAnalysisCache(analysisResult.getTargetsToBuild());
-      actionGraph=null;
     }
     configureResourceManager(request);
     Profiler.instance().markPhase(ProfilePhase.EXECUTE);
