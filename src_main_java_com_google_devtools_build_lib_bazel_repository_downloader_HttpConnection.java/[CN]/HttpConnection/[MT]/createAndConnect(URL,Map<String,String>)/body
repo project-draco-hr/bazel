@@ -1,12 +1,38 @@
 {
   Proxy proxy=ProxyHelper.createProxyIfNeeded(url.toString(),clientEnv);
-  URLConnection connection=url.openConnection(proxy);
-  if (connection instanceof HttpURLConnection) {
-    return createAndConnectViaHttp(proxy,url,(HttpURLConnection)connection);
-  }
-  int contentLength=connection.getContentLength();
-  if (contentLength == 0) {
-    throw new IOException("Attempted to download an empty file");
-  }
-  return new HttpConnection(connection.getInputStream(),contentLength);
+  for (int i=0; i < MAX_REDIRECTS; ++i) {
+    URLConnection urlConnection=url.openConnection(proxy);
+    if (!(urlConnection instanceof HttpURLConnection)) {
+      return createFileConnection(urlConnection);
+    }
+    HttpURLConnection connection=(HttpURLConnection)urlConnection;
+    int statusCode;
+    try {
+      statusCode=createAndConnectViaHttp(connection);
+    }
+ catch (    IOException e) {
+      connection.disconnect();
+      throw e;
+    }
+switch (statusCode) {
+case HttpURLConnection.HTTP_OK:
+      try {
+        return new HttpConnection(connection.getInputStream(),parseContentLength(connection));
+      }
+ catch (      IOException e) {
+        connection.disconnect();
+        throw e;
+      }
+case HttpURLConnection.HTTP_MOVED_PERM:
+case HttpURLConnection.HTTP_MOVED_TEMP:
+    url=tryGetLocation(statusCode,connection);
+  connection.disconnect();
+break;
+case -1:
+throw new IOException("An HTTP error occurred");
+default :
+throw new IOException(String.format("%s %s: %s",connection.getResponseCode(),connection.getResponseMessage(),readBody(connection)));
+}
+}
+throw new IOException("Maximum redirects (" + MAX_REDIRECTS + ") exceeded");
 }
