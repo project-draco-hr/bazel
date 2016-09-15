@@ -3,5 +3,23 @@
   Object startValue=start.eval(env);
   Object endValue=end.eval(env);
   Object stepValue=step.eval(env);
-  return eval(objValue,startValue,endValue,stepValue,getLocation(),env);
+  Location loc=getLocation();
+  if (objValue instanceof SkylarkList) {
+    SkylarkList<Object> list=(SkylarkList<Object>)objValue;
+    Object slice=list.getSlice(startValue,endValue,stepValue,loc);
+    return SkylarkType.convertToSkylark(slice,env);
+  }
+ else   if (objValue instanceof String) {
+    String string=(String)objValue;
+    List<Integer> indices=MethodLibrary.getSliceIndices(startValue,endValue,stepValue,string.length(),loc);
+    char[] result=new char[indices.size()];
+    char[] original=((String)objValue).toCharArray();
+    int resultIndex=0;
+    for (    int originalIndex : indices) {
+      result[resultIndex]=original[originalIndex];
+      ++resultIndex;
+    }
+    return new String(result);
+  }
+  throw new EvalException(loc,Printer.format("Type %s has no operator [:](%s, %s, %s)",EvalUtils.getDataTypeName(objValue),EvalUtils.getDataTypeName(startValue),EvalUtils.getDataTypeName(endValue),EvalUtils.getDataTypeName(stepValue)));
 }
