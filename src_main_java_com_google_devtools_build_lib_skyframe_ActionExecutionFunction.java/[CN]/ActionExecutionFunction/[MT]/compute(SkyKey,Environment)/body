@@ -4,7 +4,17 @@
   if ((action.isVolatile() && !(action instanceof SkyframeAwareAction)) || action instanceof NotifyOnActionCacheHit) {
     PrecomputedValue.BUILD_ID.get(env);
   }
-  Map<String,String> clientEnv=PrecomputedValue.CLIENT_ENV.get(env);
+  Map<SkyKey,SkyValue> clientEnvLookup=env.getValues(Iterables.transform(action.getClientEnvironmentVariables(),VAR_TO_SKYKEY));
+  if (env.valuesMissing()) {
+    return null;
+  }
+  Map<String,String> clientEnv=new HashMap<>();
+  for (  Entry<SkyKey,SkyValue> entry : clientEnvLookup.entrySet()) {
+    ClientEnvironmentValue envValue=(ClientEnvironmentValue)entry.getValue();
+    if (envValue.getValue() != null) {
+      clientEnv.put((String)entry.getKey().argument(),envValue.getValue());
+    }
+  }
   boolean sharedActionAlreadyRan=skyframeActionExecutor.probeActionExecution(action);
   ContinuationState state;
   if (action.discoversInputs()) {
