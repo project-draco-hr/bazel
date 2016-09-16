@@ -4,15 +4,15 @@
     for (    Map.Entry<String,NestedSetBuilder<Artifact>> entry : outputGroupBuilders.entrySet()) {
       outputGroups.put(entry.getKey(),entry.getValue().build());
     }
-    if (providers.containsKey(OutputGroupProvider.class)) {
+    if (providers.contains(OutputGroupProvider.class)) {
       throw new IllegalStateException("OutputGroupProvider was provided explicitly; do not use addOutputGroup");
     }
-    addProvider(OutputGroupProvider.class,new OutputGroupProvider(outputGroups.build()));
+    addProvider(new OutputGroupProvider(outputGroups.build()));
   }
   ImmutableMap<String,Object> skylarkProvidersMap=skylarkProviderBuilder.build();
   if (!skylarkProvidersMap.isEmpty()) {
-    providers.put(SkylarkProviders.class,new SkylarkProviders(skylarkProvidersMap,ImmutableMap.<Key,SkylarkClassObject>of()));
+    providers.add(new SkylarkProviders(skylarkProvidersMap,ImmutableMap.<Key,SkylarkClassObject>of()));
   }
-  addProvider(ExtraActionArtifactsProvider.class,createExtraActionProvider(ImmutableSet.<ActionAnalysisMetadata>of(),ruleContext));
-  return new ConfiguredAspect(name,ImmutableMap.copyOf(providers));
+  addProvider(createExtraActionProvider(ImmutableSet.<ActionAnalysisMetadata>of(),ruleContext));
+  return new ConfiguredAspect(name,providers.build());
 }

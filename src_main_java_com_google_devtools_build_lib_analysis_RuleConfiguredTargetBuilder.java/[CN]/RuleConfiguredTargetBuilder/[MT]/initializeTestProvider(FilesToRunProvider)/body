@@ -6,12 +6,12 @@
   if (explicitShardCount > 50) {
     ruleContext.attributeError("shard_count","Having more than 50 shards is indicative of poor test organization. " + "Please reduce the number of shards.");
   }
-  TestActionBuilder testActionBuilder=new TestActionBuilder(ruleContext).setInstrumentedFiles(findProvider(InstrumentedFilesProvider.class));
-  TestEnvironmentProvider environmentProvider=findProvider(TestEnvironmentProvider.class);
+  TestActionBuilder testActionBuilder=new TestActionBuilder(ruleContext).setInstrumentedFiles(providersBuilder.getProvider(InstrumentedFilesProvider.class));
+  TestEnvironmentProvider environmentProvider=providersBuilder.getProvider(TestEnvironmentProvider.class);
   if (environmentProvider != null) {
     testActionBuilder.addExtraEnv(environmentProvider.getEnvironment());
   }
-  final TestParams testParams=testActionBuilder.setFilesToRunProvider(filesToRunProvider).setExecutionRequirements(findProvider(ExecutionInfoProvider.class)).setShardCount(explicitShardCount).build();
-  final ImmutableList<String> testTags=ImmutableList.copyOf(ruleContext.getRule().getRuleTags());
+  TestParams testParams=testActionBuilder.setFilesToRunProvider(filesToRunProvider).setExecutionRequirements(providersBuilder.getProvider(ExecutionInfoProvider.class)).setShardCount(explicitShardCount).build();
+  ImmutableList<String> testTags=ImmutableList.copyOf(ruleContext.getRule().getRuleTags());
   return new TestProvider(testParams,testTags);
 }

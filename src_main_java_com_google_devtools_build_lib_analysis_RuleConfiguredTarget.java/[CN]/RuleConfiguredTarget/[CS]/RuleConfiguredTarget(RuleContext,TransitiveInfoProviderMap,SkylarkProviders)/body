@@ -1,0 +1,22 @@
+{
+  super(ruleContext);
+  TransitiveInfoProviderMap.Builder providerBuilder=providers.toBuilder();
+  Preconditions.checkState(providerBuilder.contains(RunfilesProvider.class));
+  Preconditions.checkState(providerBuilder.contains(FileProvider.class));
+  Preconditions.checkState(providerBuilder.contains(FilesToRunProvider.class));
+  skylarkProviders1.init(this);
+  providerBuilder.add(skylarkProviders1);
+  this.providers=providerBuilder.build();
+  this.configConditions=ruleContext.getConfigConditions();
+  RunUnder runUnder=getConfiguration().getRunUnder();
+  if (runUnder != null && getLabel().equals(runUnder.getLabel())) {
+    if (getProvider(FilesToRunProvider.class).getExecutable() == null) {
+      ruleContext.ruleError("run_under target " + runUnder.getLabel() + " is not executable");
+    }
+  }
+  if (!ruleContext.hasErrors()) {
+    for (    OutputFile out : ruleContext.getRule().getOutputFiles()) {
+      ruleContext.createOutputArtifact(out);
+    }
+  }
+}

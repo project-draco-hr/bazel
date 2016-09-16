@@ -43,11 +43,7 @@
   DwoArtifactsCollector dwoArtifacts=DwoArtifactsCollector.transitiveCollector(ccOutputs,implementationDeps);
   Runfiles cppStaticRunfiles=collectCppRunfiles(ccLinkingOutputs,true);
   Runfiles cppSharedRunfiles=collectCppRunfiles(ccLinkingOutputs,false);
-  Map<Class<? extends TransitiveInfoProvider>,TransitiveInfoProvider> providers=new LinkedHashMap<>();
-  providers.put(CppRunfilesProvider.class,new CppRunfilesProvider(cppStaticRunfiles,cppSharedRunfiles));
-  providers.put(CppCompilationContext.class,interfaceCompilationContext);
-  providers.put(CppDebugFileProvider.class,new CppDebugFileProvider(dwoArtifacts.getDwoArtifacts(),dwoArtifacts.getPicDwoArtifacts()));
-  providers.put(TransitiveLipoInfoProvider.class,collectTransitiveLipoInfo(ccOutputs));
+  TransitiveInfoProviderMap.Builder providers=TransitiveInfoProviderMap.builder().add(new CppRunfilesProvider(cppStaticRunfiles,cppSharedRunfiles),interfaceCompilationContext,new CppDebugFileProvider(dwoArtifacts.getDwoArtifacts(),dwoArtifacts.getPicDwoArtifacts()),collectTransitiveLipoInfo(ccOutputs));
   Map<String,NestedSet<Artifact>> outputGroups=new TreeMap<>();
   if (shouldAddLinkerOutputArtifacts(ruleContext,ccOutputs)) {
     addLinkerOutputArtifacts(outputGroups);
@@ -62,15 +58,15 @@
     outputGroups.put(OutputGroupProvider.COMPILATION_PREREQUISITES,CcCommon.collectCompilationPrerequisites(ruleContext,cppCompilationContext));
   }
   if (emitCcNativeLibrariesProvider) {
-    providers.put(CcNativeLibraryProvider.class,new CcNativeLibraryProvider(collectNativeCcLibraries(ccLinkingOutputs)));
+    providers.add(new CcNativeLibraryProvider(collectNativeCcLibraries(ccLinkingOutputs)));
   }
   providers.put(CcExecutionDynamicLibrariesProvider.class,collectExecutionDynamicLibraryArtifacts(ccLinkingOutputs.getExecutionDynamicLibraries()));
   boolean forcePic=cppConfiguration.forcePic();
   if (emitCcSpecificLinkParamsProvider) {
-    providers.put(CcSpecificLinkParamsProvider.class,new CcSpecificLinkParamsProvider(createCcLinkParamsStore(ccLinkingOutputs,cppCompilationContext,forcePic)));
+    providers.add(new CcSpecificLinkParamsProvider(createCcLinkParamsStore(ccLinkingOutputs,cppCompilationContext,forcePic)));
   }
  else {
-    providers.put(CcLinkParamsProvider.class,new CcLinkParamsProvider(createCcLinkParamsStore(ccLinkingOutputs,cppCompilationContext,forcePic)));
+    providers.add(new CcLinkParamsProvider(createCcLinkParamsStore(ccLinkingOutputs,cppCompilationContext,forcePic)));
   }
-  return new Info(providers,outputGroups,ccOutputs,ccLinkingOutputs,originalLinkingOutputs,cppCompilationContext);
+  return new Info(providers.build(),outputGroups,ccOutputs,ccLinkingOutputs,originalLinkingOutputs,cppCompilationContext);
 }

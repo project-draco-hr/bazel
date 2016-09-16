@@ -1,5 +1,5 @@
 {
-  ImmutableMap.Builder<Class<? extends TransitiveInfoProvider>,TransitiveInfoProvider> result=ImmutableMap.builder();
+  TransitiveInfoProviderMap.Builder result=TransitiveInfoProviderMap.builder();
   JavaCompilationArgsProvider generatedCompilationArgsProvider;
   NestedSetBuilder<Artifact> transitiveOutputJars=NestedSetBuilder.fromNestedSets(transform(getDeps(JavaProtoLibraryTransitiveFilesToBuildProvider.class),GET_JARS));
   if (shouldGenerateCode()) {
@@ -9,10 +9,10 @@
     generatedCompilationArgsProvider=createJavaCompileAction(sourceJar,outputJar);
     NestedSet<Artifact> javaSourceJars=NestedSetBuilder.<Artifact>stableOrder().add(sourceJar).build();
     transitiveOutputJars.add(outputJar);
-    result.put(JavaRuntimeJarAspectProvider.class,new JavaRuntimeJarAspectProvider(new JavaRuntimeJarProvider(ImmutableList.of(outputJar)))).put(JavaSourceJarsAspectProvider.class,new JavaSourceJarsAspectProvider(JavaSourceJarsProvider.create(NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER),javaSourceJars)));
+    result.add(new JavaRuntimeJarAspectProvider(new JavaRuntimeJarProvider(ImmutableList.of(outputJar))),new JavaSourceJarsAspectProvider(JavaSourceJarsProvider.create(NestedSetBuilder.<Artifact>emptySet(Order.STABLE_ORDER),javaSourceJars)));
   }
  else {
     generatedCompilationArgsProvider=dependencyCompilationArgs;
   }
-  return result.put(JavaProtoLibraryTransitiveFilesToBuildProvider.class,new JavaProtoLibraryTransitiveFilesToBuildProvider(transitiveOutputJars.build())).put(JavaCompilationArgsAspectProvider.class,new JavaCompilationArgsAspectProvider(generatedCompilationArgsProvider)).build();
+  return result.add(new JavaProtoLibraryTransitiveFilesToBuildProvider(transitiveOutputJars.build()),new JavaCompilationArgsAspectProvider(generatedCompilationArgsProvider)).build();
 }
