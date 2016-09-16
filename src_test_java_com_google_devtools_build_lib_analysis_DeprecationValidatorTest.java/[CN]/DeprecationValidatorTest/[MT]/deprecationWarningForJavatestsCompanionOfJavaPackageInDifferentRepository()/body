@@ -1,0 +1,9 @@
+{
+  try (OutputStream output=scratch.resolve("WORKSPACE").getOutputStream(true)){
+    output.write("\nlocal_repository(name = 'r', path = '/r')\n".getBytes(StandardCharsets.UTF_8));
+  }
+   scratch.file("/r/WORKSPACE","workspace(name = 'r')");
+  scratch.file("/r/java/a/BUILD","filegroup(name='b', deprecation='deprecation warning printed')");
+  invalidatePackages();
+  checkWarning("javatests/a","a","target '//javatests/a:a' depends on deprecated target '@r//java/a:b': " + "deprecation warning printed","filegroup(name='a', srcs=['@r//java/a:b'])");
+}
