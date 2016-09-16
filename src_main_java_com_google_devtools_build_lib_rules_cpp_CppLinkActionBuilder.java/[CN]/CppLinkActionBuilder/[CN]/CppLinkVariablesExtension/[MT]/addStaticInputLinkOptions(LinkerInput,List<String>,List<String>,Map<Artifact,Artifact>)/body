@@ -1,29 +1,28 @@
 {
   Preconditions.checkState(!(input.getArtifactCategory() == ArtifactCategory.DYNAMIC_LIBRARY));
+  Preconditions.checkState(ltoMap == null || linkerParamsFile != null);
   if (Link.useStartEndLib(input,cppConfiguration.archiveType())) {
     Iterable<Artifact> archiveMembers=input.getObjectFiles();
     if (!Iterables.isEmpty(archiveMembers)) {
-      standardOptions.add("-Wl,--start-lib");
+      List<String> nonLTOArchiveMembers=new ArrayList<>();
       for (      Artifact member : archiveMembers) {
-        if (ltoMap != null) {
-          Artifact backend=ltoMap.remove(member);
-          if (backend != null) {
-            member=backend;
-          }
+        if (ltoMap != null && ltoMap.remove(member) != null) {
+          continue;
         }
-        standardOptions.add(member.getExecPathString());
+        nonLTOArchiveMembers.add(member.getExecPathString());
       }
-      standardOptions.add("-Wl,--end-lib");
+      if (!nonLTOArchiveMembers.isEmpty()) {
+        standardOptions.add("-Wl,--start-lib");
+        standardOptions.addAll(nonLTOArchiveMembers);
+        standardOptions.add("-Wl,--end-lib");
+      }
     }
   }
  else {
     List<String> options=inputNeedsWholeArchive(input) ? wholeArchiveOptions : standardOptions;
     Artifact inputArtifact=input.getArtifact();
-    if (ltoMap != null) {
-      Artifact ltoArtifact=ltoMap.remove(inputArtifact);
-      if (ltoArtifact != null) {
-        inputArtifact=ltoArtifact;
-      }
+    if (ltoMap != null && ltoMap.remove(inputArtifact) != null) {
+      return;
     }
     if (input.isFake()) {
       options.add(Link.FAKE_OBJECT_PREFIX + inputArtifact.getExecPathString());

@@ -25,11 +25,20 @@
     ltoOutputRootPrefix=FileSystemUtils.appendExtension(output.getRootRelativePath(),".lto");
     allLTOArtifacts=createLTOArtifacts(ltoOutputRootPrefix,uniqueLibraries);
   }
+  PathFragment linkerParamsFileRootPath=null;
+  @Nullable Artifact linkerParamsFile=null;
+  if (allLTOArtifacts != null) {
+    linkerParamsFileRootPath=ParameterFile.derivePath(output.getRootRelativePath(),"lto-final");
+    linkerParamsFile=linkArtifactFactory.create(ruleContext,configuration,linkerParamsFileRootPath);
+  }
   final ImmutableList<Artifact> actionOutputs;
   if (isLTOIndexing) {
     ImmutableList.Builder<Artifact> builder=ImmutableList.builder();
     for (    LTOBackendArtifacts ltoA : allLTOArtifacts) {
       ltoA.addIndexingOutputs(builder);
+    }
+    if (linkerParamsFile != null) {
+      builder.add(linkerParamsFile);
     }
     actionOutputs=builder.build();
   }
@@ -38,13 +47,13 @@
   }
   ImmutableList<LinkerInput> runtimeLinkerInputs=ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs,runtimeType));
   Variables.Builder buildVariablesBuilder=new Variables.Builder();
-  CppLinkVariablesExtension variablesExtension=isLTOIndexing ? new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,null) : new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,output);
+  CppLinkVariablesExtension variablesExtension=isLTOIndexing ? new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,null,null) : new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,output,linkerParamsFile);
   variablesExtension.addVariables(buildVariablesBuilder);
   for (  VariablesExtension extraVariablesExtension : variablesExtensions) {
     extraVariablesExtension.addVariables(buildVariablesBuilder);
   }
   Variables buildVariables=buildVariablesBuilder.build();
-  PathFragment paramRootPath=ParameterFile.derivePath(output.getRootRelativePath(),(isLTOIndexing) ? "lto" : "2");
+  PathFragment paramRootPath=ParameterFile.derivePath(output.getRootRelativePath(),(isLTOIndexing) ? "lto-index" : "2");
   @Nullable final Artifact paramFile=canSplitCommandLine() ? linkArtifactFactory.create(ruleContext,configuration,paramRootPath) : null;
   Preconditions.checkArgument(linkType != LinkTargetType.INTERFACE_DYNAMIC_LIBRARY,"you can't link an interface dynamic library directly");
   if (linkType != LinkTargetType.DYNAMIC_LIBRARY) {
@@ -67,7 +76,12 @@
  else {
     List<String> opts=new ArrayList<>(linkopts);
     opts.add("-flto=thin");
-    opts.add("-Wl,-plugin-opt,thinlto-index-only");
+    if (linkerParamsFile != null) {
+      opts.add("-Wl,-plugin-opt,thinlto-index-only=" + linkerParamsFile.getExecPathString());
+    }
+ else {
+      opts.add("-Wl,-plugin-opt,thinlto-index-only");
+    }
     opts.add("-Wl,-plugin-opt,thinlto-emit-imports-files");
     opts.add("-Wl,-plugin-opt,thinlto-prefix-replace=" + configuration.getBinDirectory(ruleContext.getRule().getRepository()).getExecPathString() + ";"+ configuration.getBinDirectory(ruleContext.getRule().getRepository()).getExecPath().getRelative(ltoOutputRootPrefix).toString());
     linkCommandLineBuilder.setLinkopts(ImmutableList.copyOf(opts));
@@ -114,6 +128,9 @@
     }
   }
   IterablesChain.Builder<Artifact> inputsBuilder=IterablesChain.<Artifact>builder().add(ImmutableList.copyOf(expandedNonLibraryInputs)).add(ImmutableList.copyOf(nonCodeInputs)).add(dependencyInputsBuilder.build()).add(ImmutableIterable.from(expandedInputs));
+  if (linkerParamsFile != null && !isLTOIndexing) {
+    inputsBuilder.add(ImmutableList.of(linkerParamsFile));
+  }
   if (linkCommandLine.getParamFile() != null) {
     inputsBuilder.add(ImmutableList.of(linkCommandLine.getParamFile()));
     Action parameterFileWriteAction=new ParameterFileWriteAction(getOwner(),paramFile,linkCommandLine.paramCmdLine(),ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1);
