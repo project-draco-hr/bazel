@@ -1,0 +1,10 @@
+{
+  setRulesAvailableInTests(new TestAspects.BaseRule(),new TestAspects.WarningAspectRule());
+  pkg("a","warning_aspect(name='a', foo=['//b:b', '//c:c'])");
+  pkg("b","base(name='b')");
+  pkg("c","base(name='c')");
+  reporter.setOutputFilter(RegexOutputFilter.forPattern(Pattern.compile("^//b:")));
+  getConfiguredTarget("//a:a");
+  assertContainsEventWithFrequency("Aspect warning on //b:b",1);
+  assertContainsEventWithFrequency("Aspect warning on //c:c",0);
+}
