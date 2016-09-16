@@ -1,0 +1,7 @@
+{
+  CustomCommandLine args=new CustomCommandLine.Builder().addExecPath("--input",jar).addExecPath("--output",result).addBeforeEachExecPath("--classpath_entry",classpath).addBeforeEachExecPath("--bootclasspath_entry",bootclasspath).build();
+  Artifact paramFile=ruleContext.getDerivedArtifact(ParameterFile.derivePath(result.getRootRelativePath()),result.getRoot());
+  ruleContext.registerAction(new ParameterFileWriteAction(ruleContext.getActionOwner(),paramFile,args,ParameterFile.ParameterFileType.UNQUOTED,ISO_8859_1));
+  ruleContext.registerAction(new SpawnAction.Builder().setExecutable(ruleContext.getExecutablePrerequisite(desugarPrereqName,Mode.HOST)).addArgument("@" + paramFile.getExecPathString()).addInput(jar).addInput(paramFile).addInputs(bootclasspath).addTransitiveInputs(classpath).addOutput(result).setMnemonic("Desugar").setProgressMessage("Desugaring " + jar.prettyPrint() + " for Android").build(ruleContext));
+  return result;
+}

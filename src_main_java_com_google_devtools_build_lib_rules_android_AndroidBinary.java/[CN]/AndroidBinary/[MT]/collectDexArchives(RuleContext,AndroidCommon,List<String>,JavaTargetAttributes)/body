@@ -1,0 +1,14 @@
+{
+  DexArchiveProvider.Builder result=new DexArchiveProvider.Builder().addTransitiveProviders(ruleContext.getPrerequisites("deps",Mode.TARGET,DexArchiveProvider.class));
+  ImmutableSet<String> incrementalDexopts=DexArchiveAspect.incrementalDexopts(ruleContext,dexopts);
+  for (  Artifact jar : common.getJarsProducedForRuntime()) {
+    PathFragment jarPath=jar.getRootRelativePath();
+    Artifact jarToDex=jar;
+    if (AndroidCommon.getAndroidConfig(ruleContext).desugarJava8()) {
+      jarToDex=DexArchiveAspect.desugar(ruleContext,jar,attributes.getBootClassPath(),attributes.getCompileTimeClassPath(),ruleContext.getDerivedArtifact(jarPath.replaceName(jarPath.getBaseName() + "_desugared.jar"),jar.getRoot()));
+    }
+    Artifact dexArchive=DexArchiveAspect.createDexArchiveAction(ruleContext,jarToDex,incrementalDexopts,ruleContext.getDerivedArtifact(jarPath.replaceName(jarPath.getBaseName() + ".dex.zip"),jar.getRoot()));
+    result.addDexArchive(incrementalDexopts,dexArchive,jar);
+  }
+  return result.build().archivesForDexopts(incrementalDexopts);
+}

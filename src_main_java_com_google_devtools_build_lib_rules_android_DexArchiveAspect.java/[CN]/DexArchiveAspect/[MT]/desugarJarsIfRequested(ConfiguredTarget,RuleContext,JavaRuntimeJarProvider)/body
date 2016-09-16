@@ -1,0 +1,13 @@
+{
+  if (!getAndroidConfig(ruleContext).desugarJava8()) {
+    return Functions.identity();
+  }
+  NestedSet<Artifact> compileTimeClasspath=base.getProvider(JavaCompilationArgsProvider.class).getRecursiveJavaCompilationArgs().getCompileTimeJars();
+  ImmutableList<Artifact> bootclasspath=getBootclasspath(base);
+  LinkedHashMap<Artifact,Artifact> desugaredJars=new LinkedHashMap<>();
+  for (  Artifact jar : jarProvider.getRuntimeJars()) {
+    Artifact desugared=createDesugarAction(ruleContext,jar,bootclasspath,compileTimeClasspath);
+    desugaredJars.put(jar,desugared);
+  }
+  return Functions.forMap(desugaredJars);
+}

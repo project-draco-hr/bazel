@@ -10,10 +10,12 @@
   DexArchiveProvider.Builder result=createArchiveProviderBuilderFromDeps(ruleContext);
   JavaRuntimeJarProvider jarProvider=base.getProvider(JavaRuntimeJarProvider.class);
   if (jarProvider != null) {
+    Function<Artifact,Artifact> desugaredJars=desugarJarsIfRequested(base,ruleContext,jarProvider);
     Set<Set<String>> aspectDexopts=aspectDexopts(ruleContext);
     for (    Artifact jar : jarProvider.getRuntimeJars()) {
       for (      Set<String> incrementalDexopts : aspectDexopts) {
-        Artifact dexArchive=createDexArchiveAction(ruleContext,jar,incrementalDexopts);
+        String filename=jar.getFilename() + Joiner.on("").join(incrementalDexopts) + ".dex.zip";
+        Artifact dexArchive=createDexArchiveAction(ruleContext,ASPECT_DEXBUILDER_PREREQ,desugaredJars.apply(jar),incrementalDexopts,AndroidBinary.getDxArtifact(ruleContext,filename));
         result.addDexArchive(incrementalDexopts,dexArchive,jar);
       }
     }
