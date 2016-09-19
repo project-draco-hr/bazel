@@ -1,0 +1,23 @@
+{
+  long mtime=from.getLastModifiedTime();
+  boolean writable=from.isWritable();
+  boolean executable=from.isExecutable();
+  to.delete();
+  try {
+    from.renameTo(to);
+  }
+ catch (  IOException e) {
+    asByteSource(from).copyTo(asByteSink(to));
+    if (!from.delete()) {
+      if (!to.delete()) {
+        throw new IOException("Unable to delete " + to);
+      }
+      throw new IOException("Unable to delete " + from);
+    }
+  }
+  to.setLastModifiedTime(mtime);
+  if (!writable) {
+    to.setWritable(false);
+  }
+  to.setExecutable(executable);
+}
