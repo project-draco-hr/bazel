@@ -1,12 +1,14 @@
 {
   Path outputBase=fileSystem.getPath("/ob");
-  Path rootY=outputBase.getRelative(Label.EXTERNAL_PATH_PREFIX).getRelative("y");
-  Path rootZ=outputBase.getRelative(Label.EXTERNAL_PATH_PREFIX).getRelative("z");
-  Path rootW=outputBase.getRelative(Label.EXTERNAL_PATH_PREFIX).getRelative("w");
+  Path rootY=outputBase.getRelative(Label.EXTERNAL_PACKAGE_NAME).getRelative("y");
+  Path rootZ=outputBase.getRelative(Label.EXTERNAL_PACKAGE_NAME).getRelative("z");
+  Path rootW=outputBase.getRelative(Label.EXTERNAL_PACKAGE_NAME).getRelative("w");
   createDirectoryAndParents(rootY);
+  createDirectoryAndParents(rootZ);
+  createDirectoryAndParents(rootW);
   FileSystemUtils.createEmptyFile(rootY.getRelative("file"));
-  ImmutableMap<PackageIdentifier,Path> packageRootMap=ImmutableMap.<PackageIdentifier,Path>builder().put(createPkg(outputBase,"y","w"),outputBase).put(createPkg(outputBase,"z",""),outputBase).put(createPkg(outputBase,"z","a/b/c"),outputBase).put(createPkg(outputBase,"w",""),outputBase).build();
-  new SymlinkForest(packageRootMap,linkRoot,TestConstants.PRODUCT_NAME,"wsname").plantSymlinkForest();
+  ImmutableMap<PackageIdentifier,Path> packageRootMap=ImmutableMap.<PackageIdentifier,Path>builder().put(createPkg(outputBase,"y","w"),rootY).put(createPkg(outputBase,"z",""),rootZ).put(createPkg(outputBase,"z","a/b/c"),rootZ).put(createPkg(outputBase,"w",""),rootW).build();
+  SymlinkForest.builder().setLegacyExternalRunfiles(false).setPackageRoots(packageRootMap).setWorkspace(linkRoot).setProductName("mock-name").setWorkspaceName("wsname").build().plantSymlinkForest();
   assertFalse(linkRoot.getRelative(Label.EXTERNAL_PATH_PREFIX + "/y/file").exists());
   assertLinksTo(linkRoot.getRelative(Label.EXTERNAL_PATH_PREFIX + "/y/w"),rootY.getRelative("w"));
   assertLinksTo(linkRoot.getRelative(Label.EXTERNAL_PATH_PREFIX + "/z/file"),rootZ.getRelative("file"));

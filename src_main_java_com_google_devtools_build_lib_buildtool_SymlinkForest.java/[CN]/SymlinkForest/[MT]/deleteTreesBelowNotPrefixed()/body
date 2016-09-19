@@ -1,0 +1,15 @@
+{
+  for (  RepositoryName repositoryName : Iterables.concat(ImmutableList.of(RepositoryName.MAIN),repositories)) {
+    Path repositoryExecRoot=workspace.getRelative(repositoryName.getPathUnderExecRoot());
+    FileSystemUtils.createDirectoryAndParents(repositoryExecRoot);
+    dirloop:     for (    Path p : repositoryExecRoot.getDirectoryEntries()) {
+      String name=p.getBaseName();
+      for (      String prefix : prefixes) {
+        if (name.startsWith(prefix)) {
+          continue dirloop;
+        }
+      }
+      FileSystemUtils.deleteTree(p);
+    }
+  }
+}

@@ -1,15 +1,17 @@
 {
   for (  Map.Entry<PathFragment,Artifact> entry : inputManifest.entrySet()) {
     PathFragment path=entry.getKey();
-    if (isUnderWorkspace(path)) {
+    if (isUnderWorkspace(entry.getValue())) {
+      checker.put(manifest,workspaceName.getRelative(path).normalize(),entry.getValue());
       sawWorkspaceName=true;
-      checker.put(manifest,workspaceName.getRelative(path),entry.getValue());
     }
  else {
+      PathFragment root=entry.getValue().getRoot().getPath().asFragment();
       if (legacyExternalRunfiles) {
-        checker.put(manifest,workspaceName.getRelative(path),entry.getValue());
+        PathFragment repoDir=root.subFragment(root.segmentCount() - 2,root.segmentCount());
+        checker.put(manifest,workspaceName.getRelative(repoDir).getRelative(path).normalize(),entry.getValue());
       }
-      checker.put(manifest,getExternalPath(path),entry.getValue());
+      checker.put(manifest,workspaceName.getRelative(entry.getKey()).normalize(),entry.getValue());
     }
   }
 }

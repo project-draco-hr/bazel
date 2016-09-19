@@ -8,14 +8,14 @@
   SandboxHelpers.postActionStatusMessage(executor,spawn);
   Path sandboxPath=SandboxHelpers.getSandboxRoot(blazeDirs,productName,uuid,execCounter);
   Path sandboxExecRoot=sandboxPath.getRelative("execroot").getRelative(execRoot.getBaseName());
-  Set<Path> writableDirs=getWritableDirs(sandboxExecRoot,spawn.getEnvironment());
   try {
     SymlinkedExecRoot symlinkedExecRoot=new SymlinkedExecRoot(sandboxExecRoot);
     ImmutableSet<PathFragment> outputs=SandboxHelpers.getOutputFiles(spawn);
+    Set<Path> writableDirs=getWritableDirs(sandboxExecRoot,spawn.getEnvironment(),outputs);
     symlinkedExecRoot.createFileSystem(getMounts(spawn,actionExecutionContext),outputs,writableDirs);
     final SandboxRunner runner;
     if (fullySupported) {
-      runner=new LinuxSandboxRunner(execRoot,sandboxPath,sandboxExecRoot,getWritableDirs(sandboxExecRoot,spawn.getEnvironment()),getInaccessiblePaths(),verboseFailures,sandboxOptions.sandboxDebug);
+      runner=new LinuxSandboxRunner(execRoot,sandboxPath,sandboxExecRoot,getWritableDirs(sandboxExecRoot,spawn.getEnvironment(),outputs),getInaccessiblePaths(),verboseFailures,sandboxOptions.sandboxDebug);
     }
  else {
       runner=new ProcessWrapperRunner(execRoot,sandboxPath,sandboxExecRoot,verboseFailures);

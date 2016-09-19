@@ -1,0 +1,27 @@
+{
+  if (parent == null) {
+    return;
+  }
+  Path root=packageRoots.get(parent);
+  try {
+    Path absdir=root.getRelative(child.getPackageFragment());
+    if (absdir.isDirectory()) {
+      if (LOG_FINER) {
+        log.finer("ln -s " + absdir + "/* "+ workspace.getRelative(child.getPathUnderExecRoot())+ "/");
+      }
+      for (      Path target : absdir.getDirectoryEntries()) {
+        PathFragment p=child.getPackageFragment().getRelative(target.getBaseName());
+        if (!dirRootsMap.containsKey(createInRepo(parent,p))) {
+          PathFragment execFragment=child.getPathUnderExecRoot().getRelative(target.getBaseName());
+          workspace.getRelative(execFragment).createSymbolicLink(target);
+        }
+      }
+    }
+ else {
+      log.fine("Symlink planting skipping dir '" + absdir + "'");
+    }
+  }
+ catch (  IOException e) {
+    e.printStackTrace();
+  }
+}

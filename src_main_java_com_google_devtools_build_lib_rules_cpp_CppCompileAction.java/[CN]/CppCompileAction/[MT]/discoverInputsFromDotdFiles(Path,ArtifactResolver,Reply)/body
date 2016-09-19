@@ -18,6 +18,7 @@
       if (execPath.getBaseName().endsWith(".pcm")) {
         continue;
       }
+      RepositoryName repositoryName=RepositoryName.MAIN;
       PathFragment execPathFragment=execPath.asFragment();
       if (execPathFragment.isAbsolute()) {
         if (FileSystemUtils.startsWithAny(execPath,systemIncludePrefixes)) {
@@ -26,14 +27,25 @@
         if (execPath.startsWith(execRoot)) {
           execPathFragment=execPath.relativeTo(execRoot);
         }
+ else         if (execPath.startsWith(execRoot.getParentDirectory())) {
+          execPathFragment=execPath.relativeTo(execRoot.getParentDirectory());
+          String workspace=execPathFragment.getSegment(0);
+          execPathFragment=execPathFragment.relativeTo(workspace);
+          try {
+            repositoryName=RepositoryName.create("@" + workspace);
+          }
+ catch (          LabelSyntaxException e) {
+            throw new IllegalStateException(workspace + " is not a valid repository name");
+          }
+        }
  else {
           problems.add(execPathFragment.getPathString());
           continue;
         }
       }
-      Artifact artifact=allowedDerivedInputsMap.get(execPathFragment);
+      Artifact artifact=allowedDerivedInputsMap.get(repositoryName.getPathUnderExecRoot().getRelative(execPathFragment));
       if (artifact == null) {
-        artifact=artifactResolver.resolveSourceArtifact(execPathFragment,RepositoryName.MAIN);
+        artifact=artifactResolver.resolveSourceArtifact(execPathFragment,repositoryName);
       }
       if (artifact != null) {
         inputs.add(artifact);

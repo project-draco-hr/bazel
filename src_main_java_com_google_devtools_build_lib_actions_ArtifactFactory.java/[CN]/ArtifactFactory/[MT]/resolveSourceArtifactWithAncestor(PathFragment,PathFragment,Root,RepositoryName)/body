@@ -1,0 +1,17 @@
+{
+  Preconditions.checkState((baseExecPath == null) == (baseRoot == null),"%s %s %s",relativePath,baseExecPath,baseRoot);
+  Preconditions.checkState(relativePath.segmentCount() > 0,"%s %s %s",relativePath,baseExecPath,baseRoot);
+  PathFragment execPath=baseExecPath == null ? relativePath : baseExecPath.getRelative(relativePath);
+  execPath=execPath.normalize();
+  if (execPath.containsUplevelReferences()) {
+    return null;
+  }
+  Artifact artifact=sourceArtifactCache.getArtifactIfValid(execPath);
+  if (artifact != null) {
+    return artifact;
+  }
+  if (isDerivedArtifact(execPath)) {
+    return null;
+  }
+  return createArtifactIfNotValid(findSourceRoot(execPath,baseExecPath,baseRoot,repositoryName),execPath);
+}
