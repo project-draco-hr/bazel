@@ -29,6 +29,15 @@
   if (this.outputArtifact != null) {
     buildVariables.addVariable(OUTPUT_EXECPATH_VARIABLE,this.outputArtifact.getExecPathString());
   }
+  if (!ltoOutputRootPrefix.equals(PathFragment.EMPTY_FRAGMENT)) {
+    if (linkerParamsFile != null) {
+      buildVariables.addVariable("thinlto_optional_params_file","=" + linkerParamsFile.getExecPathString());
+    }
+ else {
+      buildVariables.addVariable("thinlto_optional_params_file","");
+    }
+    buildVariables.addVariable("thinlto_prefix_replace",configuration.getBinDirectory().getExecPathString() + ";" + configuration.getBinDirectory().getExecPath().getRelative(ltoOutputRootPrefix));
+  }
   buildVariables.addAllVariables(CppHelper.getToolchain(ruleContext).getBuildVariables()).build();
   CppHelper.getFdoSupport(ruleContext).getLinkOptions(featureConfiguration,buildVariables);
 }

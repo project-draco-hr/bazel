@@ -47,7 +47,7 @@
   }
   ImmutableList<LinkerInput> runtimeLinkerInputs=ImmutableList.copyOf(LinkerInputs.simpleLinkerInputs(runtimeInputs,runtimeType));
   Variables.Builder buildVariablesBuilder=new Variables.Builder();
-  CppLinkVariablesExtension variablesExtension=isLTOIndexing ? new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,null,null) : new CppLinkVariablesExtension(linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,output,linkerParamsFile);
+  CppLinkVariablesExtension variablesExtension=isLTOIndexing ? new CppLinkVariablesExtension(configuration,linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,null,linkerParamsFile,ltoOutputRootPrefix) : new CppLinkVariablesExtension(configuration,linkstampMap,needWholeArchive,linkerInputs,runtimeLinkerInputs,output,linkerParamsFile,PathFragment.EMPTY_FRAGMENT);
   variablesExtension.addVariables(buildVariablesBuilder);
   for (  VariablesExtension extraVariablesExtension : variablesExtensions) {
     extraVariablesExtension.addVariables(buildVariablesBuilder);
@@ -75,15 +75,7 @@
   }
  else {
     List<String> opts=new ArrayList<>(linkopts);
-    opts.add("-flto=thin");
-    if (linkerParamsFile != null) {
-      opts.add("-Wl,-plugin-opt,thinlto-index-only=" + linkerParamsFile.getExecPathString());
-    }
- else {
-      opts.add("-Wl,-plugin-opt,thinlto-index-only");
-    }
-    opts.add("-Wl,-plugin-opt,thinlto-emit-imports-files");
-    opts.add("-Wl,-plugin-opt,thinlto-prefix-replace=" + configuration.getBinDirectory(ruleContext.getRule().getRepository()).getExecPathString() + ";"+ configuration.getBinDirectory(ruleContext.getRule().getRepository()).getExecPath().getRelative(ltoOutputRootPrefix).toString());
+    opts.addAll(featureConfiguration.getCommandLine("lto-indexing",buildVariables));
     linkCommandLineBuilder.setLinkopts(ImmutableList.copyOf(opts));
   }
   LinkCommandLine linkCommandLine=linkCommandLineBuilder.build();
