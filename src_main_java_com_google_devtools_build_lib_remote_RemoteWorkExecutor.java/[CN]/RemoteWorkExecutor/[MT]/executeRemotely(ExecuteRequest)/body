@@ -1,0 +1,12 @@
+{
+  ExecuteServiceBlockingStub stub=ExecuteServiceGrpc.newBlockingStub(channel).withDeadlineAfter(grpcTimeoutSeconds + request.getTimeoutMillis() / 1000,TimeUnit.SECONDS);
+  Iterator<ExecuteReply> replies=stub.execute(request);
+  ExecuteReply reply=null;
+  while (replies.hasNext()) {
+    reply=replies.next();
+  }
+  if (reply == null) {
+    return ExecuteReply.newBuilder().setStatus(ExecutionStatus.newBuilder().setExecuted(false).setSucceeded(false).setError(ExecutionStatus.ErrorCode.UNKNOWN_ERROR).setErrorDetail("Remote server terminated the connection")).build();
+  }
+  return reply;
+}

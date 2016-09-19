@@ -1,49 +1,68 @@
 {
-  if (!spawn.isRemotable()) {
+  if (!spawn.isRemotable() || remoteActionCache == null) {
     standaloneStrategy.exec(spawn,actionExecutionContext);
     return;
   }
-  Executor executor=actionExecutionContext.getExecutor();
-  ActionExecutionMetadata actionMetadata=spawn.getResourceOwner();
-  ActionInputFileCache inputFileCache=actionExecutionContext.getActionInputFileCache();
-  EventHandler eventHandler=executor.getEventHandler();
-  if (remoteActionCache == null) {
-    eventHandler.handle(Event.warn(spawn.getMnemonic() + " Cannot instantiate remote action cache. Running locally."));
-    standaloneStrategy.exec(spawn,actionExecutionContext);
-    return;
-  }
-  Hasher hasher=Hashing.sha256().newHasher();
-  Preconditions.checkNotNull(actionMetadata.getKey());
-  hasher.putString(actionMetadata.getKey(),Charset.defaultCharset());
-  List<ActionInput> inputs=ActionInputHelper.expandArtifacts(spawn.getInputFiles(),actionExecutionContext.getArtifactExpander());
-  for (  ActionInput input : inputs) {
-    hasher.putString(input.getExecPathString(),Charset.defaultCharset());
-    try {
-      hasher.putBytes(inputFileCache.getDigest(input));
-    }
- catch (    IOException e) {
-      throw new UserExecException("Failed to get digest for input.",e);
-    }
-  }
-  String actionOutputKey=hasher.hash().toString();
-  final int timeoutSeconds=Spawns.getTimeoutSeconds(spawn,120);
+  ActionKey actionKey=null;
+  String mnemonic=spawn.getMnemonic();
+  EventHandler eventHandler=actionExecutionContext.getExecutor().getEventHandler();
   try {
-    if (writeActionOutput(spawn.getMnemonic(),actionOutputKey,eventHandler,true)) {
+    TreeNodeRepository repository=new TreeNodeRepository(execRoot);
+    List<ActionInput> inputs=ActionInputHelper.expandArtifacts(spawn.getInputFiles(),actionExecutionContext.getArtifactExpander());
+    TreeNode inputRoot=repository.buildFromActionInputs(inputs);
+    repository.computeMerkleDigests(inputRoot);
+    Command command=buildCommand(spawn.getArguments(),spawn.getEnvironment());
+    Action action=buildAction(spawn.getOutputFiles(),ContentDigests.computeDigest(command),repository.getMerkleDigest(inputRoot));
+    actionKey=ContentDigests.computeActionKey(action);
+    ActionResult result=remoteActionCache.getCachedActionResult(actionKey);
+    boolean acceptCached=true;
+    if (result != null) {
+      try {
+        remoteActionCache.downloadAllResults(result,execRoot);
+        return;
+      }
+ catch (      CacheNotFoundException e) {
+        acceptCached=false;
+      }
+    }
+    if (remoteWorkExecutor == null) {
+      execLocally(spawn,actionExecutionContext,actionKey);
       return;
     }
-    FileOutErr outErr=actionExecutionContext.getFileOutErr();
-    if (executeWorkRemotely(inputFileCache,spawn.getMnemonic(),actionOutputKey,spawn.getArguments(),inputs,spawn.getEnvironment(),spawn.getOutputFiles(),timeoutSeconds,eventHandler,outErr)) {
+    remoteActionCache.uploadBlob(command.toByteArray());
+    remoteActionCache.uploadTree(repository,execRoot,inputRoot);
+    ExecuteRequest.Builder request=ExecuteRequest.newBuilder().setAction(action).setAcceptCached(acceptCached).setTotalInputFileCount(inputs.size()).setTimeoutMillis(1000 * Spawns.getTimeoutSeconds(spawn,120));
+    ExecuteReply reply=remoteWorkExecutor.executeRemotely(request.build());
+    ExecutionStatus status=reply.getStatus();
+    result=reply.getResult();
+    if (status.getSucceeded()) {
+      passRemoteOutErr(result,actionExecutionContext.getFileOutErr());
+      remoteActionCache.downloadAllResults(result,execRoot);
       return;
     }
-    standaloneStrategy.exec(spawn,actionExecutionContext);
-    if (remoteActionCache != null) {
-      remoteActionCache.putActionOutput(actionOutputKey,spawn.getOutputFiles());
+    if (status.getError() == ExecutionStatus.ErrorCode.EXEC_FAILED) {
+      passRemoteOutErr(result,actionExecutionContext.getFileOutErr());
+      throw new UserExecException(status.getErrorDetail());
     }
+    execLocally(spawn,actionExecutionContext,actionKey);
   }
  catch (  IOException e) {
     throw new UserExecException("Unexpected IO error.",e);
   }
+catch (  InterruptedException e) {
+    eventHandler.handle(Event.warn(mnemonic + " remote work interrupted (" + e+ ")"));
+    Thread.currentThread().interrupt();
+    throw e;
+  }
+catch (  StatusRuntimeException e) {
+    eventHandler.handle(Event.warn(mnemonic + " remote work failed (" + e+ ")"));
+    execLocally(spawn,actionExecutionContext,actionKey);
+  }
+catch (  CacheNotFoundException e) {
+    eventHandler.handle(Event.warn(mnemonic + " remote work results cache miss (" + e+ ")"));
+    execLocally(spawn,actionExecutionContext,actionKey);
+  }
 catch (  UnsupportedOperationException e) {
-    eventHandler.handle(Event.warn(spawn.getMnemonic() + " unsupported operation for action cache (" + e+ ")"));
+    eventHandler.handle(Event.warn(mnemonic + " unsupported operation for action cache (" + e+ ")"));
   }
 }

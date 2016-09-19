@@ -1,0 +1,13 @@
+{
+  int blobSizeKBytes=blob.length / 1024;
+  Preconditions.checkArgument(blobSizeKBytes < MAX_MEMORY_KBYTES);
+  ContentDigest digest=ContentDigests.computeDigest(blob);
+  uploadMemoryAvailable.acquire(blobSizeKBytes);
+  try {
+    cache.put(ContentDigests.toHexString(digest),blob);
+  }
+  finally {
+    uploadMemoryAvailable.release(blobSizeKBytes);
+  }
+  return digest;
+}

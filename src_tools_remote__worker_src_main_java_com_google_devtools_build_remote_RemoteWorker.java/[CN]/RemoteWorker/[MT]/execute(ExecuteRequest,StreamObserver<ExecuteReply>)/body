@@ -1,0 +1,36 @@
+{
+  Path tempRoot=workPath.getRelative("build-" + UUID.randomUUID().toString());
+  try {
+    tempRoot.createDirectory();
+    if (LOG_FINER) {
+      LOG.fine("Work received has " + request.getTotalInputFileCount() + " input files and "+ request.getAction().getOutputPathCount()+ " output files.");
+    }
+    ExecuteReply reply=execute(request.getAction(),tempRoot);
+    responseObserver.onNext(reply);
+    if (options.debug) {
+      if (!reply.getStatus().getSucceeded()) {
+        LOG.warning("Work failed. Request: " + request.toString() + ".");
+      }
+ else       if (LOG_FINER) {
+        LOG.fine("Work completed.");
+      }
+    }
+    if (!options.debug) {
+      FileSystemUtils.deleteTree(tempRoot);
+    }
+ else {
+      LOG.warning("Preserving work directory " + tempRoot.toString() + ".");
+    }
+  }
+ catch (  IOException|InterruptedException e) {
+    ExecuteReply.Builder reply=ExecuteReply.newBuilder();
+    reply.getStatusBuilder().setSucceeded(false).setErrorDetail(e.toString());
+    responseObserver.onNext(reply.build());
+    if (e instanceof InterruptedException) {
+      Thread.currentThread().interrupt();
+    }
+  }
+ finally {
+    responseObserver.onCompleted();
+  }
+}

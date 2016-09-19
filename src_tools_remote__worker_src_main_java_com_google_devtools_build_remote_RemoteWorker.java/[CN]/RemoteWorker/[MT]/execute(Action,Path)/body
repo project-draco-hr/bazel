@@ -1,0 +1,33 @@
+{
+  ByteArrayOutputStream stdout=new ByteArrayOutputStream();
+  ByteArrayOutputStream stderr=new ByteArrayOutputStream();
+  try {
+    RemoteProtocol.Command command=RemoteProtocol.Command.parseFrom(cache.downloadBlob(action.getCommandDigest()));
+    cache.downloadTree(action.getInputRootDigest(),execRoot);
+    List<Path> outputs=new ArrayList<>(action.getOutputPathList().size());
+    for (    String output : action.getOutputPathList()) {
+      Path file=execRoot.getRelative(output);
+      if (file.exists()) {
+        throw new FileAlreadyExistsException("Output file already exists: " + file);
+      }
+      FileSystemUtils.createDirectoryAndParents(file.getParentDirectory());
+      outputs.add(file);
+    }
+    Command cmd=new Command(command.getArgvList().toArray(new String[]{}),getEnvironmentVariables(command),new File(execRoot.getPathString()));
+    cmd.execute(Command.NO_INPUT,Command.NO_OBSERVER,stdout,stderr,true);
+    ImmutableList<ContentDigest> outErrDigests=cache.uploadBlobs(ImmutableList.of(stdout.toByteArray(),stderr.toByteArray()));
+    ActionResult.Builder result=ActionResult.newBuilder().setReturnCode(0).setStdoutDigest(outErrDigests.get(0)).setStderrDigest(outErrDigests.get(1));
+    cache.uploadAllResults(execRoot,outputs,result);
+    cache.setCachedActionResult(ContentDigests.computeActionKey(action),result.build());
+    return ExecuteReply.newBuilder().setResult(result).setStatus(ExecutionStatus.newBuilder().setExecuted(true).setSucceeded(true)).build();
+  }
+ catch (  CommandException e) {
+    ImmutableList<ContentDigest> outErrDigests=cache.uploadBlobs(ImmutableList.of(stdout.toByteArray(),stderr.toByteArray()));
+    final int returnCode=e instanceof AbnormalTerminationException ? ((AbnormalTerminationException)e).getResult().getTerminationStatus().getExitCode() : -1;
+    return ExecuteReply.newBuilder().setResult(ActionResult.newBuilder().setReturnCode(returnCode).setStdoutDigest(outErrDigests.get(0)).setStderrDigest(outErrDigests.get(1))).setStatus(ExecutionStatus.newBuilder().setExecuted(true).setSucceeded(false).setError(ExecutionStatus.ErrorCode.EXEC_FAILED).setErrorDetail(e.toString())).build();
+  }
+catch (  CacheNotFoundException e) {
+    LOG.warning("Cache miss on " + ContentDigests.toString(e.getMissingDigest()));
+    return ExecuteReply.newBuilder().setCasError(CasStatus.newBuilder().setSucceeded(false).addMissingDigest(e.getMissingDigest()).setError(CasStatus.ErrorCode.MISSING_DIGEST).setErrorDetail(e.toString())).setStatus(ExecutionStatus.newBuilder().setExecuted(false).setSucceeded(false).setError(e.getMissingDigest() == action.getCommandDigest() ? ExecutionStatus.ErrorCode.MISSING_COMMAND : ExecutionStatus.ErrorCode.MISSING_INPUT).setErrorDetail(e.toString())).build();
+  }
+}

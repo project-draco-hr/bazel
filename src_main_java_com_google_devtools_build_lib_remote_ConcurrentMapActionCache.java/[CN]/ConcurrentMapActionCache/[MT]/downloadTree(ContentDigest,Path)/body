@@ -1,0 +1,10 @@
+{
+  FileNode fileNode=FileNode.parseFrom(downloadBlob(rootDigest));
+  if (fileNode.hasFileMetadata()) {
+    FileMetadata meta=fileNode.getFileMetadata();
+    downloadFileContents(meta.getDigest(),rootLocation,meta.getExecutable());
+  }
+  for (  FileNode.Child child : fileNode.getChildList()) {
+    downloadTree(child.getDigest(),rootLocation.getRelative(child.getPath()));
+  }
+}
