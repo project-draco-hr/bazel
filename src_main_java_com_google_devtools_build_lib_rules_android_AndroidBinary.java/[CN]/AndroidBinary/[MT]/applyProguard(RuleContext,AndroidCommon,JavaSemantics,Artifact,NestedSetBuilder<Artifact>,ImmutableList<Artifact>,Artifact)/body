@@ -5,7 +5,9 @@
   }
   AndroidSdkProvider sdk=AndroidSdkProvider.fromRuleContext(ruleContext);
   NestedSet<Artifact> libraryJars=NestedSetBuilder.<Artifact>naiveLinkOrder().add(sdk.getAndroidJar()).addTransitive(common.getTransitiveNeverLinkLibraries()).build();
-  ProguardOutput result=ProguardHelper.createProguardAction(ruleContext,sdk.getProguard(),deployJarArtifact,proguardSpecs,proguardMapping,libraryJars,proguardOutputJar,javaSemantics,getProguardOptimizationPasses(ruleContext));
+  Artifact proguardSeeds=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_PROGUARD_SEEDS);
+  Artifact proguardUsage=ruleContext.getImplicitOutputArtifact(JavaSemantics.JAVA_BINARY_PROGUARD_USAGE);
+  ProguardOutput result=ProguardHelper.createProguardAction(ruleContext,sdk.getProguard(),deployJarArtifact,proguardSpecs,proguardSeeds,proguardUsage,proguardMapping,libraryJars,proguardOutputJar,javaSemantics,getProguardOptimizationPasses(ruleContext));
   result.addAllToSet(filesBuilder);
   return result;
 }
