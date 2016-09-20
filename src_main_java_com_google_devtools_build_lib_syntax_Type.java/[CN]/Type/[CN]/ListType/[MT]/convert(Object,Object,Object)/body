@@ -1,0 +1,31 @@
+{
+  if (!(x instanceof Iterable<?>)) {
+    throw new ConversionException(this,x,what);
+  }
+  int index=0;
+  Iterable<?> iterable=(Iterable<?>)x;
+  List<ElemT> result=new ArrayList<>(Iterables.size(iterable));
+  ListConversionContext conversionContext=new ListConversionContext(what);
+  for (  Object elem : iterable) {
+    conversionContext.update(index);
+    ElemT converted=elemType.convert(elem,conversionContext,context);
+    if (converted != null) {
+      result.add(converted);
+    }
+ else {
+      String message="Converting a list with a null element: " + "element " + index + " of "+ what+ " in "+ context;
+      LoggingUtil.logToRemote(Level.WARNING,message,new ConversionException(message));
+    }
+    ++index;
+  }
+  if (x instanceof GlobList<?>) {
+    return new GlobList<>(((GlobList<?>)x).getCriteria(),result);
+  }
+  if (x instanceof MutableList) {
+    GlobList<?> globList=((MutableList)x).getGlobList();
+    if (globList != null) {
+      return new GlobList<>(globList.getCriteria(),result);
+    }
+  }
+  return result;
+}

@@ -1,0 +1,17 @@
+{
+  if (x.size() > 1 && originalType.concat(ImmutableList.<T>of()) == null) {
+    throw new ConversionException(String.format("type '%s' doesn't support select concatenation",originalType));
+  }
+  ImmutableList.Builder<Selector<T>> builder=ImmutableList.builder();
+  for (  Object elem : x) {
+    if (elem instanceof SelectorValue) {
+      builder.add(new Selector<>(((SelectorValue)elem).getDictionary(),what,context,originalType,((SelectorValue)elem).getNoMatchError()));
+    }
+ else {
+      T directValue=originalType.convert(elem,what,context);
+      builder.add(new Selector<>(ImmutableMap.of(Selector.DEFAULT_CONDITION_KEY,directValue),what,context,originalType));
+    }
+  }
+  this.originalType=originalType;
+  this.elements=builder.build();
+}
