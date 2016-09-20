@@ -1,15 +1,10 @@
 {
-  Path buildFilePath=scratch.file("com/google/example/BUILD","java_library(","    name = 'simple',","    srcs = ['simple/Simple.java']",")");
+  scratch.file("com/google/example/BUILD","java_library(","    name = 'simple',","    srcs = ['simple/Simple.java']",")");
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:simple");
   RuleIdeInfo ruleIdeInfo=getRuleInfoAndVerifyLabel("//com/google/example:simple",ruleIdeInfos);
   ArtifactLocation location=ruleIdeInfo.getBuildFileArtifactLocation();
   assertThat(Paths.get(location.getRelativePath()).toString()).isEqualTo(Paths.get("com/google/example/BUILD").toString());
   assertThat(location.getIsSource()).isTrue();
-  if (testLegacyAswbPluginVersionCompatibility()) {
-    assertThat(ruleIdeInfo.getBuildFile()).isEqualTo(buildFilePath.toString());
-    assertThat(Paths.get(location.getRootPath(),location.getRelativePath()).toString()).isEqualTo(Paths.get(buildFilePath.toString()).toString());
-    assertThat(ruleIdeInfo.getKind()).isEqualTo(Kind.JAVA_LIBRARY);
-  }
   assertThat(ruleIdeInfo.getKindString()).isEqualTo("java_library");
   assertThat(relativePathsForJavaSourcesOf(ruleIdeInfo)).containsExactly("com/google/example/simple/Simple.java");
   assertThat(transform(ruleIdeInfo.getJavaRuleIdeInfo().getJarsList(),LIBRARY_ARTIFACT_TO_STRING)).containsExactly(jarString("com/google/example","libsimple.jar","libsimple-ijar.jar","libsimple-src.jar"));

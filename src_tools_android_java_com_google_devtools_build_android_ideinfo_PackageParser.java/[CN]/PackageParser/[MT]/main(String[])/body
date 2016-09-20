@@ -1,17 +1,10 @@
 {
   PackageParserOptions options=parseArgs(args);
   Preconditions.checkNotNull(options.outputManifest);
-  boolean oldFormat=options.sources == null;
-  if (oldFormat) {
-    Preconditions.checkNotNull(options.sourcesAbsolutePaths);
-    Preconditions.checkNotNull(options.sourcesExecutionPaths);
-    Preconditions.checkState(options.sourcesAbsolutePaths.size() == options.sourcesExecutionPaths.size());
-    convertFromOldFormat(options);
-  }
   try {
     PackageParser parser=new PackageParser(PackageParserIoProvider.INSTANCE);
     Map<ArtifactLocation,String> outputMap=parser.parsePackageStrings(options.sources);
-    parser.writeManifest(outputMap,options.outputManifest,oldFormat);
+    parser.writeManifest(outputMap,options.outputManifest);
   }
  catch (  Throwable e) {
     logger.log(Level.SEVERE,"Error parsing package strings",e);

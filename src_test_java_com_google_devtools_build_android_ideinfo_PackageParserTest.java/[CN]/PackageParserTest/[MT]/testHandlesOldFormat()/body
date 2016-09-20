@@ -1,20 +1,8 @@
 {
-  String[] args=new String[]{"--output_manifest","/tmp/out.manifest","--sources_absolute_paths","/usr/local/code/java/com/google/Foo.java" + File.pathSeparator + "/usr/local/code/java/com/google/Bla.java","--sources_execution_paths","java/com/google/Foo.java" + File.pathSeparator + "java/com/google/Bla.java"};
+  String[] args=new String[]{"--output_manifest","/tmp/out.manifest","--sources",Joiner.on(':').join(",java/com/google/Foo.java,/usr/local/google/code","bin,java/com/google/Bla.java,/usr/local/_tmp/code/bin")};
   PackageParser.PackageParserOptions options=PackageParser.parseArgs(args);
   assertThat(options.outputManifest.toString()).isEqualTo(Paths.get("/tmp/out.manifest").toString());
-  assertThat(options.sourcesAbsolutePaths.get(0).toString()).isEqualTo(Paths.get("/usr/local/code/java/com/google/Foo.java").toString());
-  assertThat(options.sourcesAbsolutePaths.get(1).toString()).isEqualTo(Paths.get("/usr/local/code/java/com/google/Bla.java").toString());
-  PackageParser.convertFromOldFormat(options);
   assertThat(options.sources).hasSize(2);
-  assertThat(options.sources.get(0)).isEqualTo(ArtifactLocation.newBuilder().setRootPath(Paths.get("/usr/local/code/").toString() + File.separator).setRelativePath(Paths.get("java/com/google/Foo.java").toString()).build());
-  mockIoProvider.addSource(options.sources.get(0),"package com.test;\n public class Bla {}\"").addSource(options.sources.get(1),"package com.other;\n public class Foo {}\"");
-  Map<ArtifactLocation,String> map=parser.parsePackageStrings(options.sources);
-  assertThat(map).hasSize(2);
-  assertThat(map).containsEntry(options.sources.get(0),"com.test");
-  assertThat(map).containsEntry(options.sources.get(1),"com.other");
-  parser.writeManifest(map,options.outputManifest,true);
-  String writtenString=mockIoProvider.writer.toString();
-  assertThat(writtenString).doesNotContain("location");
-  assertThat(writtenString).contains("absolute_path: \"" + Paths.get("/usr/local/code/java/com/google/Foo.java").toString().replace("\\","\\\\") + "\"");
-  assertThat(writtenString).contains("absolute_path: \"" + Paths.get("/usr/local/code/java/com/google/Bla.java").toString().replace("\\","\\\\") + "\"");
+  assertThat(options.sources.get(0)).isEqualTo(ArtifactLocation.newBuilder().setRelativePath(Paths.get("java/com/google/Foo.java").toString()).setIsSource(true).build());
+  assertThat(options.sources.get(1)).isEqualTo(ArtifactLocation.newBuilder().setRootExecutionPathFragment(Paths.get("bin").toString()).setRelativePath(Paths.get("java/com/google/Bla.java").toString()).setIsSource(false).build());
 }

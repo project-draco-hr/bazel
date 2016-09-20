@@ -1,16 +1,12 @@
 {
-  Path buildFilePath=scratch.file("com/google/example/BUILD","cc_library(","    name = 'simple',","    srcs = ['simple/simple.cc'],","    hdrs = ['simple/simple.h'],",")");
+  scratch.file("com/google/example/BUILD","cc_library(","    name = 'simple',","    srcs = ['simple/simple.cc'],","    hdrs = ['simple/simple.h'],",")");
   Map<String,RuleIdeInfo> ruleIdeInfos=buildRuleIdeInfo("//com/google/example:simple");
-  assertThat(ruleIdeInfos.size()).isEqualTo(2);
+  assertThat(ruleIdeInfos).hasSize(2);
   RuleIdeInfo ruleInfo=getRuleInfoAndVerifyLabel("//com/google/example:simple",ruleIdeInfos);
   Entry<String,RuleIdeInfo> toolchainEntry=getCcToolchainRuleAndVerifyThereIsOnlyOne(ruleIdeInfos);
   RuleIdeInfo toolchainInfo=toolchainEntry.getValue();
   ArtifactLocation location=ruleInfo.getBuildFileArtifactLocation();
   assertThat(Paths.get(location.getRelativePath()).toString()).isEqualTo(Paths.get("com/google/example/BUILD").toString());
-  if (testLegacyAswbPluginVersionCompatibility()) {
-    assertThat(ruleInfo.getBuildFile()).isEqualTo(buildFilePath.toString());
-    assertThat(Paths.get(location.getRootPath(),location.getRelativePath()).toString()).isEqualTo(Paths.get(buildFilePath.toString()).toString());
-  }
   assertThat(ruleInfo.hasCToolchainIdeInfo()).isFalse();
   assertThat(toolchainInfo.hasCToolchainIdeInfo()).isTrue();
 }
