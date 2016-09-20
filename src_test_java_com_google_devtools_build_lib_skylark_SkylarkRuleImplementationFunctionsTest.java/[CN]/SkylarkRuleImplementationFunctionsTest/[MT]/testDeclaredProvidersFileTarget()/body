@@ -1,0 +1,11 @@
+{
+  scratch.file("test/bar.bzl","unused_provider = provider()","def _impl(ctx):","    src = ctx.attr.srcs[0]","    provider = src[unused_provider]","bar_rule = rule(","    implementation = _impl,","    attrs = {","       'srcs': attr.label_list(allow_files=True),","    }",")");
+  scratch.file("test/BUILD","load(':bar.bzl', 'bar_rule')","bar_rule(name = 'my_rule', srcs = ['input.txt'])");
+  try {
+    getConfiguredTarget("//test:my_rule");
+    fail();
+  }
+ catch (  AssertionError expected) {
+    assertThat(expected.getMessage()).contains("Object of type Target doesn't " + "contain declared provider unused_provider");
+  }
+}

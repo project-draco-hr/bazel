@@ -1,0 +1,9 @@
+{
+  scratch.file("test/foo.bzl","foo_provider = provider()","foobar_provider = provider()","def _impl(ctx):","    foo = foo_provider()","    foobar = foobar_provider()","    return [foo, foobar]","foo_rule = rule(","    implementation = _impl,","    attrs = {","       \"srcs\": attr.label_list(allow_files=True),","    }",")");
+  scratch.file("test/bar.bzl","load(':foo.bzl', 'foo_provider')","def _impl(ctx):","    dep = ctx.attr.deps[0]","    provider = dep[foo_provider]","    return struct(proxy = provider)","bar_rule = rule(","    implementation = _impl,","    attrs = {","       'srcs': attr.label_list(allow_files=True),","       'deps': attr.label_list(allow_files=True),","    }",")");
+  scratch.file("test/BUILD","load(':foo.bzl', 'foo_rule')","load(':bar.bzl', 'bar_rule')","foo_rule(name = 'foo_rule')","alias(name = 'dep_rule', actual=':foo_rule')","bar_rule(name = 'my_rule', deps = [':dep_rule'])");
+  ConfiguredTarget configuredTarget=getConfiguredTarget("//test:my_rule");
+  Object provider=configuredTarget.getProvider(SkylarkProviders.class).getValue("proxy");
+  assertThat(provider).isInstanceOf(SkylarkClassObject.class);
+  assertThat(((SkylarkClassObject)provider).getConstructor().getKey().getExportedName()).isEqualTo("foo_provider");
+}
