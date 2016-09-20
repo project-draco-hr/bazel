@@ -1,0 +1,21 @@
+{
+  OptionsParser parser=OptionsParser.newOptionsParser(RemoteOptions.class,RemoteWorkerOptions.class);
+  parser.parseAndExitUponError(args);
+  RemoteOptions remoteOptions=parser.getOptions(RemoteOptions.class);
+  RemoteWorkerOptions remoteWorkerOptions=parser.getOptions(RemoteWorkerOptions.class);
+  System.out.println("*** Starting Hazelcast server.");
+  ConcurrentMapActionCache cache=new ConcurrentMapActionCache(ConcurrentMapFactory.createHazelcast(remoteOptions));
+  System.out.println("*** Starting grpc server on all locally bound IPs on port " + remoteWorkerOptions.listenPort + ".");
+  RemoteCache worker=new RemoteCache(cache);
+  final Server server=ServerBuilder.forPort(remoteWorkerOptions.listenPort).addService(worker.getCasServer()).addService(worker.getExecCacheServer()).build();
+  server.start();
+  Runtime.getRuntime().addShutdownHook(new Thread(){
+    @Override public void run(){
+      System.err.println("*** Shutting down grpc server.");
+      server.shutdown();
+      System.err.println("*** Server shut down.");
+    }
+  }
+);
+  server.awaitTermination();
+}

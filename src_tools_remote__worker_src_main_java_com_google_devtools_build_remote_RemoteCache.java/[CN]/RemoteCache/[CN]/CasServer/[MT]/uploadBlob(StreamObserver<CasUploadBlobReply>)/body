@@ -1,0 +1,39 @@
+{
+  return new StreamObserver<CasUploadBlobRequest>(){
+    byte[] blob=null;
+    ContentDigest digest=null;
+    long offset=0;
+    @Override public void onNext(    CasUploadBlobRequest request){
+      BlobChunk chunk=request.getData();
+      try {
+        if (chunk.hasDigest()) {
+          Preconditions.checkArgument(digest == null || offset == 0,"Missing input chunk for digest %s",digest == null ? "" : ContentDigests.toString(digest));
+          digest=chunk.getDigest();
+          Preconditions.checkArgument((int)(digest.getSizeBytes() / 1024) < MAX_MEMORY_KBYTES);
+          blob=new byte[(int)digest.getSizeBytes()];
+        }
+        Preconditions.checkArgument(digest != null,"First chunk contains no digest");
+        Preconditions.checkArgument(offset == chunk.getOffset(),"Missing input chunk for digest %s",ContentDigests.toString(digest));
+        chunk.getData().copyTo(blob,(int)offset);
+        offset=(offset + chunk.getData().size()) % digest.getSizeBytes();
+        if (offset == 0) {
+          ContentDigest uploadedDigest=cache.uploadBlob(blob);
+          Preconditions.checkArgument(uploadedDigest.equals(digest),"Digest mismatch: client sent %s, server computed %s",ContentDigests.toString(digest),ContentDigests.toString(uploadedDigest));
+        }
+      }
+ catch (      Exception e) {
+        LOG.warning("Request failed: " + e.toString());
+        CasUploadBlobReply.Builder reply=CasUploadBlobReply.newBuilder();
+        reply.getStatusBuilder().setSucceeded(false).setError(e instanceof IllegalArgumentException ? CasStatus.ErrorCode.INVALID_ARGUMENT : CasStatus.ErrorCode.UNKNOWN).setErrorDetail(e.toString());
+        responseObserver.onNext(reply.build());
+      }
+    }
+    @Override public void onError(    Throwable t){
+      LOG.warning("Request errored remotely: " + t);
+    }
+    @Override public void onCompleted(){
+      responseObserver.onCompleted();
+    }
+  }
+;
+}

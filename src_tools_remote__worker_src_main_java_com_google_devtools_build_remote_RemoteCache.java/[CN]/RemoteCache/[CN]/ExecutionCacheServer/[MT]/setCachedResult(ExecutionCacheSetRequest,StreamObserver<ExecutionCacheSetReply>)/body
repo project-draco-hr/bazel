@@ -1,0 +1,18 @@
+{
+  try {
+    ActionKey actionKey=ContentDigests.unsafeActionKeyFromDigest(request.getActionDigest());
+    cache.setCachedActionResult(actionKey,request.getResult());
+    ExecutionCacheSetReply.Builder reply=ExecutionCacheSetReply.newBuilder();
+    reply.getStatusBuilder().setSucceeded(true);
+    responseObserver.onNext(reply.build());
+  }
+ catch (  Exception e) {
+    LOG.warning("setCachedActionResult request failed: " + e.toString());
+    ExecutionCacheSetReply.Builder reply=ExecutionCacheSetReply.newBuilder();
+    reply.getStatusBuilder().setSucceeded(false).setError(ExecutionCacheStatus.ErrorCode.UNKNOWN);
+    responseObserver.onNext(reply.build());
+  }
+ finally {
+    responseObserver.onCompleted();
+  }
+}

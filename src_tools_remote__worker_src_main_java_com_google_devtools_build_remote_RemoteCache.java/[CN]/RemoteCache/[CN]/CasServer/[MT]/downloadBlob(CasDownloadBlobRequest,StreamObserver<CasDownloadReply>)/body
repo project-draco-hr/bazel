@@ -1,0 +1,36 @@
+{
+  CasDownloadReply.Builder reply=CasDownloadReply.newBuilder();
+  CasStatus.Builder status=reply.getStatusBuilder();
+  for (  ContentDigest digest : request.getDigestList()) {
+    if (!cache.containsKey(digest)) {
+      status.addMissingDigest(digest);
+    }
+  }
+  if (status.getMissingDigestCount() > 0) {
+    status.setSucceeded(false);
+    status.setError(CasStatus.ErrorCode.MISSING_DIGEST);
+    responseObserver.onNext(reply.build());
+    responseObserver.onCompleted();
+    return;
+  }
+  status.setSucceeded(true);
+  try {
+    for (    ContentDigest digest : request.getDigestList()) {
+      reply.setData(BlobChunk.newBuilder().setDigest(digest).setData(ByteString.copyFrom(cache.downloadBlob(digest))).build());
+      responseObserver.onNext(reply.build());
+      if (reply.hasStatus()) {
+        reply.clearStatus();
+      }
+    }
+  }
+ catch (  CacheNotFoundException e) {
+    reply.clearData();
+    status.setSucceeded(false);
+    status.setError(CasStatus.ErrorCode.MISSING_DIGEST);
+    status.addMissingDigest(e.getMissingDigest());
+    responseObserver.onNext(reply.build());
+  }
+ finally {
+    responseObserver.onCompleted();
+  }
+}

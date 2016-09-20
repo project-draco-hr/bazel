@@ -1,0 +1,18 @@
+{
+  CasLookupReply.Builder reply=CasLookupReply.newBuilder();
+  CasStatus.Builder status=reply.getStatusBuilder();
+  for (  ContentDigest digest : request.getDigestList()) {
+    if (!cache.containsKey(digest)) {
+      status.addMissingDigest(digest);
+    }
+  }
+  if (status.getMissingDigestCount() > 0) {
+    status.setSucceeded(false);
+    status.setError(CasStatus.ErrorCode.MISSING_DIGEST);
+  }
+ else {
+    status.setSucceeded(true);
+  }
+  responseObserver.onNext(reply.build());
+  responseObserver.onCompleted();
+}

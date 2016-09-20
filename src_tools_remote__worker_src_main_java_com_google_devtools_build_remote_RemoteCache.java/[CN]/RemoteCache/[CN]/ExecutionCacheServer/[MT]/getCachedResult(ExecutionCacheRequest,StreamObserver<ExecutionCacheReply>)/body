@@ -1,0 +1,21 @@
+{
+  try {
+    ActionKey actionKey=ContentDigests.unsafeActionKeyFromDigest(request.getActionDigest());
+    ExecutionCacheReply.Builder reply=ExecutionCacheReply.newBuilder();
+    ActionResult result=cache.getCachedActionResult(actionKey);
+    if (result != null) {
+      reply.setResult(result);
+    }
+    reply.getStatusBuilder().setSucceeded(true);
+    responseObserver.onNext(reply.build());
+  }
+ catch (  Exception e) {
+    LOG.warning("getCachedActionResult request failed: " + e.toString());
+    ExecutionCacheReply.Builder reply=ExecutionCacheReply.newBuilder();
+    reply.getStatusBuilder().setSucceeded(false).setError(ExecutionCacheStatus.ErrorCode.UNKNOWN);
+    responseObserver.onNext(reply.build());
+  }
+ finally {
+    responseObserver.onCompleted();
+  }
+}

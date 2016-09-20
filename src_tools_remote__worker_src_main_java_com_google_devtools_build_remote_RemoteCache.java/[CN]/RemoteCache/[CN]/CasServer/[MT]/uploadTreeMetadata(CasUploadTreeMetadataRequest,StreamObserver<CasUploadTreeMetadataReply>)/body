@@ -1,0 +1,17 @@
+{
+  try {
+    for (    FileNode treeNode : request.getTreeNodeList()) {
+      cache.uploadBlob(treeNode.toByteArray());
+    }
+    responseObserver.onNext(CasUploadTreeMetadataReply.newBuilder().setStatus(CasStatus.newBuilder().setSucceeded(true)).build());
+  }
+ catch (  Exception e) {
+    LOG.warning("Request failed: " + e.toString());
+    CasUploadTreeMetadataReply.Builder reply=CasUploadTreeMetadataReply.newBuilder();
+    reply.getStatusBuilder().setSucceeded(false).setError(CasStatus.ErrorCode.UNKNOWN).setErrorDetail(e.toString());
+    responseObserver.onNext(reply.build());
+  }
+ finally {
+    responseObserver.onCompleted();
+  }
+}
