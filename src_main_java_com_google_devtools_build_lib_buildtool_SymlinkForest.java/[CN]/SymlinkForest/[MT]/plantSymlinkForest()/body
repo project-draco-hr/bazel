@@ -1,5 +1,5 @@
 {
-  deleteTreesBelowNotPrefixed();
+  deleteTreesBelowNotPrefixed(workspace,prefixes);
   Map<PackageIdentifier,Set<Path>> dirRootsMap=Maps.newTreeMap();
   for (  Map.Entry<PackageIdentifier,Path> entry : packageRoots.entrySet()) {
     PackageIdentifier pkgId=entry.getKey();
@@ -19,10 +19,10 @@
   }
   for (  Map.Entry<PackageIdentifier,Set<Path>> entry : dirRootsMap.entrySet()) {
     PackageIdentifier dir=entry.getKey();
-    if (!isPackage(dir)) {
-      PackageIdentifier parentPackage=findParentPackage(dir);
-      if (parentPackage != null) {
-        entry.getValue().add(packageRoots.get(parentPackage));
+    if (!packageRoots.containsKey(dir)) {
+      PackageIdentifier pkgId=longestPathPrefix(dir,packageRoots.keySet());
+      if (pkgId != null) {
+        entry.getValue().add(packageRoots.get(pkgId));
       }
     }
   }
@@ -33,7 +33,7 @@
     }
     if (entry.getValue().size() > 1) {
       if (LOG_FINER) {
-        log.finer("mkdir " + workspace.getRelative(dir.getPathUnderExecRoot()));
+        LOG.finer("mkdir " + workspace.getRelative(dir.getPathUnderExecRoot()));
       }
       FileSystemUtils.createDirectoryAndParents(workspace.getRelative(dir.getPathUnderExecRoot()));
     }
@@ -47,16 +47,38 @@
       }
       Path root=roots.iterator().next();
       if (LOG_FINER) {
-        log.finer("ln -s " + root.getRelative(dir.getPackageFragment()) + " "+ workspace.getRelative(dir.getPathUnderExecRoot()));
+        LOG.finer("ln -s " + root.getRelative(dir.getSourceRoot()) + " "+ workspace.getRelative(dir.getPathUnderExecRoot()));
       }
-      workspace.getRelative(dir.getPathUnderExecRoot()).createSymbolicLink(root.getRelative(dir.getPackageFragment()));
+      workspace.getRelative(dir.getPathUnderExecRoot()).createSymbolicLink(root.getRelative(dir.getSourceRoot()));
     }
   }
   for (  Map.Entry<PackageIdentifier,Set<Path>> entry : dirRootsMap.entrySet()) {
-    PackageIdentifier child=entry.getKey();
+    PackageIdentifier dir=entry.getKey();
     if (entry.getValue().size() > 1) {
-      PackageIdentifier parent=longestPathPrefix(child,packageRoots.keySet());
-      linkDirectoryEntries(parent,child,dirRootsMap);
+      PackageIdentifier pkgId=longestPathPrefix(dir,packageRoots.keySet());
+      if (pkgId != null) {
+        Path root=packageRoots.get(pkgId);
+        try {
+          Path absdir=root.getRelative(dir.getSourceRoot());
+          if (absdir.isDirectory()) {
+            if (LOG_FINER) {
+              LOG.finer("ln -s " + absdir + "/* "+ workspace.getRelative(dir.getSourceRoot())+ "/");
+            }
+            for (            Path target : absdir.getDirectoryEntries()) {
+              PathFragment p=target.relativeTo(root);
+              if (!dirRootsMap.containsKey(createInRepo(pkgId,p))) {
+                workspace.getRelative(p).createSymbolicLink(target);
+              }
+            }
+          }
+ else {
+            LOG.fine("Symlink planting skipping dir '" + absdir + "'");
+          }
+        }
+ catch (        IOException e) {
+          e.printStackTrace();
+        }
+      }
     }
   }
   for (  Map.Entry<PackageIdentifier,Path> entry : packageRoots.entrySet()) {
@@ -68,16 +90,14 @@
     if (!execrootDirectory.exists()) {
       FileSystemUtils.createDirectoryAndParents(execrootDirectory);
     }
-    for (    Path target : entry.getValue().getDirectoryEntries()) {
+    Path sourceDirectory=entry.getValue().getRelative(pkgId.getSourceRoot());
+    for (    Path target : sourceDirectory.getDirectoryEntries()) {
       String baseName=target.getBaseName();
       Path execPath=execrootDirectory.getRelative(baseName);
-      if (!baseName.startsWith(productName + "-") && !execPath.exists(Symlinks.NOFOLLOW)) {
+      if (!baseName.startsWith(productName + "-") && !execPath.exists()) {
         execPath.createSymbolicLink(target);
       }
     }
-  }
-  if (legacyExternalRunfiles) {
-    workspace.getRelative(Label.EXTERNAL_PACKAGE_NAME).createSymbolicLink(workspace.getRelative(Label.EXTERNAL_PATH_PREFIX));
   }
   symlinkCorrectWorkspaceName();
 }

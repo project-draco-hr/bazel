@@ -14,17 +14,17 @@
     errWriter.printf("working dir is %s\n",sandboxExecRoot.toString());
   }
   ImmutableMap<String,String> spawnEnvironment=StandaloneSpawnStrategy.locallyDeterminedEnv(execRoot,productName,spawn.getEnvironment());
+  Set<Path> writableDirs=getWritableDirs(sandboxExecRoot,spawn.getEnvironment());
   Path runUnderPath=getRunUnderPath(spawn);
   try {
     HardlinkedExecRoot hardlinkedExecRoot=new HardlinkedExecRoot(execRoot,sandboxPath,sandboxExecRoot,errWriter);
     ImmutableSet<PathFragment> outputs=SandboxHelpers.getOutputFiles(spawn);
-    Set<Path> writableDirs=getWritableDirs(sandboxExecRoot,spawn.getEnvironment(),outputs);
     hardlinkedExecRoot.createFileSystem(getMounts(spawn,actionExecutionContext),outputs,writableDirs);
     if (errWriter != null) {
       errWriter.flush();
     }
     DarwinSandboxRunner runner;
-    runner=new DarwinSandboxRunner(sandboxPath,sandboxExecRoot,getWritableDirs(sandboxExecRoot,spawnEnvironment,outputs),getInaccessiblePaths(),runUnderPath,verboseFailures);
+    runner=new DarwinSandboxRunner(sandboxPath,sandboxExecRoot,getWritableDirs(sandboxExecRoot,spawnEnvironment),getInaccessiblePaths(),runUnderPath,verboseFailures);
     try {
       runner.run(spawn.getArguments(),spawnEnvironment,actionExecutionContext.getFileOutErr(),Spawns.getTimeoutSeconds(spawn),SandboxHelpers.shouldAllowNetwork(buildRequest,spawn));
     }

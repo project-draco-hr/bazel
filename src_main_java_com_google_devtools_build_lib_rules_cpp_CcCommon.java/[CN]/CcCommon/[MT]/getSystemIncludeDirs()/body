@@ -9,8 +9,8 @@
       continue;
     }
     PathFragment includesPath=packageFragment.getRelative(includesAttr).normalize();
-    if ((packageIdentifier.getRepository().isMain() && !includesPath.isNormalized()) || (!packageIdentifier.getRepository().isMain() && !includesPath.startsWith(packageIdentifier.getRepository().getPathUnderExecRoot()))) {
-      ruleContext.attributeError("includes",includesAttr + " references a path above the execution root (" + includesPath+ ").");
+    if (!includesPath.isNormalized()) {
+      ruleContext.attributeError("includes","Path references a path above the execution root.");
     }
     if (includesPath.segmentCount() == 0) {
       ruleContext.attributeError("includes","'" + includesAttr + "' resolves to the workspace root, which would allow this rule and all of its "+ "transitive dependents to include any file in your workspace. Please include only"+ " what you need");

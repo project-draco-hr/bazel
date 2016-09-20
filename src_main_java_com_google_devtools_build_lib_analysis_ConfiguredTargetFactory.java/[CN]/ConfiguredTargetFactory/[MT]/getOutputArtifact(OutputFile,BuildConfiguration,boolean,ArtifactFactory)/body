@@ -2,7 +2,7 @@
   Rule rule=outputFile.getAssociatedRule();
   Root root=rule.hasBinaryOutput() ? configuration.getBinDirectory(rule.getRepository()) : configuration.getGenfilesDirectory(rule.getRepository());
   ArtifactOwner owner=new ConfiguredTargetKey(rule.getLabel(),configuration.getArtifactOwnerConfiguration());
-  PathFragment rootRelativePath=outputFile.getLabel().toPathFragment();
+  PathFragment rootRelativePath=outputFile.getLabel().getPackageIdentifier().getSourceRoot().getRelative(outputFile.getLabel().getName());
   Artifact result=isFileset ? artifactFactory.getFilesetArtifact(rootRelativePath,root,owner) : artifactFactory.getDerivedArtifact(rootRelativePath,root,owner);
   Preconditions.checkNotNull(result,"no artifact for %s",rootRelativePath);
   return result;

@@ -1,0 +1,38 @@
+{
+  Preconditions.checkState(outputRoots == null ^ directories == null);
+  this.actionsEnabled=!actionsDisabled;
+  this.fragments=ImmutableSortedMap.copyOf(fragmentsMap,lexicalFragmentSorter);
+  this.skylarkVisibleFragments=buildIndexOfSkylarkVisibleFragments();
+  this.buildOptions=buildOptions;
+  this.options=buildOptions.get(Options.class);
+  Map<String,String> testEnv=new TreeMap<>();
+  for (  Map.Entry<String,String> entry : this.options.testEnvironment) {
+    if (entry.getValue() != null) {
+      testEnv.put(entry.getKey(),entry.getValue());
+    }
+  }
+  this.testEnvironment=ImmutableMap.copyOf(testEnv);
+  Map<String,String> commandLineDefinesBuilder=new TreeMap<>();
+  for (  Map.Entry<String,String> define : options.commandLineBuildVariables) {
+    commandLineDefinesBuilder.put(define.getKey(),define.getValue());
+  }
+  commandLineBuildVariables=ImmutableMap.copyOf(commandLineDefinesBuilder);
+  this.mnemonic=buildMnemonic();
+  String outputDirName=(options.outputDirectoryName != null) ? options.outputDirectoryName : mnemonic;
+  this.platformName=buildPlatformName();
+  this.shExecutable=collectExecutables().get("sh");
+  this.outputRoots=outputRoots != null ? outputRoots : new OutputRoots(directories,outputDirName);
+  Pair<ImmutableMap<String,String>,ImmutableSet<String>> shellEnvironment=setupShellEnvironment();
+  this.localShellEnvironment=shellEnvironment.getFirst();
+  this.envVariables=shellEnvironment.getSecond();
+  this.transitiveOptionsMap=computeOptionsMap(buildOptions,fragments.values());
+  ImmutableMap.Builder<String,String> globalMakeEnvBuilder=ImmutableMap.builder();
+  for (  Fragment fragment : fragments.values()) {
+    fragment.addGlobalMakeVariables(globalMakeEnvBuilder);
+  }
+  globalMakeEnvBuilder.put("COMPILATION_MODE",options.compilationMode.toString());
+  globalMakeEnvBuilder.put("BINDIR",getBinDirectory().getExecPath().getPathString());
+  globalMakeEnvBuilder.put("GENDIR",getGenfilesDirectory().getExecPath().getPathString());
+  globalMakeEnv=globalMakeEnvBuilder.build();
+  checksum=Fingerprint.md5Digest(buildOptions.computeCacheKey());
+}
