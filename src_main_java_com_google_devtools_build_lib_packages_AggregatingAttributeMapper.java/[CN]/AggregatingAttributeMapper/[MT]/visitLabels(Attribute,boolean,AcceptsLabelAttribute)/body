@@ -5,9 +5,14 @@
     if (getComputedDefault(attribute.getName(),attribute.getType()) != null) {
       for (      Object value : visitAttribute(attribute.getName(),attribute.getType())) {
         if (value != null) {
-          for (          Label label : extractLabels(type,value)) {
-            observer.acceptLabelAttribute(getLabel().resolveRepositoryRelative(label),attribute);
+          type.visitLabels(new Type.LabelVisitor(){
+            @Override public void visit(            @Nullable Object label) throws InterruptedException {
+              if (label != null) {
+                observer.acceptLabelAttribute(getLabel().resolveRepositoryRelative((Label)label),attribute);
+              }
+            }
           }
+,value);
         }
       }
     }
@@ -22,9 +27,14 @@
           observer.acceptLabelAttribute(getLabel().resolveRepositoryRelative(selectorEntry.getKey()),attribute);
         }
         Object value=selector.isValueSet(selectorEntry.getKey()) ? selectorEntry.getValue() : attribute.getDefaultValue(null);
-        for (        Label label : extractLabels(type,value)) {
-          observer.acceptLabelAttribute(getLabel().resolveRepositoryRelative(label),attribute);
+        type.visitLabels(new Type.LabelVisitor(){
+          @Override public void visit(          @Nullable Object label) throws InterruptedException {
+            if (label != null) {
+              observer.acceptLabelAttribute(getLabel().resolveRepositoryRelative((Label)label),attribute);
+            }
+          }
         }
+,value);
       }
     }
   }

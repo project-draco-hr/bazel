@@ -2,9 +2,14 @@
   Type<?> type=attribute.getType();
   Object value=get(attribute.getName(),type);
   if (value != null) {
-    for (    Label label : extractLabels(type,value)) {
-      Label absoluteLabel=ruleLabel.resolveRepositoryRelative(label);
-      observer.acceptLabelAttribute(absoluteLabel,attribute);
+    type.visitLabels(new Type.LabelVisitor(){
+      @Override public void visit(      @Nullable Object object) throws InterruptedException {
+        if (object != null) {
+          Label absoluteLabel=ruleLabel.resolveRepositoryRelative((Label)object);
+          observer.acceptLabelAttribute(absoluteLabel,attribute);
+        }
+      }
     }
+,value);
   }
 }
