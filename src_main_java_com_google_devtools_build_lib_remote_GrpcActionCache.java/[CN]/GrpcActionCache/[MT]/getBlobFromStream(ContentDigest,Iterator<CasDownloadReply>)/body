@@ -1,0 +1,29 @@
+{
+  Preconditions.checkArgument(replies.hasNext());
+  CasDownloadReply reply=replies.next();
+  if (reply.hasStatus()) {
+    handleDownloadStatus(reply.getStatus());
+  }
+  BlobChunk chunk=reply.getData();
+  ContentDigest digest=chunk.getDigest();
+  Preconditions.checkArgument(digest.equals(blobDigest));
+  Preconditions.checkArgument(digest.getSizeBytes() / 1000.0 < MAX_MEMORY_KBYTES);
+  byte[] result=new byte[(int)digest.getSizeBytes()];
+  ByteString data=chunk.getData();
+  data.copyTo(result,0);
+  int offset=data.size();
+  while (offset < result.length) {
+    Preconditions.checkArgument(replies.hasNext());
+    reply=replies.next();
+    if (reply.hasStatus()) {
+      handleDownloadStatus(reply.getStatus());
+    }
+    chunk=reply.getData();
+    Preconditions.checkArgument(!chunk.hasDigest());
+    Preconditions.checkArgument(chunk.getOffset() == offset);
+    data=chunk.getData();
+    data.copyTo(result,offset);
+    offset+=data.size();
+  }
+  return result;
+}

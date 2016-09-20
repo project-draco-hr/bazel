@@ -1,0 +1,25 @@
+{
+  RemoteOptions options=Options.getDefaults(RemoteOptions.class);
+  options.grpcMaxBatchInputs=10;
+  options.grpcMaxChunkSizeBytes=2;
+  options.grpcMaxBatchSizeBytes=10;
+  options.grpcTimeoutSeconds=10;
+  GrpcActionCache client=new GrpcActionCache(channel,options);
+  byte[] foo="fooooooo".getBytes(UTF_8);
+  byte[] bar="baaaar".getBytes(UTF_8);
+  byte[] s1="1".getBytes(UTF_8);
+  byte[] s2="2".getBytes(UTF_8);
+  byte[] s3="3".getBytes(UTF_8);
+  ContentDigest fooDigest=ContentDigests.computeDigest(foo);
+  ContentDigest barDigest=ContentDigests.computeDigest(bar);
+  ContentDigest s1Digest=ContentDigests.computeDigest(s1);
+  ContentDigest s2Digest=ContentDigests.computeDigest(s2);
+  ContentDigest s3Digest=ContentDigests.computeDigest(s3);
+  ImmutableList<ContentDigest> digests=client.uploadBlobs(ImmutableList.<byte[]>of(foo,bar,s1,s2,s3));
+  assertThat(digests).containsExactly(fooDigest,barDigest,s1Digest,s2Digest,s3Digest);
+  assertThat(fakeRemoteCacheService.get(fooDigest)).isEqualTo(foo);
+  assertThat(fakeRemoteCacheService.get(barDigest)).isEqualTo(bar);
+  assertThat(fakeRemoteCacheService.get(s1Digest)).isEqualTo(s1);
+  assertThat(fakeRemoteCacheService.get(s2Digest)).isEqualTo(s2);
+  assertThat(fakeRemoteCacheService.get(s3Digest)).isEqualTo(s3);
+}

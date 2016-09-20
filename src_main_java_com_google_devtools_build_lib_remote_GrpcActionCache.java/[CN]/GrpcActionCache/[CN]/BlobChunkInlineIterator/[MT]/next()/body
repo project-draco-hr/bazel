@@ -1,0 +1,19 @@
+{
+  if (!hasNext()) {
+    throw new NoSuchElementException();
+  }
+  BlobChunk.Builder chunk=BlobChunk.newBuilder();
+  if (offset == 0) {
+    chunk.setDigest(digest);
+  }
+ else {
+    chunk.setOffset(offset);
+  }
+  int size=Math.min(currentBlob.length - offset,maxChunkSizeBytes);
+  chunk.setData(ByteString.copyFrom(currentBlob,offset,size));
+  offset+=size;
+  if (offset >= currentBlob.length) {
+    advanceInput();
+  }
+  return chunk.build();
+}

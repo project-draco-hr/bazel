@@ -1,0 +1,9 @@
+{
+  ExecutionCacheServiceBlockingStub stub=ExecutionCacheServiceGrpc.newBlockingStub(channel).withDeadlineAfter(grpcTimeoutSeconds,TimeUnit.SECONDS);
+  ExecutionCacheSetRequest request=ExecutionCacheSetRequest.newBuilder().setActionDigest(actionKey.getDigest()).setResult(result).build();
+  ExecutionCacheSetReply reply=stub.setCachedResult(request);
+  ExecutionCacheStatus status=reply.getStatus();
+  if (!status.getSucceeded()) {
+    throw new RuntimeException(status.getErrorDetail());
+  }
+}

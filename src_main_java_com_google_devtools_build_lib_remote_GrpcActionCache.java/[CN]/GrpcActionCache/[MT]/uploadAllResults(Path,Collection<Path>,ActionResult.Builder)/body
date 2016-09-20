@@ -1,0 +1,17 @@
+{
+  ArrayList<ContentDigest> digests=new ArrayList<>();
+  for (  Path file : files) {
+    digests.add(ContentDigests.computeDigest(file));
+  }
+  ImmutableSet<ContentDigest> missing=getMissingDigests(digests);
+  if (!missing.isEmpty()) {
+    uploadChunks(missing.size(),new BlobChunkFileIterator(missing,files.iterator()));
+  }
+  int index=0;
+  for (  Path file : files) {
+    if (file.isDirectory()) {
+      throw new UnsupportedOperationException("Storing a directory is not yet supported.");
+    }
+    result.addOutputBuilder().setPath(file.relativeTo(execRoot).getPathString()).getFileMetadataBuilder().setDigest(digests.get(index++)).setExecutable(file.isExecutable());
+  }
+}

@@ -1,0 +1,48 @@
+{
+  CountDownLatch finishLatch=new CountDownLatch(numItems);
+  AtomicReference<RuntimeException> exception=new AtomicReference<>(null);
+  UploadBlobReplyStreamObserver responseObserver=null;
+  StreamObserver<CasUploadBlobRequest> requestObserver=null;
+  int currentBatchBytes=0;
+  int batchedInputs=0;
+  int batches=0;
+  try {
+    while (blobs.hasNext()) {
+      BlobChunk chunk=blobs.next();
+      if (chunk.hasDigest()) {
+        if (batchedInputs % maxBatchInputs == 0 || chunk.getDigest().getSizeBytes() + currentBatchBytes > maxBatchSizeBytes) {
+          if (requestObserver != null) {
+            batchedInputs=0;
+            currentBatchBytes=0;
+            requestObserver.onCompleted();
+          }
+          batches++;
+          responseObserver=new UploadBlobReplyStreamObserver(finishLatch,exception);
+          requestObserver=getStub().uploadBlob(responseObserver);
+        }
+        batchedInputs++;
+      }
+      currentBatchBytes+=chunk.getData().size();
+      requestObserver.onNext(CasUploadBlobRequest.newBuilder().setData(chunk).build());
+      if (finishLatch.getCount() == 0) {
+        throw new RuntimeException("gRPC terminated prematurely: " + (exception.get() != null ? exception.get() : "unknown cause"));
+      }
+    }
+  }
+ catch (  RuntimeException e) {
+    if (requestObserver != null) {
+      requestObserver.onError(e);
+    }
+    throw e;
+  }
+  if (requestObserver != null) {
+    requestObserver.onCompleted();
+  }
+  while (batches++ < numItems) {
+    finishLatch.countDown();
+  }
+  finishLatch.await(grpcTimeoutSeconds,TimeUnit.SECONDS);
+  if (exception.get() != null) {
+    throw exception.get();
+  }
+}

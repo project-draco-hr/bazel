@@ -1,0 +1,30 @@
+{
+  Preconditions.checkArgument(replies.hasNext());
+  CasDownloadReply reply=replies.next();
+  if (reply.hasStatus()) {
+    handleDownloadStatus(reply.getStatus());
+  }
+  BlobChunk chunk=reply.getData();
+  ContentDigest digest=chunk.getDigest();
+  Preconditions.checkArgument(digest.equals(fileMetadata.getDigest()));
+  FileSystemUtils.createDirectoryAndParents(path.getParentDirectory());
+  try (OutputStream stream=path.getOutputStream()){
+    ByteString data=chunk.getData();
+    data.writeTo(stream);
+    long bytesLeft=digest.getSizeBytes() - data.size();
+    while (bytesLeft > 0) {
+      Preconditions.checkArgument(replies.hasNext());
+      reply=replies.next();
+      if (reply.hasStatus()) {
+        handleDownloadStatus(reply.getStatus());
+      }
+      chunk=reply.getData();
+      data=chunk.getData();
+      Preconditions.checkArgument(!chunk.hasDigest());
+      Preconditions.checkArgument(chunk.getOffset() == digest.getSizeBytes() - bytesLeft);
+      data.writeTo(stream);
+      bytesLeft-=data.size();
+    }
+    path.setExecutable(fileMetadata.getExecutable());
+  }
+ }

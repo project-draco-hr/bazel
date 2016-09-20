@@ -1,0 +1,17 @@
+{
+  CasDownloadBlobRequest.Builder request=CasDownloadBlobRequest.newBuilder();
+  for (  ContentDigest digest : digests) {
+    if (digest.getSizeBytes() > 0) {
+      request.addDigest(digest);
+    }
+  }
+  Iterator<CasDownloadReply> replies=null;
+  if (request.getDigestCount() > 0) {
+    replies=getBlockingStub().downloadBlob(request.build());
+  }
+  ArrayList<byte[]> result=new ArrayList<>();
+  for (  ContentDigest digest : digests) {
+    result.add(digest.getSizeBytes() == 0 ? new byte[0] : getBlobFromStream(digest,replies));
+  }
+  return ImmutableList.copyOf(result);
+}

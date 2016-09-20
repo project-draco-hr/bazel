@@ -1,0 +1,21 @@
+{
+  repository.computeMerkleDigests(root);
+  ImmutableSet<ContentDigest> missingDigests=getMissingDigests(repository.getAllDigests(root));
+  ArrayList<ActionInput> actionInputs=new ArrayList<>();
+  ArrayList<FileNode> treeNodes=new ArrayList<>();
+  repository.getDataFromDigests(missingDigests,actionInputs,treeNodes);
+  if (!treeNodes.isEmpty()) {
+    CasUploadTreeMetadataRequest.Builder metaRequest=CasUploadTreeMetadataRequest.newBuilder().addAllTreeNode(treeNodes);
+    CasUploadTreeMetadataReply reply=getBlockingStub().uploadTreeMetadata(metaRequest.build());
+    if (!reply.getStatus().getSucceeded()) {
+      throw new RuntimeException(reply.getStatus().getErrorDetail());
+    }
+  }
+  if (!actionInputs.isEmpty()) {
+    ArrayList<Path> paths=new ArrayList<>();
+    for (    ActionInput actionInput : actionInputs) {
+      paths.add(execRoot.getRelative(actionInput.getExecPathString()));
+    }
+    uploadChunks(paths.size(),new BlobChunkFileIterator(missingDigests,paths.iterator()));
+  }
+}

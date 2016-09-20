@@ -1,0 +1,25 @@
+{
+  CasDownloadBlobRequest.Builder request=CasDownloadBlobRequest.newBuilder();
+  ArrayList<Output> fileOutputs=new ArrayList<>();
+  for (  Output output : result.getOutputList()) {
+    Path path=execRoot.getRelative(output.getPath());
+    if (output.getContentCase() == ContentCase.FILE_METADATA) {
+      ContentDigest digest=output.getFileMetadata().getDigest();
+      if (digest.getSizeBytes() > 0) {
+        request.addDigest(digest);
+        fileOutputs.add(output);
+      }
+ else {
+        FileSystemUtils.createDirectoryAndParents(path.getParentDirectory());
+        FileSystemUtils.writeContent(path,new byte[0]);
+      }
+    }
+ else {
+      downloadTree(output.getDigest(),path);
+    }
+  }
+  Iterator<CasDownloadReply> replies=getBlockingStub().downloadBlob(request.build());
+  for (  Output output : fileOutputs) {
+    createFileFromStream(execRoot.getRelative(output.getPath()),output.getFileMetadata(),replies);
+  }
+}

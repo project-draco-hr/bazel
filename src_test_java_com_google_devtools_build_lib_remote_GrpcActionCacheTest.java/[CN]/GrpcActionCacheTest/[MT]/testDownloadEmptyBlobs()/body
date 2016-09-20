@@ -1,0 +1,10 @@
+{
+  GrpcActionCache client=new GrpcActionCache(channel,Options.getDefaults(RemoteOptions.class));
+  ContentDigest fooDigest=fakeRemoteCacheService.put("foo".getBytes(UTF_8));
+  ContentDigest emptyDigest=ContentDigests.computeDigest(new byte[0]);
+  ImmutableList<byte[]> results=client.downloadBlobs(ImmutableList.<ContentDigest>of(emptyDigest,fooDigest,emptyDigest));
+  assertThat(new String(results.get(0),UTF_8)).isEmpty();
+  assertThat(new String(results.get(1),UTF_8)).isEqualTo("foo");
+  assertThat(new String(results.get(2),UTF_8)).isEmpty();
+  assertThat(new String(client.downloadBlob(emptyDigest),UTF_8)).isEmpty();
+}

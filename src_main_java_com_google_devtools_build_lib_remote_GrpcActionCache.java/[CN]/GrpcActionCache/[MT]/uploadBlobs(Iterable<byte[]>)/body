@@ -1,0 +1,16 @@
+{
+  ArrayList<ContentDigest> digests=new ArrayList<>();
+  for (  byte[] blob : blobs) {
+    digests.add(ContentDigests.computeDigest(blob));
+  }
+  ImmutableSet<ContentDigest> missing=getMissingDigests(digests);
+  try {
+    if (!missing.isEmpty()) {
+      uploadChunks(missing.size(),new BlobChunkInlineIterator(missing,blobs.iterator()));
+    }
+    return ImmutableList.copyOf(digests);
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+}

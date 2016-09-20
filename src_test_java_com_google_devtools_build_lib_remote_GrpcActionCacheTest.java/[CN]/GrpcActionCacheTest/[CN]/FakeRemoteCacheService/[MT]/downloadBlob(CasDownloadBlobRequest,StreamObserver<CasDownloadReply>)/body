@@ -1,0 +1,22 @@
+{
+  CasDownloadReply.Builder reply=CasDownloadReply.newBuilder();
+  CasStatus.Builder status=reply.getStatusBuilder();
+  boolean success=true;
+  for (  ContentDigest digest : request.getDigestList()) {
+    if (get(digest) == null) {
+      status.addMissingDigest(digest);
+      success=false;
+    }
+  }
+  if (!success) {
+    status.setError(CasStatus.ErrorCode.MISSING_DIGEST);
+    status.setSucceeded(false);
+    observer.onNext(reply.build());
+    observer.onCompleted();
+    return;
+  }
+  for (  ContentDigest digest : request.getDigestList()) {
+    observer.onNext(CasDownloadReply.newBuilder().setStatus(CasStatus.newBuilder().setSucceeded(true)).setData(BlobChunk.newBuilder().setDigest(digest).setData(ByteString.copyFrom(get(digest)))).build());
+  }
+  observer.onCompleted();
+}

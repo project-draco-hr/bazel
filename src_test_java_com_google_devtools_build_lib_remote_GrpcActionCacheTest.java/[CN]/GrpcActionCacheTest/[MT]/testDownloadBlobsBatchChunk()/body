@@ -1,0 +1,19 @@
+{
+  RemoteOptions options=Options.getDefaults(RemoteOptions.class);
+  options.grpcMaxBatchInputs=10;
+  options.grpcMaxChunkSizeBytes=2;
+  options.grpcMaxBatchSizeBytes=10;
+  options.grpcTimeoutSeconds=10;
+  GrpcActionCache client=new GrpcActionCache(channel,options);
+  ContentDigest fooDigest=fakeRemoteCacheService.put("fooooooo".getBytes(UTF_8));
+  ContentDigest barDigest=fakeRemoteCacheService.put("baaaar".getBytes(UTF_8));
+  ContentDigest s1Digest=fakeRemoteCacheService.put("1".getBytes(UTF_8));
+  ContentDigest s2Digest=fakeRemoteCacheService.put("2".getBytes(UTF_8));
+  ContentDigest s3Digest=fakeRemoteCacheService.put("3".getBytes(UTF_8));
+  ImmutableList<byte[]> results=client.downloadBlobs(ImmutableList.<ContentDigest>of(fooDigest,barDigest,s1Digest,s2Digest,s3Digest));
+  assertThat(new String(results.get(0),UTF_8)).isEqualTo("fooooooo");
+  assertThat(new String(results.get(1),UTF_8)).isEqualTo("baaaar");
+  assertThat(new String(results.get(2),UTF_8)).isEqualTo("1");
+  assertThat(new String(results.get(3),UTF_8)).isEqualTo("2");
+  assertThat(new String(results.get(4),UTF_8)).isEqualTo("3");
+}

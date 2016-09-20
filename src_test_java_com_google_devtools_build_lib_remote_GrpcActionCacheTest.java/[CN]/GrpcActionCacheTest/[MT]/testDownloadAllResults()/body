@@ -1,0 +1,17 @@
+{
+  GrpcActionCache client=new GrpcActionCache(channel,Options.getDefaults(RemoteOptions.class));
+  ContentDigest fooDigest=fakeRemoteCacheService.put("foo".getBytes(UTF_8));
+  ContentDigest barDigest=fakeRemoteCacheService.put("bar".getBytes(UTF_8));
+  ContentDigest emptyDigest=ContentDigests.computeDigest(new byte[0]);
+  ActionResult.Builder result=ActionResult.newBuilder();
+  result.addOutputBuilder().setPath("a/foo").getFileMetadataBuilder().setDigest(fooDigest);
+  result.addOutputBuilder().setPath("b/empty").getFileMetadataBuilder().setDigest(emptyDigest);
+  result.addOutputBuilder().setPath("a/bar").getFileMetadataBuilder().setDigest(barDigest);
+  client.downloadAllResults(result.build(),rootDir.getPath());
+  Path fooFile=rootDir.getPath().getRelative("a/foo");
+  Path emptyFile=rootDir.getPath().getRelative("b/empty");
+  Path barFile=rootDir.getPath().getRelative("a/bar");
+  assertThat(ContentDigests.computeDigest(fooFile)).isEqualTo(fooDigest);
+  assertThat(ContentDigests.computeDigest(emptyFile)).isEqualTo(emptyDigest);
+  assertThat(ContentDigests.computeDigest(barFile)).isEqualTo(barDigest);
+}

@@ -1,0 +1,16 @@
+{
+  CasLookupRequest.Builder request=CasLookupRequest.newBuilder();
+  for (  ContentDigest digest : digests) {
+    if (digest.getSizeBytes() > 0) {
+      request.addDigest(digest);
+    }
+  }
+  if (request.getDigestCount() == 0) {
+    return ImmutableSet.of();
+  }
+  CasStatus status=getBlockingStub().lookup(request.build()).getStatus();
+  if (!status.getSucceeded() && status.getError() != CasStatus.ErrorCode.MISSING_DIGEST) {
+    throw new RuntimeException(status.getErrorDetail());
+  }
+  return ImmutableSet.copyOf(status.getMissingDigestList());
+}

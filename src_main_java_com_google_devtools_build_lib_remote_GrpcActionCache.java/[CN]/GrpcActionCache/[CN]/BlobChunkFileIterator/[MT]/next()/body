@@ -1,0 +1,22 @@
+{
+  if (!hasNext()) {
+    throw new NoSuchElementException();
+  }
+  byte[] blob=new byte[(int)Math.min(bytesLeft,(long)maxChunkSizeBytes)];
+  currentStream.read(blob);
+  BlobChunk.Builder chunk=BlobChunk.newBuilder();
+  long offset=digest.getSizeBytes() - bytesLeft;
+  if (offset == 0) {
+    chunk.setDigest(digest);
+  }
+ else {
+    chunk.setOffset(offset);
+  }
+  chunk.setData(ByteString.copyFrom(blob));
+  bytesLeft-=blob.length;
+  if (bytesLeft == 0) {
+    currentStream.close();
+    advanceInput();
+  }
+  return chunk.build();
+}
