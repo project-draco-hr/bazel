@@ -1,6 +1,10 @@
 {
   Map<Dependency,BuildConfiguration> builder=new HashMap<>();
   Set<Dependency> depsToEvaluate=new HashSet<>();
+  Set<Class<? extends BuildConfiguration.Fragment>> allFragments=null;
+  if (useUntrimmedDynamicConfigs(fromOptions)) {
+    allFragments=getAllFragments();
+  }
   final List<SkyKey> transitiveFragmentSkyKeys=new ArrayList<>();
   Map<Label,Set<Class<? extends BuildConfiguration.Fragment>>> fragmentsMap=new HashMap<>();
   Set<Label> labelsWithErrors=new HashSet<>();
@@ -10,6 +14,9 @@
     }
  else     if (key.getTransition() == Attribute.ConfigurationTransition.NULL) {
       builder.put(key,null);
+    }
+ else     if (useUntrimmedDynamicConfigs(fromOptions)) {
+      fragmentsMap.put(key.getLabel(),allFragments);
     }
  else {
       depsToEvaluate.add(key);
@@ -33,20 +40,24 @@
   }
   final List<SkyKey> configSkyKeys=new ArrayList<>();
   for (  Dependency key : keys) {
-    if (!depsToEvaluate.contains(key) || labelsWithErrors.contains(key.getLabel())) {
+    if (labelsWithErrors.contains(key.getLabel())) {
       continue;
     }
     Set<Class<? extends BuildConfiguration.Fragment>> depFragments=fragmentsMap.get(key.getLabel());
-    configSkyKeys.add(BuildConfigurationValue.key(depFragments,getDynamicConfigOptions(key,fromOptions,depFragments)));
+    if (depFragments != null) {
+      configSkyKeys.add(BuildConfigurationValue.key(depFragments,getDynamicConfigOptions(key,fromOptions,depFragments)));
+    }
   }
   EvaluationResult<SkyValue> configsResult=evaluateSkyKeys(eventHandler,configSkyKeys,true);
   for (  Dependency key : keys) {
-    if (!depsToEvaluate.contains(key) || labelsWithErrors.contains(key.getLabel())) {
+    if (labelsWithErrors.contains(key.getLabel())) {
       continue;
     }
     Set<Class<? extends BuildConfiguration.Fragment>> depFragments=fragmentsMap.get(key.getLabel());
-    SkyKey configKey=BuildConfigurationValue.key(depFragments,getDynamicConfigOptions(key,fromOptions,depFragments));
-    builder.put(key,((BuildConfigurationValue)configsResult.get(configKey)).getConfiguration());
+    if (depFragments != null) {
+      SkyKey configKey=BuildConfigurationValue.key(depFragments,getDynamicConfigOptions(key,fromOptions,depFragments));
+      builder.put(key,((BuildConfigurationValue)configsResult.get(configKey)).getConfiguration());
+    }
   }
   return builder;
 }

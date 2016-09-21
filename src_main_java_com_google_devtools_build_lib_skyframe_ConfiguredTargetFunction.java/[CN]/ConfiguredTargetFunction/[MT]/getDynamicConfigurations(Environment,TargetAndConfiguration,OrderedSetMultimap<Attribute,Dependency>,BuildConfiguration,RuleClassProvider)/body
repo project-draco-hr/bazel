@@ -15,12 +15,10 @@
       putOnlyEntry(trimmedDeps,attributeAndLabel,Dependency.withNullConfiguration(dep.getLabel()));
       continue;
     }
-    SkyKey fragmentsKey=TransitiveTargetValue.key(dep.getLabel());
-    TransitiveTargetValue transitiveDepInfo=(TransitiveTargetValue)env.getValue(fragmentsKey);
-    if (transitiveDepInfo == null) {
+    Set<Class<? extends BuildConfiguration.Fragment>> depFragments=getTransitiveFragments(env,dep.getLabel(),ctgValue.getConfiguration());
+    if (depFragments == null) {
       return null;
     }
-    Set<Class<? extends BuildConfiguration.Fragment>> depFragments=transitiveDepInfo.getTransitiveConfigFragments().toSet();
     checkForMissingFragments(env,ctgValue,attributeAndLabel.attribute.getName(),dep,depFragments);
     boolean sameFragments=depFragments.equals(ctgFragments);
     Attribute.Transition transition=dep.getTransition();
@@ -40,7 +38,7 @@
       ImmutableList.Builder<BuildOptions> toOptionsBuilder=ImmutableList.builder();
       for (      BuildOptions options : getDynamicTransitionOptions(ctgOptions,transition)) {
         if (!sameFragments) {
-          options=options.trim(BuildConfiguration.getOptionsClasses(transitiveDepInfo.getTransitiveConfigFragments(),ruleClassProvider));
+          options=options.trim(BuildConfiguration.getOptionsClasses(depFragments,ruleClassProvider));
         }
         toOptionsBuilder.add(options);
       }
