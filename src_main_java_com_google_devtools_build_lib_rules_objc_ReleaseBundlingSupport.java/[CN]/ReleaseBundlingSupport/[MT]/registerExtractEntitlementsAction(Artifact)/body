@@ -1,5 +1,5 @@
 {
   String shellCommand="set -e && " + "PLIST=$(mktemp -t entitlements.plist) && trap \"rm ${PLIST}\" EXIT && " + extractPlistCommand(releaseBundling.getProvisioningProfile()) + " > ${PLIST} && "+ "/usr/libexec/PlistBuddy -x -c 'Print Entitlements' ${PLIST} > "+ entitlements.getShellEscapedExecPathString();
-  ruleContext.registerAction(ObjcRuleClasses.spawnBashOnDarwinActionBuilder(shellCommand).setMnemonic("ExtractIosEntitlements").setProgressMessage("Extracting entitlements: " + ruleContext.getLabel()).addInput(releaseBundling.getProvisioningProfile()).addOutput(entitlements).build(ruleContext));
+  ruleContext.registerAction(ObjcRuleClasses.spawnBashOnDarwinActionBuilder(shellCommand).setMnemonic("ExtractIosEntitlements").disableSandboxing().setProgressMessage("Extracting entitlements: " + ruleContext.getLabel()).addInput(releaseBundling.getProvisioningProfile()).addOutput(entitlements).build(ruleContext));
   return this;
 }
