@@ -9,31 +9,13 @@
   }
 );
   final AtomicBoolean foundTarget=new AtomicBoolean(false);
-  final AtomicReference<InterruptedException> interrupt=new AtomicReference<>();
-  final AtomicReference<TargetParsingException> parsingException=new AtomicReference<>();
-  final AtomicReference<Exception> genericException=new AtomicReference<>();
   final Object callbackLock=new Object();
   List<List<PackageIdentifier>> partitions=ImmutableList.copyOf(Iterables.partition(pkgIds,MAX_PACKAGES_BULK_GET));
-  ArrayList<ListenableFuture<?>> futures=new ArrayList<>(partitions.size());
+  ArrayList<Callable<Void>> callables=new ArrayList<>(partitions.size());
   for (  final Iterable<PackageIdentifier> pkgIdBatch : partitions) {
-    futures.add(executor.submit(new Runnable(){
-      @Override public void run(){
-        Iterable<ResolvedTargets<Target>> resolvedTargets;
-        try {
-          resolvedTargets=bulkGetTargetsInPackage(originalPattern,pkgIdBatch,NO_FILTER).values();
-        }
- catch (        InterruptedException e) {
-          interrupt.compareAndSet(null,e);
-          return;
-        }
-catch (        TargetParsingException e) {
-          parsingException.compareAndSet(null,e);
-          return;
-        }
-catch (        RuntimeException e) {
-          genericException.compareAndSet(null,e);
-          return;
-        }
+    callables.add(new Callable<Void>(){
+      @Override public Void call() throws E, TargetParsingException, InterruptedException {
+        Iterable<ResolvedTargets<Target>> resolvedTargets=bulkGetTargetsInPackage(originalPattern,pkgIdBatch,NO_FILTER).values();
         List<Target> filteredTargets=new ArrayList<>(calculateSize(resolvedTargets));
         for (        ResolvedTargets<Target> targets : resolvedTargets) {
           for (          Target target : targets.getTargets()) {
@@ -43,30 +25,25 @@ catch (        RuntimeException e) {
             }
           }
         }
-        try {
 synchronized (callbackLock) {
-            callback.process(filteredTargets);
-          }
+          callback.process(filteredTargets);
         }
- catch (        InterruptedException e) {
-          interrupt.compareAndSet(null,e);
-        }
-catch (        Exception e) {
-          genericException.compareAndSet(e,null);
-        }
+        return null;
       }
     }
-));
+);
   }
-  try {
-    Futures.allAsList(futures).get();
+  List<Future<Void>> futures=executor.invokeAll(callables);
+  for (  Future<Void> future : futures) {
+    try {
+      future.get();
+    }
+ catch (    ExecutionException e) {
+      Throwables.propagateIfPossible(e.getCause(),exceptionClass);
+      Throwables.propagateIfPossible(e.getCause(),TargetParsingException.class,InterruptedException.class);
+      throw new IllegalStateException(e);
+    }
   }
- catch (  ExecutionException e) {
-    throw new IllegalStateException(e);
-  }
-  Throwables.propagateIfInstanceOf(interrupt.get(),InterruptedException.class);
-  Throwables.propagateIfInstanceOf(parsingException.get(),TargetParsingException.class);
-  Throwables.propagateIfPossible(genericException.get(),exceptionClass);
   if (!foundTarget.get()) {
     throw new TargetParsingException("no targets found beneath '" + pathFragment + "'");
   }
