@@ -1,11 +1,6 @@
 {
-  AttributeContainer attributeContainer=ruleContext.getRule().getAttributeContainer();
-  if (attributeContainer.isAttributeValueExplicitlySpecified("strict_deps")) {
-    return (boolean)attributeContainer.getAttr("strict_deps");
+  if (ruleContext.getFragment(JavaConfiguration.class).strictDepsJavaProtos()) {
+    return true;
   }
-  TriState defaultJavaProtoLibraryStrictDeps=ruleContext.getRule().getPackage().getDefaultStrictDepsJavaProtos();
-  if (defaultJavaProtoLibraryStrictDeps == TriState.AUTO) {
-    return ruleContext.getFragment(JavaConfiguration.class).strictDepsJavaProtos();
-  }
-  return defaultJavaProtoLibraryStrictDeps == TriState.YES;
+  return (boolean)ruleContext.getRule().getAttributeContainer().getAttr("strict_deps");
 }
