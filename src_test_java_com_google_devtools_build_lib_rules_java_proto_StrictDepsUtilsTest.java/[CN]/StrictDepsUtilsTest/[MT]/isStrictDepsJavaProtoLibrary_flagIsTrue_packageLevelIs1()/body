@@ -1,0 +1,7 @@
+{
+  useConfiguration("--strict_deps_java_protos=true");
+  scratch.file("z/BUILD","package(default_strict_deps_java_protos = 1)","java_proto_library(name = 'a')","java_proto_library(name = 'b', strict_deps = 0)","java_proto_library(name = 'c', strict_deps = 1)");
+  assertThat(StrictDepsUtils.isStrictDepsJavaProtoLibrary(getRuleContext("//z:a"))).isTrue();
+  assertThat(StrictDepsUtils.isStrictDepsJavaProtoLibrary(getRuleContext("//z:b"))).isFalse();
+  assertThat(StrictDepsUtils.isStrictDepsJavaProtoLibrary(getRuleContext("//z:c"))).isTrue();
+}

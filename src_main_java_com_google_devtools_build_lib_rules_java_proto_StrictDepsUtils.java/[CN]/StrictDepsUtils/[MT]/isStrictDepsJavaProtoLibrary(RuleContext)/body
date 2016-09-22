@@ -1,6 +1,11 @@
 {
-  if (ruleContext.getFragment(JavaConfiguration.class).strictDepsJavaProtos()) {
-    return true;
+  AttributeContainer attributeContainer=ruleContext.getRule().getAttributeContainer();
+  if (attributeContainer.isAttributeValueExplicitlySpecified("strict_deps")) {
+    return (boolean)attributeContainer.getAttr("strict_deps");
   }
-  return (boolean)ruleContext.getRule().getAttributeContainer().getAttr("strict_deps");
+  TriState defaultJavaProtoLibraryStrictDeps=ruleContext.getRule().getPackage().getDefaultStrictDepsJavaProtos();
+  if (defaultJavaProtoLibraryStrictDeps == TriState.AUTO) {
+    return ruleContext.getFragment(JavaConfiguration.class).strictDepsJavaProtos();
+  }
+  return defaultJavaProtoLibraryStrictDeps == TriState.YES;
 }
