@@ -1,15 +1,15 @@
 {
-  if (originalPath.isDirectory()) {
-    for (    Path originalSubpath : originalPath.getDirectoryEntries()) {
-      Path linkSubpath=linkPath.getRelative(originalSubpath.relativeTo(originalPath));
-      createHardLink(linkSubpath,originalSubpath);
-    }
-  }
- else {
+  if (originalPath.isFile()) {
     Path parentDir=linkPath.getParentDirectory();
     if (!parentDir.exists()) {
       FileSystemUtils.createDirectoryAndParents(parentDir);
     }
     originalPath.createHardLink(linkPath);
+  }
+ else   if (originalPath.isDirectory()) {
+    for (    Path originalSubpath : originalPath.getDirectoryEntries()) {
+      Path linkSubpath=linkPath.getRelative(originalSubpath.relativeTo(originalPath));
+      createHardLink(linkSubpath,originalSubpath);
+    }
   }
 }
