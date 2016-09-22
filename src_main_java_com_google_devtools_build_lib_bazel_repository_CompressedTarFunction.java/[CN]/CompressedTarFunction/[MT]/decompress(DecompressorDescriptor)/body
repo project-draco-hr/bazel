@@ -18,8 +18,9 @@
  else {
         if (entry.isSymbolicLink() || entry.isLink()) {
           PathFragment linkName=new PathFragment(entry.getLinkName());
-          if (linkName.isAbsolute()) {
-            linkName=linkName.relativeTo(PathFragment.ROOT_DIR);
+          boolean wasAbsolute=linkName.isAbsolute();
+          linkName=StripPrefixedPath.maybeDeprefix(linkName.getPathString(),prefix).getPathFragment();
+          if (wasAbsolute) {
             linkName=descriptor.repositoryPath().getRelative(linkName).asFragment();
           }
           if (entry.isSymbolicLink()) {
