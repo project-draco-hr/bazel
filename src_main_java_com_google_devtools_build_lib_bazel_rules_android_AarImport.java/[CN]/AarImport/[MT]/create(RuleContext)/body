@@ -12,5 +12,13 @@
   ApplicationManifest androidManifest=ApplicationManifest.fromExplicitManifest(ruleContext,androidManifestArtifact);
   FileProvider resourcesProvider=new FileProvider(new NestedSetBuilder<Artifact>(Order.NAIVE_LINK_ORDER).add(resources).build());
   ResourceApk resourceApk=androidManifest.packWithDataAndResources(ruleContext,new LocalResourceContainer.Builder(ruleContext).withResources(ImmutableList.of(resourcesProvider)).build(),ResourceDependencies.fromRuleDeps(ruleContext,JavaCommon.isNeverLink(ruleContext)),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_R_TXT),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_SYMBOLS_TXT),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_PROCESSED_MANIFEST),ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_ZIP));
-  return ruleBuilder.setFilesToBuild(NestedSetBuilder.<Artifact>stableOrder().add(resources).add(classesJar).build()).addProvider(RunfilesProvider.class,RunfilesProvider.EMPTY).addProvider(AndroidResourcesProvider.class,resourceApk.toResourceProvider(ruleContext.getLabel())).addProvider(JavaRuleOutputJarsProvider.class,new JavaRuleOutputJarsProvider.Builder().addOutputJar(classesJar,null,null).build()).build();
+  NestedSetBuilder<Artifact> filesToBuildBuilder=NestedSetBuilder.<Artifact>stableOrder().add(resources).add(classesJar);
+  JavaRuleOutputJarsProvider.Builder jarProviderBuilder=new JavaRuleOutputJarsProvider.Builder().addOutputJar(classesJar,null,null);
+  for (  TransitiveInfoCollection export : ruleContext.getPrerequisites("exports",Mode.TARGET)) {
+    for (    OutputJar jar : export.getProvider(JavaRuleOutputJarsProvider.class).getOutputJars()) {
+      jarProviderBuilder.addOutputJar(jar);
+      filesToBuildBuilder.add(jar.getClassJar());
+    }
+  }
+  return ruleBuilder.setFilesToBuild(filesToBuildBuilder.build()).addProvider(RunfilesProvider.class,RunfilesProvider.EMPTY).addProvider(AndroidResourcesProvider.class,resourceApk.toResourceProvider(ruleContext.getLabel())).addProvider(JavaRuleOutputJarsProvider.class,jarProviderBuilder.build()).build();
 }
