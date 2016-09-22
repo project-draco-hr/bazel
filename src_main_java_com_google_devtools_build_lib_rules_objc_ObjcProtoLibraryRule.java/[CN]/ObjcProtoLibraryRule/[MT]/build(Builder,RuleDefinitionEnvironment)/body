@@ -1,5 +1,5 @@
 {
-  return builder.requiresConfigurationFragments(ObjcConfiguration.class,AppleConfiguration.class).override(attr("deps",LABEL_LIST).allowedRuleClasses("proto_library","filegroup","objc_proto_library").aspect(objcProtoAspect).legacyAllowAnyFileType()).add(attr(OPTIONS_FILE_ATTR,LABEL).legacyAllowAnyFileType().singleArtifact().cfg(HOST)).add(attr(OUTPUT_CPP_ATTR,BOOLEAN).value(false)).add(attr(USE_OBJC_HEADER_NAMES_ATTR,BOOLEAN).value(false)).add(attr(PER_PROTO_INCLUDES_ATTR,BOOLEAN).value(false)).add(attr(PORTABLE_PROTO_FILTERS_ATTR,LABEL_LIST).legacyAllowAnyFileType().allowedRuleClasses("filegroup").cfg(HOST)).add(attr(PROTO_COMPILER_ATTR,LABEL).allowedFileTypes(FileType.of(".py"),FileType.of(".sh")).cfg(HOST).singleArtifact().value(new ComputedDefault(PORTABLE_PROTO_FILTERS_ATTR){
+  return builder.requiresConfigurationFragments(ObjcConfiguration.class,AppleConfiguration.class).override(attr("deps",LABEL_LIST).allowedRuleClasses("proto_library","filegroup","objc_proto_library").aspect(objcProtoAspect).legacyAllowAnyFileType()).add(attr(OPTIONS_FILE_ATTR,LABEL).legacyAllowAnyFileType().singleArtifact().cfg(HOST)).add(attr(USE_OBJC_HEADER_NAMES_ATTR,BOOLEAN).value(false)).add(attr(PER_PROTO_INCLUDES_ATTR,BOOLEAN).value(false)).add(attr(PORTABLE_PROTO_FILTERS_ATTR,LABEL_LIST).legacyAllowAnyFileType().allowedRuleClasses("filegroup").cfg(HOST)).add(attr(PROTO_COMPILER_ATTR,LABEL).allowedFileTypes(FileType.of(".py"),FileType.of(".sh")).cfg(HOST).singleArtifact().value(new ComputedDefault(PORTABLE_PROTO_FILTERS_ATTR){
     @Override public Object getDefault(    AttributeMap rule){
       return rule.isAttributeValueExplicitlySpecified(PORTABLE_PROTO_FILTERS_ATTR) ? env.getToolsLabel("//tools/objc:protobuf_compiler_wrapper") : env.getToolsLabel("//tools/objc:compile_protos");
     }
@@ -9,13 +9,13 @@
       return rule.isAttributeValueExplicitlySpecified(PORTABLE_PROTO_FILTERS_ATTR) ? env.getToolsLabel("//tools/objc:protobuf_compiler_support") : env.getToolsLabel("//tools/objc:proto_support");
     }
   }
-)).add(attr(PROTO_LIB_ATTR,LABEL).allowedRuleClasses("objc_library").value(new ComputedDefault(PORTABLE_PROTO_FILTERS_ATTR,OUTPUT_CPP_ATTR){
+)).add(attr(PROTO_LIB_ATTR,LABEL).allowedRuleClasses("objc_library").value(new ComputedDefault(PORTABLE_PROTO_FILTERS_ATTR){
     @Override public Object getDefault(    AttributeMap rule){
       if (rule.isAttributeValueExplicitlySpecified(PORTABLE_PROTO_FILTERS_ATTR)) {
         return env.getLabel("//external:objc_protobuf_lib");
       }
  else {
-        return rule.get(OUTPUT_CPP_ATTR,Type.BOOLEAN) ? env.getLabel("//external:objc_proto_cpp_lib") : env.getLabel("//external:objc_proto_lib");
+        return env.getLabel("//external:objc_proto_lib");
       }
     }
   }
