@@ -1,0 +1,19 @@
+{
+  Map<Description,Integer> map=new HashMap<>();
+  List<Description> sortedDescriptions=new ArrayList<>(descriptions);
+  Collections.sort(sortedDescriptions,new WeightClassAndTestNameComparator(weightStrategy));
+  PriorityQueue<Shard> queue=new PriorityQueue<>(numShards);
+  for (int i=0; i < numShards; i++) {
+    queue.offer(new Shard(i));
+  }
+  for (  Description description : sortedDescriptions) {
+    if (!description.isTest()) {
+      throw new IllegalArgumentException("Test suite should not be included in the set of tests " + "to shard: " + description.getDisplayName());
+    }
+    Shard shard=queue.remove();
+    shard.addWeight(weightStrategy.getDescriptionWeight(description));
+    queue.offer(shard);
+    map.put(description,shard.getIndex());
+  }
+  return Collections.unmodifiableMap(map);
+}
