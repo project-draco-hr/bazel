@@ -25,6 +25,12 @@
   manifestMerger.setPlaceHolderValues(placeholders);
   try {
     MergingReport mergingReport=manifestMerger.merge();
+    if (logFile != null) {
+      logFile.getParent().toFile().mkdirs();
+      try (PrintStream stream=new PrintStream(logFile.toFile())){
+        mergingReport.log(new PrintStreamLogger(stream));
+      }
+     }
 switch (mergingReport.getResult()) {
 case WARNING:
       mergingReport.log(stdLogger);
