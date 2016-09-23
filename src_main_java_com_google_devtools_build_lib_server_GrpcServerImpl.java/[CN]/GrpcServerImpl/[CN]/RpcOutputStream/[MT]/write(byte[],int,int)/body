@@ -1,12 +1,13 @@
 {
-  ByteString input=ByteString.copyFrom(b,off,inlen);
-  RunResponse.Builder response=RunResponse.newBuilder().setCookie(responseCookie).setCommandId(commandId);
+  for (int i=0; i < inlen; i+=CHUNK_SIZE) {
+    ByteString input=ByteString.copyFrom(b,off + i,Math.min(CHUNK_SIZE,inlen - i));
+    RunResponse.Builder response=RunResponse.newBuilder().setCookie(responseCookie).setCommandId(commandId);
 switch (type) {
 case STDOUT:
-    response.setStandardOutput(input);
-  break;
+      response.setStandardOutput(input);
+    break;
 case STDERR:
-response.setStandardError(input);
+  response.setStandardError(input);
 break;
 default :
 throw new IllegalStateException();
@@ -14,5 +15,6 @@ throw new IllegalStateException();
 if (!sink.offer(response.build())) {
 log.info(String.format("Client disconnected received for command %s on thread %s",commandId,Thread.currentThread().getName()));
 throw new IOException("Client disconnected");
+}
 }
 }
