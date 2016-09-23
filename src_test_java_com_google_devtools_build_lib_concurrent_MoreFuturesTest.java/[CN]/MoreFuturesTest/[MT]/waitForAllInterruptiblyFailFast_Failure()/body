@@ -1,0 +1,18 @@
+{
+  List<DelayedFuture> futureList=new ArrayList<>();
+  for (int i=1; i < 6; i++) {
+    DelayedFuture future=new DelayedFuture(i * 1000);
+    executorService.execute(future);
+    futureList.add(future);
+  }
+  DelayedFuture toFail=new DelayedFuture(1000);
+  futureList.add(toFail);
+  toFail.makeItFail();
+  try {
+    MoreFutures.waitForAllInterruptiblyFailFast(futureList);
+    fail();
+  }
+ catch (  ExecutionException ee) {
+    assertThat(ee.getCause()).hasMessage("I like to fail!!");
+  }
+}

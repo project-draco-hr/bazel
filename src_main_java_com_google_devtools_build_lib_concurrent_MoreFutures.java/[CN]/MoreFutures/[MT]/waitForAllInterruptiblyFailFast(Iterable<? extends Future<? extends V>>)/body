@@ -1,0 +1,21 @@
+{
+  int numFutures=Iterables.size(futures);
+  while (true) {
+    int numCompletedFutures=0;
+    for (    Future<? extends V> future : futures) {
+      try {
+        future.get(1,TimeUnit.MILLISECONDS);
+      }
+ catch (      TimeoutException te) {
+        continue;
+      }
+catch (      ExecutionException ee) {
+        throw ee;
+      }
+      numCompletedFutures++;
+    }
+    if (numCompletedFutures == numFutures) {
+      return;
+    }
+  }
+}

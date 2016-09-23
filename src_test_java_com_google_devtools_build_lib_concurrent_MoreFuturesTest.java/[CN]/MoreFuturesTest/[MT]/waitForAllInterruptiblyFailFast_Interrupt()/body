@@ -1,0 +1,38 @@
+{
+  final List<DelayedFuture> futureList=new ArrayList<>();
+  for (int i=1; i < 6; i++) {
+    DelayedFuture future=new DelayedFuture(Integer.MAX_VALUE);
+    executorService.execute(future);
+    futureList.add(future);
+  }
+  final Thread testThread=Thread.currentThread();
+  Thread interruptThread=new Thread(){
+    @Override public void run(){
+      for (      DelayedFuture delayedFuture : futureList) {
+        try {
+          delayedFuture.getLatch.await(TestUtils.WAIT_TIMEOUT_MILLISECONDS,TimeUnit.MILLISECONDS);
+        }
+ catch (        InterruptedException ie) {
+          throw new IllegalStateException(ie);
+        }
+      }
+      testThread.interrupt();
+    }
+  }
+;
+  interruptThread.start();
+  try {
+    try {
+      MoreFutures.waitForAllInterruptiblyFailFast(futureList);
+      fail();
+    }
+ catch (    InterruptedException expected) {
+    }
+  }
+  finally {
+    for (    DelayedFuture delayedFuture : futureList) {
+      delayedFuture.cancel(true);
+    }
+    interruptThread.interrupt();
+  }
+}

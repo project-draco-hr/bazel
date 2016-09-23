@@ -1,0 +1,14 @@
+{
+  List<DelayedFuture> futureList=new ArrayList<>();
+  for (int i=1; i < 6; i++) {
+    DelayedFuture future=new DelayedFuture(i * 1000);
+    executorService.execute(future);
+    futureList.add(future);
+  }
+  MoreFutures.waitForAllInterruptiblyFailFast(futureList);
+  for (  DelayedFuture delayedFuture : futureList) {
+    assertFalse(delayedFuture.wasCanceled);
+    assertFalse(delayedFuture.wasInterrupted);
+    assertNotNull(delayedFuture.get());
+  }
+}
