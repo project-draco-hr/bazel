@@ -1,38 +1,3 @@
 {
-  Executor executor=actionExecutionContext.getExecutor();
-  if (!spawn.isRemotable() || spawn.hasNoSandbox()) {
-    SandboxHelpers.fallbackToNonSandboxedExecution(spawn,actionExecutionContext,executor);
-    return;
-  }
-  SandboxHelpers.reportSubcommand(executor,spawn);
-  SandboxHelpers.postActionStatusMessage(executor,spawn);
-  Path sandboxPath=SandboxHelpers.getSandboxRoot(blazeDirs,productName,uuid,execCounter);
-  Path sandboxExecRoot=sandboxPath.getRelative("execroot").getRelative(execRoot.getBaseName());
-  Path sandboxTempDir=sandboxPath.getRelative("tmp");
-  Set<Path> writableDirs=getWritableDirs(sandboxExecRoot,spawn.getEnvironment());
-  try {
-    SymlinkedExecRoot symlinkedExecRoot=new SymlinkedExecRoot(sandboxExecRoot);
-    ImmutableSet<PathFragment> outputs=SandboxHelpers.getOutputFiles(spawn);
-    symlinkedExecRoot.createFileSystem(getMounts(spawn,actionExecutionContext),outputs,writableDirs);
-    sandboxTempDir.createDirectory();
-    final SandboxRunner runner;
-    if (fullySupported) {
-      runner=new LinuxSandboxRunner(execRoot,sandboxPath,sandboxExecRoot,sandboxTempDir,getWritableDirs(sandboxExecRoot,spawn.getEnvironment()),getInaccessiblePaths(),getBindMounts(blazeDirs),verboseFailures,sandboxOptions.sandboxDebug);
-    }
- else {
-      runner=new ProcessWrapperRunner(execRoot,sandboxPath,sandboxExecRoot,verboseFailures);
-    }
-    try {
-      runner.run(spawn.getArguments(),spawn.getEnvironment(),actionExecutionContext.getFileOutErr(),Spawns.getTimeoutSeconds(spawn),SandboxHelpers.shouldAllowNetwork(buildRequest,spawn));
-    }
-  finally {
-      symlinkedExecRoot.copyOutputs(execRoot,outputs);
-      if (!sandboxOptions.sandboxDebug) {
-        SandboxHelpers.lazyCleanup(backgroundWorkers,runner);
-      }
-    }
-  }
- catch (  IOException e) {
-    throw new UserExecException("I/O error during sandboxed execution",e);
-  }
+  exec(spawn,actionExecutionContext,null);
 }
