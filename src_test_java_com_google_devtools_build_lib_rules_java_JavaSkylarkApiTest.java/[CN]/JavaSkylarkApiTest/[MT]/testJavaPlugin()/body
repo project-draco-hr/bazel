@@ -3,7 +3,7 @@
   scratch.file("java/test/BUILD","load(':extension.bzl', 'my_rule')","java_library(name = 'plugin_dep',","    srcs = [ 'ProcessorDep.java'])","java_plugin(name = 'plugin',","    srcs = ['AnnotationProcessor.java'],","    processor_class = 'com.google.process.stuff',","    deps = [ ':plugin_dep' ])","java_library(name = 'to_be_processed',","    plugins = [':plugin'],","    srcs = ['ToBeProcessed.java'])","my_rule(name = 'my', dep = ':to_be_processed')");
   ConfiguredTarget configuredTarget=getConfiguredTarget("//java/test:my");
   SkylarkProviders provider=configuredTarget.getProvider(SkylarkProviders.class);
-  SkylarkClassObject skylarkClassObject=provider.getDeclaredProvider(new Key(Label.parseAbsolute("//java/test:extension.bzl"),"result"));
+  SkylarkClassObject skylarkClassObject=provider.getDeclaredProvider(new SkylarkKey(Label.parseAbsolute("//java/test:extension.bzl"),"result"));
   assertThat(Iterables.transform((List<?>)skylarkClassObject.getValue("processor_classpath"),new Function<Object,String>(){
     @Nullable @Override public String apply(    @Nullable Object o){
       return ((Artifact)o).getFilename();
