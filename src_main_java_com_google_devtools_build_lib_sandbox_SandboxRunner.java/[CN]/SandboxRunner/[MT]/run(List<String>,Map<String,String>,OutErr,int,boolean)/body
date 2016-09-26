@@ -1,5 +1,11 @@
 {
-  Command cmd=getCommand(arguments,environment,timeout,allowNetwork);
+  Command cmd;
+  try {
+    cmd=getCommand(arguments,environment,timeout,allowNetwork);
+  }
+ catch (  IOException e) {
+    throw new UserExecException("I/O error during sandboxed execution",e);
+  }
   try {
     cmd.execute(new byte[]{},getCommandObserver(timeout),outErr.getOutputStream(),outErr.getErrorStream(),true);
   }

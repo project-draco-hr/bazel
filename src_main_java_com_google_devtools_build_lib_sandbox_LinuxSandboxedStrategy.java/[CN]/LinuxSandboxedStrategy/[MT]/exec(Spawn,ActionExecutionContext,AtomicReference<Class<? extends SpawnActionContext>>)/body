@@ -10,37 +10,15 @@
   Path sandboxExecRoot=sandboxPath.getRelative("execroot").getRelative(execRoot.getBaseName());
   Path sandboxTempDir=sandboxPath.getRelative("tmp");
   Set<Path> writableDirs=getWritableDirs(sandboxExecRoot,spawn.getEnvironment());
+  SymlinkedExecRoot symlinkedExecRoot=new SymlinkedExecRoot(sandboxExecRoot);
+  ImmutableSet<PathFragment> outputs=SandboxHelpers.getOutputFiles(spawn);
   try {
-    SymlinkedExecRoot symlinkedExecRoot=new SymlinkedExecRoot(sandboxExecRoot);
-    ImmutableSet<PathFragment> outputs=SandboxHelpers.getOutputFiles(spawn);
     symlinkedExecRoot.createFileSystem(getMounts(spawn,actionExecutionContext),outputs,writableDirs);
     sandboxTempDir.createDirectory();
-    final SandboxRunner runner;
-    if (fullySupported) {
-      runner=new LinuxSandboxRunner(execRoot,sandboxPath,sandboxExecRoot,sandboxTempDir,getWritableDirs(sandboxExecRoot,spawn.getEnvironment()),getInaccessiblePaths(),getBindMounts(blazeDirs),verboseFailures,sandboxOptions.sandboxDebug);
-    }
- else {
-      runner=new ProcessWrapperRunner(execRoot,sandboxPath,sandboxExecRoot,verboseFailures);
-    }
-    try {
-      runner.run(spawn.getArguments(),spawn.getEnvironment(),actionExecutionContext.getFileOutErr(),Spawns.getTimeoutSeconds(spawn),SandboxHelpers.shouldAllowNetwork(buildRequest,spawn));
-    }
-  finally {
-      if (writeOutputFiles != null && !writeOutputFiles.compareAndSet(null,LinuxSandboxedStrategy.class)) {
-        Thread.currentThread().interrupt();
-      }
- else {
-        symlinkedExecRoot.copyOutputs(execRoot,outputs);
-      }
-      if (!sandboxOptions.sandboxDebug) {
-        SandboxHelpers.lazyCleanup(backgroundWorkers,runner);
-      }
-    }
   }
  catch (  IOException e) {
     throw new UserExecException("I/O error during sandboxed execution",e);
   }
-  if (Thread.interrupted()) {
-    throw new InterruptedException();
-  }
+  SandboxRunner runner=getSandboxRunner(spawn,sandboxPath,sandboxExecRoot,sandboxTempDir);
+  runSpawn(spawn,actionExecutionContext,spawn.getEnvironment(),symlinkedExecRoot,outputs,runner,writeOutputFiles);
 }
