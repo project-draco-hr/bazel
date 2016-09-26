@@ -12,14 +12,14 @@
     }
   }
   if (mandatoryPositionals > args.size() || args.size() > mandatoryPositionals + callable.parameters().length) {
-    return ArgumentListConversionResult.fromError("Too many arguments");
+    return null;
   }
   int i=0;
   if (mandatoryPositionals > 0) {
     for (    Class<?> param : params) {
       Object value=args.get(i);
       if (!param.isAssignableFrom(value.getClass())) {
-        return ArgumentListConversionResult.fromError(String.format("Cannot convert parameter at position %d to type %s",i,param.toString()));
+        return null;
       }
       builder.add(value);
       i++;
@@ -37,33 +37,30 @@
     Object value=null;
     if (i < args.size()) {
       value=args.get(i);
-      if (!param.positional()) {
-        return ArgumentListConversionResult.fromError(String.format("Parameter '%s' is not positional",param.name()));
-      }
- else       if (!type.contains(value)) {
-        return ArgumentListConversionResult.fromError(String.format("Cannot convert parameter '%s' to type %s",param.name(),type.toString()));
+      if (!param.positional() || !type.contains(value)) {
+        return null;
       }
       i++;
     }
  else     if (param.named() && keys.remove(param.name())) {
       value=kwargs.get(param.name());
       if (!type.contains(value)) {
-        return ArgumentListConversionResult.fromError(String.format("Cannot convert parameter '%s' to type %s",param.name(),type.toString()));
+        return null;
       }
     }
  else {
       if (param.defaultValue().isEmpty()) {
-        return ArgumentListConversionResult.fromError(String.format("Parameter '%s' has no default value",param.name()));
+        return null;
       }
       value=SkylarkSignatureProcessor.getDefaultValue(param,null);
     }
     builder.add(value);
     if (!param.noneable() && value instanceof NoneType) {
-      return ArgumentListConversionResult.fromError(String.format("Parameter '%s' cannot be None",param.name()));
+      return null;
     }
   }
   if (i < args.size() || !keys.isEmpty()) {
-    return ArgumentListConversionResult.fromError("Too many arguments");
+    return null;
   }
-  return ArgumentListConversionResult.fromArgumentList(builder.build());
+  return builder.build();
 }

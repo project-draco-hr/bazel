@@ -1,14 +1,13 @@
 {
   Pair<MethodDescriptor,List<Object>> matchingMethod=null;
   List<MethodDescriptor> methods=getMethods(objClass,methodName,getLocation());
-  ArgumentListConversionResult argumentListConversionResult=null;
   if (methods != null) {
     for (    MethodDescriptor method : methods) {
       if (!method.getAnnotation().structField()) {
-        argumentListConversionResult=convertArgumentList(args,kwargs,method);
-        if (argumentListConversionResult.getArguments() != null) {
+        List<Object> resultArgs=convertArgumentList(args,kwargs,method);
+        if (resultArgs != null) {
           if (matchingMethod == null) {
-            matchingMethod=new Pair<>(method,argumentListConversionResult.getArguments());
+            matchingMethod=new Pair<>(method,resultArgs);
           }
  else {
             throw new EvalException(getLocation(),String.format("Type %s has multiple matches for %s",EvalUtils.getDataTypeNameFromClass(objClass),formatMethod(args,kwargs)));
@@ -18,14 +17,7 @@
     }
   }
   if (matchingMethod == null) {
-    String errorMessage;
-    if (argumentListConversionResult == null || argumentListConversionResult.getError() == null) {
-      errorMessage=String.format("Type %s has no %s",EvalUtils.getDataTypeNameFromClass(objClass),formatMethod(args,kwargs));
-    }
- else {
-      errorMessage=String.format("%s (in %s of %s).",argumentListConversionResult.getError(),formatMethod(args,kwargs),EvalUtils.getDataTypeNameFromClass(objClass));
-    }
-    throw new EvalException(getLocation(),errorMessage);
+    throw new EvalException(getLocation(),String.format("Type %s has no %s",EvalUtils.getDataTypeNameFromClass(objClass),formatMethod(args,kwargs)));
   }
   return matchingMethod;
 }
