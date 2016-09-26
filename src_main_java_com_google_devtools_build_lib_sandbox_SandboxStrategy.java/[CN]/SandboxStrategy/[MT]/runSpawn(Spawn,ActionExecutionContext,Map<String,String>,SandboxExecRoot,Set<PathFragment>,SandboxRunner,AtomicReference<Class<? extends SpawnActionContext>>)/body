@@ -1,4 +1,5 @@
 {
+  EventHandler eventHandler=actionExecutionContext.getExecutor().getEventHandler();
   try {
     runner.run(spawn.getArguments(),spawnEnvironment,actionExecutionContext.getFileOutErr(),Spawns.getTimeoutSeconds(spawn),SandboxHelpers.shouldAllowNetwork(buildRequest,spawn));
   }
@@ -11,11 +12,11 @@
         sandboxExecRoot.copyOutputs(execRoot,outputs);
       }
  catch (      IOException e) {
-        actionExecutionContext.getExecutor().getEventHandler().handle(Event.error("I/O exception while extracting output artifacts from sandboxed execution: " + e));
+        eventHandler.handle(Event.error("I/O exception while extracting output artifacts from sandboxed execution: " + e));
       }
     }
     if (!sandboxOptions.sandboxDebug) {
-      SandboxHelpers.lazyCleanup(backgroundWorkers,runner);
+      SandboxHelpers.lazyCleanup(backgroundWorkers,eventHandler,runner);
     }
   }
   if (Thread.interrupted()) {

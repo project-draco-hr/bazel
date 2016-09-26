@@ -1,5 +1,26 @@
 {
+  backgroundWorkers.shutdownNow();
+  if (sandboxOptions != null && !sandboxOptions.sandboxDebug) {
+    Path sandboxRoot=env.getDirectories().getOutputBase().getRelative(env.getRuntime().getProductName() + "-sandbox");
+    if (sandboxRoot.exists()) {
+      try {
+        for (        Path child : sandboxRoot.getDirectoryEntries()) {
+          try {
+            FileSystemUtils.deleteTree(child);
+          }
+ catch (          IOException e) {
+            env.getReporter().handle(Event.warn(String.format("Could not delete sandbox directory: %s (%s)",child.getPathString(),e)));
+          }
+        }
+        sandboxRoot.delete();
+      }
+ catch (      IOException e) {
+        env.getReporter().handle(Event.warn(String.format("Could not delete %s directory: %s",sandboxRoot.getBaseName(),e)));
+      }
+    }
+  }
   env=null;
   buildRequest=null;
-  ExecutorUtil.interruptibleShutdown(backgroundWorkers);
+  backgroundWorkers=null;
+  sandboxOptions=null;
 }
