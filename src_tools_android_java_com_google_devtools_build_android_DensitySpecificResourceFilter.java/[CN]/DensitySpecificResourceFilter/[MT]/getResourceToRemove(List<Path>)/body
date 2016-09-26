@@ -1,4 +1,10 @@
 {
+  Predicate<ResourceInfo> requestedDensityFilter=new Predicate<ResourceInfo>(){
+    @Override public boolean apply(    @Nullable ResourceInfo info){
+      return !densities.contains(info.getDensity());
+    }
+  }
+;
   List<ResourceInfo> resourceInfos=getResourceInfos(resourcePaths);
   List<ResourceInfo> densityResourceInfos=filterDensityResourceInfos(resourceInfos);
   List<ResourceInfo> resourceInfoToRemove=new ArrayList<>();
@@ -14,7 +20,7 @@
           }
         }
 ).immutableSortedCopy(qualifierResourceInfos);
-        resourceInfoToRemove.addAll(sortedResourceInfos.subList(1,sortedResourceInfos.size()));
+        resourceInfoToRemove.addAll(Collections2.filter(sortedResourceInfos.subList(1,sortedResourceInfos.size()),requestedDensityFilter));
       }
     }
   }
