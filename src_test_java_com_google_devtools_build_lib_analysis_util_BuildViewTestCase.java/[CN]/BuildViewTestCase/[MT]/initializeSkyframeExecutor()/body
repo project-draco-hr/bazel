@@ -13,7 +13,10 @@
   pkgFactory=analysisMock.getPackageFactoryForTesting().create(ruleClassProvider,getPlatformSetRegexps(),getEnvironmentExtensions(),scratch.getFileSystem());
   tsgm=new TimestampGranularityMonitor(BlazeClock.instance());
   skyframeExecutor=SequencedSkyframeExecutor.create(pkgFactory,directories,binTools,workspaceStatusActionFactory,ruleClassProvider.getBuildInfoFactories(),ImmutableList.<DiffAwareness.Factory>of(),Predicates.<PathFragment>alwaysFalse(),getPreprocessorFactorySupplier(),analysisMock.getSkyFunctions(),getPrecomputedValues(),ImmutableList.<SkyValueDirtinessChecker>of(),analysisMock.getProductName());
-  skyframeExecutor.preparePackageLoading(new PathPackageLocator(outputBase,ImmutableList.of(rootDirectory)),ConstantRuleVisibility.PUBLIC,true,7,"",UUID.randomUUID(),ImmutableMap.<String,String>of(),tsgm);
+  packageCacheOptions.defaultVisibility=ConstantRuleVisibility.PUBLIC;
+  packageCacheOptions.showLoadingProgress=true;
+  packageCacheOptions.globbingThreads=7;
+  skyframeExecutor.preparePackageLoading(new PathPackageLocator(outputBase,ImmutableList.of(rootDirectory)),packageCacheOptions,"",UUID.randomUUID(),ImmutableMap.<String,String>of(),tsgm);
   useConfiguration();
   setUpSkyframe();
   ResourceManager.instance().setAvailableResources(getStartingResources());

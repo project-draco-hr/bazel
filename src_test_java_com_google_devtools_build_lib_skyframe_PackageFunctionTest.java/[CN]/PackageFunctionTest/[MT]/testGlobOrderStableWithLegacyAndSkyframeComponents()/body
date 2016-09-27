@@ -15,7 +15,11 @@
   value=validPackage(skyKey);
   assertThat((Iterable<Label>)value.getPackage().getTarget("foo").getAssociatedRule().getAttributeContainer().getAttr("srcs")).containsExactly(Label.parseAbsoluteUnchecked("//foo:a.config"),Label.parseAbsoluteUnchecked("//foo:b.txt")).inOrder();
   getSkyframeExecutor().resetEvaluator();
-  getSkyframeExecutor().preparePackageLoading(new PathPackageLocator(outputBase,ImmutableList.<Path>of(rootDirectory)),ConstantRuleVisibility.PUBLIC,true,7,"",UUID.randomUUID(),ImmutableMap.<String,String>of(),tsgm);
+  PackageCacheOptions packageCacheOptions=Options.getDefaults(PackageCacheOptions.class);
+  packageCacheOptions.defaultVisibility=ConstantRuleVisibility.PUBLIC;
+  packageCacheOptions.showLoadingProgress=true;
+  packageCacheOptions.globbingThreads=7;
+  getSkyframeExecutor().preparePackageLoading(new PathPackageLocator(outputBase,ImmutableList.<Path>of(rootDirectory)),packageCacheOptions,"",UUID.randomUUID(),ImmutableMap.<String,String>of(),tsgm);
   value=validPackage(skyKey);
   assertThat((Iterable<Label>)value.getPackage().getTarget("foo").getAssociatedRule().getAttributeContainer().getAttr("srcs")).containsExactly(Label.parseAbsoluteUnchecked("//foo:a.config"),Label.parseAbsoluteUnchecked("//foo:b.txt")).inOrder();
 }
