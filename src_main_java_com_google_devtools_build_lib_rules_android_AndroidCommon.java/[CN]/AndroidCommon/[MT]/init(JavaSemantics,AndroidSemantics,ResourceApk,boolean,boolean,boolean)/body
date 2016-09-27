@@ -1,7 +1,14 @@
 {
   classJar=ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_LIBRARY_CLASS_JAR);
   idlHelper=new AndroidIdlHelper(ruleContext,classJar);
-  JavaTargetAttributes.Builder attributes=javaCommon.initCommon(idlHelper.getIdlGeneratedJavaSources(),androidSemantics.getJavacArguments(ruleContext)).setBootClassPath(ImmutableList.of(AndroidSdkProvider.fromRuleContext(ruleContext).getAndroidJar()));
+  ImmutableList<Artifact> bootclasspath;
+  if (getAndroidConfig(ruleContext).desugarJava8()) {
+    bootclasspath=ImmutableList.<Artifact>builder().addAll(ruleContext.getPrerequisite("$desugar_java8_extra_bootclasspath",Mode.HOST).getProvider(FileProvider.class).getFilesToBuild()).add(AndroidSdkProvider.fromRuleContext(ruleContext).getAndroidJar()).build();
+  }
+ else {
+    bootclasspath=ImmutableList.of(AndroidSdkProvider.fromRuleContext(ruleContext).getAndroidJar());
+  }
+  JavaTargetAttributes.Builder attributes=javaCommon.initCommon(idlHelper.getIdlGeneratedJavaSources(),androidSemantics.getJavacArguments(ruleContext)).setBootClassPath(bootclasspath);
   JavaCompilationArtifacts.Builder artifactsBuilder=new JavaCompilationArtifacts.Builder();
   ImmutableList.Builder<Artifact> jarsProducedForRuntime=ImmutableList.builder();
   NestedSetBuilder<Artifact> filesBuilder=NestedSetBuilder.<Artifact>stableOrder();
