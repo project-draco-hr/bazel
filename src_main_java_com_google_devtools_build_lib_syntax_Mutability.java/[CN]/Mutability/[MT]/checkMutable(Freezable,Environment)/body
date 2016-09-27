@@ -5,4 +5,13 @@
   if (!object.mutability().equals(env.mutability())) {
     throw new AssertionError("trying to mutate an object from a different context");
   }
+  if (env.mutability().isLocked(object)) {
+    Iterable<String> locs=Iterables.transform(env.mutability().getLockLocations(object),new Function<Location,String>(){
+      @Override public String apply(      Location loc){
+        return loc.print();
+      }
+    }
+);
+    throw new MutabilityException("trying to mutate a locked object (is it currently being iterated over by a for loop " + "or comprehension?)\n" + "Object locked at the following locations: "+ String.join(", ",locs));
+  }
 }

@@ -1,0 +1,16 @@
+{
+  if (!object.mutability().equals(this)) {
+    throw new AssertionError("trying to unlock an object from a different context");
+  }
+  if (!isMutable) {
+    return;
+  }
+  Integer hash=System.identityHashCode(object);
+  if (!lockedItems.containsKey(hash)) {
+    throw new AssertionError("trying to unlock an object that is not locked");
+  }
+  boolean changed=lockedItems.remove(hash,loc);
+  if (!changed) {
+    throw new AssertionError(Printer.format("trying to unlock an object for a location at which " + "it was not locked (%r)",loc));
+  }
+}

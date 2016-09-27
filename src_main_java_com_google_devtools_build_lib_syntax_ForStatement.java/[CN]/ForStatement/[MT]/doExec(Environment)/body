@@ -1,17 +1,23 @@
 {
   Object o=collection.eval(env);
   Iterable<?> col=EvalUtils.toIterable(o,getLocation());
-  for (  Object it : ImmutableList.copyOf(col)) {
-    variable.assign(env,getLocation(),it);
-    try {
-      for (      Statement stmt : block) {
-        stmt.exec(env);
+  EvalUtils.lock(o,getLocation());
+  try {
+    for (    Object it : col) {
+      variable.assign(env,getLocation(),it);
+      try {
+        for (        Statement stmt : block) {
+          stmt.exec(env);
+        }
+      }
+ catch (      FlowException ex) {
+        if (ex.mustTerminateLoop()) {
+          return;
+        }
       }
     }
- catch (    FlowException ex) {
-      if (ex.mustTerminateLoop()) {
-        return;
-      }
-    }
+  }
+  finally {
+    EvalUtils.unlock(o,getLocation());
   }
 }
