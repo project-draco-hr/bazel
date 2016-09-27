@@ -1,0 +1,6 @@
+{
+  setRulesAvailableInTests(new TestAspects.BaseRule(),new TestAspects.SimpleRule(),new TestAspects.AllAttributesAspectRule());
+  pkg("a","simple(name='a', foo=[':b'], foo1=':c', txt='some text')","simple(name='b', foo=[], txt='some text')","simple(name='c', foo=[], txt='more text')","all_attributes_aspect(name='x', foo=[':a'])");
+  ConfiguredTarget a=getConfiguredTarget("//a:x");
+  assertThat(a.getProvider(RuleInfo.class).getData()).containsExactly("aspect //a:a","aspect //a:b","aspect //a:c","rule //a:x");
+}

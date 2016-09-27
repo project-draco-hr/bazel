@@ -1,9 +1,15 @@
 {
   NestedSetBuilder<String> result=new NestedSetBuilder<>(Order.STABLE_ORDER);
   result.add(me);
-  if (ruleContext.attributes().has("foo",LABEL_LIST)) {
-    for (    AspectInfo dep : ruleContext.getPrerequisites("foo",Mode.TARGET,AspectInfo.class)) {
-      result.addTransitive(dep.getData());
+  Iterable<String> attributeNames=ruleContext.attributes().getAttributeNames();
+  for (  String attributeName : attributeNames) {
+    Type<?> attributeType=ruleContext.attributes().getAttributeType(attributeName);
+    if (!LABEL.equals(attributeType) && !LABEL_LIST.equals(attributeType)) {
+      continue;
+    }
+    Iterable<AspectInfo> prerequisites=ruleContext.getPrerequisites(attributeName,Mode.DONT_CHECK,AspectInfo.class);
+    for (    AspectInfo prerequisite : prerequisites) {
+      result.addTransitive(prerequisite.getData());
     }
   }
   return result.build();
