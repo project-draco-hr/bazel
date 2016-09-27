@@ -7,16 +7,16 @@
   registerAction(action);
   builder.buildArtifacts(reporter,ImmutableSet.of(actionOutput),null,null,null,null,executor,null,false,null,null);
   SkyKey actionKey=ActionExecutionValue.key(action);
-  TrackingEvaluationProgressReceiver.EvaluatedEntry evaluatedAction=invalidationReceiver.getEvalutedEntry(actionKey);
+  TrackingEvaluationProgressReceiver.EvaluatedEntry evaluatedAction=progressReceiver.getEvalutedEntry(actionKey);
   assertThat(evaluatedAction).isNotNull();
   SkyValue actionValue=evaluatedAction.value;
   maybeChangeFile(actionInput,changeActionInput);
   betweenBuilds.call();
-  invalidationReceiver.reset();
+  progressReceiver.reset();
   builder.buildArtifacts(reporter,ImmutableSet.of(actionOutput),null,null,null,null,executor,null,false,null,null);
   if (expectActionIs.dirtied()) {
-    assertThat(invalidationReceiver.wasInvalidated(actionKey)).isTrue();
-    TrackingEvaluationProgressReceiver.EvaluatedEntry newEntry=invalidationReceiver.getEvalutedEntry(actionKey);
+    assertThat(progressReceiver.wasInvalidated(actionKey)).isTrue();
+    TrackingEvaluationProgressReceiver.EvaluatedEntry newEntry=progressReceiver.getEvalutedEntry(actionKey);
     assertThat(newEntry).isNotNull();
     if (expectActionIs.actuallyClean()) {
       assertThat(newEntry.state).isEqualTo(EvaluationState.CLEAN);
@@ -28,7 +28,7 @@
     }
   }
  else {
-    assertThat(invalidationReceiver.wasInvalidated(actionKey)).isFalse();
+    assertThat(progressReceiver.wasInvalidated(actionKey)).isFalse();
   }
   assertThat(executionCounter.get()).isEqualTo(expectActionIs.reexecuted() ? 2 : 1);
 }
