@@ -1,5 +1,8 @@
 {
-  DexArchiveProvider.Builder result=new DexArchiveProvider.Builder().addTransitiveProviders(ruleContext.getPrerequisites("deps",Mode.TARGET,DexArchiveProvider.class));
+  DexArchiveProvider.Builder result=new DexArchiveProvider.Builder();
+  for (  String attr : semantics.getAttributesWithJavaRuntimeDeps(ruleContext)) {
+    result.addTransitiveProviders(ruleContext.getPrerequisites(attr,Mode.TARGET,DexArchiveProvider.class));
+  }
   ImmutableSet<String> incrementalDexopts=DexArchiveAspect.incrementalDexopts(ruleContext,dexopts);
   for (  Artifact jar : common.getJarsProducedForRuntime()) {
     PathFragment jarPath=jar.getRootRelativePath();
