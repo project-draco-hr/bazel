@@ -1,6 +1,15 @@
 {
   C depComponent=outputArtifactToComponent.get(input);
   if (depComponent != null) {
+    if (depComponent.isRunning) {
+      Action action=depComponent.getAction();
+      for (      Artifact actionOutput : action.getOutputs()) {
+        if (input.equals(actionOutput) && Objects.equals(input.getArtifactOwner(),actionOutput.getArtifactOwner())) {
+          throw new IllegalStateException(String.format("Cannot add critical path stats when the action is not finished. %s. %s. %s",input,actionStats.getAction(),depComponent.getAction()));
+        }
+      }
+      return;
+    }
     actionStats.addDepInfo(depComponent);
   }
 }
