@@ -7,19 +7,16 @@
   for (  Map.Entry<Attribute,Dependency> depsEntry : originalDeps.entries()) {
     Dependency dep=depsEntry.getValue();
     AttributeAndLabel attributeAndLabel=new AttributeAndLabel(depsEntry.getKey(),dep.getLabel());
-    if (dep.hasStaticConfiguration()) {
-      trimmedDeps.put(attributeAndLabel,dep);
-      continue;
-    }
- else     if (dep.getTransition() == Attribute.ConfigurationTransition.NULL) {
-      putOnlyEntry(trimmedDeps,attributeAndLabel,Dependency.withNullConfiguration(dep.getLabel()));
+    if (dep.hasStaticConfiguration() || dep.getTransition() == Attribute.ConfigurationTransition.NULL) {
       continue;
     }
     Set<Class<? extends BuildConfiguration.Fragment>> depFragments=getTransitiveFragments(env,dep.getLabel(),ctgValue.getConfiguration());
     if (depFragments == null) {
       return null;
     }
-    checkForMissingFragments(env,ctgValue,attributeAndLabel.attribute.getName(),dep,depFragments);
+    if (ctgValue.getConfiguration().trimConfigurations()) {
+      checkForMissingFragments(env,ctgValue,attributeAndLabel.attribute.getName(),dep,depFragments);
+    }
     boolean sameFragments=depFragments.equals(ctgFragments);
     Attribute.Transition transition=dep.getTransition();
     if (sameFragments) {
@@ -79,9 +76,18 @@
   }
   OrderedSetMultimap<Attribute,Dependency> result=OrderedSetMultimap.create();
   for (  Map.Entry<Attribute,Dependency> depsEntry : originalDeps.entries()) {
-    Collection<Dependency> trimmedAttrDeps=trimmedDeps.get(new AttributeAndLabel(depsEntry.getKey(),depsEntry.getValue().getLabel()));
-    Verify.verify(!trimmedAttrDeps.isEmpty());
-    result.putAll(depsEntry.getKey(),trimmedAttrDeps);
+    AttributeAndLabel attrAndLabel=new AttributeAndLabel(depsEntry.getKey(),depsEntry.getValue().getLabel());
+    if (depsEntry.getValue().hasStaticConfiguration()) {
+      result.put(attrAndLabel.attribute,depsEntry.getValue());
+    }
+ else     if (depsEntry.getValue().getTransition() == Attribute.ConfigurationTransition.NULL) {
+      result.put(attrAndLabel.attribute,Dependency.withNullConfiguration(attrAndLabel.label));
+    }
+ else {
+      Collection<Dependency> trimmedAttrDeps=trimmedDeps.get(attrAndLabel);
+      Verify.verify(!trimmedAttrDeps.isEmpty());
+      result.putAll(depsEntry.getKey(),trimmedAttrDeps);
+    }
   }
   return result;
 }
