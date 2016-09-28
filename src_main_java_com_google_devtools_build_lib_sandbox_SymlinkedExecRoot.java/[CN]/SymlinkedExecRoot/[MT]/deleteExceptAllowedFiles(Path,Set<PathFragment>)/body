@@ -1,0 +1,16 @@
+{
+  for (  Path p : root.getDirectoryEntries()) {
+    FileStatus stat=p.stat(Symlinks.NOFOLLOW);
+    if (!stat.isDirectory()) {
+      if (!allowedFiles.contains(p.relativeTo(sandboxExecRoot))) {
+        p.delete();
+      }
+    }
+ else {
+      deleteExceptAllowedFiles(p,allowedFiles);
+      if (p.readdir(Symlinks.NOFOLLOW).isEmpty()) {
+        p.delete();
+      }
+    }
+  }
+}

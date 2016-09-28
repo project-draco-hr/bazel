@@ -1,0 +1,37 @@
+{
+  Worker worker=null;
+  WorkResponse response=null;
+  try {
+    worker=workers.borrowObject(key);
+    worker.prepareExecution(key);
+    request.writeDelimitedTo(worker.getOutputStream());
+    worker.getOutputStream().flush();
+    response=WorkResponse.parseDelimitedFrom(worker.getInputStream());
+    if (writeOutputFiles != null && !writeOutputFiles.compareAndSet(null,WorkerSpawnStrategy.class)) {
+      throw new InterruptedException();
+    }
+    worker.finishExecution(key);
+    if (response == null) {
+      throw new UserExecException("Worker process did not return a correct WorkResponse. This is probably caused by a " + "bug in the worker, writing unexpected other data to stdout.");
+    }
+  }
+ catch (  IOException e) {
+    if (worker != null) {
+      workers.invalidateObject(key,worker);
+      worker=null;
+    }
+    if (retriesLeft > 0) {
+      eventHandler.handle(Event.warn(key.getMnemonic() + " worker failed (" + Throwables.getStackTraceAsString(e)+ "), invalidating and retrying with new worker..."));
+      return execInWorker(eventHandler,key,request,retriesLeft - 1,writeOutputFiles);
+    }
+ else {
+      throw e;
+    }
+  }
+ finally {
+    if (worker != null) {
+      workers.returnObject(key,worker);
+    }
+  }
+  return response;
+}

@@ -1,0 +1,11 @@
+{
+  String[] command=workerKey.getArgs().toArray(new String[0]);
+  File executable=new File(command[0]);
+  if (!executable.isAbsolute() && executable.getParent() != null) {
+    command[0]=new File(workDir.getPathFile(),command[0]).getAbsolutePath();
+  }
+  ProcessBuilder processBuilder=new ProcessBuilder(command).directory(workDir.getPathFile()).redirectError(Redirect.appendTo(logFile.getPathFile()));
+  processBuilder.environment().clear();
+  processBuilder.environment().putAll(workerKey.getEnv());
+  this.process=processBuilder.start();
+}

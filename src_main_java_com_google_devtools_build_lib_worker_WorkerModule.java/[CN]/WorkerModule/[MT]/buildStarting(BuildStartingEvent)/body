@@ -1,28 +1,29 @@
 {
   buildRequest=event.getRequest();
-  WorkerOptions options=buildRequest.getOptions(WorkerOptions.class);
-  verbose=options.workerVerbose;
+  options=buildRequest.getOptions(WorkerOptions.class);
   if (workerFactory == null) {
-    Path logDir=env.getOutputBase().getRelative("worker-logs");
+    Path workerDir=env.getOutputBase().getRelative(env.getRuntime().getProductName() + "-workers");
     try {
-      if (!logDir.createDirectory()) {
-        for (        Path logFile : logDir.getDirectoryEntries()) {
-          try {
-            logFile.delete();
-          }
- catch (          IOException e) {
-            env.getReporter().handle(Event.error("Could not delete old worker log: " + logFile));
+      if (!workerDir.createDirectory()) {
+        for (        Path logFile : workerDir.getDirectoryEntries()) {
+          if (logFile.getBaseName().endsWith(".log")) {
+            try {
+              logFile.delete();
+            }
+ catch (            IOException e) {
+              env.getReporter().handle(Event.error("Could not delete old worker log: " + logFile));
+            }
           }
         }
       }
     }
  catch (    IOException e) {
-      env.getReporter().handle(Event.error("Could not create directory for worker logs: " + logDir));
+      env.getReporter().handle(Event.error("Could not create base directory for workers: " + workerDir));
     }
-    workerFactory=new WorkerFactory(logDir);
+    workerFactory=new WorkerFactory(options,workerDir);
   }
   workerFactory.setReporter(env.getReporter());
-  workerFactory.setVerbose(options.workerVerbose);
+  workerFactory.setOptions(options);
   WorkerPoolConfig newConfig=createWorkerPoolConfig(options);
   if (workerPoolConfig != null && !workerPoolConfig.equals(newConfig)) {
     shutdownPool("Worker configuration has changed, restarting worker pool...");

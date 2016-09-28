@@ -1,3 +1,19 @@
 {
-  return Worker.create(key,logDir,reporter,verbose);
+  int workerId=pidCounter.getAndIncrement();
+  Path logFile=workerBaseDir.getRelative("worker-" + workerId + "-"+ key.getMnemonic()+ ".log");
+  Worker worker;
+  boolean sandboxed=workerOptions.workerSandboxing || key.mustBeSandboxed();
+  if (sandboxed) {
+    Path workDir=workerBaseDir.getRelative("worker-" + workerId + "-"+ key.getMnemonic());
+    worker=new SandboxedWorker(key,workerId,workDir,logFile);
+  }
+ else {
+    worker=new Worker(key,workerId,key.getExecRoot(),logFile);
+  }
+  worker.prepareExecution(key);
+  worker.createProcess();
+  if (workerOptions.workerVerbose) {
+    reporter.handle(Event.info(String.format("Created new %s %s worker (id %d), logging to %s",sandboxed ? "sandboxed" : "non-sandboxed",key.getMnemonic(),workerId,logFile)));
+  }
+  return worker;
 }

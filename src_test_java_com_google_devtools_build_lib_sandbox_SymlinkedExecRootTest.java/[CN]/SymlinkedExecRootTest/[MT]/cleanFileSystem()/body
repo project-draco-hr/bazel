@@ -1,0 +1,14 @@
+{
+  Path helloTxt=workspaceDir.getRelative("hello.txt");
+  FileSystemUtils.createEmptyFile(helloTxt);
+  SymlinkedExecRoot symlinkedExecRoot=new SymlinkedExecRoot(execRoot);
+  symlinkedExecRoot.createFileSystem(ImmutableMap.of(new PathFragment("such/input.txt"),helloTxt),ImmutableSet.of(new PathFragment("very/output.txt")),ImmutableSet.of(execRoot.getRelative("wow/writable")));
+  execRoot.getRelative("tempdir").createDirectory();
+  FileSystemUtils.createEmptyFile(execRoot.getRelative("very/output.txt"));
+  FileSystemUtils.createEmptyFile(execRoot.getRelative("wow/writable/temp.txt"));
+  symlinkedExecRoot.createFileSystem(ImmutableMap.of(new PathFragment("such/input.txt"),helloTxt),ImmutableSet.of(new PathFragment("very/output.txt")),ImmutableSet.of(execRoot.getRelative("wow/writable")));
+  assertThat(execRoot.getRelative("such/input.txt").exists()).isTrue();
+  assertThat(execRoot.getRelative("tempdir").exists()).isFalse();
+  assertThat(execRoot.getRelative("very/output.txt").exists()).isFalse();
+  assertThat(execRoot.getRelative("wow/writable/temp.txt").exists()).isFalse();
+}

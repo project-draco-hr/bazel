@@ -1,6 +1,12 @@
 {
   for (  Entry<PathFragment,Path> entry : inputs.entrySet()) {
     Path key=sandboxExecRoot.getRelative(entry.getKey());
+    if (key.exists(Symlinks.NOFOLLOW)) {
+      if (key.readSymbolicLink().equals(entry.getValue().asFragment())) {
+        continue;
+      }
+      key.delete();
+    }
     key.createSymbolicLink(entry.getValue());
   }
 }

@@ -1,0 +1,27 @@
+{
+  Path outputFile=execRoot.getRelative("very/output.txt");
+  Path outputLink=execRoot.getRelative("very/output.link");
+  Path outputDangling=execRoot.getRelative("very/output.dangling");
+  Path outputDir=execRoot.getRelative("very/output.dir");
+  SymlinkedExecRoot symlinkedExecRoot=new SymlinkedExecRoot(execRoot);
+  symlinkedExecRoot.createFileSystem(ImmutableMap.<PathFragment,Path>of(),ImmutableSet.of(outputFile.relativeTo(execRoot),outputLink.relativeTo(execRoot),outputDangling.relativeTo(execRoot),outputDir.relativeTo(execRoot)),ImmutableSet.<Path>of());
+  FileSystemUtils.createEmptyFile(outputFile);
+  outputLink.createSymbolicLink(new PathFragment("output.txt"));
+  outputDangling.createSymbolicLink(new PathFragment("doesnotexist"));
+  outputDir.createDirectory();
+  FileSystemUtils.createEmptyFile(outputDir.getRelative("test.txt"));
+  outputsDir.getRelative("very").createDirectory();
+  symlinkedExecRoot.copyOutputs(outputsDir,ImmutableSet.of(outputFile.relativeTo(execRoot),outputLink.relativeTo(execRoot),outputDangling.relativeTo(execRoot),outputDir.relativeTo(execRoot)));
+  assertThat(outputsDir.getRelative("very/output.txt").isFile(Symlinks.NOFOLLOW)).isTrue();
+  assertThat(outputsDir.getRelative("very/output.link").isSymbolicLink()).isTrue();
+  assertThat(outputsDir.getRelative("very/output.link").resolveSymbolicLinks()).isEqualTo(outputsDir.getRelative("very/output.txt"));
+  assertThat(outputsDir.getRelative("very/output.dangling").isSymbolicLink()).isTrue();
+  try {
+    outputsDir.getRelative("very/output.dangling").resolveSymbolicLinks();
+    fail("expected IOException");
+  }
+ catch (  IOException e) {
+  }
+  assertThat(outputsDir.getRelative("very/output.dir").isDirectory(Symlinks.NOFOLLOW)).isTrue();
+  assertThat(outputsDir.getRelative("very/output.dir/test.txt").isFile(Symlinks.NOFOLLOW)).isTrue();
+}
